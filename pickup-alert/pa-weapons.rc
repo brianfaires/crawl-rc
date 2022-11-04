@@ -1,0 +1,321 @@
+{
+loaded_pa_weapons = true
+
+-- load dependencies if not previously loaded
+if not loaded_pa_util then
+  crawl.read_options("pa-util.rc")
+end
+
+if not loaded_pa_data then
+  crawl.read_options("pa-data.rc")
+end
+
+if not loaded_pa_main then
+  crawl.read_options("pa-main.rc")
+end
+
+
+-------------------------------
+---- alert_early_weapons() ----
+-------------------------------
+-- Alert strong weapons early, regardless of skill
+local function alert_early_weapons(it)
+  if you.xl() <= 8 then
+	if it.branded or it.plus and it.plus >= 4 then
+	  -- Make sure we don't alert a pure downgrade to something in inventory
+	  for slot = 0,51 do
+	    local inv = items.inslot(slot)
+		if inv and inv.name("base") == it.name("base") then
+		  if inv.plus >= it.plus then
+		    if not it.branded then return end
+		    if it.ego() == inv.ego() then return end
+		  end
+		end
+	  end
+	  
+	  return alert_item(it, "Early weapon")
+    end
+  elseif you.xl() <= 14 then
+    if it.fully_identified and it.is_ranged then
+	  if it.branded and it.plus >= 5 or it.plus >= 7 then
+	    if get_hands(it) == 1 or not items.equipped_at("shield") or you.skill("shield") <= 8 then
+		  return alert_item(it, "Ranged weapon9")
+		end
+	  end
+	end
+  end
+end
+
+
+----------------------------
+---- Alert first ranged ----
+----------------------------
+local function alert_first_ranged(it)
+  if not it.is_ranged then return false end
+  
+  if get_hands(it) == 2 then
+	if items.equipped_at("shield") then return false end
+    if alerted_first_ranged_two_handed == 0 then
+	  alerted_first_ranged_two_handed = 1
+	  for slot=0,51 do
+	    local inv = items.inslot(slot)
+		if inv and inv.is_ranged and get_hands(inv) == 2 then return true end
+      end
+	  return alert_item(it, "Ranged weapon5")
+	end
+  else
+    if alerted_first_ranged_one_handed == 0 then
+	  alerted_first_ranged_one_handed = 1
+	  for slot=0,51 do
+	    local inv = items.inslot(slot)
+		if inv and inv.is_ranged then return true end
+      end
+	  return alert_item(it, "Ranged weapon6")
+	end
+  end
+  
+  return false
+end
+
+
+------------------------------
+---- Begin max_dmg arrays ----
+------------------------------
+-- Use these arrays to compare potential upgrades against entire inventory
+local inv_max_dmg = { melee = 0, melee_b = 0, twohands = 0, twohands_b = 0, ranged = 0, ranged_b = 0 }
+local inv_max_dmg_acc = { melee = 0, melee_b = 0, twohands = 0, twohands_b = 0, ranged = 0, ranged_b = 0 }
+local egos = { }
+
+local function get_weap_type(it)
+  if it.is_ranged then
+	if it.branded then return "ranged_b"
+	else return "ranged" end
+  else
+	if get_hands(it) == 2 then
+	  if it.branded then return "twohands_b"
+	  else return "twohands" end
+	else
+	  if it.branded then return "melee_b"
+	  else return "melee" end
+	end
+  end
+end
+
+local function enforce_dmg_floor(target, floor)
+  if inv_max_dmg[target] < inv_max_dmg[floor] then
+    inv_max_dmg[target] = inv_max_dmg[floor]
+	inv_max_dmg_acc[target] = inv_max_dmg_acc[floor]
+  end
+end
+
+local function generate_inv_weap_arrays()
+  for slot=0,51 do
+    local cur
+	cur = items.inslot(slot)
+    if cur and cur.class(true) == "weapon" then
+	  if cur.ego() then table.insert(egos, cur.ego()) end
+	  
+	  local dmg = get_weap_dps(cur)
+	  local weap_type = get_weap_type(cur)
+	  if dmg > inv_max_dmg[weap_type] then
+	    inv_max_dmg[weap_type] = dmg
+		inv_max_dmg_acc[weap_type] = cur.accuracy + cur.plus
+      end
+	end
+  end
+  
+  enforce_dmg_floor("melee", "melee_b")
+  enforce_dmg_floor("twohands_b", "melee_b")
+  enforce_dmg_floor("twohands", "twohands_b")
+  enforce_dmg_floor("twohands", "melee")
+  enforce_dmg_floor("ranged", "ranged_b")
+end
+----------------------------
+---- End max_dmg arrays ----
+----------------------------
+
+
+--------------------------------
+---- Begin pickup_weapons() ----
+--------------------------------
+
+local function pickup_weapon(it, cur)
+  if cur.subtype() == it.subtype() then
+    -- Exact weapon type match
+    if it.artefact then return true end
+    if cur.artefact then return false end
+	if it.branded and it.fully_identified and not cur.branded then return true end
+	if cur.branded and not it.branded then return false end
+	return it.ego() == cur.ego() and get_weap_dps(it) > get_weap_dps(cur)
+
+  elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
+	-- A usable weapon school
+	if get_hands(it) > get_hands(cur) then return false end
+	if it.is_ranged ~= cur.is_ranged then return false end
+	if cur.weap_skill == "Polearms" and it.weap_skill ~= "Polearms" then return false end
+	
+	if it.artefact then return true end
+	if cur.artefact then return false end
+	if it.branded and not it.fully_identified then return false end
+    if cur.branded and not it.branded then return false end
+
+    local dmg_delta
+    if get_weap_dps(cur) > inv_max_dmg[get_weap_type(it)] then 
+	  dmg_delta = get_weap_dps(it) - get_weap_dps(cur)
+	else
+	  dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
+	end
+	
+	if dmg_delta > 0 then return true end
+	local it_plus = it.plus
+	if not it_plus then it_plus = 0 end
+	return dmg_delta == 0 and (it.accuracy+it_plus) > inv_max_dmg_acc[get_weap_type(it)]
+  end
+  
+  return false
+end
+
+
+
+function pickup_weapons(it)
+  if it.is_useless then return false end
+  
+  generate_inv_weap_arrays()
+  local unarmed = true
+
+  for slot=0,51 do
+    local cur
+	cur = items.inslot(slot)
+    if cur and cur.class(true) == "weapon" then
+	  if pickup_weapon(it, cur) then
+	    return pickup_item(it)
+	  end
+	  if not cur.is_ranged then
+	    unarmed = false
+	  end
+	end
+  end
+  
+  -- Return false unless you need a weapon but don't have one yet
+  if not unarmed or you.skill("Unarmed Combat") > 0 then return false end
+  if you.get_base_mutation_level("claws", true, false, true) > 0 then return false end
+  if you.get_base_mutation_level("demonic touch", true, false, true) > 0 then return false end
+  
+  return true
+end
+
+------------------------------
+---- End pickup_weapons() ----
+------------------------------
+
+-------------------------------------------
+---- Begin alert_interesting_weapons() ----
+-------------------------------------------
+local function alert_interesting_weapon(it, cur)
+  -- Try to avoid auto-replacing stat sticks
+  if cur.artefact and you.skill(it.weap_skill) < 2 and you.xl() > 6 then return false end
+	
+  if cur.subtype() == it.subtype() then
+    -- Exact weapon type match
+	if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego1") end
+	if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "Stronger weapon0") end
+  
+  elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
+	-- A usable weapon school
+	if it.is_ranged ~= cur.is_ranged then return false end
+	
+	if get_hands(it) == 2 and get_hands(cur) == 1 then
+	  -- Item requires an extra hand
+	  if it.artefact then return alert_item(it, "2-handed artefact") end
+	  if it.branded and not cur.artefact and not cur.branded then
+	    if get_weap_dps(it) > 0.8*get_weap_dps(cur) then return alert_item(it, "2-handed weapon1") end
+	  end
+	  
+	  if not items.equipped_at("shield") then 
+		if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego") end
+		if not (cur.branded or cur.artefact) and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon2") end
+		--if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > 1.3*inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
+		if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
+	  elseif you.skill("shields") <= 4 then
+	    -- Not really training shields; may be interested in big upgrades
+		if get_weap_dps(it) >= 2*inv_max_dmg["melee"] then return alert_item(it, "2-handed weapon4") end
+	  end
+	else
+	  -- Item uses same number of hands or fewer
+	  if cur.artefact then return false end
+	  if it.branded then
+	    local dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
+	    if not cur.branded then
+		  if dmg_delta >= -4 then return alert_item(it, "New ego2") end
+		elseif it.ego() == cur.ego() then
+		  if dmg_delta >= 0 then return alert_item(it, "Stronger weapon1") end
+		elseif not util.contains(egos, it.ego()) then
+		  if dmg_delta >= -4 then return alert_item(it, "New ego3") end
+		end
+	  else
+	    -- Not branded
+	    if cur.branded then 
+		  --if get_weap_dps(it) > 1.25*inv_max_dmg[get_weap_type(it)] then
+		  if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
+		  	return alert_item(it, "Stronger weapon2")
+		  end
+		else
+		  local dmg_delta, other_acc
+          if get_weap_dps(cur) > inv_max_dmg[get_weap_type(it)] then 
+	        dmg_delta = get_weap_dps(it) - get_weap_dps(cur)
+			other_acc = cur.accuracy + cur.plus
+	      else
+	        dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
+			other_acc = inv_max_dmg_acc[get_weap_type(it)]
+	      end
+		  
+		  if dmg_delta > 0 then return alert_item(it, "Stronger weapon3") end
+		  local it_plus = it.plus
+	      if not it_plus then it_plus = 0 end
+		  if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then return alert_item(it, "Higher accuracy") end
+		end
+      end	  
+	end
+  end
+end
+
+
+local function alert_interesting_weapons(it)
+  generate_inv_weap_arrays()
+  
+  local ranged_weap_in_inv = false
+  for slot=0,51 do
+    cur = items.inslot(slot)
+	if cur and cur.class(true) == "weapon" then
+      if alert_interesting_weapon(it, cur) then return true end
+	  if cur.is_ranged then ranged_weap_in_inv = true end
+	end
+  end
+  
+  -- Alert for the first ranged weapon found (for 1 and 2 handed separately)
+  if it.is_ranged and not ranged_weap_in_inv then
+	if it.artefact or it.branded and it.plus >= 4 then
+	  if items.equipped_at("shield") then
+	    local qualname = it.name("qual")
+	    if qualname:find("hand crossbow") or qualname:find("sling") then
+		  return alert_item(it, "Ranged Weapon1")
+		end
+	  else
+	    return alert_item(it, "Ranged Weapon2")
+	  end
+	end
+  end
+  
+  return false
+end
+-----------------------------------------
+---- End alert_interesting_weapons() ----
+-----------------------------------------
+
+function alert_weapons(it)
+  alert_first_ranged(it)
+  if (it.artefact or it.branded) and not it.fully_identified then return end
+  alert_interesting_weapons(it)
+  alert_early_weapons(it)
+end
+}

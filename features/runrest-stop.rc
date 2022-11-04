@@ -1,0 +1,101 @@
+{
+-------------------------------------
+---- Hooks (All functions below) ----
+-------------------------------------
+-- You can add/remove these hooks a-la-carte if you don't like any
+
+
+-----------------------
+---- Ignore altars ----
+-----------------------
+local stop_on_altars = true
+
+function ready_ignore_altars()
+  if stop_on_altars and (you.god() ~= "No God" or you.branch() == "Temple") then
+    stop_on_altars = false
+	crawl.setopt("explore_stop -= altars")
+  elseif not stop_on_altars and you.god() == "No God" and you.branch() ~= "Temple" then
+    stop_on_altars = true
+	crawl.setopt("explore_stop += altars")
+  end
+end
+
+
+-----------------------------------------------
+---- Search altars in temple after explore ----
+-----------------------------------------------
+function c_message_search_altars_in_temple(text, channel)
+  if you.branch() == "Temple" and text:find("explor") then
+    crawl.sendkeys({ 6, "altar\r" })
+  end
+end
+
+
+-----------------------------
+---- Ignore exit portals ----
+-----------------------------
+local ignore_exit_brances = { "Bailey", "Bazaar", "Ice Cave", "Ossuary", "Sewer", "Trove", "Volcano", "Ziggurat" }
+local stop_on_portals = true
+
+function ready_ignore_exits()
+  local branch = you.branch()
+  if stop_on_portals and util.contains(ignore_exit_brances, branch) then
+    stop_on_portals = false
+	crawl.setopt("explore_stop -= portals")
+  elseif not stop_on_portals and not util.contains(ignore_exit_brances, branch) then
+    stop_on_portals = true
+	crawl.setopt("explore_stop += portals")
+  end
+end
+
+
+-------------------------------------
+---- Ignore summons disappearing ----
+-------------------------------------
+function ch_stop_running_ignore_summons(kind)
+  local runrest_ignore_summons = { "crumbles into dust", "fades into mist", "returns to the shadows", 
+                                   "Your foxfire dissipates", "Your.*simulacrum vaporises", "Your crimson imp blinks" }
+  local text = crawl.messages(1)
+  for _, v in ipairs(runrest_ignore_summons) do
+    if text:find(v) then
+      if kind:find("explore") then crawl.sendkeys("o") end
+	  if kind == "" then crawl.sendkeys("5") end
+	end
+  end
+end
+
+
+------------------------------
+---- Ignore sense monster ----
+------------------------------
+function ch_stop_running_ignore_sense_monsters(kind)
+  if crawl.messages(1):find("You sense a monster nearby") then
+    if kind:find("explore") then crawl.sendkeys("o") end
+	if kind == "" then crawl.sendkeys("5") end
+  end
+end
+
+
+-----------------------
+---- Ignore mimics ----
+-----------------------
+function ch_stop_running_ignore_mimics(kind)
+  if crawl.messages(1):find("mimic.*vanishes") then
+    if kind:find("explore") then crawl.sendkeys("o") end
+  end
+end
+
+
+----------------------------------------
+---- Stop on recovery if full hp/mp ----
+----------------------------------------
+function c_message_stop_wait_on_recovery(text, channel)
+  if text:find("You start waiting.") then
+    crawl.setopt("runrest_ignore_message -= recovery:.*")
+    crawl.setopt("runrest_ignore_message -= duration:.*")
+  elseif text:find("Done waiting.") then
+	crawl.setopt("runrest_ignore_message += recovery:.*")
+    crawl.setopt("runrest_ignore_message += duration:.*")
+  end
+end
+}
