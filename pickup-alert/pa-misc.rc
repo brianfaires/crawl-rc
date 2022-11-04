@@ -1,8 +1,9 @@
+include = pickup-alert/pa-util.rc
+include = pickup-alert/pa-data.rc
+include = pickup-alert/pa-main.rc
+
 {
 loaded_pa_misc = true
-crawl.read_options("pa-util.rc")
-crawl.read_options("pa-data.rc")
-crawl.read_options("pa-main.rc")
 
 
 --------------------------

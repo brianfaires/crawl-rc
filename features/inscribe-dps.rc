@@ -1,8 +1,5 @@
+include = pickup-alert/pa-util.rc
 {
--- load dependencies if not previously loaded
-if not loaded_pa_util then
-  crawl.read_options("../pickup-alert/pa-util.rc")
-end
 
 ------------------------------------------
 ------------------ Hook ------------------

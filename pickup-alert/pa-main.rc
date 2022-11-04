@@ -1,6 +1,7 @@
+include = pickup-alert/pa-util.rc
+include = pickup-alert/pa-data.rc
+
 {
-crawl.read_options("pa-util.rc")
-crawl.read_options("pa-data.rc")
 
 ------------------------------------
 ---- Autopickup and alerts hook ----
