@@ -1,6 +1,4 @@
 {
-loaded_pa_util = true
-
 -- Add an item name to a table, along with all less enchanted versions
 -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
 function insert_item_and_less_enchanted(table_name, item_name)
@@ -45,6 +43,10 @@ function get_size_factor()
   end
 end
 
+local summon_gods = { "Beogh", "Jiyva", "Yredelemnul" }
+function you_have_summons()
+  return you.skill("Summonings") + you.skill("Necromancy") > 0 or util.contains(summon_gods, you.god())
+end
 
 --------------------------------------------------
 --------------------- Armour ---------------------
@@ -286,7 +288,7 @@ function get_weap_dps(it, no_brand_dmg)
 end
 
 
-function inscribe_stats(it)
+function inscribe_stats(it, skip_inscription)
   local dps = get_weap_dps(it)
   local dps_str = string.format("%.2f", dps)
 	  
@@ -301,7 +303,7 @@ function inscribe_stats(it)
 	  
   local idx = it.inscription:find("DPS=")
   if not idx then
-    it.inscribe(new_inscr, false)
+    if not skip_inscription then it.inscribe(new_inscr, false) end
 	return new_inscr
   end
 
@@ -309,8 +311,8 @@ function inscribe_stats(it)
     new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
   end
   if idx > 1 then new_inscr = it.inscription:sub(1, idx-1)..new_inscr end
-	  
-  it.inscribe(new_inscr, false)
+
+  if not skip_inscription then it.inscribe(new_inscr, false) end
   return new_inscr
 end
 

@@ -1,18 +1,8 @@
 {
 loaded_pa_misc = true
-
--- load dependencies if not previously loaded
-if not loaded_pa_util then
-  crawl.read_options("pa-util.rc")
-end
-
-if not loaded_pa_data then
-  crawl.read_options("pa-data.rc")
-end
-
-if not loaded_pa_main then
-  crawl.read_options("pa-main.rc")
-end
+crawl.read_options("pa-util.rc")
+crawl.read_options("pa-data.rc")
+crawl.read_options("pa-main.rc")
 
 
 --------------------------
