@@ -1,31 +1,3 @@
-### Fairly normal RC options ###
-include = slots.rc
-include = macros.rc
-include = runrest.rc
-include = fm-messages.rc
-include = fm-monsters.rc
-include = dynamic-options.rc
-include = startup.rc
-
-
-### Pickup and alert ###
-include = pickup-alert/pa-armour.rc
-include = pickup-alert/pa-weapons.rc
-include = pickup-alert/pa-misc.rc
-
-
-### Features ###
-include = features/inscribe-dps.rc
-include = features/remind-id.rc
-include = features/weapon-slots.rc
-include = features/exclude-dropped.rc
-include = features/safe-consumables.rc
-include = features/drop-inferior.rc
-include = features/runrest-stop.rc
-include = features/mute-swaps.rc
-include = features/after-shaft.rc
-
-
 #################################
 ####### Main options ############
 #################################
@@ -58,6 +30,38 @@ explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, jave
 autopickup_exceptions ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 autopickup_exceptions ^= <scrolls? of immolation, <scrolls? of poison
 autopickup_exceptions ^= >useless_item, <misc
+
+
+#############################
+####### RC files ############
+#############################
+
+### Mostly normal RC options ###
+include = slots.rc
+include = macros.rc
+include = runrest.rc
+include = fm-messages.rc
+include = fm-monsters.rc
+include = dynamic-options.rc
+include = startup.rc
+
+
+### Pickup and alert ###
+include = pickup-alert/pa-armour.rc
+include = pickup-alert/pa-weapons.rc
+include = pickup-alert/pa-misc.rc
+
+
+### Features ###
+include = features/inscribe-dps.rc
+include = features/remind-id.rc
+include = features/weapon-slots.rc
+include = features/exclude-dropped.rc
+include = features/safe-consumables.rc
+include = features/drop-inferior.rc
+include = features/runrest-stop.rc
+include = features/mute-swaps.rc
+include = features/after-shaft.rc
 
 
 
@@ -108,7 +112,6 @@ function ch_stop_running(kind)
   if ch_stop_running_ignore_mimics then ch_stop_running_ignore_mimics(kind) end
 end
 
-
 ---------------------------
 --------- ready() ---------
 ---------------------------
@@ -126,6 +129,7 @@ function ready()
   if ready_ignore_altars then ready_ignore_altars() end
   if ready_ignore_exits then ready_ignore_exits() end
   if ready_after_shaft then ready_after_shaft() end
+  
 end
 
 
@@ -143,5 +147,4 @@ end
 --Avoid weird effects after save/restart
 if you.turns() > 0 then ready() end
 
-crawl.mpr(items.inslot(3).subtype())
 }

@@ -27,9 +27,7 @@ local function set_god_options()
   if you.god() ~= cur_god then
     cur_god = you.god()
   
-    if cur_god == "Ashenzari" then
-	  crawl.setopt("runrest_ignore_message ^= You sense a monster nearby")
-	elseif cur_god == "Beogh" then
+	if cur_god == "Beogh" then
 	  crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
       crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
       crawl.setopt("force_more_message += Your orc.*dies")
