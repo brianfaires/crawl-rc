@@ -118,12 +118,12 @@ local ignoring_spellcasting = false
 local function set_skill_options()
   -- Ignore spellcaster items if you have no spellcasting skill, and wearing some armour without much armour skill
   local arm = items.equipped_at("body armour")
-  if not ignoring_spellcasting and you.skill("Spellcasting") == 0 and arm and arm.encumbrance > 2*you.skill("Armour") then
+  if not ignoring_spellcasting and you.skill("Spellcasting") == 0 and arm and arm.encumbrance > you.skill("Armour") then
     ignoring_spellcasting = true
     crawl.setopt("explore_stop_pickup_ignore += spellbooks")
     crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
     crawl.setopt("runrest_ignore_message += You add the spell")
-  elseif ignoring_spellcasting and not (you.skill("Spellcasting") == 0 and arm and arm.encumbrance > 2*you.skill("Armour")) then
+  elseif ignoring_spellcasting and not (you.skill("Spellcasting") == 0 and arm and arm.encumbrance > you.skill("Armour")) then
     ignoring_spellcasting = false
     crawl.setopt("explore_stop_pickup_ignore -= spellbooks")
     crawl.setopt("autopickup_exceptions -= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
