@@ -1,0 +1,71 @@
+###############################
+####### Auto-inscribe #########
+# Unidentified consumables
+autoinscribe += potions?(?!.*of ):!q
+autoinscribe += scrolls?(?!.*of ):!r
+
+# Add a warning for everything that doesn't have one built-in
+autoinscribe += potions? of(?!.*(attraction|lignification|mutation)):!q
+autoinscribe += scrolls? of(butterflies|fear|fog|magic mapping|posion|silence|summoning|teleportation|torment|vulnerability):!r
+
+
+{
+--------------------------------------------
+---- Protective consumable inscriptions ----
+--------------------------------------------
+-- Initialize to true to fix inscriptions on init (starting items don't get default inscriptions)
+local no_inscriptions = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
+		                 "identify", "immolation", "noise", "poison", "vulnerability", "attraction", "lignification", "mutation" }
+
+local function fix_inscriptions()
+  -- Remove the default "!r" and "!q" inscriptions after identify
+  local keystring = ""
+  for slot=0,51 do
+    local it = items.inslot(slot)
+	
+    if it and it.fully_identified then
+      local it_class = it.class(true)
+      if it_class == "potion" or it_class == "scroll" then
+        local qualname = it.name("qual")
+        local st, _ = it.subtype()
+		
+        if util.contains(no_inscriptions, st) then
+          if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
+		  if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
+	    elseif it_class == "scroll" and not util.contains(no_inscriptions, st) and not qualname:find("!r") then
+	      it.inscribe("!r")
+	    elseif it_class == "potion" and not util.contains(no_inscriptions, st) and not qualname:find("!q") then
+	      it.inscribe("!q")
+		end
+	  end
+	end
+  end
+end
+
+
+local do_fix_inscriptions = true
+
+---------------------------------------------
+------------------- Hooks -------------------
+---------------------------------------------
+function ready_safe_consumables()
+  if do_fix_inscriptions then
+    fix_inscriptions()
+	do_fix_inscriptions = false
+  end
+end
+
+
+function c_message_safe_consumables(text, channel)
+  if channel ~= "plain" then return end
+  local triggers = { "Thank you for shopping at", "s a scroll of ", "s a potion of ", "read the scroll of identify" }
+  for _, v in ipairs(triggers) do
+    if text:find(v) then
+	  fix_inscriptions()
+      do_fix_inscriptions = true
+	  return
+	end
+  end
+end
+
+}

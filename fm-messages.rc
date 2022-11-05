@@ -1,0 +1,132 @@
+# Alias
+more := force_more_message
+
+# Remove annoying defaults
+more -= You have reached level
+more -= The lock glows eerily
+more -= Heavy smoke blows from the lock
+more -= The gate opens wide
+more -= With a soft hiss the gate opens wide
+more -= You pick up the .* rune and feel its power
+
+
+# Significant spells/effects ending
+more += is no longer charmed
+more += You are starting to lose your buoyancy
+# Death's Door
+more += time is.*running out
+more += life is in your own
+# Death channel
+more += unholy channel is weakening
+
+
+# Monsters doing things
+more += monster_warning:wielding.*of chaos
+more += monster_warning:carrying a wand of
+more += monster_warning:curare
+more += (?<!You)(?<!yourself) speeds? up
+more += danger:goes berserk
+more += The forest starts to sway and rumble
+more += begins to recite a word of recall
+more += doors? slams? shut
+more += blows on a signal horn
+more += The.*offers itself to Yredelemnul
+more += Deactivating autopickup
+more += Your?.*suddenly stops? moving
+more += There is.*feeling in your soul
+more += swoops through the air toward you
+more += Its appearance distorts for a moment
+more += wretched star pulses
+more += Strange energies course through your body
+
+
+# Crowd control
+more += You ((?<!( too|less)) confused|blown|knocked back|mesmerised|trampled|stumble backwards|encased|(?<!hands )slow.*down|lose consciousness)
+more += infuriates you
+more += danger:Space.*around you
+more += hits you.*distortion
+more += The pull of.*song draws you forward
+more += The.*engulfs you in water
+more += surroundings become eerily quiet
+more += Your limbs are stiffening
+more += Your magical effects are unraveling
+more += Your magical defenses are stripped away
+more += You stop (a|de)scending the stairs
+more += A sentinel's mark forms upon you
+
+
+# Clouds
+more += danger:(calcify|mutagenic)
+more += You are engulfed in.*miasma
+more += Miasma billows from the
+
+
+# You Screwed Up
+more += power of Zot
+more += is no longer ready
+more += You really shouldn't be using
+more += You don't have enough magic to cast this spell
+more += Your body shudders with the violent release
+
+
+# Found something important
+more += Found a staircase to the Ecumenical Temple
+more += timed_portal:.*
+more += Found.*(treasure|bazaar|ziggurat)
+more += .*resides here
+more += You have a vision of.*gates?
+
+
+# Translocations
+more += You blink
+more += danger:You feel strangely .*stable
+more += danger:sense of stasis
+more += Your surroundings.*(different|flicker)
+more += You are suddenly pulled into a different region
+more += delayed
+
+
+# Big damage
+more += your body is wracked
+more += Ouch! That really hurt!
+more += silver sears you
+more += The poison in your body grows stronger
+more += You.*re (more poisoned|lethally poisoned)
+more += danger:You convulse
+more += You feel a (horrible|terrible) chill
+more += You are (blasted|electrocuted|burned terribly)
+
+
+# Hit by something
+more += Terrible wounds
+more += danger:corrodes you
+more += The air around.*erupts in flames
+more += The air twists around and violently strikes you in flight
+more += You shudder from the earth-shattering force
+more += You feel.*(?<!less )(haunted|rot|vulnerable)
+more += Your damage is reflected back at you
+more += (?<!You.*)reflects
+
+
+# FYI
+more += seems mollified
+more += You have finished your manual
+
+
+# Unexpected monsters
+more += appears in a (shower|flash)
+more += appears out of thin air
+more += You sense the presence of something unfriendly
+more += Wisps of shadow swirl around
+
+
+# Misc
+more += hell effect:.*
+more += god:wrath finds you
+more += The walls disappear
+more += guardian golem overheats
+
+
+## If you understand this, I trust you not to troll me
+more += dgl_message:.*
+

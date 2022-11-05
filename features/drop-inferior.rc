@@ -1,0 +1,52 @@
+-- Auto-drop items that are strictly worse than another
+-- On item pickup, inscribes inferior items with "~drop"
+drop_filter += ~drop
+
+{
+------------------------------------------
+------------------ Hook ------------------
+------------------------------------------
+function c_assign_invletter_drop_inferior(it)
+  -- Skip brands that are potentially harmful
+  local it_ego = it.ego()
+  if it_ego == "distortion" or it_ego == "chaos" or it_ego == "infusion" then return end
+  
+  local it_class = it.class(true)
+  if it_class ~= "weapon" and it_class ~= "armour" then return end
+  
+  local risky_artefact = false
+  if it.artefact then
+    local qualname = it.name("qual")
+    if qualname:find("%-") or qualname:find("Harm") or qualname:find("Infuse") then
+      risky_artefact = true
+    end
+  end
+
+  if risky_artefact then return end
+
+  local st = it.subtype()
+  local basename = it.name("base")
+
+  for slot=0,51 do
+    local inv = items.inslot(slot)
+	if inv then
+	  local item_match = false
+	  if inv.subtype() == st then
+	    if st == "body" then
+	      if inv.encumbrance >= it.encumbrance then item_match = true end
+		else
+		  if inv.name("base") == basename then item_match = true end
+		end
+	  end
+
+      if not inv.artefact and item_match and (not has_ego(inv) or inv.ego() == it.ego()) then
+        if it_class == "weapon" then
+          if inv.plus <= it.plus then inv.inscribe("~drop") end
+        else
+          if inv.ac <= it.ac then inv.inscribe("~drop") end
+	    end
+	  end
+	end
+  end -- end for slot=0,51
+end
+}

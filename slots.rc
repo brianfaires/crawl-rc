@@ -1,0 +1,129 @@
+############################
+####### Item Slots #########
+# Rings to P/p for easy swapping
+item_slot += (?<!cu)ring(?! mail):Pp
+
+# ignore: degeneration, noise, torment
+# unassigned slots: d, e, k
+item_slot += scroll of acquirement:q
+item_slot += scroll of amnesia:E
+item_slot += scroll of blinking:B
+item_slot += scroll of brand weapon:D
+item_slot += scroll of butterflies:F
+item_slot += scroll of enchant armour:u
+item_slot += scroll of enchant weapon:W
+item_slot += scroll of fear:f
+item_slot += scroll of fog:F
+item_slot += scroll of identify:i
+item_slot += scroll of immolation:o
+item_slot += scroll of magic mapping:j
+item_slot += scroll of poison:y
+item_slot += scroll of silence:S
+item_slot += scroll of summoning:s
+item_slot += scroll of teleportation:t
+item_slot += scroll of vulnerability:v
+
+item_slot += potion of ambrosia:A
+item_slot += potion of attraction:n
+item_slot += potion of berserk rage:z
+item_slot += potion of brilliance:R
+item_slot += potion of cancellation:C
+item_slot += potion of curing:c
+item_slot += potion of experience:x
+item_slot += potion of flight:g
+item_slot += potion of haste:H
+item_slot += potion of heal wounds:h
+item_slot += potion of invisibility:I
+item_slot += potion of lignification:l
+item_slot += potion of magic:M
+item_slot += potion of might:m
+item_slot += potion of resistance:r
+item_slot += potion of mutation:U
+
+item_slot += condenser vane:V
+item_slot += phial of floods:O
+item_slot += phantom mirror:N
+item_slot += box of beasts:X
+item_slot += tin of tremorstones:T
+item_slot += lightning rod:L
+
+item_slot += wand of digging:K
+item_slot += wand of flame:Q
+item_slot += wand of mindburst:Y
+item_slot += wand of acid:G
+item_slot += wand of light:G
+item_slot += wand of quicksilver:G
+item_slot += wand of iceblast:Z
+item_slot += wand of roots:Z
+item_slot += wand of charming:J
+item_slot += wand of paralysis:J
+
+
+
+#############################
+####### Spell Slots #########
+spell_slot += Alistair's Intoxication:AITX
+spell_slot += Animate Armour:ANMT
+spell_slot += Animate Dead:ADNMT
+spell_slot += Arcjolt:AJCOLT
+spell_slot += Blade Hands:BHLD
+spell_slot += Blink:BLNK
+spell_slot += Borgnjor's Revivification:BRVF
+spell_slot += Call Canine Familiar:CFN
+spell_slot += Call Imp:ICMP
+spell_slot += Chain Lightning:LCHGNT
+spell_slot += Confusing Touch:CTF
+spell_slot += Conjure Ball Lightning:BLCTN
+spell_slot += Cause Fear:FCR
+spell_slot += Corpse Rot:CRPS
+spell_slot += Death Channel:DCNL
+spell_slot += Death's Door:DROTHEA
+spell_slot += Discord:DISCORD
+spell_slot += Disjunction:DJNIS
+spell_slot += Dispersal:DPLIS
+spell_slot += Dragon Form:DFGN
+spell_slot += Dragon's Call:DCRGN
+spell_slot += Eringya's Noxious Bog:NBE
+spell_slot += Flame Wave:FLW
+spell_slot += Frozen Ramparts:FRZ
+spell_slot += Iskenderun's Battlespehere:BSI
+spell_slot += Ice Form:IFORM
+spell_slot += Ignite Poison:IPOSN
+spell_slot += Ignition:IGNTO
+spell_slot += Irradiate:IRADTE
+spell_slot += Iskenderun's Mystic Blast:IMB
+spell_slot += Kindle Blastsparks:KBS
+spell_slot += Leda's Liquefaction:LQFND
+spell_slot += Malign Gateway:MGWTN
+spell_slot += Manifold Assault:MANFT
+spell_slot += Maxwell's Capacitive Coupling:MCXW
+spell_slot += Metabolic Englaciation:MENC
+spell_slot += Monstrous Menagerie:MNGR
+spell_slot += Necromutation:NMCT
+spell_slot += Olgreb's Toxic Radiance:TOR
+spell_slot += Ozocubu's Armour:OAMR
+spell_slot += Ozocubu's Refrigeration:ROZFG
+spell_slot += Polar Vortex:PVXT
+spell_slot += Scorch:SCORH
+spell_slot += Shatter:SHTR
+spell_slot += Silence:SICL
+spell_slot += Spellforged Servitor:SVFR
+spell_slot += Spider Form:SPFM
+spell_slot += Starburst:SBUT
+spell_slot += Static Discharge:DSCGT
+spell_slot += Summon Cactus Giant:CGS
+spell_slot += Summon Forest:FSRTM
+spell_slot += Summon Guardian Golem:GSOM
+spell_slot += Summon Horrible Things:HST
+spell_slot += Summon Hydra:HYDRA
+spell_slot += Summon Ice Beast:ISB
+spell_slot += Summon Lightning Spire:SMLIRNG
+spell_slot += Summon Mana Viper:MSV
+spell_slot += Statue Form:STFM
+spell_slot += Storm Form:STORMF
+spell_slot += Sublimation of Blood:SBLM
+spell_slot += Swiftness:SWIFT
+spell_slot += Wereblood:WRB
+:if you.class() == "Summoner" then
+  spell_slot ^= (summon|call):abcdefgh
+:end

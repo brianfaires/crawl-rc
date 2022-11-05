@@ -1,0 +1,62 @@
+# Aliases
+stop := runrest_stop_message
+ignore := runrest_ignore_message
+
+
+# Monsters to ignore at a distance
+runrest_ignore_monster += fire vortex:1
+runrest_ignore_monster += neutral:1
+
+# Message mutes: CAREFUL WITH THESE!
+message_colour += mute:plain:No target in view!
+
+# Stop for consumables you want to use immediately
+stop += potions? of experience
+stop += scrolls? of acquirement
+
+# Don't stop for noisy doors unless someone shouts back
+stop -= it creaks loudly
+stop -= flies open with a bang
+stop += You hear
+
+# Re-enable stops for all ally actions then ignore some
+ignore -= friend_action:
+ignore -= friend_spell:
+ignore -= friend_enchant:
+ignore ^= butterfly disappears
+ignore ^= friend_action:(a|the) web
+ignore ^= friend_action:(seems|blinks)
+stop += friend_action:
+stop += friend_spell:
+stop += friend_enchant:
+stop += appears from out of your range of vision
+stop += hits your
+stop += your.*is destroyed
+
+# Expiring effects; Turn on transmutation|flight|swiftness ending and ignore the rest
+ignore -= transformation is almost over\.
+ignore -= transformation has ended\.
+ignore -= revert to a slightly less stony form\.
+ignore -= revert to your normal fleshy form\.
+ignore -= You feel yourself come back to life
+ignore ^= Your unholy channel is weakening
+stop ^= Your transformation is almost over
+stop ^= Your transformation has ended
+stop ^= revert to a slightly less stony form\.
+stop ^= You revert to your normal fleshy form
+stop ^= You feel yourself come back to life
+stop ^= Your unholy channel expires
+stop ^= You are starting to lose your buoyancy
+stop ^= You feel.*sluggish
+# Expiring effects for friends too
+stop ^= no longer petrified
+ignore += no longer covered in acid
+# Rest through recovery (this is turned back on below when resting from full hp/mp)
+ignore += recovery:.*
+ignore += duration:.*
+
+# Misc
+stop -= You now have enough gold to
+ignore += nearby plant withers and dies
+ignore += disentangle yourself
+ignore += You swap places.

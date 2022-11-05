@@ -1,0 +1,37 @@
+include = pickup-alert/pa-util.rc
+include = pickup-alert/pa-data.rc
+
+{
+
+------------------------------------
+---- Autopickup and alerts hook ----
+------------------------------------
+local function autopickup_master(it, name)
+  local class = it.class(true)
+  
+  -- Check for pickup
+  local retVal = false
+  if class == "armour" and loaded_pa_armour then retVal = pickup_armour(it)
+  elseif class == "weapon" and loaded_pa_weapons then retVal = pickup_weapons(it)
+  elseif class == "magical staff" and loaded_pa_misc then retVal = pickup_staves(it)
+  end
+  
+  if retVal == true then return pickup_item(it) end
+
+  
+  -- Not picking up this item. Check for alerts
+  if it.name("base") == "orb" and loaded_pa_misc then alert_orbs(it)
+  elseif class == "armour" and loaded_pa_armour then alert_armour(it)
+  elseif class == "weapon" and loaded_pa_weapons then alert_weapons(it)
+  end
+  if loaded_pa_misc then
+    alert_rare_items(it)
+    if class == "magical staff" then alert_staves(it) end
+  end
+end
+
+add_autopickup_func(autopickup_master)
+-------------------------------
+---- End autopickup master ----
+-------------------------------
+}
