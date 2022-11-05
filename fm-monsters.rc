@@ -28,7 +28,7 @@ local force_more_monsters = {
 -- hp-specific force_mores() by gammafunk, willpower/int/resistance added by sockthot
 local fm_patterns = {
   -- Fast, early game Dungeon problems for chars with low mhp.
-  {name = "30mhp", cond = "hp", cutoff = 30, pattern = "hound"},
+  {name = "30hp", cond = "hp", cutoff = 30, pattern = "hound"},
   
   -- Monsters dangerous until a certain point
   {name = "xl_7", cond = "xl", cutoff = 7, pattern = "orc wizard"},
@@ -36,17 +36,17 @@ local fm_patterns = {
   
   
   -- Monsters that can hit for ~50% of hp from range with unbranded attacks
-  {name = "40mhp", cond = "hp", cutoff = 40, pattern = "orc priest" },
-  {name = "50mhp", cond = "hp", cutoff = 50, pattern = "orc high priest|manticore" },
-  {name = "70mhp", cond = "hp", cutoff = 70, pattern = "meliai|yaktaur(?! captain)|cyclops" },
-  {name = "80mhp", cond = "hp", cutoff = 80, pattern = "centaur(?! warrior)|gargoyle" },
-  {name = "90mhp", cond = "hp", cutoff = 90, pattern = "deep elf archer|tengu conjurer" },
-  {name = "110mhp", cond = "hp", cutoff = 110, pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth",
+  {name = "40hp", cond = "hp", cutoff = 40, pattern = "orc priest" },
+  {name = "50hp", cond = "hp", cutoff = 50, pattern = "orc high priest|manticore" },
+  {name = "70hp", cond = "hp", cutoff = 70, pattern = "meliai|yaktaur(?! captain)|cyclops" },
+  {name = "80hp", cond = "hp", cutoff = 80, pattern = "centaur(?! warrior)|gargoyle" },
+  {name = "90hp", cond = "hp", cutoff = 90, pattern = "deep elf archer|tengu conjurer" },
+  {name = "110hp", cond = "hp", cutoff = 110, pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth",
               "deep elf high priest|deep troll earth mage|stone giant|cacodemon"} },
-  {name = "120mhp", cond = "hp", cutoff = 120, pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
-  {name = "160mhp", cond = "hp", cutoff = 160, pattern = {"brimstone fiend|deep elf sorcerer",
+  {name = "120hp", cond = "hp", cutoff = 120, pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
+  {name = "160hp", cond = "hp", cutoff = 160, pattern = {"brimstone fiend|deep elf sorcerer",
               "hell sentinal|war gargoyle|draconian (knight|scorcher)"} },
-  {name = "200mhp", cond = "hp", cutoff = 200, pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
+  {name = "200hp", cond = "hp", cutoff = 200, pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
 
   -- Monsters that can crowd-control you without sufficient willpower
   -- Cutoff ~10% for most spells; lower for more significant spells like banish
