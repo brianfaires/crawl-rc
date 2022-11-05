@@ -1,12 +1,12 @@
 # crawl-rc
-Settings files for use in dcss.
+Settings files for use in dcss (requires v0.31 - if my PRs get put in by then...)
 All files are loaded through init.txt via include statements. Files dependencies are handled more-or-less automatically, so features can be easily cherry-picked. There are 2 ways to do this:
 1) Start with the included init.txt, and remove the lines "include = xxxx.rc", to remove unwanted features.
 2) Use your own init.txt and add "include = xxxxx.rc" to add each feature. If you do this, you must also add the lua hook functions to your init.txt. You can copy the entire section straight over from the included init.txt, and if you are already using hook functions such as ready(), you will need to merge the two functions since you can only have one of each hook defined.
 
 You are not required to edit the lua hook functions as you remove features - removing the include statements is enough and won't cause errors.
 
-The included python script concat_rc.py will build a single RC file from all of these components. Just put it in the same folder as init.txt and run. If you don't want to run the script, a copy of the single init file will be on branch "single-init-file", though I can't guarantee it'll always be up to date. If you build the single file manually (by copy/pasting), just make sure each file that starts with "include = xxx.rc" comes after xxx.rc. And remove the include commands.
+The included python script concat_rc.py will build a single RC file from all of these components. Just put it in the same folder as init.txt and run. If you don't want to run the script, a copy of the single init file is stored here as "allRC.txt", though I can't guarantee it'll always be up to date.
 
 Here's an overview of all files, starting with the simplest:
 ## Standard RC options
