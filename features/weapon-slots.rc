@@ -37,7 +37,7 @@ local function cleanup_weapon_slots()
   -- Move non-ranged, non-polearm weapons to slots a & b
   for i=0,1 do
     local inv = items.inslot(i)
-    if not is_early_slot_wpn(inv) then
+    if not inv or inv.class(true) ~= "weapon" then
 	  for replacement=0,51 do
 		local it
 		if replacement == 0 then
@@ -63,7 +63,7 @@ local function cleanup_weapon_slots()
   -- Move polearms slots a & b
   for i=0,1 do
     local inv = items.inslot(i)
-    if not is_early_slot_wpn(inv) then
+    if not inv or inv.class(true) ~= "weapon" then
 	  for replacement=0,51 do
 	    local it
 		if replacement == 0 then 
@@ -86,10 +86,31 @@ local function cleanup_weapon_slots()
 	end
   end
 
-  -- Move any polearm or ranged to slot w
+  -- Move any ranged to slot w
   local slot_w = items.letter_to_index("w")
   local inv = items.inslot(slot_w)
-  if not inv or not (inv.is_ranged or inv.weap_skill == "Polearms") then
+  if not inv or inv.class(true) ~= "weapon" then
+    for replacement = 1,51 do
+	  local it
+	  if replacement == 1 then
+		-- prioritize wielded weapon first
+		it = items.equipped_at("weapon")
+		if it and it.slot < 2 then it = nil end
+	  else
+	    it = items.inslot(replacement)
+	  end
+		
+	  if it and it.is_ranged then
+		items.swap_slots(it.slot, slot_w)
+		return
+	  end
+	end
+  end
+
+  -- Move any polearm to slot w
+  local slot_w = items.letter_to_index("w")
+  local inv = items.inslot(slot_w)
+  if not inv or inv.class(true) ~= "weapon" then
     for replacement = 1,51 do
 	  local it
 	  if replacement == 1 then
@@ -106,7 +127,7 @@ local function cleanup_weapon_slots()
 	  end
 	end
   end
-
+  
   -- Move any 3rd weapon to slot w
   local slot_w = items.letter_to_index("w")
   local inv = items.inslot(slot_w)
