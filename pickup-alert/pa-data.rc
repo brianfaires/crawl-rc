@@ -249,7 +249,7 @@ function alert_item(it, alert_type)
   if (it.artefact or it.branded) and not it.fully_identified then
     if util.contains(items_alerted, name) then return end
 	table.insert(items_alerted, name)
-    crawl.mpr("<magenta>----Item alert, " .. alert_type .. ": " .. name .. "----</magenta>", "item")
+	show_alert_msg("Item alert, "..alert_type..": ", name)
 	return
   end
   
@@ -264,9 +264,9 @@ function alert_item(it, alert_type)
 	  local acc = it.accuracy
 	  if it.plus then acc = acc + it.plus end
       if acc == 0 then acc = "+0" end
-	  crawl.mpr("<magenta>----Item alert, " .. alert_type .. ": " .. name .. " {"..inscribe_stats(it, true).."}----</magenta>", "item")
+	  show_alert_msg("Item alert, "..alert_type..": ", name.." "..inscribe_stats(it, true))
 	else
-	  crawl.mpr("<magenta>----Item alert, " .. alert_type .. ": " .. name .. "----</magenta>", "item")
+	  show_alert_msg("Item alert, "..alert_type..": ", name)
 	end
     
 	insert_item_and_less_enchanted(items_alerted, name)

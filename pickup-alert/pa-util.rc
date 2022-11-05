@@ -1,4 +1,8 @@
 {
+function show_alert_msg(alert_text, item_name)
+  crawl.mpr("<cyan>----<magenta>"..alert_text.."<yellow>"..item_name.."</yellow></magenta>----</cyan>")
+end
+
 -- Add an item name to a table, along with all less enchanted versions
 -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
 function insert_item_and_less_enchanted(table_name, item_name)
