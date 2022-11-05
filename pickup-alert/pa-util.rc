@@ -59,8 +59,10 @@ function get_armour_ac(it)
     local art_ac = it.artprops["AC"]
     if art_ac then it_plus = it_plus + art_ac end
   end
+  local it_ac = it.ac
+  if you.get_base_mutation_level("deformed body", true, false, false) > 0 then it_ac = it_ac / 2 end
   
-  return it.ac * (you.skill("Armour") / 22 + 1) + it_plus 
+  return it_ac * (you.skill("Armour") / 22 + 1) + it_plus 
 end
 
 
