@@ -260,15 +260,13 @@ function alert_item(it, alert_type)
 
   if not util.contains(items_alerted, name) then
     if it.class(true) == "weapon" or it.class(true) == "magical staff" then
-      local dps = string.format("%.2f", get_weap_dps(it))
-      local acc = it.accuracy
-      if it.plus then acc = acc + it.plus end
-      if acc == 0 then acc = "+0" end
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..inscribe_stats(it, true))
+      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
+    elseif it.class(true) == "armour" then
+      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))	
     else
       show_alert_msg("Item alert, "..alert_type..": ", name)
     end
-    
+
     insert_item_and_less_enchanted(items_alerted, name)
   end
   

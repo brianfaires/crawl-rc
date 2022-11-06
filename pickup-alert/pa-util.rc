@@ -47,6 +47,12 @@ function get_size_factor()
   end
 end
 
+
+function get_shield_penalty(sh)
+  return 2/5 * sh.encumbrance * sh.encumbrance / (20 - 3 * get_size_factor()) * (27 - you.skill("Shields")) / 27
+end
+
+
 local summon_gods = { "Beogh", "Jiyva", "Yredelemnul" }
 function you_have_summons()
   return you.skill("Summonings") + you.skill("Necromancy") > 0 or util.contains(summon_gods, you.god())
@@ -63,12 +69,61 @@ function get_armour_ac(it)
     local art_ac = it.artprops["AC"]
     if art_ac then it_plus = it_plus + art_ac end
   end
+
+  if it.artefact and it.fully_identified then
+    local art_ac = it.artprops["AC"]
+    if art_ac then it_plus = it_plus + art_ac end
+  end
+  
   local it_ac = it.ac
   if you.get_base_mutation_level("deformed body", true, false, false) > 0 then it_ac = it_ac / 2 end
   
   return it_ac * (you.skill("Armour") / 22 + 1) + it_plus 
 end
 
+
+function get_shield_sh(it)
+  local dex = you.dexterity()
+  if it.artefact and it.fully_identified then
+    local art_dex = it.artprops["Dex"]
+    if art_dex then dex = dex + art_dex end
+  end
+  
+  local cur = items.equipped_at("shield")
+  if cur and cur.artefact and cur.slot ~= it.slot then
+    local art_dex = cur.artprops["Dex"]
+    if art_dex then dex = dex - art_dex end
+  end
+
+  local it_plus = it.plus
+  if not it_plus then it_plus = 0 end
+  
+  local it_ac = it.ac
+  if you.get_base_mutation_level("deformed body", true, false, false) > 0 then it_ac = it_ac / 2 end
+  
+  local block = it_ac
+  local race = you.race()
+  if race == "Spriggan" then
+    if it.name("base"):find("buckler") then block = block + 2 end
+  elseif race == "Kobold" then
+    local basename = it.name("base")
+	if basename:find("buckler") then block = block + 1
+	elseif basename:find("kite shield") then block = block + 0.5 end
+  elseif race == "Ogre" or race == "Troll" then
+    if it.name("base"):find("kite shield") then block = block - 0.5 end
+  end
+  
+  
+  local stat_bonus = dex * 38 * (it_ac + 13) / 5200
+  
+  local skill = you.skill("Shields")
+  local addend
+  if skill >= 3 then addend = .38*skill
+  else addend = .57 + 0.19*skill
+  end
+  
+  return block * (1+skill/40) + it_plus + stat_bonus + addend
+end
 
 function get_armour_ev(it)
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
@@ -81,7 +136,7 @@ function get_armour_ev(it)
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
     local worn = items.equipped_at("body armour")
-    if worn.artefact then
+    if worn and worn.artefact then
       if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
       if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
       if worn.artprops["EV"] then it_plus = it_plus - worn.artprops["EV"] end
@@ -153,10 +208,7 @@ function get_weap_delay(it)
   if delay < 3 then delay = 3 end
   
   local sh = items.equipped_at("shield")
-  if sh then
-    local sh_penalty = 2/5 * sh.encumbrance * sh.encumbrance / (20 - 3 * get_size_factor()) * (27 - you.skill("shields")) / 27
-    delay = delay + sh_penalty
-  end
+  if sh then delay = delay + get_shield_penalty(sh) end
   
   return delay / 10
 end
@@ -294,7 +346,11 @@ function get_weap_dps(it, no_brand_dmg)
 end
 
 
-function inscribe_stats(it, skip_inscription)
+-----------------------------
+---- Weapon info strings ----
+-----------------------------
+function get_weapon_info(it)
+  if not it.weap_skill then return end
   local dps = get_weap_dps(it)
   local dps_str = string.format("%.2f", dps)
       
@@ -303,23 +359,39 @@ function inscribe_stats(it, skip_inscription)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
   
-  local new_inscr = "DPS="..dps_str
-  if dps < 10 then new_inscr = new_inscr.." " end
-  new_inscr = new_inscr.."(Acc"..acc..")"
-      
-  local idx = it.inscription:find("DPS=")
-  if not idx then
-    if not skip_inscription then it.inscribe(new_inscr, false) end
-    return new_inscr
-  end
-
-  if idx + #new_inscr <= #it.inscription then
-    new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
-  end
-  if idx > 1 then new_inscr = it.inscription:sub(1, idx-1)..new_inscr end
-
-  if not skip_inscription then it.inscribe(new_inscr, false) end
-  return new_inscr
+  dps_str = "DPS="..dps_str
+  if dps < 10 then dps_str = dps_str.." " end
+  return dps_str.."(Acc"..acc..")"
 end
 
+
+function get_armour_info(it)
+  if not it or it.class(true) ~= "armour" then return end
+  
+  if it.subtype() == "shield" then
+    local ev = get_shield_penalty(it)
+    local ev_str = string.format("%.2f", ev)
+    ev_str = "-"..ev_str
+  
+    local sh = get_shield_sh(it)
+    local sh_str = string.format("%.2f", sh)
+    if sh >= 0 then sh_str = "+"..sh_str end
+    sh_str = "SH"..sh_str..","
+    if sh < 10 then sh_str = sh_str.." " end
+
+    return sh_str.."EV"..ev_str
+  else
+    local ev = get_armour_ev(it)
+    local ev_str = string.format("%.2f", ev)
+    if ev >= 0 then ev_str = "+"..ev_str end
+
+    local ac = get_armour_ac(it)
+    local ac_str = string.format("%.2f", ac)
+    if ac >= 0 then ac_str = "+"..ac_str end
+    ac_str = "AC"..ac_str..","
+    if ac < 10 then ac_str = ac_str.." " end
+    
+	return ac_str.."EV"..ev_str
+  end  
+end
 }

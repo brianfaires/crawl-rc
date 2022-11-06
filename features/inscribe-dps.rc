@@ -1,14 +1,50 @@
 include = pickup-alert/pa-util.rc
 {
 
+local function inscribe_armour_stats(it)
+  local new_inscr = get_armour_info(it)
+      
+  local idx = it.inscription:find("AC=")
+  if idx then
+    if idx + #new_inscr <= #it.inscription then
+      new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
+    end
+    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1)..new_inscr end
+  end
+
+  it.inscribe(new_inscr, false)
+  return new_inscr
+end
+
+local function inscribe_weapon_stats(it)
+  local new_inscr = get_weapon_info(it)
+      
+  local idx = it.inscription:find("DPS=")
+  if idx then
+    if idx + #new_inscr <= #it.inscription then
+      new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
+    end
+    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1)..new_inscr end
+  end
+
+  it.inscribe(new_inscr, false)
+  return new_inscr
+end
+
+
 ------------------------------------------
 ------------------ Hook ------------------
 ------------------------------------------
 function ready_inscribe_dps()
   for slot = 0,51 do
     local it = items.inslot(slot)
-    if it and (it.class(true) == "weapon" or it.class(true) == "magical staff") then
-      inscribe_stats(it)
+    if it then
+	  local class = it.class(true)
+	  if class == "weapon" or class == "magical staff" then
+        inscribe_weapon_stats(it)
+	  elseif class == "armour" then
+	    inscribe_armour_stats(it)
+	  end
     end
   end
 end
