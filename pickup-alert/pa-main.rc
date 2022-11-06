@@ -6,7 +6,7 @@ include = pickup-alert/pa-data.rc
 ------------------------------------
 ---- Autopickup and alerts hook ----
 ------------------------------------
-local function autopickup_master(it, name)
+add_autopickup_func(function (it, name)
   local class = it.class(true)
   
   -- Check for pickup
@@ -28,9 +28,7 @@ local function autopickup_master(it, name)
     alert_rare_items(it)
     if class == "magical staff" then alert_staves(it) end
   end
-end
-
-add_autopickup_func(autopickup_master)
+end)
 -------------------------------
 ---- End autopickup master ----
 -------------------------------

@@ -2,8 +2,10 @@
 ####### Main options ############
 #################################
 autofight_stop = 65
+hp_warning = 20
 item_stack_summary_minimum = 8
 default_manual_training = true
+messages_at_top = true
 show_more = false
 autofight_caught = true
 rest_wait_both = true
@@ -11,7 +13,7 @@ rest_wait_ancestor = true
 sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
 drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, stone
-hp_warning = 20
+
 
 
 #################################
@@ -27,9 +29,27 @@ explore_greedy_visit = artefacts,glowing_items,stacks
 explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
+
+#######################################
+####### Autopickup exceptions #########
+#######################################
 autopickup_exceptions ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 autopickup_exceptions ^= <scrolls? of immolation, <scrolls? of poison
 autopickup_exceptions ^= >useless_item, <misc
+# Exclude the 3rd copy of any ring
+{
+  add_autopickup_func(function (it, name)
+    if it.class(true) ~= "jewellery" or it.artefact then return end
+    local st = it.subtype()
+    local found_first = false
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if inv.class(true) == "jewellery" and inv.subtype() == st then
+	    if found_first then return false end
+	    found_first = true
+	  end
+    end
+  end)
+}
 
 
 #############################
