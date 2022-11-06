@@ -82,6 +82,7 @@ function c_message(text, channel)
   if c_message_stop_wait_on_recovery then c_message_stop_wait_on_recovery(text, channel) end
   if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
+  if c_message_inscribe_dps then c_message_inscribe_dps(text, channel) end
 
 end
 
@@ -123,7 +124,6 @@ function ready()
  
   if ready_force_mores then ready_force_mores() end
   if ready_dynamic_options then ready_dynamic_options() end
-  if ready_inscribe_dps then ready_inscribe_dps() end
   if ready_weapon_slots then ready_weapon_slots() end
   if ready_safe_consumables then ready_safe_consumables() end
   if ready_mute_swaps then ready_mute_swaps() end

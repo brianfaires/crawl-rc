@@ -35,7 +35,7 @@ end
 ------------------------------------------
 ------------------ Hook ------------------
 ------------------------------------------
-function ready_inscribe_dps()
+function c_message_inscribe_dps(text, channel)
   for slot = 0,51 do
     local it = items.inslot(slot)
     if it then
