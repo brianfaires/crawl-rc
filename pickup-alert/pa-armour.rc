@@ -56,14 +56,14 @@ function pickup_armour(it)
     if it.encumbrance <= cur.encumbrance then
 	  local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
 	  
-	  if it.artefact and ac_delta > -5 then return pickup_item(it) end
+	  if it.artefact and ac_delta > -5 then return true end
 	  if cur.artefact then return false end
 	  
 	  if it.ego() == cur.ego() and (has_ego(it) or not has_ego(cur)) then
-	    if ac_delta > 0 then return pickup_item(it) end
+	    if ac_delta > 0 then return true end
 		return false
 	  elseif has_ego(it) and not (cur.artefact or has_ego(cur)) then
-		if ac_delta >= 0 then return pickup_item(it) end
+		if ac_delta >= 0 then return true end
 	  end
 	end
   elseif st == "shield" then
@@ -73,13 +73,13 @@ function pickup_armour(it)
 	local cur = items.equipped_at("shield")
 	if not cur then return false end
 	if cur.name("base") ~= it.name("base") then return false end
-	if it.artefact then return pickup_item(it) end
+	if it.artefact then return true end
 	if cur.artefact then return false end
 	if cur.branded then
 	  if cur.ego() == it.ego() then return it.plus > cur.plus end
 	  return false
 	end
-	if it.branded then return pickup_item(it) end
+	if it.branded then return true end
 	return it.plus > cur.plus
   else
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
@@ -104,18 +104,18 @@ function pickup_armour(it)
 	  if you.get_base_mutation_level("antennae", true, false, true) > 0 then return false end
 	end
 
-    if it.artefact then return pickup_item(it) end
+    if it.artefact then return true end
 
     local cur = items.equipped_at(st)
-    if not cur then return pickup_item(it) end
+    if not cur then return true end
 	if not it.fully_identified then return false end
 
 	if it.branded then
-	  if it.ego() ~= cur.ego() then return pickup_item(it) end
-	  if get_armour_ac(it) > get_armour_ac(cur) then return pickup_item(it) end
+	  if it.ego() ~= cur.ego() then return true end
+	  if get_armour_ac(it) > get_armour_ac(cur) then return true end
     else
 	  if cur.branded or cur.artefact then return false end
-	  if get_armour_ac(it) > get_armour_ac(cur) then return pickup_item(it) end
+	  if get_armour_ac(it) > get_armour_ac(cur) then return true end
 	end
   end
 
@@ -266,10 +266,6 @@ local function alert_interesting_armour(it)
     local cur = items.equipped_at("shield")
 	if not cur then return false end
     if it.branded and it.ego() ~= cur.ego() then
-	  for slot = 0,51 do
-	    local inv = items.inslot(slot)
-		if inv and inv.name() == it.name() then return false end
-	  end
 	  return alert_item(it, "New egoS")
 	end
   else

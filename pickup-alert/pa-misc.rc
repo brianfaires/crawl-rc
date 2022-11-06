@@ -67,7 +67,7 @@ function pickup_staves(it)
   end
   
   if good_staff == true then
-    return pickup_item(it)
+    return true
   end
   
   return false

@@ -201,7 +201,7 @@ function pickup_weapons(it)
 	cur = items.inslot(slot)
     if cur and cur.class(true) == "weapon" then
 	  if pickup_weapon(it, cur) then
-	    return pickup_item(it)
+	    return true
 	  end
 	  if not cur.is_ranged then
 	    unarmed = false
@@ -225,9 +225,8 @@ end
 ---- Begin alert_interesting_weapons() ----
 -------------------------------------------
 local function alert_interesting_weapon(it, cur)
-  -- Try to avoid auto-replacing stat sticks
-  if cur.artefact and you.skill(it.weap_skill) < 2 and you.xl() > 6 then return false end
-	
+  if it.artefact and it.fully_identified then return alert_item(it, "Artefact") end
+  
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match
 	if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego1") end
@@ -240,7 +239,6 @@ local function alert_interesting_weapon(it, cur)
 	local penalty = 0.5 * you.skill(cur.weap_skill) / you.skill(it.weap_skill)
 	if get_hands(it) == 2 and get_hands(cur) == 1 then
 	  -- Item requires an extra hand
-	  if it.artefact then return alert_item(it, "2-handed artefact") end
 	  if it.branded and not cur.artefact and not cur.branded then
 	    if get_weap_dps(it) > 0.8*get_weap_dps(cur) then return alert_item(it, "2-handed weapon1") end
 	  end
@@ -328,30 +326,31 @@ local function alert_high_scores(it)
   local it_plus = it.plus
   if not it_plus then it_plus = 0 end
 
-  score = get_weap_dps(it) + it.accuracy + it_plus
+  score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
   if score > weapon_high_score then
     weapon_high_score = score
-    alert_item(it, "Strongest weapon")
+    alert_item(it, "Good weapon")
   end
   
-  local score = get_weap_dps(it, false) + it.accuracy + it_plus
+  local score = get_weap_dps(it, false)
   if score > unbranded_high_score then
     unbranded_high_score = score
-    alert_item(it, "Strongest pure damage")
+    alert_item(it, "High pure damage")
   end
   
   if it.weap_skill == "Polearms" and you_have_summons() then
     if get_hands(it) == 1 or not items.equipped_at("shield") then
-	  local score = get_weap_dps(it) + it.accuracy + it_plus
+	  local score = get_weap_dps(it) + (it.accuracy + it_plus)/2
 	  if score > polearm_high_score then
 	    polearm_high_score = score
-		alert_item(it, "Strongest polearm")
+		alert_item(it, "Good polearm")
 	  end
 	end
   end
 end
 
 function alert_weapons(it)
+  if it.is_useless then return end
   if (it.artefact or it.branded) and not it.fully_identified then return end
   
   alert_interesting_weapons(it)
