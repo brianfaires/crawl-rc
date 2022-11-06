@@ -37,18 +37,18 @@ local function c_message_exclude_dropped_jewellery(text, channel)
   text = text:gsub(" {.*}", "")
   text = text:gsub("[.]", "")
   item_name = text:sub(idx,#text)
-	
+    
   if exclude then
     crawl.setopt("autopickup_exceptions ^= >"..item_name)
     -- Add persistant exclusion
-	if jewellery_exclusions ~= "" then jewellery_exclusions = jewellery_exclusions.."," end
+    if jewellery_exclusions ~= "" then jewellery_exclusions = jewellery_exclusions.."," end
     jewellery_exclusions = jewellery_exclusions..">"..item_name
   else
-	crawl.setopt("autopickup_exceptions -= >"..item_name)
-	-- Remove persistant exclusion (try 3 times to make sure we capture comma)
+    crawl.setopt("autopickup_exceptions -= >"..item_name)
+    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
     jewellery_exclusions = jewellery_exclusions:gsub(",>"..item_name, "")
-	jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name..",", "")
-	jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name, "")
+    jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name..",", "")
+    jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name, "")
   end
 end
 if jewellery_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..jewellery_exclusions) end
@@ -87,32 +87,32 @@ local function c_message_exclude_dropped_missiles(text, channel)
   local item_name
   for _, v in ipairs(all_missiles) do
     if text:find(v) then
-	  item_name = v
-	  if item_name == "boomerang" or item_name == "javelin" then
-	    if text:find("silver") then
-		  item_name = "silver "..item_name
-		elseif text:find("dispersal") then
-		  item_name = item_name.."s? of dispersal"
-		else
-		  item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
-		end
-	  end
-	  
-	  if exclude then
+      item_name = v
+      if item_name == "boomerang" or item_name == "javelin" then
+        if text:find("silver") then
+          item_name = "silver "..item_name
+        elseif text:find("dispersal") then
+          item_name = item_name.."s? of dispersal"
+        else
+          item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
+        end
+      end
+      
+      if exclude then
         crawl.setopt("autopickup_exceptions ^= >"..item_name)
         -- Add persistant exclusion
-	    if missile_exclusions ~= "" then missile_exclusions = missile_exclusions.."," end
+        if missile_exclusions ~= "" then missile_exclusions = missile_exclusions.."," end
         missile_exclusions = missile_exclusions..">"..item_name
       else
-	    crawl.setopt("autopickup_exceptions -= >"..item_name)
-	    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
+        crawl.setopt("autopickup_exceptions -= >"..item_name)
+        -- Remove persistant exclusion (try 3 times to make sure we capture comma)
         missile_exclusions = missile_exclusions:gsub(",>"..item_name, "")
-	    missile_exclusions = missile_exclusions:gsub(">"..item_name..",", "")
-	    missile_exclusions = missile_exclusions:gsub(">"..item_name, "")
+        missile_exclusions = missile_exclusions:gsub(">"..item_name..",", "")
+        missile_exclusions = missile_exclusions:gsub(">"..item_name, "")
       end
-	  
-	  return
-	end
+      
+      return
+    end
   end
 end
 crawl.setopt("autopickup_exceptions ^= < stone, <dart, <boomerang, <javelin")

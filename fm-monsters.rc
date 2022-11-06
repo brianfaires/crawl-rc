@@ -53,16 +53,16 @@ local fm_patterns = {
   {name = "willpower2", cond = "will", cutoff = 2, pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)" },
   {name = "willpower3", cond = "will", cutoff = 3, pattern = {"deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard", 
               "merfolk siren|fenstrider witch|great orb of eyes|cacodemon|imperial myrmidon|sphinx|nagaraja|draconian shifter",
-			  "orange crystal statue|glowing orange brain|orc sorcerer|ogre mage|satyr|vault sentinel",
-			  "iron elemental|golden eye|death knight|vampire knight" } },
+              "orange crystal statue|glowing orange brain|orc sorcerer|ogre mage|satyr|vault sentinel",
+              "iron elemental|golden eye|death knight|vampire knight" } },
   {name = "willpower4", cond = "will", cutoff = 4, pattern = "merfolk avatar|tainted leviathan|nargun" },
    
   -- Malmutate without rMut
   {name = "malmutate", cond = "mut", cutoff = 1, pattern = "cacodemon|neqoxec|shining eye" },
-	
+    
   -- Brain feed with low int
   {name = "brainfeed", cond = "int", cutoff = 6, pattern = "glowing orange brain|neqoxec|orange crystal statue" },
-	
+    
   -- Alert if no resist and HP below cutoff
   {name = "pois_30", cond = "pois", cutoff = 30, pattern = "adder"},
   {name = "pois_80", cond = "pois", cutoff = 80, pattern = "golden dragon|green draconian|swamp dragon" },
@@ -130,15 +130,15 @@ end
 -- Util for checks against resistance and hp
 local function get_three_pip_action(active, hp, cutoff, res)
   if active then
-	if hp >= cutoff then return "-" end
-	if res == 1 and hp >= cutoff/2 then return "-" end
-	if res == 2 and hp >= cutoff/3 then return "-" end
-	if res == 3 and hp >= cutoff/5 then return "-" end
+    if hp >= cutoff then return "-" end
+    if res == 1 and hp >= cutoff/2 then return "-" end
+    if res == 2 and hp >= cutoff/3 then return "-" end
+    if res == 3 and hp >= cutoff/5 then return "-" end
   else
-	if res == 0 and hp < cutoff then return "+" end
-	if res == 1 and hp > cutoff/2 then return "+" end
-	if res == 2 and hp > cutoff/3 then return "+" end
-	if res == 3 and hp > cutoff/5 then return "+" end
+    if res == 0 and hp < cutoff then return "+" end
+    if res == 1 and hp > cutoff/2 then return "+" end
+    if res == 2 and hp > cutoff/3 then return "+" end
+    if res == 3 and hp > cutoff/5 then return "+" end
   end
 end
 
@@ -175,13 +175,13 @@ function ready_force_mores()
     else
       msg = v.pattern
     end
-	
+    
     msg = "monster_warning:(?<!spectral )(" .. msg .. ")(?! (skeleton|zombie|simulacrum)).*comes into view"
     
-	local action = nil
+    local action = nil
     local fm_name = v.pattern
     if v.name then fm_name = v.name end
-	
+    
     if not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
@@ -196,39 +196,39 @@ function ready_force_mores()
       if active_fm[i] and hp >= v.cutoff then action = "-"
       elseif not active_fm[i] and hp < v.cutoff then action = "+"
       end
-	elseif v.cond == "int" then
-	  if active_fm[i] and int >= v.cutoff then action = "-"
+    elseif v.cond == "int" then
+      if active_fm[i] and int >= v.cutoff then action = "-"
       elseif not active_fm[i] and int < v.cutoff then action = "+"
       end
-	elseif v.cond == "will" then
-	  if active_fm[i] and willpower >= v.cutoff then action = "-"
+    elseif v.cond == "will" then
+      if active_fm[i] and willpower >= v.cutoff then action = "-"
       elseif not active_fm[i] and willpower < v.cutoff then action = "+"
       end
-	elseif v.cond == "mut" then
-	  if active_fm[i] and res_mut > 0 then action = "-"
+    elseif v.cond == "mut" then
+      if active_fm[i] and res_mut > 0 then action = "-"
       elseif not active_fm[i] and res_mut == 0 then action = "+"
       end
-	elseif v.cond == "pois" then
-	  if active_fm[i] and (res_pois > 0 or hp >= v.cutoff) then action = "-"
+    elseif v.cond == "pois" then
+      if active_fm[i] and (res_pois > 0 or hp >= v.cutoff) then action = "-"
       elseif not active_fm[i] and res_pois == 0 and hp < v.cutoff then action = "+"
       end
-	elseif v.cond == "elec" then
-	  if active_fm[i] and (res_elec > 0 or hp >= v.cutoff) then action = "-"
+    elseif v.cond == "elec" then
+      if active_fm[i] and (res_elec > 0 or hp >= v.cutoff) then action = "-"
       elseif not active_fm[i] and res_elec == 0 and hp < v.cutoff then action = "+"
       end
-	elseif v.cond == "corr" then
-	  if active_fm[i] and (res_corr or hp >= v.cutoff) then action = "-"
+    elseif v.cond == "corr" then
+      if active_fm[i] and (res_corr or hp >= v.cutoff) then action = "-"
       elseif not active_fm[i] and not res_corr and hp < v.cutoff then action = "+"
       end
-	elseif v.cond == "fire" then
-	  action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
-	elseif v.cond == "cold" then
-	  action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
-	elseif v.cond == "drain" then
-	  action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
+    elseif v.cond == "fire" then
+      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
+    elseif v.cond == "cold" then
+      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
+    elseif v.cond == "drain" then
+      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
     end
-	
-	
+    
+    
     if action == "+" then
       activated[#activated + 1] = fm_name
     elseif action == "-" then

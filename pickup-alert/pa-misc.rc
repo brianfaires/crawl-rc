@@ -17,16 +17,16 @@ function alert_rare_items(it)
   -- Don't alert if already wearing a larger shield
   if rare_items[index] == "buckler" then
     local sh = items.equipped_at("shield")
-	if sh and sh.name("base") ~= "orb" then do_alert = false end
+    if sh and sh.name("base") ~= "orb" then do_alert = false end
   elseif rare_items[index] == "kite shield" then
     local sh = items.equipped_at("shield")
     if sh and sh.name("base"):find("tower shield") then do_alert = false end
   end
-	
+    
   if do_alert then
     -- Found a new rare item! We may already have one if it was auto-picked up
     show_alert_msg("It's your first ", rare_items[index].."!")
-	crawl.more()
+    crawl.more()
   end
 
   rare_items[index] = ""

@@ -12,16 +12,16 @@ local function cleanup_message(text)
   local keep_going = true
   while keep_going do
     local opening = text:find("<")
-	local closing = text:find(">")	
-	
-	if opening and closing and opening < closing then
-	  local new_text = ""
+    local closing = text:find(">")    
+    
+    if opening and closing and opening < closing then
+      local new_text = ""
       if opening > 1 then new_text = text:sub(1, opening-1) end
-	  if closing < #text then new_text = new_text..text:sub(closing+1, #text) end
-	  text = new_text
-	else
-	  keep_going = false
-	end
+      if closing < #text then new_text = new_text..text:sub(closing+1, #text) end
+      text = new_text
+    else
+      keep_going = false
+    end
   end
   
   text = text:gsub("\n", "")
@@ -44,6 +44,16 @@ function ready_mute_swaps()
   unmute_items()
 end
 
+local last_pickup_turn = -1
+function c_assign_invletter_mute_swaps(it)
+  -- this causes an unmute command on the message
+  -- we can't unmute in time from this hook
+  if you.turns() == last_pickup_turn then
+    crawl.mpr("")
+  else
+    last_pickup_turn = you.turns()
+  end
+end
 
 function c_message_mute_swaps(text, channel)
   -- Mute subsequent item re-assignments in a single turn, for everything after the first item.
@@ -55,8 +65,8 @@ function c_message_mute_swaps(text, channel)
       local mute_str = "(?!.*("..item.."))"
       table.insert(muted_items, mute_str)
       crawl.setopt("message_colour ^= mute: - "..mute_str)
-	  return
-	end
+      return
+    end
   end
   
   unmute_items()

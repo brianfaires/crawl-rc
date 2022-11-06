@@ -7,18 +7,18 @@ local function remind_unidentified_items(have_unidentified)
     if not have_unidentified then
       local it = items.inslot(i)
       if it and not it.fully_identified then have_unidentified = true end
-	end
+    end
 
     if have_unidentified then
       for slot=0,51 do
         local s = items.inslot(slot)
         if s and s.name("qual"):find("scroll of identify") then
-	      crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
-		  return
-		end
-	  end
-	  
-	  return
+          crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
+          return
+        end
+      end
+      
+      return
     end
   end
   
@@ -34,7 +34,7 @@ function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
   if text:find(" of identify") and not text:find("drop") and not text:find("read") then
-	remind_unidentified_items(false)
+    remind_unidentified_items(false)
   end
 end
 

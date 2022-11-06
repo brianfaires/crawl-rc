@@ -95,6 +95,7 @@ function c_assign_invletter(it)
   if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
   if c_assign_invletter_exclude_dropped then c_assign_invletter_exclude_dropped(it) end
   if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
+  if c_assign_invletter_mute_swaps then c_assign_invletter_mute_swaps(it) end
     
   -- Calls with possible return values
   local ret_val = nil

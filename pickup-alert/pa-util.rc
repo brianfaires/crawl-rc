@@ -12,7 +12,7 @@ function insert_item_and_less_enchanted(table_name, item_name)
   -- Add less enchanted items too
   local plus = tonumber(item_name:sub(2,2))
   if not plus then return end
-	
+    
   if plus > 0 then
     if tonumber(item_name:sub(3,3)) then
       plus = 10 * plus + tonumber(item_name:sub(3,3))
@@ -21,7 +21,7 @@ function insert_item_and_less_enchanted(table_name, item_name)
     for i=plus,1,-1 do
       item_name = item_name:gsub("+"..i, "+"..(i-1))
       table.insert(table_name, item_name)
-	end
+    end
   end
 end
 
@@ -81,17 +81,17 @@ function get_armour_ev(it)
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
     local worn = items.equipped_at("body armour")
-	if worn.artefact then
-	  if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
-	  if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
-	  if worn.artprops["EV"] then it_plus = it_plus - worn.artprops["EV"] end
-	end
-	
-	if it.artefact then
-	  if it.artprops["Str"] then str = str + it.artprops["Str"] end
-	  if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-	  if it.artprops["EV"] then it_plus = it_plus + it.artprops["EV"] end
-	end
+    if worn.artefact then
+      if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
+      if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
+      if worn.artprops["EV"] then it_plus = it_plus - worn.artprops["EV"] end
+    end
+    
+    if it.artefact then
+      if it.artprops["Str"] then str = str + it.artprops["Str"] end
+      if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
+      if it.artprops["EV"] then it_plus = it_plus + it.artprops["EV"] end
+    end
   end
   
   local size_factor = get_size_factor()
@@ -104,7 +104,7 @@ function get_armour_ev(it)
   elseif armor_penalty > 0 then
     if armor_penalty >= str then modifier = str / (armor_penalty * 2)
     else modifier = 1 - armor_penalty / (str * 2)
-	end
+    end
   end
 
   local final_dodge_bonus = dodge_bonus * modifier
@@ -169,26 +169,26 @@ function get_slay_bonuses()
   for i = 0,20 do
     it = items.equipped_at(i)
     if it then
-	  if it.name("base") == "ring" then
-	    if it.artefact then
-		  local name = it.name()
-	      local idx = name:find("Slay+")
-	      if idx then
-	        local slay = tonumber(name:sub(idx+5, idx+5))
-		    if slay == 1 then
-		      local next_digit = tonumber(name:sub(idx+6, idx+6))
-		      if next_digit then slay = 10 + next_digit end
-		    end
-		    sum = sum + slay
-		  end
-		elseif it.ego(true) == "Slay" then 
-	      sum = sum + it.plus 
-		end
-	  elseif it.artefact and (it.class(true) == "armour" or it.name("base") == amulet) then
-	      local slay = it.artprops["Slay"]
-	      if slay then sum = sum + slay end
-	  end
-	end
+      if it.name("base") == "ring" then
+        if it.artefact then
+          local name = it.name()
+          local idx = name:find("Slay+")
+          if idx then
+            local slay = tonumber(name:sub(idx+5, idx+5))
+            if slay == 1 then
+              local next_digit = tonumber(name:sub(idx+6, idx+6))
+              if next_digit then slay = 10 + next_digit end
+            end
+            sum = sum + slay
+          end
+        elseif it.ego(true) == "Slay" then 
+          sum = sum + it.plus 
+        end
+      elseif it.artefact and (it.class(true) == "armour" or it.name("base") == amulet) then
+          local slay = it.artprops["Slay"]
+          if slay then sum = sum + slay end
+      end
+    end
   end
   
   if you.race() == "Demonspawn" then
@@ -215,7 +215,7 @@ function get_staff_bonus_dmg(it, no_brand_dmg)
   elseif basename == "staff of conjuration" then school = "Conjurations"
   else
     crawl.mpr("ERROR:UNRECOGNIZED STAFF:"..it.name("base"), error)
-	return 0
+    return 0
   end
   
   local spell_skill = you.skill(school)
@@ -242,17 +242,17 @@ function get_weap_dps(it, no_brand_dmg)
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
     local wielded = items.equipped_at("weapon")
-	if wielded and wielded.artefact then
-	  if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
-	  if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
-	  if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
-	end
-	
-	if it.artefact and it.fully_identified then
-	  if it.artprops["Str"] then str = str + it.artprops["Str"] end
-	  if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-	  if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
-	end
+    if wielded and wielded.artefact then
+      if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
+      if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
+      if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
+    end
+    
+    if it.artefact and it.fully_identified then
+      if it.artprops["Str"] then str = str + it.artprops["Str"] end
+      if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
+      if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
+    end
   end
   
   if it.is_ranged or it.weap_skill:find("Blades") then stat = dex
@@ -265,7 +265,7 @@ function get_weap_dps(it, no_brand_dmg)
   
   
   if it.class(true) == "magical staff" then 
-	return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg)) / get_weap_delay(it)
+    return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg)) / get_weap_delay(it)
   end
   
   local ego = it.ego()
@@ -274,7 +274,7 @@ function get_weap_dps(it, no_brand_dmg)
   if ego == "spectralizing" then return 2 * pre_brand_dmg / get_weap_delay(it) end
   if ego == "vorpality" then
     if it.is_ranged then return 1.2 * pre_brand_dmg / get_weap_delay(it) end
-	return 7/6 * pre_brand_dmg / get_weap_delay(it)
+    return 7/6 * pre_brand_dmg / get_weap_delay(it)
   end
   
   if not no_brand_dmg then
@@ -297,7 +297,7 @@ end
 function inscribe_stats(it, skip_inscription)
   local dps = get_weap_dps(it)
   local dps_str = string.format("%.2f", dps)
-	  
+      
   local it_plus = it.plus
   if not it_plus then it_plus = 0 end
   local acc = it.accuracy + it_plus
@@ -306,11 +306,11 @@ function inscribe_stats(it, skip_inscription)
   local new_inscr = "DPS="..dps_str
   if dps < 10 then new_inscr = new_inscr.." " end
   new_inscr = new_inscr.."(Acc"..acc..")"
-	  
+      
   local idx = it.inscription:find("DPS=")
   if not idx then
     if not skip_inscription then it.inscribe(new_inscr, false) end
-	return new_inscr
+    return new_inscr
   end
 
   if idx + #new_inscr <= #it.inscription then
