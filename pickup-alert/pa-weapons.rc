@@ -52,10 +52,8 @@ end
 local function generate_inv_weap_arrays()
   set_top_school()
   
-  for slot=0,51 do
-    local cur
-    cur = items.inslot(slot)
-    if cur and cur.class(true) == "weapon" then
+  for cur in iter.invent_iterator:new(items.inventory()) do
+    if cur.class(true) == "weapon" then
       if cur.ego() then table.insert(egos, cur.ego()) end
       
       local dmg = get_weap_dps(cur)
@@ -102,9 +100,8 @@ local function alert_early_weapons(it)
   if you.xl() <= 8 then
     if it.branded or it.plus and it.plus >= 4 then
       -- Make sure we don't alert a pure downgrade to something in inventory
-      for slot = 0,51 do
-        local inv = items.inslot(slot)
-        if inv and inv.name("base") == it.name("base") then
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.name("base") == it.name("base") then
           if inv.plus >= it.plus then
             if not it.branded then return end
             if it.ego() == inv.ego() then return end
@@ -128,18 +125,16 @@ local function alert_first_ranged(it)
     if items.equipped_at("shield") then return false end
     if alerted_first_ranged_two_handed == 0 then
       alerted_first_ranged_two_handed = 1
-      for slot=0,51 do
-        local inv = items.inslot(slot)
-        if inv and inv.is_ranged and get_hands(inv) == 2 then return true end
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.is_ranged and get_hands(inv) == 2 then return true end
       end
       return alert_item(it, "Ranged weapon5")
     end
   else
     if alerted_first_ranged_one_handed == 0 then
       alerted_first_ranged_one_handed = 1
-      for slot=0,51 do
-        local inv = items.inslot(slot)
-        if inv and inv.is_ranged then return true end
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.is_ranged then return true end
       end
       return alert_item(it, "Ranged weapon6")
     end
@@ -196,10 +191,8 @@ function pickup_weapons(it)
   generate_inv_weap_arrays()
   local unarmed = true
 
-  for slot=0,51 do
-    local cur
-    cur = items.inslot(slot)
-    if cur and cur.class(true) == "weapon" then
+  for cur in iter.invent_iterator:new(items.inventory()) do
+    if cur.class(true) == "weapon" then
       if pickup_weapon(it, cur) then
         return true
       end
@@ -294,9 +287,8 @@ local function alert_interesting_weapons(it)
   generate_inv_weap_arrays()
   
   local ranged_weap_in_inv = false
-  for slot=0,51 do
-    cur = items.inslot(slot)
-    if cur and cur.class(true) == "weapon" then
+  for cur in iter.invent_iterator:new(items.inventory()) do
+    if cur.class(true) == "weapon" then
       if alert_interesting_weapon(it, cur) then return true end
       if cur.is_ranged then ranged_weap_in_inv = true end
     end

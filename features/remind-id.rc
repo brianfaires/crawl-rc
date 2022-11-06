@@ -3,25 +3,17 @@
 ---- Unidentified items reminder ----
 -------------------------------------
 local function remind_unidentified_items(have_unidentified)
-  for i=0,51 do
-    if not have_unidentified then
-      local it = items.inslot(i)
-      if it and not it.fully_identified then have_unidentified = true end
-    end
-
-    if have_unidentified then
-      for slot=0,51 do
-        local s = items.inslot(slot)
+  for it in iter.invent_iterator:new(items.inventory()) do
+    if not it.fully_identified then
+	  for s in iter.invent_iterator:new(items.inventory()) do
         if s and s.name("qual"):find("scroll of identify") then
-          crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
-          return
+		  crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
         end
       end
-      
-      return
+	  
+	  return
     end
   end
-  
 end
 crawl.setopt("runrest_stop_message += You have something to identify")
 

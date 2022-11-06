@@ -36,16 +36,13 @@ end
 ------------------ Hook ------------------
 ------------------------------------------
 function c_message_inscribe_dps(text, channel)
-  for slot = 0,51 do
-    local it = items.inslot(slot)
-    if it then
-	  local class = it.class(true)
-	  if class == "weapon" or class == "magical staff" then
-        inscribe_weapon_stats(it)
-	  elseif class == "armour" then
-	    inscribe_armour_stats(it)
-	  end
-    end
+  for it in iter.invent_iterator:new(items.inventory()) do
+	local class = it.class(true)
+	if class == "weapon" or class == "magical staff" then
+      inscribe_weapon_stats(it)
+	elseif class == "armour" then
+	  inscribe_armour_stats(it)
+	end
   end
 end
 }

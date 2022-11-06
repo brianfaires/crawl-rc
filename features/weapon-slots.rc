@@ -54,21 +54,22 @@ local priorities_ab = nil
 local priorities_w = nil
 local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
-  priorities_w = { -1, -1, -1}
+  priorities_w = { -1, -1, -1 }
   
-  for slot=1,51 do
-    local it = items.inslot(slot)
-    if it then
-      local p = get_priority_w(it)
-      if priorities_w[p] == -1 then priorities_w[p] = slot
-      else priorities_w[p+1] = slot
+  for it in iter.invent_iterator:new(items.inventory()) do
+    local p = get_priority_w(it)
+	if p > 0 then
+      if priorities_w[p] == -1 then priorities_w[p] = it.slot
+      else priorities_w[p+1] = it.slot
       end
+	end
     
-      p = get_priority_ab(it)
-      if priorities_ab[p] == -1 then priorities_ab[p] = slot
-      else priorities_ab[p+1] = slot
+    p = get_priority_ab(it)
+    if p > 0 then
+	  if priorities_ab[p] == -1 then priorities_ab[p] = it.slot
+      else priorities_ab[p+1] = it.slot
       end
-    end
+	end
   end
 end
 

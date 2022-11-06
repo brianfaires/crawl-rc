@@ -27,26 +27,23 @@ function c_assign_invletter_drop_inferior(it)
   local st = it.subtype()
   local basename = it.name("base")
 
-  for slot=0,51 do
-    local inv = items.inslot(slot)
-    if inv then
-      local item_match = false
-      if inv.subtype() == st then
-        if st == "body" then
-          if inv.encumbrance >= it.encumbrance then item_match = true end
-        else
-          if inv.name("base") == basename then item_match = true end
-        end
-      end
-
-      if not inv.artefact and item_match and (not has_ego(inv) or inv.ego() == it.ego()) then
-        if it_class == "weapon" then
-          if inv.plus <= it.plus then inv.inscribe("~drop") end
-        else
-          if inv.ac <= it.ac then inv.inscribe("~drop") end
-        end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local item_match = false
+    if inv.subtype() == st then
+      if st == "body" then
+        if inv.encumbrance >= it.encumbrance then item_match = true end
+      else
+        if inv.name("base") == basename then item_match = true end
       end
     end
-  end -- end for slot=0,51
+
+    if not inv.artefact and item_match and (not has_ego(inv) or inv.ego() == it.ego()) then
+      if it_class == "weapon" then
+        if inv.plus <= it.plus then inv.inscribe("~drop") end
+      else
+        if inv.ac <= it.ac then inv.inscribe("~drop") end
+      end
+    end
+  end
 end
 }
