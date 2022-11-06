@@ -1,7 +1,6 @@
 {
 -- Add autopickup exclusion for any jewellery or missile that is dropped
 -- Exclusion is removed when you pick the item back up
--- No hooks required
 
 -----------------------------------
 ---- Exclude dropped jewellery ----
@@ -19,7 +18,7 @@ if not added_jewellery_exclusion_hook then
   added_jewellery_exclusion_hook = true
 end
 
-function c_message_exclude_dropped_jewellery(text, channel)
+local function c_message_exclude_dropped_jewellery(text, channel)
   if channel ~= "plain" then return end
   
   local exclude
@@ -71,7 +70,8 @@ if not added_missle_exclusion_hook then
   added_missle_exclusion_hook = true
 end
 
-function c_message_exclude_dropped_missiles(text, channel)
+
+local function c_message_exclude_dropped_missiles(text, channel)
   if channel ~= "plain" then return end
   
   local exclude
@@ -117,5 +117,18 @@ function c_message_exclude_dropped_missiles(text, channel)
 end
 crawl.setopt("autopickup_exceptions ^= < stone, <dart, <boomerang, <javelin")
 if missile_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..missile_exclusions) end
+
+-------------------------------------------
+------------------ Hooks ------------------
+-------------------------------------------
+function c_message_exclude_dropped(text, channel)
+  c_message_exclude_dropped_jewellery(text, channel)
+  c_message_exclude_dropped_missiles(text, channel)
+end
+
+
+function c_assign_invletter_exclude_dropped(it)
+  it.inscribe(it.inscription:gsub("~drop", ""), false)
+end
 
 }
