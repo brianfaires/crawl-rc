@@ -5,13 +5,13 @@
 local function remind_unidentified_items(have_unidentified)
   for it in iter.invent_iterator:new(items.inventory()) do
     if not it.fully_identified then
-	  for s in iter.invent_iterator:new(items.inventory()) do
+      for s in iter.invent_iterator:new(items.inventory()) do
         if s and s.name("qual"):find("scroll of identify") then
-		  crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
+          crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
         end
       end
-	  
-	  return
+      
+      return
     end
   end
 end

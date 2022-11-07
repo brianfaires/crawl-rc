@@ -315,30 +315,8 @@ end
 -----------------------------------------
 
 local function alert_high_scores(it)
-  local it_plus = it.plus
-  if not it_plus then it_plus = 0 end
-
-  score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
-  if score > weapon_high_score then
-    weapon_high_score = score
-    alert_item(it, "Good weapon")
-  end
-  
-  local score = get_weap_dps(it, false)
-  if score > unbranded_high_score then
-    unbranded_high_score = score
-    alert_item(it, "High pure damage")
-  end
-  
-  if it.weap_skill == "Polearms" and you_have_summons() then
-    if get_hands(it) == 1 or not items.equipped_at("shield") then
-      local score = get_weap_dps(it) + (it.accuracy + it_plus)/2
-      if score > polearm_high_score then
-        polearm_high_score = score
-        alert_item(it, "Good polearm")
-      end
-    end
-  end
+  local category = check_high_scores(it)
+  if category then alert_item(it, category) end
 end
 
 function alert_weapons(it)

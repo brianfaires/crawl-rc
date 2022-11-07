@@ -107,8 +107,8 @@ function get_shield_sh(it)
     if it.name("base"):find("buckler") then block = block + 2 end
   elseif race == "Kobold" then
     local basename = it.name("base")
-	if basename:find("buckler") then block = block + 1
-	elseif basename:find("kite shield") then block = block + 0.5 end
+    if basename:find("buckler") then block = block + 1
+    elseif basename:find("kite shield") then block = block + 0.5 end
   elseif race == "Ogre" or race == "Troll" then
     if it.name("base"):find("kite shield") then block = block - 0.5 end
   end
@@ -391,7 +391,7 @@ function get_armour_info(it)
     ac_str = "AC"..ac_str..","
     if ac < 10 then ac_str = ac_str.." " end
     
-	return ac_str.."EV"..ev_str
+    return ac_str.."EV"..ev_str
   end  
 end
 }

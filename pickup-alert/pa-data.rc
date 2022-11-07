@@ -4,179 +4,80 @@ include = pickup-alert/pa-util.rc
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
 -------------------------------------------------------------------------------
--- Lists of items previously alerted/picked up; and other values relevant to the decisions
-
-if not rare_items or you.turns() == 0 then
+if not added_persistant_data or you.turns() == 0 then
+  added_persistant_data = 1
+  
+  items_picked = { "" }
+  items_alerted = { "" }
   rare_items = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
                 "lajatang", "bardiche", "demon trident", "trishula",
                 "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
                 "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", 
                 "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
-end
-
-local function persist_rare_items()
-  local cmd = "rare_items = {"
-  local len = 0
-  for _,v in ipairs(rare_items) do
-    if v ~= "" then
-      cmd = cmd .. "\"" .. v .. "\", "
-      len = len+1
-    end
-  end
-  
-  return cmd .. "\"\"}" .. string.char(10)
-end
-
-if not added_rare_items_hook then
-  table.insert(chk_lua_save, persist_rare_items)
-  added_rare_items_hook = true
-end
 
 
-if not items_picked or you.turns() == 0 then
-  items_picked = { "" }
-end
-
-local function persist_items_picked()
-  local cmd = "items_picked = {"
-  local len = 0
-  for _,v in ipairs(items_picked) do
-    if v ~= "" then
-      cmd = cmd .. "\"" .. v .. "\", "
-      len = len+1
-    end
-  end
-  
-  return cmd .. "\"\"}" .. string.char(10)
-end
-
-if not added_items_picked_hook then
-  table.insert(chk_lua_save, persist_items_picked)
-  added_items_picked_hook = true
-end
-
-
-if not items_alerted or you.turns() == 0 then
-  items_alerted = { "" }
-end
-
-local function persist_items_alerted()
-  local cmd = "items_alerted = {"
-  local len = 0
-  for _,v in ipairs(items_alerted) do
-    if v ~= "" then
-      cmd = cmd .. "\"" .. v .. "\", "
-      len = len+1
-    end
-  end
-  
-  return cmd .. "\"\"}" .. string.char(10)
-end
-
-if not added_items_alerted_hook then
-  table.insert(chk_lua_save, persist_items_alerted)
-  added_items_alerted_hook = true
-end
-
-
-if not armour_high_score or you.turns() == 0 then
   armour_high_score = 0
   local eq = items.equipped_at("body armour")
   if eq then armour_high_score = get_armour_ac(eq) end
-end
 
-local function persist_armour_high_score()
-  local cmd = "armour_high_score = " .. armour_high_score .. string.char(10)
-  return cmd
-end
-
-if not added_armour_high_score_hook then
-  table.insert(chk_lua_save, persist_armour_high_score)
-  added_armour_high_score_hook = true
-end
-
-
-if not alerted_first_ranged_one_handed or you.turns() == 0 then
   alerted_first_ranged_one_handed = 0
-  local eq = items.equipped_at("weapon")
-  if eq and eq.is_ranged and get_hands(eq) == 1 then alerted_first_ranged_one_handed = 1 end
-end
-
-local function persist_alerted_first_ranged_one_handed()
-  local cmd = "alerted_first_ranged_one_handed = " .. alerted_first_ranged_one_handed .. string.char(10)
-  return cmd
-end
-
-if not added_first_ranged_one_handed_hook then
-  table.insert(chk_lua_save, persist_alerted_first_ranged_one_handed)
-  added_first_ranged_one_handed_hook = true
-end
-
-if not alerted_first_ranged_two_handed or you.turns() == 0 then
   alerted_first_ranged_two_handed = 0
-  local eq = items.equipped_at("weapon")
-  if eq and eq.is_ranged and get_hands(eq) == 2 then alerted_first_ranged_two_handed = 1 end
-end
-
-local function persist_alerted_first_ranged_two_handed()
-  local cmd = "alerted_first_ranged_two_handed = " .. alerted_first_ranged_two_handed .. string.char(10)
-  return cmd
-end
-
-if not added_first_ranged_two_handed_hook then
-  table.insert(chk_lua_save, persist_alerted_first_ranged_two_handed)
-  added_first_ranged_two_handed_hook = true
-end
-
-if not polearm_high_score or you.turns() == 0 then
   polearm_high_score = 0
-  local eq = items.equipped_at("weapon")
-  if eq and eq.weap_skill == "Polearms" then polearm_high_score = get_weap_dps(eq) + eq.accuracy + eq.plus end
-end
-
-local function persist_polearm_high_score()
-  local cmd = "polearm_high_score = " .. polearm_high_score .. string.char(10)
-  return cmd
-end
-
-if not added_polearm_high_score_hook then
-  table.insert(chk_lua_save, persist_polearm_high_score)
-  added_polearm_high_score_hook = true
-end
-
-
-if not unbranded_high_score or you.turns() == 0 then
+  polearm_onehand_high_score = 0
   unbranded_high_score = 0
-  local eq = items.equipped_at("weapon")
-  if eq then unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus end
-end
-
-local function persist_unbranded_high_score()
-  local cmd = "unbranded_high_score = " .. unbranded_high_score .. string.char(10)
-  return cmd
-end
-
-if not added_unbranded_high_score_hook then
-  table.insert(chk_lua_save, persist_unbranded_high_score)
-  added_unbranded_high_score_hook = true
-end
-
-if not weapon_high_score or you.turns() == 0 then
   weapon_high_score = 0
-  local eq = items.equipped_at("weapon")
-  if eq then weapon_high_score = get_weap_dps(eq) + eq.accuracy + eq.plus end
+  
+  eq = items.equipped_at("weapon")
+  if eq then
+    local eq_dmg = get_weap_dps(eq) + eq.accuracy + eq.plus
+    weapon_high_score = eq_dmg
+    unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus
+    
+    if eq.is_ranged then
+      if get_hands(eq) == 1 then alerted_first_ranged_one_handed = 1
+      else alerted_first_ranged_two_handed = 1 end
+    elseif eq.weap_skill == "Polearms" then
+      polearm_high_score = eq_dmg
+      if get_hands(eq) == 1 then polearm_onehand_high_score = eq_dmg end
+    end
+  end
 end
 
-local function persist_weapon_high_score()
-  local cmd = "weapon_high_score = " .. weapon_high_score .. string.char(10)
-  return cmd
+
+local function persist_table(table_name, table)
+  local cmd = table_name.." = {"
+  local len = 0
+  for _,v in ipairs(table) do
+    if v ~= "" then
+      cmd = cmd .. "\"" .. v .. "\", "
+      len = len+1
+    end
+  end
+
+  return cmd .. "\"\"}" .. string.char(10)
 end
 
-if not added_weapon_high_score_hook then
-  table.insert(chk_lua_save, persist_weapon_high_score)
-  added_weapon_high_score_hook = true
+local function persist_var(var_name, var)
+  return var_name .. " = " .. var .. string.char(10)
 end
 
+
+if not added_persistant_data_hooks then
+  added_persistant_data_hooks = true
+  
+  table.insert(chk_lua_save, function() return persist_table("rare_items", rare_items) end)
+  table.insert(chk_lua_save, function() return persist_table("items_picked", items_picked) end)
+  table.insert(chk_lua_save, function() return persist_table("items_alerted", items_alerted) end)
+  table.insert(chk_lua_save, function() return persist_var("armour_high_score", armour_high_score) end)
+  table.insert(chk_lua_save, function() return persist_var("alerted_first_ranged_one_handed", alerted_first_ranged_one_handed) end)
+  table.insert(chk_lua_save, function() return persist_var("alerted_first_ranged_two_handed", alerted_first_ranged_two_handed) end)
+  table.insert(chk_lua_save, function() return persist_var("polearm_high_score", polearm_high_score) end)
+  table.insert(chk_lua_save, function() return persist_var("polearm_onehand_high_score", polearm_onehand_high_score) end)
+  table.insert(chk_lua_save, function() return persist_var("unbranded_high_score", unbranded_high_score) end)
+  table.insert(chk_lua_save, function() return persist_var("weapon_high_score", weapon_high_score) end)
+  
+  table.insert(chk_lua_save, function() return persist_var("added_persistant_data", 1) end)
+end
 
 ----------------------------------------
 ---- Accessors into persistant data ----
@@ -207,36 +108,56 @@ function pickup_item(it)
   return ret_val
 end
 
+function check_high_scores(it)
+  local ret_val = nil
+  
+  if it.class(true) == "armour" then
+    local ac = get_armour_ac(it)
+    if ac > armour_high_score then
+      armour_high_score = ac
+      if not ret_val then ret_val = "Strongest armour" end
+    end
+  elseif it.class(true) == "weapon" then
+    local it_plus = it.plus
+    if not it_plus then it_plus = 0 end
+    local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
+    if score > weapon_high_score then
+      weapon_high_score = score
+      if not ret_val then ret_val = "Good weapon" end
+    end
+    
+    local unbranded_score = get_weap_dps(it, false) + (it.accuracy + it_plus) / 2
+    if unbranded_score > unbranded_high_score then
+      unbranded_high_score = score
+      if not ret_val then ret_val = "High pure damage" end
+    end
+    
+    if it.weap_skill == "Polearms" then
+      if score > polearm_high_score then
+        polearm_high_score = score
+        if not ret_val then ret_val = "Good polearm" end
+      end
+
+      if get_hands(it) == 1 and score > polearm_onehand_high_score then
+        polearm_onehand_high_score = score
+        if not ret_val then ret_val = "1-handed polearm" end
+      end
+    end
+  end
+
+  return ret_val
+end
 
 function c_assign_invletter_item_alerts(it)
-  if it.class(true) == "weapon" or it.class(true) == "magical staff" or it.class(true) == "armour" then
+  if it.weap_skill or it.class(true) == "armour" then
     local name = it.name("plain")
     if not util.contains(items_picked, name) then
       insert_item_and_less_enchanted(items_picked, name)
       insert_item_and_less_enchanted(items_alerted, name)
+      check_high_scores(it)
       
       for i, v in ipairs(rare_items) do
         if name:find(v) then rare_items[i] = "" end
-      end
-      
-      -- Update high scores
-      if it.class(true) == "armour" then
-         local ac = get_armour_ac(it)
-        if ac > armour_high_score then armour_high_score = ac end
-      elseif it.class(true) == "weapon" then
-        if it.weap_skill == "Polearms" then
-          local score = get_weap_dps(it) + it.accuracy + it.plus
-          if score > polearm_high_score then
-            polearm_high_score = score
-            alert_item(it, "Strongest polearm")
-          end
-        end
-
-        local score = get_weap_dps(it, false) + it.accuracy + it.plus
-        if score > unbranded_high_score then unbranded_high_score = score end
-    
-        score = get_weap_dps(it) + it.accuracy + it.plus
-        if score > weapon_high_score then weapon_high_score = score end
       end
     end
   end
@@ -262,7 +183,7 @@ function alert_item(it, alert_type)
     if it.class(true) == "weapon" or it.class(true) == "magical staff" then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
     elseif it.class(true) == "armour" then
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))	
+      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))    
     else
       show_alert_msg("Item alert, "..alert_type..": ", name)
     end

@@ -73,7 +73,7 @@ include = pickup-alert/pa-misc.rc
 
 
 ### Features ###
-include = features/inscribe-dps.rc
+include = features/inscribe-stats.rc
 include = features/remind-id.rc
 include = features/weapon-slots.rc
 include = features/exclude-dropped.rc
