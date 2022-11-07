@@ -65,27 +65,6 @@ function ch_stop_running_ignore_summons(kind)
 end
 
 
-------------------------------
----- Ignore sense monster ----
-------------------------------
-function ch_stop_running_ignore_sense_monsters(kind)
-  if crawl.messages(1):find("You sense a monster nearby") then
-    if kind:find("explore") then crawl.sendkeys("o") end
-    if kind == "" then crawl.sendkeys("5") end
-  end
-end
-
-
------------------------
----- Ignore mimics ----
------------------------
-function ch_stop_running_ignore_mimics(kind)
-  if crawl.messages(1):find("mimic.*vanishes") then
-    if kind:find("explore") then crawl.sendkeys("o") end
-  end
-end
-
-
 ----------------------------------------
 ---- Stop on recovery if full hp/mp ----
 ----------------------------------------

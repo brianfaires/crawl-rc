@@ -130,8 +130,6 @@ end
 ---------------------------
 function ch_stop_running(kind)
   if ch_stop_running_ignore_summons then ch_stop_running_ignore_summons(kind) end
-  if ch_stop_running_ignore_sense_monsters then ch_stop_running_ignore_sense_monsters(kind) end
-  if ch_stop_running_ignore_mimics then ch_stop_running_ignore_mimics(kind) end
 end
 
 ---------------------------
