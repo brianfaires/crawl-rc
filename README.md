@@ -1,8 +1,10 @@
 # crawl-rc
-Settings files for use in dcss (requires v0.31 - if my PRs get put in by then...)
-All files are loaded through init.txt via include statements. Files dependencies are handled more-or-less automatically, so features can be easily cherry-picked. There are 2 ways to do this:
+Settings files for use in dcss (some features won't work until my PRs are merged into trunk...namely anything that generates inscriptions)
+
+All files are loaded through init.txt via include statements. Features can be cherry-picked pretty easily. There are a few ways to do it:
 1) Start with the included init.txt, and remove the lines "include = xxxx.rc", to remove unwanted features.
-2) Use your own init.txt and add "include = xxxxx.rc" to add each feature. If you do this, you must also add the lua hook functions to your init.txt. You can copy the entire section straight over from the included init.txt, and if you are already using hook functions such as ready(), you will need to merge the two functions since you can only have one of each hook defined.
+2) Use your own file and add "include = xxxxx.rc" to add each feature. Then, you need to add the lua hook functions to your RC file. You can copy the entire section straight over from init.txt (at the bottom). If you're already using lua hook functions such as ready(), you will need to merge the two functions since you can only have one of each hook defined.
+3) Copy-paste the contents of a file into your RC file. Same deal as option 2 with adding the hook functions to your RC, and make sure they come after the file contents that you pasted.
 
 You are not required to edit the lua hook functions as you remove features - removing the include statements is enough and won't cause errors.
 
@@ -45,8 +47,9 @@ One-time actions on startup: Opens skills menu and sets travel speed to slowest 
 
 ## Standalone Features
 
-### inscribe-dps.rc
+### inscribe-stats.rc
 Weapons in inventory are inscribed with DPS (ie damage output per 10 aut) and accuracy - updates in real time with skill/stats/etc.
+Armour is inscribed with its AC (or SH) and EV.
 
 ### remind-id.rc
 When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
@@ -63,18 +66,22 @@ Makes sure there's a confirmation prompt on all 1-click consumables. The standar
 ### drop-inferior.rc
 Adds items to the drop list when you pick up a strictly better one.
 
-### runrest-stop.rc
+### runrest-features.rc
 Fancy runrest settings:
+* Fully rest off duration/recovery effects when resting/waiting. Attached to rest before exploration.
 * No altar stops if you have a god or are in the temple (and auto search for altars after exploring the temple)
 * Don't stop exploration on portals leading out of gauntlets/baileys/etc
 * Ignores actions that can't be done the normal way: Allies disappearing, shop mimics, sensing nearby monsters.
-* Don't stop on recovery/duration messages when resting. If you're waiting from full hp, then it will.
 
 ### mute-swaps.rc
 Minimizes spam when swapping/ID'ing items. When multiple messages with " - " show up in a single turn, it mutes all except those for the first item.  e.g. You read an unidentified scroll, and it's scroll of identify. You identify a potion of curing. The scroll and potion are both moved to their assigned item_slot. Output will be: "x - potion of curing; c - a potion of curing". Without this feature, another 3-4 messages would be displayed, showing the scroll of ID moving to slot i, and whatever items were previously in slots c/i. I find that irrelevant and confusing.
 
 ### after-shaft.rc
 Stops on stairs until you get back to the level you were shafted from.
+
+### safe-stairs.rc
+Prompt user before immediately returning to same stairwell. (To prevent fat-fingering "<>" or "><").
+
 
 
 
@@ -98,7 +105,7 @@ Alerts are generated for:
 Picking up pure-upgrades is straightforward enough, but this file does a lot more. It generates a DPS value for each weapon (damage / speed), that factors in your stats, skills, and slaying bonuses. It considers accuracy, weapon type, skill levels, and other factors. It's not straightforward to describe everything but here are some features:
 * Alerts strong weapons early on, with little regard for what skills are trained
 * Alerts on the first one-handed ranged weapon (and two-handed if not wearing a shield)
-* High scores: Alerts items that set a new record for: Overall damage, Damage w/o brand, Strongest polearm (if using allies)
+* High scores: Alerts items that set a new record for: Overall damage, Damage w/o brand, and if using allies: Strongest polearm/1-handed polearm
 * Alerts DPS upgrades and new egos, with complex logic around brands/handedness/weapon skill
 
 ### Misc (pa-misc.rc)
