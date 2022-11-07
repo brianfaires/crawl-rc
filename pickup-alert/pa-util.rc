@@ -381,16 +381,18 @@ function get_armour_info(it)
 
     return sh_str.."EV"..ev_str
   else
-    local ev = get_armour_ev(it)
-    local ev_str = string.format("%.2f", ev)
-    if ev >= 0 then ev_str = "+"..ev_str end
-
     local ac = get_armour_ac(it)
     local ac_str = string.format("%.2f", ac)
     if ac >= 0 then ac_str = "+"..ac_str end
-    ac_str = "AC"..ac_str..","
-    if ac < 10 then ac_str = ac_str.." " end
+	if it.subtype() ~= "body" then return "AC"..ac_str end
     
+	ac_str = "AC"..ac_str..","
+    if ac < 10 then ac_str = ac_str.." " end
+
+
+	local ev = get_armour_ev(it)
+    local ev_str = string.format("%.2f", ev)
+    if ev >= 0 then ev_str = "+"..ev_str end
     return ac_str.."EV"..ev_str
   end  
 end

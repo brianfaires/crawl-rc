@@ -135,7 +135,7 @@ function check_high_scores(it)
     if it.weap_skill == "Polearms" then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not ret_val then ret_val = "Good polearm" end
+        if not items.equipped_at("shield") and not ret_val then ret_val = "Good polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_onehand_high_score then
