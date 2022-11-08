@@ -54,9 +54,6 @@ stop ^= You feel.*sluggish
 # Expiring effects for friends too
 stop ^= no longer petrified
 ignore += no longer covered in acid
-# Rest through recovery (this is turned back on below when resting from full hp/mp)
-ignore += recovery:.*
-ignore += duration:.*
 
 # Misc
 stop -= You now have enough gold to
