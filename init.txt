@@ -129,7 +129,6 @@ end
 ---- ch_stop_running() ----
 ---------------------------
 function ch_stop_running(kind)
-  if ch_stop_running_ignore_summons then ch_stop_running_ignore_summons(kind) end
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
 end
 

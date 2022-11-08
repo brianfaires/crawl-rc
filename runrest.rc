@@ -34,7 +34,7 @@ stop += friend_spell:
 stop += friend_enchant:
 stop += appears from out of your range of vision
 stop += hits your
-stop += your.*is destroyed
+stop += our.*is destroyed
 
 # Expiring effects; Turn on transmutation|flight|swiftness ending and ignore the rest
 ignore -= transformation is almost over\.
@@ -42,21 +42,31 @@ ignore -= transformation has ended\.
 ignore -= revert to a slightly less stony form\.
 ignore -= revert to your normal fleshy form\.
 ignore -= You feel yourself come back to life
-ignore ^= Your unholy channel is weakening
-stop ^= Your transformation is almost over
-stop ^= Your transformation has ended
+ignore ^= unholy channel is weakening
+ignore ^= magical contamination.*faded
+ignore ^= our foxfire dissipates
+stop ^= transformation is almost over
+stop ^= transformation has ended
 stop ^= revert to a slightly less stony form\.
-stop ^= You revert to your normal fleshy form
-stop ^= You feel yourself come back to life
-stop ^= Your unholy channel expires
-stop ^= You are starting to lose your buoyancy
-stop ^= You feel.*sluggish
+stop ^= revert to your normal fleshy form
+stop ^= feel yourself come back to life
+stop ^= unholy channel expires
+stop ^= are starting to lose your buoyancy
+stop ^= feel.*sluggish
 # Expiring effects for friends too
 stop ^= no longer petrified
-ignore += no longer covered in acid
+ignore ^= no longer covered in acid
 
 # Misc
 stop -= You now have enough gold to
-ignore += nearby plant withers and dies
-ignore += disentangle yourself
-ignore += You swap places.
+
+ignore ^= nearby plant withers and dies
+ignore ^= disentangle yourself
+ignore ^= You swap places.
+
+# Summonings
+ignore ^= our.*crimson imp blinks
+ignore ^= our.*simulacrum vaporises
+ignore ^= our.*returns to the shadows of the Dungeon
+ignore ^= our.*skeleton crumbles into dust
+ignore ^= our.*fades into mist

@@ -71,7 +71,6 @@ Fancy runrest settings:
 * Fully rest off duration/recovery effects when resting/waiting. Attached to rest before exploration.
 * No altar stops if you have a god or are in the temple (and auto search for altars after exploring the temple)
 * Don't stop exploration on portals leading out of gauntlets/baileys/etc
-* Ignores actions that can't be done the normal way: Allies disappearing, shop mimics, sensing nearby monsters.
 
 ### mute-swaps.rc
 Minimizes spam when swapping/ID'ing items. When multiple messages with " - " show up in a single turn, it mutes all except those for the first item.  e.g. You read an unidentified scroll, and it's scroll of identify. You identify a potion of curing. The scroll and potion are both moved to their assigned item_slot. Output will be: "x - potion of curing; c - a potion of curing". Without this feature, another 3-4 messages would be displayed, showing the scroll of ID moving to slot i, and whatever items were previously in slots c/i. I find that irrelevant and confusing.

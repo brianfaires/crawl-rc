@@ -49,6 +49,7 @@ function ch_stop_running_full_recovery(kind)
 end
 
 function c_message_fully_recover(text, channel)
+--if text:find("contamination") then crawl.mpr(text) crawl.mpr(channel) end
   if text:find("You start waiting.") then
     if not fully_recovered() then
       waiting_for_recovery = true
@@ -121,23 +122,6 @@ function ready_ignore_exits()
   elseif not stop_on_portals and not util.contains(ignore_exit_brances, branch) then
     stop_on_portals = true
     crawl.setopt("explore_stop += portals")
-  end
-end
-
-
--------------------------------------
----- Ignore summons disappearing ----
--------------------------------------
-function ch_stop_running_ignore_summons(kind)
-  local runrest_ignore_summons = { "crumbles into dust", "fades into mist", "returns to the shadows", 
-                                   "Your foxfire dissipates", "Your.*simulacrum vaporises", "Your crimson imp blinks" }
-  local text = crawl.messages(1)
-  for _, v in ipairs(runrest_ignore_summons) do
-    if text:find(v) then
-      -- Must use keypresses instead of do_commands() to work
-      if kind:find("explore") then crawl.sendkeys("o") end
-      if kind == "" then crawl.sendkeys("5") end
-    end
   end
 end
 
