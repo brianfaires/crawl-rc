@@ -1,93 +1,38 @@
 {
--- Add autopickup exclusion for any jewellery or missile that is dropped
+-- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 
------------------------------------
----- Exclude dropped jewellery ----
------------------------------------
-if not jewellery_exclusions or you.turns() == 0 then
-  jewellery_exclusions = ""
+-------------------------
+---- Persistant data ----
+-------------------------
+if not dropped_item_exclusions or you.turns() == 0 then
+  dropped_item_exclusions = ""
 end
 
-local function persist_jewellery_exclusions()
-  return "jewellery_exclusions = \""..jewellery_exclusions.."\""..string.char(10)
+local function persist_dropped_item_exclusions()
+  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
 end
 
-if not added_jewellery_exclusion_hook then
-  table.insert(chk_lua_save, persist_jewellery_exclusions)
-  added_jewellery_exclusion_hook = true
+if not added_exclude_dropped_hooks then
+  table.insert(chk_lua_save, persist_dropped_item_exclusions)
+  added_exclude_dropped_hooks = true
 end
 
-local function c_message_exclude_dropped_jewellery(text, channel)
-  if channel ~= "plain" then return end
-  
-  local exclude
-  if text:find("You drop ") then
-    exclude = true
-  elseif text:find(" %- ") then
-    exclude = false
-  else
-    return
-  end
-  
-  local idx = text:find("ring of ")
+
+local function get_jewellery_name(text)
+  local idx  = text:find("ring of ")
   if not idx then idx = text:find("amulet of ") end
   if not idx then return end
   
   text = text:gsub(" {.*}", "")
   text = text:gsub("[.]", "")
-  item_name = text:sub(idx,#text)
-    
-  if exclude then
-    crawl.setopt("autopickup_exceptions ^= >"..item_name)
-    -- Add persistant exclusion
-    if jewellery_exclusions ~= "" then jewellery_exclusions = jewellery_exclusions.."," end
-    jewellery_exclusions = jewellery_exclusions..">"..item_name
-  else
-    crawl.setopt("autopickup_exceptions -= >"..item_name)
-    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
-    jewellery_exclusions = jewellery_exclusions:gsub(",>"..item_name, "")
-    jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name..",", "")
-    jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name, "")
-  end
-end
-if jewellery_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..jewellery_exclusions) end
-
-
-----------------------------------
----- Exclude dropped missiles ----
-----------------------------------
-if not missile_exclusions or you.turns() == 0 then
-  missile_exclusions = ""
+  return text:sub(idx,#text)
 end
 
-local function persist_missile_exclusions()
-  return "missile_exclusions = \""..missile_exclusions.."\""..string.char(10)
-end
-
-if not added_missle_exclusion_hook then
-  table.insert(chk_lua_save, persist_missile_exclusions)
-  added_missle_exclusion_hook = true
-end
-
-
-local function c_message_exclude_dropped_missiles(text, channel)
-  if channel ~= "plain" then return end
-  
-  local exclude
-  if text:find("You drop ") then
-    exclude = true
-  elseif text:find(" %- ") then
-    exclude = false
-  else
-    return
-  end
-  
-  local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin" }
-  local item_name
-  for _, v in ipairs(all_missiles) do
-    if text:find(v) then
-      item_name = v
+local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin" }
+local function get_missile_name(text)
+  for _, item_name in ipairs(all_missiles) do
+    if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
           item_name = "silver "..item_name
@@ -97,38 +42,52 @@ local function c_message_exclude_dropped_missiles(text, channel)
           item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
         end
       end
-      
-      if exclude then
-        crawl.setopt("autopickup_exceptions ^= >"..item_name)
-        -- Add persistant exclusion
-        if missile_exclusions ~= "" then missile_exclusions = missile_exclusions.."," end
-        missile_exclusions = missile_exclusions..">"..item_name
-      else
-        crawl.setopt("autopickup_exceptions -= >"..item_name)
-        -- Remove persistant exclusion (try 3 times to make sure we capture comma)
-        missile_exclusions = missile_exclusions:gsub(",>"..item_name, "")
-        missile_exclusions = missile_exclusions:gsub(">"..item_name..",", "")
-        missile_exclusions = missile_exclusions:gsub(">"..item_name, "")
-      end
-      
-      return
-    end
+	  
+	  return item_name
+	end
+  end
+end
+
+local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones", 
+      "condenser vane", "box of beasts", "phantom mirror", "piece from Xom's chessboard" }
+local function get_misc_name(text)
+  for _, item_name in ipairs(all_misc) do
+    if text:find(item_name) then return item_name end
+  end
+end
+
+
+
+------------------------------------------
+------------------ Hook ------------------
+------------------------------------------
+
+function c_message_exclude_dropped(text, channel)
+  if channel ~= "plain" then return end
+  
+  local exclude
+  if text:find("You drop ") then exclude = true
+  elseif text:find(" %- ") then exclude = false
+  else return
+  end
+
+  local item_name = get_jewellery_name(text)
+  if not item_name then item_name = get_missile_name(text) end
+  if not item_name then item_name = get_misc_name(text) end
+  if not item_name then return end
+
+  if exclude then
+    crawl.setopt("autopickup_exceptions ^= >"..item_name)
+    if dropped_item_exclusions ~= "" then dropped_item_exclusions = dropped_item_exclusions.."," end
+  else
+    crawl.setopt("autopickup_exceptions -= >"..item_name)
+    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
+    dropped_item_exclusions = dropped_item_exclusions:gsub(",>"..item_name, "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name..",", "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
   end
 end
 crawl.setopt("autopickup_exceptions ^= < stone, <dart, <boomerang, <javelin")
-if missile_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..missile_exclusions) end
-
--------------------------------------------
------------------- Hooks ------------------
--------------------------------------------
-function c_message_exclude_dropped(text, channel)
-  c_message_exclude_dropped_jewellery(text, channel)
-  c_message_exclude_dropped_missiles(text, channel)
-end
-
-
-function c_assign_invletter_exclude_dropped(it)
-  it.inscribe(it.inscription:gsub("~drop", ""), false)
-end
+if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
 }

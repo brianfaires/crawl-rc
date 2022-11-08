@@ -46,4 +46,9 @@ function c_assign_invletter_drop_inferior(it)
     end
   end
 end
+
+
+function c_assign_invletter_exclude_dropped(it)
+  it.inscribe(it.inscription:gsub("~drop", ""), false)
+end
 }
