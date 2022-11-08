@@ -6,7 +6,7 @@ autoinscribe += scrolls?(?!.*of ):!r
 
 # Add a warning for everything that doesn't have one built-in
 autoinscribe += potions? of(?!.*(attraction|lignification|mutation)):!q
-autoinscribe += scrolls? of(butterflies|fear|fog|magic mapping|posion|silence|summoning|teleportation|torment|vulnerability):!r
+autoinscribe += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleportation|vulnerability):!r
 
 
 {
@@ -15,19 +15,23 @@ autoinscribe += scrolls? of(butterflies|fear|fog|magic mapping|posion|silence|su
 --------------------------------------------
 -- Initialize to true to fix inscriptions on init (starting items don't get default inscriptions)
 local no_inscriptions = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
-                         "identify", "immolation", "noise", "poison", "vulnerability", "attraction", "lignification", "mutation" }
+                         "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation" }
 
-local function fix_inscriptions()
+---------------------------------------------
+------------------- Hook -------------------
+---------------------------------------------
+function ready_safe_consumables()
+crawl.mpr("S:"..you.status())
   -- Remove the default "!r" and "!q" inscriptions after identify
-  local keystring = ""
   for it in iter.invent_iterator:new(items.inventory()) do    
     if it.fully_identified then
       local it_class = it.class(true)
       if it_class == "potion" or it_class == "scroll" then
         local qualname = it.name("qual")
         local st, _ = it.subtype()
-        
-        if util.contains(no_inscriptions, st) then
+        if (st == "poison" and you.res_poison() == 0)
+            or (st == "torment" and not (you.race() == "Mummy" or you.race() == "Ghoul" or you.status():find("tree-form") or you.status():find("lich-form")))
+            or util.contains(no_inscriptions, st) then
           if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
           if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
         elseif it_class == "scroll" and not util.contains(no_inscriptions, st) and not qualname:find("!r") then
@@ -39,31 +43,4 @@ local function fix_inscriptions()
     end
   end
 end
-
-
-local do_fix_inscriptions = true
-
----------------------------------------------
-------------------- Hooks -------------------
----------------------------------------------
-function ready_safe_consumables()
-  if do_fix_inscriptions then
-    fix_inscriptions()
-    do_fix_inscriptions = false
-  end
-end
-
-
-function c_message_safe_consumables(text, channel)
-  if channel ~= "plain" then return end
-  local triggers = { "Thank you for shopping at", "s a scroll of ", "s a potion of ", "read the scroll of identify" }
-  for _, v in ipairs(triggers) do
-    if text:find(v) then
-      fix_inscriptions()
-      do_fix_inscriptions = true
-      return
-    end
-  end
-end
-
 }
