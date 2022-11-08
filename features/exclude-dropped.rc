@@ -42,9 +42,9 @@ local function get_missile_name(text)
           item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
         end
       end
-	  
-	  return item_name
-	end
+      
+      return item_name
+    end
   end
 end
 

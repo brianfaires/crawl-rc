@@ -48,9 +48,9 @@ autopickup_exceptions ^= >useless_item, <misc
     local found_first = false
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.class(true) == "jewellery" and inv.subtype() == st then
-	    if found_first then return false end
-	    found_first = true
-	  end
+        if found_first then return false end
+        found_first = true
+      end
     end
   end)
 }
@@ -113,6 +113,9 @@ macros += K2 0 \{13}
 stop := runrest_stop_message
 ignore := runrest_ignore_message
 
+# Ignore these stops
+interrupt_travel -= sense_monster
+interrupt_travel -= mimic
 
 # Monsters to ignore at a distance
 runrest_ignore_monster += fire vortex:1
@@ -142,7 +145,7 @@ stop += friend_spell:
 stop += friend_enchant:
 stop += appears from out of your range of vision
 stop += hits your
-stop += your.*is destroyed
+stop += our.*is destroyed
 
 # Expiring effects; Turn on transmutation|flight|swiftness ending and ignore the rest
 ignore -= transformation is almost over\.
@@ -150,27 +153,34 @@ ignore -= transformation has ended\.
 ignore -= revert to a slightly less stony form\.
 ignore -= revert to your normal fleshy form\.
 ignore -= You feel yourself come back to life
-ignore ^= Your unholy channel is weakening
-stop ^= Your transformation is almost over
-stop ^= Your transformation has ended
+ignore ^= unholy channel is weakening
+ignore ^= magical contamination.*faded
+ignore ^= our foxfire dissipates
+stop ^= transformation is almost over
+stop ^= transformation has ended
 stop ^= revert to a slightly less stony form\.
-stop ^= You revert to your normal fleshy form
-stop ^= You feel yourself come back to life
-stop ^= Your unholy channel expires
-stop ^= You are starting to lose your buoyancy
-stop ^= You feel.*sluggish
+stop ^= revert to your normal fleshy form
+stop ^= feel yourself come back to life
+stop ^= unholy channel expires
+stop ^= are starting to lose your buoyancy
+stop ^= feel.*sluggish
 # Expiring effects for friends too
 stop ^= no longer petrified
-ignore += no longer covered in acid
-# Rest through recovery (this is turned back on below when resting from full hp/mp)
-ignore += recovery:.*
-ignore += duration:.*
+ignore ^= no longer covered in acid
 
 # Misc
 stop -= You now have enough gold to
-ignore += nearby plant withers and dies
-ignore += disentangle yourself
-ignore += You swap places.
+
+ignore ^= nearby plant withers and dies
+ignore ^= disentangle yourself
+ignore ^= You swap places.
+
+# Summonings
+ignore ^= our.*crimson imp blinks
+ignore ^= our.*simulacrum vaporises
+ignore ^= our.*returns to the shadows of the Dungeon
+ignore ^= our.*skeleton crumbles into dust
+ignore ^= our.*fades into mist
 
 ########fm-messages.rc########
 
@@ -744,9 +754,10 @@ function show_alert_msg(alert_text, item_name)
   crawl.mpr("<cyan>----<magenta>"..alert_text.."<yellow>"..item_name.."</yellow></magenta>----</cyan>")
 end
 
--- Add an item name to a table, along with all less enchanted versions
--- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
+
 function insert_item_and_less_enchanted(table_name, item_name)
+  -- Add an item name to a table, along with all less enchanted versions
+  -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
   if util.contains(table_name, item_name) then return end
   table.insert(table_name, item_name)
 
@@ -848,8 +859,8 @@ function get_shield_sh(it)
     if it.name("base"):find("buckler") then block = block + 2 end
   elseif race == "Kobold" then
     local basename = it.name("base")
-	if basename:find("buckler") then block = block + 1
-	elseif basename:find("kite shield") then block = block + 0.5 end
+    if basename:find("buckler") then block = block + 1
+    elseif basename:find("kite shield") then block = block + 0.5 end
   elseif race == "Ogre" or race == "Troll" then
     if it.name("base"):find("kite shield") then block = block - 0.5 end
   end
@@ -868,35 +879,37 @@ end
 
 function get_armour_ev(it)
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
-  -- Factors in stat changes for this armour and currently worn
-  local race = you.race()
+  -- Factors in stat changes from this armour and removing current one
   local str = you.strength()
   local dex = you.dexterity()
-  local it_plus = 0
+  local art_ev = 0
+  
   
   -- Adjust str/dex/EV for artefact stat changes
-  if not it.equipped then
-    local worn = items.equipped_at("body armour")
-    if worn and worn.artefact then
-      if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
-      if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
-      if worn.artprops["EV"] then it_plus = it_plus - worn.artprops["EV"] end
-    end
-    
-    if it.artefact then
-      if it.artprops["Str"] then str = str + it.artprops["Str"] end
-      if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-      if it.artprops["EV"] then it_plus = it_plus + it.artprops["EV"] end
-    end
+  local worn = items.equipped_at("body armour")
+  if worn and worn.artefact then
+    if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
+    if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
+    if worn.artprops["EV"] then art_ev = art_ev - worn.artprops["EV"] end
+  end
+  
+  local no_art_dex = dex
+  
+  if it.artefact then
+    if it.artprops["Str"] then str = str + it.artprops["Str"] end
+    if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
+    if it.artprops["EV"] then art_ev = art_ev + it.artprops["EV"] end
   end
   
   local size_factor = get_size_factor()
   
-  local dodge_bonus = (7 + you.skill("Dodging") * dex) / (20 - size_factor)
-  armor_penalty = it.encumbrance - 3
+  
+  local dodge_bonus = (8 + you.skill("Dodging") * dex) / (20 - size_factor)
+  local normalize_zero_to_zero = (8 + you.skill("Dodging") * no_art_dex) / (20 - size_factor)
 
+  armor_penalty = it.encumbrance - 3
   local modifier = 0
-  if armor_penalty < 0 then modifier = 1
+  if armor_penalty <= 0 then modifier = 1
   elseif armor_penalty > 0 then
     if armor_penalty >= str then modifier = str / (armor_penalty * 2)
     else modifier = 1 - armor_penalty / (str * 2)
@@ -906,7 +919,7 @@ function get_armour_ev(it)
   local final_dodge_bonus = dodge_bonus * modifier
   local aevp = 2 * it.encumbrance * it.encumbrance * (45 - you.skill("Armour")) / (5 * (str + 3) * 45)
 
-  return final_dodge_bonus - aevp + it_plus
+  return final_dodge_bonus - aevp + art_ev - normalize_zero_to_zero
 end
 
 
@@ -1111,28 +1124,30 @@ function get_armour_info(it)
   
   if it.subtype() == "shield" then
     local ev = get_shield_penalty(it)
-    local ev_str = string.format("%.2f", ev)
+    local ev_str = string.format("%.1f", ev)
     ev_str = "-"..ev_str
   
     local sh = get_shield_sh(it)
-    local sh_str = string.format("%.2f", sh)
+    local sh_str = string.format("%.1f", sh)
     if sh >= 0 then sh_str = "+"..sh_str end
     sh_str = "SH"..sh_str..","
     if sh < 10 then sh_str = sh_str.." " end
 
     return sh_str.."EV"..ev_str
   else
-    local ev = get_armour_ev(it)
-    local ev_str = string.format("%.2f", ev)
-    if ev >= 0 then ev_str = "+"..ev_str end
-
     local ac = get_armour_ac(it)
-    local ac_str = string.format("%.2f", ac)
+    local ac_str = string.format("%.1f", ac)
     if ac >= 0 then ac_str = "+"..ac_str end
+    if it.subtype() ~= "body" then return "AC"..ac_str end
+    
     ac_str = "AC"..ac_str..","
     if ac < 10 then ac_str = ac_str.." " end
-    
-	return ac_str.."EV"..ev_str
+
+
+    local ev = get_armour_ev(it)
+    local ev_str = string.format("%.1f", ev)
+    if ev >= 0 then ev_str = "+"..ev_str end
+    return ac_str.."EV"..ev_str
   end  
 end
 }
@@ -1171,15 +1186,15 @@ if not added_persistant_data or you.turns() == 0 then
   if eq then
     local eq_dmg = get_weap_dps(eq) + eq.accuracy + eq.plus
     weapon_high_score = eq_dmg
-	unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus
-	
-	if eq.is_ranged then
+    unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus
+    
+    if eq.is_ranged then
       if get_hands(eq) == 1 then alerted_first_ranged_one_handed = 1
       else alerted_first_ranged_two_handed = 1 end
     elseif eq.weap_skill == "Polearms" then
-	  polearm_high_score = eq_dmg
-	  if get_hands(eq) == 1 then polearm_onehand_high_score = eq_dmg end
-	end
+      polearm_high_score = eq_dmg
+      if get_hands(eq) == 1 then polearm_onehand_high_score = eq_dmg end
+    end
   end
 end
 
@@ -1254,34 +1269,34 @@ function check_high_scores(it)
   if it.class(true) == "armour" then
     local ac = get_armour_ac(it)
     if ac > armour_high_score then
-	  armour_high_score = ac
-	  if not ret_val then ret_val = "Strongest armour" end
-	end
+      armour_high_score = ac
+      if not ret_val then ret_val = "Strongest armour" end
+    end
   elseif it.class(true) == "weapon" then
     local it_plus = it.plus
     if not it_plus then it_plus = 0 end
     local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
-	if score > weapon_high_score then
-	  weapon_high_score = score
-	  if not ret_val then ret_val = "Good weapon" end
-	end
-	
+    if score > weapon_high_score then
+      weapon_high_score = score
+      if not ret_val then ret_val = "Good weapon" end
+    end
+    
     local unbranded_score = get_weap_dps(it, false) + (it.accuracy + it_plus) / 2
     if unbranded_score > unbranded_high_score then
-	  unbranded_high_score = score
-	  if not ret_val then ret_val = "High pure damage" end
-	end
+      unbranded_high_score = score
+      if not ret_val then ret_val = "High pure damage" end
+    end
     
     if it.weap_skill == "Polearms" then
       if score > polearm_high_score then
         polearm_high_score = score
-		if not ret_val then ret_val = "Good polearm" end
+        if not items.equipped_at("shield") and not ret_val then ret_val = "Good polearm" end
       end
 
-	  if get_hands(it) == 1 and score > polearm_onehand_high_score then
-	    polearm_onehand_high_score = score
-		if not ret_val then ret_val = "1-handed polearm" end
-	  end
+      if get_hands(it) == 1 and score > polearm_onehand_high_score then
+        polearm_onehand_high_score = score
+        if not ret_val then ret_val = "1-handed polearm" end
+      end
     end
   end
 
@@ -1294,8 +1309,8 @@ function c_assign_invletter_item_alerts(it)
     if not util.contains(items_picked, name) then
       insert_item_and_less_enchanted(items_picked, name)
       insert_item_and_less_enchanted(items_alerted, name)
-	  check_high_scores(it)
-	  
+      check_high_scores(it)
+      
       for i, v in ipairs(rare_items) do
         if name:find(v) then rare_items[i] = "" end
       end
@@ -1323,7 +1338,7 @@ function alert_item(it, alert_type)
     if it.class(true) == "weapon" or it.class(true) == "magical staff" then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
     elseif it.class(true) == "armour" then
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))	
+      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))    
     else
       show_alert_msg("Item alert, "..alert_type..": ", name)
     end
@@ -2107,14 +2122,17 @@ end
 ### Features ###
 
 
-########features/inscribe-dps.rc########
+########features/inscribe-stats.rc########
 
 {
 
 local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)
-      
-  local idx = it.inscription:find("AC=")
+  local idx
+  if it.subtype() == "shield" then idx = it.inscription:find("SH+")
+  else idx = it.inscription:find("AC+")
+  end
+  
   if idx then
     if idx + #new_inscr <= #it.inscription then
       new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
@@ -2149,7 +2167,7 @@ function c_message_inscribe_dps(text, channel)
   for it in iter.invent_iterator:new(items.inventory()) do
     local class = it.class(true)
     if class == "weapon" or class == "magical staff" then
-      inscribe_weapon_stats(it)
+  inscribe_weapon_stats(it)
     elseif class == "armour" then
       inscribe_armour_stats(it)
     end
@@ -2357,95 +2375,40 @@ end
 ########features/exclude-dropped.rc########
 
 {
--- Add autopickup exclusion for any jewellery or missile that is dropped
+-- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 
------------------------------------
----- Exclude dropped jewellery ----
------------------------------------
-if not jewellery_exclusions or you.turns() == 0 then
-  jewellery_exclusions = ""
+-------------------------
+---- Persistant data ----
+-------------------------
+if not dropped_item_exclusions or you.turns() == 0 then
+  dropped_item_exclusions = ""
 end
 
-local function persist_jewellery_exclusions()
-  return "jewellery_exclusions = \""..jewellery_exclusions.."\""..string.char(10)
+local function persist_dropped_item_exclusions()
+  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
 end
 
-if not added_jewellery_exclusion_hook then
-  table.insert(chk_lua_save, persist_jewellery_exclusions)
-  added_jewellery_exclusion_hook = true
+if not added_exclude_dropped_hooks then
+  table.insert(chk_lua_save, persist_dropped_item_exclusions)
+  added_exclude_dropped_hooks = true
 end
 
-local function c_message_exclude_dropped_jewellery(text, channel)
-  if channel ~= "plain" then return end
-  
-  local exclude
-  if text:find("You drop ") then
-    exclude = true
-  elseif text:find(" %- ") then
-    exclude = false
-  else
-    return
-  end
-  
-  local idx = text:find("ring of ")
+
+local function get_jewellery_name(text)
+  local idx  = text:find("ring of ")
   if not idx then idx = text:find("amulet of ") end
   if not idx then return end
   
   text = text:gsub(" {.*}", "")
   text = text:gsub("[.]", "")
-  item_name = text:sub(idx,#text)
-    
-  if exclude then
-    crawl.setopt("autopickup_exceptions ^= >"..item_name)
-    -- Add persistant exclusion
-    if jewellery_exclusions ~= "" then jewellery_exclusions = jewellery_exclusions.."," end
-    jewellery_exclusions = jewellery_exclusions..">"..item_name
-  else
-    crawl.setopt("autopickup_exceptions -= >"..item_name)
-    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
-    jewellery_exclusions = jewellery_exclusions:gsub(",>"..item_name, "")
-    jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name..",", "")
-    jewellery_exclusions = jewellery_exclusions:gsub(">"..item_name, "")
-  end
-end
-if jewellery_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..jewellery_exclusions) end
-
-
-----------------------------------
----- Exclude dropped missiles ----
-----------------------------------
-if not missile_exclusions or you.turns() == 0 then
-  missile_exclusions = ""
+  return text:sub(idx,#text)
 end
 
-local function persist_missile_exclusions()
-  return "missile_exclusions = \""..missile_exclusions.."\""..string.char(10)
-end
-
-if not added_missle_exclusion_hook then
-  table.insert(chk_lua_save, persist_missile_exclusions)
-  added_missle_exclusion_hook = true
-end
-
-
-local function c_message_exclude_dropped_missiles(text, channel)
-  if channel ~= "plain" then return end
-  
-  local exclude
-  if text:find("You drop ") then
-    exclude = true
-  elseif text:find(" %- ") then
-    exclude = false
-  else
-    return
-  end
-  
-  local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin" }
-  local item_name
-  for _, v in ipairs(all_missiles) do
-    if text:find(v) then
-      item_name = v
+local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin" }
+local function get_missile_name(text)
+  for _, item_name in ipairs(all_missiles) do
+    if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
           item_name = "silver "..item_name
@@ -2456,38 +2419,51 @@ local function c_message_exclude_dropped_missiles(text, channel)
         end
       end
       
-      if exclude then
-        crawl.setopt("autopickup_exceptions ^= >"..item_name)
-        -- Add persistant exclusion
-        if missile_exclusions ~= "" then missile_exclusions = missile_exclusions.."," end
-        missile_exclusions = missile_exclusions..">"..item_name
-      else
-        crawl.setopt("autopickup_exceptions -= >"..item_name)
-        -- Remove persistant exclusion (try 3 times to make sure we capture comma)
-        missile_exclusions = missile_exclusions:gsub(",>"..item_name, "")
-        missile_exclusions = missile_exclusions:gsub(">"..item_name..",", "")
-        missile_exclusions = missile_exclusions:gsub(">"..item_name, "")
-      end
-      
-      return
+      return item_name
     end
   end
 end
-crawl.setopt("autopickup_exceptions ^= < stone, <dart, <boomerang, <javelin")
-if missile_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..missile_exclusions) end
 
--------------------------------------------
------------------- Hooks ------------------
--------------------------------------------
+local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones", 
+      "condenser vane", "box of beasts", "phantom mirror", "piece from Xom's chessboard" }
+local function get_misc_name(text)
+  for _, item_name in ipairs(all_misc) do
+    if text:find(item_name) then return item_name end
+  end
+end
+
+
+
+------------------------------------------
+------------------ Hook ------------------
+------------------------------------------
+
 function c_message_exclude_dropped(text, channel)
-  c_message_exclude_dropped_jewellery(text, channel)
-  c_message_exclude_dropped_missiles(text, channel)
-end
+  if channel ~= "plain" then return end
+  
+  local exclude
+  if text:find("You drop ") then exclude = true
+  elseif text:find(" %- ") then exclude = false
+  else return
+  end
 
+  local item_name = get_jewellery_name(text)
+  if not item_name then item_name = get_missile_name(text) end
+  if not item_name then item_name = get_misc_name(text) end
+  if not item_name then return end
 
-function c_assign_invletter_exclude_dropped(it)
-  it.inscribe(it.inscription:gsub("~drop", ""), false)
+  if exclude then
+    crawl.setopt("autopickup_exceptions ^= >"..item_name)
+    if dropped_item_exclusions ~= "" then dropped_item_exclusions = dropped_item_exclusions.."," end
+  else
+    crawl.setopt("autopickup_exceptions -= >"..item_name)
+    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
+    dropped_item_exclusions = dropped_item_exclusions:gsub(",>"..item_name, "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name..",", "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
+  end
 end
+if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
 }
 
@@ -2613,18 +2589,100 @@ function c_assign_invletter_drop_inferior(it)
     end
   end
 end
+
+
+function c_assign_invletter_exclude_dropped(it)
+  it.inscribe(it.inscription:gsub("~drop", ""), false)
+end
 }
 
-########features/runrest-stop.rc########
+########features/runrest-features.rc########
 
 {
+--------------------------------
+---- Fully rest off effects ----
+--------------------------------
+crawl.setopt("runrest_ignore_message += recovery:.*")
+crawl.setopt("runrest_ignore_message += duration:.*")
+
+local function fully_recovered()
+  local status_wait = { "on berserk cooldown", "short of breath", "corroded", "vulnerable"}
+  for _, s in ipairs(status_wait) do
+    if you.status(s) then return false end
+  end
+  return true
+end
+
+local waiting_for_recovery = false
+local explore_after_recovery = false
+
+-- Attach full recovery to auto-explore
+function explore_full_recovery()
+  if not fully_recovered() then
+    explore_after_recovery = true
+    crawl.do_commands({"CMD_REST"})
+  elseif you.status("slowed") then
+    if not (you.strength() <=0 or you.intelligence() <= 0 or you.dexterity() <=0) then
+       explore_after_recovery = true
+       crawl.do_commands({"CMD_REST"})
+    else
+      crawl.do_commands({"CMD_EXPLORE"})
+    end
+  else
+    crawl.do_commands({"CMD_EXPLORE"})
+  end
+end
+crawl.setopt("macros += M o ===explore_full_recovery")
+
 -------------------------------------
 ---- Hooks (All functions below) ----
 -------------------------------------
--- You can add/remove these hooks a-la-carte if you don't like any
 
+--------------------------------
+---- rest off effects cont. ----
+--------------------------------
+function ch_stop_running_full_recovery(kind)
+  if kind == "run" and not fully_recovered() then
+    waiting_for_recovery = true
+    crawl.setopt("message_colour += mute:You start waiting.")
+  end
+end
 
------------------------
+function c_message_fully_recover(text, channel)
+--if text:find("contamination") then crawl.mpr(text) crawl.mpr(channel) end
+  if text:find("You start waiting.") then
+    if not fully_recovered() then
+      waiting_for_recovery = true
+      crawl.setopt("message_colour += mute:You start waiting.")
+    end
+  elseif waiting_for_recovery then
+    you.stop_activity()
+  end
+end
+
+function ready_fully_recover()
+  if waiting_for_recovery then
+    if fully_recovered() then
+      you.stop_activity()
+      crawl.setopt("message_colour -= mute:You start waiting.")
+      waiting_for_recovery = false
+      crawl.mpr("Fully recovered.")
+      
+      if explore_after_recovery then
+        crawl.sendkeys("o")
+        explore_after_recovery = false
+      end
+    else
+      crawl.do_commands({"CMD_WAIT"})
+    end
+  end
+end
+
+--------------------------------------------------------------------
+---- End Fully rest off effects (Hooks for other features cont. ----
+--------------------------------------------------------------------
+
+----------------------
 ---- Ignore altars ----
 -----------------------
 local stop_on_altars = true
@@ -2667,56 +2725,6 @@ function ready_ignore_exits()
   end
 end
 
-
--------------------------------------
----- Ignore summons disappearing ----
--------------------------------------
-function ch_stop_running_ignore_summons(kind)
-  local runrest_ignore_summons = { "crumbles into dust", "fades into mist", "returns to the shadows", 
-                                   "Your foxfire dissipates", "Your.*simulacrum vaporises", "Your crimson imp blinks" }
-  local text = crawl.messages(1)
-  for _, v in ipairs(runrest_ignore_summons) do
-    if text:find(v) then
-      if kind:find("explore") then crawl.sendkeys("o") end
-      if kind == "" then crawl.sendkeys("5") end
-    end
-  end
-end
-
-
-------------------------------
----- Ignore sense monster ----
-------------------------------
-function ch_stop_running_ignore_sense_monsters(kind)
-  if crawl.messages(1):find("You sense a monster nearby") then
-    if kind:find("explore") then crawl.sendkeys("o") end
-    if kind == "" then crawl.sendkeys("5") end
-  end
-end
-
-
------------------------
----- Ignore mimics ----
------------------------
-function ch_stop_running_ignore_mimics(kind)
-  if crawl.messages(1):find("mimic.*vanishes") then
-    if kind:find("explore") then crawl.sendkeys("o") end
-  end
-end
-
-
-----------------------------------------
----- Stop on recovery if full hp/mp ----
-----------------------------------------
-function c_message_stop_wait_on_recovery(text, channel)
-  if text:find("You start waiting.") then
-    crawl.setopt("runrest_ignore_message -= recovery:.*")
-    crawl.setopt("runrest_ignore_message -= duration:.*")
-  elseif text:find("Done waiting.") then
-    crawl.setopt("runrest_ignore_message += recovery:.*")
-    crawl.setopt("runrest_ignore_message += duration:.*")
-  end
-end
 }
 
 ########features/mute-swaps.rc########
@@ -2857,7 +2865,7 @@ function c_message(text, channel)
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
   if c_message_safe_consumables then c_message_safe_consumables(text, channel) end
   if c_message_search_altars_in_temple then c_message_search_altars_in_temple(text, channel) end
-  if c_message_stop_wait_on_recovery then c_message_stop_wait_on_recovery(text, channel) end
+  if c_message_fully_recover then c_message_fully_recover(text, channel) end
   if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
   if c_message_inscribe_dps then c_message_inscribe_dps(text, channel) end
@@ -2887,9 +2895,7 @@ end
 ---- ch_stop_running() ----
 ---------------------------
 function ch_stop_running(kind)
-  if ch_stop_running_ignore_summons then ch_stop_running_ignore_summons(kind) end
-  if ch_stop_running_ignore_sense_monsters then ch_stop_running_ignore_sense_monsters(kind) end
-  if ch_stop_running_ignore_mimics then ch_stop_running_ignore_mimics(kind) end
+  if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
 end
 
 ---------------------------
@@ -2908,7 +2914,7 @@ function ready()
   if ready_ignore_altars then ready_ignore_altars() end
   if ready_ignore_exits then ready_ignore_exits() end
   if ready_after_shaft then ready_after_shaft() end
-  
+  if ready_fully_recover then ready_fully_recover() end
 end
 
 

@@ -44,9 +44,9 @@ autopickup_exceptions ^= >useless_item, <misc
     local found_first = false
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.class(true) == "jewellery" and inv.subtype() == st then
-	    if found_first then return false end
-	    found_first = true
-	  end
+        if found_first then return false end
+        found_first = true
+      end
     end
   end)
 }
