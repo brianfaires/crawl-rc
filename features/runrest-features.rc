@@ -6,10 +6,11 @@ crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
 local function fully_recovered()
-  local status_wait = { "on berserk cooldown", "short of breath", "corroded", "vulnerable"}
+  local status_wait = { "on berserk cooldown", "short of breath", "corroded", "vulnerable", "confused", "slowed" }
   for _, s in ipairs(status_wait) do
     if you.status(s) then return false end
   end
+  
   return true
 end
 
@@ -18,21 +19,16 @@ local explore_after_recovery = false
 
 -- Attach full recovery to auto-explore
 function explore_full_recovery()
-  if not fully_recovered() then
+  if fully_recovered() then
+    crawl.do_commands({"CMD_EXPLORE"})
+  else
     explore_after_recovery = true
     crawl.do_commands({"CMD_REST"})
-  elseif you.status("slowed") then
-    if not (you.strength() <=0 or you.intelligence() <= 0 or you.dexterity() <=0) then
-       explore_after_recovery = true
-       crawl.do_commands({"CMD_REST"})
-    else
-      crawl.do_commands({"CMD_EXPLORE"})
-    end
-  else
-    crawl.do_commands({"CMD_EXPLORE"})
   end
 end
 crawl.setopt("macros += M o ===explore_full_recovery")
+
+
 
 -------------------------------------
 ---- Hooks (All functions below) ----
@@ -78,9 +74,9 @@ function ready_fully_recover()
   end
 end
 
---------------------------------------------------------------------
----- End Fully rest off effects (Hooks for other features cont. ----
---------------------------------------------------------------------
+---------------------------------------------------------------------
+---- End Fully rest off effects (Hooks for other features cont.) ----
+---------------------------------------------------------------------
 
 ----------------------
 ---- Ignore altars ----
