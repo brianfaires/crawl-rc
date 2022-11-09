@@ -15,7 +15,6 @@ if not added_persistant_data or you.turns() == 0 then
                 "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", 
                 "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
 
-
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0
   alerted_first_ranged_two_handed = 0
@@ -72,5 +71,11 @@ function get_rare_item_index(it)
   return -1
 end
 
-
+-- Remove starting items from rare_items
+if you.turns() == 0 then  
+  for inv in iter.invent_iterator:new(items.inventory()) do
+	local idx = get_rare_item_index(inv)
+	if idx ~= -1 then util.remove(rare_items, rare_items[idx]) end
+  end
+end
 }
