@@ -94,12 +94,16 @@ function ready_ignore_altars()
 end
 
 
------------------------------------------------
----- Search altars in temple after explore ----
------------------------------------------------
+----------------------------------
+---- Automated temple actions ----
+----------------------------------
 function c_message_search_altars_in_temple(text, channel)
-  if you.branch() == "Temple" and text:find("explor") then
-    crawl.sendkeys({ 6, "altar\r" })
+  if you.branch() == "Temple" then
+    if text:find("explor") then
+      crawl.sendkeys({ 6, "altar\r" })
+	elseif text:find("welcomes you!") then
+	  crawl.sendkeys("X<\r")
+	end
   end
 end
 
