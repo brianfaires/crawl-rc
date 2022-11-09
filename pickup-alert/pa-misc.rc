@@ -1,5 +1,3 @@
-include = pickup-alert/pa-util.rc
-include = pickup-alert/pa-data.rc
 include = pickup-alert/pa-main.rc
 
 {

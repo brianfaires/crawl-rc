@@ -1,30 +1,5 @@
 include = pickup-alert/pa-util.rc
 {
-function update_high_scores(it, is_armour)
-  if not it then return end
-  if is_armour then
-    local it_ac = get_armour_ac(it)
-    if it_ac > armour_high_score then armour_high_score = it_ac end
-	return
-  end
-  
-  local it_dmg = get_weap_dps(it) + (it.accuracy + it.plus) / 2
-  if it_dmg > weapon_high_score then weapon_high_score = it_dmg end
-  
-  local it_unbranded_dmg = get_weap_dps(it, true) + it.accuracy + it.plus
-  if it_unbranded_dmg > unbranded_high_score then unbranded_high_score = it_unbranded_dmg end
-  
-  if it.is_ranged then
-    if get_hands(it) == 1 then alerted_first_ranged_one_handed = 1
-    else alerted_first_ranged_two_handed = 1 end
-  elseif it.weap_skill == "Polearms" then
-    if it_dmg > polearm_high_score then polearm_high_score = it_dmg end
-    if get_hands(it) == 1 then 
-	  if it_dmg > polearm_onehand_high_score then polearm_onehand_high_score = it_dmg end
-	end
-  end
-end
-
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
 -------------------------------------------------------------------------------
@@ -48,13 +23,12 @@ if not added_persistant_data or you.turns() == 0 then
   polearm_onehand_high_score = 0
   unbranded_high_score = 0
   weapon_high_score = 0
-
-  update_high_scores(items.equipped_at("body armour"), true)
-  update_high_scores(items.equipped_at("weapon"), false)
 end
 
 
 local function persist_table(table_name, table)
+  if #table == 0 then return string.char(10) end
+  
   local cmd = table_name.." = {"
   for _,v in ipairs(table) do
     cmd = cmd .. "\"" .. v .. "\", "
@@ -99,155 +73,4 @@ function get_rare_item_index(it)
 end
 
 
-function check_high_scores(it)
-  local ret_val = nil
-  
-  if it.class(true) == "armour" then
-    local ac = get_armour_ac(it)
-    if ac > armour_high_score then
-      armour_high_score = ac
-      if not ret_val then ret_val = "Strongest armour" end
-    end
-  elseif it.class(true) == "weapon" then
-    local it_plus = it.plus
-    if not it_plus then it_plus = 0 end
-    local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
-    if score > weapon_high_score then
-      weapon_high_score = score
-      if not ret_val then ret_val = "Good weapon" end
-    end
-    
-    local unbranded_score = get_weap_dps(it, false) + (it.accuracy + it_plus) / 2
-    if unbranded_score > unbranded_high_score then
-      unbranded_high_score = score
-      if not ret_val then ret_val = "High pure damage" end
-    end
-    
-    if it.weap_skill == "Polearms" then
-      if score > polearm_high_score then
-        polearm_high_score = score
-        if not items.equipped_at("shield") and not ret_val then ret_val = "Good polearm" end
-      end
-
-      if get_hands(it) == 1 and score > polearm_onehand_high_score then
-        polearm_onehand_high_score = score
-        if not ret_val then ret_val = "1-handed polearm" end
-      end
-    end
-  end
-
-  return ret_val
-end
-
-
-function pickup_item(it)
-  local ret_val = false
-  local name = it.name("plain")
-  if not it.fully_identified then
-    name = "+0 " .. name
-  end
-
-  if it.artefact then
-    ret_val = true
-  elseif not util.contains(items_picked, name) then
-    -- Add to the table on pickup, in c_assign_invletter() hook function
-    ret_val = true
-  end
-  
-  -- Remove from rare_items if it's there
-  for i,v in ipairs(rare_items) do
-    if name:find(v) then
-      util.remove(rare_items, rare_items[i])
-      return true
-    end
-  end
-  
-  -- Returns true if we haven't picked up this item previously
-  return ret_val
-end
-
-
-function alert_item(it, alert_type)
-  local name = it.name("plain")
-  
-  if (it.artefact or it.branded) and not it.fully_identified then
-    if util.contains(items_alerted, name) then return end
-    table.insert(items_alerted, name)
-    show_alert_msg("Item alert, "..alert_type..": ", name)
-	table.insert(level_alerts, name)
-    return
-  end
-  
-  -- Prefix unidentified items with "+0"
-  if not it.fully_identified then
-    name = "+0 " .. name
-  end
-
-  if not util.contains(items_alerted, name) then
-    if it.class(true) == "weapon" or it.class(true) == "magical staff" then
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
-	  table.insert(level_alerts, name)
-    elseif it.class(true) == "armour" then
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
-	  table.insert(level_alerts, name)
-    else
-      show_alert_msg("Item alert, "..alert_type..": ", name)
-	  table.insert(level_alerts, name)
-    end
-
-    insert_item_and_less_enchanted(items_alerted, name)
-  end
-  
-  -- Returns true to make other code more concise; indicates that we tried to alert this item
-  return true
-end
-crawl.setopt("runrest_stop_message += Item alert, ")
-
-
-
----------------------------------------------
-------------------- Hooks -------------------
----------------------------------------------
-
-function c_assign_invletter_item_alerts(it)
-  local name = it.name("plain")
-  if it.delay or it.class(true) == "armour" then
-    if not util.contains(items_picked, name) then
-      insert_item_and_less_enchanted(items_picked, name)
-      insert_item_and_less_enchanted(items_alerted, name)
-      check_high_scores(it)
-      
-      for i, v in ipairs(rare_items) do
-        if name:find(v) then
-		  util:remove(rare_items, rare_items[i])
-		  break
-		end
-      end
-    end
-  end
-  
-  if util.contains(level_alerts, name) then util.remove(level_alerts, name) end
-end
-
-function c_message_item_alerts(text, channel)
-  if text:find("Done exploring.") or text:find("Partly explored") then
-    local all_alerts
-	for _, v in ipairs(level_alerts) do
-	  if not all_alerts then all_alerts = v
-	  else all_alerts = all_alerts..", "..v
-	  end
-	end
-	
-	level_alerts = {}
-	crawl.mpr("<magenta>Level alerts: "..all_alerts.."</magenta>")
-  end
-end
-
-function ready_item_alerts()
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if it.delay then update_high_scores(it, false)
-	elseif it.subtype() == "body" then update_high_scores(it, true)
-	end
-  end
-end
 }

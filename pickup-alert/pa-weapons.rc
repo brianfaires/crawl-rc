@@ -1,5 +1,3 @@
-include = pickup-alert/pa-util.rc
-include = pickup-alert/pa-data.rc
 include = pickup-alert/pa-main.rc
 
 {
@@ -229,7 +227,7 @@ local function alert_interesting_weapon(it, cur)
     if it.is_ranged ~= cur.is_ranged then return false end
     --local penalty = 1
     --if it.weap_skill == top_school then penalty = 0.5 end
-    local penalty = 0.5 * you.skill(cur.weap_skill) / you.skill(it.weap_skill)
+    local penalty = (you.skill(it.weap_skill)+8) / (you.skill(top_school)+8)
     if get_hands(it) == 2 and get_hands(cur) == 1 then
       -- Item requires an extra hand
       if it.branded and not cur.artefact and not cur.branded then
@@ -242,7 +240,11 @@ local function alert_interesting_weapon(it, cur)
         if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
       elseif you.skill("shields") <= 4 then
         -- Not really training shields; may be interested in big upgrades
-        if get_weap_dps(it) >= penalty*2*inv_max_dmg["melee"] then return alert_item(it, "2-handed weapon4") end
+        if penalty*get_weap_dps(it) >= inv_max_dmg["melee"] then
+                crawl.mpr("pen="..penalty)
+        crawl.mpr(inv_max_dmg["melee"])
+        crawl.mpr(get_weap_dps(it))
+        return alert_item(it, "2-handed weapon4") end
       end
     else
       -- Item uses same number of hands or fewer
@@ -250,11 +252,11 @@ local function alert_interesting_weapon(it, cur)
       if it.branded then
         local dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
         if not cur.branded then
-          if dmg_delta >= -4/penalty then return alert_item(it, "New ego2") end
+          if penalty*dmg_delta >= -4 then return alert_item(it, "New ego2") end
         elseif it.ego() == cur.ego() then
           if dmg_delta >= 0 then return alert_item(it, "Stronger weapon1") end
         elseif not util.contains(egos, it.ego()) then
-          if dmg_delta >= -4/penalty then return alert_item(it, "New ego3") end
+          if penalty*dmg_delta >= -4 then return alert_item(it, "New ego3") end
         end
       else
         -- Not branded
@@ -315,7 +317,7 @@ end
 -----------------------------------------
 
 local function alert_high_scores(it)
-  local category = check_high_scores(it)
+  local category = update_high_scores(it)
   if category then alert_item(it, category) end
 end
 

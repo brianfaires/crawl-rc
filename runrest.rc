@@ -5,6 +5,7 @@ ignore := runrest_ignore_message
 # Ignore these stops
 interrupt_travel -= sense_monster
 interrupt_travel -= mimic
+ignore ^= "sense a monster nearby"
 
 # Monsters to ignore at a distance
 runrest_ignore_monster += fire vortex:1
@@ -70,3 +71,5 @@ ignore ^= our.*simulacrum vaporises
 ignore ^= our.*returns to the shadows of the Dungeon
 ignore ^= our.*skeleton crumbles into dust
 ignore ^= our.*fades into mist
+ignore ^= our.*looks more healthy
+ignore ^= our.*is no longer (corroded|moving slowly)

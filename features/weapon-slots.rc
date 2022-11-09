@@ -24,7 +24,7 @@ local function get_priority_ab(it)
   if class == "weapon" then
     if it.is_ranged then    
       if you.skill("Ranged Weapons") >= 4 then return 2 end
-	  return 5
+      return 5
     end
     
     if it.weap_skill == "Polearms" then

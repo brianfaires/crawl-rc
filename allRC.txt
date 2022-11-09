@@ -1113,7 +1113,8 @@ end
 ---- Weapon info strings ----
 -----------------------------
 function get_weapon_info(it)
-  if not it.weap_skill then return end
+  if not it.delay then return end
+  
   local dps = get_weap_dps(it)
   local dps_str = string.format("%.2f", dps)
       
@@ -1164,15 +1165,15 @@ end
 ########pickup-alert/pa-data.rc########
 
 {
-
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
 -------------------------------------------------------------------------------
 if not added_persistant_data or you.turns() == 0 then
   added_persistant_data = 1
   
-  items_picked = { "" }
-  items_alerted = { "" }
+  level_alerts = { }
+  items_picked = { }
+  items_alerted = { }
   rare_items = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
                 "lajatang", "bardiche", "demon trident", "trishula",
                 "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
@@ -1181,41 +1182,21 @@ if not added_persistant_data or you.turns() == 0 then
 
 
   armour_high_score = 0
-  local eq = items.equipped_at("body armour")
-  if eq then armour_high_score = get_armour_ac(eq) end
-
   alerted_first_ranged_one_handed = 0
   alerted_first_ranged_two_handed = 0
   polearm_high_score = 0
   polearm_onehand_high_score = 0
   unbranded_high_score = 0
   weapon_high_score = 0
-  
-  eq = items.equipped_at("weapon")
-  if eq then
-    local eq_dmg = get_weap_dps(eq) + (eq.accuracy + eq.plus) / 2
-    weapon_high_score = eq_dmg
-    unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus
-    
-    if eq.is_ranged then
-      if get_hands(eq) == 1 then alerted_first_ranged_one_handed = 1
-      else alerted_first_ranged_two_handed = 1 end
-    elseif eq.weap_skill == "Polearms" then
-      polearm_high_score = eq_dmg
-      if get_hands(eq) == 1 then polearm_onehand_high_score = eq_dmg end
-    end
-  end
 end
 
 
 local function persist_table(table_name, table)
+  if #table == 0 then return string.char(10) end
+  
   local cmd = table_name.." = {"
-  local len = 0
   for _,v in ipairs(table) do
-    if v ~= "" then
-      cmd = cmd .. "\"" .. v .. "\", "
-      len = len+1
-    end
+    cmd = cmd .. "\"" .. v .. "\", "
   end
 
   return cmd .. "\"\"}" .. string.char(10)
@@ -1229,6 +1210,7 @@ end
 if not added_persistant_data_hooks then
   added_persistant_data_hooks = true
   
+  table.insert(chk_lua_save, function() return persist_table("level_alerts", level_alerts) end)
   table.insert(chk_lua_save, function() return persist_table("rare_items", rare_items) end)
   table.insert(chk_lua_save, function() return persist_table("items_picked", items_picked) end)
   table.insert(chk_lua_save, function() return persist_table("items_alerted", items_alerted) end)
@@ -1246,33 +1228,56 @@ end
 ----------------------------------------
 ---- Accessors into persistant data ----
 ----------------------------------------
-function pickup_item(it)
-  local ret_val = false
-  local name = it.name("plain")
-  if not it.fully_identified then
-    name = "+0 " .. name
-  end
-
-  if it.artefact then
-    ret_val = true
-  elseif not util.contains(items_picked, name) then
-    -- Add to the table on pickup, in c_assign_invletter() hook function
-    ret_val = true
-  end
-  
-  -- Remove from rare_items if it's there
+function get_rare_item_index(it)
+  local qualname = it.name("qual")
   for i,v in ipairs(rare_items) do
-    if v ~= "" and name:find(v) then
-      rare_items[i] = ""
-      return true
-    end
+    if v ~= "" and qualname:find(v) then 
+    return i end
   end
-  
-  -- Returns true if we haven't picked up this item previously
-  return ret_val
+  return -1
 end
 
-function check_high_scores(it)
+
+}
+
+########pickup-alert/pa-main.rc########
+
+
+{
+
+-------------------------
+---- Autopickup main ----
+-------------------------
+add_autopickup_func(function (it, name)
+  local class = it.class(true)
+  
+  -- Check for pickup
+  local retVal = false
+  if class == "armour" and loaded_pa_armour then retVal = pickup_armour(it)
+  elseif class == "weapon" and loaded_pa_weapons then retVal = pickup_weapons(it)
+  elseif class == "magical staff" and loaded_pa_misc then retVal = pickup_staves(it)
+  end
+  
+  if retVal == true then return pickup_item(it) end
+
+  
+  -- Not picking up this item. Check for alerts
+  if loaded_pa_misc then
+    alert_rare_items(it)
+    if class == "magical staff" then alert_staves(it) end
+  end
+
+  if it.name("base") == "orb" and loaded_pa_misc then alert_orbs(it)
+  elseif class == "armour" and loaded_pa_armour then alert_armour(it)
+  elseif class == "weapon" and loaded_pa_weapons then alert_weapons(it)
+  end
+end)
+
+
+----------------------------------------
+---- Persistant data access / logic ----
+----------------------------------------
+function update_high_scores(it)
   local ret_val = nil
   
   if it.class(true) == "armour" then
@@ -1312,19 +1317,30 @@ function check_high_scores(it)
   return ret_val
 end
 
-function c_assign_invletter_item_alerts(it)
-  if it.weap_skill or it.class(true) == "armour" then
-    local name = it.name("plain")
-    if not util.contains(items_picked, name) then
-      insert_item_and_less_enchanted(items_picked, name)
-      insert_item_and_less_enchanted(items_alerted, name)
-      check_high_scores(it)
-      
-      for i, v in ipairs(rare_items) do
-        if name:find(v) then rare_items[i] = "" end
-      end
+function pickup_item(it)
+  local ret_val = false
+  local name = it.name("plain")
+  if not it.fully_identified then
+    name = "+0 " .. name
+  end
+
+  if it.artefact then
+    ret_val = true
+  elseif not util.contains(items_picked, name) then
+    -- Add to the table on pickup, in c_assign_invletter() hook function
+    ret_val = true
+  end
+  
+  -- Remove from rare_items if it's there
+  for i,v in ipairs(rare_items) do
+    if name:find(v) then
+      util.remove(rare_items, rare_items[i])
+      return true
     end
   end
+  
+  -- Returns true if we haven't picked up this item previously
+  return ret_val
 end
 
 
@@ -1335,6 +1351,7 @@ function alert_item(it, alert_type)
     if util.contains(items_alerted, name) then return end
     table.insert(items_alerted, name)
     show_alert_msg("Item alert, "..alert_type..": ", name)
+    table.insert(level_alerts, name)
     return
   end
   
@@ -1346,10 +1363,13 @@ function alert_item(it, alert_type)
   if not util.contains(items_alerted, name) then
     if it.class(true) == "weapon" or it.class(true) == "magical staff" then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
+      table.insert(level_alerts, name)
     elseif it.class(true) == "armour" then
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))    
+      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
+      table.insert(level_alerts, name)
     else
       show_alert_msg("Item alert, "..alert_type..": ", name)
+      table.insert(level_alerts, name)
     end
 
     insert_item_and_less_enchanted(items_alerted, name)
@@ -1361,54 +1381,53 @@ end
 crawl.setopt("runrest_stop_message += Item alert, ")
 
 
-function get_rare_item_index(it)
-  local qualname = it.name("qual")
-  for i,v in ipairs(rare_items) do
-    if v ~= "" and qualname:find(v) then 
-    return i end
+
+
+---------------------------------------------
+------------------- Hooks -------------------
+---------------------------------------------
+
+function c_assign_invletter_item_alerts(it)
+  local name = it.name("plain")
+  if it.delay or it.class(true) == "armour" then
+    if not util.contains(items_picked, name) then
+      insert_item_and_less_enchanted(items_picked, name)
+      insert_item_and_less_enchanted(items_alerted, name)
+      update_high_scores(it)
+      
+      for i, v in ipairs(rare_items) do
+        if name:find(v) then
+          util:remove(rare_items, rare_items[i])
+          break
+        end
+      end
+    end
   end
-  return -1
+  
+  if util.contains(level_alerts, name) then util.remove(level_alerts, name) end
 end
 
------------------------------------------------------------------------------
----------------------------- End persistant data ----------------------------
------------------------------------------------------------------------------
-}
-
-########pickup-alert/pa-main.rc########
-
-
-{
-
-------------------------------------
----- Autopickup and alerts hook ----
-------------------------------------
-add_autopickup_func(function (it, name)
-  local class = it.class(true)
-  
-  -- Check for pickup
-  local retVal = false
-  if class == "armour" and loaded_pa_armour then retVal = pickup_armour(it)
-  elseif class == "weapon" and loaded_pa_weapons then retVal = pickup_weapons(it)
-  elseif class == "magical staff" and loaded_pa_misc then retVal = pickup_staves(it)
+function c_message_item_alerts(text, channel)
+  if text:find("Done exploring.") or text:find("Partly explored") then
+    local all_alerts
+    for _, v in ipairs(level_alerts) do
+      if not all_alerts then all_alerts = v
+      else all_alerts = all_alerts..", "..v
+      end
+    end
+    
+    level_alerts = {}
+    crawl.mpr("<magenta>Level alerts: "..all_alerts.."</magenta>")
   end
-  
-  if retVal == true then return pickup_item(it) end
+end
 
-  
-  -- Not picking up this item. Check for alerts
-  if it.name("base") == "orb" and loaded_pa_misc then alert_orbs(it)
-  elseif class == "armour" and loaded_pa_armour then alert_armour(it)
-  elseif class == "weapon" and loaded_pa_weapons then alert_weapons(it)
+function ready_item_alerts()
+  for it in iter.invent_iterator:new(items.inventory()) do
+    if it.delay then update_high_scores(it, false)
+    elseif it.subtype() == "body" then update_high_scores(it, true)
+    end
   end
-  if loaded_pa_misc then
-    alert_rare_items(it)
-    if class == "magical staff" then alert_staves(it) end
-  end
-end)
--------------------------------
----- End autopickup master ----
--------------------------------
+end
 }
 
 ########pickup-alert/pa-armour.rc########
@@ -2018,7 +2037,7 @@ end
 -----------------------------------------
 
 local function alert_high_scores(it)
-  local category = check_high_scores(it)
+  local category = update_high_scores(it)
   if category then alert_item(it, category) end
 end
 
@@ -2255,7 +2274,7 @@ local function get_priority_ab(it)
   if class == "weapon" then
     if it.is_ranged then    
       if you.skill("Ranged Weapons") >= 4 then return 2 end
-	  return 5
+      return 5
     end
     
     if it.weap_skill == "Polearms" then
@@ -2853,13 +2872,13 @@ function check_new_location(key)
   local cur_location = you.branch()..you.depth()
   if prev_location ~= cur_location then
     crawl.formatted_mpr("Really go right back? (y/n)", "prompt")
-     local res = crawl.getch()
-     if string.lower(string.char(res)) == "y" then
-       crawl.sendkeys(key)
-     end
-    else
+    local res = crawl.getch()
+    if string.lower(string.char(res)) == "y" then
       crawl.sendkeys(key)
     end
+  else
+    crawl.sendkeys(key)
+  end
 end
 
 function safe_upstairs()
@@ -2880,6 +2899,7 @@ end
 }
 
 
+
 ####################################################################
 ######################## Lua Hook Functions ########################
 ####################################################################
@@ -2888,7 +2908,6 @@ end
 ---------- c_message() -----------
 ----------------------------------
 function c_message(text, channel)
-
   if c_message_remind_identify then c_message_remind_identify(text, channel) end
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
@@ -2897,7 +2916,7 @@ function c_message(text, channel)
   if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
   if c_message_inscribe_dps then c_message_inscribe_dps(text, channel) end
-
+  if c_message_item_alerts then c_message_item_alerts(text, channel) end
 end
 
 
@@ -2944,6 +2963,7 @@ function ready()
   if ready_after_shaft then ready_after_shaft() end
   if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
+  if ready_item_alerts then ready_item_alerts() end
 end
 
 
