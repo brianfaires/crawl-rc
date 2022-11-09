@@ -5,11 +5,11 @@
 crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
-crawl.mpr(you.status())
 local function fully_recovered()
-  local status_wait = { "on berserk cooldown", "short of breath", "corroded", "vulnerable", "confused", "slowed", "tree-form", "tree-form (expiring)" }
+  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "slowed", "tree-form" }
+  local status = you.status()
   for s in iter.invent_iterator:new(status_wait) do
-    if you.status(s) then return false end
+    if status:find(s) then return false end
   end
   
   return true
@@ -69,7 +69,10 @@ function ready_fully_recover()
         crawl.sendkeys("o")
         explore_after_recovery = false
       end
-    else
+    elseif not you.feel_safe() then
+	  you.stop_activity()
+	  waiting_for_recovery = false
+	else
       crawl.do_commands({"CMD_WAIT"})
     end
   end
