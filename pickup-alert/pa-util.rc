@@ -359,7 +359,8 @@ end
 ---- Weapon info strings ----
 -----------------------------
 function get_weapon_info(it)
-  if not it.weap_skill then return end
+  if not it.delay then return end
+  
   local dps = get_weap_dps(it)
   local dps_str = string.format("%.2f", dps)
       

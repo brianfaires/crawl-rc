@@ -3,9 +3,9 @@ include = pickup-alert/pa-data.rc
 
 {
 
-------------------------------------
----- Autopickup and alerts hook ----
-------------------------------------
+-------------------------
+---- Autopickup main ----
+-------------------------
 add_autopickup_func(function (it, name)
   local class = it.class(true)
   
@@ -30,7 +30,5 @@ add_autopickup_func(function (it, name)
   elseif class == "weapon" and loaded_pa_weapons then alert_weapons(it)
   end
 end)
--------------------------------
----- End autopickup master ----
--------------------------------
+
 }

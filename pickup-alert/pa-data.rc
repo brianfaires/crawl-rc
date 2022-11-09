@@ -1,5 +1,30 @@
 include = pickup-alert/pa-util.rc
 {
+function update_high_scores(it, is_armour)
+  if not it then return end
+  if is_armour then
+    local it_ac = get_armour_ac(it)
+    if it_ac > armour_high_score then armour_high_score = it_ac end
+	return
+  end
+  
+  local it_dmg = get_weap_dps(it) + (it.accuracy + it.plus) / 2
+  if it_dmg > weapon_high_score then weapon_high_score = it_dmg end
+  
+  local it_unbranded_dmg = get_weap_dps(it, true) + it.accuracy + it.plus
+  if it_unbranded_dmg > unbranded_high_score then unbranded_high_score = it_unbranded_dmg end
+  
+  if it.is_ranged then
+    if get_hands(it) == 1 then alerted_first_ranged_one_handed = 1
+    else alerted_first_ranged_two_handed = 1 end
+  elseif it.weap_skill == "Polearms" then
+    if it_dmg > polearm_high_score then polearm_high_score = it_dmg end
+    if get_hands(it) == 1 then 
+	  if it_dmg > polearm_onehand_high_score then polearm_onehand_high_score = it_dmg end
+	end
+  end
+end
+
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
 -------------------------------------------------------------------------------
@@ -17,30 +42,15 @@ if not added_persistant_data or you.turns() == 0 then
 
 
   armour_high_score = 0
-  local eq = items.equipped_at("body armour")
-  if eq then armour_high_score = get_armour_ac(eq) end
-
   alerted_first_ranged_one_handed = 0
   alerted_first_ranged_two_handed = 0
   polearm_high_score = 0
   polearm_onehand_high_score = 0
   unbranded_high_score = 0
   weapon_high_score = 0
-  
-  eq = items.equipped_at("weapon")
-  if eq then
-    local eq_dmg = get_weap_dps(eq) + (eq.accuracy + eq.plus) / 2
-    weapon_high_score = eq_dmg
-    unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus
-    
-    if eq.is_ranged then
-      if get_hands(eq) == 1 then alerted_first_ranged_one_handed = 1
-      else alerted_first_ranged_two_handed = 1 end
-    elseif eq.weap_skill == "Polearms" then
-      polearm_high_score = eq_dmg
-      if get_hands(eq) == 1 then polearm_onehand_high_score = eq_dmg end
-    end
-  end
+
+  update_high_scores(items.equipped_at("body armour"), true)
+  update_high_scores(items.equipped_at("weapon"), false)
 end
 
 
@@ -201,14 +211,17 @@ crawl.setopt("runrest_stop_message += Item alert, ")
 
 function c_assign_invletter_item_alerts(it)
   local name = it.name("plain")
-  if it.weap_skill or it.class(true) == "armour" then
+  if it.delay or it.class(true) == "armour" then
     if not util.contains(items_picked, name) then
       insert_item_and_less_enchanted(items_picked, name)
       insert_item_and_less_enchanted(items_alerted, name)
       check_high_scores(it)
       
       for i, v in ipairs(rare_items) do
-        if name:find(v) then util:remove(rare_items, rare_items[i]) end
+        if name:find(v) then
+		  util:remove(rare_items, rare_items[i])
+		  break
+		end
       end
     end
   end
@@ -227,6 +240,14 @@ function c_message_item_alerts(text, channel)
 	
 	level_alerts = {}
 	crawl.mpr("<magenta>Level alerts: "..all_alerts.."</magenta>")
+  end
+end
+
+function ready_item_alerts()
+  for it in iter.invent_iterator:new(items.inventory()) do
+    if it.delay then update_high_scores(it, false)
+	elseif it.subtype() == "body" then update_high_scores(it, true)
+	end
   end
 end
 }

@@ -149,6 +149,7 @@ function ready()
   if ready_after_shaft then ready_after_shaft() end
   if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
+  if ready_item_alerts then ready_item_alerts() end
 end
 
 
