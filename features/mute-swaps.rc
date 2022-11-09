@@ -48,7 +48,7 @@ local last_pickup_turn = -1
 function c_assign_invletter_mute_swaps(it)
   -- this causes an unmute command on the message
   -- we can't unmute in time from this hook
-  if you.turns() == last_pickup_turn then
+  if you.turns() == last_pickup_turn or crawl.messages(1):find(" %- ") then
     crawl.mpr("")
   else
     last_pickup_turn = you.turns()
