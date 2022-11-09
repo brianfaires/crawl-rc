@@ -28,7 +28,7 @@ end
 local function persist_table(table_name, table)
   local cmd_init = table_name.." = {"
   local cmd = cmd_init
-  for _,v in ipairs(table) do
+  for v in iter.invent_iterator:new(table) do
     if cmd ~= cmd_init then cmd = cmd..", " end
 	cmd = cmd.."\""..v.."\""
   end

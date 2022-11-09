@@ -31,7 +31,7 @@ end
 
 local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin" }
 local function get_missile_name(text)
-  for _, item_name in ipairs(all_missiles) do
+  for item_name in iter.invent_iterator:new(all_missiles) do
     if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
@@ -51,7 +51,7 @@ end
 local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones", 
       "condenser vane", "box of beasts", "phantom mirror", "piece from Xom's chessboard" }
 local function get_misc_name(text)
-  for _, item_name in ipairs(all_misc) do
+  for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
   end
 end

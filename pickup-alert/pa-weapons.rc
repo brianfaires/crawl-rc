@@ -12,7 +12,7 @@ local all_schools = { "axes", "maces & flails", "long blades", "short blades", "
 local function set_top_school()
   local max = 0
   
-  for _, v in ipairs(all_schools) do
+  for v in iter.invent_iterator:new(all_schools) do
     if you.skill(v) > max then
       max = you.skill(v)
       top_school = v

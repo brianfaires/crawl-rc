@@ -27,7 +27,7 @@ function alert_rare_items(it)
     crawl.more()
   end
 
-  rare_items[index] = ""
+  util.remove(rare_items, rare_items[index])
   
   return
 end

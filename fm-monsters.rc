@@ -105,7 +105,7 @@ local fm_patterns = {
 
 -- Add the non-dynamic force_mores()  (moved code down here for easier configuration)
 local fm_mon_str = nil
-for _, v in ipairs(force_more_monsters) do
+for v in iter.invent_iterator:new(force_more_monsters) do
   if fm_mon_str == nil then
     fm_mon_str = "monster_warning:(?<!spectral )("..v
   else
@@ -123,7 +123,7 @@ local notify_fm = false
 
 -- Keep track of active force_mores()
 local active_fm = {}
-for i,v in ipairs(fm_patterns) do
+for v in iter.invent_iterator:new(fm_patterns) do
   active_fm[#active_fm + 1] = false
 end
 
@@ -165,7 +165,7 @@ function ready_force_mores()
   for i,v in ipairs(fm_patterns) do
     local msg = nil
     if type(v.pattern) == "table" then
-      for j, p in ipairs(v.pattern) do
+      for p in iter.invent_iterator:new(v.pattern) do
         if not msg then
           msg = p
         else
