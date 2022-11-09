@@ -29,7 +29,7 @@ if not added_persistant_data or you.turns() == 0 then
   
   eq = items.equipped_at("weapon")
   if eq then
-    local eq_dmg = get_weap_dps(eq) + eq.accuracy + eq.plus
+    local eq_dmg = get_weap_dps(eq) + (eq.accuracy + eq.plus) / 2
     weapon_high_score = eq_dmg
     unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus
     
