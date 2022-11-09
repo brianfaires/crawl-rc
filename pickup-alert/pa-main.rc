@@ -20,13 +20,14 @@ add_autopickup_func(function (it, name)
 
   
   -- Not picking up this item. Check for alerts
-  if it.name("base") == "orb" and loaded_pa_misc then alert_orbs(it)
-  elseif class == "armour" and loaded_pa_armour then alert_armour(it)
-  elseif class == "weapon" and loaded_pa_weapons then alert_weapons(it)
-  end
   if loaded_pa_misc then
     alert_rare_items(it)
     if class == "magical staff" then alert_staves(it) end
+  end
+
+  if it.name("base") == "orb" and loaded_pa_misc then alert_orbs(it)
+  elseif class == "armour" and loaded_pa_armour then alert_armour(it)
+  elseif class == "weapon" and loaded_pa_weapons then alert_weapons(it)
   end
 end)
 -------------------------------
