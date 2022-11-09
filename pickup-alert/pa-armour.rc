@@ -200,6 +200,7 @@ local function alert_interesting_armour(it)
   local st, _ = it.subtype()
 
   if st == "body" then
+    if it.is_useless then return end
     local cur = items.equipped_at("body armour")
     if not cur then return false end
     
@@ -261,6 +262,7 @@ local function alert_interesting_armour(it)
       end
     end
   elseif st == "shield" then
+    if it.is_useless then return end
     local cur = items.equipped_at("shield")
     if not cur then return false end
     if it.branded and it.ego() ~= cur.ego() then
