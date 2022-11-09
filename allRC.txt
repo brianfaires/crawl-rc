@@ -116,6 +116,7 @@ ignore := runrest_ignore_message
 # Ignore these stops
 interrupt_travel -= sense_monster
 interrupt_travel -= mimic
+ignore ^= "sense a monster nearby"
 
 # Monsters to ignore at a distance
 runrest_ignore_monster += fire vortex:1
@@ -181,6 +182,8 @@ ignore ^= our.*simulacrum vaporises
 ignore ^= our.*returns to the shadows of the Dungeon
 ignore ^= our.*skeleton crumbles into dust
 ignore ^= our.*fades into mist
+ignore ^= our.*looks more healthy
+ignore ^= our.*is no longer (corroded|moving slowly)
 
 ########fm-messages.rc########
 
@@ -790,18 +793,19 @@ function has_ego(it)
 end
 
 
-function get_size_factor()
+function get_race_size()
   local race = you.race()
-  if race == "Spriggan" then return 4
-  elseif race == "Kobold" then return 2
-  elseif race == "Formicid" or race == "Armataur" or race == "Naga" or race == "Ogre" or race == "Troll" then return -2
+  if race == "Spriggan" then return -2
+  elseif race == "Kobold" then return -1
+  elseif race == "Formicid" or race == "Armataur" or race == "Naga" then return 1
+  elseif race == "Ogre" or race == "Troll" then return 2
   else return 0
   end
 end
 
 
 function get_shield_penalty(sh)
-  return 2/5 * sh.encumbrance * sh.encumbrance / (20 - 3 * get_size_factor()) * (27 - you.skill("Shields")) / 27
+  return 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_race_size()) * (27 - you.skill("Shields")) / 27
 end
 
 
@@ -827,55 +831,17 @@ function get_armour_ac(it)
     if art_ac then it_plus = it_plus + art_ac end
   end
   
-  local it_ac = it.ac
-  if you.get_base_mutation_level("deformed body", true, false, false) > 0 then it_ac = it_ac / 2 end
+  local deformed = you.get_base_mutation_level("deformed body", true, false, false) > 0
+  local pseudopods = you.get_base_mutation_level("pseudopods", true, false, false) > 0
   
-  return it_ac * (you.skill("Armour") / 22 + 1) + it_plus 
+  local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
+  if pseudopods or (deformed and it.subtype() == "body") then
+    return ac - it.ac / 2
+  else
+    return ac
+  end
 end
 
-
-function get_shield_sh(it)
-  local dex = you.dexterity()
-  if it.artefact and it.fully_identified then
-    local art_dex = it.artprops["Dex"]
-    if art_dex then dex = dex + art_dex end
-  end
-  
-  local cur = items.equipped_at("shield")
-  if cur and cur.artefact and cur.slot ~= it.slot then
-    local art_dex = cur.artprops["Dex"]
-    if art_dex then dex = dex - art_dex end
-  end
-
-  local it_plus = it.plus
-  if not it_plus then it_plus = 0 end
-  
-  local it_ac = it.ac
-  if you.get_base_mutation_level("deformed body", true, false, false) > 0 then it_ac = it_ac / 2 end
-  
-  local block = it_ac
-  local race = you.race()
-  if race == "Spriggan" then
-    if it.name("base"):find("buckler") then block = block + 2 end
-  elseif race == "Kobold" then
-    local basename = it.name("base")
-    if basename:find("buckler") then block = block + 1
-    elseif basename:find("kite shield") then block = block + 0.5 end
-  elseif race == "Ogre" or race == "Troll" then
-    if it.name("base"):find("kite shield") then block = block - 0.5 end
-  end
-  
-  
-  local stat_bonus = dex * 38 * (it_ac + 13) / 5200
-  
-  local skill = you.skill("Shields")
-  local addend
-  if skill >= 3 then addend = .38*skill
-  else addend = .57 + 0.19*skill
-  end
-  
-  return block * (1+skill/40) + it_plus + stat_bonus + addend
-end
 
 function get_armour_ev(it)
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
@@ -901,27 +867,70 @@ function get_armour_ev(it)
     if it.artprops["EV"] then art_ev = art_ev + it.artprops["EV"] end
   end
   
-  local size_factor = get_size_factor()
+  if str <= 0 then str = 1 end
+  
+  local size_factor = -2 * get_race_size()
   
   
-  local dodge_bonus = (8 + you.skill("Dodging") * dex) / (20 - size_factor)
-  local normalize_zero_to_zero = (8 + you.skill("Dodging") * no_art_dex) / (20 - size_factor)
+  local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
+  local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
 
-  armor_penalty = it.encumbrance - 3
-  local modifier = 0
-  if armor_penalty <= 0 then modifier = 1
-  elseif armor_penalty > 0 then
-    if armor_penalty >= str then modifier = str / (armor_penalty * 2)
-    else modifier = 1 - armor_penalty / (str * 2)
+  local encumb = it.encumbrance - 2* you.get_base_mutation_level("sturdy frame", true, false, true)
+  if encumb < 0 then encumb = 0 end
+  
+  armor_penalty = encumb - 3
+  -- todo: sturdy frame mutation
+  
+  if armor_penalty > 0 then
+    if armor_penalty >= str then dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
+    else dodge_bonus = dodge_bonus * (1 - armor_penalty / (str * 2))
     end
   end
 
-  local final_dodge_bonus = dodge_bonus * modifier
-  local aevp = 2 * it.encumbrance * it.encumbrance * (45 - you.skill("Armour")) / (5 * (str + 3) * 45)
+  local aevp = 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (str + 3) * 45)
 
-  return final_dodge_bonus - aevp + art_ev - normalize_zero_to_zero
+  return dodge_bonus - aevp + art_ev - normalize_zero_to_zero
 end
 
+
+function get_shield_sh(it)
+  local dex = you.dexterity()
+  if it.artefact and it.fully_identified then
+    local art_dex = it.artprops["Dex"]
+    if art_dex then dex = dex + art_dex end
+  end
+  
+  local cur = items.equipped_at("shield")
+  if cur and cur.artefact and cur.slot ~= it.slot then
+    local art_dex = cur.artprops["Dex"]
+    if art_dex then dex = dex - art_dex end
+  end
+
+  local it_plus = it.plus
+  if not it_plus then it_plus = 0 end
+  
+  local it_ac = it.ac
+  --if you.get_base_mutation_level("deformed body", true, false, false) > 0 then it_ac = it_ac / 2 end
+  
+  local skill = you.skill("Shields")
+  local basename = it.name("base")
+  local sh_size
+  if basename:find("tower shield") then sh_size = 0
+  elseif basename:find("kite shield") then sh_size = -1
+  else sh_size = -2
+  end
+  
+  local base_sh = it_ac * 2 + sh_size*get_race_size()
+  local shield = base_sh * (50 + skill*5/2)
+  shield = shield + 200*it_plus
+  
+  if skill < 3 then shield = shield + 76*skill
+  else shield = shield + 38*(3+skill)
+  end
+  
+  shield = shield + dex*38*(base_sh+13)/26
+  return (shield + 50) / 200
+end
 
 ---------------------------------------------------
 --------------------- Weapons ---------------------
@@ -1184,7 +1193,7 @@ if not added_persistant_data or you.turns() == 0 then
   
   eq = items.equipped_at("weapon")
   if eq then
-    local eq_dmg = get_weap_dps(eq) + eq.accuracy + eq.plus
+    local eq_dmg = get_weap_dps(eq) + (eq.accuracy + eq.plus) / 2
     weapon_high_score = eq_dmg
     unbranded_high_score = get_weap_dps(eq, true) + eq.accuracy + eq.plus
     
@@ -1919,7 +1928,7 @@ local function alert_interesting_weapon(it, cur)
     if it.is_ranged ~= cur.is_ranged then return false end
     --local penalty = 1
     --if it.weap_skill == top_school then penalty = 0.5 end
-    local penalty = 0.5 * you.skill(cur.weap_skill) / you.skill(it.weap_skill)
+    local penalty = (you.skill(it.weap_skill)+8) / (you.skill(top_school)+8)
     if get_hands(it) == 2 and get_hands(cur) == 1 then
       -- Item requires an extra hand
       if it.branded and not cur.artefact and not cur.branded then
@@ -1932,7 +1941,11 @@ local function alert_interesting_weapon(it, cur)
         if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
       elseif you.skill("shields") <= 4 then
         -- Not really training shields; may be interested in big upgrades
-        if get_weap_dps(it) >= penalty*2*inv_max_dmg["melee"] then return alert_item(it, "2-handed weapon4") end
+        if penalty*get_weap_dps(it) >= inv_max_dmg["melee"] then
+                crawl.mpr("pen="..penalty)
+        crawl.mpr(inv_max_dmg["melee"])
+        crawl.mpr(get_weap_dps(it))
+        return alert_item(it, "2-handed weapon4") end
       end
     else
       -- Item uses same number of hands or fewer
@@ -1940,11 +1953,11 @@ local function alert_interesting_weapon(it, cur)
       if it.branded then
         local dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
         if not cur.branded then
-          if dmg_delta >= -4/penalty then return alert_item(it, "New ego2") end
+          if penalty*dmg_delta >= -4 then return alert_item(it, "New ego2") end
         elseif it.ego() == cur.ego() then
           if dmg_delta >= 0 then return alert_item(it, "Stronger weapon1") end
         elseif not util.contains(egos, it.ego()) then
-          if dmg_delta >= -4/penalty then return alert_item(it, "New ego3") end
+          if penalty*dmg_delta >= -4 then return alert_item(it, "New ego3") end
         end
       else
         -- Not branded
@@ -2223,7 +2236,7 @@ end
 --Whenever you drop an item:
     -- Assign weapons to slots a and b
         -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless skill
-        -- 3:magical staff, 4:polearm
+        -- 3:magical staff, 4:polearm, 5:ranged
     -- Assign weap to w: ranged/polearm/any
 
 
@@ -2242,7 +2255,7 @@ local function get_priority_ab(it)
   if class == "weapon" then
     if it.is_ranged then    
       if you.skill("Ranged Weapons") >= 4 then return 2 end
-      return 5
+	  return 5
     end
     
     if it.weap_skill == "Polearms" then
@@ -2340,8 +2353,14 @@ function c_assign_invletter_weapon_slots(it)
   
   for i=0,2 do
     local slot
-    if i==2 then slot = items.letter_to_index("w")
-    else slot = i
+    if it.is_ranged then
+      if i==0 then slot = items.letter_to_index("w")
+      else slot = i-1
+      end
+    else
+      if i==2 then slot = items.letter_to_index("w")
+      else slot = i
+      end
     end
     
     local inv = items.inslot(slot)
@@ -2463,6 +2482,7 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
   end
 end
+crawl.setopt("autopickup_exceptions ^= < stone, <dart, <boomerang, <javelin")
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
 }
@@ -2477,7 +2497,7 @@ autoinscribe += scrolls?(?!.*of ):!r
 
 # Add a warning for everything that doesn't have one built-in
 autoinscribe += potions? of(?!.*(attraction|lignification|mutation)):!q
-autoinscribe += scrolls? of(butterflies|fear|fog|magic mapping|posion|silence|summoning|teleportation|torment|vulnerability):!r
+autoinscribe += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleportation|vulnerability):!r
 
 
 {
@@ -2486,19 +2506,22 @@ autoinscribe += scrolls? of(butterflies|fear|fog|magic mapping|posion|silence|su
 --------------------------------------------
 -- Initialize to true to fix inscriptions on init (starting items don't get default inscriptions)
 local no_inscriptions = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
-                         "identify", "immolation", "noise", "poison", "vulnerability", "attraction", "lignification", "mutation" }
+                         "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation" }
 
-local function fix_inscriptions()
+---------------------------------------------
+------------------- Hook -------------------
+---------------------------------------------
+function ready_safe_consumables()
   -- Remove the default "!r" and "!q" inscriptions after identify
-  local keystring = ""
   for it in iter.invent_iterator:new(items.inventory()) do    
     if it.fully_identified then
       local it_class = it.class(true)
       if it_class == "potion" or it_class == "scroll" then
         local qualname = it.name("qual")
         local st, _ = it.subtype()
-        
-        if util.contains(no_inscriptions, st) then
+        if (st == "poison" and you.res_poison() == 0)
+            or (st == "torment" and not (you.race() == "Mummy" or you.race() == "Ghoul" or you.status():find("tree-form") or you.status():find("lich-form")))
+            or util.contains(no_inscriptions, st) then
           if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
           if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
         elseif it_class == "scroll" and not util.contains(no_inscriptions, st) and not qualname:find("!r") then
@@ -2510,33 +2533,6 @@ local function fix_inscriptions()
     end
   end
 end
-
-
-local do_fix_inscriptions = true
-
----------------------------------------------
-------------------- Hooks -------------------
----------------------------------------------
-function ready_safe_consumables()
-  if do_fix_inscriptions then
-    fix_inscriptions()
-    do_fix_inscriptions = false
-  end
-end
-
-
-function c_message_safe_consumables(text, channel)
-  if channel ~= "plain" then return end
-  local triggers = { "Thank you for shopping at", "s a scroll of ", "s a potion of ", "read the scroll of identify" }
-  for _, v in ipairs(triggers) do
-    if text:find(v) then
-      fix_inscriptions()
-      do_fix_inscriptions = true
-      return
-    end
-  end
-end
-
 }
 
 ########features/drop-inferior.rc########
@@ -2606,10 +2602,11 @@ crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
 local function fully_recovered()
-  local status_wait = { "on berserk cooldown", "short of breath", "corroded", "vulnerable"}
+  local status_wait = { "on berserk cooldown", "short of breath", "corroded", "vulnerable", "confused", "slowed" }
   for _, s in ipairs(status_wait) do
     if you.status(s) then return false end
   end
+  
   return true
 end
 
@@ -2618,21 +2615,16 @@ local explore_after_recovery = false
 
 -- Attach full recovery to auto-explore
 function explore_full_recovery()
-  if not fully_recovered() then
+  if fully_recovered() then
+    crawl.do_commands({"CMD_EXPLORE"})
+  else
     explore_after_recovery = true
     crawl.do_commands({"CMD_REST"})
-  elseif you.status("slowed") then
-    if not (you.strength() <=0 or you.intelligence() <= 0 or you.dexterity() <=0) then
-       explore_after_recovery = true
-       crawl.do_commands({"CMD_REST"})
-    else
-      crawl.do_commands({"CMD_EXPLORE"})
-    end
-  else
-    crawl.do_commands({"CMD_EXPLORE"})
   end
 end
 crawl.setopt("macros += M o ===explore_full_recovery")
+
+
 
 -------------------------------------
 ---- Hooks (All functions below) ----
@@ -2678,9 +2670,9 @@ function ready_fully_recover()
   end
 end
 
---------------------------------------------------------------------
----- End Fully rest off effects (Hooks for other features cont. ----
---------------------------------------------------------------------
+---------------------------------------------------------------------
+---- End Fully rest off effects (Hooks for other features cont.) ----
+---------------------------------------------------------------------
 
 ----------------------
 ---- Ignore altars ----
@@ -2850,6 +2842,43 @@ end
 
 }
 
+########features/safe-stairs.rc########
+
+macros += M > ===safe_downstairs
+macros += M < ===safe_upstairs
+
+{
+local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
+function check_new_location(key)
+  local cur_location = you.branch()..you.depth()
+  if prev_location ~= cur_location then
+    crawl.formatted_mpr("Really go right back? (y/n)", "prompt")
+     local res = crawl.getch()
+     if string.lower(string.char(res)) == "y" then
+       crawl.sendkeys(key)
+     end
+    else
+      crawl.sendkeys(key)
+    end
+end
+
+function safe_upstairs()
+  check_new_location("<")
+end
+
+function safe_downstairs()
+  check_new_location(">")
+end
+
+--------------------------------------------
+------------------- Hook -------------------
+--------------------------------------------
+function ready_safe_stairs()
+  prev_location = temp_location
+  temp_location = you.branch()..you.depth()
+end
+}
+
 
 ####################################################################
 ######################## Lua Hook Functions ########################
@@ -2863,7 +2892,6 @@ function c_message(text, channel)
   if c_message_remind_identify then c_message_remind_identify(text, channel) end
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
-  if c_message_safe_consumables then c_message_safe_consumables(text, channel) end
   if c_message_search_altars_in_temple then c_message_search_altars_in_temple(text, channel) end
   if c_message_fully_recover then c_message_fully_recover(text, channel) end
   if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
@@ -2915,6 +2943,7 @@ function ready()
   if ready_ignore_exits then ready_ignore_exits() end
   if ready_after_shaft then ready_after_shaft() end
   if ready_fully_recover then ready_fully_recover() end
+  if ready_safe_stairs then ready_safe_stairs() end
 end
 
 
