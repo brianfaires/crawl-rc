@@ -5,7 +5,7 @@
 --Whenever you drop an item:
     -- Assign weapons to slots a and b
         -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless skill
-        -- 3:magical staff, 4:polearm
+        -- 3:magical staff, 4:polearm, 5:ranged
     -- Assign weap to w: ranged/polearm/any
 
 
@@ -24,7 +24,7 @@ local function get_priority_ab(it)
   if class == "weapon" then
     if it.is_ranged then    
       if you.skill("Ranged Weapons") >= 4 then return 2 end
-      return 5
+	  return 5
     end
     
     if it.weap_skill == "Polearms" then
@@ -122,8 +122,14 @@ function c_assign_invletter_weapon_slots(it)
   
   for i=0,2 do
     local slot
-    if i==2 then slot = items.letter_to_index("w")
-    else slot = i
+    if it.is_ranged then
+      if i==0 then slot = items.letter_to_index("w")
+      else slot = i-1
+      end
+    else
+      if i==2 then slot = items.letter_to_index("w")
+      else slot = i
+      end
     end
     
     local inv = items.inslot(slot)
