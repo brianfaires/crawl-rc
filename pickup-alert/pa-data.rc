@@ -1,14 +1,14 @@
 include = pickup-alert/pa-util.rc
 {
-
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
 -------------------------------------------------------------------------------
 if not added_persistant_data or you.turns() == 0 then
   added_persistant_data = 1
   
-  items_picked = { "" }
-  items_alerted = { "" }
+  level_alerts = { }
+  items_picked = { }
+  items_alerted = { }
   rare_items = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
                 "lajatang", "bardiche", "demon trident", "trishula",
                 "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
@@ -46,12 +46,8 @@ end
 
 local function persist_table(table_name, table)
   local cmd = table_name.." = {"
-  local len = 0
   for _,v in ipairs(table) do
-    if v ~= "" then
-      cmd = cmd .. "\"" .. v .. "\", "
-      len = len+1
-    end
+    cmd = cmd .. "\"" .. v .. "\", "
   end
 
   return cmd .. "\"\"}" .. string.char(10)
@@ -65,6 +61,7 @@ end
 if not added_persistant_data_hooks then
   added_persistant_data_hooks = true
   
+  table.insert(chk_lua_save, function() return persist_table("level_alerts", level_alerts) end)
   table.insert(chk_lua_save, function() return persist_table("rare_items", rare_items) end)
   table.insert(chk_lua_save, function() return persist_table("items_picked", items_picked) end)
   table.insert(chk_lua_save, function() return persist_table("items_alerted", items_alerted) end)
@@ -82,31 +79,15 @@ end
 ----------------------------------------
 ---- Accessors into persistant data ----
 ----------------------------------------
-function pickup_item(it)
-  local ret_val = false
-  local name = it.name("plain")
-  if not it.fully_identified then
-    name = "+0 " .. name
-  end
-
-  if it.artefact then
-    ret_val = true
-  elseif not util.contains(items_picked, name) then
-    -- Add to the table on pickup, in c_assign_invletter() hook function
-    ret_val = true
-  end
-  
-  -- Remove from rare_items if it's there
+function get_rare_item_index(it)
+  local qualname = it.name("qual")
   for i,v in ipairs(rare_items) do
-    if v ~= "" and name:find(v) then
-      rare_items[i] = ""
-      return true
-    end
+    if v ~= "" and qualname:find(v) then 
+    return i end
   end
-  
-  -- Returns true if we haven't picked up this item previously
-  return ret_val
+  return -1
 end
+
 
 function check_high_scores(it)
   local ret_val = nil
@@ -148,19 +129,31 @@ function check_high_scores(it)
   return ret_val
 end
 
-function c_assign_invletter_item_alerts(it)
-  if it.weap_skill or it.class(true) == "armour" then
-    local name = it.name("plain")
-    if not util.contains(items_picked, name) then
-      insert_item_and_less_enchanted(items_picked, name)
-      insert_item_and_less_enchanted(items_alerted, name)
-      check_high_scores(it)
-      
-      for i, v in ipairs(rare_items) do
-        if name:find(v) then rare_items[i] = "" end
-      end
+
+function pickup_item(it)
+  local ret_val = false
+  local name = it.name("plain")
+  if not it.fully_identified then
+    name = "+0 " .. name
+  end
+
+  if it.artefact then
+    ret_val = true
+  elseif not util.contains(items_picked, name) then
+    -- Add to the table on pickup, in c_assign_invletter() hook function
+    ret_val = true
+  end
+  
+  -- Remove from rare_items if it's there
+  for i,v in ipairs(rare_items) do
+    if name:find(v) then
+      util.remove(rare_items, rare_items[i])
+      return true
     end
   end
+  
+  -- Returns true if we haven't picked up this item previously
+  return ret_val
 end
 
 
@@ -171,6 +164,7 @@ function alert_item(it, alert_type)
     if util.contains(items_alerted, name) then return end
     table.insert(items_alerted, name)
     show_alert_msg("Item alert, "..alert_type..": ", name)
+	table.insert(level_alerts, name)
     return
   end
   
@@ -182,10 +176,13 @@ function alert_item(it, alert_type)
   if not util.contains(items_alerted, name) then
     if it.class(true) == "weapon" or it.class(true) == "magical staff" then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
+	  table.insert(level_alerts, name)
     elseif it.class(true) == "armour" then
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))    
+      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
+	  table.insert(level_alerts, name)
     else
       show_alert_msg("Item alert, "..alert_type..": ", name)
+	  table.insert(level_alerts, name)
     end
 
     insert_item_and_less_enchanted(items_alerted, name)
@@ -197,16 +194,39 @@ end
 crawl.setopt("runrest_stop_message += Item alert, ")
 
 
-function get_rare_item_index(it)
-  local qualname = it.name("qual")
-  for i,v in ipairs(rare_items) do
-    if v ~= "" and qualname:find(v) then 
-    return i end
+
+---------------------------------------------
+------------------- Hooks -------------------
+---------------------------------------------
+
+function c_assign_invletter_item_alerts(it)
+  local name = it.name("plain")
+  if it.weap_skill or it.class(true) == "armour" then
+    if not util.contains(items_picked, name) then
+      insert_item_and_less_enchanted(items_picked, name)
+      insert_item_and_less_enchanted(items_alerted, name)
+      check_high_scores(it)
+      
+      for i, v in ipairs(rare_items) do
+        if name:find(v) then util:remove(rare_items, rare_items[i]) end
+      end
+    end
   end
-  return -1
+  
+  if util.contains(level_alerts, name) then util.remove(level_alerts, name) end
 end
 
------------------------------------------------------------------------------
----------------------------- End persistant data ----------------------------
------------------------------------------------------------------------------
+function c_message_item_alerts(text, channel)
+  if text:find("Done exploring.") or text:find("Partly explored") then
+    local all_alerts
+	for _, v in ipairs(level_alerts) do
+	  if not all_alerts then all_alerts = v
+	  else all_alerts = all_alerts..", "..v
+	  end
+	end
+	
+	level_alerts = {}
+	crawl.mpr("<magenta>Level alerts: "..all_alerts.."</magenta>")
+  end
+end
 }
