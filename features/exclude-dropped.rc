@@ -29,7 +29,7 @@ local function get_jewellery_name(text)
   return text:sub(idx,#text)
 end
 
-local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin" }
+local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin", "large rock" }
 local function get_missile_name(text)
   for item_name in iter.invent_iterator:new(all_missiles) do
     if text:find(item_name) then
@@ -88,6 +88,7 @@ function c_message_exclude_dropped(text, channel)
   end
 end
 crawl.setopt("autopickup_exceptions ^= < stone, <dart, <boomerang, <javelin")
+if you.race() == "Ogre" or you.race() == "Troll" then crawl.setopt("autopickup_exceptions ^= <large rock") end
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
 }
