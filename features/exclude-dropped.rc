@@ -79,6 +79,7 @@ function c_message_exclude_dropped(text, channel)
   if exclude then
     crawl.setopt("autopickup_exceptions ^= >"..item_name)
     if dropped_item_exclusions ~= "" then dropped_item_exclusions = dropped_item_exclusions.."," end
+    dropped_item_exclusions = dropped_item_exclusions..">"..item_name
   else
     crawl.setopt("autopickup_exceptions -= >"..item_name)
     -- Remove persistant exclusion (try 3 times to make sure we capture comma)
