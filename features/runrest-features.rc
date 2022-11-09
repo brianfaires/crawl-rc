@@ -47,7 +47,7 @@ end
 
 function c_message_fully_recover(text, channel)
 --if text:find("contamination") then crawl.mpr(text) crawl.mpr(channel) end
-  if text:find("You start waiting.") then
+  if text:find("You start waiting.") or text:find("You start resting.") then
     if not fully_recovered() then
       waiting_for_recovery = true
       crawl.setopt("message_colour += mute:You start waiting.")
