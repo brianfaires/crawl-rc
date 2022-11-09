@@ -1,0 +1,26 @@
+macros += M > ===safe_downstairs
+macros += M < ===safe_upstairs
+
+{
+local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
+function check_new_location(key)
+  local cur_location = you.branch()..you.depth()
+  if prev_location ~= cur_location then    crawl.formatted_mpr("Really go right back? (y/n)", "prompt")    local res = crawl.getch()    if string.lower(string.char(res)) == "y" then      crawl.sendkeys(key)    end  else    crawl.sendkeys(key)  end
+end
+
+function safe_upstairs()
+  check_new_location("<")
+end
+
+function safe_downstairs()
+  check_new_location(">")
+end
+
+--------------------------------------------
+------------------- Hook -------------------
+--------------------------------------------
+function ready_safe_stairs()
+  prev_location = temp_location
+  temp_location = you.branch()..you.depth()
+end
+}

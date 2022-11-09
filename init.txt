@@ -82,6 +82,7 @@ include = features/drop-inferior.rc
 include = features/runrest-features.rc
 include = features/mute-swaps.rc
 include = features/after-shaft.rc
+include = features/safe-stairs.rc
 
 
 
@@ -148,6 +149,7 @@ function ready()
   if ready_ignore_exits then ready_ignore_exits() end
   if ready_after_shaft then ready_after_shaft() end
   if ready_fully_recover then ready_fully_recover() end
+  if ready_safe_stairs then ready_safe_stairs() end
 end
 
 
