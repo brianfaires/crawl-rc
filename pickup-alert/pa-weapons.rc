@@ -187,19 +187,8 @@ function pickup_weapons(it)
   if it.is_useless then return false end
   
   generate_inv_weap_arrays()
-  local unarmed = true
+  local unarmed = inv_max_dmg["twohands"] == 0
 
-  for cur in iter.invent_iterator:new(items.inventory()) do
-    if cur.class(true) == "weapon" then
-      if pickup_weapon(it, cur) then
-        return true
-      end
-      if not cur.is_ranged then
-        unarmed = false
-      end
-    end
-  end
-  
   -- Return false unless you need a weapon but don't have one yet
   if not unarmed or you.skill("Unarmed Combat") > 0 then return false end
   if you.get_base_mutation_level("claws", true, false, true) > 0 then return false end
@@ -240,11 +229,7 @@ local function alert_interesting_weapon(it, cur)
         if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
       elseif you.skill("shields") <= 4 then
         -- Not really training shields; may be interested in big upgrades
-        if penalty*get_weap_dps(it) >= inv_max_dmg["melee"] then
-                crawl.mpr("pen="..penalty)
-        crawl.mpr(inv_max_dmg["melee"])
-        crawl.mpr(get_weap_dps(it))
-        return alert_item(it, "2-handed weapon4") end
+        if penalty*get_weap_dps(it) >= inv_max_dmg["melee"] then return alert_item(it, "2-handed weapon4") end
       end
     else
       -- Item uses same number of hands or fewer
@@ -325,8 +310,12 @@ function alert_weapons(it)
   if it.is_useless then return end
   if (it.artefact or it.branded) and not it.fully_identified then return end
   
-  alert_interesting_weapons(it)
   alert_first_ranged(it)
+  
+  -- Skip weapon alerts if not using weapons
+  if inv_max_dmg["twohands"] == 0 then return end
+  
+  alert_interesting_weapons(it)
   alert_early_weapons(it)
   alert_high_scores(it)
 end
