@@ -56,6 +56,11 @@ local function get_misc_name(text)
   end
 end
 
+local function get_scroll_name(text)
+  if you.skill("Unarmed Combat") < 8 then return end
+  if text:find("enchant weapon") then return "enchant weapon" end
+  if text:find("brand weapon") then return "brand weapon" end
+end
 
 
 ------------------------------------------
@@ -74,6 +79,7 @@ function c_message_exclude_dropped(text, channel)
   local item_name = get_jewellery_name(text)
   if not item_name then item_name = get_missile_name(text) end
   if not item_name then item_name = get_misc_name(text) end
+  if not item_name then item_name = get_scroll_name(text) end
   if not item_name then return end
 
   if exclude then
