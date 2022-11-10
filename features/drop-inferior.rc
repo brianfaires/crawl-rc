@@ -1,3 +1,6 @@
+include = pickup-alert/pa-util.rc
+
+
 -- Auto-drop items that are strictly worse than another
 -- On item pickup, inscribes inferior items with "~drop"
 drop_filter += ~drop
@@ -37,11 +40,11 @@ function c_assign_invletter_drop_inferior(it)
       end
     end
 
-    if not inv.artefact and item_match and (not has_ego(inv) or inv.ego() == it.ego()) then
+    if not inv.artefact and item_match and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
       if it_class == "weapon" then
-        if inv.plus <= it.plus then inv.inscribe("~drop") end
+	    if inv.plus <= it.plus then inv.inscribe("~drop") end
       else
-        if inv.ac <= it.ac then inv.inscribe("~drop") end
+        if get_armour_ac(inv) <= get_armour_ac(it) then inv.inscribe("~drop") end
       end
     end
   end

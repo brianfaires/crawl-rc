@@ -32,12 +32,19 @@ function has_ego(it)
   
   if it.artefact then return true end
   if it.branded then return true end
-  local qualname = it.name("qual")
-  if qualname:find("troll leather") then return true end
-  if qualname:find("dragon scales") then return true end
+  local basename = it.name("base")
+  if basename:find("troll leather") then return true end
+  if basename:find("dragon scales") then return true end
   return false
 end
 
+function get_ego(it)
+  local basename = it.name("base")
+  if basename:find("troll leather") then return "Regen+" end
+  if basename:find("dragon scales") then return basename end
+  if it.artefact then return "arte" end
+  return it.ego()
+end
 
 function get_race_size()
   local race = you.race()
