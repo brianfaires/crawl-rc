@@ -83,6 +83,7 @@ include = features/runrest-features.rc
 include = features/mute-swaps.rc
 include = features/after-shaft.rc
 include = features/safe-stairs.rc
+include = features/misc-alerts.rc
 
 
 
@@ -150,8 +151,8 @@ function ready()
   if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
   if ready_item_alerts then ready_item_alerts() end
+  if ready_misc_alerts then ready_misc_alerts() end
 end
-
 
 
 -----------------------------
