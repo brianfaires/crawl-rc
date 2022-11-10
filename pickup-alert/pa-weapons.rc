@@ -236,12 +236,16 @@ local function alert_interesting_weapon(it, cur)
       if cur.artefact then return false end
       if it.branded then
         local dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
+		if dmg_delta > 0 then dmg_delta = dmg_delta * penalty
+		else dmg_delta = dmg_delta / penalty
+		end
+		
         if not cur.branded then
-          if penalty*dmg_delta >= -4 then return alert_item(it, "New ego2") end
+          if dmg_delta >= -4 then return alert_item(it, "New ego2") end
         elseif it.ego() == cur.ego() then
           if dmg_delta >= 0 then return alert_item(it, "Stronger weapon1") end
         elseif not util.contains(egos, it.ego()) then
-          if penalty*dmg_delta >= -4 then return alert_item(it, "New ego3") end
+          if dmg_delta >= -4 then return alert_item(it, "New ego3") end
         end
       else
         -- Not branded
