@@ -315,12 +315,10 @@ function alert_weapons(it)
   if (it.artefact or it.branded) and not it.fully_identified then return end
   
   alert_first_ranged(it)
-  
-  -- Skip weapon alerts if not using weapons
-  if inv_max_dmg["twohands"] == 0 then return end
-  
-  alert_interesting_weapons(it)
   alert_early_weapons(it)
-  alert_high_scores(it)
+  alert_interesting_weapons(it)
+  
+  -- Skip high score alerts if not using weapons
+  if inv_max_dmg["twohands"] > 0 then alert_high_scores(it)end
 end
 }
