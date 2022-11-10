@@ -5,7 +5,7 @@ include = pickup-alert/pa-util.rc
 -------------------------------------------------------------------------------
 if not added_persistant_data or you.turns() == 0 then
   added_persistant_data = 1
-  
+
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
@@ -32,7 +32,7 @@ local function persist_table(table_name, table)
     if cmd ~= cmd_init then cmd = cmd..", " end
 	cmd = cmd.."\""..v.."\""
   end
-
+  
   return cmd .. "}" .. string.char(10)
 end
 
@@ -65,8 +65,7 @@ end
 function get_rare_item_index(it)
   local qualname = it.name("qual")
   for i,v in ipairs(rare_items) do
-    if v ~= "" and qualname:find(v) then 
-    return i end
+	if v ~= "" and qualname:find(v) then return i end
   end
   return -1
 end

@@ -57,7 +57,7 @@ function pickup_armour(it)
       if it.artefact and ac_delta > -5 then return true end
       if cur.artefact then return false end
       
-      if it.ego() == cur.ego() and (has_ego(it) or not has_ego(cur)) then
+      if get_ego(it) == get_ego(cur) and (has_ego(it) or not has_ego(cur)) then
         if ac_delta > 0 then return true end
         return false
       elseif has_ego(it) and not (cur.artefact or has_ego(cur)) then
@@ -74,7 +74,7 @@ function pickup_armour(it)
     if it.artefact then return true end
     if cur.artefact then return false end
     if cur.branded then
-      if cur.ego() == it.ego() then return it.plus > cur.plus end
+      if get_ego(cur) == get_ego(it) then return it.plus > cur.plus end
       return false
     end
     if it.branded then return true end
@@ -109,7 +109,7 @@ function pickup_armour(it)
     if not it.fully_identified then return false end
 
     if it.branded then
-      if it.ego() ~= cur.ego() then return true end
+      if get_ego(it) ~= get_ego(cur) then return true end
       if get_armour_ac(it) > get_armour_ac(cur) then return true end
     else
       if cur.branded or cur.artefact then return false end
@@ -194,11 +194,11 @@ end
 ------------------------------------------
 local function alert_interesting_armour(it)
   if it.artefact then 
-    if not it.fully_identified then return false end
+    if not it.fully_identified or it.is_useless then return false end
     return alert_item(it, "Artefact armour")
   end
+  
   local st, _ = it.subtype()
-
   if st == "body" then
     if it.is_useless then return end
     local cur = items.equipped_at("body armour")
@@ -207,7 +207,7 @@ local function alert_interesting_armour(it)
     if it.encumbrance == cur.encumbrance then
       if has_ego(it) then
         if not has_ego(cur) then return alert_item(it, "Added ego") end
-        if it.ego() ~= cur.ego() then return alert_item(it, "New ego") end
+        if get_ego(it) ~= get_ego(cur) then return alert_item(it, "New ego") end
       end
       if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour1") end
     
@@ -219,7 +219,7 @@ local function alert_interesting_armour(it)
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
           if ev_gain >= 0.6 * ac_lost or ac_lost <= 6 then return alert_item(it, "Added ego1") end
-        elseif it.ego() ~= cur.ego() then
+        elseif get_ego(it) ~= get_ego(cur) then
           if ev_gain >= 0.8 * ac_lost or ac_lost <= 6 then return alert_item(it, "New ego1") end
         else
           -- Same ego
@@ -245,7 +245,7 @@ local function alert_interesting_armour(it)
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
           if ac_gain >= 0.4 * ev_lost or ev_lost <= 8 then return alert_item(it, "Added ego2") end
-        elseif it.ego() ~= cur.ego() then
+        elseif get_ego(it) ~= get_ego(cur) then
           if ac_gain >= 0.6 * ev_lost or ev_lost <= 8 then return alert_item(it, "New ego2") end
         else
           -- Same ego

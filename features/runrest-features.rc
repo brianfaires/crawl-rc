@@ -73,7 +73,7 @@ function ready_fully_recover()
 	  you.stop_activity()
 	  waiting_for_recovery = false
 	else
-      crawl.do_commands({"CMD_WAIT"})
+      crawl.do_commands({"CMD_SAFE_WAIT"})
     end
   end
 end
