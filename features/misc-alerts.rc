@@ -7,7 +7,7 @@ if not alerted_max_piety then
 end
 
 local function persist_alerted_max_piety()
-  return alerted_max_piety .. " = " .. alerted_max_piety .. string.char(10)
+  return "alerted_max_piety = "..alerted_max_piety..string.char(10)
 end
 
 if not added_misc_alert_data_hooks then
