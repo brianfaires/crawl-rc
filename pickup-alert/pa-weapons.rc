@@ -187,7 +187,7 @@ function pickup_weapons(it)
   if it.is_useless then return false end
   
   generate_inv_weap_arrays()
-  local unarmed = inv_max_dmg["twohands"] == 0
+  local unarmed = inv_max_dmg["twohands"] == 0 and inv_max_dmg["ranged"] == 0
 
   -- Return false unless you need a weapon but don't have one yet
   if not unarmed or you.skill("Unarmed Combat") > 0 then return false end

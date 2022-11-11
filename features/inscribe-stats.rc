@@ -34,18 +34,29 @@ local function inscribe_weapon_stats(it)
   return new_inscr
 end
 
-
-------------------------------------------
------------------- Hook ------------------
-------------------------------------------
-function c_message_inscribe_dps(text, channel)
+local function update_inscriptions()
   for it in iter.invent_iterator:new(items.inventory()) do
     local class = it.class(true)
     if class == "weapon" or class == "magical staff" then
-  inscribe_weapon_stats(it)
+      inscribe_weapon_stats(it)
     elseif class == "armour" then
       inscribe_armour_stats(it)
     end
+  end
+  
+  crawl.redraw_screen()
+end
+------------------------------------------
+------------------ Hook ------------------
+------------------------------------------
+function c_message_inscribe_stats(text, channel)
+  update_inscriptions()
+end
+
+function ready_inscribe_stats()
+  local last_msg = crawl.messages(1)
+  if last_msg:find("finish putting on") or last_msg:find("finish taking off") then
+    update_inscriptions()
   end
 end
 }
