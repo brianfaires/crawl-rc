@@ -18,7 +18,8 @@ end
 
 function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
-    if items.equipped_at("amulet").subtype() == "amulet of faith" then
+    local am = items.equipped_at("amulet")
+    if am and am.subtype() == "amulet of faith" then
       crawl.mpr("<cyan>6 star piety! Maybe ditch that amulet soon.</cyan>")
       crawl.more()
       alerted_max_piety = 1
