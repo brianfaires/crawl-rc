@@ -56,7 +56,8 @@ stop ^= are starting to lose your buoyancy
 stop ^= feel.*sluggish
 # Expiring effects for friends too
 stop ^= no longer petrified
-ignore ^= no longer covered in acid
+ignore ^= no longer.*(covered in acid|unusually strong)
+ignore ^= looks more healthy
 
 # Misc
 stop -= You now have enough gold to
