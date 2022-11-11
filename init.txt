@@ -95,6 +95,7 @@ include = features/misc-alerts.rc
 ---------- c_message() -----------
 ----------------------------------
 function c_message(text, channel)
+  if c_message_inscribe_stats then c_message_inscribe_stats(text, channel) end
   if c_message_remind_identify then c_message_remind_identify(text, channel) end
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
@@ -102,7 +103,6 @@ function c_message(text, channel)
   if c_message_fully_recover then c_message_fully_recover(text, channel) end
   if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
-  if c_message_inscribe_dps then c_message_inscribe_dps(text, channel) end
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
 end
 
@@ -132,16 +132,40 @@ function ch_stop_running(kind)
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
 end
 
+
+local function note_table(n, t)
+  local note = n.." = {"
+  for e in iter.invent_iterator:new(t) do
+    note = note..e..", "
+  end
+  
+  note = note.."}"
+  crawl.take_note(note)
+end
+
 ---------------------------
 --------- ready() ---------
 ---------------------------
 local last_turn = -1
+local last_write_counter = 0
 function ready()
   if you.turns() == last_turn then return end
+
+  last_write_counter = last_write_counter + you.turns() - last_turn
+  if last_write_counter >= 1000 then
+    last_write_counter = 0
+	crawl.take_note("Data dump:")
+	crawl.take_note("dropped_item_exclusions = "..dropped_item_exclusions)
+	note_table("rare_items", rare_items)
+	note_table("items_picked", items_picked)
+	note_table("items_alerted", items_alerted)
+  end
+
   last_turn = you.turns()
  
   if ready_force_mores then ready_force_mores() end
   if ready_dynamic_options then ready_dynamic_options() end
+  if ready_inscribe_stats then ready_inscribe_stats() end
   if ready_weapon_slots then ready_weapon_slots() end
   if ready_safe_consumables then ready_safe_consumables() end
   if ready_mute_swaps then ready_mute_swaps() end
@@ -165,7 +189,7 @@ function c_answer_prompt(prompt)
   if prompt == "Die?" then return false end  
 end
 
---Avoid weird effects after save/restart
-if you.turns() > 0 then ready() end
+--Call ready() once before autopickup/alerts trigger
+ready()
 
 }
