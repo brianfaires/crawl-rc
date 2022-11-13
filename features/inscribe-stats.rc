@@ -34,7 +34,12 @@ local function inscribe_weapon_stats(it)
   return new_inscr
 end
 
-local function update_inscriptions()
+
+local skipped_first_redraw = false
+------------------------------------------
+------------------ Hook ------------------
+------------------------------------------
+function ready_inscribe_stats()
   for it in iter.invent_iterator:new(items.inventory()) do
     local class = it.class(true)
     if class == "weapon" or class == "magical staff" then
@@ -44,19 +49,10 @@ local function update_inscriptions()
     end
   end
   
-  crawl.redraw_screen()
-end
-------------------------------------------
------------------- Hook ------------------
-------------------------------------------
-function c_message_inscribe_stats(text, channel)
-  update_inscriptions()
-end
-
-function ready_inscribe_stats()
-  local last_msg = crawl.messages(1)
-  if last_msg:find("finish putting on") or last_msg:find("finish taking off") then
-    update_inscriptions()
+  -- This redraw can causes crashes if called during an autopickup.
+  -- Be sure not to hook any of this to c_message, or anything that can trigger during an autopickup
+  if skipped_first_redraw then crawl.redraw_screen()
+  else skipped_first_redraw = true
   end
 end
 }

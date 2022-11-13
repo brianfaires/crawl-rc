@@ -57,7 +57,7 @@ function pickup_item(it)
     -- Add to the table on pickup, in c_assign_invletter() hook function
     ret_val = true
   end
-  
+
   -- Remove from rare_items if it's there
   local rare_idx = get_rare_item_index(it)
   if rare_idx ~= -1 then
@@ -165,12 +165,12 @@ add_autopickup_func(function (it, name)
   elseif class == "weapon" and loaded_pa_weapons then retVal = pickup_weapons(it)
   elseif class == "magical staff" and loaded_pa_misc then retVal = pickup_staves(it)
   end
-  
+
   if retVal == true then return pickup_item(it) end
 
   -- Update inventory high scores before alerting; relevant when XP gained same turn item is dropped
   ready_item_alerts()
-  
+
   -- Not picking up this item. Check for alerts
   if loaded_pa_misc then
     alert_rare_items(it)

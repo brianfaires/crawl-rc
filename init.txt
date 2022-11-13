@@ -95,7 +95,6 @@ include = features/misc-alerts.rc
 ---------- c_message() -----------
 ----------------------------------
 function c_message(text, channel)
-  if c_message_inscribe_stats then c_message_inscribe_stats(text, channel) end
   if c_message_remind_identify then c_message_remind_identify(text, channel) end
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
