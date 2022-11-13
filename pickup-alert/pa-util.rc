@@ -71,6 +71,7 @@ end
 --------------------- Armour ---------------------
 --------------------------------------------------
 function get_armour_ac(it)
+  local is_body = it.subtype() == "body"
   local it_plus = it.plus
   if not it_plus then it_plus = 0 end
   
@@ -88,10 +89,11 @@ function get_armour_ac(it)
   local pseudopods = you.get_base_mutation_level("pseudopods", true, false, true) > 0
   
   local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
-  if pseudopods or (deformed and it.subtype() == "body") then
+  if pseudopods or (deformed and is_body) then
 	ac = ac - it.ac / 2
   end
-  if ac >= 0.05 then ac = ac - 0.05 end
+  
+  if is_body and ac >= 0.05 then ac = ac - 0.05 end
   return ac
 end
 
