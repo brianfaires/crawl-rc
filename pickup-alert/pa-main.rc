@@ -73,19 +73,12 @@ end
 function alert_item(it, alert_type)
   local name = it.name("plain")
   
-  if (it.artefact or it.branded) and not it.fully_identified then
-    if not it.artefact then table.insert(items_alerted, name) end
-    show_alert_msg("Item alert, "..alert_type..": ", name)
-    table.insert(level_alerts, name)
-    return
-  end
-  
   -- Prefix unidentified items with "+0"
   if not it.fully_identified then
     name = "+0 " .. name
   end
 
-  if not util.contains(items_alerted, name) then
+  if not util.contains(items_alerted, name) and not util.contains(items_picked) then
     if it.class(true) == "weapon" or it.class(true) == "magical staff" then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
       table.insert(level_alerts, name)
@@ -97,7 +90,9 @@ function alert_item(it, alert_type)
       table.insert(level_alerts, name)
     end
 
-    if not it.artefact then insert_item_and_less_enchanted(items_alerted, name) end
+    if it.artefact then table.insert(items_alerted, name)
+	else insert_item_and_less_enchanted(items_alerted, name)
+	end
   end
   
   -- Returns true to make other code more concise; indicates that we tried to alert this item
@@ -116,10 +111,10 @@ function c_assign_invletter_item_alerts(it)
   local name = it.name("plain")
   if it.delay or it.class(true) == "armour" then
     if not util.contains(items_picked, name) then
-      if not it.artefact then 
-	    insert_item_and_less_enchanted(items_picked, name)
-        insert_item_and_less_enchanted(items_alerted, name)
+	  if it.artefact then table.insert(items_picked, name)
+	  else insert_item_and_less_enchanted(items_picked, name)
 	  end
+	  
       update_high_scores(it)
       
 	  local rare_idx = get_rare_item_index(it)
