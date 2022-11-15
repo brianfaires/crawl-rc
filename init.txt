@@ -39,7 +39,7 @@ autopickup_exceptions ^= >useless_item, <misc
 # Exclude the 3rd copy of any ring
 {
   add_autopickup_func(function (it, name)
-    if it.class(true) ~= "jewellery" or it.artefact then return end
+    if it.class(true) ~= "jewellery" or it.artefact or you.race() == "Octopode" then return end
     local st = it.subtype()
     local found_first = false
     for inv in iter.invent_iterator:new(items.inventory()) do
