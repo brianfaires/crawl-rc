@@ -6,6 +6,11 @@ include = pickup-alert/pa-util.rc
 drop_filter += ~drop
 
 {
+function inscribe_drop(it)
+  local new_inscr = it.inscription:gsub("~drop", "").."~drop"
+  it.inscribe(new_inscr, false)
+end
+
 ------------------------------------------
 ------------------ Hook ------------------
 ------------------------------------------
@@ -42,9 +47,9 @@ function c_assign_invletter_drop_inferior(it)
 
     if not inv.artefact and item_match and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
       if it_class == "weapon" then
-        if inv.plus <= it.plus then inv.inscribe("~drop") end
+        if inv.plus <= it.plus then inscribe_drop(inv) end
       else
-        if get_armour_ac(inv) <= get_armour_ac(it) then inv.inscribe("~drop") end
+        if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
       end
     end
   end
@@ -52,6 +57,7 @@ end
 
 
 function c_assign_invletter_exclude_dropped(it)
+ -- Remove "~drop" inscription on pickup
   it.inscribe(it.inscription:gsub("~drop", ""), false)
 end
 }
