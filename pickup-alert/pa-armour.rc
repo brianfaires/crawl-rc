@@ -144,7 +144,7 @@ local function alert_armour_while_mutated(it, type)
     
     if claws_lvl + touch_lvl > 0 then
       if it.artefact or it.branded then return alert_item(it, "Branded gloves") end
-	  if it.plus > 0 then return alert_item(it, "Enchanted gloves") end
+      if it.plus > 0 then return alert_item(it, "Enchanted gloves") end
       return true
     end
   elseif type == "boots" then
@@ -159,7 +159,7 @@ local function alert_armour_while_mutated(it, type)
 
     if hooves_lvl + talons_lvl > 0 then
       if it.artefact or it.branded then return alert_item(it, "Branded boots") end
-	  if it.plus > 0 then return alert_item(it, "Enchanted boots") end
+      if it.plus > 0 then return alert_item(it, "Enchanted boots") end
       return true
     end
   elseif type == "helmet" then
@@ -181,7 +181,7 @@ local function alert_armour_while_mutated(it, type)
     local beak_lvl = you.get_base_mutation_level("beak", true, false, true)
     if horns_lvl + antennae_lvl + beak_lvl > 0 then
       if it.artefact or it.branded then return alert_item(it, "Branded headgear") end
-	  if it.plus > 0 then return alert_item(it, "Enchanted headgear") end
+      if it.plus > 0 then return alert_item(it, "Enchanted headgear") end
       return true
     end
   end

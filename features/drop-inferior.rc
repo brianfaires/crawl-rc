@@ -42,7 +42,7 @@ function c_assign_invletter_drop_inferior(it)
 
     if not inv.artefact and item_match and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
       if it_class == "weapon" then
-	    if inv.plus <= it.plus then inv.inscribe("~drop") end
+        if inv.plus <= it.plus then inv.inscribe("~drop") end
       else
         if get_armour_ac(inv) <= get_armour_ac(it) then inv.inscribe("~drop") end
       end

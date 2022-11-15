@@ -236,10 +236,10 @@ local function alert_interesting_weapon(it, cur)
       if cur.artefact then return false end
       if it.branded then
         local dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
-		if dmg_delta > 0 then dmg_delta = dmg_delta * penalty
-		else dmg_delta = dmg_delta / penalty
-		end
-		
+        if dmg_delta > 0 then dmg_delta = dmg_delta * penalty
+        else dmg_delta = dmg_delta / penalty
+        end
+        
         if not cur.branded then
           if dmg_delta >= -4 then return alert_item(it, "New ego2") end
         elseif it.ego() == cur.ego() then
@@ -305,7 +305,7 @@ end
 ---- End alert_interesting_weapons() ----
 -----------------------------------------
 
-local function alert_high_scores(it)
+local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
   if category then alert_item(it, category) end
 end
@@ -319,6 +319,6 @@ function alert_weapons(it)
   alert_interesting_weapons(it)
   
   -- Skip high score alerts if not using weapons
-  if inv_max_dmg["twohands"] > 0 then alert_high_scores(it)end
+  if inv_max_dmg["twohands"] > 0 then alert_weap_high_scores(it)end
 end
 }

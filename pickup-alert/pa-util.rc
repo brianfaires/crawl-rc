@@ -4,13 +4,19 @@ function show_alert_msg(alert_text, item_name)
 end
 
 
-function insert_item_and_less_enchanted(table_name, item_name)
-  -- Add an item name to a table, along with all less enchanted versions
+local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
+  -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  if util.contains(table_name, item_name) then return end
-  table.insert(table_name, item_name)
+  local item_name = it.name("plain")
+  if util.contains(table_ref, item_name) ~= remove_item then return end
+  
+  if remove_item then table.remove(table_ref, item_name)
+  else table.insert(table_ref, item_name)
+  end
 
-  -- Add less enchanted items too
+  if it.artefact then return end
+  
+  -- Do less enchanted items too
   local plus = tonumber(item_name:sub(2,2))
   if not plus then return end
     
@@ -21,9 +27,19 @@ function insert_item_and_less_enchanted(table_name, item_name)
 
     for i=plus,1,-1 do
       item_name = item_name:gsub("+"..i, "+"..(i-1))
-      table.insert(table_name, item_name)
+      if remove_item then table.remove(table_ref, item_name)
+      else table.insert(table_ref, item_name)
+      end
     end
   end
+end
+
+function insert_item_and_less_enchanted(table_ref, it)
+  add_remove_item_and_less_enchanted(table_ref, it, false)
+end
+
+function remove_item_and_less_enchanted(table_ref, it)
+  add_remove_item_and_less_enchanted(table_ref, it, true)
 end
 
 
@@ -90,7 +106,7 @@ function get_armour_ac(it)
   
   local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
   if pseudopods or (deformed and is_body) then
-	ac = ac - it.ac / 2
+    ac = ac - it.ac / 2
   end
   
   if is_body and ac >= 0.05 then ac = ac - 0.05 end
@@ -233,18 +249,18 @@ function get_weap_delay(it)
   
   if it.is_ranged then
     local body = items.equipped_at("body armour")
-	if body then
-	  local str = you.strength()
-	  if it.artefact then
-	    if it.artprops["Str"] then str = str + it.artprops["Str"] end
-	  end
-	  local cur = items.equipped_at("weapon")
-	  if cur and cur ~= it and cur.artefact then
-	    if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
-	  end
-	  
-	  delay = delay + get_aevp(body.encumbrance, str)
-	end
+    if body then
+      local str = you.strength()
+      if it.artefact then
+        if it.artprops["Str"] then str = str + it.artprops["Str"] end
+      end
+      local cur = items.equipped_at("weapon")
+      if cur and cur ~= it and cur.artefact then
+        if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
+      end
+      
+      delay = delay + get_aevp(body.encumbrance, str)
+    end
   end
   
   return delay / 10

@@ -50,7 +50,7 @@ function c_assign_invletter_mute_swaps(it)
   -- we can't unmute in time from this hook
   if you.turns() == last_pickup_turn or crawl.messages(1):find(" %- ") then
     unmute_items()
-	--crawl.mpr("")
+    --crawl.mpr("")
   else
     last_pickup_turn = you.turns()
   end

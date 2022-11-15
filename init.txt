@@ -142,6 +142,7 @@ local function note_table(n, t)
   crawl.take_note(note)
 end
 
+
 ---------------------------
 --------- ready() ---------
 ---------------------------
@@ -153,11 +154,11 @@ function ready()
   last_write_counter = last_write_counter + you.turns() - last_turn
   if last_write_counter >= 1000 then
     last_write_counter = 0
-	crawl.take_note("Data dump:")
-	crawl.take_note("dropped_item_exclusions = "..dropped_item_exclusions)
-	note_table("rare_items", rare_items)
-	note_table("items_picked", items_picked)
-	note_table("items_alerted", items_alerted)
+    crawl.take_note("Data dump:")
+    crawl.take_note("dropped_item_exclusions = "..dropped_item_exclusions)
+    note_table("rare_items", rare_items)
+    note_table("items_picked", items_picked)
+    note_table("items_alerted", items_alerted)
   end
 
   last_turn = you.turns()

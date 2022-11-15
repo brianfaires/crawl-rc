@@ -30,7 +30,7 @@ local function persist_table(table_name, table)
   local cmd = cmd_init
   for v in iter.invent_iterator:new(table) do
     if cmd ~= cmd_init then cmd = cmd..", " end
-	cmd = cmd.."\""..v.."\""
+    cmd = cmd.."\""..v.."\""
   end
   
   return cmd .. "}" .. string.char(10)
@@ -65,16 +65,45 @@ end
 function get_rare_item_index(it)
   local qualname = it.name("qual")
   for i,v in ipairs(rare_items) do
-	if v ~= "" and qualname:find(v) then return i end
+    if v ~= "" and qualname:find(v) then return i end
   end
   return -1
 end
 
+function remove_from_rare_items(it)
+  local rare_idx = get_rare_item_index(it)
+  if idx ~= -1 then
+    util:remove(rare_items, rare_items[rare_idx])
+    return true
+  end
+  
+  return false
+end
+
+function previously_picked(it)
+  local name = it.name("plain")
+  if not it.fully_identified then
+    name = "+0 " .. name
+  end
+
+  return util.contains(items_picked, name)
+end
+
+function previously_alerted(it)
+  local name = it.name("plain")
+  if not it.fully_identified then
+    name = "+0 " .. name
+  end
+
+  return util.contains(items_alerted, name)
+end
+
+
 -- Remove starting items from rare_items
 if you.turns() == 0 then  
   for inv in iter.invent_iterator:new(items.inventory()) do
-	local idx = get_rare_item_index(inv)
-	if idx ~= -1 then util.remove(rare_items, rare_items[idx]) end
+    local idx = get_rare_item_index(inv)
+    if idx ~= -1 then util.remove(rare_items, rare_items[idx]) end
   end
 end
 }

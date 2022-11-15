@@ -72,7 +72,7 @@ function ready_fully_recover()
     elseif not you.feel_safe() then
       you.stop_activity()
       waiting_for_recovery = false
-	  explore_after_recovery = false
+      explore_after_recovery = false
     else
       crawl.do_commands({"CMD_SAFE_WAIT"})
     end
