@@ -47,7 +47,6 @@ function ch_stop_running_full_recovery(kind)
 end
 
 function c_message_fully_recover(text, channel)
---if text:find("contamination") then crawl.mpr(text) crawl.mpr(channel) end
   if text:find("You start waiting.") or text:find("You start resting.") then
     if not fully_recovered() then
       waiting_for_recovery = true
@@ -73,9 +72,12 @@ function ready_fully_recover()
     elseif not you.feel_safe() then
       you.stop_activity()
       waiting_for_recovery = false
+	  explore_after_recovery = false
     else
       crawl.do_commands({"CMD_SAFE_WAIT"})
     end
+  else
+    explore_after_recovery = false
   end
 end
 
