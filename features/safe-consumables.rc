@@ -21,7 +21,6 @@ local no_inscriptions = {"acquirement", "amnesia", "blinking", "brand weapon", "
 ------------------- Hook -------------------
 ---------------------------------------------
 function ready_safe_consumables()
-crawl.mpr("S:"..you.status())
   -- Remove the default "!r" and "!q" inscriptions after identify
   for it in iter.invent_iterator:new(items.inventory()) do    
     if it.fully_identified then
