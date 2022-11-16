@@ -141,10 +141,48 @@ local function alert_first_ranged(it)
   return false
 end
 
+-----------------------------------
+---- Begin pickup_weapons util ----
+-----------------------------------
+local function no_upgrade_possible(it, cur)
+  if get_hands(it) > get_hands(cur) then return true end
+  if it.is_ranged ~= cur.is_ranged then return true end
+  if cur.weap_skill == "Polearms" and it.weap_skill ~= "Polearms" then return true end
+  return false
+end
+
+local function get_dmg_delta(it, cur, penalty)
+  if not penalty then penalty = 1 end
+  
+  local dmg_it = get_weap_dps(it)
+  local dmg_cur = get_weap_dps(cur)
+  local dmg_inv = inv_max_dmg[get_weap_type(it)]
+  
+  local delta
+  if dmg_cur >= dmg_inv then 
+    delta = dmg_it - dmg_cur
+  else
+    delta = dmg_it - dmg_inv
+  end
+  
+  if delta > 0 then return delta * penalty end
+  return delta / penalty
+end
+
+local function need_first_weapon()
+  local unarmed = inv_max_dmg["twohands"] == 0 and inv_max_dmg["ranged"] == 0
+  
+  if not unarmed or you.skill("Unarmed Combat") > 0 then return false end
+  if you.get_base_mutation_level("claws", true, false, true) > 0 then return false end
+  if you.get_base_mutation_level("demonic touch", true, false, true) > 0 then return false end
+  
+  return true
+end
+
+
 --------------------------------
 ---- Begin pickup_weapons() ----
 --------------------------------
-
 local function pickup_weapon(it, cur)
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match
@@ -155,23 +193,14 @@ local function pickup_weapon(it, cur)
     return it.ego() == cur.ego() and get_weap_dps(it) > get_weap_dps(cur)
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
     -- A usable weapon school
-    -- Replace cur weapon if new one does more damage, unless there are potential benefits to cur
-    if get_hands(it) > get_hands(cur) then return false end
-    if it.is_ranged ~= cur.is_ranged then return false end
-    if cur.weap_skill == "Polearms" and it.weap_skill ~= "Polearms" then return false end
-    
+    if no_upgrade_possible(it, cur) then return false end
+
     if it.artefact then return true end
     if cur.artefact then return false end
     if it.branded and not it.fully_identified then return false end
     if cur.branded and not it.branded then return false end
 
-    local dmg_delta
-    if get_weap_dps(cur) > inv_max_dmg[get_weap_type(it)] then 
-      dmg_delta = get_weap_dps(it) - get_weap_dps(cur)
-    else
-      dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
-    end
-    
+    local dmg_delta = get_dmg_delta(it, cur)
     if dmg_delta > 0 then return true end
     local it_plus = it.plus
     if not it_plus then it_plus = 0 end
@@ -182,19 +211,19 @@ local function pickup_weapon(it, cur)
 end
 
 
-
 function pickup_weapons(it)
   if it.is_useless then return false end
-  
   generate_inv_weap_arrays()
-  local unarmed = inv_max_dmg["twohands"] == 0 and inv_max_dmg["ranged"] == 0
-
-  -- Return false unless you need a weapon but don't have one yet
-  if not unarmed or you.skill("Unarmed Combat") > 0 then return false end
-  if you.get_base_mutation_level("claws", true, false, true) > 0 then return false end
-  if you.get_base_mutation_level("demonic touch", true, false, true) > 0 then return false end
   
-  return true
+  for cur in iter.invent_iterator:new(items.inventory()) do
+    if cur.class(true) == "weapon" then
+      if pickup_weapon(it, cur) then
+        return true
+      end
+    end
+  end
+
+  return need_first_weapon()
 end
 
 ------------------------------
@@ -214,9 +243,11 @@ local function alert_interesting_weapon(it, cur)
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
+    
     --local penalty = 1
     --if it.weap_skill == top_school then penalty = 0.5 end
     local penalty = (you.skill(it.weap_skill)+8) / (you.skill(top_school)+8)
+    
     if get_hands(it) == 2 and get_hands(cur) == 1 then
       -- Item requires an extra hand
       if it.branded and not cur.artefact and not cur.branded then
@@ -224,7 +255,7 @@ local function alert_interesting_weapon(it, cur)
       end
       
       if not items.equipped_at("shield") then 
-        if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego") end
+        if it.branded and not util.contains(egos, it.ego()) then return alert_item(it, "New ego4") end
         if not (cur.branded or cur.artefact) and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon2") end
         if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
       elseif you.skill("shields") <= 4 then
@@ -235,17 +266,15 @@ local function alert_interesting_weapon(it, cur)
       -- Item uses same number of hands or fewer
       if cur.artefact then return false end
       if it.branded then
-        local dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
-        if dmg_delta > 0 then dmg_delta = dmg_delta * penalty
-        else dmg_delta = dmg_delta / penalty
-        end
+        local dmg_delta = get_dmg_delta(it, cur, penalty)
+        local dmg_delta_ratio = dmg_delta / get_weap_dps(it)
         
         if not cur.branded then
-          if dmg_delta >= -4 then return alert_item(it, "New ego2") end
+          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego2") end
         elseif it.ego() == cur.ego() then
-          if dmg_delta >= 0 then return alert_item(it, "Stronger weapon1") end
+          if dmg_delta_ratio >= 0 then return alert_item(it, "Stronger weapon1") end
         elseif not util.contains(egos, it.ego()) then
-          if dmg_delta >= -4 then return alert_item(it, "New ego3") end
+          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego3") end
         end
       else
         -- Not branded

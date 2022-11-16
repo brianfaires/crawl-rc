@@ -7,28 +7,29 @@ end
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local item_name = it.name("plain")
-  if util.contains(table_ref, item_name) ~= remove_item then return end
+  local name = it.name("plain")
+  if not it.fully_identified then name = "+0 " .. name end
+  if util.contains(table_ref, name) ~= remove_item then return end
   
-  if remove_item then table.remove(table_ref, item_name)
-  else table.insert(table_ref, item_name)
+  if remove_item then util.remove(table_ref, name)
+  else table.insert(table_ref, name)
   end
 
   if it.artefact then return end
   
   -- Do less enchanted items too
-  local plus = tonumber(item_name:sub(2,2))
+  local plus = tonumber(name:sub(2,2))
   if not plus then return end
     
   if plus > 0 then
-    if tonumber(item_name:sub(3,3)) then
-      plus = 10 * plus + tonumber(item_name:sub(3,3))
+    if tonumber(name:sub(3,3)) then
+      plus = 10 * plus + tonumber(name:sub(3,3))
     end
 
     for i=plus,1,-1 do
-      item_name = item_name:gsub("+"..i, "+"..(i-1))
-      if remove_item then table.remove(table_ref, item_name)
-      else table.insert(table_ref, item_name)
+      name = name:gsub("+"..i, "+"..(i-1))
+      if remove_item then util.remove(table_ref, name)
+      else table.insert(table_ref, name)
       end
     end
   end

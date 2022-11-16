@@ -71,9 +71,9 @@ function get_rare_item_index(it)
 end
 
 function remove_from_rare_items(it)
-  local rare_idx = get_rare_item_index(it)
+  local idx = get_rare_item_index(it)
   if idx ~= -1 then
-    util:remove(rare_items, rare_items[rare_idx])
+    util.remove(rare_items, rare_items[idx])
     return true
   end
   
@@ -82,19 +82,13 @@ end
 
 function previously_picked(it)
   local name = it.name("plain")
-  if not it.fully_identified then
-    name = "+0 " .. name
-  end
-
+  if not it.fully_identified then name = "+0 " .. name end
   return util.contains(items_picked, name)
 end
 
 function previously_alerted(it)
   local name = it.name("plain")
-  if not it.fully_identified then
-    name = "+0 " .. name
-  end
-
+  if not it.fully_identified then name = "+0 " .. name end
   return util.contains(items_alerted, name)
 end
 

@@ -47,6 +47,7 @@ end
 
 function alert_item(it, alert_type)
   local name = it.name("plain")
+  if not it.fully_identified then name = "+0 " .. name end
 
   if not previously_alerted(it) and not previously_picked(it) then
     if it.class(true) == "weapon" or it.class(true) == "magical staff" then
@@ -83,7 +84,7 @@ function c_assign_invletter_item_alerts(it)
   end
   
   remove_item_and_less_enchanted(items_alerted, it)
-  util:remove(level_alerts, name)
+  util.remove(level_alerts, name)
 end
 
 function c_message_item_alerts(text, channel)

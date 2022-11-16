@@ -242,7 +242,7 @@ local function alert_interesting_armour(it)
       local ac_gain = get_armour_ac(it) - get_armour_ac(cur)
       local ev_lost = get_armour_ev(cur) - get_armour_ev(it)
       local encumb_penalty = 0
-      if you.skill("Spellcasting") > 1 then encumb_penalty = (it.encumbrance - cur.encumbrance)/2 end
+      if you.skill("Spellcasting") + you.skill("Ranged") > 1 then encumb_penalty = (it.encumbrance - cur.encumbrance)/2 end
       
       
       if has_ego(it) then
@@ -257,7 +257,7 @@ local function alert_interesting_armour(it)
       else
         if cur.artefact or has_ego(cur) then
           -- Lost ego
-          if ac_gain >= 1 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour3") end
+          if ac_gain >= 2 + ev_lost + encumb_penalty then return alert_item(it, "Stronger armour3") end
         else
           -- Neither has ego
           if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour4") end

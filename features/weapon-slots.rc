@@ -122,14 +122,8 @@ function c_assign_invletter_weapon_slots(it)
   
   for i=0,2 do
     local slot
-    if it.is_ranged then
-      if i==0 then slot = items.letter_to_index("w")
-      else slot = i-1
-      end
-    else
-      if i==2 then slot = items.letter_to_index("w")
-      else slot = i
-      end
+    if i==2 then slot = items.letter_to_index("w")
+    else slot = i
     end
     
     local inv = items.inslot(slot)
@@ -144,9 +138,7 @@ end
 
 
 function c_message_weapon_slots(text, channel)
-  if channel ~= "plain" then return end
-  if not text:find("You drop ") then return end
-  do_cleanup_weapon_slots = true
+  do_cleanup_weapon_slots = channel == "plain" and text:find("You drop ")
 end
 
 
