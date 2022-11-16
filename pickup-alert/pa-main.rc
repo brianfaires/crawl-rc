@@ -89,9 +89,9 @@ end
 
 function c_message_item_alerts(text, channel)
   if text:find("Done exploring.") or text:find("Partly explored") then
-    local all_alerts
+    local all_alerts = ""
     for v in iter.invent_iterator:new(level_alerts) do
-      if not all_alerts then all_alerts = v
+      if all_alerts == "" then all_alerts = v
       else all_alerts = all_alerts..", "..v
       end
     end
