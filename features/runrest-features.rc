@@ -132,4 +132,22 @@ function ready_ignore_exits()
   end
 end
 
+
+----------------------------------------------
+---- Ignore gauntlet msgs while exploring ----
+----------------------------------------------
+local ignoring_all_gauntlet = false
+function c_message_ignore_gauntlet_msgs(text, channel)
+  if ignoring_all_gauntlet then
+    if you.branch() ~= "Gauntlet" or text:find("Done exploring.") or text:find("Partly explored") then
+	  ignoring_all_gauntlet = false
+	  crawl.setopt("runrest_ignore_message -= .*")
+	end
+  else
+    if text:find("enter a gauntlet!") then
+      ignoring_all_gauntlet = true
+      crawl.setopt("runrest_ignore_message ^= .*")
+	end
+  end
+end
 }
