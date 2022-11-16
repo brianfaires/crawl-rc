@@ -38,8 +38,8 @@ local fm_patterns = {
   -- Monsters that can hit for ~50% of hp from range with unbranded attacks
   {name = "40hp", cond = "hp", cutoff = 40, pattern = "orc priest" },
   {name = "50hp", cond = "hp", cutoff = 50, pattern = "orc high priest|manticore" },
-  {name = "70hp", cond = "hp", cutoff = 70, pattern = "meliai|yaktaur(?! captain)|cyclops" },
-  {name = "80hp", cond = "hp", cutoff = 80, pattern = "centaur(?! warrior)|gargoyle" },
+  {name = "70hp", cond = "hp", cutoff = 70, pattern = "meliai|yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
+  {name = "80hp", cond = "hp", cutoff = 80, pattern = "gargoyle" },
   {name = "90hp", cond = "hp", cutoff = 90, pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110, pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth",
               "deep elf high priest|deep troll earth mage|stone giant|cacodemon"} },

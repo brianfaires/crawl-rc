@@ -22,7 +22,7 @@ fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
-view_delay = 500
+view_delay = 100
 show_travel_trail = true
 
 explore_greedy_visit = artefacts,glowing_items,stacks

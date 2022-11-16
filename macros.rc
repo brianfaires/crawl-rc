@@ -1,9 +1,6 @@
 bindkey = [~] CMD_LUA_CONSOLE
 
 
-# Auto drop filter macro
-macros += M d d,
-
 # Numpad keymaps
 macros += K \{-1019} f
 macros += K \{-1018} 3
