@@ -6,7 +6,7 @@ crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
 local function fully_recovered()
-  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "slowed", "tree%-form" }
+  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "slowed", "marked", "tree%-form" }
   local status = you.status()
 
   for s in iter.invent_iterator:new(status_wait) do

@@ -9,7 +9,6 @@ ignore ^= "sense a monster nearby"
 
 # Monsters to ignore at a distance
 runrest_ignore_monster += fire vortex:1
-runrest_ignore_monster += neutral:1
 
 # Message mutes: CAREFUL WITH THESE!
 message_colour += mute:plain:No target in view!
