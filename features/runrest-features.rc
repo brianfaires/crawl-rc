@@ -13,6 +13,10 @@ local function fully_recovered()
     if status:find(s) then return false end
   end
   
+  local hp, mhp = you.hp()
+  if hp ~= mhp then return false end
+  local mp, mmp = you.mp()
+  if mp ~= mmp then return false end
   return true
 end
 
@@ -140,14 +144,14 @@ local ignoring_all_gauntlet = false
 function c_message_ignore_gauntlet_msgs(text, channel)
   if ignoring_all_gauntlet then
     if you.branch() ~= "Gauntlet" or text:find("Done exploring.") or text:find("Partly explored") then
-	  ignoring_all_gauntlet = false
-	  crawl.setopt("runrest_ignore_message -= .*")
-	end
+      ignoring_all_gauntlet = false
+      crawl.setopt("runrest_ignore_message -= .*")
+    end
   else
     if text:find("enter a gauntlet!") then
       ignoring_all_gauntlet = true
       crawl.setopt("runrest_ignore_message ^= .*")
-	end
+    end
   end
 end
 }
