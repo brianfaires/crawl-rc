@@ -20,24 +20,21 @@ local function set_top_school()
   end
 end
 
-
-local inv_max_dmg = { melee = 0, melee_b = 0, twohands = 0, twohands_b = 0, ranged = 0, ranged_b = 0 }
-local inv_max_dmg_acc = { melee = 0, melee_b = 0, twohands = 0, twohands_b = 0, ranged = 0, ranged_b = 0 }
+local inv_max_dmg =     { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0, ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0 }
+local inv_max_dmg_acc = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0, ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0 }
 local egos = { }
 
+
 local function get_weap_type(it)
-  if it.is_ranged then
-    if it.branded then return "ranged_b"
-    else return "ranged" end
-  else
-    if get_hands(it) == 2 then
-      if it.branded then return "twohands_b"
-      else return "twohands" end
-    else
-      if it.branded then return "melee_b"
-      else return "melee" end
-    end
+  local ret_val
+  if it.is_ranged then ret_val = "ranged_"
+  else ret_val = "melee_"
   end
+  
+  ret_val = ret_val..get_hands(it)
+  if it.branded then ret_val = ret_val.."b" end
+  
+  return ret_val
 end
 
 local function enforce_dmg_floor(target, floor)
@@ -49,6 +46,10 @@ end
 
 local function generate_inv_weap_arrays()
   set_top_school()
+  for k, _ in pairs(inv_max_dmg) do
+    inv_max_dmg[k] = 0
+    inv_max_dmg_acc[k] = 0
+  end
   
   for cur in iter.invent_iterator:new(items.inventory()) do
     if cur.class(true) == "weapon" then
@@ -58,16 +59,26 @@ local function generate_inv_weap_arrays()
       local weap_type = get_weap_type(cur)
       if dmg > inv_max_dmg[weap_type] then
         inv_max_dmg[weap_type] = dmg
-        inv_max_dmg_acc[weap_type] = cur.accuracy + cur.plus
+        local cur_plus = cur.plus
+        if not cur_plus then cur_plus = 0 end
+        inv_max_dmg_acc[weap_type] = cur.accuracy + cur_plus
       end
     end
   end
   
-  enforce_dmg_floor("melee", "melee_b")
-  enforce_dmg_floor("twohands_b", "melee_b")
-  enforce_dmg_floor("twohands", "twohands_b")
-  enforce_dmg_floor("twohands", "melee")
-  enforce_dmg_floor("ranged", "ranged_b")
+  -- Copy max_dmg from more restrictive categories to less restrictive
+  enforce_dmg_floor("ranged_1", "ranged_1b")
+  enforce_dmg_floor("ranged_2", "ranged_2b")
+  enforce_dmg_floor("melee_1", "melee_1b")
+  enforce_dmg_floor("melee_2", "melee_2b")
+
+  enforce_dmg_floor("melee_1", "ranged_1")
+  enforce_dmg_floor("melee_1b", "ranged_1b")
+  enforce_dmg_floor("melee_2", "ranged_2")
+  enforce_dmg_floor("melee_2b", "ranged_2b")
+
+  enforce_dmg_floor("melee_2", "melee_1")
+  enforce_dmg_floor("melee_2b", "melee_1b")
 end
 ------------------------
 ---- End inv arrays ----
@@ -170,7 +181,7 @@ local function get_dmg_delta(it, cur, penalty)
 end
 
 local function need_first_weapon()
-  local unarmed = inv_max_dmg["twohands"] == 0 and inv_max_dmg["ranged"] == 0
+  local unarmed = inv_max_dmg["melee_2"] == 0
   
   if not unarmed or you.skill("Unarmed Combat") > 0 then return false end
   if you.get_base_mutation_level("claws", true, false, true) > 0 then return false end
@@ -260,7 +271,7 @@ local function alert_interesting_weapon(it, cur)
         if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
       elseif you.skill("shields") <= 4 then
         -- Not really training shields; may be interested in big upgrades
-        if penalty*get_weap_dps(it) >= inv_max_dmg["melee"] then return alert_item(it, "2-handed weapon4") end
+        if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then return alert_item(it, "2-handed weapon4") end
       end
     else
       -- Item uses same number of hands or fewer
@@ -348,6 +359,6 @@ function alert_weapons(it)
   alert_interesting_weapons(it)
   
   -- Skip high score alerts if not using weapons
-  if inv_max_dmg["twohands"] > 0 then alert_weap_high_scores(it)end
+  if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it)end
 end
 }
