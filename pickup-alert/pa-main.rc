@@ -28,15 +28,15 @@ function update_high_scores(it)
       if not ret_val then ret_val = "High pure damage" end
     end
     
-    if it.weap_skill == "Polearms" then
+    if it.weap_skill == "Polearms" and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not items.equipped_at("shield") and not ret_val then ret_val = "Good polearm" end
+        if not items.equipped_at("shield") and not ret_val then ret_val = "Good polearm1" end
       end
 
       if get_hands(it) == 1 and score > polearm_onehand_high_score then
         polearm_onehand_high_score = score
-        if not ret_val then ret_val = "1-handed polearm" end
+        if not ret_val then ret_val = "Good polearm" end
       end
     end
   end

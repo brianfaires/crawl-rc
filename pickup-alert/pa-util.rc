@@ -79,9 +79,9 @@ function get_shield_penalty(sh)
 end
 
 
-local summon_gods = { "Beogh", "Jiyva", "Yredelemnul" }
-function you_have_summons()
-  return you.skill("Summonings") + you.skill("Necromancy") > 0 or util.contains(summon_gods, you.god())
+local allied_gods = { "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul" }
+function you_have_allies()
+  return you.skill("Summonings") + you.skill("Necromancy") > 0 or util.contains(allied_gods, you.god())
 end
 
 --------------------------------------------------
