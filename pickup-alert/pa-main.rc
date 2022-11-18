@@ -97,7 +97,9 @@ function c_message_item_alerts(text, channel)
     end
     
     level_alerts = {}
-    crawl.mpr("<magenta>Level alerts: "..all_alerts.."</magenta>")
+    if all_alerts ~= "" then
+      crawl.mpr("<magenta>Level alerts: "..all_alerts.."</magenta>")
+    end
   end
 end
 
