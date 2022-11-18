@@ -94,8 +94,21 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
   end
 end
-crawl.setopt("autopickup_exceptions ^= < stone, <dart, <boomerang, <javelin")
+
+-- Init autopickup missiles
+local started_with_ranged = false
+if you.skill("Ranged Weapons") > 2 then
+  for it in iter.invent_iterator:new(items.inventory()) do
+    if it.is_ranged then
+      started_with_ranged = true
+      break
+    end
+  end
+end
+if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
+crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
 if you.race() == "Ogre" or you.race() == "Troll" then crawl.setopt("autopickup_exceptions ^= <large rock") end
+
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
 }
