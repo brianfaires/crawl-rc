@@ -10,6 +10,7 @@ show_more = false
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
+easy_confirm = all
 sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
 drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, stone
