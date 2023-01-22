@@ -64,11 +64,14 @@ function pickup_staves(it)
   else crawl.mpr("Unrecognized staff: " .. basename, "error")
   end
   
-  if good_staff == true then
-    return true
-  end
+  if good_staff == false then return false end
   
-  return false
+  -- Check for previously picked staves
+  for v in iter.invent_iterator:new(items_picked) do
+    if v:find(basename) then return false end
+  end
+	
+  return true
 end
 
 
