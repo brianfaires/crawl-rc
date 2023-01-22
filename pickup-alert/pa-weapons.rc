@@ -290,9 +290,9 @@ local function alert_interesting_weapon(it, cur)
       else
         -- Not branded
         if cur.branded then
-          if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
-              return alert_item(it, "Stronger weapon2")
-          end
+          --if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
+          --    return alert_item(it, "Stronger weapon2")
+          --end
         else
           local dmg_delta, other_acc
           if get_weap_dps(cur) > inv_max_dmg[get_weap_type(it)] then 
