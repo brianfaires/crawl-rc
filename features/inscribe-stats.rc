@@ -5,7 +5,8 @@ local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)
   local idx
   if it.subtype() == "shield" then idx = it.inscription:find("SH+")
-  else idx = it.inscription:find("AC+")
+  elseif it.subtype() == "body" then idx = it.inscription:find("AC+")
+  else return
   end
   
   if idx then
