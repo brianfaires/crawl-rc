@@ -75,7 +75,9 @@ end
 
 
 function get_shield_penalty(sh)
-  return 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_race_size()) * (27 - you.skill("Shields")) / 27
+  local pen = 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_race_size()) * (27 - you.skill("Shields")) / 27
+  -- Round to 2 decimals, mimicing scale==100
+  return math.floor(100 * pen) / 100
 end
 
 
@@ -110,8 +112,7 @@ function get_armour_ac(it)
     ac = ac - it.ac / 2
   end
   
-  if is_body and ac >= 0.05 then ac = ac - 0.05 end
-  return ac
+  return math.max(0, ac - 0.05)
 end
 
 local function get_aevp(encumb, str)
@@ -225,7 +226,7 @@ function get_weap_min_delay(it)
   local st, _ = it.subtype()
   local base_delay = it.delay
   
-  local min_delay = base_delay / 2
+  local min_delay = math.floor(base_delay / 2)
   if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
   if min_delay > 7 then min_delay = 7 end
   
@@ -369,7 +370,7 @@ function get_weap_dps(it, no_brand_dmg)
   
   local pre_brand_dmg = it.damage * stat_mod * skill_mod + it_plus + get_slay_bonuses()
   
-  
+
   if it.class(true) == "magical staff" then 
     return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg)) / get_weap_delay(it)
   end
