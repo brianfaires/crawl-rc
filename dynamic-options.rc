@@ -27,7 +27,9 @@ local function set_god_options()
   if you.god() ~= cur_god then
     cur_god = you.god()
   
-    if cur_god == "Beogh" then
+    if cur_god == "Ashenzari" then
+      crawl.setopt("runrest_stop_message += god:Ashenzari invites you to partake")
+    elseif cur_god == "Beogh" then
       crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
       crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
       crawl.setopt("force_more_message += Your orc.*dies")
@@ -58,6 +60,8 @@ local function set_god_options()
       crawl.setopt("force_more_message += god:Lugonu sends minions to punish you")
     elseif cur_god == "Okawaru" then
       crawl.setopt("force_more_message += god:Okawaru sends forces against you")
+    elseif cur_god == "Ru" then
+      crawl.setopt("runrest_stop_message += god:Ru believes you are ready to make a new sacrifice")
     elseif cur_god == "Qazlal" then
       crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
       crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
