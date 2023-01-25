@@ -6,17 +6,25 @@ crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
 local function fully_recovered()
-  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "slowed", "marked", "tree%-form" }
+  -- Confirm sure HP and MP are full
+  local hp, mhp = you.hp()
+  if hp ~= mhp then return false end
+  local mp, mmp = you.mp()
+  if mp ~= mmp then return false end
+  
+  -- Statuses that will always rest off
+  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form" }
   local status = you.status()
 
   for s in iter.invent_iterator:new(status_wait) do
     if status:find(s) then return false end
   end
   
-  local hp, mhp = you.hp()
-  if hp ~= mhp then return false end
-  local mp, mmp = you.mp()
-  if mp ~= mmp then return false end
+  -- If negative stats, don't rest off slow
+  if status:find("slowed") then
+    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+  end
+
   return true
 end
 
