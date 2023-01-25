@@ -90,6 +90,10 @@ function c_assign_invletter_item_alerts(it)
 end
 
 function c_message_item_alerts(text, channel)
+  if text:find("You start waiting.") or text:find("You start resting.") then
+    disable_autopickup = true
+  end
+  
   if text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
     for v in iter.invent_iterator:new(level_alerts) do
@@ -106,6 +110,7 @@ function c_message_item_alerts(text, channel)
 end
 
 function ready_item_alerts()
+  disable_autopickup = false
   for it in iter.invent_iterator:new(items.inventory()) do
     if it.delay or it.subtype() == "body" then update_high_scores(it) end
   end
@@ -121,6 +126,8 @@ end
 ---- Autopickup main ----
 -------------------------
 add_autopickup_func(function (it, name)
+  if disable_autopickup then return end
+
   local class = it.class(true)
 
   -- Check for pickup
