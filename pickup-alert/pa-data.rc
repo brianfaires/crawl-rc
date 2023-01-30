@@ -12,7 +12,7 @@ if not added_persistant_data or you.turns() == 0 then
   rare_items = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
                 "lajatang", "bardiche", "demon trident", "trishula",
                 "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
-                "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", 
+                "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", "wand of digging",
                 "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
 
   armour_high_score = 0

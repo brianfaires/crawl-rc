@@ -13,7 +13,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
   
   -- Statuses that will always rest off
-  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form" }
+  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form", "sluggish" }
   local status = you.status()
 
   for s in iter.invent_iterator:new(status_wait) do
