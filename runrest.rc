@@ -61,7 +61,7 @@ ignore ^= looks more healthy
 
 # Misc
 stop -= You now have enough gold to
-
+stop ^= timed_portal:.*
 ignore ^= nearby plant withers and dies
 ignore ^= disentangle yourself
 ignore ^= You swap places.
