@@ -71,8 +71,6 @@ local function set_god_options()
     elseif cur_god == "Trog" then
       crawl.setopt("force_more_message += god:You feel the effects of Trog's Hand fading")
       crawl.setopt("force_more_message += god:You feel less resistant to hostile enchantments")
-    elseif cur_god == "Uskayaw" then
-      crawl.setopt("force_more_message += god:You can no longer pass through a line of other dancers.")
     elseif cur_god == "Wu Jian Council" then
       crawl.setopt("runrest_ignore_message += heavenly storm settles")
     elseif cur_god == "Xom" then
