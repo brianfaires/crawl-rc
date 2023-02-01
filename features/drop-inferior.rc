@@ -41,7 +41,7 @@ function c_assign_invletter_drop_inferior(it)
       if st == "body" then
         if inv.encumbrance >= it.encumbrance then item_match = true end
       else
-        if inv.name("base") == basename then item_match = true end
+        if inv.subtype() == st then item_match = true end
       end
     end
 
