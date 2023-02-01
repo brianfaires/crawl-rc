@@ -1,58 +1,14 @@
 include = pickup-alert/pa-data.rc
 
 {
-----------------------------------------
----- Persistant data access / logic ----
-----------------------------------------
-function update_high_scores(it)
-  local ret_val = nil
-  
-  if it.class(true) == "armour" then
-    local ac = get_armour_ac(it)
-    if ac > armour_high_score then
-      armour_high_score = ac
-      if not ret_val then ret_val = "Strongest armour" end
-    end
-  elseif it.class(true) == "weapon" then
-    local it_plus = it.plus
-    if not it_plus then it_plus = 0 end
-    local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
-    if score > weapon_high_score then
-      weapon_high_score = score
-      if not ret_val then ret_val = "Good weapon" end
-    end
-    
-    local unbranded_score = get_weap_dps(it, false) + (it.accuracy + it_plus) / 2
-    if unbranded_score > unbranded_high_score then
-      unbranded_high_score = score
-      if not ret_val then ret_val = "High pure damage" end
-    end
-    
-    if it.weap_skill == "Polearms" and you_have_allies() then
-      if score > polearm_high_score then
-        polearm_high_score = score
-        if not items.equipped_at("shield") and not ret_val then ret_val = "Good polearm1" end
-      end
-
-      if get_hands(it) == 1 and score > polearm_onehand_high_score then
-        polearm_onehand_high_score = score
-        if not ret_val then ret_val = "Good polearm" end
-      end
-    end
-  end
-
-  return ret_val
-end
-
-
 function alert_item(it, alert_type)
   local name = it.name("plain")
   if not it.fully_identified then name = "+0 " .. name end
 
   if not previously_alerted(it) and not previously_picked(it) then
-    if it.class(true) == "weapon" or it.class(true) == "magical staff" then
+    if is_weapon(it) or is_staff(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
-	elseif it.subtype() == "body" then
+	elseif is_body_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
     elseif it.class(true) == "armour" then
       show_alert_msg("Item alert, "..alert_type..": ", name)
@@ -77,7 +33,7 @@ crawl.setopt("runrest_stop_message += Item alert, ")
 ---------------------------------------------
 function c_assign_invletter_item_alerts(it)
   local name = it.name("plain")
-  if it.delay or it.class(true) == "armour" then
+  if is_weapon(it) or is_armour(it) then
     if not previously_picked(it) then
       insert_item_and_less_enchanted(items_picked, it)
       update_high_scores(it)
@@ -91,10 +47,8 @@ end
 
 function c_message_item_alerts(text, channel)
   if text:find("You start waiting.") or text:find("You start resting.") then
-    disable_autopickup = true
-  end
-  
-  if text:find("Done exploring.") or text:find("Partly explored") then
+    disable_pa = true
+  elseif text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
     for v in iter.invent_iterator:new(level_alerts) do
       if all_alerts == "" then all_alerts = v
@@ -104,56 +58,56 @@ function c_message_item_alerts(text, channel)
     
     level_alerts = {}
     if all_alerts ~= "" then
-      crawl.mpr("<magenta>Level alerts: "..all_alerts.."</magenta>")
+      crawl.mpr("<magenta>Recent alerts: "..all_alerts.."</magenta>")
     end
   end
 end
 
 function ready_item_alerts()
-  disable_autopickup = false
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if it.delay or it.subtype() == "body" then update_high_scores(it) end
+  if not disable_pa then
+    generate_inv_weap_arrays()
+    update_high_scores(items.equipped_at("body armour"))
+  else
+    disable_pa = false
   end
 end
-
--------------------------------------------------
-------------------- End Hooks -------------------
--------------------------------------------------
 
 
 
 -------------------------
 ---- Autopickup main ----
 -------------------------
-add_autopickup_func(function (it, name)
-  if disable_autopickup then return end
+if not added_autopickup_func then
+  added_autopickup_func = true
+  
+  add_autopickup_func(function (it, name)
+    if disable_pa then return end
 
-  local class = it.class(true)
+    -- Check for pickup
+    local retVal = false
+    if is_armour(it) and loaded_pa_armour then retVal = pickup_armour(it)
+    elseif is_weapon(it) and loaded_pa_weapons then retVal = pickup_weapons(it)
+    elseif is_staff(it) and loaded_pa_misc then retVal = pickup_staff(it)
+    end
 
-  -- Check for pickup
-  local retVal = false
-  if class == "armour" and loaded_pa_armour then retVal = pickup_armour(it)
-  elseif class == "weapon" and loaded_pa_weapons then retVal = pickup_weapons(it)
-  elseif class == "magical staff" and loaded_pa_misc then retVal = pickup_staves(it)
-  end
+    if retVal == true then
+      remove_from_rare_items(it)
+      return true
+    end
 
-  if retVal == true then
-    remove_from_rare_items(it)
-    return true
-  end
+    -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
+    ready_item_alerts()
 
-  -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
-  ready_item_alerts()
+    -- Not picking up this item. Check for alerts
+    if loaded_pa_misc then
+      alert_rare_items(it)
+      if is_staff(it) then alert_staff(it) end
+    end
 
-  -- Not picking up this item. Check for alerts
-  if loaded_pa_misc then
-    alert_rare_items(it)
-    if class == "magical staff" then alert_staves(it) end
-  end
-
-  if it.name("base") == "orb" and loaded_pa_misc then alert_orbs(it)
-  elseif class == "armour" and loaded_pa_armour then alert_armour(it)
-  elseif class == "weapon" and loaded_pa_weapons then alert_weapons(it)
-  end
-end)
+    if is_orb(it) and loaded_pa_misc then alert_orb(it)
+    elseif is_armour(it) and loaded_pa_armour then alert_armour(it)
+    elseif is_weapon(it) and loaded_pa_weapons then alert_weapons(it)
+    end
+  end)
+end
 }

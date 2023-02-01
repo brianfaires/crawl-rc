@@ -1,54 +1,83 @@
 {
+------------------------------------
+--------------- Misc ---------------
+------------------------------------
 function show_alert_msg(alert_text, item_name)
   crawl.mpr("<cyan>----<magenta>"..alert_text.."<yellow>"..item_name.."</yellow></magenta>----</cyan>")
+  you.stop_activity()
+end
+
+local allied_gods = { "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul" }
+function you_have_allies()
+  return you.skill("Summonings") + you.skill("Necromancy") > 0 or util.contains(allied_gods, you.god())
 end
 
 
-local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
-  -- Add (or remove) an item name to a table, along with all less enchanted versions
-  -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = it.name("plain")
-  if not it.fully_identified then name = "+0 " .. name end
-  if util.contains(table_ref, name) ~= remove_item then return end
-  
-  if remove_item then util.remove(table_ref, name)
-  else table.insert(table_ref, name)
-  end
-
-  if it.artefact then return end
-  
-  -- Do less enchanted items too
-  local plus = tonumber(name:sub(2,2))
-  if not plus then return end
-    
-  if plus > 0 then
-    if tonumber(name:sub(3,3)) then
-      plus = 10 * plus + tonumber(name:sub(3,3))
-    end
-
-    for i=plus,1,-1 do
-      name = name:gsub("+"..i, "+"..(i-1))
-      if remove_item then util.remove(table_ref, name)
-      else table.insert(table_ref, name)
-      end
-    end
+------------------------------
+--- Code readability funcs ---
+------------------------------
+function if_el(cond, a, b)
+  if cond then
+    return a
+  else
+    return b
   end
 end
 
-function insert_item_and_less_enchanted(table_ref, it)
-  add_remove_item_and_less_enchanted(table_ref, it, false)
+function is_body_armour(it)
+  return it and it.subtype() == "body"
 end
 
-function remove_item_and_less_enchanted(table_ref, it)
-  add_remove_item_and_less_enchanted(table_ref, it, true)
+function is_armour(it)
+  return it and it.class(true) == "armour"
 end
 
+function is_shield(it)
+  return it and it.subtype() == "shield"
+end
 
+function is_weapon(it)
+  return it and (it.delay ~= nil)
+end
+
+function is_staff(it)
+  return it and it.class(true) == "magical staff"
+end
+
+function is_armour(it)
+  return it and it.class(true) == "armour"
+end
+
+function is_ring(it)
+  return it and it.name("base") == "ring"
+end
+
+function is_amulet(it)
+  return it and it.name("base") == "amulet"
+end
+
+function is_orb(it)
+  return it and it.name("base") == "orb"
+end
+
+function get_mut(mutation, include_temp)
+  return you.get_base_mutation_level(mutation, include_temp)
+end
+
+function have_shield()
+  return items.equipped_at("shield") ~= nil
+end
+
+function get_body_armour()
+  return items.equipped_at("body armour")
+end
+
+---------------------------------
+--- Custom def of ego/branded ---
+---------------------------------
 function has_ego(it)
-  if it.class(true) == "weapon" then return it.branded end
-  
-  if it.artefact then return true end
-  if it.branded then return true end
+  if it.class(true) == "weapon" then return it.branded or it.artefact end
+  if it.artefact or it.branded then return true end
   local basename = it.name("base")
   if basename:find("troll leather") then return true end
   if basename:find("dragon scales") and not basename:find("steam") then return true end
@@ -56,13 +85,17 @@ function has_ego(it)
 end
 
 function get_ego(it)
+  if it.artefact then return "arte" end
   local basename = it.name("base")
   if basename:find("troll leather") then return "Regen+" end
   if basename:find("dragon scales") and not basename:find("steam") then return basename end
-  if it.artefact then return "arte" end
   return it.ego()
 end
 
+
+-------------------------------------------------
+--------- Armour (Mimicing crawl calcs) ---------
+-------------------------------------------------
 function get_race_size()
   local race = you.race()
   if race == "Spriggan" then return -2
@@ -73,26 +106,14 @@ function get_race_size()
   end
 end
 
-
 function get_shield_penalty(sh)
   local pen = 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_race_size()) * (27 - you.skill("Shields")) / 27
-  -- Round to 2 decimals, mimicing scale==100
+  -- Round to 2 decimals, which mimics scale==100
   return math.floor(100 * pen) / 100
 end
 
-
-local allied_gods = { "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul" }
-function you_have_allies()
-  return you.skill("Summonings") + you.skill("Necromancy") > 0 or util.contains(allied_gods, you.god())
-end
-
---------------------------------------------------
---------------------- Armour ---------------------
---------------------------------------------------
 function get_armour_ac(it)
-  local is_body = it.subtype() == "body"
-  local it_plus = it.plus
-  if not it_plus then it_plus = 0 end
+  local it_plus = if_el(it.plus, it.plus, 0)
   
   if it.artefact and it.fully_identified then
     local art_ac = it.artprops["AC"]
@@ -104,11 +125,11 @@ function get_armour_ac(it)
     if art_ac then it_plus = it_plus + art_ac end
   end
   
-  local deformed = you.get_base_mutation_level("deformed body", true, false, true) > 0
-  local pseudopods = you.get_base_mutation_level("pseudopods", true, false, true) > 0
+  local deformed = get_mut("deformed body", true) > 0
+  local pseudopods = get_mut("pseudopods", true) > 0
   
   local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
-  if pseudopods or (deformed and is_body) then
+  if pseudopods or (deformed and is_body_armour(it)) then
     ac = ac - it.ac / 2
   end
   
@@ -151,11 +172,10 @@ function get_armour_ev(it)
   local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
 
-  local encumb = it.encumbrance - 2* you.get_base_mutation_level("sturdy frame", true, false, true)
+  local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
   
   armor_penalty = encumb - 3
-  -- todo: sturdy frame mutation
   
   if armor_penalty > 0 then
     if armor_penalty >= str then dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
@@ -182,11 +202,7 @@ function get_shield_sh(it)
     if art_dex then dex = dex - art_dex end
   end
 
-  local it_plus = it.plus
-  if not it_plus then it_plus = 0 end
-  
-  local it_ac = it.ac
-  --if you.get_base_mutation_level("deformed body", true, false, false) > 0 then it_ac = it_ac / 2 end
+  local it_plus = if_el(it.plus, it.plus, 0)
   
   local skill = you.skill("Shields")
   local basename = it.name("base")
@@ -196,7 +212,7 @@ function get_shield_sh(it)
   else sh_size = -2
   end
   
-  local base_sh = it_ac * 2 + sh_size*get_race_size()
+  local base_sh = it.ac * 2 + sh_size*get_race_size()
   local shield = base_sh * (50 + skill*5/2)
   shield = shield + 200*it_plus
   
@@ -208,9 +224,10 @@ function get_shield_sh(it)
   return (shield + 50) / 200
 end
 
----------------------------------------------------
---------------------- Weapons ---------------------
----------------------------------------------------
+
+--------------------------------------------------
+--------- Weapons (Mimicing crawl calcs) ---------
+--------------------------------------------------
 function get_hands(it)
   if you.race() ~= "Formicid" then return it.hands end
   st, _ = it.subtype()
@@ -218,15 +235,15 @@ function get_hands(it)
   return 1
 end
 
-
 function get_weap_min_delay(it)
   -- This is an abbreviated version of the actual calculation.
   -- Intended only to be used to prevent skill from reducing too far in get_weap_delay()
   local basename = it.name("base")
-  local st, _ = it.subtype()
-  local base_delay = it.delay
   
-  local min_delay = math.floor(base_delay / 2)
+  adj_base_delay = it.delay / 2
+  if it.ego() == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
+  local min_delay = math.floor(adj_base_delay)
+  
   if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
   if min_delay > 7 then min_delay = 7 end
   
@@ -236,13 +253,14 @@ function get_weap_min_delay(it)
   return min_delay
 end
 
-
 function get_weap_delay(it)
   local delay = it.delay - you.skill(it.weap_skill)/2
   local min_delay = get_weap_min_delay(it)
   if delay < min_delay then delay = min_delay end
   
-  if it.ego() == "Speed" then delay = delay * 2 / 3 end
+  if it.ego() == "speed" then delay = delay * 2 / 3
+  elseif it.ego() == "heavy" then delay = delay * 1.5
+  end
   
   if delay < 3 then delay = 3 end
   
@@ -269,6 +287,10 @@ function get_weap_delay(it)
 end
 
 
+--------------------------------------
+--------- Other damage calcs ---------
+--------------------------------------
+-- Count all slay bonuses from weapons/armour/jewellery
 function get_slay_bonuses()
   local sum = 0
 
@@ -276,7 +298,7 @@ function get_slay_bonuses()
   for i = 0,20 do
     it = items.equipped_at(i)
     if it then
-      if it.name("base") == "ring" then
+      if is_ring(it) then
         if it.artefact then
           local name = it.name()
           local idx = name:find("Slay+")
@@ -291,7 +313,7 @@ function get_slay_bonuses()
         elseif it.ego(true) == "Slay" then 
           sum = sum + it.plus 
         end
-      elseif it.artefact and (it.class(true) == "armour" or it.name("base") == amulet) then
+      elseif it.artefact and (is_armour(it) or is_amulet(it)) then
           local slay = it.artprops["Slay"]
           if slay then sum = sum + slay end
       end
@@ -299,31 +321,31 @@ function get_slay_bonuses()
   end
   
   if you.race() == "Demonspawn" then
-    sum = sum + 3 * you.get_base_mutation_level("augmentation", true, false, true)
-    sum = sum + you.get_base_mutation_level("sharp scales", true, false, true)
+    sum = sum + 3 * get_mut("augmentation", true)
+    sum = sum + get_mut("sharp scales", true)
   end
 
   return sum
 end
 
 
+-- Calc extra damage for magical staves
+staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
+              poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
 function get_staff_bonus_dmg(it, no_brand_dmg)
   if no_brand_dmg and basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
   
   local evo_skill = you.skill("Evocations")
   local basename = it.name("base")
-  local school
-  if basename == "staff of fire" then school = "Fire Magic"
-  elseif basename == "staff of cold" then school = "Ice Magic"
-  elseif basename == "staff of earth" then school = "Earth Magic"
-  elseif basename == "staff of air" then school = "Air Magic"
-  elseif basename == "staff of poison" then school = "Poison Magic"
-  elseif basename == "staff of death" then school = "Necromancy"
-  elseif basename == "staff of conjuration" then school = "Conjurations"
-  else
-    crawl.mpr("ERROR:UNRECOGNIZED STAFF:"..it.name("base"), error)
-    return 0
+  local school = nil
+  
+  for k,v in pairs(staff_schools) do
+    if basename == "staff of "..k then
+	  school = v
+	  break
+	end
   end
+  if not school then return 0 end
   
   local spell_skill = you.skill(school)
   local chance = (evo_skill + spell_skill/2) / 15
@@ -335,12 +357,14 @@ function get_staff_bonus_dmg(it, no_brand_dmg)
 end
 
 
+----------------------------------
+--------- get_weap_dps() ---------
+----------------------------------
 function get_weap_dps(it, no_brand_dmg)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
-  local it_plus = it.plus
-  if not it_plus then it_plus = 0 end
+  local it_plus = if_el(it.plus, it.plus, 0)
 
   -- Adjust str/dex/slay from artefacts
   local str = you.strength()
@@ -371,17 +395,15 @@ function get_weap_dps(it, no_brand_dmg)
   local pre_brand_dmg = it.damage * stat_mod * skill_mod + it_plus + get_slay_bonuses()
   
 
-  if it.class(true) == "magical staff" then 
+  if is_staff(it) then 
     return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg)) / get_weap_delay(it)
   end
   
   local ego = it.ego()
   if not ego then return pre_brand_dmg / get_weap_delay(it) end
 
-  if ego == "spectralizing" then return 2 * pre_brand_dmg / get_weap_delay(it) end
-  if ego == "vorpality" then
-    if it.is_ranged then return 1.2 * pre_brand_dmg / get_weap_delay(it) end
-    return 7/6 * pre_brand_dmg / get_weap_delay(it)
+  if ego == "spectralizing" then return 2 * pre_brand_dmg / get_weap_delay(it)
+  elseif ego == "heavy" then return 1.8 * pre_brand_dmg / get_weap_delay(it)
   end
   
   if not no_brand_dmg then
@@ -410,8 +432,7 @@ function get_weapon_info(it)
   local dps = get_weap_dps(it)
   local dps_str = string.format("%.2f", dps)
       
-  local it_plus = it.plus
-  if not it_plus then it_plus = 0 end
+  local it_plus = if_el(it.plus, it.plus, 0)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
   
@@ -422,9 +443,9 @@ end
 
 
 function get_armour_info(it)
-  if not it or it.class(true) ~= "armour" then return end
+  if not is_armour(it) then return end
   
-  if it.subtype() == "shield" then
+  if is_shield(it) then
     local ev = get_shield_penalty(it)
     local ev_str = string.format("%.1f", ev)
     ev_str = "-"..ev_str
@@ -440,7 +461,7 @@ function get_armour_info(it)
     local ac = get_armour_ac(it)
     local ac_str = string.format("%.1f", ac)
     if ac >= 0 then ac_str = "+"..ac_str end
-    if it.subtype() ~= "body" then return "AC"..ac_str end
+    if not is_body_armour(it) then return "AC"..ac_str end
     
     ac_str = "AC"..ac_str..","
     if ac < 10 then ac_str = ac_str.." " end
