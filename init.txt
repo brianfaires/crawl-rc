@@ -134,17 +134,6 @@ function ch_stop_running(kind)
 end
 
 
-local function note_table(n, t)
-  local note = n.." = {"
-  for e in iter.invent_iterator:new(t) do
-    note = note..e..", "
-  end
-  
-  note = note.."}"
-  crawl.take_note(note)
-end
-
-
 ---------------------------
 --------- ready() ---------
 ---------------------------
@@ -152,17 +141,6 @@ local last_turn = -1
 local last_write_counter = 0
 function ready()
   if you.turns() == last_turn then return end
-
-  last_write_counter = last_write_counter + you.turns() - last_turn
-  if last_write_counter >= 1000 then
-    last_write_counter = 0
-    crawl.take_note("Data dump:")
-    crawl.take_note("dropped_item_exclusions = "..dropped_item_exclusions)
-    note_table("rare_items", rare_items)
-    note_table("items_picked", items_picked)
-    note_table("items_alerted", items_alerted)
-  end
-
   last_turn = you.turns()
  
   if ready_force_mores then ready_force_mores() end

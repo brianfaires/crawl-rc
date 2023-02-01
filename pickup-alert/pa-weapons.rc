@@ -184,8 +184,8 @@ local function need_first_weapon()
   local unarmed = inv_max_dmg["melee_2"] == 0
   
   if not unarmed or you.skill("Unarmed Combat") > 0 then return false end
-  if you.get_base_mutation_level("claws", true, false, true) > 0 then return false end
-  if you.get_base_mutation_level("demonic touch", true, false, true) > 0 then return false end
+  if get_mut("claws", true) > 0 then return false end
+  if get_mut("demonic touch", true) > 0 then return false end
   
   return true
 end
@@ -199,7 +199,7 @@ local function pickup_weapon(it, cur)
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
-    if it.branded and it.fully_identified and not cur.branded then return true end
+    if it.branded and it.fully_identified and not cur.branded then return get_weap_dps(it) > 0.85*get_weap_dps(cur) end
     if cur.branded and not it.branded then return false end
     return it.ego() == cur.ego() and get_weap_dps(it) > get_weap_dps(cur)
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
@@ -213,8 +213,7 @@ local function pickup_weapon(it, cur)
 
     local dmg_delta = get_dmg_delta(it, cur)
     if dmg_delta > 0 then return true end
-    local it_plus = it.plus
-    if not it_plus then it_plus = 0 end
+    local it_plus = if_el(it.plus, it.plus, 0)
     return dmg_delta == 0 and (it.accuracy+it_plus) > inv_max_dmg_acc[get_weap_type(it)]
   end
   
@@ -266,7 +265,7 @@ local function alert_interesting_weapon(it, cur)
       end
       
       if not items.equipped_at("shield") then 
-        if it.branded and not util.contains(egos, it.ego()) then return alert_item(it, "New ego4") end
+        if it.branded and not (it.ego() == "heavy" or it.ego() == "speed") and not util.contains(egos, it.ego()) then return alert_item(it, "New ego4") end
         if not (cur.branded or cur.artefact) and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon2") end
         if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
       elseif you.skill("shields") <= 4 then
@@ -304,8 +303,7 @@ local function alert_interesting_weapon(it, cur)
           end
           
           if dmg_delta > 0 then return alert_item(it, "Stronger weapon3") end
-          local it_plus = it.plus
-          if not it_plus then it_plus = 0 end
+          local it_plus = if_el(it.plus, it.plus, 0)
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then return alert_item(it, "Higher accuracy") end
         end
       end      
@@ -315,8 +313,6 @@ end
 
 
 local function alert_interesting_weapons(it)
-  generate_inv_weap_arrays()
-  
   local ranged_weap_in_inv = false
   for cur in iter.invent_iterator:new(items.inventory()) do
     if cur.class(true) == "weapon" then

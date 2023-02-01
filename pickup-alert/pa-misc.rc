@@ -22,63 +22,28 @@ function alert_rare_items(it)
   end
     
   if do_alert then
-    -- Found a new rare item! We may already have one if it was auto-picked up
     show_alert_msg("It's your first ", rare_items[index].."!")
-    crawl.more()
+	crawl.more()
   end
 
   remove_from_rare_items(it)
-  
-  return
 end
-crawl.setopt("runrest_stop_message += It's your first.*!")
 
 
 --------------------
 ---- Alert orbs ----
 --------------------
-function alert_orbs(it)
-  if items.equipped_at("shield") then return false end
-  if not it.fully_identified then return false end
-  alert_item(it, "New orb")
-  return false
+function alert_orb(it)
+  if it.fully_identified and not have_shield() then
+    alert_item(it, "New orb")
+  end
 end
 
 
-
-----------------------------
----- Smart staff pickup ----
-----------------------------
-function pickup_staves(it)
-  if it.is_useless or not it.fully_identified then return false end
-
-  local basename = it.name("base")
-  local good_staff = false
-  if basename == "staff of fire" then good_staff = you.skill("Fire Magic") > 0
-  elseif basename == "staff of cold" then good_staff = you.skill("Ice Magic") > 0
-  elseif basename == "staff of earth" then good_staff = you.skill("Earth Magic") > 0
-  elseif basename == "staff of air" then good_staff = you.skill("Air Magic") > 0
-  elseif basename == "staff of poison" then good_staff = you.skill("Poison Magic") > 0
-  elseif basename == "staff of death" then good_staff = you.skill("Necromancy") > 0
-  elseif basename == "staff of conjuration" then good_staff = you.skill("Conjurations") > 0
-  else crawl.mpr("Unrecognized staff: " .. basename, "error")
-  end
-  
-  if good_staff == false then return false end
-  
-  -- Check for previously picked staves
-  for v in iter.invent_iterator:new(items_picked) do
-    if v:find(basename) then return false end
-  end
-	
-  return true
-end
-
-
-------------------------
----- alert_staves() ----
-------------------------
-function alert_staves(it)
+----------------------------------
+---- Alert for needed resists ----
+----------------------------------
+function alert_staff(it)
   if not it.fully_identified then return false end
   local needRes = false
   local basename = it.name("base")
@@ -90,11 +55,38 @@ function alert_staves(it)
   elseif basename == "staff of death" then needRes = you.res_draining() == 0
   end
   
-  if needRes == true then
-    return alert_item(it, "Staff resistance")
+  if needRes then
+    alert_item(it, "Staff resistance")
+  end
+end
+
+
+----------------------------
+---- Smart staff pickup ----
+----------------------------
+staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
+              poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
+function pickup_staff(it)
+  if it.is_useless or not it.fully_identified then return false end
+
+  local basename = it.name("base")
+  local good_staff = false
+  
+  for k,v in pairs(staff_schools) do
+    if basename == "staff of "..k then
+	  good_staff = you.skill(v) > 0
+	  break
+	end
   end
   
-  return false
+  if not good_staff then return false end
+  
+  -- Check for previously picked staves
+  for v in iter.invent_iterator:new(items_picked) do
+    if v:find(basename) then return false end
+  end
+	
+  return true
 end
 
 }
