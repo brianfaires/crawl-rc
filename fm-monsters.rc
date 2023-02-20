@@ -112,7 +112,7 @@ for v in iter.invent_iterator:new(force_more_monsters) do
     fm_mon_str = fm_mon_str.."|"..v
   end
 end
-fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum).*comes into view"
+fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum)).*comes into view"
 crawl.setopt("force_more_message += "..fm_mon_str)
 
 
@@ -136,9 +136,9 @@ local function get_three_pip_action(active, hp, cutoff, res)
     if res == 3 and hp >= cutoff/5 then return "-" end
   else
     if res == 0 and hp < cutoff then return "+" end
-    if res == 1 and hp > cutoff/2 then return "+" end
-    if res == 2 and hp > cutoff/3 then return "+" end
-    if res == 3 and hp > cutoff/5 then return "+" end
+    if res == 1 and hp < cutoff/2 then return "+" end
+    if res == 2 and hp < cutoff/3 then return "+" end
+    if res == 3 and hp < cutoff/5 then return "+" end
   end
 end
 
