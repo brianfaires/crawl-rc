@@ -152,12 +152,12 @@ function update_high_scores(it)
   elseif is_weapon(it) then
     local it_plus = if_el(it.plus, it.plus, 0)
     local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
-    if score > weapon_high_score then
+    if score > weapon_high_score and (get_hands(it) == 1 or not have_shield()) then
       weapon_high_score = score
       if not ret_val then ret_val = "Good weapon" end
     end
     
-    local unbranded_score = get_weap_dps(it, false) + (it.accuracy + it_plus) / 2
+    local unbranded_score = get_weap_dps(it, true) + (it.accuracy + it_plus) / 2
     if unbranded_score > unbranded_high_score then
       unbranded_high_score = score
       if not ret_val then ret_val = "High pure damage" end
