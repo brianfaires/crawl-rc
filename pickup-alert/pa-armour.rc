@@ -4,7 +4,6 @@ include = pickup-alert/pa-main.rc
 loaded_pa_armour = true
 
 
-
 ---------------------------------------
 ---- Begin alert_armour_upgrades() ----
 ---------------------------------------
@@ -56,7 +55,7 @@ function pickup_armour(it)
     if cur.artefact then return false end
       
     if get_ego(it) == get_ego(cur) then
-      return ac_delta > 0
+      return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance
     elseif has_ego(it) and not has_ego(cur) then
       return ac_delta >= 0
     end
@@ -198,8 +197,8 @@ end
 ------------------------------------------
 -- Alerts armour items that did trigger autopickup, but are worth consideration
 -- Includes: Artefacts, added or changed egos, and body armour AC/EV/Encumbrance changes, defined by following heuristics:
--- Lighter: EV/AC >= { 0.6, 0.8, 1.2, 2 } for ego: {gain, diff, same, lose}  --OR-- Gain/Diff ego while losing <=6AC
--- Heavier: AC/EV >= { 0.4, 0.6, 0.8, 2 } for ego: {gain, diff, same, lose} ; Penalty == encumb_change / 2 (or 0 if irrelevant)
+-- Lighter: EV/AC >= { 0.6, 0.8, 1.2, 2 } for ego: {gain, diff, same, lose}  --OR-- Gain/Diff ego while losing <=4AC
+-- Heavier: AC/EV >= { 0.4, 0.7, 0.8, 2 } for ego: {gain, diff, same, lose} ; Penalty == 0.75*encumb_change (or 0 if irrelevant)
 --
 -- Adjusting the heuristic values up will mean fewer alerts, and down will alert more often.
 -- If you want a specific alert to occur more or less often, look for the line of code below with the alert text,
@@ -223,15 +222,15 @@ local function alert_interesting_armour(it)
       
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ev_gain/ac_lost >= 0.6 or ac_lost <= 6 then return alert_item(it, "Gain ego (Lighter armour)") end
+          if ev_gain/ac_lost >= 0.6 or ac_lost <= 4 then return alert_item(it, "Gain ego (Lighter armour)") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ev_gain/ac_lost >= 0.8 or ac_lost <= 6 then return alert_item(it, "Diff ego (Lighter armour)") end
+          if ev_gain/ac_lost >= 0.8 or ac_lost <= 4 then return alert_item(it, "Diff ego (Lighter armour)") end
         else
           if ev_gain/ac_lost >= 1.2 then return alert_item(it, "Lighter armour (Same ego)") end
         end
       else
         if cur.artefact or has_ego(cur) then
-          if ev_gain/ac_lost >= 2 then return alert_item(it, "Lighter armour (Lost ego)") end
+          if ev_gain/ac_lost >= 2 and ev_gain >= 3 then return alert_item(it, "Lighter armour (Lost ego)") end
         else
           -- Neither has ego
           if ev_gain/ac_lost >= 1.2 then return alert_item(it, "Lighter armour") end
@@ -246,15 +245,15 @@ local function alert_interesting_armour(it)
     
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ac_gain/total_loss >= 0.4 or total_loss <= 8 then return alert_item(it, "Gain ego (Heavier armour)") end
+          if ac_gain/total_loss >= 0.4 or total_loss <= 6 then return alert_item(it, "Gain ego (Heavier armour)") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain/total_loss >= 0.6 or total_loss <= 8 then return alert_item(it, "Diff ego (Heavier armour)") end
+          if ac_gain/total_loss >= 0.7 or total_loss <= 6 then return alert_item(it, "Diff ego (Heavier armour)") end
         else
           if ac_gain/total_loss >= 0.8 then return alert_item(it, "Heavier armour (Same ego)") end
         end
       else
         if cur.artefact or has_ego(cur) then
-          if ac_gain/total_loss >= 2 then return alert_item(it, "Heavier armour (Lost ego)") end
+          if ac_gain/total_loss >= 2 and ac_gain >= 3 then return alert_item(it, "Heavier armour (Lost ego)") end
         else
           -- Neither has ego
           if ac_gain/total_loss >= 0.8 then return alert_item(it, "Heavier armour") end
