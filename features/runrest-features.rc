@@ -64,8 +64,11 @@ function c_message_fully_recover(text, channel)
       waiting_for_recovery = true
       crawl.setopt("message_colour += mute:You start waiting.")
     end
-  elseif waiting_for_recovery then
+  elseif waiting_for_recovery and channel == "timed_portal" then
     you.stop_activity()
+    waiting_for_recovery = false
+	crawl.setopt("message_colour -= mute:You start waiting.")
+	explore_after_recovery = false
   end
 end
 
