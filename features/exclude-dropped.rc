@@ -1,7 +1,7 @@
 {
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
--- Also exclude scrolls of enchant weapon/brand weapon, when no weapons are in inventory
+-- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
 
 -------------------------
 ---- Persistant data ----
@@ -57,9 +57,9 @@ local function get_misc_name(text)
   end
 end
 
-local function has_weap_in_inv()
+local function has_enchantable_weap_in_inv()
   for cur in iter.invent_iterator:new(items.inventory()) do
-    if cur.class(true) == "weapon" then return true end
+    if cur.class(true) == "weapon" and not cur.artefact and cur.plus < 9 then return true end
   end
 
   return false
@@ -67,10 +67,10 @@ end
 
 local function get_scroll_name(text)
   if text:find("enchant weapon") then
-    if has_weap_in_inv() then return end
+    if has_enchantable_weap_in_inv() then return end
     return "enchant weapon"
   elseif text:find("brand weapon") then
-    if has_weap_in_inv() then return end
+    if has_enchantable_weap_in_inv() then return end
     return "brand weapon"
   end
 end
