@@ -63,7 +63,12 @@ function c_message_item_alerts(text, channel)
   end
 end
 
+local last_ready_item_alerts_turn = 0
+
 function ready_item_alerts()
+  if you.turns() == last_ready_item_alerts_turn then return end
+  last_ready_item_alerts_turn = you.turns()
+  
   if not disable_pa then
     generate_inv_weap_arrays()
     update_high_scores(items.equipped_at("body armour"))
