@@ -3,19 +3,27 @@
 ---- race-specific ----
 ----------------------
 if you.race() == "Demonspawn" then
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
 elseif you.race() == "Formicid" then
-  crawl.setopt("more -= monster_warning:curare")
+  crawl.setopt("force_more_message -= monster_warning:curare")
 elseif you.race() == "Gargoyle" then
-  crawl.setopt("more -= monster_warning:curare")
+  crawl.setopt("force_more_message -= monster_warning:curare")
 elseif you.race() == "Ghoul" then
-  crawl.setopt("more -= monster_warning:curare")
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+  crawl.setopt("force_more_message -= monster_warning:curare")
+  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
 elseif you.race() == "Gnoll" then
   crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
 elseif you.race() == "Mummy" then
-  crawl.setopt("more -= monster_warning:curare")
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+  crawl.setopt("force_more_message -= monster_warning:curare")
+  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+end
+
+
+-----------------------
+---- class-specific ----
+-----------------------
+if you.class() == "Hunter" then
+  crawl.setopt("view_delay = 20")
 end
 
 
@@ -94,6 +102,7 @@ end
 ---------------------
 local warn_early_levels = false
 local warn_mid_levels = false
+local warn_late_levels = false
 local function set_xl_options()
   if not warn_early_levels and you.xl() <= 5 then
     warn_early_levels = true
@@ -106,9 +115,20 @@ local function set_xl_options()
   if not warn_mid_levels and you.xl() <= 10 then
     warn_mid_levels = true
     crawl.setopt("force_more_message += wielding.*of electrocution")
+	crawl.setopt("force_more_message += You.*re more poisoned")
   elseif warn_mid_levels and you.xl() > 10 then
     warn_mid_levels = false
     crawl.setopt("force_more_message -= wielding.*of electrocution")
+	crawl.setopt("force_more_message -= You.*re more poisoned")
+  end
+  
+  
+  if not warn_late_levels and you.xl() <= 18 then
+    crawl.setopt("force_more_message += (?<!You)(?<!yourself) speeds? up")
+	crawl.setopt("force_more_message += danger:goes berserk")
+  elseif not warn_late_levels and you.xl() > 18 then
+    crawl.setopt("force_more_message -= (?<!You)(?<!yourself) speeds? up")
+	crawl.setopt("force_more_message -= danger:goes berserk")
   end
 end
 
