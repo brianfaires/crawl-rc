@@ -8,7 +8,7 @@ function alert_item(it, alert_type)
   if not previously_alerted(it) and not previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
-	elseif is_body_armour(it) then
+    elseif is_body_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
     elseif it.class(true) == "armour" then
       show_alert_msg("Item alert, "..alert_type..": ", name)

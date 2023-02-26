@@ -23,7 +23,7 @@ function alert_rare_items(it)
     
   if do_alert then
     show_alert_msg("It's your first ", rare_items[index].."!")
-	crawl.more()
+    crawl.more()
   end
 
   remove_from_rare_items(it)
@@ -74,9 +74,9 @@ function pickup_staff(it)
   
   for k,v in pairs(staff_schools) do
     if basename == "staff of "..k then
-	  good_staff = you.skill(v) > 0
-	  break
-	end
+      good_staff = you.skill(v) > 0
+      break
+    end
   end
   
   if not good_staff then return false end
@@ -85,7 +85,7 @@ function pickup_staff(it)
   for v in iter.invent_iterator:new(items_picked) do
     if v:find(basename) then return false end
   end
-	
+
   return true
 end
 

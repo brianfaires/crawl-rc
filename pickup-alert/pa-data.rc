@@ -188,7 +188,7 @@ if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(rare_items, rare_items[idx]) end
-	insert_item_and_less_enchanted(items_picked, inv)
+    insert_item_and_less_enchanted(items_picked, inv)
   end
 end
 }

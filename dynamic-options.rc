@@ -115,20 +115,20 @@ local function set_xl_options()
   if not warn_mid_levels and you.xl() <= 10 then
     warn_mid_levels = true
     crawl.setopt("force_more_message += wielding.*of electrocution")
-	crawl.setopt("force_more_message += You.*re more poisoned")
+    crawl.setopt("force_more_message += You.*re more poisoned")
   elseif warn_mid_levels and you.xl() > 10 then
     warn_mid_levels = false
     crawl.setopt("force_more_message -= wielding.*of electrocution")
-	crawl.setopt("force_more_message -= You.*re more poisoned")
+    crawl.setopt("force_more_message -= You.*re more poisoned")
   end
   
   
   if not warn_late_levels and you.xl() <= 18 then
     crawl.setopt("force_more_message += (?<!You)(?<!yourself) speeds? up")
-	crawl.setopt("force_more_message += danger:goes berserk")
+    crawl.setopt("force_more_message += danger:goes berserk")
   elseif not warn_late_levels and you.xl() > 18 then
     crawl.setopt("force_more_message -= (?<!You)(?<!yourself) speeds? up")
-	crawl.setopt("force_more_message -= danger:goes berserk")
+    crawl.setopt("force_more_message -= danger:goes berserk")
   end
 end
 

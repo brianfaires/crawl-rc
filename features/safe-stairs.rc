@@ -10,9 +10,9 @@ function check_new_location(key)
   local turn_diff = you.turns() - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < 5 then
     crawl.formatted_mpr("Really go right back? (y/n)", "prompt")    local res = crawl.getch()    if string.lower(string.char(res)) == "y" then      crawl.sendkeys(key)
-	  last_stair_turn = you.turns()
+      last_stair_turn = you.turns()
     end  else    crawl.sendkeys(key)
-	last_stair_turn = you.turns()
+    last_stair_turn = you.turns()
   end
 end
 
