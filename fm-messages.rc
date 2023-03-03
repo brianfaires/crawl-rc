@@ -72,6 +72,7 @@ more += Your body shudders with the violent release
 # Found something important
 more += Found a staircase to the Ecumenical Temple
 more += timed_portal:.*
+more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
@@ -105,7 +106,7 @@ more += danger:corrodes you
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
-more += You feel.*(?<!less )(haunted|rot|vulnerable)
+more += You feel.*(?<!less) (haunted|rot|vulnerable)
 more += Your damage is reflected back at you
 more += (?<!You.*)reflects
 

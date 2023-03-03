@@ -71,8 +71,7 @@ local function set_god_options()
     elseif cur_god == "Ru" then
       crawl.setopt("runrest_stop_message += god:Ru believes you are ready to make a new sacrifice")
     elseif cur_god == "Qazlal" then
-      crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
-      crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
+	  crawl.setopt("force_more_message -= god:You feel.*protected")
     elseif cur_god == "The Shining One" then
       crawl.setopt("force_more_message += god:Your divine shield starts to fade.")
       crawl.setopt("force_more_message += god:Your divine shield fades away.")
