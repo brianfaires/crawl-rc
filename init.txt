@@ -3,10 +3,9 @@
 #################################
 autofight_stop = 65
 hp_warning = 20
+mouse_input = false
 item_stack_summary_minimum = 8
 default_manual_training = true
-messages_at_top = true
-show_more = false
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
@@ -20,6 +19,7 @@ fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped
 #################################
 ####### Explore options #########
 #################################
+explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
@@ -34,9 +34,10 @@ explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, jave
 #######################################
 ####### Autopickup exceptions #########
 #######################################
-autopickup_exceptions ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
-autopickup_exceptions ^= <scrolls? of immolation, <scrolls? of poison
-autopickup_exceptions ^= >useless_item, <misc
+ae := autopickup_exceptions
+ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
+ae ^= <scrolls? of immolation, <scrolls? of poison
+ae ^= >useless_item, <misc
 # Exclude the 3rd copy of any ring
 {
   add_autopickup_func(function (it, name)
@@ -58,33 +59,34 @@ autopickup_exceptions ^= >useless_item, <misc
 #############################
 
 ### Mostly normal RC options ###
-include = slots.rc
+include = autoinscribe.rc
+include = display.rc
+include = dynamic-options.rc
+#include = fm-messages.rc
+#include = fm-monsters.rc
 include = macros.rc
 include = runrest.rc
-include = fm-messages.rc
-include = fm-monsters.rc
-include = dynamic-options.rc
+include = slots.rc
 include = startup.rc
 
 
 ### Pickup and alert ###
 include = pickup-alert/pa-armour.rc
-include = pickup-alert/pa-weapons.rc
 include = pickup-alert/pa-misc.rc
+include = pickup-alert/pa-weapons.rc
 
 
 ### Features ###
-include = features/inscribe-stats.rc
-include = features/remind-id.rc
-include = features/weapon-slots.rc
-include = features/exclude-dropped.rc
-include = features/safe-consumables.rc
-include = features/drop-inferior.rc
-include = features/runrest-features.rc
-include = features/mute-swaps.rc
 include = features/after-shaft.rc
+include = features/drop-inferior.rc
+include = features/exclude-dropped.rc
+#include = features/inscribe-stats.rc
+#include = features/misc-alerts.rc
+include = features/mute-swaps.rc
+include = features/remind-id.rc
+include = features/runrest-features.rc
 include = features/safe-stairs.rc
-include = features/misc-alerts.rc
+include = features/weapon-slots.rc
 
 
 

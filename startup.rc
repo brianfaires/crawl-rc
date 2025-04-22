@@ -1,14 +1,4 @@
 {
--------------------------------------------------
----- Start with travel speed to slowest ally ----
--------------------------------------------------
--- Make sure this comes before Skill menu on startup, since they both use crawl.sendkeys()
-local need_toggle_travel_speed = true
-if you.turns() == 0 and need_toggle_travel_speed then
-  need_toggle_travel_speed = false
-  crawl.sendkeys(20)
-end
-
 
 ---------------------------------------------
 ---- Skill menu on startup (by rwbarton) ----

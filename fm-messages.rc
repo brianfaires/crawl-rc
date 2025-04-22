@@ -25,8 +25,6 @@ more += unholy channel is weakening
 more += monster_warning:wielding.*of chaos
 more += monster_warning:carrying a wand of
 more += monster_warning:curare
-more += (?<!You)(?<!yourself) speeds? up
-more += danger:goes berserk
 more += The forest starts to sway and rumble
 more += begins to recite a word of recall
 more += doors? slams? shut
@@ -35,8 +33,7 @@ more += The.*offers itself to Yredelemnul
 more += Deactivating autopickup
 more += Your?.*suddenly stops? moving
 more += There is.*feeling in your soul
-more += swoops through the air toward you
-more += Its appearance distorts for a moment
+#more += Its appearance distorts for a moment
 more += wretched star pulses
 more += Strange energies course through your body
 
@@ -76,6 +73,7 @@ more += timed_portal:.*
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
+more += byssal rune
 
 
 # Translocations
@@ -90,16 +88,14 @@ more += delayed
 # Big damage
 more += your body is wracked
 more += Ouch! That really hurt!
-more += silver sears you
 more += The poison in your body grows stronger
-more += You.*re (more poisoned|lethally poisoned)
+more += You.*re lethally poisoned
 more += danger:You convulse
 more += You feel a (horrible|terrible) chill
-more += You are (blasted|electrocuted|burned terribly)
-
+more += You are.*terribly
 
 # Hit by something
-more += Terrible wounds
+more += Terrible wounds open
 more += danger:corrodes you
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
@@ -125,9 +121,3 @@ more += Wisps of shadow swirl around
 more += hell effect:.*
 more += god:wrath finds you
 more += The walls disappear
-more += guardian golem overheats
-
-
-## If you understand this, I trust you not to troll me
-more += dgl_message:.*
-
