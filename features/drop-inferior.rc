@@ -2,12 +2,12 @@ include = pickup-alert/pa-util.rc
 
 
 -- Auto-drop items that are strictly worse than another
--- On item pickup, inscribes inferior items with "~drop"
-drop_filter += ~drop
+-- On item pickup, inscribes inferior items with "~~DROP_ME"
+drop_filter += ~~DROP_ME
 
 {
 function inscribe_drop(it)
-  local new_inscr = it.inscription:gsub("~drop", "").."~drop"
+  local new_inscr = it.inscription:gsub("~~DROP_ME", "").."~~DROP_ME"
   it.inscribe(new_inscr, false)
 end
 
@@ -57,7 +57,7 @@ end
 
 
 function c_assign_invletter_exclude_dropped(it)
- -- Remove "~drop" inscription on pickup
-  it.inscribe(it.inscription:gsub("~drop", ""), false)
+ -- Remove "~~DROP_ME" inscription on pickup
+  it.inscribe(it.inscription:gsub("~~DROP_ME", ""), false)
 end
 }

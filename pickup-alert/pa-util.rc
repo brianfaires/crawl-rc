@@ -111,12 +111,12 @@ end
 function get_armour_ac(it)
   local it_plus = if_el(it.plus, it.plus, 0)
   
-  if it.artefact and it.fully_identified then
+  if it.artefact and it.is_identified then
     local art_ac = it.artprops["AC"]
     if art_ac then it_plus = it_plus + art_ac end
   end
 
-  if it.artefact and it.fully_identified then
+  if it.artefact and it.is_identified then
     local art_ac = it.artprops["AC"]
     if art_ac then it_plus = it_plus + art_ac end
   end
@@ -127,8 +127,9 @@ function get_armour_ac(it)
   local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
   if pseudopods or (deformed and is_body_armour(it)) then
     ac = ac - it.ac / 2
+
   end
-  
+
   return math.max(0, ac - 0.05)
 end
 
@@ -145,7 +146,7 @@ function get_armour_ev(it)
   
   
   -- Adjust str/dex/EV for artefact stat changes
-  local worn = items.equipped_at("body armour")
+  local worn = items.equipped_at("Armour")
   if worn and worn.artefact then
     if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
     if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
@@ -188,7 +189,7 @@ end
 
 function get_shield_sh(it)
   local dex = you.dexterity()
-  if it.artefact and it.fully_identified then
+  if it.artefact and it.is_identified then
     local art_dex = it.artprops["Dex"]
     if art_dex then dex = dex + art_dex end
   end
@@ -265,7 +266,7 @@ function get_weap_delay(it)
   if sh then delay = delay + get_shield_penalty(sh) end
   
   if it.is_ranged then
-    local body = items.equipped_at("body armour")
+    local body = items.equipped_at("Armour")
     if body then
       local str = you.strength()
       if it.artefact then
@@ -376,7 +377,7 @@ function get_weap_dps(it, no_brand_dmg)
       if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
     end
     
-    if it.artefact and it.fully_identified then
+    if it.artefact and it.is_identified then
       if it.artprops["Str"] then str = str + it.artprops["Str"] end
       if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
       if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
@@ -455,18 +456,26 @@ function get_armour_info(it)
 
     return sh_str.."EV"..ev_str
   else
-    local ac = get_armour_ac(it)
-    local ac_str = string.format("%.1f", ac)
-    if ac >= 0 then ac_str = "+"..ac_str end
+    local cur = items.equipped_at(it.equip_type)
+    local cur_ac = 0
+    local cur_ev = 0
+    if cur then 
+      cur_ac = get_armour_ac(cur)
+      cur_ev = get_armour_ev(cur)
+    end
+
+    local ac_delta = get_armour_ac(it) - cur_ac
+    local ac_str = string.format("%.1f", ac_delta)
+    if ac_delta >= 0 then ac_str = "+"..ac_str end
     if not is_body_armour(it) then return "AC"..ac_str end
     
     ac_str = "AC"..ac_str..","
-    if ac < 10 then ac_str = ac_str.." " end
+    if ac_delta < 10 then ac_str = ac_str.." " end
 
 
-    local ev = get_armour_ev(it)
-    local ev_str = string.format("%.1f", ev)
-    if ev >= 0 then ev_str = "+"..ev_str end
+    local ev_delta = get_armour_ev(it) - cur_ev
+    local ev_str = string.format("%.1f", ev_delta)
+    if ev_delta >= 0 then ev_str = "+"..ev_str end
     return ac_str.."EV"..ev_str
   end  
 end

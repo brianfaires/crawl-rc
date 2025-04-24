@@ -3,22 +3,22 @@ include = pickup-alert/pa-data.rc
 {
 function alert_item(it, alert_type)
   local name = it.name("plain")
-  if not it.fully_identified then name = "+0 " .. name end
+  if not it.is_identified then name = "+0 " .. name end
 
   if not previously_alerted(it) and not previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
 	elseif is_body_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
-    elseif it.class(true) == "armour" then
-      show_alert_msg("Item alert, "..alert_type..": ", name)
-    else
-      show_alert_msg("Item alert, "..alert_type..": ", name)
-    end
-
-    insert_item_and_less_enchanted(items_alerted, it)
-    table.insert(level_alerts, name)
+  elseif it.class(true) == "armour" then
+    show_alert_msg("Item alert, "..alert_type..": ", name)
+  else
+    show_alert_msg("Item alert, "..alert_type..": ", name)
   end
+
+  insert_item_and_less_enchanted(items_alerted, it)
+  table.insert(level_alerts, name)
+end
   
   -- Returns true to make other code more concise; indicates that we tried to alert this item
   return true
@@ -64,7 +64,7 @@ function c_message_item_alerts(text, channel)
 end
 
 function ready_item_alerts()
-  update_high_scores(items.equipped_at("body armour"))
+  update_high_scores(items.equipped_at("Armour"))
   if not disable_autopickup then
 	  for it in iter.invent_iterator:new(items.inventory()) do
 		if is_weapon(it) then update_high_scores(it) end

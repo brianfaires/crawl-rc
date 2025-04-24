@@ -93,7 +93,7 @@ end
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
   if you.xl() <= 14 then
-    if it.fully_identified and it.is_ranged then
+    if it.is_identified and it.is_ranged then
       if it.branded and it.plus >= 5 or it.plus >= 7 then
         if get_hands(it) == 1 or not items.equipped_at("shield") or you.skill("shield") <= 8 then
           return alert_item(it, "Ranged weapon9")
@@ -199,7 +199,7 @@ local function pickup_weapon(it, cur)
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
-    if it.branded and it.fully_identified and not cur.branded then return get_weap_dps(it) > 0.85*get_weap_dps(cur) end
+    if it.branded and it.is_identified and not cur.branded then return get_weap_dps(it) > 0.85*get_weap_dps(cur) end
     if cur.branded and not it.branded then return false end
     return it.ego() == cur.ego() and get_weap_dps(it) > get_weap_dps(cur)
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
@@ -208,7 +208,7 @@ local function pickup_weapon(it, cur)
 
     if it.artefact then return true end
     if cur.artefact then return false end
-    if it.branded and not it.fully_identified then return false end
+    if it.branded and not it.is_identified then return false end
     if cur.branded and not it.branded then return false end
 
     local dmg_delta = get_dmg_delta(it, cur)
@@ -244,7 +244,7 @@ end
 ---- Begin alert_interesting_weapons() ----
 -------------------------------------------
 local function alert_interesting_weapon(it, cur)
-  if it.artefact and it.fully_identified then return alert_item(it, "Artefact weapon") end
+  if it.artefact and it.is_identified then return alert_item(it, "Artefact weapon") end
   
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match
@@ -348,7 +348,7 @@ end
 
 function alert_weapons(it)
   if it.is_useless then return end
-  if (it.artefact or it.branded) and not it.fully_identified then return end
+  if (it.artefact or it.branded) and not it.is_identified then return end
   
   alert_first_ranged(it)
   alert_early_weapons(it)

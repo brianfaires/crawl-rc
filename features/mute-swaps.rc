@@ -25,7 +25,8 @@ local function cleanup_message(text)
   end
   
   text = text:gsub("\n", "")
-  return text
+  local special_characters = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
+  return text:gsub(special_characters, "%%%1")
 end
 
 muted_items = {}

@@ -66,14 +66,14 @@ include = dynamic-options.rc
 #include = fm-monsters.rc
 include = macros.rc
 include = runrest.rc
-include = slots.rc
+include = slot-defaults.rc
 include = startup.rc
 
 
 ### Pickup and alert ###
-include = pickup-alert/pa-armour.rc
-include = pickup-alert/pa-misc.rc
-include = pickup-alert/pa-weapons.rc
+include = ./pickup-alert/pa-armour.rc
+include = ./pickup-alert/pa-misc.rc
+include = ./pickup-alert/pa-weapons.rc
 
 
 ### Features ###
@@ -81,7 +81,7 @@ include = features/after-shaft.rc
 include = features/drop-inferior.rc
 include = features/exclude-dropped.rc
 #include = features/inscribe-stats.rc
-#include = features/misc-alerts.rc
+include = features/misc-alerts.rc
 include = features/mute-swaps.rc
 include = features/remind-id.rc
 include = features/runrest-features.rc

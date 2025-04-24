@@ -21,7 +21,7 @@ def recurse_write_lines(infile, outfile, prevfiles):
         print("Writing " + infile.name)
       outfile.writelines(line)
 
-  outfile.writelines("\n\n######## End" + infile.name + " ########\n\n")
+  outfile.writelines("\n\n######## End " + infile.name + " ########\n\n")
 
 
 

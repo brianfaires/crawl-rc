@@ -34,7 +34,7 @@ end
 ---- Alert orbs ----
 --------------------
 function alert_orb(it)
-  if it.fully_identified and not have_shield() then
+  if it.is_identified and not have_shield() then
     alert_item(it, "New orb")
   end
 end
@@ -44,7 +44,7 @@ end
 ---- Alert for needed resists ----
 ----------------------------------
 function alert_staff(it)
-  if not it.fully_identified then return false end
+  if not it.is_identified then return false end
   local needRes = false
   local basename = it.name("base")
   
@@ -67,7 +67,7 @@ end
 staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
               poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
 function pickup_staff(it)
-  if it.is_useless or not it.fully_identified then return false end
+  if it.is_useless or not it.is_identified then return false end
 
   local basename = it.name("base")
   local good_staff = false
