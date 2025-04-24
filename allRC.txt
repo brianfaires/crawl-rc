@@ -132,21 +132,20 @@ function ready_safe_consumables()
   local no_inscriptions = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
                           "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation" }
 
-  for it in iter.invent_iterator:new(items.inventory()) do    
+  for it in iter.invent_iterator:new(items.inventory()) do
     if it.is_identified then
       local it_class = it.class(true)
       if it_class == "potion" or it_class == "scroll" then
-        local qualname = it.name("qual")
         local st, _ = it.subtype()
-        if (st == "poison" and you.res_poison() == 0)
-            or (st == "torment" and not (you.race() == "Mummy" or you.race() == "Ghoul" or you.status():find("tree-form") or you.status():find("lich-form")))
-            or util.contains(no_inscriptions, st) then
-          if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
-          if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
-        elseif it_class == "scroll" and not util.contains(no_inscriptions, st) and not qualname:find("!r") then
-          it.inscribe("!r")
-        elseif it_class == "potion" and not util.contains(no_inscriptions, st) and not qualname:find("!q") then
-          it.inscribe("!q")
+        if (st == "poison" and you.res_poison() > 0)
+          or (st == "torment" and you.torment_immune())
+          or util.contains(no_inscriptions, st) then
+            if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
+            if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
+        elseif it_class == "scroll" and not it.inscription:find("!r") then
+            it.inscribe("!r")
+        elseif it_class == "potion" and not it.inscription:find("!q") then
+            it.inscribe("!q")
         end
       end
     end
@@ -2883,7 +2882,7 @@ channel.duration = $warning
 channel.danger = $danger
 channel.warning = $danger
 channel.recovery = $verypositive
-channel.talk = $mute
+channel.talk = mute
 channel.talk_visual = $boring
 channel.timed_portal = $warning
 channel.intrinsic_gain = $awesome
