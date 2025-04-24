@@ -41,8 +41,8 @@ ai += staff of poison:rPois
 
 
 # Unidentified consumables
-ai += potions?(?!.*of ):!q
-ai += scrolls?(?!.*of ):!r
+ai += potions?$:!q
+ai += scrolls? labelled:!r
 
 # Add a warning for everything that doesn't have one built-in
 ai += potions? of(?!.*(attraction|lignification|mutation)):!q
@@ -53,7 +53,9 @@ ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleporta
 --------------------------------------------
 ---- Protective consumable inscriptions ----
 --------------------------------------------
--- Add inscriptions on init (starting items don't get default inscriptions)
+-- Update inscriptions every turn
+-- Handles on init (starting items don't get default inscriptions)
+-- Handles after ID
 
 ---------------------------------------------
 ------------------- Hook -------------------
