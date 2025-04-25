@@ -65,7 +65,42 @@ ae ^= >useless_item, <misc
 ### Mostly normal RC options ###
 
 
+######## Begin config.rc ########
+
+{
+  -- Constants; update to preferences
+  one_time_alerts = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
+                "lajatang", "bardiche", "demon trident", "trishula",
+                "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
+                "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", "wand of digging",
+                "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
+
+    ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary", "Sewer", "Trove", "Volcano", "Ziggurat" }
+
+    status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form", "sluggish" }
+              
+                -- Constants; update as game changes
+  all_misc = { "phial of floods", "lightning rod", "tin of tremorstones", 
+      "condenser vane", "box of beasts", "phantom mirror" }
+
+  all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin", "large rock" }
+    
+  staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
+                poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
+
+  all_weap_schools = { "axes", "maces & flails", "polearms", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons" }
+
+  no_inscription_needed = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
+  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation" }
+
+}
+
+######## End config.rc ########
+
+
+
 ######## Begin autoinscribe.rc ########
+
 
 ###############################
 ####### Auto-inscribe #########
@@ -131,9 +166,6 @@ ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleporta
 ---------------------------------------------
 function ready_safe_consumables()
   -- Remove the default "!r" and "!q" inscriptions after identify
-  local no_inscriptions = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
-                          "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation" }
-
   for it in iter.invent_iterator:new(items.inventory()) do
     if it.is_identified then
       local it_class = it.class(true)
@@ -141,7 +173,7 @@ function ready_safe_consumables()
         local st, _ = it.subtype()
         if (st == "poison" and you.res_poison() > 0)
           or (st == "torment" and you.torment_immune())
-          or util.contains(no_inscriptions, st) then
+          or util.contains(no_inscription_needed, st) then
             if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
             if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
         elseif it_class == "scroll" and not it.inscription:find("!r") then
@@ -3760,6 +3792,7 @@ end
 
 ######## Begin pickup-alert/pa-util.rc ########
 
+
 {
 ------------------------------------
 --------------- Misc ---------------
@@ -4086,8 +4119,6 @@ end
 
 
 -- Calc extra damage for magical staves
-staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
-              poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
 function get_staff_bonus_dmg(it, no_brand_dmg)
   if no_brand_dmg and basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
   
@@ -4274,11 +4305,10 @@ if not added_persistant_data or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
-  rare_items = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
-                "lajatang", "bardiche", "demon trident", "trishula",
-                "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
-                "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", "wand of digging",
-                "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
+  rare_items = {}
+  for i = 1, #one_time_alerts do
+    rare_items[i] = one_time_alerts[i]
+  end
 
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0
@@ -4320,7 +4350,6 @@ if not added_persistant_data_hooks then
   table.insert(chk_lua_save, function() return persist_var("polearm_onehand_high_score", polearm_onehand_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("unbranded_high_score", unbranded_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("weapon_high_score", weapon_high_score) end)
-  
   table.insert(chk_lua_save, function() return persist_var("added_persistant_data", 1) end)
 end
 
@@ -4431,7 +4460,7 @@ function update_high_scores(it)
     if it.weap_skill == "Polearms" and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Good polearm1" end
+        if not have_shield() and not ret_val then ret_val = "Good polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_onehand_high_score then
@@ -4584,8 +4613,6 @@ end)
 
 {
 loaded_pa_armour = true
-
-
 
 ---------------------------------------
 ---- Begin alert_armour_upgrades() ----
@@ -4945,8 +4972,6 @@ end
 ----------------------------
 ---- Smart staff pickup ----
 ----------------------------
-staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
-              poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
 function pickup_staff(it)
   if it.is_useless or not it.is_identified then return false end
 
@@ -4987,11 +5012,11 @@ loaded_pa_weapons = true
 --------------------------
 -- Use these arrays to compare potential upgrades against entire inventory
 local top_school = "unarmed combat"
-local all_schools = { "axes", "maces & flails", "polearms", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons" }
+
 local function set_top_school()
   local max = 0
   
-  for v in iter.invent_iterator:new(all_schools) do
+  for v in iter.invent_iterator:new(all_weap_schools) do
     if you.skill(v) > max then
       max = you.skill(v)
       top_school = v
@@ -5431,7 +5456,6 @@ function c_assign_invletter_drop_inferior(it)
   if risky_artefact then return end
 
   local st = it.subtype()
-  local basename = it.name("base")
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     local item_match = false
@@ -5466,6 +5490,7 @@ end
 
 ######## Begin features/exclude-dropped.rc ########
 
+
 {
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
@@ -5497,7 +5522,6 @@ local function get_jewellery_name(text)
   return text:sub(idx,#text)
 end
 
-local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin", "large rock" }
 local function get_missile_name(text)
   for item_name in iter.invent_iterator:new(all_missiles) do
     if text:find(item_name) then
@@ -5516,8 +5540,7 @@ local function get_missile_name(text)
   end
 end
 
-local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones", 
-      "condenser vane", "box of beasts", "phantom mirror", "piece from Xom's chessboard" }
+
 local function get_misc_name(text)
   for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
@@ -5575,6 +5598,7 @@ if you.skill("Ranged Weapons") > 2 then
 end
 if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
+--TODO: More general race check?
 if you.race() == "Ogre" or you.race() == "Troll" then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
@@ -5823,6 +5847,7 @@ end
 
 ######## Begin features/runrest-features.rc ########
 
+
 {
 --------------------------------
 ---- Fully rest off effects ----
@@ -5838,10 +5863,9 @@ local function fully_recovered()
   if mp ~= mmp then return false end
   
   -- Statuses that will always rest off
-  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form", "sluggish" }
   local status = you.status()
 
-  for s in iter.invent_iterator:new(status_wait) do
+  for s in iter.invent_iterator:new(status_to_wait_off) do
     if status:find(s) then return false end
   end
   
@@ -5955,7 +5979,6 @@ end
 -----------------------------
 ---- Ignore exit portals ----
 -----------------------------
-local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary", "Sewer", "Trove", "Volcano", "Ziggurat" }
 local stop_on_portals = true
 
 function ready_ignore_exits()

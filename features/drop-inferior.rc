@@ -32,7 +32,6 @@ function c_assign_invletter_drop_inferior(it)
   if risky_artefact then return end
 
   local st = it.subtype()
-  local basename = it.name("base")
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     local item_match = false

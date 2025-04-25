@@ -113,17 +113,20 @@ It inscribes weapons with useful stats:
 - Inscription also shows (`dmg`/`delay`), and Accuracy bonus
 
 Alerts are generated for:
-* Strong weapons early on, with little regard for what skills are trained
-* The first one-handed ranged weapon (and two-handed if not wearing a shield)
-* High scores: items that set a new record for: Overall damage, Damage w/o brand, and if using allies: Strongest polearm/1-handed polearm
-* DPS upgrades and new egos, with various heuristics based off brands/handedness/weapon skill
+- Strong weapons early on, with little regard for what skills are trained
+- The first one-handed ranged weapon (and two-handed if not wearing a shield)
+- High scores: items that set a new record for: Overall damage, Damage w/o brand, and if using allies: Strongest polearm/1-handed polearm
+- DPS upgrades and new egos, with various heuristics based off brands/handedness/weapon skill
 
 ### [pa-misc.rc](pickup-alert/pa-misc.rc) (Misc)
 Picks up staves when you are training the relevant spell school. Alerts generated for:
-* Staves that provide you a needed resistance
-* The first instance of anything in the "rare_items" list. Each shield type is included, so "rare" is a bit of a misnomer.
-* First orb of each type
+- Staves that provide you a needed resistance
+- The first instance of anything in the "rare_items" list. Each shield type is included, so "rare" is a bit of a misnomer.
+- First orb of each type
 
+## Configuration / updates
+- See [config.rc](config.rc) for lists of values that can be adjusted to taste
+- Also contains lists of in-game items that need updates as the game chnages
 
 ## Dev todo list
 ### runrest-features
@@ -131,7 +134,5 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 1. Disable all auto explore stop in gauntlets
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
 1. Update fm-mosnsters lists to fm_monsters[{name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg}][];
-1. Build constants.h
-1. Build config.h
 1. LLM/linter cleanup (files aren't 100% lua)
 1. Set dynamic-options.rc to use list[{god name, [fm-prompts]}]

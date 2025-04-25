@@ -1,0 +1,27 @@
+{
+  -- Constants; update to preferences
+  one_time_alerts = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
+                "lajatang", "bardiche", "demon trident", "trishula",
+                "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
+                "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", "wand of digging",
+                "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
+
+    ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary", "Sewer", "Trove", "Volcano", "Ziggurat" }
+
+    status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form", "sluggish" }
+              
+                -- Constants; update as game changes
+  all_misc = { "phial of floods", "lightning rod", "tin of tremorstones", 
+      "condenser vane", "box of beasts", "phantom mirror" }
+
+  all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin", "large rock" }
+    
+  staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
+                poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
+
+  all_weap_schools = { "axes", "maces & flails", "polearms", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons" }
+
+  no_inscription_needed = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
+  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation" }
+
+}

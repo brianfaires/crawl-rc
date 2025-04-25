@@ -3,8 +3,6 @@ include = pickup-alert/pa-main.rc
 {
 loaded_pa_armour = true
 
-
-
 ---------------------------------------
 ---- Begin alert_armour_upgrades() ----
 ---------------------------------------

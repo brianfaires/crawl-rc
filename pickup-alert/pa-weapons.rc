@@ -1,4 +1,5 @@
 include = pickup-alert/pa-main.rc
+include = config.rc
 
 {
 loaded_pa_weapons = true
@@ -8,11 +9,11 @@ loaded_pa_weapons = true
 --------------------------
 -- Use these arrays to compare potential upgrades against entire inventory
 local top_school = "unarmed combat"
-local all_schools = { "axes", "maces & flails", "polearms", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons" }
+
 local function set_top_school()
   local max = 0
   
-  for v in iter.invent_iterator:new(all_schools) do
+  for v in iter.invent_iterator:new(all_weap_schools) do
     if you.skill(v) > max then
       max = you.skill(v)
       top_school = v

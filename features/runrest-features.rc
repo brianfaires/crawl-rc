@@ -1,3 +1,5 @@
+include = config.rc
+
 {
 --------------------------------
 ---- Fully rest off effects ----
@@ -13,10 +15,9 @@ local function fully_recovered()
   if mp ~= mmp then return false end
   
   -- Statuses that will always rest off
-  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form", "sluggish" }
   local status = you.status()
 
-  for s in iter.invent_iterator:new(status_wait) do
+  for s in iter.invent_iterator:new(status_to_wait_off) do
     if status:find(s) then return false end
   end
   
@@ -130,7 +131,6 @@ end
 -----------------------------
 ---- Ignore exit portals ----
 -----------------------------
-local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary", "Sewer", "Trove", "Volcano", "Ziggurat" }
 local stop_on_portals = true
 
 function ready_ignore_exits()

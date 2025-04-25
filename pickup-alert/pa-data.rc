@@ -1,4 +1,5 @@
 include = pickup-alert/pa-util.rc
+include = config.rc
 {
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
@@ -9,11 +10,10 @@ if not added_persistant_data or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
-  rare_items = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
-                "lajatang", "bardiche", "demon trident", "trishula",
-                "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
-                "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", "wand of digging",
-                "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
+  rare_items = {}
+  for i = 1, #one_time_alerts do
+    rare_items[i] = one_time_alerts[i]
+  end
 
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0
@@ -55,7 +55,6 @@ if not added_persistant_data_hooks then
   table.insert(chk_lua_save, function() return persist_var("polearm_onehand_high_score", polearm_onehand_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("unbranded_high_score", unbranded_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("weapon_high_score", weapon_high_score) end)
-  
   table.insert(chk_lua_save, function() return persist_var("added_persistant_data", 1) end)
 end
 
@@ -166,7 +165,7 @@ function update_high_scores(it)
     if it.weap_skill == "Polearms" and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Good polearm1" end
+        if not have_shield() and not ret_val then ret_val = "Good polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_onehand_high_score then
