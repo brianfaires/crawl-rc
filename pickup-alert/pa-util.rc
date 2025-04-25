@@ -44,10 +44,6 @@ function is_staff(it)
   return it and it.class(true) == "magical staff"
 end
 
-function is_armour(it)
-  return it and it.class(true) == "armour"
-end
-
 function is_ring(it)
   return it and it.name("base") == "ring"
 end

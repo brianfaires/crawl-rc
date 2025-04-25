@@ -3806,10 +3806,6 @@ function is_staff(it)
   return it and it.class(true) == "magical staff"
 end
 
-function is_armour(it)
-  return it and it.class(true) == "armour"
-end
-
 function is_ring(it)
   return it and it.name("base") == "ring"
 end
@@ -4479,7 +4475,7 @@ function alert_item(it, alert_type)
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
 	elseif is_body_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
-  elseif it.class(true) == "armour" then
+  elseif is_armour(it) then
     show_alert_msg("Item alert, "..alert_type..": ", name)
   else
     show_alert_msg("Item alert, "..alert_type..": ", name)
@@ -4630,7 +4626,7 @@ function pickup_armour(it)
   
   local st, _ = it.subtype()
  
-  if st == "body" then
+  if is_body_armour(it) then
     -- Body armour: AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
     local cur = items.equipped_at("Armour")
     if not cur then return false end
@@ -4649,7 +4645,7 @@ function pickup_armour(it)
         if ac_delta >= 0 then return true end
       end
     end
-  elseif st == "shield" then
+  elseif is_shield(it) then
     -- Shields
     if not it.is_identified or is_orb(it) then return false end
     
@@ -4793,7 +4789,7 @@ local function alert_interesting_armour(it)
   end
   
   local st, _ = it.subtype()
-  if st == "body" then
+  if is_body_armour(it) then
     if it.is_useless then return end
     local cur = items.equipped_at("Armour")
     if not cur then return false end
@@ -4853,7 +4849,7 @@ local function alert_interesting_armour(it)
         end
       end
     end
-  elseif st == "shield" then
+  elseif is_shield(it) then
     if it.is_useless then return end
     local cur = items.equipped_at("shield")
     if not cur then return false end
@@ -5003,6 +4999,7 @@ local function set_top_school()
   end
 end
 
+-- High scores for melee/ranged, 1/2-handed, branded/unbranded
 local inv_max_dmg =     { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0, ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0 }
 local inv_max_dmg_acc = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0, ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0 }
 local egos = { }
@@ -5421,8 +5418,7 @@ function c_assign_invletter_drop_inferior(it)
   local it_ego = it.ego()
   if it_ego == "distortion" or it_ego == "chaos" or it_ego == "infusion" then return end
   
-  local it_class = it.class(true)
-  if it_class ~= "weapon" and it_class ~= "armour" then return end
+  if not is_weapon(it) and not is_armour(it) then return end
   
   local risky_artefact = false
   if it.artefact then
@@ -5440,7 +5436,7 @@ function c_assign_invletter_drop_inferior(it)
   for inv in iter.invent_iterator:new(items.inventory()) do
     local item_match = false
     if inv.subtype() == st then
-      if st == "body" then
+      if is_body_armour(it) then
         if inv.encumbrance >= it.encumbrance then item_match = true end
       else
         if inv.subtype() == st then item_match = true end
@@ -5448,7 +5444,7 @@ function c_assign_invletter_drop_inferior(it)
     end
 
     if not inv.artefact and item_match and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
-      if it_class == "weapon" then
+      if is_weapon(it) then
         if inv.plus <= it.plus then inscribe_drop(inv) end
       else
         if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
@@ -5591,13 +5587,14 @@ if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..
 
 ######## Begin features/inscribe-stats.rc ########
 
+
 {
 
 local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)
   local idx
-  if it.subtype() == "shield" then idx = it.inscription:find("SH+")
-  elseif it.subtype() == "body" then idx = it.inscription:find("AC+")
+  if is_shield(it) then idx = it.inscription:find("SH+")
+  elseif is_body_armour(it) then idx = it.inscription:find("AC+")
   else return
   end
   
@@ -5635,9 +5632,9 @@ local skipped_first_redraw = false
 function ready_inscribe_stats()
   for it in iter.invent_iterator:new(items.inventory()) do
     local class = it.class(true)
-    if class == "weapon" or class == "magical staff" then
+    if is_weapon(it) or is_staff(it) then
       inscribe_weapon_stats(it)
-    elseif class == "armour" then
+    elseif is_armour(it) then
       inscribe_armour_stats(it)
     end
   end
@@ -6045,6 +6042,7 @@ end
 
 ######## Begin features/weapon-slots.rc ########
 
+
 {
 ------------------------------
 ---- Cleanup weapon slots ----
@@ -6066,9 +6064,8 @@ local function get_priority_ab(it)
   if not it or not it.weap_skill then return -1 end
   if it.equipped then return 1 end
   
-  local class = it.class(true)
-  if class == "magical staff" then return 3 end
-  if class == "weapon" then
+  if is_staff(it) then return 3 end
+  if is_weapon(it) then
     if it.is_ranged then    
       if you.skill("Ranged Weapons") >= 4 then return 2 end
       return 5
@@ -6165,7 +6162,7 @@ local do_cleanup_weapon_slots = false
 ------------------- Hooks -------------------
 ---------------------------------------------
 function c_assign_invletter_weapon_slots(it)
-  if it.class(true) ~= "weapon" and it.class(true) ~= "magical staff" then return end
+  if not is_weapon(it) and not is_staff(it) then return end
   
   for i=0,2 do
     local slot
@@ -6175,7 +6172,7 @@ function c_assign_invletter_weapon_slots(it)
     
     local inv = items.inslot(slot)
     if not inv then return slot end
-    if inv.class(true) ~= "weapon" and inv.class(true) ~= "magical staff" then
+    if not is_weapon(inv) and not is_staff(inv) then
       items.swap_slots(slot, get_first_empty_slot())
       return slot
     end

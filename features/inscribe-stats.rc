@@ -1,11 +1,12 @@
 include = pickup-alert/pa-util.rc
+
 {
 
 local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)
   local idx
-  if it.subtype() == "shield" then idx = it.inscription:find("SH+")
-  elseif it.subtype() == "body" then idx = it.inscription:find("AC+")
+  if is_shield(it) then idx = it.inscription:find("SH+")
+  elseif is_body_armour(it) then idx = it.inscription:find("AC+")
   else return
   end
   
@@ -43,9 +44,9 @@ local skipped_first_redraw = false
 function ready_inscribe_stats()
   for it in iter.invent_iterator:new(items.inventory()) do
     local class = it.class(true)
-    if class == "weapon" or class == "magical staff" then
+    if is_weapon(it) or is_staff(it) then
       inscribe_weapon_stats(it)
-    elseif class == "armour" then
+    elseif is_armour(it) then
       inscribe_armour_stats(it)
     end
   end
