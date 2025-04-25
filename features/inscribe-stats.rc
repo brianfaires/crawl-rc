@@ -23,7 +23,7 @@ end
 local function inscribe_weapon_stats(it)
   local new_inscr = get_weapon_info(it)
       
-  local idx = it.inscription:find("DPS=")
+  local idx = it.inscription:find("DPS:")
   if idx then
     if idx + #new_inscr <= #it.inscription then
       new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)

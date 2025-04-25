@@ -358,7 +358,7 @@ end
 ----------------------------------
 --------- get_weap_dps() ---------
 ----------------------------------
-function get_weap_dps(it, no_brand_dmg)
+function get_weap_dmg(it, no_brand_dmg)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
@@ -394,32 +394,38 @@ function get_weap_dps(it, no_brand_dmg)
   
 
   if is_staff(it) then 
-    return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg)) / get_weap_delay(it)
+    return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg))
   end
   
   local ego = it.ego()
-  if not ego then return pre_brand_dmg / get_weap_delay(it) end
+  if not ego then return pre_brand_dmg end
 
-  if ego == "spectralizing" then return 2 * pre_brand_dmg / get_weap_delay(it)
-  elseif ego == "heavy" then return 1.8 * pre_brand_dmg / get_weap_delay(it)
+  if ego == "spectralizing" then return 2 * pre_brand_dmg
+  elseif ego == "heavy" then return 1.8 * pre_brand_dmg
   end
   
   if not no_brand_dmg then
-    if ego == "flaming" or ego == "freezing" then return 1.25 * pre_brand_dmg  / get_weap_delay(it) end
-    if ego == "draining" then return (1.25 * pre_brand_dmg + 2) / get_weap_delay(it) end 
-    if ego == "electrocution" then return (pre_brand_dmg + 3.5) / get_weap_delay(it) end
+    if ego == "flaming" or ego == "freezing" then return 1.25 * pre_brand_dmg  end
+    if ego == "draining" then return (1.25 * pre_brand_dmg + 2) end 
+    if ego == "electrocution" then return (pre_brand_dmg + 3.5) end
     -- Ballparking venom as 5 dmg since it totally breaks the paradigm
-    if ego == "venom" then return (pre_brand_dmg + 5) / get_weap_delay(it) end
-    if ego == "pain" then return (pre_brand_dmg + you.skill("Necromancy")/2) / get_weap_delay(it) end
+    if ego == "venom" then return (pre_brand_dmg + 5) end
+    if ego == "pain" then return (pre_brand_dmg + you.skill("Necromancy")/2) end
     -- Distortion does 5.025 extra dmg, + 5% chance to banish
-    if ego == "distortion" then return (pre_brand_dmg + 6) / get_weap_delay(it) end
+    if ego == "distortion" then return (pre_brand_dmg + 6) end
     -- Weighted average of all the easily computed brands was ~ 1.17*dmg + 2.13
-    if ego == "chaos" then return (1.25 * pre_brand_dmg + 2) / get_weap_delay(it) end
+    if ego == "chaos" then return (1.25 * pre_brand_dmg + 2) end
   end
   
-  return pre_brand_dmg / get_weap_delay(it)
+  return pre_brand_dmg
 end
 
+----------------------------------
+--------- get_weap_dps() ---------
+----------------------------------
+function get_weap_dps(it, no_brand_dmg)
+  return get_weap_dmg(it, no_brand_dmg) / get_weap_delay(it)
+end
 
 -----------------------------
 ---- Weapon info strings ----
@@ -427,16 +433,29 @@ end
 function get_weapon_info(it)
   if not it.delay then return end
   
+  local dmg = get_weap_dmg(it)
+  local dmg_str = string.format("%.1f", dmg)
+  if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
+  if dmg > 99.9 then dmg_str = ">100" end
+
+  local delay = get_weap_delay(it)
+  local delay_str = string.format("%.1f", delay)
+  if delay < 1 then
+    delay_str = string.format("%.2f", delay)
+    delay_str = delay_str:sub(2, #delay_str)
+  end
+
   local dps = get_weap_dps(it)
-  local dps_str = string.format("%.2f", dps)
+  local dps_str = string.format("%.1f", dps)
+  if dps < 10 then dps_str = string.format("%.2f", dps) end
+  if dps > 99.9 then dps_str = ">100" end
       
   local it_plus = if_el(it.plus, it.plus, 0)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
   
-  dps_str = "DPS="..dps_str
-  if dps < 10 then dps_str = dps_str.." " end
-  return dps_str.."(Acc"..acc..")"
+  dps_str = "DPS="..dps_str.." "
+  return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
 end
 
 

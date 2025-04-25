@@ -68,7 +68,7 @@ more += Your body shudders with the violent release
 
 
 # Found something important
-more += Found a staircase to the Ecumenical Temple
+more += Found.*the Ecumenical Temple
 more += timed_portal:.*
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
