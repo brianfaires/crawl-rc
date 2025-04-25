@@ -130,3 +130,7 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 1. Wait for allies to heal
 1. Disable all auto explore stop in gauntlets
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
+1. Update fm-mosnsters lists to fm_monsters[{name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg}][];
+1. Build constants.h
+1. Build config.h
+1. LLM cleanup

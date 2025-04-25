@@ -4803,7 +4803,7 @@ local function alert_interesting_armour(it)
         if not has_ego(cur) then return alert_item(it, "Added ego") end
         if get_ego(it) ~= get_ego(cur) then return alert_item(it, "New ego") end
       end
-      if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour1") end
+      if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour") end
     
     elseif it.encumbrance < cur.encumbrance then
 	-- Lighter armour
@@ -4812,20 +4812,20 @@ local function alert_interesting_armour(it)
       
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ev_gain >= 0.6 * ac_lost or ac_lost <= 6 then return alert_item(it, "Added ego1") end
+          if ev_gain >= 0.6 * ac_lost or ac_lost <= 6 then return alert_item(it, "Added ego") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ev_gain >= 0.8 * ac_lost or ac_lost <= 6 then return alert_item(it, "New ego1") end
+          if ev_gain >= 0.8 * ac_lost or ac_lost <= 6 then return alert_item(it, "New ego") end
         else
           -- Same ego
-          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour1") end
+          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour") end
         end
       else
         if cur.artefact or has_ego(cur) then
 		-- Lost ego
-          if ev_gain >= 2 * ac_lost then return alert_item(it, "Lighter armour2") end
+          if ev_gain >= 2 * ac_lost then return alert_item(it, "Lighter armour") end
         else
 		-- Neither has ego
-          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour3") end
+          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour") end
         end
       end
     else
@@ -4836,20 +4836,20 @@ local function alert_interesting_armour(it)
 	  
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ac_gain >= 0.4 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Added ego2") end
+          if ac_gain >= 0.4 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Added ego") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain >= 0.6 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Diff ego2") end
+          if ac_gain >= 0.6 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Diff ego") end
         else
 		-- Same ego
-          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour2") end
+          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         end
       else
         if cur.artefact or has_ego(cur) then
 		-- Lost ego
-          if ac_gain >= 2 + ev_lost + encumb_penalty then return alert_item(it, "Stronger armour3") end
+          if ac_gain >= 2 + ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         else
 		-- Neither has ego
-          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour4") end
+          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         end
       end
     end
@@ -4863,7 +4863,7 @@ local function alert_interesting_armour(it)
   else
   -- Aux armour
     local cur = items.equipped_at(st)
-    if cur and not it.is_useless and get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour5") end
+    if cur and not it.is_useless and get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour") end
     return alert_armour_while_mutated(it, st)
   end
 end
@@ -4991,7 +4991,7 @@ loaded_pa_weapons = true
 --------------------------
 -- Use these arrays to compare potential upgrades against entire inventory
 local top_school = "unarmed combat"
-local all_schools = { "axes", "maces & flails", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons" }
+local all_schools = { "axes", "maces & flails", "polearms", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons" }
 local function set_top_school()
   local max = 0
   
@@ -5079,7 +5079,7 @@ local function alert_early_weapons(it)
     if it.is_identified and it.is_ranged then
       if it.branded and it.plus >= 5 or it.plus >= 7 then
         if get_hands(it) == 1 or not items.equipped_at("shield") or you.skill("shield") <= 8 then
-          return alert_item(it, "Ranged weapon9")
+          return alert_item(it, "Ranged weapon")
         end
       end
     end
@@ -5120,7 +5120,7 @@ local function alert_first_ranged(it)
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.is_ranged and get_hands(inv) == 2 then return true end
       end
-      return alert_item(it, "Ranged weapon5")
+      return alert_item(it, "Ranged weapon")
     end
   else
     if alerted_first_ranged_one_handed == 0 then
@@ -5128,7 +5128,7 @@ local function alert_first_ranged(it)
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.is_ranged then return true end
       end
-      return alert_item(it, "Ranged weapon6")
+      return alert_item(it, "Ranged weapon")
     end
   end
   
@@ -5231,8 +5231,8 @@ local function alert_interesting_weapon(it, cur)
   
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match
-    if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego1") end
-    if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "Stronger weapon0") end
+    if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego") end
+    if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "Stronger weapon") end
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
@@ -5244,16 +5244,16 @@ local function alert_interesting_weapon(it, cur)
     if get_hands(it) == 2 and get_hands(cur) == 1 then
       -- Item requires an extra hand
       if it.branded and not cur.artefact and not cur.branded then
-        if get_weap_dps(it) > 0.8*get_weap_dps(cur) then return alert_item(it, "2-handed weapon1") end
+        if get_weap_dps(it) > 0.8*get_weap_dps(cur) then return alert_item(it, "2-handed weapon") end
       end
       
       if not items.equipped_at("shield") then 
-        if it.branded and not (it.ego() == "heavy" or it.ego() == "speed") and not util.contains(egos, it.ego()) then return alert_item(it, "New ego4") end
-        if not (cur.branded or cur.artefact) and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon2") end
-        if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
+        if it.branded and not (it.ego() == "heavy" or it.ego() == "speed") and not util.contains(egos, it.ego()) then return alert_item(it, "New ego") end
+        if not (cur.branded or cur.artefact) and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon") end
+        if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon") end
       elseif you.skill("shields") <= 4 then
         -- Not really training shields; may be interested in big upgrades
-        if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then return alert_item(it, "2-handed weapon4") end
+        if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then return alert_item(it, "2-handed weapon") end
       end
     else
       -- Item uses same number of hands or fewer
@@ -5263,17 +5263,17 @@ local function alert_interesting_weapon(it, cur)
         local dmg_delta_ratio = dmg_delta / get_weap_dps(it)
         
         if not cur.branded then
-          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego2") end
+          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego") end
         elseif it.ego() == cur.ego() then
-          if dmg_delta_ratio >= 0 then return alert_item(it, "Stronger weapon1") end
+          if dmg_delta_ratio >= 0 then return alert_item(it, "Stronger weapon") end
         elseif not util.contains(egos, it.ego()) then
-          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego3") end
+          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego") end
         end
       else
         -- Not branded
         if cur.branded then
           --if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
-          --    return alert_item(it, "Stronger weapon2")
+          --    return alert_item(it, "Stronger weapon")
           --end
         else
           local dmg_delta, other_acc
@@ -5285,7 +5285,7 @@ local function alert_interesting_weapon(it, cur)
             other_acc = inv_max_dmg_acc[get_weap_type(it)]
           end
           
-          if dmg_delta > 0 then return alert_item(it, "Stronger weapon3") end
+          if dmg_delta > 0 then return alert_item(it, "Stronger weapon") end
           local it_plus = if_el(it.plus, it.plus, 0)
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then return alert_item(it, "Higher accuracy") end
         end
@@ -5310,10 +5310,10 @@ local function alert_interesting_weapons(it)
       if items.equipped_at("shield") then
         local qualname = it.name("qual")
         if qualname:find("hand crossbow") or qualname:find("sling") then
-          return alert_item(it, "Ranged Weapon1")
+          return alert_item(it, "Ranged Weapon")
         end
       else
-        return alert_item(it, "Ranged Weapon2")
+        return alert_item(it, "Ranged Weapon")
       end
     end
   end

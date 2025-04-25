@@ -217,7 +217,7 @@ local function alert_interesting_armour(it)
         if not has_ego(cur) then return alert_item(it, "Added ego") end
         if get_ego(it) ~= get_ego(cur) then return alert_item(it, "New ego") end
       end
-      if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour1") end
+      if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour") end
     
     elseif it.encumbrance < cur.encumbrance then
 	-- Lighter armour
@@ -226,20 +226,20 @@ local function alert_interesting_armour(it)
       
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ev_gain >= 0.6 * ac_lost or ac_lost <= 6 then return alert_item(it, "Added ego1") end
+          if ev_gain >= 0.6 * ac_lost or ac_lost <= 6 then return alert_item(it, "Added ego") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ev_gain >= 0.8 * ac_lost or ac_lost <= 6 then return alert_item(it, "New ego1") end
+          if ev_gain >= 0.8 * ac_lost or ac_lost <= 6 then return alert_item(it, "New ego") end
         else
           -- Same ego
-          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour1") end
+          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour") end
         end
       else
         if cur.artefact or has_ego(cur) then
 		-- Lost ego
-          if ev_gain >= 2 * ac_lost then return alert_item(it, "Lighter armour2") end
+          if ev_gain >= 2 * ac_lost then return alert_item(it, "Lighter armour") end
         else
 		-- Neither has ego
-          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour3") end
+          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour") end
         end
       end
     else
@@ -250,20 +250,20 @@ local function alert_interesting_armour(it)
 	  
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ac_gain >= 0.4 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Added ego2") end
+          if ac_gain >= 0.4 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Added ego") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain >= 0.6 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Diff ego2") end
+          if ac_gain >= 0.6 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Diff ego") end
         else
 		-- Same ego
-          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour2") end
+          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         end
       else
         if cur.artefact or has_ego(cur) then
 		-- Lost ego
-          if ac_gain >= 2 + ev_lost + encumb_penalty then return alert_item(it, "Stronger armour3") end
+          if ac_gain >= 2 + ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         else
 		-- Neither has ego
-          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour4") end
+          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         end
       end
     end
@@ -277,7 +277,7 @@ local function alert_interesting_armour(it)
   else
   -- Aux armour
     local cur = items.equipped_at(st)
-    if cur and not it.is_useless and get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour5") end
+    if cur and not it.is_useless and get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour") end
     return alert_armour_while_mutated(it, st)
   end
 end
