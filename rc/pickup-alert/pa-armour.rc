@@ -1,0 +1,6 @@
+include = pa-main.rc
+
+{
+  dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
+  dofile("crawl-rc/lua/pickup-alert/pa-armour.lua")
+}

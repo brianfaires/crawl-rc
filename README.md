@@ -5,7 +5,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - All features are enabled and included via [init.txt](init.txt). If you want a single file, [allRC.txt](allRC.txt) contains [init.txt](init.txt) and all the files it references.
 - To merge [init.txt](init.txt) into an existing RC file, make sure any Lua hook functions are only defined once (at the bottom of the RC file). If duplicate functions exist, combine them.
 - Features can be cherry-picked pretty easily. The simplest way is:
-    1. In [init.txt](init.txt), comment out `include` statements to toggle off features. (You don't need to edit the lua hook functions if you remove features.)
+    1. In [init.txt](init.txt), comment out `include` statements to toggle off features/ (You don't need to edit the lua hook functions if you remove features/)
     
         e.g. `include = xxxx.rc` -> `#include = xxxx.rc`
 
@@ -134,5 +134,5 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 1. Disable all auto explore stop in gauntlets
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
 1. Update fm-mosnsters lists to fm_monsters[{name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg}][];
-1. LLM/linter cleanup (files aren't 100% lua)
+1. LLM/linter cleanup (need to use .lua files?)
 1. Set dynamic-options.rc to use list[{god name, [fm-prompts]}]

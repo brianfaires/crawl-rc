@@ -1,0 +1,3 @@
+{
+  dofile("crawl-rc/lua/dynamic-options.lua")
+}

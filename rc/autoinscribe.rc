@@ -1,0 +1,56 @@
+include = config.rc
+
+###############################
+####### Auto-inscribe #########
+
+ai := autoinscribe
+
+# Armour
+ai += fire dragon scale:rF++, rC-
+ai += gold dragon scale:rC+, rF+, rPois
+ai += ice dragon scale:rC++, rF-
+ai += pearl dragon scale:rN+
+ai += storm dragon scale:rElec
+ai += swamp dragon scale:rPois
+ai += quicksilver dragon scale:MR+
+ai += shadow dragon scale:Stlth+
+
+# Amulets
+ai += amulet of faith:Faith, !P
+
+# Rings
+ai += ring of fire:rF+, rC-
+ai += ring of flight:+Fly
+ai += ring of ice:rC+, rF-
+ai += ring of resist corrosion:rCorr
+ai += ring of poison resistance:rPois
+ai += ring of magical power:MP+9
+ai += ring of positive energy:rN+
+ai += ring of protection from cold:rC+
+ai += ring of protection from fire:rF+
+ai += ring of protection from magic:MR+
+ai += ring of see invisible:sInv
+ai += ring of stealth:Stlth+
+ai += ring of teleportation:*tele
+ai += ring of wizardry:wiz+
+
+# Staves
+ai += staff of air:rElec
+ai += staff of cold:rC+
+ai += staff of death:rN+
+ai += staff of fire:rF+
+ai += staff of poison:rPois
+
+
+# Unidentified consumables
+ai += potions?$:!q
+ai += scrolls? labelled:!r
+
+# Add a warning for everything that doesn't have one built-in
+ai += potions? of(?!.*(attraction|lignification|mutation)):!q
+ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleportation|vulnerability):!r
+
+
+{
+  dofile("crawl-rc/lua/autoinscribe.lua")
+}

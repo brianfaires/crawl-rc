@@ -1,0 +1,35 @@
+------------------------------------------
+------ Max piety w/ amulet of faith ------
+------------------------------------------
+if not alerted_max_piety then
+  alerted_max_piety = 0
+end
+
+local function persist_alerted_max_piety()
+  return "alerted_max_piety = "..alerted_max_piety..string.char(10)
+end
+
+if not added_misc_alert_data_hooks then
+  added_misc_alert_data_hooks = true
+  
+  table.insert(chk_lua_save, persist_alerted_max_piety)
+end
+
+function alert_remove_faith()
+  if alerted_max_piety == 0 and you.piety_rank() == 6 then
+    local am = items.equipped_at("amulet")
+    if am and am.subtype() == "amulet of faith" then
+      if you.god() == "Uskayaw" or you.god() == "Kikubaaqudgha" then return end
+      crawl.mpr("<cyan>6 star piety! Maybe ditch that amulet soon.</cyan>")
+      crawl.more()
+      alerted_max_piety = 1
+    end
+  end
+end
+
+------------------------------------------
+------------------ Hook ------------------
+------------------------------------------
+function ready_misc_alerts()
+  alert_remove_faith()
+end

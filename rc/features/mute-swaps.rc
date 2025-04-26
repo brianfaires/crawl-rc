@@ -1,0 +1,3 @@
+{
+  dofile("crawl-rc/lua/features/mute-swaps.lua")
+}

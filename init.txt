@@ -59,34 +59,34 @@ ae ^= >useless_item, <misc
 #############################
 
 ### Mostly normal RC options ###
-include = autoinscribe.rc
-include = display.rc
-include = dynamic-options.rc
-include = fm-messages.rc
-include = fm-monsters.rc
-include = macros.rc
-include = runrest.rc
-include = slot-defaults.rc
-include = startup.rc
+include = rc/autoinscribe.rc
+include = rc/display.rc
+include = rc/dynamic-options.rc
+include = rc/fm-messages.rc
+include = rc/fm-monsters.rc
+include = rc/macros.rc
+include = rc/runrest.rc
+include = rc/slot-defaults.rc
+include = rc/startup.rc
 
 
 ### Pickup and alert ###
-include = ./pickup-alert/pa-armour.rc
-include = ./pickup-alert/pa-misc.rc
-include = ./pickup-alert/pa-weapons.rc
+include = rc/pickup-alert/pa-armour.rc
+include = rc/pickup-alert/pa-misc.rc
+include = rc/pickup-alert/pa-weapons.rc
 
 
 ### Features ###
-include = features/after-shaft.rc
-include = features/drop-inferior.rc
-include = features/exclude-dropped.rc
-include = features/inscribe-stats.rc
-include = features/misc-alerts.rc
-include = features/mute-swaps.rc
-include = features/remind-id.rc
-include = features/runrest-features.rc
-include = features/safe-stairs.rc
-include = features/weapon-slots.rc
+include = rc/features/after-shaft.rc
+include = rc/features/drop-inferior.rc
+include = rc/features/exclude-dropped.rc
+include = rc/features/inscribe-stats.rc
+include = rc/features/misc-alerts.rc
+include = rc/features/mute-swaps.rc
+include = rc/features/remind-id.rc
+include = rc/features/runrest-features.rc
+include = rc/features/safe-stairs.rc
+include = rc/features/weapon-slots.rc
 
 
 

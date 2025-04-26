@@ -1,0 +1,11 @@
+include = ../pickup-alert/pa-util.rc
+
+
+-- Auto-drop items that are strictly worse than another
+-- On item pickup, inscribes inferior items with "~~DROP_ME"
+drop_filter += ~~DROP_ME
+
+{
+  dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+  dofile("crawl-rc/lua/features/drop-inferior.lua")
+}

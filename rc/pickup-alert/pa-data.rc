@@ -1,0 +1,7 @@
+include = ../config.rc
+include = pa-util.rc
+{
+  dofile("crawl-rc/lua/config.lua")
+  dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+  dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+}
