@@ -1,4 +1,3 @@
-{
 ----------------------
 ---- race-specific ----
 ----------------------
@@ -26,18 +25,13 @@ local cur_god = "No God"
 local function set_god_options()
   if you.god() ~= cur_god then
     cur_god = you.god()
-  
+
     if cur_god == "Ashenzari" then
       crawl.setopt("runrest_stop_message += god:Ashenzari invites you to partake")
     elseif cur_god == "Beogh" then
       crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
       crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
       crawl.setopt("force_more_message += Your orc.*dies")
-      crawl.setopt("macros += M 1 tf")
-      crawl.setopt("macros += M 2 ta")
-      crawl.setopt("macros += M 3 tr")
-      crawl.setopt("macros += M 4 tg")
-      crawl.setopt("macros += M 6 ab")
     elseif cur_god == "Dithmenos" then
       crawl.setopt("force_more_message += god:You are shrouded in an aura of darkness")
       crawl.setopt("force_more_message += god:You now sometimes bleed smoke")
@@ -106,7 +100,7 @@ local function set_xl_options()
     crawl.setopt("force_more_message -= goes berserk")
     crawl.setopt("force_more_message -= (?<!You)(?<!yourself) speeds? up")
   end
-  
+
   if not warn_mid_levels and you.xl() <= 10 then
     warn_mid_levels = true
     crawl.setopt("force_more_message += wielding.*of electrocution")
@@ -133,7 +127,7 @@ local function set_skill_options()
     ignoring_spellbooks = false
     crawl.setopt("explore_stop_pickup_ignore -= ^book of")
   end
-  
+
   local arm = items.equipped_at("Armour")
   local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + you.skill("Armour")/2
   if not ignoring_spellcasting and heavy_arm then
@@ -157,5 +151,3 @@ function ready_dynamic_options()
   set_xl_options()
   set_skill_options()
 end
-
-}

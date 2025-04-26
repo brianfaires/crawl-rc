@@ -1,9 +1,6 @@
-# This file needs attribution; from same place as display.rc
-
-{
----------------------------------------
----- Damage Calc (citation needed) ----
----------------------------------------
+------------------------------------------
+---- Damage Calc (attribution needed) ----
+------------------------------------------
 local previous_hp = 0
 local previous_mp = 0
 local previous_form = ""
@@ -52,17 +49,25 @@ function ready_announce_damage()
     else
       --On losing health
       if (current_hp < previous_hp) then
+        local msg
         if current_hp <= (max_hp * 0.30) then
-          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><lightred> and have " .. current_hp .. "/" .. max_hp .. " hp.</lightred>")
+          msg = "<red>You take " .. hp_difference .. " damage,</red>" ..
+                    "<lightred> and have " .. current_hp .. "/" .. max_hp .. " hp.</lightred>"
         elseif current_hp <= (max_hp * 0.50) then
-          crawl.mpr("<red>You take " .. hp_difference .. " damage, and have " .. current_hp .. "/" .. max_hp .. " hp.</red>")
+          msg = "<red>You take " .. hp_difference .. " damage, and have " ..
+                  current_hp .. "/" .. max_hp .. " hp.</red>"
         elseif current_hp <= (max_hp *  0.70) then
-          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><yellow> and have " .. current_hp .. "/" .. max_hp .. " hp.</yellow>")
+          msg = "<red>You take " .. hp_difference .. " damage,</red><yellow> and have " ..
+                  current_hp .. "/" .. max_hp .. " hp.</yellow>"
         elseif current_hp <= (max_hp * 0.90) then
-          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><lightgrey> and have " .. current_hp .. "/" .. max_hp .. " hp.</lightgrey>")
+          msg = "<red>You take " .. hp_difference .. " damage,</red><lightgrey> and have " ..
+                  current_hp .. "/" .. max_hp .. " hp.</lightgrey>"
         else
-          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><green> and have " .. current_hp .. "/" .. max_hp .. " hp.</green>")
+          msg = crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><green> and have " ..
+                            current_hp .. "/" .. max_hp .. " hp.</green>")
         end
+        crawl.mpr(msg)
+
         if hp_difference > (max_hp * 0.20) then
           crawl.mpr("<lightred>MASSIVE DAMAGE!!</lightred>")
         end
@@ -72,18 +77,25 @@ function ready_announce_damage()
       if (current_hp > previous_hp + 2) then
         --Removes the negative sign
         local health_inturn = (0 - hp_difference)
-        if (health_inturn > 1) and not (current_hp == max_hp) then
+        if (health_inturn > 1) and current_hp ~= max_hp then
+          local msg
           if current_hp <= (max_hp * 0.30) then
-            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><lightred> and now have " .. current_hp .. "/" .. max_hp .. " hp.</lightred>")
+            msg = "<green>You regained " .. health_inturn .. " hp,</green><lightred> and now have " ..
+                    current_hp .. "/" .. max_hp .. " hp.</lightred>"
           elseif current_hp <= (max_hp * 0.50) then
-            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><red> and now have " .. current_hp .. "/" .. max_hp .. " hp.</red>")
+            msg = "<green>You regained " .. health_inturn .. " hp,</green><red> and now have " ..
+                    current_hp .. "/" .. max_hp .. " hp.</red>"
           elseif current_hp <= (max_hp *  0.70) then
-            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><yellow> and now have " .. current_hp .. "/" .. max_hp .. " hp.</yellow>")
+            msg = "<green>You regained " .. health_inturn .. " hp,</green><yellow> and now have " ..
+                    current_hp .. "/" .. max_hp .. " hp.</yellow>"
           elseif current_hp <= (max_hp * 0.90) then
-            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><lightgrey> and now have " .. current_hp .. "/" .. max_hp .. " hp.</lightgrey>")
+            msg = "<green>You regained " .. health_inturn .. " hp,</green><lightgrey> and now have " ..
+                    current_hp .. "/" .. max_hp .. " hp.</lightgrey>"
           else
-            crawl.mpr("<green>You regained " .. health_inturn .. " hp, and now have " .. current_hp .. "/" .. max_hp .. " hp.</green>")
+            msg = "<green>You regained " .. health_inturn .. " hp, and now have " .. current_hp .. "/" ..
+                      max_hp .. " hp.</green>"
           end
+          crawl.mpr(msg)
         end
         if (current_hp == max_hp) then
           crawl.mpr("<green>Health restored: " .. current_hp .. "</green>")
@@ -94,14 +106,19 @@ function ready_announce_damage()
       if (current_mp > previous_mp+1) then
         --Removes the negative sign
         local mp_inturn = (0 - mp_difference)
-        if (mp_inturn > 1) and not (current_mp == max_mp) then
+        if (mp_inturn > 1) and current_mp ~= max_mp then
+          local msg
           if current_mp < (max_mp * 0.25) then
-            crawl.mpr("<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><red> and now have " .. current_mp .. "/" .. max_mp .. " mp.</red>")
+            msg = "<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><red> and now have " ..
+                    current_mp .. "/" .. max_mp .. " mp.</red>"
           elseif current_mp < (max_mp * 0.50) then
-            crawl.mpr("<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><yellow> and now have " .. current_mp .. "/" .. max_mp .. " mp.</yellow>")
+            msg = "<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><yellow> and now have " ..
+                    current_mp .. "/" .. max_mp .. " mp.</yellow>"
           else
-            crawl.mpr("<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><green> and now have " .. current_mp .. "/" .. max_mp .. " mp.</green>")
+            msg = "<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><green> and now have " ..
+                    current_mp .. "/" .. max_mp .. " mp.</green>"
           end
+          crawl.mpr(msg)
         end
         if (current_mp == max_mp) then
           crawl.mpr("<lightcyan>MP restored: " .. current_mp .. "</lightcyan>")
@@ -127,5 +144,3 @@ function ready_announce_damage()
   previous_form = current_form
   was_berserk_last_turn = you_are_berserk
 end
-
-}

@@ -1,11 +1,12 @@
-#################################
-####### Main options ############
-#################################
+############################
+####### Main options #######
+############################
 autofight_stop = 65
 hp_warning = 20
 mouse_input = false
 item_stack_summary_minimum = 8
 default_manual_training = true
+drop_disables_autopickup = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
@@ -16,9 +17,10 @@ fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped
 
 
 
-#################################
-####### Explore options #########
-#################################
+###############################
+####### Explore options #######
+###############################
+#TODO: evaluate this wall bias
 explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
@@ -31,9 +33,9 @@ explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
 
-#######################################
-####### Autopickup exceptions #########
-#######################################
+#####################################
+####### Autopickup exceptions #######
+#####################################
 ae := autopickup_exceptions
 ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
@@ -54,40 +56,43 @@ ae ^= >useless_item, <misc
 }
 
 
-#############################
-####### RC files ############
-#############################
-
+########################
+####### RC files #######
+########################
 ### Mostly normal RC options ###
-include = autoinscribe.rc
-include = display.rc
-include = dynamic-options.rc
-include = fm-messages.rc
-include = fm-monsters.rc
-include = macros.rc
-include = runrest.rc
-include = slot-defaults.rc
-include = startup.rc
+include = crawl-rc/rc/autoinscribe.rc
+include = crawl-rc/rc/display.rc
+include = crawl-rc/rc/fm-messages.rc
+include = crawl-rc/rc/macros.rc
+include = crawl-rc/rc/runrest.rc
+include = crawl-rc/rc/slot-defaults.rc
 
 
+
+#########################
+####### Lua Files #######
+#########################
 ### Pickup and alert ###
-include = ./pickup-alert/pa-armour.rc
-include = ./pickup-alert/pa-misc.rc
-include = ./pickup-alert/pa-weapons.rc
-
+lua_file = crawl-rc/lua/pickup-alert/pa-armour.lua
+lua_file = crawl-rc/lua/pickup-alert/pa-misc.lua
+lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 
 ### Features ###
-include = features/after-shaft.rc
-include = features/drop-inferior.rc
-include = features/exclude-dropped.rc
-include = features/inscribe-stats.rc
-include = features/misc-alerts.rc
-include = features/mute-swaps.rc
-include = features/remind-id.rc
-include = features/runrest-features.rc
-include = features/safe-stairs.rc
-include = features/weapon-slots.rc
-
+lua_file = crawl-rc/lua/after-shaft.lua
+lua_file = crawl-rc/lua/announce-damage.lua
+lua_file = crawl-rc/lua/color-inscribe.lua
+lua_file = crawl-rc/lua/drop-inferior.lua
+lua_file = crawl-rc/lua/dynamic-options.lua
+lua_file = crawl-rc/lua/exclude-dropped.lua
+lua_file = crawl-rc/lua/fm-monsters.lua
+lua_file = crawl-rc/lua/inscribe-stats.lua
+lua_file = crawl-rc/lua/misc-alerts.lua
+lua_file = crawl-rc/lua/mute-swaps.lua
+lua_file = crawl-rc/lua/remind-id.lua
+lua_file = crawl-rc/lua/runrest-features.lua
+lua_file = crawl-rc/lua/safe-stairs.lua
+lua_file = crawl-rc/lua/startup.lua
+lua_file = crawl-rc/lua/weapon-slots.lua
 
 
 ####################################################################
@@ -120,7 +125,8 @@ function c_assign_invletter(it)
   if c_assign_invletter_exclude_dropped then c_assign_invletter_exclude_dropped(it) end
   if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
   if c_assign_invletter_mute_swaps then c_assign_invletter_mute_swaps(it) end
-    
+  if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
+
   -- Calls with possible return values
   local ret_val = nil
   if c_assign_invletter_weapon_slots then ret_val = c_assign_invletter_weapon_slots(it) end
@@ -136,31 +142,6 @@ function ch_stop_running(kind)
 end
 
 
----------------------------
---------- ready() ---------
----------------------------
-local last_turn = -1
-local last_write_counter = 0
-function ready()
-  if you.turns() == last_turn then return end
-  last_turn = you.turns()
- 
-  if ready_force_mores then ready_force_mores() end
-  if ready_dynamic_options then ready_dynamic_options() end
-  if ready_inscribe_stats then ready_inscribe_stats() end
-  if ready_weapon_slots then ready_weapon_slots() end
-  if ready_safe_consumables then ready_safe_consumables() end
-  if ready_mute_swaps then ready_mute_swaps() end
-  if ready_ignore_altars then ready_ignore_altars() end
-  if ready_ignore_exits then ready_ignore_exits() end
-  if ready_after_shaft then ready_after_shaft() end
-  if ready_fully_recover then ready_fully_recover() end
-  if ready_safe_stairs then ready_safe_stairs() end
-  if ready_item_alerts then ready_item_alerts() end
-  if ready_misc_alerts then ready_misc_alerts() end
-end
-
-
 -----------------------------
 ---- Prompt auto-answers ----
 -----------------------------
@@ -171,6 +152,30 @@ function c_answer_prompt(prompt)
   if prompt == "Die?" then return false end  
 end
 
+
+---------------------------
+--------- ready() ---------
+---------------------------
+local last_turn = -1
+function ready()
+  if you.turns() ~= last_turn then
+    last_turn = you.turns()
+    if ready_force_mores then ready_force_mores() end
+    if ready_dynamic_options then ready_dynamic_options() end
+    if ready_inscribe_stats then ready_inscribe_stats() end
+    if ready_weapon_slots then ready_weapon_slots() end
+    if ready_safe_consumables then ready_safe_consumables() end
+    if ready_mute_swaps then ready_mute_swaps() end
+    if ready_ignore_altars then ready_ignore_altars() end
+    if ready_ignore_exits then ready_ignore_exits() end
+    if ready_after_shaft then ready_after_shaft() end
+    if ready_fully_recover then ready_fully_recover() end
+    if ready_safe_stairs then ready_safe_stairs() end
+    if ready_item_alerts then ready_item_alerts() end
+    if ready_misc_alerts then ready_misc_alerts() end
+    if ready_announce_damage then ready_announce_damage() end
+  end
+end
 --Call ready() once before autopickup/alerts trigger
 ready()
 

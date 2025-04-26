@@ -1,10 +1,8 @@
+######## Begin init.txt ########
 
-
-######## Begin ./init.txt ########
-
-#################################
-####### Main options ############
-#################################
+############################
+####### Main options #######
+############################
 autofight_stop = 65
 hp_warning = 20
 mouse_input = false
@@ -20,9 +18,10 @@ fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped
 
 
 
-#################################
-####### Explore options #########
-#################################
+###############################
+####### Explore options #######
+###############################
+#TODO: evaluate this wall bias
 explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
@@ -35,9 +34,9 @@ explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
 
-#######################################
-####### Autopickup exceptions #########
-#######################################
+#####################################
+####### Autopickup exceptions #######
+#####################################
 ae := autopickup_exceptions
 ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
@@ -58,17 +57,11 @@ ae ^= >useless_item, <misc
 }
 
 
-#############################
-####### RC files ############
-#############################
-
+########################
+####### RC files #######
+########################
 ### Mostly normal RC options ###
-
-
-######## Begin autoinscribe.rc ########
-
-###############################
-####### Auto-inscribe #########
+######## Begin rc/autoinscribe.rc ########
 
 ai := autoinscribe
 
@@ -109,39 +102,28 @@ ai += staff of fire:rF+
 ai += staff of poison:rPois
 
 
-# Unidentified consumables
-ai += potions?$:!q
-ai += scrolls? labelled:!r
-
-# Add a warning for everything that doesn't have one built-in
-ai += potions? of(?!.*(attraction|lignification|mutation)):!q
-ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleportation|vulnerability):!r
-
 
 {
---------------------------------------------
----- Protective consumable inscriptions ----
---------------------------------------------
--- Update inscriptions every turn
--- Handles on init (starting items don't get default inscriptions)
--- Handles after ID
-
----------------------------------------------
-------------------- Hook -------------------
----------------------------------------------
-function ready_safe_consumables()
-  -- Remove the default "!r" and "!q" inscriptions after identify
-  local no_inscriptions = {"acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", 
-                          "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation" }
-
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if it.is_identified then
+  -- Protective consumable inscriptions on everything w/o a built-in prompt
+  -- Updates every turn to:
+    -- Inscribe starting items
+    -- Update inscriptions after ID
+  
+  local no_inscription_needed = {
+    "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
+    "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation"}
+  ---------------------------------------------
+  ------------------- Hook -------------------
+  ---------------------------------------------
+  function ready_safe_consumables()
+    -- Remove the default "!r" and "!q" inscriptions after identify
+    for it in iter.invent_iterator:new(items.inventory()) do
       local it_class = it.class(true)
       if it_class == "potion" or it_class == "scroll" then
         local st, _ = it.subtype()
         if (st == "poison" and you.res_poison() > 0)
           or (st == "torment" and you.torment_immune())
-          or util.contains(no_inscriptions, st) then
+          or util.contains(no_inscription_needed, st) then
             if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
             if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
         elseif it_class == "scroll" and not it.inscription:find("!r") then
@@ -152,14 +134,12 @@ function ready_safe_consumables()
       end
     end
   end
-end
 }
 
-######## End autoinscribe.rc ########
+######## End rc/autoinscribe.rc ########
 
 
-
-######## Begin display.rc ########
+######## Begin rc/display.rc ########
 
 # This file needs attribution (minimal updates made)
 # LMK whose work this is!
@@ -2910,181 +2890,10 @@ channel.orb = $awesome
 #channel.hell_effect = -either danger/warning/boring
 
 
+######## End rc/display.rc ########
 
 
-######## End display.rc ########
-
-
-
-######## Begin dynamic-options.rc ########
-
-{
-----------------------
----- race-specific ----
-----------------------
-if you.race() == "Demonspawn" then
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
-elseif you.race() == "Formicid" then
-  crawl.setopt("more -= monster_warning:curare")
-elseif you.race() == "Gargoyle" then
-  crawl.setopt("more -= monster_warning:curare")
-elseif you.race() == "Ghoul" then
-  crawl.setopt("more -= monster_warning:curare")
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
-elseif you.race() == "Gnoll" then
-  crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
-elseif you.race() == "Mummy" then
-  crawl.setopt("more -= monster_warning:curare")
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
-end
-
-
-----------------------
----- god-specific ----
-----------------------
-local cur_god = "No God"
-local function set_god_options()
-  if you.god() ~= cur_god then
-    cur_god = you.god()
-  
-    if cur_god == "Ashenzari" then
-      crawl.setopt("runrest_stop_message += god:Ashenzari invites you to partake")
-    elseif cur_god == "Beogh" then
-      crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
-      crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
-      crawl.setopt("force_more_message += Your orc.*dies")
-      crawl.setopt("macros += M 1 tf")
-      crawl.setopt("macros += M 2 ta")
-      crawl.setopt("macros += M 3 tr")
-      crawl.setopt("macros += M 4 tg")
-      crawl.setopt("macros += M 6 ab")
-    elseif cur_god == "Dithmenos" then
-      crawl.setopt("force_more_message += god:You are shrouded in an aura of darkness")
-      crawl.setopt("force_more_message += god:You now sometimes bleed smoke")
-      crawl.setopt("force_more_message += god:You.*no longer.*bleed smoke")
-      crawl.setopt("force_more_message += god:Your shadow no longer tangibly mimics your actions")
-      crawl.setopt("force_more_message += god:Your shadow now sometimes tangibly mimics your actions")
-    elseif cur_god == "Fedhas" then
-      crawl.setopt("force_more_message += god:Fedhas invokes the elements against you")
-    elseif cur_god == "Hepliaklqana" then
-      crawl.setopt("runrest_ignore_message ^= emerges from the mists of memory")
-    elseif cur_god == "Jiyva" then
-      crawl.setopt("force_more_message += god:will now unseal the treasures of the Slime Pits")
-      crawl.setopt("force_more_message += god:Jiyva alters your body")
-      crawl.setopt("force_more_message += god:splits in two")
-      crawl.setopt("force_more_message += god:Your prayer is over.")
-    elseif cur_god == "Kikubaaqudgha" then
-      crawl.setopt("force_more_message += god:Kikubaaqudgha will grant you")
-    elseif cur_god == "Lugonu" then
-      crawl.setopt("force_more_message += god:Lugonu will now corrupt your weapon")
-      crawl.setopt("force_more_message += god:Lugonu sends minions to punish you")
-    elseif cur_god == "Okawaru" then
-      crawl.setopt("force_more_message += god:Okawaru sends forces against you")
-    elseif cur_god == "Ru" then
-      crawl.setopt("runrest_stop_message += god:Ru believes you are ready to make a new sacrifice")
-    elseif cur_god == "Qazlal" then
-      crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
-      crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
-    elseif cur_god == "The Shining One" then
-      crawl.setopt("force_more_message += god:Your divine shield starts to fade.")
-      crawl.setopt("force_more_message += god:Your divine shield fades away.")
-    elseif cur_god == "Trog" then
-      crawl.setopt("force_more_message += god:You feel the effects of Trog's Hand fading")
-      crawl.setopt("force_more_message += god:You feel less resistant to hostile enchantments")
-    elseif cur_god == "Wu Jian Council" then
-      crawl.setopt("runrest_ignore_message += heavenly storm settles")
-    elseif cur_god == "Xom" then
-      crawl.setopt("force_more_message += god:")
-      crawl.setopt("force_more_message += staircase.*moves")
-      crawl.setopt("force_more_message += Some monsters swap places")
-    elseif cur_god == "Yredelemnul" then
-      crawl.setopt("force_more_message += god:soul is now ripe for the taking")
-      crawl.setopt("force_more_message += god:soul is no longer ripe for the taking")
-      crawl.setopt("force_more_message += god:dark mirror aura disappears")
-    elseif cur_god == "Zin" then
-      crawl.setopt("force_more_message += god:will now cure all your mutations")
-    end
-  end
-end
-
-
-
----------------------
----- xl-specific ----
----------------------
-local warn_early_levels = false
-local warn_mid_levels = false
-local function set_xl_options()
-  if not warn_early_levels and you.xl() <= 5 then
-    warn_early_levels = true
-    crawl.setopt("force_more_message += wielding.*(vorpal|(?<!armour)(?<!mail)(?<!scales) of)")
-    crawl.setopt("force_more_message += goes berserk")
-    crawl.setopt("force_more_message += (?<!You)(?<!yourself) speeds? up")
-  elseif warn_early_levels and you.xl() > 5 then
-    warn_early_levels = false
-    crawl.setopt("force_more_message -= wielding.*(vorpal|(?<!armour)(?<!mail)(?<!scales) of)")
-    crawl.setopt("force_more_message -= goes berserk")
-    crawl.setopt("force_more_message -= (?<!You)(?<!yourself) speeds? up")
-  end
-  
-  if not warn_mid_levels and you.xl() <= 10 then
-    warn_mid_levels = true
-    crawl.setopt("force_more_message += wielding.*of electrocution")
-  elseif warn_mid_levels and you.xl() > 10 then
-    warn_mid_levels = false
-    crawl.setopt("force_more_message -= wielding.*of electrocution")
-  end
-end
-
-
-------------------------
----- skill-specific ----
-------------------------
-local ignoring_spellcasting = false
-local ignoring_spellbooks = false
-local function set_skill_options()
-  -- Ignore spellbook reading if you have no spellcasting skill
-  -- Ignore all spellcaster items if wearing heavy armour or not much armour skill
-  local zero_spellcasting = you.skill("Spellcasting") == 0
-  if not ignoring_spellbooks and zero_spellcasting then
-    ignoring_spellbooks = true
-    crawl.setopt("explore_stop_pickup_ignore += ^book of")
-  elseif ignoring_spellbooks and not zero_spellcasting then
-    ignoring_spellbooks = false
-    crawl.setopt("explore_stop_pickup_ignore -= ^book of")
-  end
-  
-  local arm = items.equipped_at("Armour")
-  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + you.skill("Armour")/2
-  if not ignoring_spellcasting and heavy_arm then
-    ignoring_spellcasting = true
-    crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
-    crawl.setopt("runrest_ignore_message += You add the spell")
-  elseif ignoring_spellcasting and not heavy_arm then
-    ignoring_spellcasting = false
-    crawl.setopt("autopickup_exceptions -= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
-    crawl.setopt("runrest_ignore_message -= You add the spell")
-  end
-end
-
-
-
-------------------------------------------
------------------- Hook ------------------
-------------------------------------------
-function ready_dynamic_options()
-  set_god_options()
-  set_xl_options()
-  set_skill_options()
-end
-
-}
-
-######## End dynamic-options.rc ########
-
-
-
-######## Begin fm-messages.rc ########
+######## Begin rc/fm-messages.rc ########
 
 # Alias
 more := force_more_message
@@ -3211,268 +3020,10 @@ more += god:wrath finds you
 more += The walls disappear
 
 
-######## End fm-messages.rc ########
+######## End rc/fm-messages.rc ########
 
 
-
-######## Begin fm-monsters.rc ########
-
-{
-------------------------------------------------------------------------------------------
-------------------------------- Monster force_mores config -------------------------------
-------------------------------------------------------------------------------------------
--- This stops on all Uniques & Pan lords
-crawl.setopt("force_more_message += monster_warning:(?!Orb)(?!Guardian)(?-i:[A-Z]).*comes into view")
-
----- Everything included in this list will cause a more() prompt.
----- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
-local force_more_monsters = {
-  -- High damage/speed
-    "shrike", "juggernaut", "orbs? of fire", "flayed ghost",
-  -- Torment
-    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy", "mummy priest", "(dread|ancient) lich", "lurking horror",
-  --Summoning
-    "boggart", "shadow demon", "guardian serpent", "ironbound convoker", "draconian stormcaller", "spriggan druid", "dryad",
-    "worldbinder", "halazid warlock", "deep elf elementalist", "demonspawn corrupter", "elemental wellspring",
-  --Dangerous abilities
-    "swamp worm", "floating eye", "vault warden", "air elemental", "wendingo", "torpor snail", "dream sheep", "water nymph", 
-    "shambling mangrove", "iron giant", "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
-  --Dangerous clouds
-    "catoblepas", "death drake", "apocalypse crab", "putrid mouth" }
-
-
-------------------------------------------------------------------------------------------
-------------------------------- Dynamic force_mores config -------------------------------
-------------------------------------------------------------------------------------------
--- hp-specific force_mores() by gammafunk, willpower/int/resistance added by sockthot
-local fm_patterns = {
-  -- Fast, early game Dungeon problems for chars with low mhp.
-  {name = "30hp", cond = "hp", cutoff = 30, pattern = "hound"},
-  
-  -- Monsters dangerous until a certain point
-  {name = "xl_7", cond = "xl", cutoff = 7, pattern = "orc wizard"},
-  {name = "xl_12", cond = "xl", cutoff = 12, pattern = "hydra|bloated husk"},
-  
-  
-  -- Monsters that can hit for ~50% of hp from range with unbranded attacks
-  {name = "40hp", cond = "hp", cutoff = 40, pattern = "orc priest" },
-  {name = "50hp", cond = "hp", cutoff = 50, pattern = "orc high priest|manticore" },
-  {name = "70hp", cond = "hp", cutoff = 70, pattern = "meliai|yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
-  {name = "80hp", cond = "hp", cutoff = 80, pattern = "gargoyle" },
-  {name = "90hp", cond = "hp", cutoff = 90, pattern = "deep elf archer|tengu conjurer" },
-  {name = "110hp", cond = "hp", cutoff = 110, pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth",
-              "deep elf high priest|deep troll earth mage|stone giant|cacodemon"} },
-  {name = "120hp", cond = "hp", cutoff = 120, pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
-  {name = "160hp", cond = "hp", cutoff = 160, pattern = {"brimstone fiend|deep elf sorcerer",
-              "hell sentinal|war gargoyle|draconian (knight|scorcher)"} },
-  {name = "200hp", cond = "hp", cutoff = 200, pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
-
-  -- Monsters that can crowd-control you without sufficient willpower
-  -- Cutoff ~10% for most spells; lower for more significant spells like banish
-  {name = "willpower2", cond = "will", cutoff = 2, pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)" },
-  {name = "willpower3", cond = "will", cutoff = 3, pattern = {"deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard", 
-              "merfolk siren|fenstrider witch|great orb of eyes|cacodemon|imperial myrmidon|sphinx|nagaraja|draconian shifter",
-              "orange crystal statue|glowing orange brain|orc sorcerer|ogre mage|satyr|vault sentinel",
-              "iron elemental|golden eye|death knight|vampire knight" } },
-  {name = "willpower4", cond = "will", cutoff = 4, pattern = "merfolk avatar|tainted leviathan|nargun" },
-   
-  -- Malmutate without rMut
-  {name = "malmutate", cond = "mut", cutoff = 1, pattern = "cacodemon|neqoxec|shining eye" },
-    
-  -- Brain feed with low int
-  {name = "brainfeed", cond = "int", cutoff = 6, pattern = "glowing orange brain|neqoxec|orange crystal statue" },
-    
-  -- Alert if no resist and HP below cutoff
-  {name = "pois_30", cond = "pois", cutoff = 30, pattern = "adder"},
-  {name = "pois_80", cond = "pois", cutoff = 80, pattern = "golden dragon|green draconian|swamp dragon" },
-  {name = "pois_120", cond = "pois", cutoff = 120, pattern = "green death|naga mage|nagaraja|fenstrider witch" },
-  {name = "pois_140", cond = "pois", cutoff = 140, pattern = "tengu reaver" },
-   
-  {name = "elec_40", cond = "elec", cutoff = 40, pattern = "electric eel" },
-  {name = "elec_80", cond = "elec", cutoff = 80, pattern = "shock serpent|raiju|spark wasp" },
-  {name = "elec_120", cond = "elec", cutoff = 120, pattern = "black draconian|blizzard demon|deep elf zephyrmancer|storm dragon|tengu conjurer" },
-  {name = "elec_140", cond = "elec", cutoff = 140, pattern = "electric golem|titan|servants? of whisper|spriggan air mage|ball lightning|tengu reaver" },
-   
-  {name = "corr_60", cond = "corr", cutoff = 60, pattern = "acid dragon" },
-  {name = "corr_140", cond = "corr", cutoff = 140, pattern = "tengu reaver|entropy weaver|demonspawn corrupter|moon troll" },
-   
-  {name = "fire_60", cond = "fire", cutoff = 60, pattern = "steam dragon|lindwurm|fire crab|lava snake" },
-  {name = "fire_100", cond = "fire", cutoff = 100, pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
-  {name = "fire_120", cond = "fire", cutoff = 120, pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|ogre mage|molten gargoyle|hell knight" },
-  {name = "fire_140", cond = "fire", cutoff = 140, pattern = "balrug" },
-  {name = "fire_160", cond = "fire", cutoff = 160, pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|fire dragon|salamander tyrant|tengu reaver" },
-  {name = "fire_240", cond = "fire", cutoff = 240, pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
-   
-  {name = "cold_80", cond = "cold", cutoff = 80, pattern = "rime drake" },
-  {name = "cold_120", cond = "cold", cutoff = 120, pattern = "blizzard demon|bog body|ironbound frostheart|demonspawn blood saint|white draconian" },
-  {name = "cold_160", cond = "cold", cutoff = 160, pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
-  {name = "cold_180", cond = "cold", cutoff = 180, pattern = "(?>!dread)(?>!ancient) lich" },
-  {name = "cold_240", cond = "cold", cutoff = 240, pattern = "crystal (guardian|echidna)" },
-   
-  {name = "drain_100", cond = "drain", cutoff = 100, pattern = "orc sorcerer" },
-  {name = "drain_120", cond = "drain", cutoff = 120, pattern = "necromancer" },
-  {name = "drain_150", cond = "drain", cutoff = 150, pattern = "revenant|demonspawn blood saint" },
-  {name = "drain_190", cond = "drain", cutoff = 190, pattern = "shadow dragon" },
-   
-} -- end fm_patterns
-
-----------------------------------------------------------------------------------
-------------------------------- End config section -------------------------------
-----------------------------------------------------------------------------------
-
-
-
--- Add the non-dynamic force_mores()  (moved code down here for easier configuration)
-local fm_mon_str = nil
-for v in iter.invent_iterator:new(force_more_monsters) do
-  if fm_mon_str == nil then
-    fm_mon_str = "monster_warning:(?<!spectral )("..v
-  else
-    fm_mon_str = fm_mon_str.."|"..v
-  end
-end
-fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum).*comes into view"
-crawl.setopt("force_more_message += "..fm_mon_str)
-
-
-
-
--- Set to true to get a message when the fm change
-local notify_fm = false
-
--- Keep track of active force_mores()
-local active_fm = {}
-for v in iter.invent_iterator:new(fm_patterns) do
-  active_fm[#active_fm + 1] = false
-end
-
--- Util for checks against resistance and hp
-local function get_three_pip_action(active, hp, cutoff, res)
-  if active then
-    if hp >= cutoff then return "-" end
-    if res == 1 and hp >= cutoff/2 then return "-" end
-    if res == 2 and hp >= cutoff/3 then return "-" end
-    if res == 3 and hp >= cutoff/5 then return "-" end
-  else
-    if res == 0 and hp < cutoff then return "+" end
-    if res == 1 and hp > cutoff/2 then return "+" end
-    if res == 2 and hp > cutoff/3 then return "+" end
-    if res == 3 and hp > cutoff/5 then return "+" end
-  end
-end
-
-
-
---------------------------------------------
-------------------- Hook -------------------
---------------------------------------------
-function ready_force_mores()
-  local activated = {}
-  local deactivated = {}
-  
-  local hp, maxhp = you.hp()
-  local willpower = you.willpower()
-  local res_mut = you.res_mutation()
-  local res_pois = you.res_poison()
-  local res_elec = you.res_shock()
-  local res_corr = you.res_corr()
-  local res_fire = you.res_fire()
-  local res_cold = you.res_cold()
-  local res_drain = you.res_draining()
-  local int, maxint = you.intelligence()
-  
-  for i,v in ipairs(fm_patterns) do
-    local msg = nil
-    if type(v.pattern) == "table" then
-      for p in iter.invent_iterator:new(v.pattern) do
-        if not msg then
-          msg = p
-        else
-          msg = msg .. "|" .. p
-        end
-      end
-    else
-      msg = v.pattern
-    end
-    
-    msg = "monster_warning:(?<!spectral )(" .. msg .. ")(?! (skeleton|zombie|simulacrum)).*comes into view"
-    
-    local action = nil
-    local fm_name = v.pattern
-    if v.name then fm_name = v.name end
-    
-    if not v.cond and not active_fm[i] then
-      action = "+"
-    elseif v.cond == "xl" then
-      if active_fm[i] and you.xl() >= v.cutoff then action = "-"
-      elseif not active_fm[i] and you.xl() < v.cutoff then action = "+"
-      end
-    elseif v.cond == "maxhp" then
-      if active_fm[i] and maxhp >= v.cutoff then action = "-"
-      elseif not active_fm[i] and maxhp < v.cutoff then action = "+"
-      end
-    elseif v.cond == "hp" then
-      if active_fm[i] and hp >= v.cutoff then action = "-"
-      elseif not active_fm[i] and hp < v.cutoff then action = "+"
-      end
-    elseif v.cond == "int" then
-      if active_fm[i] and int >= v.cutoff then action = "-"
-      elseif not active_fm[i] and int < v.cutoff then action = "+"
-      end
-    elseif v.cond == "will" then
-      if active_fm[i] and willpower >= v.cutoff then action = "-"
-      elseif not active_fm[i] and willpower < v.cutoff then action = "+"
-      end
-    elseif v.cond == "mut" then
-      if active_fm[i] and res_mut > 0 then action = "-"
-      elseif not active_fm[i] and res_mut == 0 then action = "+"
-      end
-    elseif v.cond == "pois" then
-      if active_fm[i] and (res_pois > 0 or hp >= v.cutoff) then action = "-"
-      elseif not active_fm[i] and res_pois == 0 and hp < v.cutoff then action = "+"
-      end
-    elseif v.cond == "elec" then
-      if active_fm[i] and (res_elec > 0 or hp >= v.cutoff) then action = "-"
-      elseif not active_fm[i] and res_elec == 0 and hp < v.cutoff then action = "+"
-      end
-    elseif v.cond == "corr" then
-      if active_fm[i] and (res_corr or hp >= v.cutoff) then action = "-"
-      elseif not active_fm[i] and not res_corr and hp < v.cutoff then action = "+"
-      end
-    elseif v.cond == "fire" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
-    elseif v.cond == "cold" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
-    elseif v.cond == "drain" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
-    end
-    
-    
-    if action == "+" then
-      activated[#activated + 1] = fm_name
-    elseif action == "-" then
-      deactivated[#deactivated + 1] = fm_name
-    end
-    if action then
-      local opt = "force_more_message " .. action .. "= " .. msg
-      crawl.setopt(opt)
-      active_fm[i] = not active_fm[i]
-    end
-  end
-  if #activated > 0 and notify_fm then
-    crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
-  end
-  if #deactivated > 0 and notify_fm then
-    crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", "), "plain")
-  end
-end
-}
-
-######## End fm-monsters.rc ########
-
-
-
-######## Begin macros.rc ########
+######## Begin rc/macros.rc ########
 
 bindkey = [~] CMD_LUA_CONSOLE
 
@@ -3513,11 +3064,10 @@ macros += K2 9 \{13}
 macros += K2 0 \{13}
 
 
-######## End macros.rc ########
+######## End rc/macros.rc ########
 
 
-
-######## Begin runrest.rc ########
+######## Begin rc/runrest.rc ########
 
 # Aliases
 stop := runrest_stop_message
@@ -3597,11 +3147,10 @@ ignore ^= our.*looks more healthy
 ignore ^= our.*is no longer (corroded|moving slowly)
 ignore ^= our.*dissolves into a puddle of slime
 
-######## End runrest.rc ########
+######## End rc/runrest.rc ########
 
 
-
-######## Begin slot-defaults.rc ########
+######## Begin rc/slot-defaults.rc ########
 
 ############################
 ####### Item Slots #########
@@ -3732,35 +3281,28 @@ spell_slot ^= Swiftness:SWIFT
 :end
 
 
-######## End slot-defaults.rc ########
+######## End rc/slot-defaults.rc ########
 
 
 
-######## Begin startup.rc ########
-
-{
-
----------------------------------------------
----- Skill menu on startup (by rwbarton) ----
----------------------------------------------
-local need_skills_opened = true
-if you.turns() == 0 and need_skills_opened then
-  need_skills_opened = false
-  crawl.sendkeys("m!!")
-end
-
-}
-
-######## End startup.rc ########
 
 
-
+#########################
+####### Lua Files #######
+#########################
 ### Pickup and alert ###
 
-
-######## Begin pickup-alert/pa-util.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/pickup-alert/pa-armour.lua --------
+
+if loaded_pa_armour then return end
+loaded_pa_armour = true
+-------- Begin lua/util.lua --------
+
+if loaded_util_lua then return end
+loaded_util_lua = true
+
 ------------------------------------
 --------------- Misc ---------------
 ------------------------------------
@@ -3804,10 +3346,6 @@ end
 
 function is_staff(it)
   return it and it.class(true) == "magical staff"
-end
-
-function is_armour(it)
-  return it and it.class(true) == "armour"
 end
 
 function is_ring(it)
@@ -4089,22 +3627,20 @@ function get_slay_bonuses()
 end
 
 
+local staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
+                        poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
+local function get_staff_school(it)
+  for k,v in pairs(staff_schools) do
+    if it.name("base") == "staff of "..k then return v end
+	end
+end
+
 -- Calc extra damage for magical staves
-staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
-              poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
 function get_staff_bonus_dmg(it, no_brand_dmg)
-  if no_brand_dmg and basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
+  if no_brand_dmg and it.name("base") ~= "staff of earth" and it.name("base") ~= "staff of conjuration" then return 0 end
   
   local evo_skill = you.skill("Evocations")
-  local basename = it.name("base")
-  local school = nil
-  
-  for k,v in pairs(staff_schools) do
-    if basename == "staff of "..k then
-	  school = v
-	  break
-	end
-  end
+  local school = get_staff_school(it)
   if not school then return 0 end
   
   local spell_skill = you.skill(school)
@@ -4260,15 +3796,13 @@ function get_armour_info(it)
     return ac_str.."EV"..ev_str
   end  
 end
-}
-
-######## End pickup-alert/pa-util.rc ########
 
 
+-------- End lua/util.lua ---------------- Begin lua/pickup-alert/pa-data.lua --------
 
-######## Begin pickup-alert/pa-data.rc ########
+if loaded_pa_data then return end
+loaded_pa_data = true
 
-{
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
 -------------------------------------------------------------------------------
@@ -4278,11 +3812,12 @@ if not added_persistant_data or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
-  rare_items = {"broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
-                "lajatang", "bardiche", "demon trident", "trishula",
-                "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
-                "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales", "wand of digging",
-                "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
+  rare_items = {  "broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
+                  "lajatang", "bardiche", "demon trident", "trishula",
+                  "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
+                  "crystal plate armour", "gold dragon scales", "pearl dragon scales",
+                  "storm dragon scales", "shadow dragon scales", "wand of digging",
+                  "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
 
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0
@@ -4324,7 +3859,6 @@ if not added_persistant_data_hooks then
   table.insert(chk_lua_save, function() return persist_var("polearm_onehand_high_score", polearm_onehand_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("unbranded_high_score", unbranded_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("weapon_high_score", weapon_high_score) end)
-  
   table.insert(chk_lua_save, function() return persist_var("added_persistant_data", 1) end)
 end
 
@@ -4435,7 +3969,7 @@ function update_high_scores(it)
     if it.weap_skill == "Polearms" and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Good polearm1" end
+        if not have_shield() and not ret_val then ret_val = "Good polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_onehand_high_score then
@@ -4460,16 +3994,13 @@ if you.turns() == 0 then
 	insert_item_and_less_enchanted(items_picked, inv)
   end
 end
-}
-
-######## End pickup-alert/pa-data.rc ########
 
 
+-------- End lua/pickup-alert/pa-data.lua ---------------- Begin lua/pickup-alert/pa-main.lua --------
 
-######## Begin pickup-alert/pa-main.rc ########
+if loaded_pa_main then return end
+loaded_pa_main = true
 
-
-{
 function alert_item(it, alert_type)
   local name = it.name("plain")
   if not it.is_identified then name = "+0 " .. name end
@@ -4479,7 +4010,7 @@ function alert_item(it, alert_type)
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
 	elseif is_body_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
-  elseif it.class(true) == "armour" then
+  elseif is_armour(it) then
     show_alert_msg("Item alert, "..alert_type..": ", name)
   else
     show_alert_msg("Item alert, "..alert_type..": ", name)
@@ -4509,7 +4040,7 @@ function c_assign_invletter_item_alerts(it)
       remove_from_rare_items(it)
     end
   end
-  
+
   remove_item_and_less_enchanted(items_alerted, it)
   util.remove(level_alerts, name)
 end
@@ -4524,7 +4055,7 @@ function c_message_item_alerts(text, channel)
       else all_alerts = all_alerts..", "..v
       end
     end
-    
+
     level_alerts = {}
     if all_alerts ~= "" then
       crawl.mpr("<magenta>Recent alerts: "..all_alerts.."</magenta>")
@@ -4577,20 +4108,9 @@ add_autopickup_func(function (it, name)
   elseif is_weapon(it) and loaded_pa_weapons then alert_weapons(it)
   end
 end)
-}
-
-######## End pickup-alert/pa-main.rc ########
 
 
-
-######## Begin ./pickup-alert/pa-armour.rc ########
-
-
-{
-loaded_pa_armour = true
-
-
-
+-------- End lua/pickup-alert/pa-main.lua --------
 ---------------------------------------
 ---- Begin alert_armour_upgrades() ----
 ---------------------------------------
@@ -4630,7 +4150,7 @@ function pickup_armour(it)
   
   local st, _ = it.subtype()
  
-  if st == "body" then
+  if is_body_armour(it) then
     -- Body armour: AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
     local cur = items.equipped_at("Armour")
     if not cur then return false end
@@ -4649,7 +4169,7 @@ function pickup_armour(it)
         if ac_delta >= 0 then return true end
       end
     end
-  elseif st == "shield" then
+  elseif is_shield(it) then
     -- Shields
     if not it.is_identified or is_orb(it) then return false end
     
@@ -4793,7 +4313,7 @@ local function alert_interesting_armour(it)
   end
   
   local st, _ = it.subtype()
-  if st == "body" then
+  if is_body_armour(it) then
     if it.is_useless then return end
     local cur = items.equipped_at("Armour")
     if not cur then return false end
@@ -4803,7 +4323,7 @@ local function alert_interesting_armour(it)
         if not has_ego(cur) then return alert_item(it, "Added ego") end
         if get_ego(it) ~= get_ego(cur) then return alert_item(it, "New ego") end
       end
-      if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour1") end
+      if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour") end
     
     elseif it.encumbrance < cur.encumbrance then
 	-- Lighter armour
@@ -4812,20 +4332,20 @@ local function alert_interesting_armour(it)
       
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ev_gain >= 0.6 * ac_lost or ac_lost <= 6 then return alert_item(it, "Added ego1") end
+          if ev_gain >= 0.6 * ac_lost or ac_lost <= 6 then return alert_item(it, "Added ego") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ev_gain >= 0.8 * ac_lost or ac_lost <= 6 then return alert_item(it, "New ego1") end
+          if ev_gain >= 0.8 * ac_lost or ac_lost <= 6 then return alert_item(it, "New ego") end
         else
           -- Same ego
-          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour1") end
+          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour") end
         end
       else
         if cur.artefact or has_ego(cur) then
 		-- Lost ego
-          if ev_gain >= 2 * ac_lost then return alert_item(it, "Lighter armour2") end
+          if ev_gain >= 2 * ac_lost then return alert_item(it, "Lighter armour") end
         else
 		-- Neither has ego
-          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour3") end
+          if ev_gain >= 1.2 * ac_lost then return alert_item(it, "Lighter armour") end
         end
       end
     else
@@ -4836,24 +4356,24 @@ local function alert_interesting_armour(it)
 	  
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ac_gain >= 0.4 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Added ego2") end
+          if ac_gain >= 0.4 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Added ego") end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain >= 0.6 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Diff ego2") end
+          if ac_gain >= 0.6 * ev_lost + encumb_penalty or ev_lost + encumb_penalty <= 8 then return alert_item(it, "Diff ego") end
         else
 		-- Same ego
-          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour2") end
+          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         end
       else
         if cur.artefact or has_ego(cur) then
 		-- Lost ego
-          if ac_gain >= 2 + ev_lost + encumb_penalty then return alert_item(it, "Stronger armour3") end
+          if ac_gain >= 2 + ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         else
 		-- Neither has ego
-          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour4") end
+          if ac_gain >= 0.8 * ev_lost + encumb_penalty then return alert_item(it, "Stronger armour") end
         end
       end
     end
-  elseif st == "shield" then
+  elseif is_shield(it) then
     if it.is_useless then return end
     local cur = items.equipped_at("shield")
     if not cur then return false end
@@ -4863,7 +4383,7 @@ local function alert_interesting_armour(it)
   else
   -- Aux armour
     local cur = items.equipped_at(st)
-    if cur and not it.is_useless and get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour5") end
+    if cur and not it.is_useless and get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour") end
     return alert_armour_while_mutated(it, st)
   end
 end
@@ -4876,18 +4396,17 @@ function alert_armour(it)
   if it.is_identified or not it.branded then alert_interesting_armour(it) end
 end
 
+
+-------- End lua/pickup-alert/pa-armour.lua --------
 }
+### END LUA ###
 
-######## End ./pickup-alert/pa-armour.rc ########
-
-
-
-######## Begin ./pickup-alert/pa-misc.rc ########
-
-
+### BEGIN LUA ###
 {
-loaded_pa_misc = true
+-------- Begin lua/pickup-alert/pa-misc.lua --------
 
+if loaded_pa_misc then return end
+loaded_pa_misc = true
 
 --------------------------
 ---- Alert rare items ----
@@ -4949,41 +4468,29 @@ end
 ----------------------------
 ---- Smart staff pickup ----
 ----------------------------
-staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
-              poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
 function pickup_staff(it)
   if it.is_useless or not it.is_identified then return false end
+  local school = get_staff_school(it)
+  if you.skill(school) == 0 then return false end
 
-  local basename = it.name("base")
-  local good_staff = false
-  
-  for k,v in pairs(staff_schools) do
-    if basename == "staff of "..k then
-	  good_staff = you.skill(v) > 0
-	  break
-	end
-  end
-  
-  if not good_staff then return false end
-  
   -- Check for previously picked staves
   for v in iter.invent_iterator:new(items_picked) do
-    if v:find(basename) then return false end
+    if v:find(it.name("base")) then return false end
   end
-	
+
   return true
 end
 
+
+-------- End lua/pickup-alert/pa-misc.lua --------
 }
+### END LUA ###
 
-######## End ./pickup-alert/pa-misc.rc ########
-
-
-
-######## Begin ./pickup-alert/pa-weapons.rc ########
-
-
+### BEGIN LUA ###
 {
+-------- Begin lua/pickup-alert/pa-weapons.lua --------
+
+if loaded_pa_weapons then return end
 loaded_pa_weapons = true
 
 --------------------------
@@ -4991,11 +4498,13 @@ loaded_pa_weapons = true
 --------------------------
 -- Use these arrays to compare potential upgrades against entire inventory
 local top_school = "unarmed combat"
-local all_schools = { "axes", "maces & flails", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons" }
+local all_weap_schools = { "axes", "maces & flails", "polearms", "long blades",
+    "short blades", "staves", "unarmed combat", "ranged weapons" }
+
 local function set_top_school()
   local max = 0
-  
-  for v in iter.invent_iterator:new(all_schools) do
+
+  for v in iter.invent_iterator:new(all_weap_schools) do
     if you.skill(v) > max then
       max = you.skill(v)
       top_school = v
@@ -5003,6 +4512,7 @@ local function set_top_school()
   end
 end
 
+-- High scores for melee/ranged, 1/2-handed, branded/unbranded
 local inv_max_dmg =     { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0, ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0 }
 local inv_max_dmg_acc = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0, ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0 }
 local egos = { }
@@ -5079,7 +4589,7 @@ local function alert_early_weapons(it)
     if it.is_identified and it.is_ranged then
       if it.branded and it.plus >= 5 or it.plus >= 7 then
         if get_hands(it) == 1 or not items.equipped_at("shield") or you.skill("shield") <= 8 then
-          return alert_item(it, "Ranged weapon9")
+          return alert_item(it, "Ranged weapon")
         end
       end
     end
@@ -5120,7 +4630,7 @@ local function alert_first_ranged(it)
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.is_ranged and get_hands(inv) == 2 then return true end
       end
-      return alert_item(it, "Ranged weapon5")
+      return alert_item(it, "Ranged weapon")
     end
   else
     if alerted_first_ranged_one_handed == 0 then
@@ -5128,7 +4638,7 @@ local function alert_first_ranged(it)
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.is_ranged then return true end
       end
-      return alert_item(it, "Ranged weapon6")
+      return alert_item(it, "Ranged weapon")
     end
   end
   
@@ -5231,8 +4741,8 @@ local function alert_interesting_weapon(it, cur)
   
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match
-    if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego1") end
-    if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "Stronger weapon0") end
+    if it.branded and it.ego() ~= cur.ego() then return alert_item(it, "New ego") end
+    if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "Stronger weapon") end
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
@@ -5244,16 +4754,16 @@ local function alert_interesting_weapon(it, cur)
     if get_hands(it) == 2 and get_hands(cur) == 1 then
       -- Item requires an extra hand
       if it.branded and not cur.artefact and not cur.branded then
-        if get_weap_dps(it) > 0.8*get_weap_dps(cur) then return alert_item(it, "2-handed weapon1") end
+        if get_weap_dps(it) > 0.8*get_weap_dps(cur) then return alert_item(it, "2-handed weapon") end
       end
       
       if not items.equipped_at("shield") then 
-        if it.branded and not (it.ego() == "heavy" or it.ego() == "speed") and not util.contains(egos, it.ego()) then return alert_item(it, "New ego4") end
-        if not (cur.branded or cur.artefact) and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon2") end
-        if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon3") end
+        if it.branded and not (it.ego() == "heavy" or it.ego() == "speed") and not util.contains(egos, it.ego()) then return alert_item(it, "New ego") end
+        if not (cur.branded or cur.artefact) and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon") end
+        if (cur.branded or cur.artefact) and not it.branded and get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "2-handed weapon") end
       elseif you.skill("shields") <= 4 then
         -- Not really training shields; may be interested in big upgrades
-        if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then return alert_item(it, "2-handed weapon4") end
+        if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then return alert_item(it, "2-handed weapon") end
       end
     else
       -- Item uses same number of hands or fewer
@@ -5263,17 +4773,17 @@ local function alert_interesting_weapon(it, cur)
         local dmg_delta_ratio = dmg_delta / get_weap_dps(it)
         
         if not cur.branded then
-          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego2") end
+          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego") end
         elseif it.ego() == cur.ego() then
-          if dmg_delta_ratio >= 0 then return alert_item(it, "Stronger weapon1") end
+          if dmg_delta_ratio >= 0 then return alert_item(it, "Stronger weapon") end
         elseif not util.contains(egos, it.ego()) then
-          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego3") end
+          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego") end
         end
       else
         -- Not branded
         if cur.branded then
           --if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
-          --    return alert_item(it, "Stronger weapon2")
+          --    return alert_item(it, "Stronger weapon")
           --end
         else
           local dmg_delta, other_acc
@@ -5285,7 +4795,7 @@ local function alert_interesting_weapon(it, cur)
             other_acc = inv_max_dmg_acc[get_weap_type(it)]
           end
           
-          if dmg_delta > 0 then return alert_item(it, "Stronger weapon3") end
+          if dmg_delta > 0 then return alert_item(it, "Stronger weapon") end
           local it_plus = if_el(it.plus, it.plus, 0)
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then return alert_item(it, "Higher accuracy") end
         end
@@ -5310,10 +4820,10 @@ local function alert_interesting_weapons(it)
       if items.equipped_at("shield") then
         local qualname = it.name("qual")
         if qualname:find("hand crossbow") or qualname:find("sling") then
-          return alert_item(it, "Ranged Weapon1")
+          return alert_item(it, "Ranged Weapon")
         end
       else
-        return alert_item(it, "Ranged Weapon2")
+        return alert_item(it, "Ranged Weapon")
       end
     end
   end
@@ -5340,18 +4850,18 @@ function alert_weapons(it)
   -- Skip high score alerts if not using weapons
   if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it)end
 end
+
+
+-------- End lua/pickup-alert/pa-weapons.lua --------
 }
-
-######## End ./pickup-alert/pa-weapons.rc ########
-
-
+### END LUA ###
 
 ### Features ###
 
-
-######## Begin features/after-shaft.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/after-shaft.lua --------
+
 ------------------------------------
 ---- Stop on stairs after shaft ----
 ------------------------------------
@@ -5393,23 +4903,157 @@ function ready_after_shaft()
   end
 end
 
+
+-------- End lua/after-shaft.lua --------
 }
+### END LUA ###
 
-######## End features/after-shaft.rc ########
-
-
-
-######## Begin features/drop-inferior.rc ########
-
-
-
--- Auto-drop items that are strictly worse than another
--- On item pickup, inscribes inferior items with "~~DROP_ME"
-drop_filter += ~~DROP_ME
-
+### BEGIN LUA ###
 {
+-------- Begin lua/display-damage.lua --------
+
+------------------------------------------
+---- Damage Calc (attribution needed) ----
+------------------------------------------
+local previous_hp = 0
+local previous_mp = 0
+local previous_form = ""
+local was_berserk_last_turn = false
+
+function ready_announce_damage()
+  local current_hp, max_hp = you.hp()
+  local current_mp, max_mp = you.mp()
+  --Things that increase hp/mp temporarily really mess with this
+  local current_form = you.transform()
+  local you_are_berserk = you.berserk()
+  local max_hp_increased = false
+  local max_hp_decreased = false
+
+  if (current_form ~= previous_form) then
+    if (previous_form:find("dragon") or
+        previous_form:find("statue") or
+        previous_form:find("tree") or
+        previous_form:find("ice")) then
+      max_hp_decreased = true
+    elseif (current_form:find("dragon") or
+        current_form:find("statue") or
+        current_form:find("tree") or
+        current_form:find("ice")) then
+      max_hp_increased = true
+    end
+  end
+  if (was_berserk_last_turn and not you_are_berserk) then
+    max_hp_decreased = true
+  elseif (you_are_berserk and not was_berserk_last_turn) then
+    max_hp_increased = true
+  end
+
+
+  --Skips message on initializing game
+  if previous_hp > 0 then
+    local hp_difference = previous_hp - current_hp
+    local mp_difference = previous_mp - current_mp
+
+    if max_hp_increased or max_hp_decreased then
+      if max_hp_increased then
+        crawl.mpr("<green>You now have " .. current_hp .. "/" .. max_hp .. " hp.</green>")
+      else
+        crawl.mpr("<yellow>You now have " .. current_hp .. "/" .. max_hp .. " hp.</yellow>")
+      end
+    else
+      --On losing health
+      if (current_hp < previous_hp) then
+        if current_hp <= (max_hp * 0.30) then
+          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><lightred> and have " .. current_hp .. "/" .. max_hp .. " hp.</lightred>")
+        elseif current_hp <= (max_hp * 0.50) then
+          crawl.mpr("<red>You take " .. hp_difference .. " damage, and have " .. current_hp .. "/" .. max_hp .. " hp.</red>")
+        elseif current_hp <= (max_hp *  0.70) then
+          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><yellow> and have " .. current_hp .. "/" .. max_hp .. " hp.</yellow>")
+        elseif current_hp <= (max_hp * 0.90) then
+          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><lightgrey> and have " .. current_hp .. "/" .. max_hp .. " hp.</lightgrey>")
+        else
+          crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><green> and have " .. current_hp .. "/" .. max_hp .. " hp.</green>")
+        end
+        if hp_difference > (max_hp * 0.20) then
+          crawl.mpr("<lightred>MASSIVE DAMAGE!!</lightred>")
+        end
+      end
+
+      --On gaining more than 2 HP
+      if (current_hp > previous_hp + 2) then
+        --Removes the negative sign
+        local health_inturn = (0 - hp_difference)
+        if (health_inturn > 1) and not (current_hp == max_hp) then
+          if current_hp <= (max_hp * 0.30) then
+            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><lightred> and now have " .. current_hp .. "/" .. max_hp .. " hp.</lightred>")
+          elseif current_hp <= (max_hp * 0.50) then
+            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><red> and now have " .. current_hp .. "/" .. max_hp .. " hp.</red>")
+          elseif current_hp <= (max_hp *  0.70) then
+            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><yellow> and now have " .. current_hp .. "/" .. max_hp .. " hp.</yellow>")
+          elseif current_hp <= (max_hp * 0.90) then
+            crawl.mpr("<green>You regained " .. health_inturn .. " hp,</green><lightgrey> and now have " .. current_hp .. "/" .. max_hp .. " hp.</lightgrey>")
+          else
+            crawl.mpr("<green>You regained " .. health_inturn .. " hp, and now have " .. current_hp .. "/" .. max_hp .. " hp.</green>")
+          end
+        end
+        if (current_hp == max_hp) then
+          crawl.mpr("<green>Health restored: " .. current_hp .. "</green>")
+        end
+      end
+
+      --On gaining more than 1 MP
+      if (current_mp > previous_mp+1) then
+        --Removes the negative sign
+        local mp_inturn = (0 - mp_difference)
+        if (mp_inturn > 1) and not (current_mp == max_mp) then
+          if current_mp < (max_mp * 0.25) then
+            crawl.mpr("<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><red> and now have " .. current_mp .. "/" .. max_mp .. " mp.</red>")
+          elseif current_mp < (max_mp * 0.50) then
+            crawl.mpr("<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><yellow> and now have " .. current_mp .. "/" .. max_mp .. " mp.</yellow>")
+          else
+            crawl.mpr("<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><green> and now have " .. current_mp .. "/" .. max_mp .. " mp.</green>")
+          end
+        end
+        if (current_mp == max_mp) then
+          crawl.mpr("<lightcyan>MP restored: " .. current_mp .. "</lightcyan>")
+        end
+      end
+
+      --On losing magic
+      if current_mp < previous_mp then
+        if current_mp <= (max_mp / 5) then
+          crawl.mpr("<lightcyan>You now have </lightcyan><red>" .. current_mp .. "/" ..max_mp .." mp.</red>")
+        elseif current_mp <= (max_mp / 2) then
+          crawl.mpr("<lightcyan>You now have </lightcyan><yellow>" .. current_mp .. "/" ..max_mp .." mp.</yellow>")
+        else
+          crawl.mpr("<lightcyan>You now have </lightcyan><green>" .. current_mp .. "/" ..max_mp .." mp.</green>")
+        end
+      end
+    end
+  end
+
+  --Set previous hp/mp and form at end of turn
+  previous_hp = current_hp
+  previous_mp = current_mp
+  previous_form = current_form
+  was_berserk_last_turn = you_are_berserk
+end
+
+
+-------- End lua/display-damage.lua --------
+}
+### END LUA ###
+
+### BEGIN LUA ###
+{
+-------- Begin lua/drop-inferior.lua --------
+
+
+local DROP_KEY = "~~DROP_ME"
+crawl.setopt("drop_filter += "..DROP_KEY)
+
 function inscribe_drop(it)
-  local new_inscr = it.inscription:gsub("~~DROP_ME", "").."~~DROP_ME"
+  local new_inscr = it.inscription:gsub(DROP_KEY, "")..DROP_KEY
   it.inscribe(new_inscr, false)
 end
 
@@ -5421,8 +5065,7 @@ function c_assign_invletter_drop_inferior(it)
   local it_ego = it.ego()
   if it_ego == "distortion" or it_ego == "chaos" or it_ego == "infusion" then return end
   
-  local it_class = it.class(true)
-  if it_class ~= "weapon" and it_class ~= "armour" then return end
+  if not is_weapon(it) and not is_armour(it) then return end
   
   local risky_artefact = false
   if it.artefact then
@@ -5435,12 +5078,11 @@ function c_assign_invletter_drop_inferior(it)
   if risky_artefact then return end
 
   local st = it.subtype()
-  local basename = it.name("base")
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     local item_match = false
     if inv.subtype() == st then
-      if st == "body" then
+      if is_body_armour(it) then
         if inv.encumbrance >= it.encumbrance then item_match = true end
       else
         if inv.subtype() == st then item_match = true end
@@ -5448,7 +5090,7 @@ function c_assign_invletter_drop_inferior(it)
     end
 
     if not inv.artefact and item_match and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
-      if it_class == "weapon" then
+      if is_weapon(it) then
         if inv.plus <= it.plus then inscribe_drop(inv) end
       else
         if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
@@ -5459,18 +5101,182 @@ end
 
 
 function c_assign_invletter_exclude_dropped(it)
- -- Remove "~~DROP_ME" inscription on pickup
-  it.inscribe(it.inscription:gsub("~~DROP_ME", ""), false)
+ -- Remove DROP_KEY inscription on pickup
+  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 end
+
+
+-------- End lua/drop-inferior.lua --------
 }
+### END LUA ###
 
-######## End features/drop-inferior.rc ########
-
-
-
-######## Begin features/exclude-dropped.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/dynamic-options.lua --------
+
+----------------------
+---- race-specific ----
+----------------------
+if you.race() == "Demonspawn" then
+  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+elseif you.race() == "Formicid" then
+  crawl.setopt("more -= monster_warning:curare")
+elseif you.race() == "Gargoyle" then
+  crawl.setopt("more -= monster_warning:curare")
+elseif you.race() == "Ghoul" then
+  crawl.setopt("more -= monster_warning:curare")
+  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+elseif you.race() == "Gnoll" then
+  crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
+elseif you.race() == "Mummy" then
+  crawl.setopt("more -= monster_warning:curare")
+  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+end
+
+
+----------------------
+---- god-specific ----
+----------------------
+local cur_god = "No God"
+local function set_god_options()
+  if you.god() ~= cur_god then
+    cur_god = you.god()
+  
+    if cur_god == "Ashenzari" then
+      crawl.setopt("runrest_stop_message += god:Ashenzari invites you to partake")
+    elseif cur_god == "Beogh" then
+      crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
+      crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
+      crawl.setopt("force_more_message += Your orc.*dies")
+    elseif cur_god == "Dithmenos" then
+      crawl.setopt("force_more_message += god:You are shrouded in an aura of darkness")
+      crawl.setopt("force_more_message += god:You now sometimes bleed smoke")
+      crawl.setopt("force_more_message += god:You.*no longer.*bleed smoke")
+      crawl.setopt("force_more_message += god:Your shadow no longer tangibly mimics your actions")
+      crawl.setopt("force_more_message += god:Your shadow now sometimes tangibly mimics your actions")
+    elseif cur_god == "Fedhas" then
+      crawl.setopt("force_more_message += god:Fedhas invokes the elements against you")
+    elseif cur_god == "Hepliaklqana" then
+      crawl.setopt("runrest_ignore_message ^= emerges from the mists of memory")
+    elseif cur_god == "Jiyva" then
+      crawl.setopt("force_more_message += god:will now unseal the treasures of the Slime Pits")
+      crawl.setopt("force_more_message += god:Jiyva alters your body")
+      crawl.setopt("force_more_message += god:splits in two")
+      crawl.setopt("force_more_message += god:Your prayer is over.")
+    elseif cur_god == "Kikubaaqudgha" then
+      crawl.setopt("force_more_message += god:Kikubaaqudgha will grant you")
+    elseif cur_god == "Lugonu" then
+      crawl.setopt("force_more_message += god:Lugonu will now corrupt your weapon")
+      crawl.setopt("force_more_message += god:Lugonu sends minions to punish you")
+    elseif cur_god == "Okawaru" then
+      crawl.setopt("force_more_message += god:Okawaru sends forces against you")
+    elseif cur_god == "Ru" then
+      crawl.setopt("runrest_stop_message += god:Ru believes you are ready to make a new sacrifice")
+    elseif cur_god == "Qazlal" then
+      crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
+      crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
+    elseif cur_god == "The Shining One" then
+      crawl.setopt("force_more_message += god:Your divine shield starts to fade.")
+      crawl.setopt("force_more_message += god:Your divine shield fades away.")
+    elseif cur_god == "Trog" then
+      crawl.setopt("force_more_message += god:You feel the effects of Trog's Hand fading")
+      crawl.setopt("force_more_message += god:You feel less resistant to hostile enchantments")
+    elseif cur_god == "Wu Jian Council" then
+      crawl.setopt("runrest_ignore_message += heavenly storm settles")
+    elseif cur_god == "Xom" then
+      crawl.setopt("force_more_message += god:")
+      crawl.setopt("force_more_message += staircase.*moves")
+      crawl.setopt("force_more_message += Some monsters swap places")
+    elseif cur_god == "Yredelemnul" then
+      crawl.setopt("force_more_message += god:soul is now ripe for the taking")
+      crawl.setopt("force_more_message += god:soul is no longer ripe for the taking")
+      crawl.setopt("force_more_message += god:dark mirror aura disappears")
+    elseif cur_god == "Zin" then
+      crawl.setopt("force_more_message += god:will now cure all your mutations")
+    end
+  end
+end
+
+
+
+---------------------
+---- xl-specific ----
+---------------------
+local warn_early_levels = false
+local warn_mid_levels = false
+local function set_xl_options()
+  if not warn_early_levels and you.xl() <= 5 then
+    warn_early_levels = true
+    crawl.setopt("force_more_message += wielding.*(vorpal|(?<!armour)(?<!mail)(?<!scales) of)")
+    crawl.setopt("force_more_message += goes berserk")
+    crawl.setopt("force_more_message += (?<!You)(?<!yourself) speeds? up")
+  elseif warn_early_levels and you.xl() > 5 then
+    warn_early_levels = false
+    crawl.setopt("force_more_message -= wielding.*(vorpal|(?<!armour)(?<!mail)(?<!scales) of)")
+    crawl.setopt("force_more_message -= goes berserk")
+    crawl.setopt("force_more_message -= (?<!You)(?<!yourself) speeds? up")
+  end
+  
+  if not warn_mid_levels and you.xl() <= 10 then
+    warn_mid_levels = true
+    crawl.setopt("force_more_message += wielding.*of electrocution")
+  elseif warn_mid_levels and you.xl() > 10 then
+    warn_mid_levels = false
+    crawl.setopt("force_more_message -= wielding.*of electrocution")
+  end
+end
+
+
+------------------------
+---- skill-specific ----
+------------------------
+local ignoring_spellcasting = false
+local ignoring_spellbooks = false
+local function set_skill_options()
+  -- Ignore spellbook reading if you have no spellcasting skill
+  -- Ignore all spellcaster items if wearing heavy armour or not much armour skill
+  local zero_spellcasting = you.skill("Spellcasting") == 0
+  if not ignoring_spellbooks and zero_spellcasting then
+    ignoring_spellbooks = true
+    crawl.setopt("explore_stop_pickup_ignore += ^book of")
+  elseif ignoring_spellbooks and not zero_spellcasting then
+    ignoring_spellbooks = false
+    crawl.setopt("explore_stop_pickup_ignore -= ^book of")
+  end
+  
+  local arm = items.equipped_at("Armour")
+  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + you.skill("Armour")/2
+  if not ignoring_spellcasting and heavy_arm then
+    ignoring_spellcasting = true
+    crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
+    crawl.setopt("runrest_ignore_message += You add the spell")
+  elseif ignoring_spellcasting and not heavy_arm then
+    ignoring_spellcasting = false
+    crawl.setopt("autopickup_exceptions -= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
+    crawl.setopt("runrest_ignore_message -= You add the spell")
+  end
+end
+
+
+
+------------------------------------------
+------------------ Hook ------------------
+------------------------------------------
+function ready_dynamic_options()
+  set_god_options()
+  set_xl_options()
+  set_skill_options()
+end
+
+
+-------- End lua/dynamic-options.lua --------
+}
+### END LUA ###
+
+### BEGIN LUA ###
+{
+-------- Begin lua/exclude-dropped.lua --------
+
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 
@@ -5495,7 +5301,7 @@ local function get_jewellery_name(text)
   local idx  = text:find("ring of ")
   if not idx then idx = text:find("amulet of ") end
   if not idx then return end
-  
+
   text = text:gsub(" {.*}", "")
   text = text:gsub("[.]", "")
   return text:sub(idx,#text)
@@ -5514,14 +5320,15 @@ local function get_missile_name(text)
           item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
         end
       end
-      
+
       return item_name
     end
   end
 end
 
-local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones", 
-      "condenser vane", "box of beasts", "phantom mirror", "piece from Xom's chessboard" }
+local all_misc = { "box of beasts", "condenser vane", "figurine of a ziggurat",
+    "Gell's gravitambourine", "horn of Geryon", "lightning rod", "phantom mirror",
+    "phial of floods", "sack of spiders", "tin of tremorstones" }
 local function get_misc_name(text)
   for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
@@ -5541,7 +5348,7 @@ end
 
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
-  
+
   local exclude
   if text:find("You drop ") then exclude = true
   elseif text:find(" %- ") then exclude = false
@@ -5579,28 +5386,287 @@ if you.skill("Ranged Weapons") > 2 then
 end
 if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
+
 if you.race() == "Ogre" or you.race() == "Troll" then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
+
+-------- End lua/exclude-dropped.lua --------
 }
+### END LUA ###
 
-######## End features/exclude-dropped.rc ########
-
-
-
-######## Begin features/inscribe-stats.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/fm-monsters.lua --------
+
+------------------------------------------------------------------------------------------
+------------------------------- Monster force_mores config -------------------------------
+------------------------------------------------------------------------------------------
+-- This stops on all Uniques & Pan lords
+crawl.setopt("force_more_message += monster_warning:(?!Orb)(?!Guardian)(?-i:[A-Z]).*comes into view")
+
+---- Everything included in this list will cause a more() prompt.
+---- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
+local force_more_monsters = {
+  -- High damage/speed
+    "shrike", "juggernaut", "orbs? of fire", "flayed ghost",
+  -- Torment
+    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy", "mummy priest", "(dread|ancient) lich", "lurking horror",
+  --Summoning
+    "boggart", "shadow demon", "guardian serpent", "ironbound convoker", "draconian stormcaller", "spriggan druid", "dryad",
+    "worldbinder", "halazid warlock", "deep elf elementalist", "demonspawn corrupter", "elemental wellspring",
+  --Dangerous abilities
+    "swamp worm", "floating eye", "vault warden", "air elemental", "wendingo", "torpor snail", "dream sheep", "water nymph", 
+    "shambling mangrove", "iron giant", "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
+  --Dangerous clouds
+    "catoblepas", "death drake", "apocalypse crab", "putrid mouth" }
+
+
+------------------------------------------------------------------------------------------
+------------------------------- Dynamic force_mores config -------------------------------
+------------------------------------------------------------------------------------------
+-- hp-specific force_mores() by gammafunk, willpower/int/resistance added by sockthot
+local fm_patterns = {
+  -- Fast, early game Dungeon problems for chars with low mhp.
+  {name = "30hp", cond = "hp", cutoff = 30, pattern = "hound"},
+  
+  -- Monsters dangerous until a certain point
+  {name = "xl_7", cond = "xl", cutoff = 7, pattern = "orc wizard"},
+  {name = "xl_12", cond = "xl", cutoff = 12, pattern = "hydra|bloated husk"},
+  
+  
+  -- Monsters that can hit for ~50% of hp from range with unbranded attacks
+  {name = "40hp", cond = "hp", cutoff = 40, pattern = "orc priest" },
+  {name = "50hp", cond = "hp", cutoff = 50, pattern = "orc high priest|manticore" },
+  {name = "70hp", cond = "hp", cutoff = 70, pattern = "meliai|yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
+  {name = "80hp", cond = "hp", cutoff = 80, pattern = "gargoyle" },
+  {name = "90hp", cond = "hp", cutoff = 90, pattern = "deep elf archer|tengu conjurer" },
+  {name = "110hp", cond = "hp", cutoff = 110, pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth",
+              "deep elf high priest|deep troll earth mage|stone giant|cacodemon"} },
+  {name = "120hp", cond = "hp", cutoff = 120, pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
+  {name = "160hp", cond = "hp", cutoff = 160, pattern = {"brimstone fiend|deep elf sorcerer",
+              "hell sentinal|war gargoyle|draconian (knight|scorcher)"} },
+  {name = "200hp", cond = "hp", cutoff = 200, pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
+
+  -- Monsters that can crowd-control you without sufficient willpower
+  -- Cutoff ~10% for most spells; lower for more significant spells like banish
+  {name = "willpower2", cond = "will", cutoff = 2, pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)" },
+  {name = "willpower3", cond = "will", cutoff = 3, pattern = {"deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard", 
+              "merfolk siren|fenstrider witch|great orb of eyes|cacodemon|imperial myrmidon|sphinx|nagaraja|draconian shifter",
+              "orange crystal statue|glowing orange brain|orc sorcerer|ogre mage|satyr|vault sentinel",
+              "iron elemental|golden eye|death knight|vampire knight" } },
+  {name = "willpower4", cond = "will", cutoff = 4, pattern = "merfolk avatar|tainted leviathan|nargun" },
+   
+  -- Malmutate without rMut
+  {name = "malmutate", cond = "mut", cutoff = 1, pattern = "cacodemon|neqoxec|shining eye" },
+    
+  -- Brain feed with low int
+  {name = "brainfeed", cond = "int", cutoff = 6, pattern = "glowing orange brain|neqoxec|orange crystal statue" },
+    
+  -- Alert if no resist and HP below cutoff
+  {name = "pois_30", cond = "pois", cutoff = 30, pattern = "adder"},
+  {name = "pois_80", cond = "pois", cutoff = 80, pattern = "golden dragon|green draconian|swamp dragon" },
+  {name = "pois_120", cond = "pois", cutoff = 120, pattern = "green death|naga mage|nagaraja|fenstrider witch" },
+  {name = "pois_140", cond = "pois", cutoff = 140, pattern = "tengu reaver" },
+   
+  {name = "elec_40", cond = "elec", cutoff = 40, pattern = "electric eel" },
+  {name = "elec_80", cond = "elec", cutoff = 80, pattern = "shock serpent|raiju|spark wasp" },
+  {name = "elec_120", cond = "elec", cutoff = 120, pattern = "black draconian|blizzard demon|deep elf zephyrmancer|storm dragon|tengu conjurer" },
+  {name = "elec_140", cond = "elec", cutoff = 140, pattern = "electric golem|titan|servants? of whisper|spriggan air mage|ball lightning|tengu reaver" },
+   
+  {name = "corr_60", cond = "corr", cutoff = 60, pattern = "acid dragon" },
+  {name = "corr_140", cond = "corr", cutoff = 140, pattern = "tengu reaver|entropy weaver|demonspawn corrupter|moon troll" },
+   
+  {name = "fire_60", cond = "fire", cutoff = 60, pattern = "steam dragon|lindwurm|fire crab|lava snake" },
+  {name = "fire_100", cond = "fire", cutoff = 100, pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
+  {name = "fire_120", cond = "fire", cutoff = 120, pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|ogre mage|molten gargoyle|hell knight" },
+  {name = "fire_140", cond = "fire", cutoff = 140, pattern = "balrug" },
+  {name = "fire_160", cond = "fire", cutoff = 160, pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|fire dragon|salamander tyrant|tengu reaver" },
+  {name = "fire_240", cond = "fire", cutoff = 240, pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
+   
+  {name = "cold_80", cond = "cold", cutoff = 80, pattern = "rime drake" },
+  {name = "cold_120", cond = "cold", cutoff = 120, pattern = "blizzard demon|bog body|ironbound frostheart|demonspawn blood saint|white draconian" },
+  {name = "cold_160", cond = "cold", cutoff = 160, pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
+  {name = "cold_180", cond = "cold", cutoff = 180, pattern = "(?>!dread)(?>!ancient) lich" },
+  {name = "cold_240", cond = "cold", cutoff = 240, pattern = "crystal (guardian|echidna)" },
+   
+  {name = "drain_100", cond = "drain", cutoff = 100, pattern = "orc sorcerer" },
+  {name = "drain_120", cond = "drain", cutoff = 120, pattern = "necromancer" },
+  {name = "drain_150", cond = "drain", cutoff = 150, pattern = "revenant|demonspawn blood saint" },
+  {name = "drain_190", cond = "drain", cutoff = 190, pattern = "shadow dragon" },
+   
+} -- end fm_patterns
+
+----------------------------------------------------------------------------------
+------------------------------- End config section -------------------------------
+----------------------------------------------------------------------------------
+
+
+
+-- Add the non-dynamic force_mores()  (moved code down here for easier configuration)
+local fm_mon_str = nil
+for v in iter.invent_iterator:new(force_more_monsters) do
+  if fm_mon_str == nil then
+    fm_mon_str = "monster_warning:(?<!spectral )("..v
+  else
+    fm_mon_str = fm_mon_str.."|"..v
+  end
+end
+fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum).*comes into view"
+crawl.setopt("force_more_message += "..fm_mon_str)
+
+
+
+
+-- Set to true to get a message when the fm change
+local notify_fm = false
+
+-- Keep track of active force_mores()
+local active_fm = {}
+for v in iter.invent_iterator:new(fm_patterns) do
+  active_fm[#active_fm + 1] = false
+end
+
+-- Util for checks against resistance and hp
+local function get_three_pip_action(active, hp, cutoff, res)
+  if active then
+    if hp >= cutoff then return "-" end
+    if res == 1 and hp >= cutoff/2 then return "-" end
+    if res == 2 and hp >= cutoff/3 then return "-" end
+    if res == 3 and hp >= cutoff/5 then return "-" end
+  else
+    if res == 0 and hp < cutoff then return "+" end
+    if res == 1 and hp > cutoff/2 then return "+" end
+    if res == 2 and hp > cutoff/3 then return "+" end
+    if res == 3 and hp > cutoff/5 then return "+" end
+  end
+end
+
+
+
+--------------------------------------------
+------------------- Hook -------------------
+--------------------------------------------
+function ready_force_mores()
+  local activated = {}
+  local deactivated = {}
+  
+  local hp, maxhp = you.hp()
+  local willpower = you.willpower()
+  local res_mut = you.res_mutation()
+  local res_pois = you.res_poison()
+  local res_elec = you.res_shock()
+  local res_corr = you.res_corr()
+  local res_fire = you.res_fire()
+  local res_cold = you.res_cold()
+  local res_drain = you.res_draining()
+  local int, maxint = you.intelligence()
+  
+  for i,v in ipairs(fm_patterns) do
+    local msg = nil
+    if type(v.pattern) == "table" then
+      for p in iter.invent_iterator:new(v.pattern) do
+        if not msg then
+          msg = p
+        else
+          msg = msg .. "|" .. p
+        end
+      end
+    else
+      msg = v.pattern
+    end
+    
+    msg = "monster_warning:(?<!spectral )(" .. msg .. ")(?! (skeleton|zombie|simulacrum)).*comes into view"
+    
+    local action = nil
+    local fm_name = v.pattern
+    if v.name then fm_name = v.name end
+    
+    if not v.cond and not active_fm[i] then
+      action = "+"
+    elseif v.cond == "xl" then
+      if active_fm[i] and you.xl() >= v.cutoff then action = "-"
+      elseif not active_fm[i] and you.xl() < v.cutoff then action = "+"
+      end
+    elseif v.cond == "maxhp" then
+      if active_fm[i] and maxhp >= v.cutoff then action = "-"
+      elseif not active_fm[i] and maxhp < v.cutoff then action = "+"
+      end
+    elseif v.cond == "hp" then
+      if active_fm[i] and hp >= v.cutoff then action = "-"
+      elseif not active_fm[i] and hp < v.cutoff then action = "+"
+      end
+    elseif v.cond == "int" then
+      if active_fm[i] and int >= v.cutoff then action = "-"
+      elseif not active_fm[i] and int < v.cutoff then action = "+"
+      end
+    elseif v.cond == "will" then
+      if active_fm[i] and willpower >= v.cutoff then action = "-"
+      elseif not active_fm[i] and willpower < v.cutoff then action = "+"
+      end
+    elseif v.cond == "mut" then
+      if active_fm[i] and res_mut > 0 then action = "-"
+      elseif not active_fm[i] and res_mut == 0 then action = "+"
+      end
+    elseif v.cond == "pois" then
+      if active_fm[i] and (res_pois > 0 or hp >= v.cutoff) then action = "-"
+      elseif not active_fm[i] and res_pois == 0 and hp < v.cutoff then action = "+"
+      end
+    elseif v.cond == "elec" then
+      if active_fm[i] and (res_elec > 0 or hp >= v.cutoff) then action = "-"
+      elseif not active_fm[i] and res_elec == 0 and hp < v.cutoff then action = "+"
+      end
+    elseif v.cond == "corr" then
+      if active_fm[i] and (res_corr or hp >= v.cutoff) then action = "-"
+      elseif not active_fm[i] and not res_corr and hp < v.cutoff then action = "+"
+      end
+    elseif v.cond == "fire" then
+      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
+    elseif v.cond == "cold" then
+      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
+    elseif v.cond == "drain" then
+      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
+    end
+    
+    
+    if action == "+" then
+      activated[#activated + 1] = fm_name
+    elseif action == "-" then
+      deactivated[#deactivated + 1] = fm_name
+    end
+    if action then
+      local opt = "force_more_message " .. action .. "= " .. msg
+      crawl.setopt(opt)
+      active_fm[i] = not active_fm[i]
+    end
+  end
+  if #activated > 0 and notify_fm then
+    crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
+  end
+  if #deactivated > 0 and notify_fm then
+    crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", "), "plain")
+  end
+end
+
+
+-------- End lua/fm-monsters.lua --------
+}
+### END LUA ###
+
+### BEGIN LUA ###
+{
+-------- Begin lua/inscribe-stats.lua --------
+
 
 local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)
   local idx
-  if it.subtype() == "shield" then idx = it.inscription:find("SH+")
-  elseif it.subtype() == "body" then idx = it.inscription:find("AC+")
+  if is_shield(it) then idx = it.inscription:find("SH+")
+  elseif is_body_armour(it) then idx = it.inscription:find("AC+")
   else return
   end
-  
+
   if idx then
     if idx + #new_inscr <= #it.inscription then
       new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
@@ -5635,9 +5701,9 @@ local skipped_first_redraw = false
 function ready_inscribe_stats()
   for it in iter.invent_iterator:new(items.inventory()) do
     local class = it.class(true)
-    if class == "weapon" or class == "magical staff" then
+    if is_weapon(it) or is_staff(it) then
       inscribe_weapon_stats(it)
-    elseif class == "armour" then
+    elseif is_armour(it) then
       inscribe_armour_stats(it)
     end
   end
@@ -5648,15 +5714,16 @@ function ready_inscribe_stats()
   else skipped_first_redraw = true
   end
 end
+
+
+-------- End lua/inscribe-stats.lua --------
 }
+### END LUA ###
 
-######## End features/inscribe-stats.rc ########
-
-
-
-######## Begin features/misc-alerts.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/misc-alerts.lua --------
+
 ------------------------------------------
 ------ Max piety w/ amulet of faith ------
 ------------------------------------------
@@ -5693,15 +5760,15 @@ function ready_misc_alerts()
   alert_remove_faith()
 end
 
+
+-------- End lua/misc-alerts.lua --------
 }
+### END LUA ###
 
-######## End features/misc-alerts.rc ########
-
-
-
-######## Begin features/mute-swaps.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/mute-swaps.lua --------
+
 -- When an item is moved to its assigned slot, mute the messages for the item that was previously in that slot
 -- If we cared what slot the item was in, it'd already be assigned somewhere
 -- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
@@ -5775,15 +5842,16 @@ function c_message_mute_swaps(text, channel)
   
   unmute_items()
 end
+
+
+-------- End lua/mute-swaps.lua --------
 }
+### END LUA ###
 
-######## End features/mute-swaps.rc ########
-
-
-
-######## Begin features/remind-id.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/remind-id.lua --------
+
 -------------------------------------
 ---- Unidentified items reminder ----
 -------------------------------------
@@ -5818,18 +5886,22 @@ end
 function c_assign_invletter_remind_identify(it)
   if not it.is_identified then remind_unidentified_items(true) end
 end
+
+
+-------- End lua/remind-id.lua --------
 }
+### END LUA ###
 
-######## End features/remind-id.rc ########
-
-
-
-######## Begin features/runrest-features.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/runrest-features.lua --------
+
 --------------------------------
 ---- Fully rest off effects ----
 --------------------------------
+local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
+    "confused", "marked", "tree%-form", "sluggish" }
+
 crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
@@ -5841,10 +5913,9 @@ local function fully_recovered()
   if mp ~= mmp then return false end
   
   -- Statuses that will always rest off
-  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form", "sluggish" }
   local status = you.status()
 
-  for s in iter.invent_iterator:new(status_wait) do
+  for s in iter.invent_iterator:new(status_to_wait_off) do
     if status:find(s) then return false end
   end
   
@@ -5958,7 +6029,8 @@ end
 -----------------------------
 ---- Ignore exit portals ----
 -----------------------------
-local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary", "Sewer", "Trove", "Volcano", "Ziggurat" }
+local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary",
+                              "Sewer", "Trove", "Volcano", "Ziggurat" }
 local stop_on_portals = true
 
 function ready_ignore_exits()
@@ -5990,20 +6062,21 @@ function c_message_ignore_gauntlet_msgs(text, channel)
     end
   end
 end
+
+
+-------- End lua/runrest-features.lua --------
 }
+### END LUA ###
 
-######## End features/runrest-features.rc ########
-
-
-
-######## Begin features/safe-stairs.rc ########
-
-macros += M > ===safe_downstairs
-macros += M < ===safe_upstairs
-
+### BEGIN LUA ###
 {
+-------- Begin lua/safe-stairs.lua --------
+
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
 local last_stair_turn = 0
+
+crawl.setopt("macros += M > ===safe_downstairs")
+crawl.setopt("macros += M < ===safe_upstairs")
 
 function check_new_location(key)
   local cur_location = you.branch()..you.depth()
@@ -6036,16 +6109,35 @@ function ready_safe_stairs()
   prev_location = temp_location
   temp_location = you.branch()..you.depth()
 end
+
+
+-------- End lua/safe-stairs.lua --------
 }
+### END LUA ###
 
-
-######## End features/safe-stairs.rc ########
-
-
-
-######## Begin features/weapon-slots.rc ########
-
+### BEGIN LUA ###
 {
+-------- Begin lua/startup.lua --------
+
+---------------------------------------------
+---- Skill menu on startup (by rwbarton) ----
+---------------------------------------------
+local need_skills_opened = true
+if you.turns() == 0 and need_skills_opened then
+  need_skills_opened = false
+  crawl.sendkeys("m!!")
+end
+
+
+-------- End lua/startup.lua --------
+}
+### END LUA ###
+
+### BEGIN LUA ###
+{
+-------- Begin lua/weapon-slots.lua --------
+
+
 ------------------------------
 ---- Cleanup weapon slots ----
 ------------------------------
@@ -6066,9 +6158,8 @@ local function get_priority_ab(it)
   if not it or not it.weap_skill then return -1 end
   if it.equipped then return 1 end
   
-  local class = it.class(true)
-  if class == "magical staff" then return 3 end
-  if class == "weapon" then
+  if is_staff(it) then return 3 end
+  if is_weapon(it) then
     if it.is_ranged then    
       if you.skill("Ranged Weapons") >= 4 then return 2 end
       return 5
@@ -6165,7 +6256,7 @@ local do_cleanup_weapon_slots = false
 ------------------- Hooks -------------------
 ---------------------------------------------
 function c_assign_invletter_weapon_slots(it)
-  if it.class(true) ~= "weapon" and it.class(true) ~= "magical staff" then return end
+  if not is_weapon(it) and not is_staff(it) then return end
   
   for i=0,2 do
     local slot
@@ -6175,7 +6266,7 @@ function c_assign_invletter_weapon_slots(it)
     
     local inv = items.inslot(slot)
     if not inv then return slot end
-    if inv.class(true) ~= "weapon" and inv.class(true) ~= "magical staff" then
+    if not is_weapon(inv) and not is_staff(inv) then
       items.swap_slots(slot, get_first_empty_slot())
       return slot
     end
@@ -6197,11 +6288,10 @@ function ready_weapon_slots()
   end
 end
 
+
+-------- End lua/weapon-slots.lua --------
 }
-
-######## End features/weapon-slots.rc ########
-
-
+### END LUA ###
 
 
 ####################################################################
@@ -6250,31 +6340,6 @@ function ch_stop_running(kind)
 end
 
 
----------------------------
---------- ready() ---------
----------------------------
-local last_turn = -1
-local last_write_counter = 0
-function ready()
-  if you.turns() == last_turn then return end
-  last_turn = you.turns()
- 
-  if ready_force_mores then ready_force_mores() end
-  if ready_dynamic_options then ready_dynamic_options() end
-  if ready_inscribe_stats then ready_inscribe_stats() end
-  if ready_weapon_slots then ready_weapon_slots() end
-  if ready_safe_consumables then ready_safe_consumables() end
-  if ready_mute_swaps then ready_mute_swaps() end
-  if ready_ignore_altars then ready_ignore_altars() end
-  if ready_ignore_exits then ready_ignore_exits() end
-  if ready_after_shaft then ready_after_shaft() end
-  if ready_fully_recover then ready_fully_recover() end
-  if ready_safe_stairs then ready_safe_stairs() end
-  if ready_item_alerts then ready_item_alerts() end
-  if ready_misc_alerts then ready_misc_alerts() end
-end
-
-
 -----------------------------
 ---- Prompt auto-answers ----
 -----------------------------
@@ -6285,10 +6350,34 @@ function c_answer_prompt(prompt)
   if prompt == "Die?" then return false end  
 end
 
+
+---------------------------
+--------- ready() ---------
+---------------------------
+local last_turn = -1
+function ready()
+  if you.turns() ~= last_turn then
+    last_turn = you.turns()
+    if ready_force_mores then ready_force_mores() end
+    if ready_dynamic_options then ready_dynamic_options() end
+    if ready_inscribe_stats then ready_inscribe_stats() end
+    if ready_weapon_slots then ready_weapon_slots() end
+    if ready_safe_consumables then ready_safe_consumables() end
+    if ready_mute_swaps then ready_mute_swaps() end
+    if ready_ignore_altars then ready_ignore_altars() end
+    if ready_ignore_exits then ready_ignore_exits() end
+    if ready_after_shaft then ready_after_shaft() end
+    if ready_fully_recover then ready_fully_recover() end
+    if ready_safe_stairs then ready_safe_stairs() end
+    if ready_item_alerts then ready_item_alerts() end
+    if ready_misc_alerts then ready_misc_alerts() end
+  end
+end
 --Call ready() once before autopickup/alerts trigger
 ready()
 
 }
 
-######## End ./init.txt ########
+######## End init.txt ########
+
 

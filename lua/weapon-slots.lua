@@ -1,4 +1,5 @@
-{
+dofile("crawl-rc/lua/util.lua")
+
 ------------------------------
 ---- Cleanup weapon slots ----
 ------------------------------
@@ -18,23 +19,22 @@ end
 local function get_priority_ab(it)
   if not it or not it.weap_skill then return -1 end
   if it.equipped then return 1 end
-  
-  local class = it.class(true)
-  if class == "magical staff" then return 3 end
-  if class == "weapon" then
-    if it.is_ranged then    
+
+  if is_staff(it) then return 3 end
+  if is_weapon(it) then
+    if it.is_ranged then
       if you.skill("Ranged Weapons") >= 4 then return 2 end
       return 5
     end
-    
+
     if it.weap_skill == "Polearms" then
       if you.skill("Polearms") >= 4 then return 2 end
       return 4
     end
-    
+
     return 2
   end
-  
+
   return -1
 end
 
@@ -55,7 +55,7 @@ local priorities_w = nil
 local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
   priorities_w = { -1, -1, -1 }
-  
+
   for it in iter.invent_iterator:new(items.inventory()) do
     local p = get_priority_w(it)
     if p > 0 then
@@ -63,7 +63,7 @@ local function generate_priorities()
       else priorities_w[p+1] = it.slot
       end
     end
-    
+
     p = get_priority_ab(it)
     if p > 0 then
       if priorities_ab[p] == -1 then priorities_ab[p] = it.slot
@@ -118,17 +118,17 @@ local do_cleanup_weapon_slots = false
 ------------------- Hooks -------------------
 ---------------------------------------------
 function c_assign_invletter_weapon_slots(it)
-  if it.class(true) ~= "weapon" and it.class(true) ~= "magical staff" then return end
-  
+  if not is_weapon(it) and not is_staff(it) then return end
+
   for i=0,2 do
     local slot
     if i==2 then slot = items.letter_to_index("w")
     else slot = i
     end
-    
+
     local inv = items.inslot(slot)
     if not inv then return slot end
-    if inv.class(true) ~= "weapon" and inv.class(true) ~= "magical staff" then
+    if not is_weapon(inv) and not is_staff(inv) then
       items.swap_slots(slot, get_first_empty_slot())
       return slot
     end
@@ -149,5 +149,3 @@ function ready_weapon_slots()
     do_cleanup_weapon_slots = false
   end
 end
-
-}

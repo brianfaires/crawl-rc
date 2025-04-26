@@ -1,41 +1,49 @@
-import os
-path =r'.'
-list_of_files = []
-files_opened = [ "slots.rc" ]
-outfilename = "allRC.txt"
+INIT_FILE_NAME = "init.txt"
+OUT_FILE_NAME = "allRC.txt"
+REPO_ROOT = "crawl-rc/"
+RC_PREFIX =  f"include = {REPO_ROOT}"
+LUA_PREFX = f"lua_file = {REPO_ROOT}"
 
 def recurse_write_lines(infile, outfile, prevfiles):
-  wroteheader = False
-  infilelines = infile.readlines()
-  for line in infilelines:
-    if (line.startswith("include = ")):
-      inc_filename = line.replace("include = ", "").strip()
-      if not inc_filename in prevfiles:
+  print("Writing " + infile.name)
+  if infile.name.endswith(".lua"):
+    outfile.writelines("-------- Begin " + infile.name + " --------\n\n")
+  else:
+    outfile.writelines("######## Begin " + infile.name + " ########\n\n")
+  for line in infile.readlines():
+    if (line.startswith(RC_PREFIX)):
+      inc_filename = line.replace(RC_PREFIX, "").strip()
+      if inc_filename not in prevfiles:
+        prevfiles.append(inc_filename)
+        with open(inc_filename, 'r') as inc_file:
+          recurse_write_lines(inc_file, outfile, prevfiles)
+    elif (line.startswith(LUA_PREFX)):
+      inc_filename = line.replace(LUA_PREFX, "").strip()
+      if inc_filename not in prevfiles:
+        prevfiles.append(inc_filename)
+        with open(inc_filename, 'r') as inc_file:
+          outfile.writelines("\n### BEGIN LUA ###\n{\n")
+          recurse_write_lines(inc_file, outfile, prevfiles)
+          outfile.writelines("\n}\n### END LUA ###\n")
+    elif line.startswith("dofile("):
+      inc_filename = line.split('"')[1]
+      inc_filename = inc_filename.replace(REPO_ROOT, "")
+      if inc_filename not in prevfiles:
         prevfiles.append(inc_filename)
         with open(inc_filename, 'r') as inc_file:
           recurse_write_lines(inc_file, outfile, prevfiles)
     else:
-      if (not wroteheader):
-        wroteheader = True
-        outfile.writelines("\n\n######## Begin " + infile.name + " ########\n\n")
-        print("Writing " + infile.name)
       outfile.writelines(line)
 
-  outfile.writelines("\n\n######## End " + infile.name + " ########\n\n")
+  if infile.name.endswith(".lua"):
+    outfile.writelines("\n\n-------- End " + infile.name + " --------")
+  else:
+    outfile.writelines("\n\n######## End " + infile.name + " ########\n\n\n")
 
 
-
-for root, dirs, files in os.walk(path):
-	for file in files:
-		if(file.endswith(".rcXXX")):
-			list_of_files.append(os.path.join(root,file))
-list_of_files.append("./init.txt")
-
-with open(outfilename, 'w') as outfile:
-  for fname in list_of_files:
-    files_opened.append(fname)
-    with open(fname, 'r') as readfile:
+files_opened = [INIT_FILE_NAME]
+with open(INIT_FILE_NAME, 'r') as readfile:
+    with open(OUT_FILE_NAME, 'w') as outfile:
         recurse_write_lines(readfile, outfile, files_opened)
-
 
 input("\nDone writing to allRC.txt\nPress enter to close.")

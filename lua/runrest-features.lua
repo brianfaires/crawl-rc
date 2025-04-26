@@ -1,7 +1,9 @@
-{
 --------------------------------
 ---- Fully rest off effects ----
 --------------------------------
+local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
+    "confused", "marked", "tree%-form", "sluggish" }
+
 crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
@@ -11,15 +13,14 @@ local function fully_recovered()
   if hp ~= mhp then return false end
   local mp, mmp = you.mp()
   if mp ~= mmp then return false end
-  
+
   -- Statuses that will always rest off
-  local status_wait = { "berserk", "short of breath", "corroded", "vulnerable", "confused", "marked", "tree%-form", "sluggish" }
   local status = you.status()
 
-  for s in iter.invent_iterator:new(status_wait) do
+  for s in iter.invent_iterator:new(status_to_wait_off) do
     if status:find(s) then return false end
   end
-  
+
   -- If negative stats, don't rest off slow
   if status:find("slowed") then
     return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
@@ -58,7 +59,7 @@ function ch_stop_running_full_recovery(kind)
   end
 end
 
-function c_message_fully_recover(text, channel)
+function c_message_fully_recover(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
     if not fully_recovered() then
       waiting_for_recovery = true
@@ -76,7 +77,7 @@ function ready_fully_recover()
       crawl.setopt("message_colour -= mute:You start waiting.")
       waiting_for_recovery = false
       crawl.mpr("Fully recovered.")
-      
+
       if explore_after_recovery then
         crawl.sendkeys("o")
         explore_after_recovery = false
@@ -116,7 +117,7 @@ end
 ----------------------------------
 ---- Automated temple actions ----
 ----------------------------------
-function c_message_search_altars_in_temple(text, channel)
+function c_message_search_altars_in_temple(text, _)
   if you.branch() == "Temple" then
     if text:find("explor") then
       crawl.sendkeys({ 6, "altar\r" })
@@ -130,7 +131,8 @@ end
 -----------------------------
 ---- Ignore exit portals ----
 -----------------------------
-local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary", "Sewer", "Trove", "Volcano", "Ziggurat" }
+local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary",
+                              "Sewer", "Trove", "Volcano", "Ziggurat" }
 local stop_on_portals = true
 
 function ready_ignore_exits()
@@ -149,7 +151,7 @@ end
 ---- Ignore gauntlet msgs while exploring ----
 ----------------------------------------------
 local ignoring_all_gauntlet = false
-function c_message_ignore_gauntlet_msgs(text, channel)
+function c_message_ignore_gauntlet_msgs(text, _)
   if ignoring_all_gauntlet then
     if you.branch() ~= "Gauntlet" or text:find("Done exploring.") or text:find("Partly explored") then
       ignoring_all_gauntlet = false
@@ -162,4 +164,3 @@ function c_message_ignore_gauntlet_msgs(text, channel)
     end
   end
 end
-}

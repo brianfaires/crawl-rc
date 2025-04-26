@@ -1,8 +1,7 @@
-{
 -------------------------------------
 ---- Unidentified items reminder ----
 -------------------------------------
-local function remind_unidentified_items(have_unidentified)
+local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
     if not it.is_identified then
       for s in iter.invent_iterator:new(items.inventory()) do
@@ -10,7 +9,7 @@ local function remind_unidentified_items(have_unidentified)
           crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
         end
       end
-      
+
       return
     end
   end
@@ -26,11 +25,10 @@ function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
   if text:find(" of identify") and not text:find("drop") and not text:find("read") then
-    remind_unidentified_items(false)
+    remind_unidentified_items()
   end
 end
 
 function c_assign_invletter_remind_identify(it)
-  if not it.is_identified then remind_unidentified_items(true) end
+  if not it.is_identified then remind_unidentified_items() end
 end
-}

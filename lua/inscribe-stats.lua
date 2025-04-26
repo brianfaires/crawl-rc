@@ -1,14 +1,13 @@
-include = pickup-alert/pa-util.rc
-{
+dofile("crawl-rc/lua/util.lua")
 
 local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)
   local idx
-  if it.subtype() == "shield" then idx = it.inscription:find("SH+")
-  elseif it.subtype() == "body" then idx = it.inscription:find("AC+")
+  if is_shield(it) then idx = it.inscription:find("SH+")
+  elseif is_body_armour(it) then idx = it.inscription:find("AC+")
   else return
   end
-  
+
   if idx then
     if idx + #new_inscr <= #it.inscription then
       new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
@@ -22,7 +21,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local new_inscr = get_weapon_info(it)
-      
+
   local idx = it.inscription:find("DPS:")
   if idx then
     if idx + #new_inscr <= #it.inscription then
@@ -42,18 +41,16 @@ local skipped_first_redraw = false
 ------------------------------------------
 function ready_inscribe_stats()
   for it in iter.invent_iterator:new(items.inventory()) do
-    local class = it.class(true)
-    if class == "weapon" or class == "magical staff" then
+    if is_weapon(it) or is_staff(it) then
       inscribe_weapon_stats(it)
-    elseif class == "armour" then
+    elseif is_armour(it) then
       inscribe_armour_stats(it)
     end
   end
-  
+
   -- This redraw can causes crashes if called during an autopickup.
   -- Be sure not to hook any of this to c_message, or anything that can trigger during an autopickup
   if skipped_first_redraw then crawl.redraw_screen()
   else skipped_first_redraw = true
   end
 end
-}

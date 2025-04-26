@@ -1,6 +1,8 @@
-include = pickup-alert/pa-data.rc
+if loaded_pa_main then return end
+loaded_pa_main = true
+dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 
-{
 function alert_item(it, alert_type)
   local name = it.name("plain")
   if not it.is_identified then name = "+0 " .. name end
@@ -10,7 +12,7 @@ function alert_item(it, alert_type)
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
 	elseif is_body_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
-  elseif it.class(true) == "armour" then
+  elseif is_armour(it) then
     show_alert_msg("Item alert, "..alert_type..": ", name)
   else
     show_alert_msg("Item alert, "..alert_type..": ", name)
@@ -19,7 +21,7 @@ function alert_item(it, alert_type)
   insert_item_and_less_enchanted(items_alerted, it)
   table.insert(level_alerts, name)
 end
-  
+
   -- Returns true to make other code more concise; indicates that we tried to alert this item
   return true
 end
@@ -32,7 +34,6 @@ crawl.setopt("runrest_stop_message += Item alert, ")
 ------------------- Hooks -------------------
 ---------------------------------------------
 function c_assign_invletter_item_alerts(it)
-  local name = it.name("plain")
   if is_weapon(it) or is_armour(it) then
     if not previously_picked(it) then
       insert_item_and_less_enchanted(items_picked, it)
@@ -40,12 +41,12 @@ function c_assign_invletter_item_alerts(it)
       remove_from_rare_items(it)
     end
   end
-  
+
   remove_item_and_less_enchanted(items_alerted, it)
-  util.remove(level_alerts, name)
+  util.remove(level_alerts, it.name("plain"))
 end
 
-function c_message_item_alerts(text, channel)
+function c_message_item_alerts(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
     disable_autopickup = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
@@ -55,7 +56,7 @@ function c_message_item_alerts(text, channel)
       else all_alerts = all_alerts..", "..v
       end
     end
-    
+
     level_alerts = {}
     if all_alerts ~= "" then
       crawl.mpr("<magenta>Recent alerts: "..all_alerts.."</magenta>")
@@ -70,7 +71,7 @@ function ready_item_alerts()
 		if is_weapon(it) then update_high_scores(it) end
 	end
   end
-  
+
   disable_autopickup = false
 end
 
@@ -79,7 +80,7 @@ end
 -------------------------
 ---- Autopickup main ----
 -------------------------
-add_autopickup_func(function (it, name)
+add_autopickup_func(function (it, _)
   if disable_autopickup then return end
 
   -- Check for pickup
@@ -108,4 +109,3 @@ add_autopickup_func(function (it, name)
   elseif is_weapon(it) and loaded_pa_weapons then alert_weapons(it)
   end
 end)
-}
