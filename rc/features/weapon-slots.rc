@@ -1,6 +1,0 @@
-include = ../pickup-alert/pa-util.rc
-
-{
-  dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
-  dofile("crawl-rc/lua/features/weapon-slots.lua")
-}

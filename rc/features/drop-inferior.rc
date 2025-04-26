@@ -6,6 +6,6 @@ include = ../pickup-alert/pa-util.rc
 drop_filter += ~~DROP_ME
 
 {
-  dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+  --dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
   dofile("crawl-rc/lua/features/drop-inferior.lua")
 }

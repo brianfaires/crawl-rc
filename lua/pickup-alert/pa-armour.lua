@@ -1,4 +1,4 @@
-dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
+--dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
 loaded_pa_armour = true
 

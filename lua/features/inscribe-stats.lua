@@ -1,4 +1,4 @@
-dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+--dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
 
 local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)

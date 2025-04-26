@@ -1,3 +1,0 @@
-{
-  dofile("crawl-rc/lua/features/remind-id.lua")
-}

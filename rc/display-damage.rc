@@ -1,5 +1,0 @@
-# This file needs attribution; from same place as display.rc
-
-{
-  dofile("crawl-rc/lua/display-damage.lua")
-}

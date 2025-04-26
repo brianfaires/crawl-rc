@@ -1,6 +1,6 @@
----------------------------------------
----- Damage Calc (citation needed) ----
----------------------------------------
+------------------------------------------
+---- Damage Calc (attribution needed) ----
+------------------------------------------
 local previous_hp = 0
 local previous_mp = 0
 local previous_form = ""

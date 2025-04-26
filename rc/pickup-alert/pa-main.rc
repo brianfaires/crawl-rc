@@ -1,6 +1,6 @@
 include = pa-data.rc
 
 {
-  dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+  --dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
   dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 }

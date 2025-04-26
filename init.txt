@@ -61,6 +61,7 @@ ae ^= >useless_item, <misc
 ### Mostly normal RC options ###
 include = rc/autoinscribe.rc
 include = rc/display.rc
+lua_file = crawl-rc/lua/display-damage.lua
 include = rc/dynamic-options.rc
 include = rc/fm-messages.rc
 include = rc/fm-monsters.rc
@@ -77,17 +78,17 @@ include = rc/pickup-alert/pa-weapons.rc
 
 
 ### Features ###
-include = rc/features/after-shaft.rc
 include = rc/features/drop-inferior.rc
-include = rc/features/exclude-dropped.rc
 include = rc/features/inscribe-stats.rc
-include = rc/features/misc-alerts.rc
-include = rc/features/mute-swaps.rc
-include = rc/features/remind-id.rc
 include = rc/features/runrest-features.rc
 include = rc/features/safe-stairs.rc
-include = rc/features/weapon-slots.rc
 
+lua_file = crawl-rc/lua/features/after-shaft.lua
+lua_file = crawl-rc/lua/features/exclude-dropped.lua
+lua_file = crawl-rc/lua/features/misc-alerts.lua
+lua_file = crawl-rc/lua/features/mute-swaps.lua
+lua_file = crawl-rc/lua/features/remind-id.lua
+lua_file = crawl-rc/lua/features/weapon-slots.lua
 
 
 ####################################################################

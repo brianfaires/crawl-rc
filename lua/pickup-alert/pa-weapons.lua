@@ -1,5 +1,5 @@
-dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
-dofile("crawl-rc/lua/config.lua")
+--dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
+--dofile("crawl-rc/lua/config.lua")
 
 
 loaded_pa_weapons = true

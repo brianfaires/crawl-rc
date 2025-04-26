@@ -1,3 +1,0 @@
-{
-  dofile("crawl-rc/lua/features/after-shaft.lua")
-}

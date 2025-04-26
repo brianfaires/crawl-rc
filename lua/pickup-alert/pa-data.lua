@@ -1,5 +1,5 @@
-dofile("crawl-rc/lua/config.lua")
-dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+--dofile("crawl-rc/lua/config.lua")
+--dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
 
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------

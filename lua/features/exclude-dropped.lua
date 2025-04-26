@@ -1,4 +1,4 @@
-dofile("crawl-rc/lua/config.lua")
+--dofile("crawl-rc/lua/config.lua")
 
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up

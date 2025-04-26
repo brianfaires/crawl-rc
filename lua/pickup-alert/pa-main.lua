@@ -1,4 +1,4 @@
-dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+--dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 
 function alert_item(it, alert_type)
   local name = it.name("plain")

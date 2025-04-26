@@ -1,4 +1,4 @@
-dofile("crawl-rc/lua/config.lua")
+--dofile("crawl-rc/lua/config.lua")
 
 ------------------------------------
 --------------- Misc ---------------
