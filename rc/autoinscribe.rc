@@ -36,17 +36,10 @@ ai += staff of death:rN+
 ai += staff of fire:rF+
 ai += staff of poison:rPois
 
-# TODO: is this needed with the function below?
-# Unidentified consumables
-ai += potions?$:!q
-ai += scrolls? labelled:!r
 
-# Add a warning for everything that doesn't have one built-in
-ai += potions? of(?!.*(attraction|lignification|mutation)):!q
-ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleportation|vulnerability):!r
 
 {
-  -- Protective consumable inscriptions
+  -- Protective consumable inscriptions on everything w/o a built-in prompt
   -- Updates every turn to:
     -- Inscribe starting items
     -- Update inscriptions after ID
@@ -57,23 +50,21 @@ ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleporta
   ---------------------------------------------
   ------------------- Hook -------------------
   ---------------------------------------------
-  local function ready_safe_consumables()
+  function ready_safe_consumables()
     -- Remove the default "!r" and "!q" inscriptions after identify
     for it in iter.invent_iterator:new(items.inventory()) do
-      if it.is_identified then
-        local it_class = it.class(true)
-        if it_class == "potion" or it_class == "scroll" then
-          local st, _ = it.subtype()
-          if (st == "poison" and you.res_poison() > 0)
-            or (st == "torment" and you.torment_immune())
-            or util.contains(no_inscription_needed, st) then
-              if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
-              if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
-          elseif it_class == "scroll" and not it.inscription:find("!r") then
-              it.inscribe("!r")
-          elseif it_class == "potion" and not it.inscription:find("!q") then
-              it.inscribe("!q")
-          end
+      local it_class = it.class(true)
+      if it_class == "potion" or it_class == "scroll" then
+        local st, _ = it.subtype()
+        if (st == "poison" and you.res_poison() > 0)
+          or (st == "torment" and you.torment_immune())
+          or util.contains(no_inscription_needed, st) then
+            if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
+            if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
+        elseif it_class == "scroll" and not it.inscription:find("!r") then
+            it.inscribe("!r")
+        elseif it_class == "potion" and not it.inscription:find("!q") then
+            it.inscribe("!q")
         end
       end
     end

@@ -101,17 +101,10 @@ ai += staff of death:rN+
 ai += staff of fire:rF+
 ai += staff of poison:rPois
 
-# TODO: is this needed with the function below?
-# Unidentified consumables
-ai += potions?$:!q
-ai += scrolls? labelled:!r
 
-# Add a warning for everything that doesn't have one built-in
-ai += potions? of(?!.*(attraction|lignification|mutation)):!q
-ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleportation|vulnerability):!r
 
 {
-  -- Protective consumable inscriptions
+  -- Protective consumable inscriptions on everything w/o a built-in prompt
   -- Updates every turn to:
     -- Inscribe starting items
     -- Update inscriptions after ID
@@ -122,23 +115,21 @@ ai += scrolls? of(butterflies|fear|fog|magic mapping|silence|summoning|teleporta
   ---------------------------------------------
   ------------------- Hook -------------------
   ---------------------------------------------
-  local function ready_safe_consumables()
+  function ready_safe_consumables()
     -- Remove the default "!r" and "!q" inscriptions after identify
     for it in iter.invent_iterator:new(items.inventory()) do
-      if it.is_identified then
-        local it_class = it.class(true)
-        if it_class == "potion" or it_class == "scroll" then
-          local st, _ = it.subtype()
-          if (st == "poison" and you.res_poison() > 0)
-            or (st == "torment" and you.torment_immune())
-            or util.contains(no_inscription_needed, st) then
-              if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
-              if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
-          elseif it_class == "scroll" and not it.inscription:find("!r") then
-              it.inscribe("!r")
-          elseif it_class == "potion" and not it.inscription:find("!q") then
-              it.inscribe("!q")
-          end
+      local it_class = it.class(true)
+      if it_class == "potion" or it_class == "scroll" then
+        local st, _ = it.subtype()
+        if (st == "poison" and you.res_poison() > 0)
+          or (st == "torment" and you.torment_immune())
+          or util.contains(no_inscription_needed, st) then
+            if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
+            if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
+        elseif it_class == "scroll" and not it.inscription:find("!r") then
+            it.inscribe("!r")
+        elseif it_class == "potion" and not it.inscription:find("!q") then
+            it.inscribe("!q")
         end
       end
     end
@@ -5335,8 +5326,9 @@ local function get_missile_name(text)
   end
 end
 
-local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones",
-    "condenser vane", "box of beasts", "phantom mirror" }
+local all_misc = { "box of beasts", "condenser vane", "figurine of a ziggurat",
+    "Gell's gravitambourine", "horn of Geryon", "lightning rod", "phantom mirror",
+    "phial of floods", "sack of spiders", "tin of tremorstones" }
 local function get_misc_name(text)
   for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
@@ -5394,7 +5386,7 @@ if you.skill("Ranged Weapons") > 2 then
 end
 if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
---TODO: More general race check?
+
 if you.race() == "Ogre" or you.race() == "Troll" then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
