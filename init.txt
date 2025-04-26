@@ -6,6 +6,7 @@ hp_warning = 20
 mouse_input = false
 item_stack_summary_minimum = 8
 default_manual_training = true
+drop_disables_autopickup = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true

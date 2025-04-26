@@ -57,7 +57,7 @@ function c_message_color_inscribe(text, _)
 
   local cleaned = cleanup_message(text)
   if cleaned:sub(2, 4) == " - " then
-    text = "_"..text
+    text = " "..text
   end
 
   crawl.mpr(text)
