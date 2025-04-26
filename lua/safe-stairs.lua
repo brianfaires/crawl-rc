@@ -4,7 +4,7 @@ local last_stair_turn = 0
 crawl.setopt("macros += M > ===safe_downstairs")
 crawl.setopt("macros += M < ===safe_upstairs")
 
-function check_new_location(key)
+local function check_new_location(key)
   local cur_location = you.branch()..you.depth()
   local turn_diff = you.turns() - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < 5 then
