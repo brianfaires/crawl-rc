@@ -2,30 +2,6 @@
 -- If we cared what slot the item was in, it'd already be assigned somewhere
 -- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
 
---------------
----- Util ----
---------------
-local function cleanup_message(text)
-  local keep_going = true
-  while keep_going do
-    local opening = text:find("<")
-    local closing = text:find(">")
-
-    if opening and closing and opening < closing then
-      local new_text = ""
-      if opening > 1 then new_text = text:sub(1, opening-1) end
-      if closing < #text then new_text = new_text..text:sub(closing+1, #text) end
-      text = new_text
-    else
-      keep_going = false
-    end
-  end
-
-  text = text:gsub("\n", "")
-  local special_characters = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
-  return text:gsub(special_characters, "%%%1")
-end
-
 local muted_items = {}
 
 -- Must define this separate from ready() if we want to call it from c_message_mute_swaps as well
@@ -57,7 +33,7 @@ function c_message_mute_swaps(text, channel)
   -- Mute subsequent item re-assignments in a single turn, for everything after the first item.
   -- Multiple slots for the same item will still be shown
   if channel == "plain" then
-    text = cleanup_message(text)
+    text = cleanup_message(text, true)
     if text:sub(2,4) == " - " then
       local item = text:sub(5, #text)
       local mute_str = "(?!.*("..item.."))"

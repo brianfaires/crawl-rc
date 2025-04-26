@@ -79,6 +79,7 @@ lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 ### Features ###
 lua_file = crawl-rc/lua/after-shaft.lua
 lua_file = crawl-rc/lua/announce-damage.lua
+lua_file = crawl-rc/lua/color-inscribe.lua
 lua_file = crawl-rc/lua/drop-inferior.lua
 lua_file = crawl-rc/lua/dynamic-options.lua
 lua_file = crawl-rc/lua/exclude-dropped.lua
@@ -123,7 +124,8 @@ function c_assign_invletter(it)
   if c_assign_invletter_exclude_dropped then c_assign_invletter_exclude_dropped(it) end
   if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
   if c_assign_invletter_mute_swaps then c_assign_invletter_mute_swaps(it) end
-    
+  if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
+
   -- Calls with possible return values
   local ret_val = nil
   if c_assign_invletter_weapon_slots then ret_val = c_assign_invletter_weapon_slots(it) end

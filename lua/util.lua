@@ -454,7 +454,10 @@ function get_weapon_info(it)
   local it_plus = if_el(it.plus, it.plus, 0)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
-
+  
+  --TODO: This would be awesome if it didn't ruin the main UI
+  --dps_str = "DPS=<white>"..dps_str.."</white> "
+  --return dps_str.."(<red>"..dmg_str.."</red>/<blue>"..delay_str.."</blue>), Acc<white>"..acc.."</white>"
   dps_str = "DPS="..dps_str.." "
   return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
 end
@@ -497,4 +500,32 @@ function get_armour_info(it)
     if ev_delta >= 0 then ev_str = "+"..ev_str end
     return ac_str.."EV"..ev_str
   end
+end
+
+-----------------------------------
+---- Prep messages for parsing ----
+-----------------------------------
+function cleanup_message(text, escape_chars)
+  local keep_going = true
+  while keep_going do
+    local opening = text:find("<")
+    local closing = text:find(">")
+
+    if opening and closing and opening < closing then
+      local new_text = ""
+      if opening > 1 then new_text = text:sub(1, opening-1) end
+      if closing < #text then new_text = new_text..text:sub(closing+1, #text) end
+      text = new_text
+    else
+      keep_going = false
+    end
+  end
+
+  local new_text = text:gsub("\n", "")
+  if escape_chars then
+    local special_characters = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
+    new_text = new_text:gsub(special_characters, "%%%1")
+  end
+
+  return new_text
 end
