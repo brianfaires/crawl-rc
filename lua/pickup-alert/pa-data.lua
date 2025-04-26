@@ -1,5 +1,6 @@
---dofile("crawl-rc/lua/config.lua")
---dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+if loaded_pa_data then return end
+loaded_pa_data = true
+dofile("crawl-rc/lua/util.lua")
 
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistant data ----------------------------
@@ -10,10 +11,12 @@ if not added_persistant_data or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
-  rare_items = {}
-  for i = 1, #one_time_alerts do
-    rare_items[i] = one_time_alerts[i]
-  end
+  rare_items = {  "broad axe", "executioner's axe", "eveningstar", "demon whip", "sacred scourge",
+                  "lajatang", "bardiche", "demon trident", "trishula",
+                  "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
+                  "crystal plate armour", "gold dragon scales", "pearl dragon scales",
+                  "storm dragon scales", "shadow dragon scales", "wand of digging",
+                  "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
 
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0

@@ -1,4 +1,5 @@
---dofile("crawl-rc/lua/config.lua")
+if loaded_util_lua then return end
+loaded_util_lua = true
 
 ------------------------------------
 --------------- Misc ---------------
@@ -324,20 +325,20 @@ function get_slay_bonuses()
 end
 
 
+local staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
+                        poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
+local function get_staff_school(it)
+  for k,v in pairs(staff_schools) do
+    if it.name("base") == "staff of "..k then return v end
+	end
+end
+
 -- Calc extra damage for magical staves
 function get_staff_bonus_dmg(it, no_brand_dmg)
-  if no_brand_dmg and basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
+  if no_brand_dmg and it.name("base") ~= "staff of earth" and it.name("base") ~= "staff of conjuration" then return 0 end
   
   local evo_skill = you.skill("Evocations")
-  local basename = it.name("base")
-  local school = nil
-  
-  for k,v in pairs(staff_schools) do
-    if basename == "staff of "..k then
-	  school = v
-	  break
-	end
-  end
+  local school = get_staff_school(it)
   if not school then return 0 end
   
   local spell_skill = you.skill(school)

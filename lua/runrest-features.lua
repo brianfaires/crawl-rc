@@ -1,8 +1,9 @@
---dofile("crawl-rc/lua/config.lua")
-
 --------------------------------
 ---- Fully rest off effects ----
 --------------------------------
+local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
+    "confused", "marked", "tree%-form", "sluggish" }
+
 crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
@@ -130,6 +131,8 @@ end
 -----------------------------
 ---- Ignore exit portals ----
 -----------------------------
+local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary",
+                              "Sewer", "Trove", "Volcano", "Ziggurat" }
 local stop_on_portals = true
 
 function ready_ignore_exits()

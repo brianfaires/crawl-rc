@@ -1,6 +1,9 @@
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
 local last_stair_turn = 0
 
+crawl.setopt("macros += M > ===safe_downstairs")
+crawl.setopt("macros += M < ===safe_upstairs")
+
 function check_new_location(key)
   local cur_location = you.branch()..you.depth()
   local turn_diff = you.turns() - last_stair_turn

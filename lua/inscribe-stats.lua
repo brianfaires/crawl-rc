@@ -1,4 +1,4 @@
---dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+dofile("crawl-rc/lua/util.lua")
 
 local function inscribe_armour_stats(it)
   local new_inscr = get_armour_info(it)
@@ -7,7 +7,7 @@ local function inscribe_armour_stats(it)
   elseif is_body_armour(it) then idx = it.inscription:find("AC+")
   else return
   end
-  
+
   if idx then
     if idx + #new_inscr <= #it.inscription then
       new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)

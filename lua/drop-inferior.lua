@@ -1,5 +1,10 @@
+dofile("crawl-rc/lua/util.lua")
+
+local DROP_KEY = "~~DROP_ME"
+crawl.setopt("drop_filter += "..DROP_KEY)
+
 function inscribe_drop(it)
-  local new_inscr = it.inscription:gsub("~~DROP_ME", "").."~~DROP_ME"
+  local new_inscr = it.inscription:gsub(DROP_KEY, "")..DROP_KEY
   it.inscribe(new_inscr, false)
 end
 
@@ -47,6 +52,6 @@ end
 
 
 function c_assign_invletter_exclude_dropped(it)
- -- Remove "~~DROP_ME" inscription on pickup
-  it.inscribe(it.inscription:gsub("~~DROP_ME", ""), false)
+ -- Remove DROP_KEY inscription on pickup
+  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 end

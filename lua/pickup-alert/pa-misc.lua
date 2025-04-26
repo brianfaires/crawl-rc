@@ -1,8 +1,8 @@
---dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
---dofile("crawl-rc/lua/config.lua")
-
+if loaded_pa_misc then return end
 loaded_pa_misc = true
-
+dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
 --------------------------
 ---- Alert rare items ----
@@ -66,23 +66,13 @@ end
 ----------------------------
 function pickup_staff(it)
   if it.is_useless or not it.is_identified then return false end
+  local school = get_staff_school(it)
+  if you.skill(school) == 0 then return false end
 
-  local basename = it.name("base")
-  local good_staff = false
-  
-  for k,v in pairs(staff_schools) do
-    if basename == "staff of "..k then
-	  good_staff = you.skill(v) > 0
-	  break
-	end
-  end
-  
-  if not good_staff then return false end
-  
   -- Check for previously picked staves
   for v in iter.invent_iterator:new(items_picked) do
-    if v:find(basename) then return false end
+    if v:find(it.name("base")) then return false end
   end
-	
+
   return true
 end

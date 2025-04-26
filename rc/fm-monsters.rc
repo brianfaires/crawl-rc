@@ -1,3 +1,0 @@
-{
-  dofile("crawl-rc/lua/fm-monsters.lua")
-}

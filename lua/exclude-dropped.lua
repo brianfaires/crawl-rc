@@ -1,5 +1,3 @@
---dofile("crawl-rc/lua/config.lua")
-
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 
@@ -24,12 +22,13 @@ local function get_jewellery_name(text)
   local idx  = text:find("ring of ")
   if not idx then idx = text:find("amulet of ") end
   if not idx then return end
-  
+
   text = text:gsub(" {.*}", "")
   text = text:gsub("[.]", "")
   return text:sub(idx,#text)
 end
 
+local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin", "large rock" }
 local function get_missile_name(text)
   for item_name in iter.invent_iterator:new(all_missiles) do
     if text:find(item_name) then
@@ -42,13 +41,14 @@ local function get_missile_name(text)
           item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
         end
       end
-      
+
       return item_name
     end
   end
 end
 
-
+local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones",
+    "condenser vane", "box of beasts", "phantom mirror" }
 local function get_misc_name(text)
   for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
@@ -68,7 +68,7 @@ end
 
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
-  
+
   local exclude
   if text:find("You drop ") then exclude = true
   elseif text:find(" %- ") then exclude = false

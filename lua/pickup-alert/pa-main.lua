@@ -1,4 +1,7 @@
---dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+if loaded_pa_main then return end
+loaded_pa_main = true
+dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 
 function alert_item(it, alert_type)
   local name = it.name("plain")
@@ -39,7 +42,7 @@ function c_assign_invletter_item_alerts(it)
       remove_from_rare_items(it)
     end
   end
-  
+
   remove_item_and_less_enchanted(items_alerted, it)
   util.remove(level_alerts, name)
 end
@@ -54,7 +57,7 @@ function c_message_item_alerts(text, channel)
       else all_alerts = all_alerts..", "..v
       end
     end
-    
+
     level_alerts = {}
     if all_alerts ~= "" then
       crawl.mpr("<magenta>Recent alerts: "..all_alerts.."</magenta>")

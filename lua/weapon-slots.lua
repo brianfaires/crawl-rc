@@ -1,4 +1,4 @@
---dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+dofile("crawl-rc/lua/util.lua")
 
 ------------------------------
 ---- Cleanup weapon slots ----

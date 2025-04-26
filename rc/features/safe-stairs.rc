@@ -1,6 +1,0 @@
-macros += M > ===safe_downstairs
-macros += M < ===safe_upstairs
-
-{
-  dofile("crawl-rc/lua/features/safe-stairs.lua")
-}

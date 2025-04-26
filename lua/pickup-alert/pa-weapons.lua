@@ -1,18 +1,20 @@
---dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
---dofile("crawl-rc/lua/config.lua")
-
-
+if loaded_pa_weapons then return end
 loaded_pa_weapons = true
+dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
 --------------------------
 ---- Begin inv arrays ----
 --------------------------
 -- Use these arrays to compare potential upgrades against entire inventory
 local top_school = "unarmed combat"
+local all_weap_schools = { "axes", "maces & flails", "polearms", "long blades",
+    "short blades", "staves", "unarmed combat", "ranged weapons" }
 
 local function set_top_school()
   local max = 0
-  
+
   for v in iter.invent_iterator:new(all_weap_schools) do
     if you.skill(v) > max then
       max = you.skill(v)
