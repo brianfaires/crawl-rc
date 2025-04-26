@@ -2,18 +2,22 @@
 Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/crawl).
 
 ## Basics
-- All features are enabled and included via [init.txt](init.txt). If you want a single file, [allRC.txt](allRC.txt) contains [init.txt](init.txt) and all the files it references.
-- To merge [init.txt](init.txt) into an existing RC file, make sure any Lua hook functions are only defined once (at the bottom of the RC file). If duplicate functions exist, combine them.
+- All features are enabled and included via [init.txt](init.txt). If you want a single file, 
+    [allRC.txt](allRC.txt) contains [init.txt](init.txt) and all the files it references.
+- To merge [init.txt](init.txt) into an existing RC file, make sure any Lua hook functions are only 
+    defined once (at the bottom of the RC file). If duplicate functions exist, combine them.
 - Features can be individually toggled off. The simplest way is:
     1. In [init.txt](init.txt), comment out `include` or `lua_file` statements to toggle off features.
     
         e.g. `lua_file = xxxx.lua` -> `#lua_file = xxxx.lua`
 
-    1. Run `python concat_rc.py` to regenerate [allRC.txt](allRC.txt) without the features included.    
+    2. Run `python concat_rc.py` to regenerate [allRC.txt](allRC.txt) without the features included.    
 
 - You can copy-paste individual files into another RC, as long as you also copy any other files they reference. 
 You must also include the hook functions from [init.txt](init.txt). 
-If you copy-paste a file with a dependency (e.g. `include = xxxxx.rc`), you'll want to replace any `include`, and `dofile()` statements with a copy-paste of the referenced file. Also copy-paste any `lua_file = ` statements, and be sure to surround the lua file with curly braces `{ <file_contents> }`. And don't copy the same file more than once.
+If you copy-paste a file with a dependency (e.g. `include = xxxxx.rc`), you'll want to replace any `include`, 
+and `dofile()` statements with a copy-paste of the referenced file. Also copy-paste any `lua_file = ` statements, 
+and be sure to surround the lua file with curly braces `{ <file_contents> }`. And don't copy the same file more than once.
 
 
 ## Standard(-ish) Settings
@@ -34,9 +38,9 @@ Settings for force_more messages
 
 ### [rc/macros.rc](rc/macros.rc)
 Default macros and keybinds for a US keyboard:
-* The first macro automatically activates the drop filter when you go to drop items.
-* Numperpad has a handful of common actions
-* Number keys perform spellcasting, and confirm targeting (so you can double-tap the key to fire a targeted spell)
+- The first macro automatically activates the drop filter when you go to drop items.
+- Numperpad has a handful of common actions
+- Number keys perform spellcasting, and confirm targeting (so you can double-tap the key to fire a targeted spell)
 
 ### [rc/runrest.rc](rc/runrest.rc)
 Settings for exploration/resting stop messages
@@ -63,7 +67,8 @@ Anything that changes based on XL, God, etc.
 ### [lua/exclude-dropped.lua](lua/exclude-dropped.lua)
 It'll stop picking up items after you drop one of them... No more picking up every ring of ice you come across.
 If you pick up an item again it'll resume picking up more.
-This feature is why stones are auto-picked up (if you don't start ranged). Just drop those stones when you're done with them and move on.
+This feature is why stones are auto-picked up (if you don't start ranged). 
+Just drop those stones when you're done with them and move on.
 
 ### [lua/fm-monsters.lua](lua/fm-monsters.lua)
 Generates force_more prompts when monsters come into view. 
@@ -78,23 +83,28 @@ Dynamic force_mores only trigger in certain scenarios, based on:
 Currently this section is configured to trigger when a monster threatens to take ~half of your current hp.
 
 ### [lua/inscribe-stats.lua](lua/inscribe-stats.lua)
-Weapons in inventory are inscribed with their stats and an idealized DPS (ie damage output per 10 aut). Updates in real time with skill/stats/etc.
+Weapons in inventory are inscribed with their stats and an idealized DPS (ie damage output per 10 aut). 
+Updates in real time with skill/stats/etc.
 Armour is inscribed with its AC (or SH) and EV.
 
 ### [lua/misc-alerts.lua](lua/misc-alerts.lua)
 Used to hold more - currently just pings when you hit 6* piety w/ amulet of faith
 
 ### [lua/mute-swaps.rc](lua/mute-swaps.lua)
-Minimizes spam when swapping/ID'ing items. When multiple messages with " - " show up in a single turn, it mutes all except those for the first item.  e.g. You read an unidentified scroll, and it's scroll of identify. You identify a potion of curing. The scroll and potion are both moved to their assigned item_slot. Output will simply be: "x - potion of curing; c - a potion of curing". Without this feature, another 3-4 messages would be displayed, showing the scroll of ID moving to slot i, and whatever items were previously in slots c/i. I find that irrelevant and confusing.
+Minimizes spam when swapping/ID'ing items. When multiple messages with " - " show up in a single turn, 
+it mutes all except those for the first item.  e.g. You read an unidentified scroll, and it's scroll of identify. 
+You identify a potion of curing. The scroll and potion are both moved to their assigned item_slot. Output will simply 
+be: "x - potion of curing; c - a potion of curing". Without this feature, another 3-4 messages would be displayed, 
+showing the scroll of ID moving to slot i, and whatever items were previously in slots c/i. I find that irrelevant and confusing.
 
 ### [lua/remind-id.lua](lua/remind-id.lua)
 When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
 
 ### [lua/runrest-features.lua](lua/runrest-features.lua)
 QOL runrest settings:
-* Fully rest off duration/recovery effects when resting/waiting. Attached to rest before exploration.
-* No altar stops if you have a god
-* Don't stop exploration on portals leading out of gauntlets/baileys/etc
+- Fully rest off duration/recovery effects when resting/waiting. Attached to rest before exploration.
+- No altar stops if you have a god
+- Don't stop exploration on portals leading out of gauntlets/baileys/etc
 
 ### [lua/safe-stairs.rc](lua/safe-stairs.lua)
 Protects against fat-fingering `<>` or `><`, by prompting before immediately returning to the previous floor.
@@ -103,12 +113,18 @@ Protects against fat-fingering `<>` or `><`, by prompting before immediately ret
 One-time actions on startup: Just opens skills menu now.
 
 ### [lua/weapon-slots.lua](lua/weapon-slots.lua)
-Keeps weapons in slots a/b/w. Reassignments happen whenever you drop an item, and it will only kick non-weapons out of these slots.  It'll favor putting ranged and polearms in w.
+Keeps weapons in slots a/b/w. Reassignments happen whenever you drop an item, and it will only kick 
+non-weapons out of these slots.  It'll favor putting ranged and polearms in w.
 
 ## Pickup and Alert system
-Intelligent autopickup based on your character and items in your inventory. Pickup tries to only grab items you *definitely* want, so there is also an alert system to flag items that seem noteworthy. You can enable/disable this for any combination of armour/weapons/misc. There are 3 support files (util/data/main) that are included with any of the 3 main files.
+Intelligent autopickup based on your character and items in your inventory. 
+Pickup tries to only grab items you *definitely* want, so there is also an alert system to flag items that seem noteworthy. 
+You can enable/disable this for any combination of armour/weapons/misc. There are 3 support files 
+    (util/data/main) that are included with any of the 3 main files.
 
-To prevent spamming, item alerts are not generated for items that are covered by previous alerts/pickups.  e.g. If you're alerted to a +1 chain mail as a potential upgrade to your scale mail, no more alerts will be generated for +1 or +0 chain mails, unless they are branded. Alerts are one-line messages that stop travel and are formatted to stand out.
+To prevent spamming, item alerts are not generated for items that are covered by previous alerts/pickups.  
+e.g. If you're alerted to a +1 chain mail as a potential upgrade to your scale mail, no more alerts will be generated 
+for +1 or +0 chain mails, unless they are branded. Alerts are one-line messages that stop travel and are formatted to stand out.
 
 ### [pa-armour.rc](lua/pickup-alert/pa-armour.lua) (Armour)
 Picks up usable armour that is a pure upgrade to what you currently have. ex:
@@ -122,7 +138,8 @@ Alerts are generated for:
 - Aux armour that is good but conflicts with non-innate mutations
 - Items that gain AC but lose a brand
 - New body armour egos
-- Heavier/lighter body armour that passes some additional checks. In general, 1 AC is valued ~1.2EV, and alerts are generated when it seems like an armour might be an overall improvement, factoring in brands/AC/EV.
+- Heavier/lighter body armour that passes some additional checks. In general, 1 AC is valued ~1.2EV, 
+    and alerts are generated when it seems like an armour might be an overall improvement, factoring in brands/AC/EV.
 
 ###  [pa-weapons.rc](lua/pickup-alert/pa-weapons.lua) (Weapons)
 Picking up pure-upgrades is straightforward enough, but this file does a lot more. 
@@ -144,11 +161,15 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 - First orb of each type
 
 ## Dev notes
-* I wrote this ~2 years ago and recently refreshed it when lua inscriptions was enabled in 0.33. Please LMK if you find any bugs or have other input.
+- I wrote this ~2 years ago and recently refreshed it when lua inscriptions was enabled via lua.
+    I've run it with several characters, but can't cover everything. 
+    Please LMK if you find any bugs, outdated notes, suggestions, etc.
 
 ### TODO list
+1. 0.33.1 Updates: spells, runrest_status's, rare_items, misc_items(talismans)
+1. Can colorize rF+, rC+, etc ?
 1. Wait for allies to heal
-1. Disable all auto explore stop in gauntlets
+1. Disable all auto explore stops in gauntlets until fully explored
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
-1. Update fm-mosnsters lists to fm_monsters[{name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg}][];
-1. Set dynamic-options.rc to use list[{god name, [fm-prompts]}]
+1. Update fm-monsters lists to {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
+1. dynamic-options.rc to use lists like {god name, [fm-prompts]}

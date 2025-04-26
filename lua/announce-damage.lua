@@ -49,7 +49,7 @@ function ready_announce_damage()
     else
       --On losing health
       if (current_hp < previous_hp) then
-        local msg = ""
+        local msg
         if current_hp <= (max_hp * 0.30) then
           msg = "<red>You take " .. hp_difference .. " damage,</red>" ..
                     "<lightred> and have " .. current_hp .. "/" .. max_hp .. " hp.</lightred>"
@@ -67,7 +67,7 @@ function ready_announce_damage()
                             current_hp .. "/" .. max_hp .. " hp.</green>")
         end
         crawl.mpr(msg)
-        
+
         if hp_difference > (max_hp * 0.20) then
           crawl.mpr("<lightred>MASSIVE DAMAGE!!</lightred>")
         end
@@ -77,8 +77,8 @@ function ready_announce_damage()
       if (current_hp > previous_hp + 2) then
         --Removes the negative sign
         local health_inturn = (0 - hp_difference)
-        if (health_inturn > 1) and not (current_hp == max_hp) then
-          local msg = ""
+        if (health_inturn > 1) and current_hp ~= max_hp then
+          local msg
           if current_hp <= (max_hp * 0.30) then
             msg = "<green>You regained " .. health_inturn .. " hp,</green><lightred> and now have " ..
                     current_hp .. "/" .. max_hp .. " hp.</lightred>"
@@ -93,7 +93,7 @@ function ready_announce_damage()
                     current_hp .. "/" .. max_hp .. " hp.</lightgrey>"
           else
             msg = "<green>You regained " .. health_inturn .. " hp, and now have " .. current_hp .. "/" ..
-                      max_hp .. " hp.</green>")
+                      max_hp .. " hp.</green>"
           end
           crawl.mpr(msg)
         end
@@ -106,8 +106,8 @@ function ready_announce_damage()
       if (current_mp > previous_mp+1) then
         --Removes the negative sign
         local mp_inturn = (0 - mp_difference)
-        if (mp_inturn > 1) and not (current_mp == max_mp) then
-          local msg = ""
+        if (mp_inturn > 1) and current_mp ~= max_mp then
+          local msg
           if current_mp < (max_mp * 0.25) then
             msg = "<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><red> and now have " ..
                     current_mp .. "/" .. max_mp .. " mp.</red>"

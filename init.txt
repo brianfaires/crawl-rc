@@ -78,7 +78,7 @@ lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 
 ### Features ###
 lua_file = crawl-rc/lua/after-shaft.lua
-lua_file = crawl-rc/lua/display-damage.lua
+lua_file = crawl-rc/lua/announce-damage.lua
 lua_file = crawl-rc/lua/drop-inferior.lua
 lua_file = crawl-rc/lua/dynamic-options.lua
 lua_file = crawl-rc/lua/exclude-dropped.lua
@@ -170,6 +170,7 @@ function ready()
     if ready_safe_stairs then ready_safe_stairs() end
     if ready_item_alerts then ready_item_alerts() end
     if ready_misc_alerts then ready_misc_alerts() end
+    if ready_announce_damage then ready_announce_damage() end
   end
 end
 --Call ready() once before autopickup/alerts trigger

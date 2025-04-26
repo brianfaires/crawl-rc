@@ -2,7 +2,7 @@
 ------ Max piety w/ amulet of faith ------
 ------------------------------------------
 if not alerted_max_piety then
-  alerted_max_piety = 0
+  local alerted_max_piety = 0
 end
 
 local function persist_alerted_max_piety()
@@ -10,12 +10,12 @@ local function persist_alerted_max_piety()
 end
 
 if not added_misc_alert_data_hooks then
-  added_misc_alert_data_hooks = true
-  
+  local added_misc_alert_data_hooks = true
+
   table.insert(chk_lua_save, persist_alerted_max_piety)
 end
 
-function alert_remove_faith()
+local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" then

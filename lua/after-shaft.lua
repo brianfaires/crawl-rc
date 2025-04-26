@@ -11,7 +11,7 @@ end
 
 if not added_shaft_stairs_hook then
   table.insert(chk_lua_save, persist_shaft_values)
-  added_shaft_stairs_hook = true
+  local added_shaft_stairs_hook = true
 end
 
 

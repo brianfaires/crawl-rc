@@ -21,7 +21,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local new_inscr = get_weapon_info(it)
-      
+
   local idx = it.inscription:find("DPS:")
   if idx then
     if idx + #new_inscr <= #it.inscription then
@@ -41,14 +41,13 @@ local skipped_first_redraw = false
 ------------------------------------------
 function ready_inscribe_stats()
   for it in iter.invent_iterator:new(items.inventory()) do
-    local class = it.class(true)
     if is_weapon(it) or is_staff(it) then
       inscribe_weapon_stats(it)
     elseif is_armour(it) then
       inscribe_armour_stats(it)
     end
   end
-  
+
   -- This redraw can causes crashes if called during an autopickup.
   -- Be sure not to hook any of this to c_message, or anything that can trigger during an autopickup
   if skipped_first_redraw then crawl.redraw_screen()

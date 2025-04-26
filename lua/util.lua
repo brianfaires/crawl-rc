@@ -1,5 +1,5 @@
 if loaded_util_lua then return end
-loaded_util_lua = true
+local loaded_util_lua = true
 
 ------------------------------------
 --------------- Misc ---------------
@@ -384,6 +384,7 @@ function get_weap_dmg(it, no_brand_dmg)
     end
   end
 
+  local stat
   if it.is_ranged or it.weap_skill:find("Blades") then stat = dex
   else stat = str end
 

@@ -21,7 +21,7 @@ function alert_item(it, alert_type)
   insert_item_and_less_enchanted(items_alerted, it)
   table.insert(level_alerts, name)
 end
-  
+
   -- Returns true to make other code more concise; indicates that we tried to alert this item
   return true
 end
@@ -47,7 +47,7 @@ function c_assign_invletter_item_alerts(it)
   util.remove(level_alerts, name)
 end
 
-function c_message_item_alerts(text, channel)
+function c_message_item_alerts(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
     disable_autopickup = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
@@ -72,7 +72,7 @@ function ready_item_alerts()
 		if is_weapon(it) then update_high_scores(it) end
 	end
   end
-  
+
   disable_autopickup = false
 end
 
@@ -81,7 +81,7 @@ end
 -------------------------
 ---- Autopickup main ----
 -------------------------
-add_autopickup_func(function (it, name)
+add_autopickup_func(function (it, _)
   if disable_autopickup then return end
 
   -- Check for pickup
