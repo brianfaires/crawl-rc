@@ -262,8 +262,6 @@ local function alert_interesting_weapon(it, cur)
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
 
-    --local penalty = 1
-    --if it.weap_skill == top_school then penalty = 0.5 end
     local penalty = (you.skill(it.weap_skill)+8) / (you.skill(top_school)+8)
 
     if get_hands(it) == 2 and get_hands(cur) == 1 then
@@ -337,8 +335,7 @@ local function alert_interesting_weapons(it)
   if it.is_ranged and not ranged_weap_in_inv then
     if it.artefact or it.branded and it.plus >= 4 then
       if items.equipped_at("shield") then
-        local qualname = it.name("qual")
-        if qualname:find("hand crossbow") or qualname:find("sling") then
+        if qualname:find("hand crossbow") or it.name("qual"):find("sling") then
           return alert_item(it, "Ranged Weapon")
         end
       else

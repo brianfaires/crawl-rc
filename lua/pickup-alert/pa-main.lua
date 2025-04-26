@@ -34,7 +34,6 @@ crawl.setopt("runrest_stop_message += Item alert, ")
 ------------------- Hooks -------------------
 ---------------------------------------------
 function c_assign_invletter_item_alerts(it)
-  local name = it.name("plain")
   if is_weapon(it) or is_armour(it) then
     if not previously_picked(it) then
       insert_item_and_less_enchanted(items_picked, it)
@@ -44,7 +43,7 @@ function c_assign_invletter_item_alerts(it)
   end
 
   remove_item_and_less_enchanted(items_alerted, it)
-  util.remove(level_alerts, name)
+  util.remove(level_alerts, it.name("plain"))
 end
 
 function c_message_item_alerts(text, _)

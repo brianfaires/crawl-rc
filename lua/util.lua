@@ -131,7 +131,7 @@ function get_armour_ac(it)
   return math.max(0, ac - 0.05)
 end
 
-local function get_aevp(encumb, str)
+function get_aevp(encumb, str)
   return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (str + 3) * 45)
 end
 
@@ -327,7 +327,7 @@ end
 
 local staff_schools = { fire="Fire Magic", cold="Ice Magic", earth="Earth Magic", air="Air Magic",
                         poison="Poison Magic", death="Necromancy", conjuration="Conjurations" }
-local function get_staff_school(it)
+function get_staff_school(it)
   for k,v in pairs(staff_schools) do
     if it.name("base") == "staff of "..k then return v end
 	end
