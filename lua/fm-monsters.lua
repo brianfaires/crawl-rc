@@ -75,7 +75,7 @@ end
 ------------------------------------------------------------------------------------------
 ------------------------------- Dynamic force_mores config -------------------------------
 ------------------------------------------------------------------------------------------
--- hp-specific force_mores() by gammafunk, extended by bueler
+-- hp-specific force_mores() by gammafunk, extended by buehler
 local fm_patterns = {
   -- Fast, early game Dungeon problems for chars with low mhp.
   {name = "30hp", cond = "hp", cutoff = 30, pattern = "hound"},

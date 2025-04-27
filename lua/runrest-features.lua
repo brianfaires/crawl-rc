@@ -59,7 +59,7 @@ function ch_stop_running_full_recovery(kind)
   end
 end
 
-function c_message_fully_recover(text, channel)
+function c_message_fully_recover(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
     if not fully_recovered() then
       waiting_for_recovery = true

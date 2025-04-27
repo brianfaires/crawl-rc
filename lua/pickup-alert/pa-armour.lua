@@ -215,6 +215,8 @@ local function alert_interesting_armour(it)
         if not has_ego(cur) then return alert_item(it, "Gain ego") end
         if get_ego(it) ~= get_ego(cur) then return alert_item(it, "Diff ego") end
       end
+      --if get_armour_ac(it) > get_armour_ac(cur) then return alert_item(it, "Stronger armour") end
+
     elseif it.encumbrance < cur.encumbrance then
       -- Lighter armour
       local ev_gain = get_armour_ev(it) - get_armour_ev(cur)
@@ -240,7 +242,10 @@ local function alert_interesting_armour(it)
       -- Heavier armour
       local ac_gain = get_armour_ac(it) - get_armour_ac(cur)
       local ev_lost = get_armour_ev(cur) - get_armour_ev(it)
-      local encumb_penalty = if_el((you.skill("Spellcasting") + you.skill("Ranged Weapons") > 1), (it.encumbrance - cur.encumbrance)*0.75, 0)
+      local encumb_penalty = 0
+      if you.skill("Spellcasting") + you.skill("Ranged Weapons") > 1 then
+        encumb_penalty = (it.encumbrance - cur.encumbrance)*0.75
+      end
       local total_loss = ev_lost + encumb_penalty
 
       if has_ego(it) then
@@ -261,6 +266,7 @@ local function alert_interesting_armour(it)
       end
     end
   elseif is_shield(it) then
+    --if it.is_useless then return end
     local cur = items.equipped_at("shield")
     if not cur then return false end
     if it.branded and it.ego() ~= cur.ego() then
