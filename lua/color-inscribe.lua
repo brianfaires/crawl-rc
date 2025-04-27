@@ -50,15 +50,15 @@ end
 
 -- TODO: Would like to modify all messages/menus, but need a way to
 -- replace messages while they're in queue, delete the last message, or something
-function c_message_color_inscribe(text, _)
-  local orig_text = text
-  text = colorize_text(text)
-  if text == orig_text then return end
+-- function c_message_color_inscribe(text, _)
+--   local orig_text = text
+--   text = colorize_text(text)
+--   if text == orig_text then return end
 
-  local cleaned = cleanup_message(text)
-  if cleaned:sub(2, 4) == " - " then
-    text = " "..text
-  end
+--   local cleaned = cleanup_message(text)
+--   if cleaned:sub(2, 4) == " - " then
+--     text = " "..text
+--   end
 
-  crawl.mpr(text)
-end
+--   crawl.mpr(text)
+-- end

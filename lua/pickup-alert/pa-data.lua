@@ -3,10 +3,10 @@ loaded_pa_data = true
 dofile("crawl-rc/lua/util.lua")
 
 -------------------------------------------------------------------------------
----------------------------- Begin persistant data ----------------------------
+---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
-if not added_persistant_data or you.turns() == 0 then
-  local added_persistant_data = 1
+if not added_persistent_data or you.turns() == 0 then
+  local added_persistent_data = 1
 
   level_alerts = { }
   items_picked = { }
@@ -16,7 +16,7 @@ if not added_persistant_data or you.turns() == 0 then
                   "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
                   "crystal plate armour", "gold dragon scales", "pearl dragon scales",
                   "storm dragon scales", "shadow dragon scales", "wand of digging",
-                  "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
+                  "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield" }
 
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0
@@ -44,8 +44,8 @@ local function persist_var(var_name, var)
 end
 
 
-if not added_persistant_data_hooks then
-  added_persistant_data_hooks = true
+if not added_persistent_data_hooks then
+  added_persistent_data_hooks = true
 
   table.insert(chk_lua_save,
     function() return persist_table("level_alerts",
@@ -81,12 +81,12 @@ if not added_persistant_data_hooks then
     function() return persist_var("weapon_high_score",
         weapon_high_score) end)
   table.insert(chk_lua_save,
-    function() return persist_var("added_persistant_data", 1) end)
+    function() return persist_var("added_persistent_data", 1) end)
 end
 
 
 ----------------------------------------
----- Accessors into persistant data ----
+---- Accessors into persistent data ----
 ----------------------------------------
 function get_rare_item_index(it)
   local qualname = it.name("qual")
@@ -122,7 +122,7 @@ end
 -------------------------------
 --- Multi store/remove data ---
 -------------------------------
-function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
+local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
   local name = it.name("plain")
@@ -213,6 +213,6 @@ if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(rare_items, rare_items[idx]) end
-	insert_item_and_less_enchanted(items_picked, inv)
+    insert_item_and_less_enchanted(items_picked, inv)
   end
 end

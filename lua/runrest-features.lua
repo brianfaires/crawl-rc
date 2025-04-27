@@ -65,8 +65,11 @@ function c_message_fully_recover(text, _)
       waiting_for_recovery = true
       crawl.setopt("message_colour += mute:You start waiting.")
     end
-  elseif waiting_for_recovery then
+  elseif waiting_for_recovery and channel == "timed_portal" then
     you.stop_activity()
+    waiting_for_recovery = false
+    crawl.setopt("message_colour -= mute:You start waiting.")
+    explore_after_recovery = false
   end
 end
 
@@ -143,6 +146,23 @@ function ready_ignore_exits()
   elseif not stop_on_portals and not util.contains(ignore_exit_brances, branch) then
     stop_on_portals = true
     crawl.setopt("explore_stop += portals")
+  end
+end
+
+
+---------------------------
+---- Stop on Pan Gates ----
+---------------------------
+local stop_on_pan_gates = false
+
+function ready_stop_on_pan_gates()
+  local branch = you.branch()
+  if stop_on_pan_gates and branch ~= "Pan" then
+    stop_on_pan_gates = false
+    crawl.setopt("explore_stop -= stairs")
+  elseif not stop_on_pan_gates and branch == "Pan" then
+    stop_on_pan_gates = true
+    crawl.setopt("explore_stop += stairs")
   end
 end
 

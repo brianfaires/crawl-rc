@@ -1,8 +1,9 @@
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
+-- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
 
 -------------------------
----- Persistant data ----
+---- Persistent data ----
 -------------------------
 if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
@@ -47,18 +48,36 @@ local function get_missile_name(text)
   end
 end
 
-local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones",
-    "condenser vane", "box of beasts", "phantom mirror" }
+local all_misc =  { "box of beasts", "condenser vane", "figurine of a ziggurat",
+                    "Gell's gravitambourine", "horn of Geryon", "lightning rod",
+                    "phantom mirror", "phial of floods", "sack of spiders", "tin of tremorstones" }
 local function get_misc_name(text)
   for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
   end
 end
 
-local function get_scroll_name(text)
-  if you.skill("Unarmed Combat") < 8 then return end
-  if text:find("enchant weapon") then return "enchant weapon" end
-  if text:find("brand weapon") then return "brand weapon" end
+local function has_enchantable_weap_in_inv()
+  for cur in iter.invent_iterator:new(items.inventory()) do
+    if cur.class(true) == "weapon" and not cur.artefact and cur.plus < 9 then return true end
+  end
+
+  return false
+end
+
+local function get_excludable_scroll_name(text)
+  if text:find("enchant weapon") then
+    if has_enchantable_weap_in_inv() then return end
+    return "enchant weapon"
+  elseif text:find("brand weapon") then
+    if has_enchantable_weap_in_inv() then return end
+    return "brand weapon"
+  else
+    local excludable = { "enchant armour", "torment", "immolation", "silence" }
+    for _,v in ipairs(excludable) do
+      if text:find(v) then return v end
+    end
+  end
 end
 
 
@@ -78,7 +97,7 @@ function c_message_exclude_dropped(text, channel)
   local item_name = get_jewellery_name(text)
   if not item_name then item_name = get_missile_name(text) end
   if not item_name then item_name = get_misc_name(text) end
-  if not item_name then item_name = get_scroll_name(text) end
+  if not item_name then item_name = get_excludable_scroll_name(text) end
   if not item_name then return end
 
   if exclude then
@@ -87,7 +106,7 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions..">"..item_name
   else
     crawl.setopt("autopickup_exceptions -= >"..item_name)
-    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
+    -- Remove persistent exclusion (try 3 times to make sure we capture comma)
     dropped_item_exclusions = dropped_item_exclusions:gsub(",>"..item_name, "")
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name..",", "")
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")

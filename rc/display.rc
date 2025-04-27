@@ -91,7 +91,7 @@ menu += $danger:scrolls? of torment
 menu += $boring:scrolls? of noise
 menu += $decent:scrolls? of (amnesia|holy word|identify|immolation|remove curse)
 menu += $good:scrolls? of (fear|fog|silence|summoning|vulnerability)
-menu += $positive:scrolls? of (brand|enchant|magic mapping)
+menu += $positive:scrolls? of (brand|enchant|revelation)
 menu += $verypositive:scrolls? of acquirement
 menu += $awesome:scrolls? of (blinking|teleportation)
 
@@ -112,7 +112,6 @@ menu += $positive:amulet of (faith|reflection|magic regeneration)
 menu += $verypositive:amulet of (regeneration)
 
 # Rings
-menu += $negative:ring of (attention|teleportation)
 menu += $negative:ring of \-.*(dexterity|evasion|intelligence|protection|slaying|strength)
 menu += $warning:ring of (fire|ice|stealth)
 menu += $decent:ring of flight

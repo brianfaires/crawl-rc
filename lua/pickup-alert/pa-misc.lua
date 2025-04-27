@@ -23,7 +23,7 @@ function alert_rare_items(it)
 
   if do_alert then
     show_alert_msg("It's your first ", rare_items[index].."!")
-	crawl.more()
+    crawl.more()
   end
 
   remove_from_rare_items(it)

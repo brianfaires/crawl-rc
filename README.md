@@ -1,5 +1,5 @@
 # crawl-rc
-Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/crawl).
+Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/crawl) v0.33.1
 
 ## Basics
 - All features are enabled and included via [init.txt](init.txt). If you want a single file, 
@@ -7,17 +7,19 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - To merge [init.txt](init.txt) into an existing RC file, make sure any Lua hook functions are only 
     defined once (at the bottom of the RC file). If duplicate functions exist, combine them.
 - Features can be individually toggled off. The simplest way is:
-    1. In [init.txt](init.txt), comment out `include` or `lua_file` statements to toggle off features.
+    1. In [init.txt](init.txt), comment out `include =` or `lua_file =` statements to toggle off features.
     
         e.g. `lua_file = xxxx.lua` -> `#lua_file = xxxx.lua`
 
     2. Run `python concat_rc.py` to regenerate [allRC.txt](allRC.txt) without the features included.    
 
 - You can copy-paste individual files into another RC, as long as you also copy any other files they reference. 
+References are at the top of the file. 
 You must also include the hook functions from [init.txt](init.txt). 
 If you copy-paste a file with a dependency (e.g. `include = xxxxx.rc`), you'll want to replace any `include`, 
-and `dofile()` statements with a copy-paste of the referenced file. Also copy-paste any `lua_file = ` statements, 
-and be sure to surround the lua file with curly braces `{ <file_contents> }`. And don't copy the same file more than once.
+and `dofile()` statements with a copy-paste of the referenced file. Do the same for any lua files (`lua_file =`), 
+but add curly braces around the file contents to mark it as lua code `{ <file_contents> }`. 
+And don't manualy copy-paste the same file more than once.
 
 
 ## Standard(-ish) Settings
@@ -31,14 +33,13 @@ Automatically inscribe items, mostly to add warnings to consumables
 
 ### [rc/display.rc](rc/display.rc)
 Various display related settings, including 1000's of colors for customized messages.
-TODO: This section needs attribution - would really like to list the original author.
+*This section needs attribution - would really like to list the original author.*
 
 ### [rc/fm-messages.rc](rc/fm-messages.rc)
 Settings for force_more messages
 
 ### [rc/macros.rc](rc/macros.rc)
 Default macros and keybinds for a US keyboard:
-- The first macro automatically activates the drop filter when you go to drop items.
 - Numperpad has a handful of common actions
 - Number keys perform spellcasting, and confirm targeting (so you can double-tap the key to fire a targeted spell)
 
@@ -54,15 +55,18 @@ One-click spells on capital letters. Rings on P/p, etc.
 ### [lua/after-shaft.lua](lua/after-shaft.lua)
 Stops travel on stairs until you get back to the level you were shafted from.
 
-### [lua/display-damage.lua](lua/display-damage.lua)
+### [lua/announce-damage.lua](lua/announce-damage.lua)
 Writes messages for HP and MP changes. I believe same author as [rc/display.rc](rc/display.rc).
+
+### [lua/color-inscribe.lua](lua/color-inscribe.lua)
+Colors item inscriptions for resistances, stat modifiers, etc.
 
 ### [lua/drop-inferior.lua](lua/drop-inferior.lua)
 Marks items with `~~DROP_ME` when you pick up a strictly better one.
 These items are added to the `drop_list`, so press `,` in the drop menu to select them all.
 
 ### [lua/dynamic-options.lua](lua/dynamic-options.lua)
-Anything that changes based on XL, God, etc.
+Anything that changes based on XL, God, Class, etc.
 
 ### [lua/exclude-dropped.lua](lua/exclude-dropped.lua)
 It'll stop picking up items after you drop one of them... No more picking up every ring of ice you come across.
@@ -83,16 +87,19 @@ Dynamic force_mores only trigger in certain scenarios, based on:
 Currently this section is configured to trigger when a monster threatens to take ~half of your current hp.
 
 ### [lua/inscribe-stats.lua](lua/inscribe-stats.lua)
-Weapons in inventory are inscribed with their stats and an idealized DPS (ie damage output per 10 aut). 
+Weapons in inventory are inscribed with their stats and an idealized DPS (ie max damage per 10 aut, including brand). 
 Updates in real time with skill/stats/etc.
 Armour is inscribed with its AC (or SH) and EV.
 
 ### [lua/misc-alerts.lua](lua/misc-alerts.lua)
-Used to hold more - currently just pings when you hit 6* piety w/ amulet of faith
+- A one-time force-more when dropping below 50% HP.
+- A msg when you hit 6* piety while wearing an amulet of faith
 
 ### [lua/mute-swaps.rc](lua/mute-swaps.lua)
 Minimizes spam when swapping/ID'ing items. When multiple messages with " - " show up in a single turn, 
-it mutes all except those for the first item.  e.g. You read an unidentified scroll, and it's scroll of identify. 
+it mutes all except those for the first item. 
+
+e.g. You read an unidentified scroll, and it's scroll of identify. 
 You identify a potion of curing. The scroll and potion are both moved to their assigned item_slot. Output will simply 
 be: "x - potion of curing; c - a potion of curing". Without this feature, another 3-4 messages would be displayed, 
 showing the scroll of ID moving to slot i, and whatever items were previously in slots c/i. I find that irrelevant and confusing.
@@ -105,12 +112,13 @@ QOL runrest settings:
 - Fully rest off duration/recovery effects when resting/waiting. Attached to rest before exploration.
 - No altar stops if you have a god
 - Don't stop exploration on portals leading out of gauntlets/baileys/etc
+- Stop travel on gates in Pan
 
 ### [lua/safe-stairs.rc](lua/safe-stairs.lua)
 Protects against fat-fingering `<>` or `><`, by prompting before immediately returning to the previous floor.
 
 ### [lua/startup.lua](lua/startup.lua)
-One-time actions on startup: Just opens skills menu now.
+One-time actions on new games: Used to do more but just opens the skills menu now.
 
 ### [lua/weapon-slots.lua](lua/weapon-slots.lua)
 Keeps weapons in slots a/b/w. Reassignments happen whenever you drop an item, and it will only kick 
@@ -127,7 +135,7 @@ e.g. If you're alerted to a +1 chain mail as a potential upgrade to your scale m
 for +1 or +0 chain mails, unless they are branded. Alerts are one-line messages that stop travel and are formatted to stand out.
 
 ### [pa-armour.rc](lua/pickup-alert/pa-armour.lua) (Armour)
-Picks up usable armour that is a pure upgrade to what you currently have. ex:
+Picks up usable armour that is a pure upgrade to what you currently have. e.g.:
 - Picks up a usable cloak if you don't have one,
 - Then picks up a +1 cloak,
 - Then picks up a +1 cloak of resistance,
@@ -142,13 +150,7 @@ Alerts are generated for:
     and alerts are generated when it seems like an armour might be an overall improvement, factoring in brands/AC/EV.
 
 ###  [pa-weapons.rc](lua/pickup-alert/pa-weapons.lua) (Weapons)
-Picking up pure-upgrades is straightforward enough, but this file does a lot more. 
-It inscribes weapons with useful stats:
-- An idealized DPS value (damage / speed), factoring in your stats, skills, slaying, and any brands. 
-- This is an over-simplification of weapons, but still convenient IMO.
-- Inscription also shows (`dmg`/`delay`), and Accuracy bonus
-
-Alerts are generated for:
+Picking up pure-upgrades is straightforward enough. Alerts are generated for:
 - Strong weapons early on, with little regard for what skills are trained
 - The first one-handed ranged weapon (and two-handed if not wearing a shield)
 - High scores: items that set a new record for: Overall damage, Damage w/o brand, and if using allies: Strongest polearm/1-handed polearm
@@ -161,15 +163,16 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 - First orb of each type
 
 ## Dev notes
-- I wrote this ~2 years ago and recently refreshed it when lua inscriptions was enabled via lua.
-    I've run it with several characters, but can't cover everything. 
-    Please LMK if you find any bugs, outdated notes, suggestions, etc.
+- I wrote this over 2 years ago and recently picked it back up when writing inscriptions via lua was enabled in 0.33. 
+I've run it with several characters, but can't cover everything. 
+Please LMK if you find bugs, outdated notes, suggestions, etc.
 
 ### TODO list
 1. 0.33.1 Updates: spells, runrest_status's, rare_items, misc_items(talismans)
-1. Can colorize rF+, rC+, etc ?
-1. Wait for allies to heal
+1. Separate toggles for pickup & alert
 1. Disable all auto explore stops in gauntlets until fully explored
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
-1. Update fm-monsters lists to {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
-1. dynamic-options.rc to use lists like {god name, [fm-prompts]}
+1. fm-monsters to use lists like {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
+1. dynamic-options to use lists like {god name, [fm-prompts]}
+1. Better colorizing of rF+, rC+, etc (needs crawl PR?)
+1. Wait for allies to heal (needs crawl PR?)
