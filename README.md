@@ -7,17 +7,19 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - To merge [init.txt](init.txt) into an existing RC file, make sure any Lua hook functions are only 
     defined once (at the bottom of the RC file). If duplicate functions exist, combine them.
 - Features can be individually toggled off. The simplest way is:
-    1. In [init.txt](init.txt), comment out `include` or `lua_file` statements to toggle off features.
+    1. In [init.txt](init.txt), comment out `include = ` or `lua_file = ` statements to toggle off features.
     
         e.g. `lua_file = xxxx.lua` -> `#lua_file = xxxx.lua`
 
     2. Run `python concat_rc.py` to regenerate [allRC.txt](allRC.txt) without the features included.    
 
 - You can copy-paste individual files into another RC, as long as you also copy any other files they reference. 
+References are at the top of the file. 
 You must also include the hook functions from [init.txt](init.txt). 
 If you copy-paste a file with a dependency (e.g. `include = xxxxx.rc`), you'll want to replace any `include`, 
-and `dofile()` statements with a copy-paste of the referenced file. Also copy-paste any `lua_file = ` statements, 
-and be sure to surround the lua file with curly braces `{ <file_contents> }`. And don't copy the same file more than once.
+and `dofile()` statements with a copy-paste of the referenced file. Do the same for any lua files (`lua_file = `), 
+and be sure to add curly braces around the file contents `{ <file_contents> }`. 
+And don't manualy copy-paste the same file more than once.
 
 
 ## Standard(-ish) Settings
@@ -31,14 +33,13 @@ Automatically inscribe items, mostly to add warnings to consumables
 
 ### [rc/display.rc](rc/display.rc)
 Various display related settings, including 1000's of colors for customized messages.
-TODO: This section needs attribution - would really like to list the original author.
+*This section needs attribution - would really like to list the original author.*
 
 ### [rc/fm-messages.rc](rc/fm-messages.rc)
 Settings for force_more messages
 
 ### [rc/macros.rc](rc/macros.rc)
 Default macros and keybinds for a US keyboard:
-- The first macro automatically activates the drop filter when you go to drop items.
 - Numperpad has a handful of common actions
 - Number keys perform spellcasting, and confirm targeting (so you can double-tap the key to fire a targeted spell)
 
