@@ -67,7 +67,7 @@ function have_shield()
 end
 
 function get_body_armour()
-  return items.equipped_at("body armour")
+  return items.equipped_at("Armour")
 end
 
 ---------------------------------
@@ -174,13 +174,13 @@ function get_armour_ev(it)
   local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
 
-  local armor_penalty = encumb - 3
+  local armour_penalty = encumb - 3
 
-  if armor_penalty > 0 then
-    if armor_penalty >= str then
-      dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
+  if armour_penalty > 0 then
+    if armour_penalty >= str then
+      dodge_bonus = dodge_bonus * (str / (armour_penalty * 2))
     else
-      dodge_bonus = dodge_bonus * (1 - armor_penalty / (str * 2))
+      dodge_bonus = dodge_bonus * (1 - armour_penalty / (str * 2))
     end
   end
 

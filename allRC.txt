@@ -236,7 +236,7 @@ menu += $danger:scrolls? of torment
 menu += $boring:scrolls? of noise
 menu += $decent:scrolls? of (amnesia|holy word|identify|immolation|remove curse)
 menu += $good:scrolls? of (fear|fog|silence|summoning|vulnerability)
-menu += $positive:scrolls? of (brand|enchant|magic mapping)
+menu += $positive:scrolls? of (brand|enchant|revelation)
 menu += $verypositive:scrolls? of acquirement
 menu += $awesome:scrolls? of (blinking|teleportation)
 
@@ -257,7 +257,6 @@ menu += $positive:amulet of (faith|reflection|magic regeneration)
 menu += $verypositive:amulet of (regeneration)
 
 # Rings
-menu += $negative:ring of (attention|teleportation)
 menu += $negative:ring of \-.*(dexterity|evasion|intelligence|protection|slaying|strength)
 menu += $warning:ring of (fire|ice|stealth)
 menu += $decent:ring of flight
@@ -3174,7 +3173,7 @@ item_slot ^= scroll of fear:f
 item_slot ^= scroll of fog:F
 item_slot ^= scroll of identify:i
 item_slot ^= scroll of immolation:o
-item_slot ^= scroll of magic mapping:j
+item_slot ^= scroll of revelation:j
 item_slot ^= scroll of poison:y
 item_slot ^= scroll of silence:S
 item_slot ^= scroll of summoning:s
@@ -3188,7 +3187,7 @@ item_slot ^= potion of brilliance:R
 item_slot ^= potion of cancellation:C
 item_slot ^= potion of curing:c
 item_slot ^= potion of experience:x
-item_slot ^= potion of flight:g
+item_slot ^= potion of enlightenment:g
 item_slot ^= potion of haste:H
 item_slot ^= potion of heal wounds:h
 item_slot ^= potion of invisibility:I
@@ -3372,7 +3371,7 @@ function have_shield()
 end
 
 function get_body_armour()
-  return items.equipped_at("body armour")
+  return items.equipped_at("Armour")
 end
 
 ---------------------------------
@@ -3479,13 +3478,13 @@ function get_armour_ev(it)
   local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
 
-  local armor_penalty = encumb - 3
+  local armour_penalty = encumb - 3
 
-  if armor_penalty > 0 then
-    if armor_penalty >= str then
-      dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
+  if armour_penalty > 0 then
+    if armour_penalty >= str then
+      dodge_bonus = dodge_bonus * (str / (armour_penalty * 2))
     else
-      dodge_bonus = dodge_bonus * (1 - armor_penalty / (str * 2))
+      dodge_bonus = dodge_bonus * (1 - armour_penalty / (str * 2))
     end
   end
 
@@ -4143,7 +4142,7 @@ function ready_item_alerts()
 
   if not disable_pa then
     generate_inv_weap_arrays()
-    update_high_scores(items.equipped_at("body armour"))
+    update_high_scores(items.equipped_at("Armour"))
   else
     disable_pa = false
   end
@@ -4910,8 +4909,8 @@ local function alert_interesting_weapon(it, cur)
         end
       else
         -- Not branded
-    -- This would trigger too often after picking up an untrained weapon
-    -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
+        -- Allowing lower-trained skills triggers too often after picking up an untrained weapon
+        -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
         if cur.branded and cur.weap_skill == it.weap_skill then
           if get_weap_dps(it, true) > get_weap_dps(it, true) then
               return alert_item(it, "Stronger weapon")
@@ -5536,7 +5535,7 @@ end
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
 
 -------------------------
----- persistent data ----
+---- Persistent data ----
 -------------------------
 if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
@@ -5581,8 +5580,9 @@ local function get_missile_name(text)
   end
 end
 
-local all_misc = { "phial of floods", "lightning rod", "tin of tremorstones",
-    "condenser vane", "box of beasts", "phantom mirror" }
+local all_misc =  { "box of beasts", "condenser vane", "figurine of a ziggurat",
+                    "Gell's gravitambourine", "horn of Geryon", "lightning rod",
+                    "phantom mirror", "phial of floods", "sack of spiders", "tin of tremorstones" }
 local function get_misc_name(text)
   for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
@@ -5597,13 +5597,18 @@ local function has_enchantable_weap_in_inv()
   return false
 end
 
-local function get_scroll_name(text)
+local function get_excludable_scroll_name(text)
   if text:find("enchant weapon") then
     if has_enchantable_weap_in_inv() then return end
     return "enchant weapon"
   elseif text:find("brand weapon") then
     if has_enchantable_weap_in_inv() then return end
     return "brand weapon"
+  else
+    local excludable = { "enchant armour", "torment", "immolation", "silence" }
+    for _,v in ipairs(excludable) do
+      if text:find(v) then return v end
+    end
   end
 end
 
@@ -5624,7 +5629,7 @@ function c_message_exclude_dropped(text, channel)
   local item_name = get_jewellery_name(text)
   if not item_name then item_name = get_missile_name(text) end
   if not item_name then item_name = get_misc_name(text) end
-  if not item_name then item_name = get_scroll_name(text) end
+  if not item_name then item_name = get_excludable_scroll_name(text) end
   if not item_name then return end
 
   if exclude then

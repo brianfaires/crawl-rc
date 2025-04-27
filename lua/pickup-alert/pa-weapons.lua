@@ -341,8 +341,8 @@ local function alert_interesting_weapon(it, cur)
         end
       else
         -- Not branded
-    -- This would trigger too often after picking up an untrained weapon
-    -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
+        -- Allowing lower-trained skills triggers too often after picking up an untrained weapon
+        -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
         if cur.branded and cur.weap_skill == it.weap_skill then
           if get_weap_dps(it, true) > get_weap_dps(it, true) then
               return alert_item(it, "Stronger weapon")
