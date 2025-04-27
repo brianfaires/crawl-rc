@@ -16,7 +16,7 @@ if not added_persistent_data or you.turns() == 0 then
                   "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
                   "crystal plate armour", "gold dragon scales", "pearl dragon scales",
                   "storm dragon scales", "shadow dragon scales", "wand of digging",
-                  "triple crossbow", "hand crossbow", "buckler", "kite shield", "tower shield" }
+                  "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield" }
 
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0
@@ -208,11 +208,11 @@ end
 --------------------
 --- Startup code ---
 --------------------
--- Starting items: Remove from rare_items, and add to items_pickedgit 
+-- Starting items: Remove from rare_items, and add to items_picked
 if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(rare_items, rare_items[idx]) end
-	insert_item_and_less_enchanted(items_picked, inv)
+    insert_item_and_less_enchanted(items_picked, inv)
   end
 end

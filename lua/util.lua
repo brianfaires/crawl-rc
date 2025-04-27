@@ -66,6 +66,10 @@ function have_shield()
   return items.equipped_at("shield") ~= nil
 end
 
+function get_body_armour()
+  return items.equipped_at("body armour")
+end
+
 ---------------------------------
 --- Custom def of ego/branded ---
 ---------------------------------
@@ -167,11 +171,10 @@ function get_armour_ev(it)
   local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
 
-  local encumb = it.encumbrance - 2* get_mut("sturdy frame", true)
+  local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
 
   armor_penalty = encumb - 3
-  -- todo: sturdy frame mutation
 
   if armor_penalty > 0 then
     if armor_penalty >= str then dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
@@ -249,13 +252,15 @@ function get_weap_min_delay(it)
   return min_delay
 end
 
-function get_weap_delay(it)
+function get_weap_delay(it, ignore_brands)
   local delay = it.delay - you.skill(it.weap_skill)/2
   local min_delay = get_weap_min_delay(it)
   if delay < min_delay then delay = min_delay end
 
-  if it.ego() == "speed" then delay = delay * 2 / 3
-  elseif it.ego() == "heavy" then delay = delay * 1.5
+  if not ignore_brands then
+    if it.ego() == "speed" then delay = delay * 2 / 3
+    elseif it.ego() == "heavy" then delay = delay * 1.5
+    end
   end
 
   if delay < 3 then delay = 3 end
@@ -297,14 +302,16 @@ function get_slay_bonuses()
       if is_ring(it) then
         if it.artefact then
           local name = it.name()
-          local idx = name:find("Slay+")
+          local idx = name:find("Slay")
           if idx then
             local slay = tonumber(name:sub(idx+5, idx+5))
             if slay == 1 then
               local next_digit = tonumber(name:sub(idx+6, idx+6))
               if next_digit then slay = 10 + next_digit end
             end
-            sum = sum + slay
+
+            if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
+            else sum = sum - slay end
           end
         elseif it.ego(true) == "Slay" then
           sum = sum + it.plus
@@ -333,7 +340,6 @@ function get_staff_school(it)
 	end
 end
 
--- Calc extra damage for magical staves
 function get_staff_bonus_dmg(it, no_brand_dmg)
   if no_brand_dmg and
      it.name("base") ~= "staff of earth" and
@@ -356,9 +362,9 @@ end
 
 
 ----------------------------------
---------- get_weap_dps() ---------
+--------- get_weap_dmg() ---------
 ----------------------------------
-function get_weap_dmg(it, no_brand_dmg)
+function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
@@ -391,8 +397,9 @@ function get_weap_dmg(it, no_brand_dmg)
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + you.skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
 
-  local pre_brand_dmg = it.damage * stat_mod * skill_mod + it_plus + get_slay_bonuses()
-
+  it_plus = it_plus + get_slay_bonuses()
+  local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
+  local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
   if is_staff(it) then
     return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg))
@@ -401,12 +408,10 @@ function get_weap_dmg(it, no_brand_dmg)
   local ego = it.ego()
   if not ego then return pre_brand_dmg end
 
-  if ego == "spectralizing" then return 2 * pre_brand_dmg
-  elseif ego == "heavy" then return 1.8 * pre_brand_dmg
-  end
-
   if not no_brand_dmg then
-    if ego == "flaming" or ego == "freezing" then return 1.25 * pre_brand_dmg  end
+    if ego == "spectralizing" then return 2 * pre_brand_dmg end
+    if ego == "heavy" then return (1.8 * pre_brand_dmg_no_plus + it_plus) end
+    if ego == "flaming" or ego == "freezing" then return 1.25 * pre_brand_dmg end
     if ego == "draining" then return (1.25 * pre_brand_dmg + 2) end
     if ego == "electrocution" then return (pre_brand_dmg + 3.5) end
     -- Ballparking venom as 5 dmg since it totally breaks the paradigm
@@ -416,6 +421,13 @@ function get_weap_dmg(it, no_brand_dmg)
     if ego == "distortion" then return (pre_brand_dmg + 6) end
     -- Weighted average of all the easily computed brands was ~ 1.17*dmg + 2.13
     if ego == "chaos" then return (1.25 * pre_brand_dmg + 2) end
+
+    if not no_weight_all_brands then
+      if ego == "protection" then return 1.15 * pre_brand_dmg end
+      if ego == "vampirism" then return 1.25 * pre_brand_dmg end
+      if ego == "holy wrath" then return 1.15 * pre_brand_dmg end
+      if ego == "antimagic" then return 1.1 * pre_brand_dmg end
+    end
   end
 
   return pre_brand_dmg
@@ -424,8 +436,8 @@ end
 ----------------------------------
 --------- get_weap_dps() ---------
 ----------------------------------
-function get_weap_dps(it, no_brand_dmg)
-  return get_weap_dmg(it, no_brand_dmg) / get_weap_delay(it)
+function get_weap_dps(it, no_brand_dmg, no_weight_all_brands)
+  return get_weap_dmg(it, no_brand_dmg, no_weight_all_brands) / get_weap_delay(it)
 end
 
 -----------------------------
@@ -467,6 +479,8 @@ function get_armour_info(it)
   if not is_armour(it) then return end
 
   if is_shield(it) then
+    if is_orb(it) then return "" end
+
     local ev = get_shield_penalty(it)
     local ev_str = string.format("%.1f", ev)
     ev_str = "-"..ev_str

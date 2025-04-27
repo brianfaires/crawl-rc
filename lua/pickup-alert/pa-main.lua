@@ -10,17 +10,17 @@ function alert_item(it, alert_type)
   if not previously_alerted(it) and not previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
-	elseif is_body_armour(it) then
+	  elseif is_body_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
-  elseif is_armour(it) then
-    show_alert_msg("Item alert, "..alert_type..": ", name)
-  else
-    show_alert_msg("Item alert, "..alert_type..": ", name)
-  end
+    elseif is_armour(it) then
+      show_alert_msg("Item alert, "..alert_type..": ", name)
+    else
+      show_alert_msg("Item alert, "..alert_type..": ", name)
+    end
 
-  insert_item_and_less_enchanted(items_alerted, it)
-  table.insert(level_alerts, name)
-end
+    insert_item_and_less_enchanted(items_alerted, it)
+    table.insert(level_alerts, name)
+  end
 
   -- Returns true to make other code more concise; indicates that we tried to alert this item
   return true
@@ -46,9 +46,10 @@ function c_assign_invletter_item_alerts(it)
   util.remove(level_alerts, it.name("plain"))
 end
 
+local disable_pa = false
 function c_message_item_alerts(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
-    disable_autopickup = true
+    disable_pa = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
     for v in iter.invent_iterator:new(level_alerts) do
@@ -64,15 +65,17 @@ function c_message_item_alerts(text, _)
   end
 end
 
+local last_ready_item_alerts_turn = 0
 function ready_item_alerts()
-  update_high_scores(items.equipped_at("Armour"))
-  if not disable_autopickup then
-	  for it in iter.invent_iterator:new(items.inventory()) do
-		if is_weapon(it) then update_high_scores(it) end
-	end
-  end
+  if you.turns() == last_ready_item_alerts_turn then return end
+  last_ready_item_alerts_turn = you.turns()
 
-  disable_autopickup = false
+  if not disable_pa then
+    generate_inv_weap_arrays()
+    update_high_scores(items.equipped_at("body armour"))
+  else
+    disable_pa = false
+  end
 end
 
 
@@ -81,7 +84,7 @@ end
 ---- Autopickup main ----
 -------------------------
 add_autopickup_func(function (it, _)
-  if disable_autopickup then return end
+  if disable_pa then return end
 
   -- Check for pickup
   local retVal = false
