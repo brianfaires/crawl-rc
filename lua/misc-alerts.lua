@@ -18,7 +18,7 @@ end
 local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
-    if am and am.subtype() == "amulet of faith" then
+    if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" or you.god() == "Kikubaaqudgha" then return end
       crawl.mpr("<cyan>6 star piety! Maybe ditch that amulet soon.</cyan>")
       crawl.more()
@@ -27,9 +27,30 @@ local function alert_remove_faith()
   end
 end
 
+-------------------------------------------------
+----- Alert once at a specific HP threshold -----
+-------------------------------------------------
+-- Throw a force_more() at ~50% hp; don't throw again until fully healed
+local HP_THRESHOLD = 0.5
+local hp, mhp = you.hp()
+local below_hp_threshold = hp <= HP_THRESHOLD * mhp
+
+local function alert_low_hp()
+  local hp, mhp = you.hp()
+  if below_hp_threshold then
+    below_hp_threshold = hp ~= mhp
+  elseif hp <= HP_THRESHOLD * mhp then
+    below_hp_threshold = true
+    local threshold_perc = 100 * HP_THRESHOLD
+    crawl.mpr("<red>!!! Dropped below "..threshold_perc.."% HP !!!</red>")
+    crawl.more()
+  end
+end
+
 ------------------------------------------
 ------------------ Hook ------------------
 ------------------------------------------
 function ready_misc_alerts()
   alert_remove_faith()
+  alert_low_hp()
 end

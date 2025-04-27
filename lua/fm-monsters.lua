@@ -1,35 +1,81 @@
 ------------------------------------------------------------------------------------------
 ------------------------------- Monster force_mores config -------------------------------
 ------------------------------------------------------------------------------------------
+local function create_fm_string(monster_name)
+  return "monster_warning:(?<!spectral )("..monster_name..")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+end
+
 -- This stops on all Uniques & Pan lords
 crawl.setopt("force_more_message += monster_warning:" ..
-              "(?!Orb)(?!Guardian)(?-i:[A-Z]).*comes into view")
+              "(?!Orb)(?!Guardian)(?-i:[A-Z]).*comes? into view")
 
 ---- Everything included in this list will cause a more() prompt.
 ---- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
 local force_more_monsters = {
   -- High damage/speed
-    "shrike", "juggernaut", "orbs? of fire", "flayed ghost",
+    "juggernaut", "orbs? of fire", "flayed ghost",
   -- Torment
     "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
     "mummy priest", "(dread|ancient) lich", "lurking horror",
   --Summoning
-    "boggart", "shadow demon", "guardian serpent", "ironbound convoker",
+    "shadow demon", "guardian serpent", "ironbound convoker",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
     "halazid warlock", "deep elf elementalist", "demonspawn corrupter",
     "elemental wellspring",
   --Dangerous abilities
-    "swamp worm", "floating eye", "vault warden", "air elemental", "wendingo",
-    "torpor snail", "dream sheep", "water nymph", "shambling mangrove", "iron giant",
+    "swamp worm", "vault warden", "air elemental", "wendingo",
+    "torpor snail", "water nymph", "shambling mangrove", "iron giant",
     "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
   --Dangerous clouds
     "catoblepas", "death drake", "apocalypse crab", "putrid mouth" }
 
 
+-----------------------------------------------------------------------------------------
+------------------------------- force_mores w/ turn delay -------------------------------
+-----------------------------------------------------------------------------------------
+-- The following monsters will only cause a force_more() once every # of turns; ie one alert per pack
+local fm_delayed = { "dream sheep", "shrike", "boggart", "floating eye" }
+local turns_to_delay = 10
+
+local last_fm_turn = {}
+local monsters_to_mute = {}
+
+for v in iter.invent_iterator:new(fm_delayed) do
+  crawl.setopt("force_more_message += "..create_fm_string(v))
+  last_fm_turn[v] = -1
+end
+
+-------------------
+------ Hooks ------
+-------------------
+function c_message_fm_delayed(text, channel)
+  for v in iter.invent_iterator:new(fm_delayed) do
+    if text:find(v..".*comes? into view") and last_fm_turn[v] == -1 then
+	  last_fm_turn[v] = you.turns()
+	  monsters_to_mute[#monsters_to_mute+1] = v
+	end
+  end
+end
+
+function ready_fm_delayed()
+  for v in iter.invent_iterator:new(monsters_to_mute) do
+    crawl.setopt("force_more_message -= "..create_fm_string(v))
+  end
+  monsters_to_mute = {}
+
+  for v in iter.invent_iterator:new(fm_delayed) do
+    if you.turns() == last_fm_turn[v] + turns_to_delay then
+	  crawl.setopt("force_more_message += "..create_fm_string(v))
+	  last_fm_turn[v] = -1
+	end
+  end
+end
+
+
 ------------------------------------------------------------------------------------------
 ------------------------------- Dynamic force_mores config -------------------------------
 ------------------------------------------------------------------------------------------
--- hp-specific force_mores() by gammafunk, willpower/int/resistance added by sockthot
+-- hp-specific force_mores() by gammafunk, extended by bueler
 local fm_patterns = {
   -- Fast, early game Dungeon problems for chars with low mhp.
   {name = "30hp", cond = "hp", cutoff = 30, pattern = "hound"},
@@ -162,7 +208,7 @@ for v in iter.invent_iterator:new(force_more_monsters) do
     fm_mon_str = fm_mon_str.."|"..v
   end
 end
-fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum).*comes into view"
+fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 crawl.setopt("force_more_message += "..fm_mon_str)
 
 
@@ -179,16 +225,13 @@ end
 
 -- Util for checks against resistance and hp
 local function get_three_pip_action(active, hp, cutoff, res)
+  local div = res+1
+  if div == 4 then div = 5 end
+
   if active then
-    if hp >= cutoff then return "-" end
-    if res == 1 and hp >= cutoff/2 then return "-" end
-    if res == 2 and hp >= cutoff/3 then return "-" end
-    if res == 3 and hp >= cutoff/5 then return "-" end
+    if hp >= cutoff/div then return "-" end
   else
-    if res == 0 and hp < cutoff then return "+" end
-    if res == 1 and hp > cutoff/2 then return "+" end
-    if res == 2 and hp > cutoff/3 then return "+" end
-    if res == 3 and hp > cutoff/5 then return "+" end
+    if hp < cutoff/div then return "+" end
   end
 end
 
@@ -226,8 +269,7 @@ function ready_force_mores()
       msg = v.pattern
     end
 
-    msg = "monster_warning:(?<!spectral )(" .. msg .. ")"..
-          "(?! (skeleton|zombie|simulacrum)).*comes into view"
+    msg = create_fm_string(msg)
 
     local action = nil
     local fm_name = v.pattern

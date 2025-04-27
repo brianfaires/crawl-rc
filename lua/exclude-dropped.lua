@@ -1,8 +1,9 @@
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
+-- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
 
 -------------------------
----- Persistant data ----
+---- persistent data ----
 -------------------------
 if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
@@ -55,10 +56,22 @@ local function get_misc_name(text)
   end
 end
 
+local function has_enchantable_weap_in_inv()
+  for cur in iter.invent_iterator:new(items.inventory()) do
+    if cur.class(true) == "weapon" and not cur.artefact and cur.plus < 9 then return true end
+  end
+
+  return false
+end
+
 local function get_scroll_name(text)
-  if you.skill("Unarmed Combat") < 8 then return end
-  if text:find("enchant weapon") then return "enchant weapon" end
-  if text:find("brand weapon") then return "brand weapon" end
+  if text:find("enchant weapon") then
+    if has_enchantable_weap_in_inv() then return end
+    return "enchant weapon"
+  elseif text:find("brand weapon") then
+    if has_enchantable_weap_in_inv() then return end
+    return "brand weapon"
+  end
 end
 
 
@@ -87,7 +100,7 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions..">"..item_name
   else
     crawl.setopt("autopickup_exceptions -= >"..item_name)
-    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
+    -- Remove persistent exclusion (try 3 times to make sure we capture comma)
     dropped_item_exclusions = dropped_item_exclusions:gsub(",>"..item_name, "")
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name..",", "")
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")

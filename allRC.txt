@@ -3804,10 +3804,10 @@ if loaded_pa_data then return end
 loaded_pa_data = true
 
 -------------------------------------------------------------------------------
----------------------------- Begin persistant data ----------------------------
+---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
-if not added_persistant_data or you.turns() == 0 then
-  added_persistant_data = 1
+if not added_persistent_data or you.turns() == 0 then
+  added_persistent_data = 1
 
   level_alerts = { }
   items_picked = { }
@@ -3845,8 +3845,8 @@ local function persist_var(var_name, var)
 end
 
 
-if not added_persistant_data_hooks then
-  added_persistant_data_hooks = true
+if not added_persistent_data_hooks then
+  added_persistent_data_hooks = true
   
   table.insert(chk_lua_save, function() return persist_table("level_alerts", level_alerts) end)
   table.insert(chk_lua_save, function() return persist_table("rare_items", rare_items) end)
@@ -3859,12 +3859,12 @@ if not added_persistant_data_hooks then
   table.insert(chk_lua_save, function() return persist_var("polearm_onehand_high_score", polearm_onehand_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("unbranded_high_score", unbranded_high_score) end)
   table.insert(chk_lua_save, function() return persist_var("weapon_high_score", weapon_high_score) end)
-  table.insert(chk_lua_save, function() return persist_var("added_persistant_data", 1) end)
+  table.insert(chk_lua_save, function() return persist_var("added_persistent_data", 1) end)
 end
 
 
 ----------------------------------------
----- Accessors into persistant data ----
+---- Accessors into persistent data ----
 ----------------------------------------
 function get_rare_item_index(it)
   local qualname = it.name("qual")
@@ -5281,7 +5281,7 @@ end
 -- Exclusion is removed when you pick the item back up
 
 -------------------------
----- Persistant data ----
+---- persistent data ----
 -------------------------
 if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
@@ -5367,7 +5367,7 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions..">"..item_name
   else
     crawl.setopt("autopickup_exceptions -= >"..item_name)
-    -- Remove persistant exclusion (try 3 times to make sure we capture comma)
+    -- Remove persistent exclusion (try 3 times to make sure we capture comma)
     dropped_item_exclusions = dropped_item_exclusions:gsub(",>"..item_name, "")
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name..",", "")
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")

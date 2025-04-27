@@ -2,19 +2,27 @@
 ---- race-specific ----
 ----------------------
 if you.race() == "Demonspawn" then
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
 elseif you.race() == "Formicid" then
-  crawl.setopt("more -= monster_warning:curare")
+  crawl.setopt("force_more_message -= monster_warning:curare")
 elseif you.race() == "Gargoyle" then
-  crawl.setopt("more -= monster_warning:curare")
+  crawl.setopt("force_more_message -= monster_warning:curare")
 elseif you.race() == "Ghoul" then
-  crawl.setopt("more -= monster_warning:curare")
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+  crawl.setopt("force_more_message -= monster_warning:curare")
+  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
 elseif you.race() == "Gnoll" then
   crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
 elseif you.race() == "Mummy" then
-  crawl.setopt("more -= monster_warning:curare")
-  crawl.setopt("more += monster_warning:wielding.*of holy wrath")
+  crawl.setopt("force_more_message -= monster_warning:curare")
+  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+end
+
+
+-----------------------
+---- class-specific ----
+-----------------------
+if you.class() == "Hunter" then
+  crawl.setopt("view_delay = 20")
 end
 
 
@@ -59,6 +67,7 @@ local function set_god_options()
     elseif cur_god == "Qazlal" then
       crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
       crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
+      crawl.setopt("force_more_message -= god:You feel.*protected")
     elseif cur_god == "The Shining One" then
       crawl.setopt("force_more_message += god:Your divine shield starts to fade.")
       crawl.setopt("force_more_message += god:Your divine shield fades away.")
@@ -86,27 +95,55 @@ end
 ---------------------
 ---- xl-specific ----
 ---------------------
+local early_warnings = {
+
+}
+local mid_warnings = {
+  "wielding.*of electrocution",
+  "You.*re more poisoned"
+}
+local late_warnings = {
+  "(?<!You)(?<!yourself) speeds? up",
+  "danger:goes berserk"
+}
+
+local function set_warnings(warnings, create)
+  for _, v in ipairs(warnings) do
+    if create then
+      crawl.setopt("force_more_message += "..v)
+    else
+      crawl.setopt("force_more_message -= "..v)
+    end
+  end
+end
+
 local warn_early_levels = false
 local warn_mid_levels = false
+local warn_late_levels = false
+
 local function set_xl_options()
   if not warn_early_levels and you.xl() <= 5 then
     warn_early_levels = true
-    crawl.setopt("force_more_message += wielding.*(vorpal|(?<!armour)(?<!mail)(?<!scales) of)")
-    crawl.setopt("force_more_message += goes berserk")
-    crawl.setopt("force_more_message += (?<!You)(?<!yourself) speeds? up")
+    set_warnings(early_warnings, true)
   elseif warn_early_levels and you.xl() > 5 then
     warn_early_levels = false
-    crawl.setopt("force_more_message -= wielding.*(vorpal|(?<!armour)(?<!mail)(?<!scales) of)")
-    crawl.setopt("force_more_message -= goes berserk")
-    crawl.setopt("force_more_message -= (?<!You)(?<!yourself) speeds? up")
+    set_warnings(early_warnings, false)
   end
 
   if not warn_mid_levels and you.xl() <= 10 then
     warn_mid_levels = true
-    crawl.setopt("force_more_message += wielding.*of electrocution")
+    set_warnings(mid_warnings, true)
   elseif warn_mid_levels and you.xl() > 10 then
     warn_mid_levels = false
-    crawl.setopt("force_more_message -= wielding.*of electrocution")
+    set_warnings(mid_warnings, false)
+  end
+
+  if not warn_late_levels and you.xl() <= 15 then
+    warn_late_levels = true
+    set_warnings(late_warnings, true)
+  elseif not warn_late_levels and you.xl() > 15 then
+    warn_late_levels = false
+    set_warnings(late_warnings, false)
   end
 end
 

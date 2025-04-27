@@ -3,10 +3,10 @@ loaded_pa_data = true
 dofile("crawl-rc/lua/util.lua")
 
 -------------------------------------------------------------------------------
----------------------------- Begin persistant data ----------------------------
+---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
-if not added_persistant_data or you.turns() == 0 then
-  local added_persistant_data = 1
+if not added_persistent_data or you.turns() == 0 then
+  local added_persistent_data = 1
 
   level_alerts = { }
   items_picked = { }
@@ -44,8 +44,8 @@ local function persist_var(var_name, var)
 end
 
 
-if not added_persistant_data_hooks then
-  added_persistant_data_hooks = true
+if not added_persistent_data_hooks then
+  added_persistent_data_hooks = true
 
   table.insert(chk_lua_save,
     function() return persist_table("level_alerts",
@@ -81,12 +81,12 @@ if not added_persistant_data_hooks then
     function() return persist_var("weapon_high_score",
         weapon_high_score) end)
   table.insert(chk_lua_save,
-    function() return persist_var("added_persistant_data", 1) end)
+    function() return persist_var("added_persistent_data", 1) end)
 end
 
 
 ----------------------------------------
----- Accessors into persistant data ----
+---- Accessors into persistent data ----
 ----------------------------------------
 function get_rare_item_index(it)
   local qualname = it.name("qual")
@@ -208,7 +208,7 @@ end
 --------------------
 --- Startup code ---
 --------------------
--- Starting items: Remove from rare_items, and add to items_picked
+-- Starting items: Remove from rare_items, and add to items_pickedgit 
 if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)

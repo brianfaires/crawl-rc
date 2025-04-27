@@ -5,6 +5,7 @@ autofight_stop = 65
 hp_warning = 20
 mouse_input = false
 item_stack_summary_minimum = 8
+fail_severity_to_confirm = 4
 default_manual_training = true
 drop_disables_autopickup = true
 autofight_caught = true
@@ -161,6 +162,7 @@ function ready()
   if you.turns() ~= last_turn then
     last_turn = you.turns()
     if ready_force_mores then ready_force_mores() end
+    if ready_fm_delayed then ready_fm_delayed() end
     if ready_dynamic_options then ready_dynamic_options() end
     if ready_inscribe_stats then ready_inscribe_stats() end
     if ready_weapon_slots then ready_weapon_slots() end
@@ -171,9 +173,11 @@ function ready()
     if ready_after_shaft then ready_after_shaft() end
     if ready_fully_recover then ready_fully_recover() end
     if ready_safe_stairs then ready_safe_stairs() end
+    if ready_stop_on_pan_gates then ready_stop_on_pan_gates() end
+
+    if ready_announce_damage then ready_announce_damage() end
     if ready_item_alerts then ready_item_alerts() end
     if ready_misc_alerts then ready_misc_alerts() end
-    if ready_announce_damage then ready_announce_damage() end
   end
 end
 --Call ready() once before autopickup/alerts trigger

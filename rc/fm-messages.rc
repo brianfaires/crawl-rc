@@ -13,7 +13,7 @@ more -= welcomes you( back)?!
 
 # Significant spells/effects ending
 more += is no longer charmed
-more += You are starting to lose your buoyancy
+more += You.*re starting to lose your buoyancy
 # Death's Door
 more += time is.*running out
 more += life is in your own
@@ -27,8 +27,8 @@ more += monster_warning:carrying a wand of
 more += monster_warning:curare
 more += The forest starts to sway and rumble
 more += begins to recite a word of recall
-more += doors? slams? shut
-more += blows on a signal horn
+#more += doors? slams? shut
+#more += blows on a signal horn
 more += The.*offers itself to Yredelemnul
 more += Deactivating autopickup
 more += Your?.*suddenly stops? moving
@@ -55,7 +55,7 @@ more += A sentinel's mark forms upon you
 
 # Clouds
 more += danger:(calcify|mutagenic)
-more += You are engulfed in.*miasma
+more += You.*re engulfed in.*miasma
 more += Miasma billows from the
 
 
@@ -70,6 +70,7 @@ more += Your body shudders with the violent release
 # Found something important
 more += Found.*the Ecumenical Temple
 more += timed_portal:.*
+more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
@@ -81,7 +82,7 @@ more += You blink
 more += danger:You feel strangely .*stable
 more += danger:sense of stasis
 more += Your surroundings.*(different|flicker)
-more += You are suddenly pulled into a different region
+more += You.*re suddenly pulled into a different region
 more += delayed
 
 
@@ -92,7 +93,7 @@ more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse
 more += You feel a (horrible|terrible) chill
-more += You are.*terribly
+more += You.*re.*terribly
 
 # Hit by something
 more += Terrible wounds open

@@ -88,7 +88,7 @@ Updates in real time with skill/stats/etc.
 Armour is inscribed with its AC (or SH) and EV.
 
 ### [lua/misc-alerts.lua](lua/misc-alerts.lua)
-Used to hold more - currently just pings when you hit 6* piety w/ amulet of faith
+2 alerts: A one-time force-more when dropping below 50% HP. And a msg when you hit 6* piety w/ amulet of faith
 
 ### [lua/mute-swaps.rc](lua/mute-swaps.lua)
 Minimizes spam when swapping/ID'ing items. When multiple messages with " - " show up in a single turn, 
