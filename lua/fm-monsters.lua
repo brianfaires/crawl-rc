@@ -48,12 +48,12 @@ end
 -------------------
 ------ Hooks ------
 -------------------
-function c_message_fm_delayed(text, channel)
+function c_message_fm_delayed(text, _)
   for v in iter.invent_iterator:new(fm_delayed) do
     if text:find(v..".*comes? into view") and last_fm_turn[v] == -1 then
-	  last_fm_turn[v] = you.turns()
-	  monsters_to_mute[#monsters_to_mute+1] = v
-	end
+      last_fm_turn[v] = you.turns()
+      monsters_to_mute[#monsters_to_mute+1] = v
+    end
   end
 end
 

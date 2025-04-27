@@ -174,7 +174,7 @@ function get_armour_ev(it)
   local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
 
-  armor_penalty = encumb - 3
+  local armor_penalty = encumb - 3
 
   if armor_penalty > 0 then
     if armor_penalty >= str then dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
@@ -466,7 +466,7 @@ function get_weapon_info(it)
   local it_plus = if_el(it.plus, it.plus, 0)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
-  
+
   --TODO: This would be awesome if it didn't ruin the main UI
   --dps_str = "DPS=<white>"..dps_str.."</white> "
   --return dps_str.."(<red>"..dmg_str.."</red>/<blue>"..delay_str.."</blue>), Acc<white>"..acc.."</white>"

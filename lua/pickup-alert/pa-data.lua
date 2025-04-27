@@ -122,7 +122,7 @@ end
 -------------------------------
 --- Multi store/remove data ---
 -------------------------------
-function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
+local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
   local name = it.name("plain")

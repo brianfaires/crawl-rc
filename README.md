@@ -161,9 +161,9 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 - First orb of each type
 
 ## Dev notes
-- I wrote this ~2 years ago and recently refreshed it when lua inscriptions was enabled via lua.
+- I wrote this over 2 years ago and recently refreshed it when lua inscriptions was enabled via lua.
     I've run it with several characters, but can't cover everything. 
-    Please LMK if you find any bugs, outdated notes, suggestions, etc.
+    Please LMK if you find bugs, outdated notes, suggestions, etc.
 
 ### TODO list
 1. 0.33.1 Updates: spells, runrest_status's, rare_items, misc_items(talismans)
@@ -173,3 +173,4 @@ Picks up staves when you are training the relevant spell school. Alerts generate
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
 1. Update fm-monsters lists to {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
 1. dynamic-options.rc to use lists like {god name, [fm-prompts]}
+1. Separate toggles for pickup & alert

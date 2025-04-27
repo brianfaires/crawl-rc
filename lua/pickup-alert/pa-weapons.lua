@@ -12,7 +12,7 @@ dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
 local inv_weap_data = {}
 local function make_weapon_struct(it)
-  weap_data = {}
+  local weap_data = {}
 
   weap_data.dps = get_weap_dps(it)
   weap_data.acc = it.accuracy + it.plus
@@ -264,8 +264,6 @@ local function pickup_weapon(it, cur)
     if it.is_ranged then return get_weap_dps(it) > cur.dps end
 
     local it_plus = if_el(it.plus, it.plus, 0)
-    local cur_plus = if_el(cur.plus, cur.plus, 0)
-
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
     local cur_score = cur.dps + cur.acc/3
 
@@ -313,7 +311,7 @@ local function alert_interesting_weapon(it, cur)
         if get_weap_dps(it) > 0.8*cur.dps then return alert_item(it, "2-handed weapon") end
       end
 
-      if not have_shield() then 
+      if not have_shield() then
         if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
           not util.contains(egos, it.ego()) then
             return alert_item(it, "New ego4")
@@ -356,7 +354,7 @@ local function alert_interesting_weapon(it, cur)
           end
         else
           local dmg_delta, other_acc
-          if cur.dps > inv_max_dmg[get_weap_type(it)] then 
+          if cur.dps > inv_max_dmg[get_weap_type(it)] then
             dmg_delta = get_weap_dps(it) - cur.dps
             other_acc = cur.acc
           else

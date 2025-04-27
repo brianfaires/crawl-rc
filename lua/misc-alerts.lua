@@ -36,7 +36,7 @@ local hp, mhp = you.hp()
 local below_hp_threshold = hp <= HP_THRESHOLD * mhp
 
 local function alert_low_hp()
-  local hp, mhp = you.hp()
+  hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
   elseif hp <= HP_THRESHOLD * mhp then

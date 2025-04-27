@@ -50,10 +50,10 @@ function pickup_armour(it)
 
     -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-      
+
     if it.artefact and ac_delta > -5 then return true end
     if cur.artefact then return false end
-      
+
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance
     elseif has_ego(it) and not has_ego(cur) then
@@ -196,10 +196,12 @@ end
 ---- Begin alert_interesting_armour() ----
 ------------------------------------------
 -- Alerts armour items that did trigger autopickup, but are worth consideration
--- Includes: Artefacts, added or changed egos, and body armour AC/EV/Encumbrance changes, defined by following heuristics:
--- Lighter: EV/AC >= { 0.6, 0.8, 1.2, 2 } for ego: {gain, diff, same, lose}  --OR-- Gain/Diff ego while losing <=4AC
--- Heavier: AC/EV >= { 0.4, 0.7, 0.8, 2 } for ego: {gain, diff, same, lose} ; Penalty == 0.75*encumb_change (or 0 if irrelevant)
---
+-- Includes: Artefacts, added or changed egos, and
+  -- body armour AC/EV/Encumbrance changes, defined by following heuristics:
+    -- Lighter: EV/AC >= { 0.6, 0.8, 1.2, 2 } for ego: {gain, diff, same, lose}
+      -- Or: Gain/Diff ego while losing <=4AC
+    -- Heavier: AC/EV >= { 0.4, 0.7, 0.8, 2 } for ego: {gain, diff, same, lose}
+      -- Penalty == 0.75*encumb_change (or 0 if irrelevant)
 -- Adjusting the heuristic values up will mean fewer alerts, and down will alert more often.
 -- If you want a specific alert to occur more or less often, look for the line of code below with the alert text,
 -- Then modify the values in the same line of code.
