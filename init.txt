@@ -113,6 +113,7 @@ function c_message(text, channel)
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_ignore_gauntlet_msgs then c_message_ignore_gauntlet_msgs(text, channel) end
+  if c_message_fm_delayed then c_message_fm_delayed(text, channel) end
 end
 
 

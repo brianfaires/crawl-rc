@@ -3479,11 +3479,13 @@ function get_armour_ev(it)
   local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
 
-  armor_penalty = encumb - 3
+  local armor_penalty = encumb - 3
 
   if armor_penalty > 0 then
-    if armor_penalty >= str then dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
-    else dodge_bonus = dodge_bonus * (1 - armor_penalty / (str * 2))
+    if armor_penalty >= str then
+      dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
+    else
+      dodge_bonus = dodge_bonus * (1 - armor_penalty / (str * 2))
     end
   end
 
@@ -3519,11 +3521,7 @@ function get_shield_sh(it)
   local base_sh = it.ac * 2 + sh_size*get_race_size()
   local shield = base_sh * (50 + skill*5/2)
   shield = shield + 200*it_plus
-
-  if skill < 3 then shield = shield + 76*skill
-  else shield = shield + 38*(3+skill)
-  end
-
+  shield = shield + if_el(skill < 3, 76*skill, 38*(3+skill))
   shield = shield + dex*38*(base_sh+13)/26
   return (shield + 50) / 200
 end
@@ -3771,7 +3769,7 @@ function get_weapon_info(it)
   local it_plus = if_el(it.plus, it.plus, 0)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
-  
+
   --TODO: This would be awesome if it didn't ruin the main UI
   --dps_str = "DPS=<white>"..dps_str.."</white> "
   --return dps_str.."(<red>"..dmg_str.."</red>/<blue>"..delay_str.."</blue>), Acc<white>"..acc.."</white>"
@@ -3975,7 +3973,7 @@ end
 -------------------------------
 --- Multi store/remove data ---
 -------------------------------
-function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
+local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
   local name = it.name("plain")
@@ -4234,10 +4232,10 @@ function pickup_armour(it)
 
     -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-      
+
     if it.artefact and ac_delta > -5 then return true end
     if cur.artefact then return false end
-      
+
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance
     elseif has_ego(it) and not has_ego(cur) then
@@ -4380,10 +4378,12 @@ end
 ---- Begin alert_interesting_armour() ----
 ------------------------------------------
 -- Alerts armour items that did trigger autopickup, but are worth consideration
--- Includes: Artefacts, added or changed egos, and body armour AC/EV/Encumbrance changes, defined by following heuristics:
--- Lighter: EV/AC >= { 0.6, 0.8, 1.2, 2 } for ego: {gain, diff, same, lose}  --OR-- Gain/Diff ego while losing <=4AC
--- Heavier: AC/EV >= { 0.4, 0.7, 0.8, 2 } for ego: {gain, diff, same, lose} ; Penalty == 0.75*encumb_change (or 0 if irrelevant)
---
+-- Includes: Artefacts, added or changed egos, and
+  -- body armour AC/EV/Encumbrance changes, defined by following heuristics:
+    -- Lighter: EV/AC >= { 0.6, 0.8, 1.2, 2 } for ego: {gain, diff, same, lose}
+      -- Or: Gain/Diff ego while losing <=4AC
+    -- Heavier: AC/EV >= { 0.4, 0.7, 0.8, 2 } for ego: {gain, diff, same, lose}
+      -- Penalty == 0.75*encumb_change (or 0 if irrelevant)
 -- Adjusting the heuristic values up will mean fewer alerts, and down will alert more often.
 -- If you want a specific alert to occur more or less often, look for the line of code below with the alert text,
 -- Then modify the values in the same line of code.
@@ -4581,7 +4581,7 @@ loaded_pa_weapons = true
 
 local inv_weap_data = {}
 local function make_weapon_struct(it)
-  weap_data = {}
+  local weap_data = {}
 
   weap_data.dps = get_weap_dps(it)
   weap_data.acc = it.accuracy + it.plus
@@ -4626,15 +4626,10 @@ local inv_max_dmg_acc = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
 local egos = { }
 
 
-local function get_weap_type(it)
-  local ret_val
-  if it.is_ranged then ret_val = "ranged_"
-  else ret_val = "melee_"
-  end
-
+local function get_weap_tag(it)
+  local ret_val = if_el(it.is_ranged, "ranged_", "melee_")
   ret_val = ret_val..get_hands(it)
   if has_ego(it) then ret_val = ret_val.."b" end
-
   return ret_val
 end
 
@@ -4661,7 +4656,7 @@ function generate_inv_weap_arrays()
       if has_ego(cur) then table.insert(egos, get_ego(cur)) end
 
       local dmg = inv_weap_data[#inv_weap_data].dps
-      local weap_type = get_weap_type(cur)
+      local weap_type = get_weap_tag(cur)
       if dmg > inv_max_dmg[weap_type] then
         inv_max_dmg[weap_type] = dmg
         local cur_plus = cur.plus
@@ -4778,7 +4773,7 @@ local function get_dmg_delta(it, cur, penalty)
   if not penalty then penalty = 1 end
 
   local delta
-  local dmg_inv = inv_max_dmg[get_weap_type(it)]
+  local dmg_inv = inv_max_dmg[get_weap_tag(it)]
 
   if cur.dps >= dmg_inv then
     delta = get_weap_dps(it) - cur.dps
@@ -4833,8 +4828,6 @@ local function pickup_weapon(it, cur)
     if it.is_ranged then return get_weap_dps(it) > cur.dps end
 
     local it_plus = if_el(it.plus, it.plus, 0)
-    local cur_plus = if_el(cur.plus, cur.plus, 0)
-
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
     local cur_score = cur.dps + cur.acc/3
 
@@ -4867,7 +4860,7 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match
     if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then return alert_item(it, "New ego") end
-    if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "Stronger weapon") end
+    if get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then return alert_item(it, "Stronger weapon") end
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
@@ -4882,17 +4875,17 @@ local function alert_interesting_weapon(it, cur)
         if get_weap_dps(it) > 0.8*cur.dps then return alert_item(it, "2-handed weapon") end
       end
 
-      if not have_shield() then 
+      if not have_shield() then
         if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
           not util.contains(egos, it.ego()) then
             return alert_item(it, "New ego4")
         end
         if not cur.branded and
-          get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
+          get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
             return alert_item(it, "2-handed weapon")
         end
         if cur.branded and not has_ego(it) and
-        get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
+        get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
           return alert_item(it, "2-handed weapon")
         end
       elseif you.skill("shields") <= 4 then
@@ -4925,12 +4918,12 @@ local function alert_interesting_weapon(it, cur)
           end
         else
           local dmg_delta, other_acc
-          if cur.dps > inv_max_dmg[get_weap_type(it)] then 
+          if cur.dps > inv_max_dmg[get_weap_tag(it)] then
             dmg_delta = get_weap_dps(it) - cur.dps
             other_acc = cur.acc
           else
-            dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
-            other_acc = inv_max_dmg_acc[get_weap_type(it)]
+            dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_tag(it)]
+            other_acc = inv_max_dmg_acc[get_weap_tag(it)]
           end
 
           if dmg_delta > 0 then return alert_item(it, "Stronger weapon") end
@@ -5250,18 +5243,18 @@ end
 
 -- TODO: Would like to modify all messages/menus, but need a way to
 -- replace messages while they're in queue, delete the last message, or something
-function c_message_color_inscribe(text, _)
-  local orig_text = text
-  text = colorize_text(text)
-  if text == orig_text then return end
+-- function c_message_color_inscribe(text, _)
+--   local orig_text = text
+--   text = colorize_text(text)
+--   if text == orig_text then return end
 
-  local cleaned = cleanup_message(text)
-  if cleaned:sub(2, 4) == " - " then
-    text = " "..text
-  end
+--   local cleaned = cleanup_message(text)
+--   if cleaned:sub(2, 4) == " - " then
+--     text = " "..text
+--   end
 
-  crawl.mpr(text)
-end
+--   crawl.mpr(text)
+-- end
 
 
 -------- End lua/color-inscribe.lua --------
@@ -5722,12 +5715,12 @@ end
 -------------------
 ------ Hooks ------
 -------------------
-function c_message_fm_delayed(text, channel)
+function c_message_fm_delayed(text, _)
   for v in iter.invent_iterator:new(fm_delayed) do
     if text:find(v..".*comes? into view") and last_fm_turn[v] == -1 then
-	  last_fm_turn[v] = you.turns()
-	  monsters_to_mute[#monsters_to_mute+1] = v
-	end
+      last_fm_turn[v] = you.turns()
+      monsters_to_mute[#monsters_to_mute+1] = v
+    end
   end
 end
 
@@ -6127,7 +6120,7 @@ local hp, mhp = you.hp()
 local below_hp_threshold = hp <= HP_THRESHOLD * mhp
 
 local function alert_low_hp()
-  local hp, mhp = you.hp()
+  hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
   elseif hp <= HP_THRESHOLD * mhp then
@@ -6637,10 +6630,7 @@ function c_assign_invletter_weapon_slots(it)
   if not is_weapon(it) and not is_staff(it) then return end
 
   for i=0,2 do
-    local slot
-    if i==2 then slot = items.letter_to_index("w")
-    else slot = i
-    end
+    local slot = if_el(i==2, items.letter_to_index("w"), i)
 
     local inv = items.inslot(slot)
     if not inv then return slot end
@@ -6689,6 +6679,7 @@ function c_message(text, channel)
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_ignore_gauntlet_msgs then c_message_ignore_gauntlet_msgs(text, channel) end
+  if c_message_fm_delayed then c_message_fm_delayed(text, channel) end
 end
 
 

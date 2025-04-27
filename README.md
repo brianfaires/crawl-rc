@@ -167,10 +167,10 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 
 ### TODO list
 1. 0.33.1 Updates: spells, runrest_status's, rare_items, misc_items(talismans)
-1. Can colorize rF+, rC+, etc ?
-1. Wait for allies to heal
 1. Disable all auto explore stops in gauntlets until fully explored
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
 1. Update fm-monsters lists to {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
 1. dynamic-options.rc to use lists like {god name, [fm-prompts]}
 1. Separate toggles for pickup & alert
+1. Better colorizing of rF+, rC+, etc (needs crawl PR?)
+1. Wait for allies to heal (needs crawl PR?)

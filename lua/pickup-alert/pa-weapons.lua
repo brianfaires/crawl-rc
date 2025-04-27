@@ -57,15 +57,10 @@ local inv_max_dmg_acc = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
 local egos = { }
 
 
-local function get_weap_type(it)
-  local ret_val
-  if it.is_ranged then ret_val = "ranged_"
-  else ret_val = "melee_"
-  end
-
+local function get_weap_tag(it)
+  local ret_val = if_el(it.is_ranged, "ranged_", "melee_")
   ret_val = ret_val..get_hands(it)
   if has_ego(it) then ret_val = ret_val.."b" end
-
   return ret_val
 end
 
@@ -92,7 +87,7 @@ function generate_inv_weap_arrays()
       if has_ego(cur) then table.insert(egos, get_ego(cur)) end
 
       local dmg = inv_weap_data[#inv_weap_data].dps
-      local weap_type = get_weap_type(cur)
+      local weap_type = get_weap_tag(cur)
       if dmg > inv_max_dmg[weap_type] then
         inv_max_dmg[weap_type] = dmg
         local cur_plus = cur.plus
@@ -209,7 +204,7 @@ local function get_dmg_delta(it, cur, penalty)
   if not penalty then penalty = 1 end
 
   local delta
-  local dmg_inv = inv_max_dmg[get_weap_type(it)]
+  local dmg_inv = inv_max_dmg[get_weap_tag(it)]
 
   if cur.dps >= dmg_inv then
     delta = get_weap_dps(it) - cur.dps
@@ -296,7 +291,7 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match
     if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then return alert_item(it, "New ego") end
-    if get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then return alert_item(it, "Stronger weapon") end
+    if get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then return alert_item(it, "Stronger weapon") end
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
@@ -317,11 +312,11 @@ local function alert_interesting_weapon(it, cur)
             return alert_item(it, "New ego4")
         end
         if not cur.branded and
-          get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
+          get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
             return alert_item(it, "2-handed weapon")
         end
         if cur.branded and not has_ego(it) and
-        get_weap_dps(it) > inv_max_dmg[get_weap_type(it)] then
+        get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
           return alert_item(it, "2-handed weapon")
         end
       elseif you.skill("shields") <= 4 then
@@ -354,12 +349,12 @@ local function alert_interesting_weapon(it, cur)
           end
         else
           local dmg_delta, other_acc
-          if cur.dps > inv_max_dmg[get_weap_type(it)] then
+          if cur.dps > inv_max_dmg[get_weap_tag(it)] then
             dmg_delta = get_weap_dps(it) - cur.dps
             other_acc = cur.acc
           else
-            dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_type(it)]
-            other_acc = inv_max_dmg_acc[get_weap_type(it)]
+            dmg_delta = get_weap_dps(it) - inv_max_dmg[get_weap_tag(it)]
+            other_acc = inv_max_dmg_acc[get_weap_tag(it)]
           end
 
           if dmg_delta > 0 then return alert_item(it, "Stronger weapon") end

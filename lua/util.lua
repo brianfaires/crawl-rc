@@ -177,8 +177,10 @@ function get_armour_ev(it)
   local armor_penalty = encumb - 3
 
   if armor_penalty > 0 then
-    if armor_penalty >= str then dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
-    else dodge_bonus = dodge_bonus * (1 - armor_penalty / (str * 2))
+    if armor_penalty >= str then
+      dodge_bonus = dodge_bonus * (str / (armor_penalty * 2))
+    else
+      dodge_bonus = dodge_bonus * (1 - armor_penalty / (str * 2))
     end
   end
 
@@ -214,11 +216,7 @@ function get_shield_sh(it)
   local base_sh = it.ac * 2 + sh_size*get_race_size()
   local shield = base_sh * (50 + skill*5/2)
   shield = shield + 200*it_plus
-
-  if skill < 3 then shield = shield + 76*skill
-  else shield = shield + 38*(3+skill)
-  end
-
+  shield = shield + if_el(skill < 3, 76*skill, 38*(3+skill))
   shield = shield + dex*38*(base_sh+13)/26
   return (shield + 50) / 200
 end
