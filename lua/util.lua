@@ -67,7 +67,7 @@ function have_shield()
 end
 
 function get_body_armour()
-  return items.equipped_at("Armour")
+  return items.equipped_at("armour")
 end
 
 ---------------------------------
@@ -148,7 +148,7 @@ function get_armour_ev(it)
 
 
   -- Adjust str/dex/EV for artefact stat changes
-  local worn = items.equipped_at("Armour")
+  local worn = items.equipped_at("armour")
   if worn and worn.artefact then
     if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
     if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
@@ -267,7 +267,7 @@ function get_weap_delay(it, ignore_brands)
   if sh then delay = delay + get_shield_penalty(sh) end
 
   if it.is_ranged then
-    local body = items.equipped_at("Armour")
+    local body = items.equipped_at("armour")
     if body then
       local str = you.strength()
       if it.artefact then

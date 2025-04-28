@@ -73,7 +73,7 @@ function ready_item_alerts()
 
   if not disable_pa then
     generate_inv_weap_arrays()
-    update_high_scores(items.equipped_at("Armour"))
+    update_high_scores(items.equipped_at("armour"))
   else
     disable_pa = false
   end

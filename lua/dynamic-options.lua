@@ -165,7 +165,7 @@ local function set_skill_options()
     crawl.setopt("explore_stop_pickup_ignore -= ^book of")
   end
 
-  local arm = items.equipped_at("Armour")
+  local arm = items.equipped_at("armour")
   local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + you.skill("Armour")/2
   if not ignoring_spellcasting and heavy_arm then
     ignoring_spellcasting = true
