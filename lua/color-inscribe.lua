@@ -17,9 +17,9 @@ local function colorize_text(text, s, tag)
 end
 
 -- Color map to single digit tags:
-  -- 0:black, 1:lightblue, 2:lightgreen, 3:lightcyan, 4:lightred, 5:lightmagenta,
-  -- 6:brown, 7: lightgrey, 8:darkgrey, 9:blue, 10:green, 11:cyan, 12:red,
-  -- 13:magenta, 14:yellow, 15:white
+  -- 0:black, 1:lightblue, 2:green, 3:cyan, 4:red, 5:magenta,
+  -- 6:brown, 7: lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightyan, 12:lightred,
+  -- 13:lightmagenta, 14:yellow, 15:white
 local multi_plus = "%++"
 local multi_minus = "%-+"
 local pos_num = "%+%d+%.?%d*"
