@@ -36,7 +36,7 @@ function ready_announce_damage()
 
 
   --Skips message on initializing game
-  if previous_hp > 0 then
+  if you.turns() > 1 then
     local hp_difference = previous_hp - current_hp
     local mp_difference = previous_mp - current_mp
 
@@ -63,8 +63,8 @@ function ready_announce_damage()
           msg = "<red>You take " .. hp_difference .. " damage,</red><lightgrey> and have " ..
                   current_hp .. "/" .. max_hp .. " hp.</lightgrey>"
         else
-          msg = crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><green> and have " ..
-                            current_hp .. "/" .. max_hp .. " hp.</green>")
+          msg = "<red>You take " .. hp_difference .. " damage,</red><green> and have " ..
+                  current_hp .. "/" .. max_hp .. " hp.</green>"
         end
         crawl.mpr(msg)
 

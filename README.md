@@ -21,6 +21,8 @@ and `dofile()` statements with a copy-paste of the referenced file. Do the same 
 but add curly braces around the file contents to mark it as lua code `{ <file_contents> }`. 
 And don't manualy copy-paste the same file more than once.
 
+- Note: scripts don't reload when switching between characters. 
+    If you're playing locally, you should restart the app when you switch characters.
 
 ## Standard(-ish) Settings
 
