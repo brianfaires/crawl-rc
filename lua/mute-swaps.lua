@@ -33,7 +33,7 @@ function c_message_mute_swaps(text, channel)
   -- Mute subsequent item re-assignments in a single turn, for everything after the first item.
   -- Multiple slots for the same item will still be shown
   if channel == "plain" then
-    text = cleanup_message(text, true)
+    text = cleanup_text(text, true)
     if text:sub(2,4) == " - " then
       local item = text:sub(5, #text)
       local mute_str = "(?!.*("..item.."))"

@@ -11,7 +11,8 @@ function alert_item(it, alert_type)
     if is_weapon(it) or is_staff(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
 	  elseif is_body_armour(it) then
-      show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_armour_info(it))
+      local ac, ev = get_armour_info_strings(it)
+      show_alert_msg("Item alert, "..alert_type..": ", name.." "..ac..", "..ev)
     elseif is_armour(it) then
       show_alert_msg("Item alert, "..alert_type..": ", name)
     else

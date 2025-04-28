@@ -1,22 +1,30 @@
 dofile("crawl-rc/lua/util.lua")
 
 local function inscribe_armour_stats(it)
-  local new_inscr = get_armour_info(it)
-  local idx
-  if is_shield(it) then idx = it.inscription:find("SH+")
-  elseif is_body_armour(it) then idx = it.inscription:find("AC+")
-  else return
-  end
+  -- Will add to the beginning of inscriptions, or replace it's own values
+  -- This gsub's stats individually to avoid overwriting <color> tags
+  -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
+  local NUM_PATTERN = "[%+%-]%d+%.%d*"
+  local abbr = if_el(is_shield(it), "SH", "AC")
+  local primary, ev = get_armour_info_strings(it)
 
-  if idx then
-    if idx + #new_inscr <= #it.inscription then
-      new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
+  local new_insc
+  if it.inscription:find(abbr..NUM_PATTERN) then
+    new_insc = it.inscription:gsub(abbr..NUM_PATTERN, primary)
+    if ev and ev ~= "" then
+      new_insc = new_insc:gsub("EV"..NUM_PATTERN, ev)
     end
-    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1)..new_inscr end
+  else
+    new_insc = primary
+    if ev and ev ~= "" then
+      new_insc = new_insc..", "..ev
+    end
+    if it.inscription and it.inscription ~= "" then
+      new_insc = new_insc.." "..it.inscription
+    end
   end
 
-  it.inscribe(new_inscr, false)
-  return new_inscr
+  it.inscribe(new_insc, false)
 end
 
 local function inscribe_weapon_stats(it)

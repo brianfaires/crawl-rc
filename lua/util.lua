@@ -472,52 +472,47 @@ function get_weapon_info(it)
   return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
 end
 
+local function format_stat(abbr, val)
+  local stat_str = string.format("%.1f", val)
+  if val >= 0 then stat_str = "+"..stat_str end
+  return abbr..stat_str
+end
 
-function get_armour_info(it)
+function get_armour_info_strings(it)
   if not is_armour(it) then return end
+  if is_orb(it) then return "", "" end
 
-  if is_shield(it) then
-    if is_orb(it) then return "" end
-
-    local ev = get_shield_penalty(it)
-    local ev_str = string.format("%.1f", ev)
-    ev_str = "-"..ev_str
-
-    local sh = get_shield_sh(it)
-    local sh_str = string.format("%.1f", sh)
-    if sh >= 0 then sh_str = "+"..sh_str end
-    sh_str = "SH"..sh_str..","
-    if sh < 10 then sh_str = sh_str.." " end
-
-    return sh_str.."EV"..ev_str
-  else
-    local cur = items.equipped_at(it.equip_type)
-    local cur_ac = 0
-    local cur_ev = 0
-    if cur then
+  local cur = items.equipped_at(it.equip_type)
+  local cur_ac = 0
+  local cur_sh = 0
+  local cur_ev = 0
+  if cur and not (cur.ininventory and cur.slot == it.slot) then
+    -- Only show deltas if not same item
+    if is_shield(cur) then
+      cur_sh = get_shield_sh(cur)
+      cur_ev = get_shield_penalty(cur)
+    else
       cur_ac = get_armour_ac(cur)
       cur_ev = get_armour_ev(cur)
     end
+  end
 
-    local ac_delta = get_armour_ac(it) - cur_ac
-    local ac_str = string.format("%.1f", ac_delta)
-    if ac_delta >= 0 then ac_str = "+"..ac_str end
-    if not is_body_armour(it) then return "AC"..ac_str end
-
-    ac_str = "AC"..ac_str..","
-    if ac_delta < 10 then ac_str = ac_str.." " end
-
-    local ev_delta = get_armour_ev(it) - cur_ev
-    local ev_str = string.format("%.1f", ev_delta)
-    if ev_delta >= 0 then ev_str = "+"..ev_str end
-    return ac_str.."EV"..ev_str
+  if is_shield(it) then
+    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh)
+    local ev_str = format_stat("EV", get_shield_penalty(it) - cur_ev)
+    return sh_str, ev_str
+  else
+    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac)
+    if not is_body_armour(it) then return ac_str end
+    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev)
+    return ac_str, ev_str
   end
 end
 
 -----------------------------------
 ---- Prep messages for parsing ----
 -----------------------------------
-function cleanup_message(text, escape_chars)
+function cleanup_text(text, escape_chars)
   local keep_going = true
   while keep_going do
     local opening = text:find("<")
@@ -533,11 +528,11 @@ function cleanup_message(text, escape_chars)
     end
   end
 
-  local new_text = text:gsub("\n", "")
+  text = text:gsub("\n", "")
   if escape_chars then
     local special_characters = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
-    new_text = new_text:gsub(special_characters, "%%%1")
+    text = text:gsub(special_characters, "%%%1")
   end
 
-  return new_text
+  return text
 end
