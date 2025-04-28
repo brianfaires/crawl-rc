@@ -1,3 +1,6 @@
+if loaded_exclude_dropped then return end
+local loaded_exclude_dropped = true
+print("Loaded exclude-dropped.lua")
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
@@ -5,18 +8,12 @@
 -------------------------
 ---- Persistent data ----
 -------------------------
-if not dropped_item_exclusions or you.turns() == 0 then
-  dropped_item_exclusions = ""
-end
+local dropped_item_exclusions = ""
 
 local function persist_dropped_item_exclusions()
   return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
 end
-
-if not added_exclude_dropped_hooks then
-  table.insert(chk_lua_save, persist_dropped_item_exclusions)
-  added_exclude_dropped_hooks = true
-end
+table.insert(chk_lua_save, persist_dropped_item_exclusions)
 
 
 local function get_jewellery_name(text)

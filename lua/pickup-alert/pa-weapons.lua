@@ -3,6 +3,7 @@ loaded_pa_weapons = true
 dofile("crawl-rc/lua/util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
+print("Loaded pa-weapons.lua")
 
 --------------------------
 ---- Begin inv arrays ----

@@ -1,3 +1,6 @@
+if loaded_misc_alerts then return end
+loaded_misc_alerts = true
+print("Loaded misc-alerts.lua")
 ------------------------------------------
 ------ Max piety w/ amulet of faith ------
 ------------------------------------------
@@ -8,12 +11,8 @@ end
 local function persist_alerted_max_piety()
   return "alerted_max_piety = "..alerted_max_piety..string.char(10)
 end
+table.insert(chk_lua_save, persist_alerted_max_piety)
 
-if not added_misc_alert_data_hooks then
-  local added_misc_alert_data_hooks = true
-
-  table.insert(chk_lua_save, persist_alerted_max_piety)
-end
 
 local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then

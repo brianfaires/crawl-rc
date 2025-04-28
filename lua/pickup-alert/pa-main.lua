@@ -2,6 +2,7 @@ if loaded_pa_main then return end
 loaded_pa_main = true
 dofile("crawl-rc/lua/util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+print("Loaded pa-main.lua")
 
 function alert_item(it, alert_type)
   local name = it.name("plain")
