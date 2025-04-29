@@ -5,7 +5,6 @@ local function set_monster_fm(sign, monster_str)
   local fm_str = "monster_warning:(?<!spectral )("..monster_str..
       ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
   crawl.setopt("force_more_message " .. sign .. "= "..fm_str)
-  crawl.mpr(sign..monster_str)
 end
 
 -- This stops on all Uniques & Pan lords
