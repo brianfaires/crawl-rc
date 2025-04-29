@@ -1,16 +1,19 @@
 ------------------------------------------------------------------------------------------
 ------------------------------- Monster force_mores config -------------------------------
 ------------------------------------------------------------------------------------------
-local function create_fm_string(monster_name)
-  return "monster_warning:(?<!spectral )("..monster_name..")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+local function set_monster_fm(sign, monster_str)
+  local fm_str = "monster_warning:(?<!spectral )("..monster_str..
+      ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+  crawl.setopt("force_more_message " .. sign .. "= "..fm_str)
+  crawl.mpr(sign..monster_str)
 end
 
 -- This stops on all Uniques & Pan lords
-crawl.setopt("force_more_message += monster_warning:" ..
-              "(?!A )(?!An )(?-i:[A-Z]).*comes? into view")
+-- crawl.setopt("force_more_message += monster_warning:" ..
+--               "(?!A )(?!An )(?-i:[A-Z]).*comes? into view")
 
----- Everything included in this list will cause a more() prompt.
----- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
+-- Everything included in this list will cause a more() prompt.
+-- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
 local force_more_monsters = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
@@ -27,21 +30,22 @@ local force_more_monsters = {
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
     "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
   --Dangerous clouds
-    "catoblepas", "death drake", "apocalypse crab", "putrid mouth" }
+    "catoblepas", "death drake", "apocalypse crab", "putrid mouth",
+} -- force_more_monsters (Do not remove this comment)
 
 
 -----------------------------------------------------------------------------------------
 ------------------------------- force_mores w/ turn delay -------------------------------
 -----------------------------------------------------------------------------------------
 -- The following monsters will only cause a force_more() once every # of turns; ie one alert per pack
-local fm_delayed = { "dream sheep", "shrike", "boggart", "floating eye" }
+local fm_delayed = {}-- "dream sheep", "shrike", "boggart", "floating eye" }
 local turns_to_delay = 10
 
 local last_fm_turn = {}
 local monsters_to_mute = {}
 
 for v in iter.invent_iterator:new(fm_delayed) do
-  crawl.setopt("force_more_message += "..create_fm_string(v))
+  set_monster_fm("+", v)
   last_fm_turn[v] = -1
 end
 
@@ -59,15 +63,15 @@ end
 
 function ready_fm_delayed()
   for v in iter.invent_iterator:new(monsters_to_mute) do
-    crawl.setopt("force_more_message -= "..create_fm_string(v))
+    set_monster_fm("-", v)
   end
   monsters_to_mute = {}
 
   for v in iter.invent_iterator:new(fm_delayed) do
     if you.turns() == last_fm_turn[v] + turns_to_delay then
-	  crawl.setopt("force_more_message += "..create_fm_string(v))
-	  last_fm_turn[v] = -1
-	end
+      set_monster_fm("+", v)
+      last_fm_turn[v] = -1
+    end
   end
 end
 
@@ -97,12 +101,12 @@ local fm_patterns = {
   {name = "90hp", cond = "hp", cutoff = 90,
       pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110,
-      pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth",
+      pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth"..
                   "deep elf high priest|deep troll earth mage|stone giant|cacodemon"} },
   {name = "120hp", cond = "hp", cutoff = 120,
       pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
   {name = "160hp", cond = "hp", cutoff = 160,
-      pattern = {"brimstone fiend|deep elf sorcerer",
+      pattern = {"brimstone fiend|deep elf sorcerer"..
               "hell sentinal|war gargoyle|draconian (knight|scorcher)"} },
   {name = "200hp", cond = "hp", cutoff = 200,
       pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
@@ -112,7 +116,7 @@ local fm_patterns = {
   {name = "willpower2", cond = "will", cutoff = 2,
       pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = {"deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|",
+      pattern = {"deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|"..
               "merfolk siren|fenstrider witch|great orb of eyes|cacodemon|"..
               "imperial myrmidon|sphinx|nagaraja|draconian shifter|"..
               "orange crystal statue|glowing orange brain|orc sorcerer|"..
@@ -196,25 +200,21 @@ local fm_patterns = {
 ------------------------------- End config section -------------------------------
 ----------------------------------------------------------------------------------
 
+-- Set to true to get a message when the fm change
+local notify_fm = false
 
 
 -- Add the non-dynamic force_mores()  (moved code down here for easier configuration)
 local fm_mon_str = nil
 for v in iter.invent_iterator:new(force_more_monsters) do
-  if fm_mon_str == nil then
-    fm_mon_str = "monster_warning:(?<!spectral )("..v
+  if not fm_mon_str then
+    fm_mon_str = v
   else
-    fm_mon_str = fm_mon_str.."|"..v
+    fm_mon_str = fm_mon_str .. "|" .. v
   end
 end
-fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum)).*comes? into view"
-crawl.setopt("force_more_message += "..fm_mon_str)
+set_monster_fm("+", fm_mon_str)
 
-
-
-
--- Set to true to get a message when the fm change
-local notify_fm = false
 
 -- Keep track of active force_mores()
 local active_fm = {}
@@ -255,10 +255,7 @@ function ready_force_mores()
   local int, _ = you.intelligence()
 
   for i,v in ipairs(fm_patterns) do
-    local msg = nil
     local action = nil
-    local fm_name = v.pattern
-    if v.name then fm_name = v.name end
 
     if not v.cond and not active_fm[i] then
       action = "+"
@@ -307,28 +304,29 @@ function ready_force_mores()
     end
 
     if action then
+      fm_mon_str = nil
+      local fm_name = v.pattern
+      if v.name then fm_name = v.name end
+
       if type(v.pattern) == "table" then
         for p in iter.invent_iterator:new(v.pattern) do
-          if not msg then
-            msg = p
+          if not fm_mon_str then
+            fm_mon_str = p
           else
-            msg = msg .. "|" .. p
+            fm_mon_str = fm_mon_str .. "|" .. p
           end
         end
       else
-        msg = v.pattern
+        fm_mon_str = v.pattern
       end
 
-      if action then
-        msg = create_fm_string(msg)
-        crawl.setopt("force_more_message " .. action .. "= " .. msg)
-        active_fm[i] = not active_fm[i]
+      set_monster_fm(action, fm_mon_str)
+      active_fm[i] = not active_fm[i]
 
-        if action == "+" then
-          activated[#activated + 1] = fm_name
-        elseif action == "-" then
-          deactivated[#deactivated + 1] = fm_name
-        end
+      if action == "+" then
+        activated[#activated + 1] = fm_name
+      elseif action == "-" then
+        deactivated[#deactivated + 1] = fm_name
       end
     end
   end
