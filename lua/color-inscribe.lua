@@ -52,8 +52,8 @@ local colorize_tags = {
   {   "EV"..neg_num, 8 },
   {   "SH"..neg_num, 8 },
   {   "HP"..neg_num, 8 },
-  {   "MP"..neg_num, 8 }
-}
+  {   "MP"..neg_num, 8 },
+} --colorize_tags (do not remove this comment)
 
 ---------------------------------------------
 ------------------- Hooks -------------------

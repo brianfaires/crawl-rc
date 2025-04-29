@@ -97,15 +97,17 @@ end
 ---------------------
 local early_warnings = {
 
-}
+} -- early_warnings (do not remove this comment)
+
 local mid_warnings = {
   "wielding.*of electrocution",
   "You.*re more poisoned"
-}
+} -- mid_warnings (do not remove this comment)
+
 local late_warnings = {
   "(?<!You)(?<!yourself) speeds? up",
   "danger:goes berserk"
-}
+} -- late_warnings (do not remove this comment)
 
 local function set_warnings(warnings, create)
   for _, v in ipairs(warnings) do
