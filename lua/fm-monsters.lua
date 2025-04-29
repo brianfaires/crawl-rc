@@ -7,7 +7,7 @@ end
 
 -- This stops on all Uniques & Pan lords
 crawl.setopt("force_more_message += monster_warning:" ..
-              "(?!Orb)(?!Guardian)(?-i:[A-Z]).*comes? into view")
+              "(?!A )(?!An )(?-i:[A-Z]).*comes? into view")
 
 ---- Everything included in this list will cause a more() prompt.
 ---- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
@@ -190,8 +190,7 @@ local fm_patterns = {
       pattern = "revenant|demonspawn blood saint" },
   {name = "drain_190", cond = "drain", cutoff = 190,
       pattern = "shadow dragon" },
-
-} -- end fm_patterns
+} -- end fm_patterns (do not remove this comment)
 
 ----------------------------------------------------------------------------------
 ------------------------------- End config section -------------------------------
@@ -257,20 +256,6 @@ function ready_force_mores()
 
   for i,v in ipairs(fm_patterns) do
     local msg = nil
-    if type(v.pattern) == "table" then
-      for p in iter.invent_iterator:new(v.pattern) do
-        if not msg then
-          msg = p
-        else
-          msg = msg .. "|" .. p
-        end
-      end
-    else
-      msg = v.pattern
-    end
-
-    msg = create_fm_string(msg)
-
     local action = nil
     local fm_name = v.pattern
     if v.name then fm_name = v.name end
@@ -321,18 +306,33 @@ function ready_force_mores()
       action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
     end
 
-
-    if action == "+" then
-      activated[#activated + 1] = fm_name
-    elseif action == "-" then
-      deactivated[#deactivated + 1] = fm_name
-    end
     if action then
-      local opt = "force_more_message " .. action .. "= " .. msg
-      crawl.setopt(opt)
-      active_fm[i] = not active_fm[i]
+      if type(v.pattern) == "table" then
+        for p in iter.invent_iterator:new(v.pattern) do
+          if not msg then
+            msg = p
+          else
+            msg = msg .. "|" .. p
+          end
+        end
+      else
+        msg = v.pattern
+      end
+
+      if action then
+        msg = create_fm_string(msg)
+        crawl.setopt("force_more_message " .. action .. "= " .. msg)
+        active_fm[i] = not active_fm[i]
+
+        if action == "+" then
+          activated[#activated + 1] = fm_name
+        elseif action == "-" then
+          deactivated[#deactivated + 1] = fm_name
+        end
+      end
     end
   end
+
   if #activated > 0 and notify_fm then
     crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
   end
