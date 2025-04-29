@@ -3,7 +3,6 @@ loaded_pa_armour = true
 dofile("crawl-rc/lua/util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
-print("Loading pa-armour.lua")
 
 ---------------------------------------
 ---- Begin alert_armour_upgrades() ----

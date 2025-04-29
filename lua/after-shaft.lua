@@ -1,8 +1,7 @@
 if loaded_after_shaft then return end
 local loaded_after_shaft = true
-print("Loaded after-shaft.lua")
 
-if not shaft_depth then
+if not shaft_depth or you.turns() == 0 then
   shaft_depth = 0
   shaft_branch = "NA"
 end

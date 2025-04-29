@@ -3778,7 +3778,6 @@ end
 
 if loaded_pa_data then return end
 loaded_pa_data = true
-print("Loaded pa-data.lua")
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
@@ -3991,7 +3990,6 @@ end
 
 if loaded_pa_main then return end
 loaded_pa_main = true
-print("Loaded pa-main.lua")
 
 function alert_item(it, alert_type)
   local name = it.name("plain")
@@ -4105,8 +4103,7 @@ add_autopickup_func(function (it, _)
 end)
 
 
--------- End lua/pickup-alert/pa-main.lua --------print("Loading pa-armour.lua")
-
+-------- End lua/pickup-alert/pa-main.lua --------
 ---------------------------------------
 ---- Begin alert_armour_upgrades() ----
 ---------------------------------------
@@ -4408,7 +4405,6 @@ end
 
 if loaded_pa_misc then return end
 loaded_pa_misc = true
-print("Loaded pa-misc.lua")
 
 --------------------------
 ---- Alert rare items ----
@@ -4494,7 +4490,6 @@ end
 
 if loaded_pa_weapons then return end
 loaded_pa_weapons = true
-print("Loaded pa-weapons.lua")
 
 --------------------------
 ---- Begin inv arrays ----
@@ -4913,9 +4908,8 @@ end
 
 if loaded_after_shaft then return end
 local loaded_after_shaft = true
-print("Loaded after-shaft.lua")
 
-if not shaft_depth then
+if not shaft_depth or you.turns() == 0 then
   shaft_depth = 0
   shaft_branch = "NA"
 end
@@ -5480,7 +5474,6 @@ end
 
 if loaded_exclude_dropped then return end
 local loaded_exclude_dropped = true
-print("Loaded exclude-dropped.lua")
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
@@ -5488,7 +5481,7 @@ print("Loaded exclude-dropped.lua")
 -------------------------
 ---- Persistent data ----
 -------------------------
-if not dropped_item_exclusions then
+if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
 end
 local function persist_dropped_item_exclusions()
@@ -5627,8 +5620,8 @@ local function set_monster_fm(sign, monster_str)
 end
 
 -- This stops on all Uniques & Pan lords
--- crawl.setopt("force_more_message += monster_warning:" ..
---               "(?!A )(?!An )(?-i:[A-Z]).*comes? into view")
+crawl.setopt("force_more_message += monster_warning:" ..
+              "(?-i:[A-Z]).*comes? into view")
 
 -- Everything included in this list will cause a more() prompt.
 -- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
@@ -5656,7 +5649,7 @@ local force_more_monsters = {
 ------------------------------- force_mores w/ turn delay -------------------------------
 -----------------------------------------------------------------------------------------
 -- The following monsters will only cause a force_more() once every # of turns; ie one alert per pack
-local fm_delayed = {}-- "dream sheep", "shrike", "boggart", "floating eye" }
+local fm_delayed = { "dream sheep", "shrike", "boggart", "floating eye" }
 local turns_to_delay = 10
 
 local last_fm_turn = {}
@@ -6041,12 +6034,11 @@ end
 
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
-print("Loaded misc-alerts.lua")
 ------------------------------------------
 ------ Max piety w/ amulet of faith ------
 ------------------------------------------
-if not alerted_max_piety then
-  local alerted_max_piety = 0
+if not alerted_max_piety or you.turns() == 0 then
+  alerted_max_piety = 0
 end
 
 local function persist_alerted_max_piety()

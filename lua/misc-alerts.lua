@@ -1,11 +1,10 @@
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
-print("Loaded misc-alerts.lua")
 ------------------------------------------
 ------ Max piety w/ amulet of faith ------
 ------------------------------------------
-if not alerted_max_piety then
-  local alerted_max_piety = 0
+if not alerted_max_piety or you.turns() == 0 then
+  alerted_max_piety = 0
 end
 
 local function persist_alerted_max_piety()

@@ -9,8 +9,8 @@ local function set_monster_fm(sign, monster_str)
 end
 
 -- This stops on all Uniques & Pan lords
--- crawl.setopt("force_more_message += monster_warning:" ..
---               "(?!A )(?!An )(?-i:[A-Z]).*comes? into view")
+crawl.setopt("force_more_message += monster_warning:" ..
+              "(?-i:[A-Z]).*comes? into view")
 
 -- Everything included in this list will cause a more() prompt.
 -- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
@@ -38,7 +38,7 @@ local force_more_monsters = {
 ------------------------------- force_mores w/ turn delay -------------------------------
 -----------------------------------------------------------------------------------------
 -- The following monsters will only cause a force_more() once every # of turns; ie one alert per pack
-local fm_delayed = {}-- "dream sheep", "shrike", "boggart", "floating eye" }
+local fm_delayed = { "dream sheep", "shrike", "boggart", "floating eye" }
 local turns_to_delay = 10
 
 local last_fm_turn = {}
