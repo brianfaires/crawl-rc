@@ -4,7 +4,6 @@
 #####################################
 ############## Display ##############
 #####################################
-messages_at_top = true
 show_more = false
 small_more = true
 stat_colour = 3:red, 7:lightred

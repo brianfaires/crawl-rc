@@ -1,13 +1,10 @@
 if loaded_pa_data then return end
 loaded_pa_data = true
 dofile("crawl-rc/lua/util.lua")
-
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
-if not added_persistent_data or you.turns() == 0 then
-  local added_persistent_data = 1
-
+if not level_alerts or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
@@ -44,45 +41,39 @@ local function persist_var(var_name, var)
 end
 
 
-if not added_persistent_data_hooks then
-  added_persistent_data_hooks = true
-
-  table.insert(chk_lua_save,
-    function() return persist_table("level_alerts",
-        level_alerts) end)
-  table.insert(chk_lua_save,
-    function() return persist_table("rare_items",
-        rare_items) end)
-  table.insert(chk_lua_save,
-    function() return persist_table("items_picked",
-        items_picked) end)
-  table.insert(chk_lua_save,
-    function() return persist_table("items_alerted",
-        items_alerted) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("armour_high_score",
-        armour_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("alerted_first_ranged_one_handed",
-        alerted_first_ranged_one_handed) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("alerted_first_ranged_two_handed",
-        alerted_first_ranged_two_handed) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("polearm_high_score",
-        polearm_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("polearm_onehand_high_score",
-        polearm_onehand_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("unbranded_high_score",
-        unbranded_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("weapon_high_score",
-        weapon_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("added_persistent_data", 1) end)
-end
+table.insert(chk_lua_save,
+  function() return persist_table("level_alerts",
+      level_alerts) end)
+table.insert(chk_lua_save,
+  function() return persist_table("rare_items",
+      rare_items) end)
+table.insert(chk_lua_save,
+  function() return persist_table("items_picked",
+      items_picked) end)
+table.insert(chk_lua_save,
+  function() return persist_table("items_alerted",
+      items_alerted) end)
+table.insert(chk_lua_save,
+  function() return persist_var("armour_high_score",
+      armour_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("alerted_first_ranged_one_handed",
+      alerted_first_ranged_one_handed) end)
+table.insert(chk_lua_save,
+  function() return persist_var("alerted_first_ranged_two_handed",
+      alerted_first_ranged_two_handed) end)
+table.insert(chk_lua_save,
+  function() return persist_var("polearm_high_score",
+      polearm_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("polearm_onehand_high_score",
+      polearm_onehand_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("unbranded_high_score",
+      unbranded_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("weapon_high_score",
+      weapon_high_score) end)
 
 
 ----------------------------------------

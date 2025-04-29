@@ -48,6 +48,7 @@ local function set_top_school()
 end
 
 -- High scores for melee/ranged, 1/2-handed, branded/unbranded
+    -- (Don't put these closing curly braces on a line by themself)
 local inv_max_dmg = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
                       ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0,
                       melee_only = 0 }

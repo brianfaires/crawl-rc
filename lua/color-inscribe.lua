@@ -25,12 +25,12 @@ local multi_minus = "%-+"
 local pos_num = "%+%d+%.?%d*"
 local neg_num = "%-%d+%.?%d*"
 local colorize_tags = {
-  { "rF"..multi_plus, 4 },
-  { "rC"..multi_plus, 1 },
-  { "rN"..multi_plus, 5 },
-  { "rF"..multi_minus, 12 },
-  { "rC"..multi_minus, 9 },
-  { "rN"..multi_minus, 13 },
+  { "rF"..multi_plus, 12 },
+  { "rC"..multi_plus, 9 },
+  { "rN"..multi_plus, 13 },
+  { "rF"..multi_minus, 4 },
+  { "rC"..multi_minus, 1 },
+  { "rN"..multi_minus, 5 },
   { "rPois", 2 },
   { "rElec", 11 },
   { "rCorr", 14 },
@@ -52,8 +52,8 @@ local colorize_tags = {
   {   "EV"..neg_num, 8 },
   {   "SH"..neg_num, 8 },
   {   "HP"..neg_num, 8 },
-  {   "MP"..neg_num, 8 }
-}
+  {   "MP"..neg_num, 8 },
+} --colorize_tags (do not remove this comment)
 
 ---------------------------------------------
 ------------------- Hooks -------------------

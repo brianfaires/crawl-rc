@@ -143,54 +143,31 @@ ai += staff of poison:rPois
 
 ######## Begin rc/display.rc ########
 
-# This file needs attribution (minimal updates made)
-# LMK whose work this is!
+# This file needs original attribution
+# LMK who put in the time on all those msg's
 
 #####################################
 ############## Display ##############
 #####################################
-messages_at_top = true
 show_more = false
 small_more = true
+stat_colour = 3:red, 7:lightred
+
+hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
+mp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
+
 tile_font_crt_family  = Lucida Console
 tile_font_stat_family = Lucida Console
 tile_font_msg_family  = Lucida Console
 tile_font_lbl_family  = Lucida Console
 
-hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
-mp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
-
-stat_colour = 3:red, 7:lightred
 
 
-#######################
-####### Display #######
-#######################
-tile_font_crt_family  = Lucida Console
-tile_font_stat_family = Lucida Console
-tile_font_msg_family  = Lucida Console
-tile_font_lbl_family  = Lucida Console
-
-hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
-mp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
-
-stat_colour = 3:red, 7:lightred
-
-show_more = false
-small_more = true
-
-
-
-######################
-####### Colors #######
-######################
-## (Citation needed) #
-
-## menu_colour options
-
-# Set Alias
+###########################
+####### Menu Colors #######
+###########################
+# Set Alias & clear defaults
 menu := menu_colour
-# Clear defaults
 menu =
 
 # Variables
@@ -211,12 +188,8 @@ $awesome := lightmagenta
 menu += $boring:(melded)
 menu += $boring:.*useless_item.*
 menu += $item_dmg:.*evil_item.*
-menu += $danger:[^n]cursed
-menu += inventory:$danger:[^n]cursed
-menu += inventory:$interface:.*equipped.*
-menu += $decent:.*artefact.*
-menu += $negative:shield of the gong
-menu += $danger:.*artefact.* cursed
+#menu += inventory:$interface:.*equipped.*
+#menu += $decent:.*artefact.*
 menu += $awesome:manual
 
 menu += $warning:^unidentified .*(jewellery|potion|scroll|wand).*
@@ -224,7 +197,6 @@ menu += $good:^unidentified .*weapon.*(runed|glowing)
 menu += $good:^unidentified .*armour.*(runed|glowing|embroidered|shiny|dyed)
 
 # Staves
-menu += $mp:staff of energy
 menu += $positive:[^r]staff of
 
 # Wands
@@ -234,16 +206,16 @@ menu += $good:wand of (acid|digging|clouds|scattershot)
 # Scrolls
 menu += $danger:scrolls? of torment
 menu += $boring:scrolls? of noise
-menu += $decent:scrolls? of (amnesia|holy word|identify|immolation|remove curse)
+menu += $decent:scrolls? of (amnesia|identify|immolation)
 menu += $good:scrolls? of (fear|fog|silence|summoning|vulnerability)
 menu += $positive:scrolls? of (brand|enchant|revelation)
-menu += $verypositive:scrolls? of acquirement
-menu += $awesome:scrolls? of (blinking|teleportation)
+menu += $verypositive:scrolls? of (blinking|teleportation|butterflies)
+menu += $awesome:scrolls? of (acquirement)
 
 # Potions
 menu += $danger:potions? of berserk
 menu += magenta:potions? of mutation
-menu += $decent:potions? of (flight|lignification|ambrosia)
+menu += $decent:potions? of (enlightenment|lignification|ambrosia)
 menu += $good:potions? of (stabbing|brilliance|cancellation|invisibility|might|resistance)
 menu += $positive:potions? of curing
 menu += $mp:potions? of magic
@@ -251,46 +223,32 @@ menu += $verypositive:potions? of (haste|heal wounds)
 menu += $awesome:potions? of experience
 
 # Amulets
-menu += $boring:amulet of (inaccuracy|harm)
 menu += $good:amulet of (guardian spirit|the acrobat)
-menu += $positive:amulet of (faith|reflection|magic regeneration)
-menu += $verypositive:amulet of (regeneration)
+menu += $positive:amulet of (faith|reflection|magic regeneration|regeneration)
 
 # Rings
-menu += $negative:ring of \-.*(dexterity|evasion|intelligence|protection|slaying|strength)
-menu += $warning:ring of (fire|ice|stealth)
+menu += $warning:ring of (fire|ice)
 menu += $decent:ring of flight
 menu += $verypositive:ring of (.*slaying)
 menu += $positive:ring of (poison resistance|protection from cold|protection from fire|protection from magic|see invisible|resist corrosion)
 menu += $good:ring of (.*evasion|.*protection|magical power|wizardry)
-#menu += $awesome:
-
 
 # Misc items
 menu += blue:inert
 menu += $good:throwing net
-menu += $good:fan of gales
-menu += $good:tin of tremorstones
-menu += $good:phial of floods
-menu += $good:lightning rod
-menu += $decent:box of beasts
-menu += $decent:sack of spiders
-menu += $decent:Horn of Geryon
-menu += $mp:crystal ball of energy
-menu += $mp:Staff of Wucad Mu
-menu += $awesome:Figurine of a ziggurat
+menu += $good:artefact
 
 # Deck colouring
 menu += $verypositive:deck of escape
 menu += $positive:deck of summoning
 menu += $danger:deck of destruction
 
-## message_colour options
 
 
-####################
-# Message coloring #
-####################
+
+##################################
+######## Message coloring ########
+##################################
 
 # black, blue, green, cyan, red, magenta, brown, lightgrey,
 # darkgrey, lightblue, lightgreen, lightcyan, lightred,
@@ -311,14 +269,12 @@ $takesaction := blue
 $godaction := magenta
 $mp := lightcyan
 
-# Set Alias
+# Set Alias & clear defaults
 msc := message_colour
-# Clear defaults
 msc =
 
 msc += $mp:You feel your power returning
 
-#msc += $danger:
 msc += $danger:roused to righteous anger
 msc += $danger:is roused by the hymn
 msc += $danger:A magical barricade bars your way
@@ -345,7 +301,6 @@ msc += $danger:You are even more entangled
 msc += $danger:You have drawn Pain
 msc += $danger:Your magical shield disappears
 msc ^= $danger:Your.*appears confused
-msc ^= $danger:Your.*drowns
 msc += $danger:creates some ice likenesses
 msc += $danger:soul is no longer ripe for the taking
 msc += $danger:You are no longer magically infusing your attacks
@@ -551,14 +506,10 @@ msc += $danger:You feel.*sluggish
 msc += $danger:You no longer adapt resistances upon receiving elemental damage
 msc += $danger:The storm surrounding you is now too weak to repel missiles
 msc += $danger:You feel extremely strange
-msc += $danger:This meat tastes really weird
-msc += $danger:You finish putting on your cursed
-msc += $danger:It was a potion of paralysis
 msc += $danger:You feel rather ponderous
 msc += $danger:That seemed strangely inert
 msc += $danger:You can't unwield your weapon to draw a new one
 msc += $danger:the volcano erupts with a roar
-msc += $danger:too hungry
 msc += $danger:Your guardian golem overheats
 msc += $danger:burn any scroll you tried to read
 msc += $danger:You are blown backwards
@@ -569,7 +520,6 @@ msc += $danger:take too long for a potion to reach your roots
 msc += $danger:There was something very wrong with that liquid
 msc += $danger:You cannot move
 msc += $danger:stands defiantly in death's doorway
-msc += $danger:zaps a rod
 msc += $danger:twongs alarmingly
 msc += $danger:You feel yourself grow more vulnerable to poison
 msc += $danger:The poison in your body grows stronger
@@ -594,7 +544,6 @@ msc += $danger:The writing blurs in front of your eyes
 msc += $danger:You cannot cast spells while unable to breathe
 msc += $danger:You feel your rage building
 msc += $danger:You feel a little less
-msc += $danger:You are wearing\:.*cursed
 msc += $danger:This card doesn't seem to belong here
 msc += $danger:You flicker back
 msc += $danger:something.*blocking the
@@ -667,7 +616,6 @@ msc += $danger:You feel threatened and lose the ability
 msc ^= $danger:Your.*looks rather confused
 
 # Item Destruction, gaining bad mutations, or losing good ones, penance, and gong
-#msc += $item_dmg:
 msc += $item_dmg:Your teeth shrink to normal size
 msc += $item_dmg:Your.*scales disappear
 msc += $item_dmg:You feel a strong urge to yell
@@ -742,7 +690,7 @@ msc += $item_dmg:You no longer feel resistant to poison
 msc += $item_dmg:Your vision seems duller
 msc += $item_dmg:You feel less energetic
 
-#msc += $warning:
+
 msc += $warning:You yowl
 msc += $warning:You scream at
 msc += $warning:is no longer distracted by gold
@@ -801,8 +749,6 @@ msc += $warning:falls into the lava
 msc ^= $warning:Your spellforged servitor disappears
 msc += $warning:The shock serpent's electric aura discharges
 msc += $warning:The air sparks with electricity
-msc += $warning:The cursed.*is stuck to you
-msc += $warning:You cannot enchant this weapon
 msc += $warning:You sense an evil presence
 msc += $warning:Jory draws you further into his thrall
 msc += $warning:grabs your
@@ -851,7 +797,6 @@ msc += $warning:You can't close doors while held in a net
 msc += $warning:A slime creature suddenly
 msc += $warning:You feel closer to the material plane
 msc += $warning:leaps out from its hiding place
-msc += $warning:The cursed.*is stuck to your body
 msc += $warning:You stop removing your armour
 msc += $warning:You smell decay
 msc += $warning:You feel a malignant aura surround you
@@ -905,7 +850,7 @@ msc += $warning:imitates the bagpipes
 msc += $warning:looks more energetic
 msc += $warning:suddenly curses
 msc += $warning:Dowan breathes
-msc += $warning:Dowan shakes his head. saying. \"No. no. no!\"
+msc += $warning:Dowan shakes his head
 msc += $warning:You hear strange voices
 msc += $warning:You hear
 msc += $warning:You drop
@@ -1217,7 +1162,6 @@ msc += $warning:Your.*shudders
 # Demonspawn gaining a mutation they already have
 msc += $warning:Your mutations feel more permanent
 msc += $warning:Roots rise up from beneath.*and drag it to the ground
-msc ^= $warning:You hunger for vegetation
 msc ^= $warning:You feel a sudden chill
 msc += $warning:You feel hot for a moment
 msc += $warning:stop glowing
@@ -1255,7 +1199,7 @@ msc += $warning:Your divine protection wanes
 msc += $warning:The sheep \"Baaaas\" balefully
 msc += $warning:is blown backwards by the freezing wind
 
-#msc += $boring:
+
 msc += $boring:Your tentacles glow momentarily
 msc += $boring:You feel a little dazed
 msc += $boring:You feel mildly nauseous
@@ -1481,10 +1425,6 @@ msc += $boring:Your.*stays? behind
 msc += $boring:You prostrate yourself
 msc += $boring:You shiver with cold
 msc += $boring:glows? .* for a moment
-#msc += $boring:glows? (bright chartreuse|bright red|brightly|brilliant black|brilliant cobalt blue) for a moment
-#msc += $boring:glows? (brilliant magenta|brilliant silver|dark black|dark umber|dull charcoal|dull rubric) for a moment
-#msc += $boring:glows? (dull silver|faint lavender|faint lime green|mottled black|pale dun|pale gold|pale silver) for a moment
-#msc += $boring:glows? (pale yellow|shimmering blue|shimmering brown|shimmering rubric|shining black|shining brown|silvery red) for a moment
 msc += $boring:Waves of light ripple over
 msc += $boring:Your skin tingles
 msc += $boring:looks braver
@@ -1584,7 +1524,6 @@ msc += $boring:The.*falls off the wall
 msc += $boring:The.*jiggles
 msc += $boring:The.*looks excited
 msc += $boring:Pikel cracks his whip
-msc += $boring:Press } to see all the runes you have collected
 msc += $boring:slime creature splits
 msc += $boring:stops glowing
 msc += $boring:splashes around in the water
@@ -2110,8 +2049,7 @@ msc += $verypositive:Your demonic ancestry asserts itself
 msc += $verypositive:You feel (agile|clever|stronger)
 msc += $verypositive:You feel more protected from negative energy
 
-#Positive mutation - or losing bad ones
-#msc += $awesome:
+# Positive mutation - or losing bad ones
 msc += $awesome:You feel more jittery
 msc += $awesome:You feel more resistant to cold
 msc += $awesome:Your fur grows into a thick mane
@@ -2149,10 +2087,8 @@ msc += $awesome:The horns on your head grow some more
 msc += $awesome:You feel less concerned about heat
 msc += $awesome:You smell fire and brimstone
 msc += $awesome:You begin to radiate miasma
-msc += $awesome:You feel able to eat a more balanced diet
 msc += $awesome:You feel genetically stable
 msc ^= $awesome:You feel a.*healthier
-msc += $awesome:You hunger for flesh
 msc += $awesome:You feel your life force and your magical essence meld
 msc ^= $awesome:You feel your magical essence form a protective shroud around your flesh
 msc += $awesome:You feel your magic shroud grow more resilient
@@ -2461,7 +2397,6 @@ msc += $danger:completely resists
 msc += $warning:resists
 
 # For the text that describes ranged attacks and spells
-#msc += $takesaction:
 msc += $takesaction:chants a haunting song
 msc += $takesaction:You release an incredible blast of power in all directions
 msc += $takesaction:calls upon its god to speed up
@@ -2571,7 +2506,6 @@ msc += $takesaction:summons
 msc += $takesaction:great orb of eyes gazes at
 msc += $takesaction:You radiate an aura of cold
 
-#msc += $godaction:
 msc ^= $godaction:Dithmenos does not appreciate your starting fires
 msc += $godaction:Beogh throws an implement of electrocution at you
 msc += $godaction:Beogh throws implements of electrocution at you
@@ -2676,7 +2610,6 @@ msc += $boring:You feel mildly nauseous
 msc += $boring:Multicoloured lights dance around
 
 # Interface Messages - These shouldn't take any turns
-#msc += $interface:
 msc += $interface:You cannot read scrolls
 msc += $interface:You cannot drink potions
 msc += $interface:too exhausted to
@@ -2752,7 +2685,6 @@ msc += $interface:You cannot shoot.*while held in a net
 msc += $interface:You're already here
 msc += $interface:You can't do that
 msc += $interface:Cleared annotation
-msc += $interface:Your cursed.*is stuck to you
 msc += $interface:You have no means to grasp a wand firmly enough
 msc += $interface:Choose a valid weapon
 msc += $interface:No previous command
@@ -3846,13 +3778,10 @@ end
 
 if loaded_pa_data then return end
 loaded_pa_data = true
-
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
-if not added_persistent_data or you.turns() == 0 then
-  local added_persistent_data = 1
-
+if not level_alerts or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
@@ -3889,45 +3818,39 @@ local function persist_var(var_name, var)
 end
 
 
-if not added_persistent_data_hooks then
-  added_persistent_data_hooks = true
-
-  table.insert(chk_lua_save,
-    function() return persist_table("level_alerts",
-        level_alerts) end)
-  table.insert(chk_lua_save,
-    function() return persist_table("rare_items",
-        rare_items) end)
-  table.insert(chk_lua_save,
-    function() return persist_table("items_picked",
-        items_picked) end)
-  table.insert(chk_lua_save,
-    function() return persist_table("items_alerted",
-        items_alerted) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("armour_high_score",
-        armour_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("alerted_first_ranged_one_handed",
-        alerted_first_ranged_one_handed) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("alerted_first_ranged_two_handed",
-        alerted_first_ranged_two_handed) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("polearm_high_score",
-        polearm_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("polearm_onehand_high_score",
-        polearm_onehand_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("unbranded_high_score",
-        unbranded_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("weapon_high_score",
-        weapon_high_score) end)
-  table.insert(chk_lua_save,
-    function() return persist_var("added_persistent_data", 1) end)
-end
+table.insert(chk_lua_save,
+  function() return persist_table("level_alerts",
+      level_alerts) end)
+table.insert(chk_lua_save,
+  function() return persist_table("rare_items",
+      rare_items) end)
+table.insert(chk_lua_save,
+  function() return persist_table("items_picked",
+      items_picked) end)
+table.insert(chk_lua_save,
+  function() return persist_table("items_alerted",
+      items_alerted) end)
+table.insert(chk_lua_save,
+  function() return persist_var("armour_high_score",
+      armour_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("alerted_first_ranged_one_handed",
+      alerted_first_ranged_one_handed) end)
+table.insert(chk_lua_save,
+  function() return persist_var("alerted_first_ranged_two_handed",
+      alerted_first_ranged_two_handed) end)
+table.insert(chk_lua_save,
+  function() return persist_var("polearm_high_score",
+      polearm_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("polearm_onehand_high_score",
+      polearm_onehand_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("unbranded_high_score",
+      unbranded_high_score) end)
+table.insert(chk_lua_save,
+  function() return persist_var("weapon_high_score",
+      weapon_high_score) end)
 
 
 ----------------------------------------
@@ -4612,6 +4535,7 @@ local function set_top_school()
 end
 
 -- High scores for melee/ranged, 1/2-handed, branded/unbranded
+    -- (Don't put these closing curly braces on a line by themself)
 local inv_max_dmg = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
                       ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0,
                       melee_only = 0 }
@@ -4982,22 +4906,18 @@ end
 {
 -------- Begin lua/after-shaft.lua --------
 
-------------------------------------
----- Stop on stairs after shaft ----
-------------------------------------
-local shaft_depth = 0
-local shaft_branch = "NA"
+if loaded_after_shaft then return end
+local loaded_after_shaft = true
 
+if not shaft_depth or you.turns() == 0 then
+  shaft_depth = 0
+  shaft_branch = "NA"
+end
 local function persist_shaft_values()
   local cmd = "shaft_depth = "..shaft_depth..string.char(10) .."shaft_branch = \""..shaft_branch.."\""..string.char(10)
   return cmd
 end
-
-if not added_shaft_stairs_hook then
-  table.insert(chk_lua_save, persist_shaft_values)
-  local added_shaft_stairs_hook = true
-end
-
+table.insert(chk_lua_save, persist_shaft_values)
 
 ---------------------------------------------
 ------------------- Hooks -------------------
@@ -5068,7 +4988,7 @@ function ready_announce_damage()
 
 
   --Skips message on initializing game
-  if previous_hp > 0 then
+  if you.turns() > 1 then
     local hp_difference = previous_hp - current_hp
     local mp_difference = previous_mp - current_mp
 
@@ -5095,8 +5015,8 @@ function ready_announce_damage()
           msg = "<red>You take " .. hp_difference .. " damage,</red><lightgrey> and have " ..
                   current_hp .. "/" .. max_hp .. " hp.</lightgrey>"
         else
-          msg = crawl.mpr("<red>You take " .. hp_difference .. " damage,</red><green> and have " ..
-                            current_hp .. "/" .. max_hp .. " hp.</green>")
+          msg = "<red>You take " .. hp_difference .. " damage,</red><green> and have " ..
+                  current_hp .. "/" .. max_hp .. " hp.</green>"
         end
         crawl.mpr(msg)
 
@@ -5205,20 +5125,20 @@ local function colorize_text(text, s, tag)
 end
 
 -- Color map to single digit tags:
-  -- 0:black, 1:lightblue, 2:lightgreen, 3:lightcyan, 4:lightred, 5:lightmagenta,
-  -- 6:brown, 7: lightgrey, 8:darkgrey, 9:blue, 10:green, 11:cyan, 12:red,
-  -- 13:magenta, 14:yellow, 15:white
+  -- 0:black, 1:lightblue, 2:green, 3:cyan, 4:red, 5:magenta,
+  -- 6:brown, 7: lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightyan, 12:lightred,
+  -- 13:lightmagenta, 14:yellow, 15:white
 local multi_plus = "%++"
 local multi_minus = "%-+"
 local pos_num = "%+%d+%.?%d*"
 local neg_num = "%-%d+%.?%d*"
 local colorize_tags = {
-  { "rF"..multi_plus, 4 },
-  { "rC"..multi_plus, 1 },
-  { "rN"..multi_plus, 5 },
-  { "rF"..multi_minus, 12 },
-  { "rC"..multi_minus, 9 },
-  { "rN"..multi_minus, 13 },
+  { "rF"..multi_plus, 12 },
+  { "rC"..multi_plus, 9 },
+  { "rN"..multi_plus, 13 },
+  { "rF"..multi_minus, 4 },
+  { "rC"..multi_minus, 1 },
+  { "rN"..multi_minus, 5 },
   { "rPois", 2 },
   { "rElec", 11 },
   { "rCorr", 14 },
@@ -5240,8 +5160,8 @@ local colorize_tags = {
   {   "EV"..neg_num, 8 },
   {   "SH"..neg_num, 8 },
   {   "HP"..neg_num, 8 },
-  {   "MP"..neg_num, 8 }
-}
+  {   "MP"..neg_num, 8 },
+} --colorize_tags (do not remove this comment)
 
 ---------------------------------------------
 ------------------- Hooks -------------------
@@ -5449,15 +5369,17 @@ end
 ---------------------
 local early_warnings = {
 
-}
+} -- early_warnings (do not remove this comment)
+
 local mid_warnings = {
   "wielding.*of electrocution",
   "You.*re more poisoned"
-}
+} -- mid_warnings (do not remove this comment)
+
 local late_warnings = {
   "(?<!You)(?<!yourself) speeds? up",
   "danger:goes berserk"
-}
+} -- late_warnings (do not remove this comment)
 
 local function set_warnings(warnings, create)
   for _, v in ipairs(warnings) do
@@ -5550,6 +5472,8 @@ end
 {
 -------- Begin lua/exclude-dropped.lua --------
 
+if loaded_exclude_dropped then return end
+local loaded_exclude_dropped = true
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
@@ -5560,15 +5484,10 @@ end
 if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
 end
-
 local function persist_dropped_item_exclusions()
   return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
 end
-
-if not added_exclude_dropped_hooks then
-  table.insert(chk_lua_save, persist_dropped_item_exclusions)
-  added_exclude_dropped_hooks = true
-end
+table.insert(chk_lua_save, persist_dropped_item_exclusions)
 
 
 local function get_jewellery_name(text)
@@ -5693,16 +5612,19 @@ if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..
 ------------------------------------------------------------------------------------------
 ------------------------------- Monster force_mores config -------------------------------
 ------------------------------------------------------------------------------------------
-local function create_fm_string(monster_name)
-  return "monster_warning:(?<!spectral )("..monster_name..")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+local function set_monster_fm(sign, monster_str)
+  local fm_str = "monster_warning:(?<!spectral )("..monster_str..
+      ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+  crawl.setopt("force_more_message " .. sign .. "= "..fm_str)
+  crawl.mpr(sign..monster_str)
 end
 
 -- This stops on all Uniques & Pan lords
 crawl.setopt("force_more_message += monster_warning:" ..
-              "(?!Orb)(?!Guardian)(?-i:[A-Z]).*comes? into view")
+              "(?-i:[A-Z]).*comes? into view")
 
----- Everything included in this list will cause a more() prompt.
----- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
+-- Everything included in this list will cause a more() prompt.
+-- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
 local force_more_monsters = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
@@ -5719,7 +5641,8 @@ local force_more_monsters = {
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
     "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
   --Dangerous clouds
-    "catoblepas", "death drake", "apocalypse crab", "putrid mouth" }
+    "catoblepas", "death drake", "apocalypse crab", "putrid mouth",
+} -- force_more_monsters (Do not remove this comment)
 
 
 -----------------------------------------------------------------------------------------
@@ -5733,7 +5656,7 @@ local last_fm_turn = {}
 local monsters_to_mute = {}
 
 for v in iter.invent_iterator:new(fm_delayed) do
-  crawl.setopt("force_more_message += "..create_fm_string(v))
+  set_monster_fm("+", v)
   last_fm_turn[v] = -1
 end
 
@@ -5751,15 +5674,15 @@ end
 
 function ready_fm_delayed()
   for v in iter.invent_iterator:new(monsters_to_mute) do
-    crawl.setopt("force_more_message -= "..create_fm_string(v))
+    set_monster_fm("-", v)
   end
   monsters_to_mute = {}
 
   for v in iter.invent_iterator:new(fm_delayed) do
     if you.turns() == last_fm_turn[v] + turns_to_delay then
-	  crawl.setopt("force_more_message += "..create_fm_string(v))
-	  last_fm_turn[v] = -1
-	end
+      set_monster_fm("+", v)
+      last_fm_turn[v] = -1
+    end
   end
 end
 
@@ -5789,12 +5712,12 @@ local fm_patterns = {
   {name = "90hp", cond = "hp", cutoff = 90,
       pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110,
-      pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth",
+      pattern = {"centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth"..
                   "deep elf high priest|deep troll earth mage|stone giant|cacodemon"} },
   {name = "120hp", cond = "hp", cutoff = 120,
       pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
   {name = "160hp", cond = "hp", cutoff = 160,
-      pattern = {"brimstone fiend|deep elf sorcerer",
+      pattern = {"brimstone fiend|deep elf sorcerer"..
               "hell sentinal|war gargoyle|draconian (knight|scorcher)"} },
   {name = "200hp", cond = "hp", cutoff = 200,
       pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
@@ -5804,7 +5727,7 @@ local fm_patterns = {
   {name = "willpower2", cond = "will", cutoff = 2,
       pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = {"deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|",
+      pattern = {"deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|"..
               "merfolk siren|fenstrider witch|great orb of eyes|cacodemon|"..
               "imperial myrmidon|sphinx|nagaraja|draconian shifter|"..
               "orange crystal statue|glowing orange brain|orc sorcerer|"..
@@ -5882,32 +5805,27 @@ local fm_patterns = {
       pattern = "revenant|demonspawn blood saint" },
   {name = "drain_190", cond = "drain", cutoff = 190,
       pattern = "shadow dragon" },
-
-} -- end fm_patterns
+} -- end fm_patterns (do not remove this comment)
 
 ----------------------------------------------------------------------------------
 ------------------------------- End config section -------------------------------
 ----------------------------------------------------------------------------------
 
+-- Set to true to get a message when the fm change
+local notify_fm = false
 
 
 -- Add the non-dynamic force_mores()  (moved code down here for easier configuration)
 local fm_mon_str = nil
 for v in iter.invent_iterator:new(force_more_monsters) do
-  if fm_mon_str == nil then
-    fm_mon_str = "monster_warning:(?<!spectral )("..v
+  if not fm_mon_str then
+    fm_mon_str = v
   else
-    fm_mon_str = fm_mon_str.."|"..v
+    fm_mon_str = fm_mon_str .. "|" .. v
   end
 end
-fm_mon_str = fm_mon_str..")(?! (zombie|skeleton|simulacrum)).*comes? into view"
-crawl.setopt("force_more_message += "..fm_mon_str)
+set_monster_fm("+", fm_mon_str)
 
-
-
-
--- Set to true to get a message when the fm change
-local notify_fm = false
 
 -- Keep track of active force_mores()
 local active_fm = {}
@@ -5948,24 +5866,7 @@ function ready_force_mores()
   local int, _ = you.intelligence()
 
   for i,v in ipairs(fm_patterns) do
-    local msg = nil
-    if type(v.pattern) == "table" then
-      for p in iter.invent_iterator:new(v.pattern) do
-        if not msg then
-          msg = p
-        else
-          msg = msg .. "|" .. p
-        end
-      end
-    else
-      msg = v.pattern
-    end
-
-    msg = create_fm_string(msg)
-
     local action = nil
-    local fm_name = v.pattern
-    if v.name then fm_name = v.name end
 
     if not v.cond and not active_fm[i] then
       action = "+"
@@ -6013,18 +5914,34 @@ function ready_force_mores()
       action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
     end
 
-
-    if action == "+" then
-      activated[#activated + 1] = fm_name
-    elseif action == "-" then
-      deactivated[#deactivated + 1] = fm_name
-    end
     if action then
-      local opt = "force_more_message " .. action .. "= " .. msg
-      crawl.setopt(opt)
+      fm_mon_str = nil
+      local fm_name = v.pattern
+      if v.name then fm_name = v.name end
+
+      if type(v.pattern) == "table" then
+        for p in iter.invent_iterator:new(v.pattern) do
+          if not fm_mon_str then
+            fm_mon_str = p
+          else
+            fm_mon_str = fm_mon_str .. "|" .. p
+          end
+        end
+      else
+        fm_mon_str = v.pattern
+      end
+
+      set_monster_fm(action, fm_mon_str)
       active_fm[i] = not active_fm[i]
+
+      if action == "+" then
+        activated[#activated + 1] = fm_name
+      elseif action == "-" then
+        deactivated[#deactivated + 1] = fm_name
+      end
     end
   end
+
   if #activated > 0 and notify_fm then
     crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
   end
@@ -6115,22 +6032,20 @@ end
 {
 -------- Begin lua/misc-alerts.lua --------
 
+if loaded_misc_alerts then return end
+loaded_misc_alerts = true
 ------------------------------------------
 ------ Max piety w/ amulet of faith ------
 ------------------------------------------
-if not alerted_max_piety then
-  local alerted_max_piety = 0
+if not alerted_max_piety or you.turns() == 0 then
+  alerted_max_piety = 0
 end
 
 local function persist_alerted_max_piety()
   return "alerted_max_piety = "..alerted_max_piety..string.char(10)
 end
+table.insert(chk_lua_save, persist_alerted_max_piety)
 
-if not added_misc_alert_data_hooks then
-  local added_misc_alert_data_hooks = true
-
-  table.insert(chk_lua_save, persist_alerted_max_piety)
-end
 
 local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
