@@ -149,7 +149,6 @@ ai += staff of poison:rPois
 #####################################
 ############## Display ##############
 #####################################
-messages_at_top = true
 show_more = false
 small_more = true
 stat_colour = 3:red, 7:lightred
@@ -3783,7 +3782,7 @@ print("Loaded pa-data.lua")
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
-if you.turns() == 0 then
+if not level_alerts or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
@@ -3853,8 +3852,6 @@ table.insert(chk_lua_save,
 table.insert(chk_lua_save,
   function() return persist_var("weapon_high_score",
       weapon_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("added_persistent_data", 1) end)
 
 
 ----------------------------------------
@@ -4543,6 +4540,7 @@ local function set_top_school()
 end
 
 -- High scores for melee/ranged, 1/2-handed, branded/unbranded
+    -- (Don't put these closing curly braces on a line by themself)
 local inv_max_dmg = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
                       ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0,
                       melee_only = 0 }
@@ -4916,9 +4914,11 @@ end
 if loaded_after_shaft then return end
 local loaded_after_shaft = true
 print("Loaded after-shaft.lua")
-local shaft_depth = 0
-local shaft_branch = "NA"
 
+if not shaft_depth then
+  shaft_depth = 0
+  shaft_branch = "NA"
+end
 local function persist_shaft_values()
   local cmd = "shaft_depth = "..shaft_depth..string.char(10) .."shaft_branch = \""..shaft_branch.."\""..string.char(10)
   return cmd
@@ -5166,8 +5166,8 @@ local colorize_tags = {
   {   "EV"..neg_num, 8 },
   {   "SH"..neg_num, 8 },
   {   "HP"..neg_num, 8 },
-  {   "MP"..neg_num, 8 }
-}
+  {   "MP"..neg_num, 8 },
+} --colorize_tags (do not remove this comment)
 
 ---------------------------------------------
 ------------------- Hooks -------------------
@@ -5375,15 +5375,17 @@ end
 ---------------------
 local early_warnings = {
 
-}
+} -- early_warnings (do not remove this comment)
+
 local mid_warnings = {
   "wielding.*of electrocution",
   "You.*re more poisoned"
-}
+} -- mid_warnings (do not remove this comment)
+
 local late_warnings = {
   "(?<!You)(?<!yourself) speeds? up",
   "danger:goes berserk"
-}
+} -- late_warnings (do not remove this comment)
 
 local function set_warnings(warnings, create)
   for _, v in ipairs(warnings) do
@@ -5486,8 +5488,9 @@ print("Loaded exclude-dropped.lua")
 -------------------------
 ---- Persistent data ----
 -------------------------
-local dropped_item_exclusions = ""
-
+if not dropped_item_exclusions then
+  dropped_item_exclusions = ""
+end
 local function persist_dropped_item_exclusions()
   return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
 end
@@ -5622,7 +5625,7 @@ end
 
 -- This stops on all Uniques & Pan lords
 crawl.setopt("force_more_message += monster_warning:" ..
-              "(?!Orb)(?!Guardian)(?-i:[A-Z]).*comes? into view")
+              "(?!A )(?!An )(?-i:[A-Z]).*comes? into view")
 
 ---- Everything included in this list will cause a more() prompt.
 ---- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
@@ -5805,8 +5808,7 @@ local fm_patterns = {
       pattern = "revenant|demonspawn blood saint" },
   {name = "drain_190", cond = "drain", cutoff = 190,
       pattern = "shadow dragon" },
-
-} -- end fm_patterns
+} -- end fm_patterns (do not remove this comment)
 
 ----------------------------------------------------------------------------------
 ------------------------------- End config section -------------------------------
@@ -5872,20 +5874,6 @@ function ready_force_mores()
 
   for i,v in ipairs(fm_patterns) do
     local msg = nil
-    if type(v.pattern) == "table" then
-      for p in iter.invent_iterator:new(v.pattern) do
-        if not msg then
-          msg = p
-        else
-          msg = msg .. "|" .. p
-        end
-      end
-    else
-      msg = v.pattern
-    end
-
-    msg = create_fm_string(msg)
-
     local action = nil
     local fm_name = v.pattern
     if v.name then fm_name = v.name end
@@ -5936,18 +5924,33 @@ function ready_force_mores()
       action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
     end
 
-
-    if action == "+" then
-      activated[#activated + 1] = fm_name
-    elseif action == "-" then
-      deactivated[#deactivated + 1] = fm_name
-    end
     if action then
-      local opt = "force_more_message " .. action .. "= " .. msg
-      crawl.setopt(opt)
-      active_fm[i] = not active_fm[i]
+      if type(v.pattern) == "table" then
+        for p in iter.invent_iterator:new(v.pattern) do
+          if not msg then
+            msg = p
+          else
+            msg = msg .. "|" .. p
+          end
+        end
+      else
+        msg = v.pattern
+      end
+
+      if action then
+        msg = create_fm_string(msg)
+        crawl.setopt("force_more_message " .. action .. "= " .. msg)
+        active_fm[i] = not active_fm[i]
+
+        if action == "+" then
+          activated[#activated + 1] = fm_name
+        elseif action == "-" then
+          deactivated[#deactivated + 1] = fm_name
+        end
+      end
     end
   end
+
   if #activated > 0 and notify_fm then
     crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
   end

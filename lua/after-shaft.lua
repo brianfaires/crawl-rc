@@ -1,9 +1,11 @@
 if loaded_after_shaft then return end
 local loaded_after_shaft = true
 print("Loaded after-shaft.lua")
-local shaft_depth = 0
-local shaft_branch = "NA"
 
+if not shaft_depth then
+  shaft_depth = 0
+  shaft_branch = "NA"
+end
 local function persist_shaft_values()
   local cmd = "shaft_depth = "..shaft_depth..string.char(10) .."shaft_branch = \""..shaft_branch.."\""..string.char(10)
   return cmd

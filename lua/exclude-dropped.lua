@@ -8,8 +8,9 @@ print("Loaded exclude-dropped.lua")
 -------------------------
 ---- Persistent data ----
 -------------------------
-local dropped_item_exclusions = ""
-
+if not dropped_item_exclusions then
+  dropped_item_exclusions = ""
+end
 local function persist_dropped_item_exclusions()
   return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
 end

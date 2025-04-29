@@ -5,7 +5,7 @@ print("Loaded pa-data.lua")
 -------------------------------------------------------------------------------
 ---------------------------- Begin persistent data ----------------------------
 -------------------------------------------------------------------------------
-if you.turns() == 0 then
+if not level_alerts or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
@@ -75,8 +75,6 @@ table.insert(chk_lua_save,
 table.insert(chk_lua_save,
   function() return persist_var("weapon_high_score",
       weapon_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("added_persistent_data", 1) end)
 
 
 ----------------------------------------
