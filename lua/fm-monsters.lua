@@ -1,6 +1,3 @@
-------------------------------------------------------------------------------------------
-------------------------------- Monster force_mores config -------------------------------
-------------------------------------------------------------------------------------------
 local function set_monster_fm(sign, monster_str)
   local fm_str = "monster_warning:(?<!spectral )("..monster_str..
       ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
@@ -30,12 +27,10 @@ local force_more_monsters = {
     "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
   --Dangerous clouds
     "catoblepas", "death drake", "apocalypse crab", "putrid mouth",
-} -- force_more_monsters (Do not remove this comment)
+} -- force_more_monsters (do not remove this comment)
 
 
------------------------------------------------------------------------------------------
-------------------------------- force_mores w/ turn delay -------------------------------
------------------------------------------------------------------------------------------
+------------------- force_mores w/ turn delay -------------------
 -- The following monsters will only cause a force_more() once every # of turns; ie one alert per pack
 local fm_delayed = { "dream sheep", "shrike", "boggart", "floating eye" }
 local turns_to_delay = 10
@@ -48,9 +43,7 @@ for v in iter.invent_iterator:new(fm_delayed) do
   last_fm_turn[v] = -1
 end
 
--------------------
 ------ Hooks ------
--------------------
 function c_message_fm_delayed(text, _)
   for v in iter.invent_iterator:new(fm_delayed) do
     if text:find(v..".*comes? into view") and last_fm_turn[v] == -1 then
@@ -75,9 +68,7 @@ function ready_fm_delayed()
 end
 
 
-------------------------------------------------------------------------------------------
-------------------------------- Dynamic force_mores config -------------------------------
-------------------------------------------------------------------------------------------
+------------------- Dynamic force_mores config -------------------
 -- hp-specific force_mores() by gammafunk, extended by buehler
 local fm_patterns = {
   -- Fast, early game Dungeon problems for chars with low mhp.
@@ -195,9 +186,7 @@ local fm_patterns = {
       pattern = "shadow dragon" },
 } -- end fm_patterns (do not remove this comment)
 
-----------------------------------------------------------------------------------
-------------------------------- End config section -------------------------------
-----------------------------------------------------------------------------------
+------------------- End config section -------------------
 
 -- Set to true to get a message when the fm change
 local notify_fm = false
@@ -235,9 +224,7 @@ end
 
 
 
---------------------------------------------
 ------------------- Hook -------------------
---------------------------------------------
 function ready_force_mores()
   local activated = {}
   local deactivated = {}

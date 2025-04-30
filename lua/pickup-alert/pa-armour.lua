@@ -1,14 +1,12 @@
 if loaded_pa_armour then return end
 loaded_pa_armour = true
 dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
----------------------------------------
----- Begin alert_armour_upgrades() ----
----------------------------------------
--- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 
+-- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 local function alert_armour_upgrades(it)
   if not is_body_armour(it) then return false end
   if you.skill("Armour") == 0 then return false end
@@ -29,13 +27,8 @@ local function alert_armour_upgrades(it)
 
   return false
 end
--------------------------------------
----- End alert_armour_upgrades() ----
--------------------------------------
 
--------------------------------
----- Begin pickup_armour() ----
--------------------------------
+
 -- Equipment autopickup (by Medar, gammafunk, sockthot, and various others)
 function pickup_armour(it)
   if it.is_useless then return false end
@@ -121,14 +114,9 @@ function pickup_armour(it)
 
   return false
 end
------------------------------
----- End pickup_armour() ----
------------------------------
 
 
---------------------------------------------
----- Begin alert_armour_while_mutated() ----
---------------------------------------------
+---- alert_armour_while_mutated() ----
 -- Special cases where you have temporary or innate mutations that interfere with armour
 -- Alert when an ego item is usable but interferes with mutation, or unusable due to temp mutations
 local function alert_armour_while_mutated(it, type)
@@ -188,13 +176,8 @@ local function alert_armour_while_mutated(it, type)
     end
   end
 end
---------------------------------------------
----- End alert_armour_while_mutated() ----
---------------------------------------------
 
-------------------------------------------
----- Begin alert_interesting_armour() ----
-------------------------------------------
+---- alert_interesting_armour() ----
 -- Alerts armour items that did trigger autopickup, but are worth consideration
 -- Includes: Artefacts, added or changed egos, and
   -- body armour AC/EV/Encumbrance changes, defined by following heuristics:
@@ -284,9 +267,6 @@ local function alert_interesting_armour(it)
     end
   end
 end
-----------------------------------------
----- End alert_interesting_armour() ----
-----------------------------------------
 
 function alert_armour(it)
   if it.is_useless then return end

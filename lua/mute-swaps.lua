@@ -11,9 +11,8 @@ local function unmute_items()
   end
   muted_items = {}
 end
----------------------------------------------
+
 ------------------- Hooks -------------------
----------------------------------------------
 function ready_mute_swaps()
   unmute_items()
 end

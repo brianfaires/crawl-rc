@@ -1,6 +1,7 @@
 dofile("crawl-rc/lua/util.lua")
 
 local DROP_KEY = "~~DROP_ME"
+
 crawl.setopt("drop_filter += "..DROP_KEY)
 
 local function inscribe_drop(it)
@@ -8,9 +9,7 @@ local function inscribe_drop(it)
   it.inscribe(new_inscr, false)
 end
 
-------------------------------------------
 ------------------ Hook ------------------
-------------------------------------------
 function c_assign_invletter_drop_inferior(it)
   -- Skip brands that are potentially harmful
   local it_ego = it.ego()

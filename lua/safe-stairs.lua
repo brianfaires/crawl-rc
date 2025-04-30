@@ -28,9 +28,7 @@ function safe_downstairs()
   check_new_location(">")
 end
 
---------------------------------------------
 ------------------- Hook -------------------
---------------------------------------------
 function ready_safe_stairs()
   prev_location = temp_location
   temp_location = you.branch()..you.depth()

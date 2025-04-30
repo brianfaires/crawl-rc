@@ -1,146 +1,219 @@
-------------------------------------------
----- Damage Calc (attribution needed) ----
-------------------------------------------
-local previous_hp = 0
-local previous_mp = 0
-local previous_form = ""
-local was_berserk_last_turn = false
+-- from https://github.com/magus/dcss/blob/master/compile-rc/parts/AnnounceDamage.lua
+dofile("crawl-rc/lua/config.lua")
+dofile("crawl-rc/lua/constants.lua")
+dofile("crawl-rc/lua/util.lua")
 
-function ready_announce_damage()
-  local current_hp, max_hp = you.hp()
-  local current_mp, max_mp = you.mp()
-  --Things that increase hp/mp temporarily really mess with this
-  local current_form = you.transform()
-  local you_are_berserk = you.berserk()
-  local max_hp_increased = false
-  local max_hp_decreased = false
+local AD_Messages = {
+  ["HPSimple"] = function(delta)
+    return withColor(COLORS.white,
+      string.format("HP[%s]", delta_color(0 - delta))
+    )
+  end,
+  ["HPMax"] = function (color, hp, hpm, delta)
+    crawl.mpr(
+      withColor(COLORS.lightgreen,
+        string.format("You now have %s max hp (%s).", hpm, delta_color(delta))
+      )
+    )
+  end,
+  ["HPLoss"] = function (color, hp, hpm, loss)
+    crawl.mpr(
+      string.format("%s%s",
+        withColor(COLORS.red, string.format("You take %s damage,", loss)),
+        withColor(color, string.format(" and now have %s/%s hp.", hp, hpm))
+      )
+    )
+  end,
+  ["HPGain"] = function (color, hp, hpm, gain)
+    crawl.mpr(
+      string.format("%s%s",
+        withColor(COLORS.lightgreen, string.format("You regained %s hp,", gain)),
+        withColor(color, string.format(" and now have %s/%s hp.", hp, hpm))
+      )
+    )
+  end,
+  ["HPFull"] = function (color, hp)
+    crawl.mpr(
+      withColor(COLORS.lightgreen,
+        string.format("Your hp is fully restored (%s).", hp)
+      )
+    )
+  end,
+  ["HPMassivePause"] = function ()
+    crawl.mpr(
+      withColor(COLORS.lightred,
+        string.format("MASSIVE DAMAGE!! (%s)", PAUSE_MORE)
+      )
+    )
+  end,
+  ["MPSimple"] = function(delta)
+    return withColor(COLORS.white,
+      string.format("MP[%s]", delta_color(0 - delta))
+    )
+  end,
+  ["MPLoss"] = function (color, mp, mpm, loss)
+    crawl.mpr(
+      string.format("%s%s",
+        withColor(COLORS.cyan, string.format("You lost %s mp,", loss)),
+        withColor(color, string.format(" and now have %s/%s mp.", mp, mpm))
+      )
+    )
+  end,
+  ["MPGain"] = function (color, mp, mpm, gain)
+    crawl.mpr(
+      string.format("%s%s",
+        withColor(COLORS.cyan, string.format("You regained %s mp,", gain)),
+        withColor(color, string.format(" and now have %s/%s mp.", mp, mpm))
+      )
+    )
+  end,
+  ["MPFull"] = function (color, mp)
+    crawl.mpr(
+      withColor(COLORS.cyan, string.format("Your mp is fully restored (%s).", mp))
+    )
+  end,
+  [""]="",
+} --AD_Messages (do not remove this comment)
 
-  if (current_form ~= previous_form) then
-    if (previous_form:find("dragon") or
-        previous_form:find("statue") or
-        previous_form:find("tree") or
-        previous_form:find("ice")) then
-      max_hp_decreased = true
-    elseif (current_form:find("dragon") or
-        current_form:find("statue") or
-        current_form:find("tree") or
-        current_form:find("ice")) then
-      max_hp_increased = true
+local prev_hp = 0
+local prev_hp_max = 0
+local prev_mp = 0
+local prev_mp_max = 0
+
+function delta_color(delta)
+  local color = delta < 0 and COLORS.red or COLORS.green
+  local signDelta = delta < 0 and delta or "+"..delta
+  return string.format("<%s>%s</%s>", color, signDelta, color)
+end
+
+-- Simplified condensed HP and MP output
+-- Print a single condensed line showing HP & MP change
+-- e.g.😨 HP[-2] MP[-1]
+function simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
+  local emoji = ""
+  local message = nil
+
+  -- MP[-1]
+  if hp_diff == 0 and mp_diff ~= 0 then
+    message = AD_Messages.MPSimple(mp_diff)
+  -- HP[-2]
+  elseif hp_diff ~= 0 and mp_diff == 0 then
+    message = AD_Messages.HPSimple(hp_diff)
+  -- HP[-2] MP[-1]
+  elseif hp_diff ~= 0 and mp_diff ~= 0 then
+    message = string.format("%s %s", AD_Messages.HPSimple(hp_diff), AD_Messages.MPSimple(mp_diff))
+  -- else -- No changes
+  end
+
+  if message ~= nil then
+    if cur_hp <= (max_hp * 0.25) then
+      emoji = "😱"
+    elseif cur_hp <= (max_hp * 0.50) then
+      emoji = "😨"
+    elseif cur_hp <= (max_hp *  0.75) then
+      emoji = "😮"
+    elseif cur_hp < max_hp then
+      emoji = "😕"
+    else
+      emoji = "😎"
     end
-  end
-  if (was_berserk_last_turn and not you_are_berserk) then
-    max_hp_decreased = true
-  elseif (you_are_berserk and not was_berserk_last_turn) then
-    max_hp_increased = true
-  end
 
+    if CONFIG.emojis then
+      crawl.mpr(string.format("\n%s %s", emoji, message))
+    else
+      crawl.mpr(string.format("\n%s", message))
+    end
+
+  end
+end
+
+-- Try to sync with colors defined in Interface.rc
+function color_by_max(message_func, curr, max, diff)
+  if curr <= (max * 0.25) then
+    message_func(COLORS.red, curr, max, diff)
+  elseif curr <= (max * 0.50) then
+    message_func(COLORS.lightred, curr, max, diff)
+  elseif curr <= (max *  0.75) then
+    message_func(COLORS.yellow, curr, max, diff)
+  else
+    message_func(COLORS.lightgrey, curr, max, diff)
+  end
+end
+
+function announce_damage()
+  local cur_hp, max_hp = you.hp()
+  local cur_mp, max_mp = you.mp()
 
   --Skips message on initializing game
-  if you.turns() > 1 then
-    local hp_difference = previous_hp - current_hp
-    local mp_difference = previous_mp - current_mp
+  if prev_hp > 0 then
+    local hp_diff = prev_hp - cur_hp
+    local max_hp_diff = max_hp - prev_hp_max
+    local mp_diff = prev_mp - cur_mp
+    local max_mp_diff = max_mp - prev_mp_max
 
-    if max_hp_increased or max_hp_decreased then
-      if max_hp_increased then
-        crawl.mpr("<green>You now have " .. current_hp .. "/" .. max_hp .. " hp.</green>")
-      else
-        crawl.mpr("<yellow>You now have " .. current_hp .. "/" .. max_hp .. " hp.</yellow>")
-      end
-    else
-      --On losing health
-      if (current_hp < previous_hp) then
-        local msg
-        if current_hp <= (max_hp * 0.30) then
-          msg = "<red>You take " .. hp_difference .. " damage,</red>" ..
-                    "<lightred> and have " .. current_hp .. "/" .. max_hp .. " hp.</lightred>"
-        elseif current_hp <= (max_hp * 0.50) then
-          msg = "<red>You take " .. hp_difference .. " damage, and have " ..
-                  current_hp .. "/" .. max_hp .. " hp.</red>"
-        elseif current_hp <= (max_hp *  0.70) then
-          msg = "<red>You take " .. hp_difference .. " damage,</red><yellow> and have " ..
-                  current_hp .. "/" .. max_hp .. " hp.</yellow>"
-        elseif current_hp <= (max_hp * 0.90) then
-          msg = "<red>You take " .. hp_difference .. " damage,</red><lightgrey> and have " ..
-                  current_hp .. "/" .. max_hp .. " hp.</lightgrey>"
-        else
-          msg = "<red>You take " .. hp_difference .. " damage,</red><green> and have " ..
-                  current_hp .. "/" .. max_hp .. " hp.</green>"
-        end
-        crawl.mpr(msg)
+    -- Simplified condensed HP and MP output
+    simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
 
-        if hp_difference > (max_hp * 0.20) then
-          crawl.mpr("<lightred>MASSIVE DAMAGE!!</lightred>")
-        end
-      end
+    -- HP Max
+    if max_hp_diff > 0 then
+      AD_Messages.HPMax(COLORS.green, cur_hp, max_hp, max_hp_diff)
+    elseif max_hp_diff < 0 then
+      AD_Messages.HPMax(COLORS.yellow, cur_hp, max_hp, max_hp_diff)
+    end
 
-      --On gaining more than 2 HP
-      if (current_hp > previous_hp + 2) then
-        --Removes the negative sign
-        local health_inturn = (0 - hp_difference)
-        if (health_inturn > 1) and current_hp ~= max_hp then
-          local msg
-          if current_hp <= (max_hp * 0.30) then
-            msg = "<green>You regained " .. health_inturn .. " hp,</green><lightred> and now have " ..
-                    current_hp .. "/" .. max_hp .. " hp.</lightred>"
-          elseif current_hp <= (max_hp * 0.50) then
-            msg = "<green>You regained " .. health_inturn .. " hp,</green><red> and now have " ..
-                    current_hp .. "/" .. max_hp .. " hp.</red>"
-          elseif current_hp <= (max_hp *  0.70) then
-            msg = "<green>You regained " .. health_inturn .. " hp,</green><yellow> and now have " ..
-                    current_hp .. "/" .. max_hp .. " hp.</yellow>"
-          elseif current_hp <= (max_hp * 0.90) then
-            msg = "<green>You regained " .. health_inturn .. " hp,</green><lightgrey> and now have " ..
-                    current_hp .. "/" .. max_hp .. " hp.</lightgrey>"
-          else
-            msg = "<green>You regained " .. health_inturn .. " hp, and now have " .. current_hp .. "/" ..
-                      max_hp .. " hp.</green>"
-          end
-          crawl.mpr(msg)
-        end
-        if (current_hp == max_hp) then
-          crawl.mpr("<green>Health restored: " .. current_hp .. "</green>")
-        end
-      end
+    -- HP Loss
+    -- Ensure we lost MORE than the change in max hp
+    -- i.e. a change in max hp should not be considered damage
+    if (hp_diff > 0 and hp_diff > math.abs(max_hp_diff)) then
+      color_by_max(AD_Messages.HPLoss, cur_hp, max_hp, hp_diff)
 
-      --On gaining more than 1 MP
-      if (current_mp > previous_mp+1) then
-        --Removes the negative sign
-        local mp_inturn = (0 - mp_difference)
-        if (mp_inturn > 1) and current_mp ~= max_mp then
-          local msg
-          if current_mp < (max_mp * 0.25) then
-            msg = "<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><red> and now have " ..
-                    current_mp .. "/" .. max_mp .. " mp.</red>"
-          elseif current_mp < (max_mp * 0.50) then
-            msg = "<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><yellow> and now have " ..
-                    current_mp .. "/" .. max_mp .. " mp.</yellow>"
-          else
-            msg = "<lightcyan>You regained " .. mp_inturn .. " mp,</lightcyan><green> and now have " ..
-                    current_mp .. "/" .. max_mp .. " mp.</green>"
-          end
-          crawl.mpr(msg)
-        end
-        if (current_mp == max_mp) then
-          crawl.mpr("<lightcyan>MP restored: " .. current_mp .. "</lightcyan>")
-        end
-      end
-
-      --On losing magic
-      if current_mp < previous_mp then
-        if current_mp <= (max_mp / 5) then
-          crawl.mpr("<lightcyan>You now have </lightcyan><red>" .. current_mp .. "/" ..max_mp .." mp.</red>")
-        elseif current_mp <= (max_mp / 2) then
-          crawl.mpr("<lightcyan>You now have </lightcyan><yellow>" .. current_mp .. "/" ..max_mp .." mp.</yellow>")
-        else
-          crawl.mpr("<lightcyan>You now have </lightcyan><green>" .. current_mp .. "/" ..max_mp .." mp.</green>")
-        end
+      if hp_diff > (max_hp * 0.20) then
+        AD_Messages.HPMassivePause()
       end
     end
+
+    -- HP Gain
+    -- More than 1 HP gained
+    if (hp_diff < 0) then
+      -- Remove the negative sign by taking absolute value
+      local hp_gain = math.abs(hp_diff)
+
+      if (hp_gain > 1) and not (cur_hp == max_hp) then
+        color_by_max(AD_Messages.HPGain, cur_hp, max_hp, hp_gain)
+      end
+
+      if (cur_hp == max_hp) then
+        AD_Messages.HPFull(nil, cur_hp)
+      end
+    end
+
+    -- MP Gain
+    -- More than 1 MP gained
+    if (mp_diff < 0) then
+      -- Remove the negative sign by taking absolute value
+      local mp_gain = math.abs(mp_diff)
+
+      if (mp_gain > 1) and not (cur_mp == max_mp) then
+        color_by_max(AD_Messages.MPGain, cur_mp, max_mp, mp_gain)
+      end
+
+      if (cur_mp == max_mp) then
+        AD_Messages.MPFull(nil, cur_mp)
+      end
+    end
+
+    -- MP Loss
+    -- Ensure we lost MORE than the change in max mp
+    -- i.e. a change in max mp should not be considered loss
+    if (mp_diff > 0 and mp_diff > math.abs(max_mp_diff)) then
+      color_by_max(AD_Messages.MPLoss, cur_mp, max_mp, mp_diff)
+    end
+
   end
 
   --Set previous hp/mp and form at end of turn
-  previous_hp = current_hp
-  previous_mp = current_mp
-  previous_form = current_form
-  was_berserk_last_turn = you_are_berserk
+  prev_hp = cur_hp
+  prev_hp_max = max_hp
+  prev_mp = cur_mp
+  prev_mp_max = max_mp
 end

@@ -1,14 +1,16 @@
 dofile("crawl-rc/lua/util.lua")
 
-------------------------------
 ---- Cleanup weapon slots ----
-------------------------------
 --Whenever you drop an item:
     -- Assign weapons to slots a and b
         -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless skill
         -- 3:magical staff, 4:polearm, 5:ranged
     -- Assign weap to w: ranged/polearm/any
 
+
+local do_cleanup_weapon_slots = false
+local priorities_ab = nil
+local priorities_w = nil
 
 local function get_first_empty_slot()
   for slot=1,52 do
@@ -46,12 +48,6 @@ local function get_priority_w(it)
 end
 
 
-
---------------
----- main ----
---------------
-local priorities_ab = nil
-local priorities_w = nil
 local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
   priorities_w = { -1, -1, -1 }
@@ -72,7 +68,6 @@ local function generate_priorities()
     end
   end
 end
-
 
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
@@ -108,15 +103,7 @@ local function cleanup_weapon_slots()
   cleanup_w()
 end
 
-
-
-
-
-local do_cleanup_weapon_slots = false
-
----------------------------------------------
 ------------------- Hooks -------------------
----------------------------------------------
 function c_assign_invletter_weapon_slots(it)
   if not is_weapon(it) and not is_staff(it) then return end
 
@@ -132,13 +119,9 @@ function c_assign_invletter_weapon_slots(it)
   end
 end
 
-
-
 function c_message_weapon_slots(text, channel)
   do_cleanup_weapon_slots = channel == "plain" and text:find("You drop ")
 end
-
-
 
 function ready_weapon_slots()
   if do_cleanup_weapon_slots then

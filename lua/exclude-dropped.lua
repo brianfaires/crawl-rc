@@ -4,9 +4,9 @@ local loaded_exclude_dropped = true
 -- Exclusion is removed when you pick the item back up
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
 
--------------------------
----- Persistent data ----
--------------------------
+dofile("crawl-rc/lua/constants.lua")
+
+---------------- Persistent data ----------------
 if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
 end
@@ -15,6 +15,21 @@ local function persist_dropped_item_exclusions()
 end
 table.insert(chk_lua_save, persist_dropped_item_exclusions)
 
+-- Init autopickup missiles
+local started_with_ranged = false
+if you.skill("Ranged Weapons") > 2 then
+  for it in iter.invent_iterator:new(items.inventory()) do
+    if it.is_ranged then
+      started_with_ranged = true
+      break
+    end
+  end
+end
+if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
+crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
+if you.race() == "Ogre" or you.race() == "Troll" then crawl.setopt("autopickup_exceptions ^= <large rock") end
+
+if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
 local function get_jewellery_name(text)
   local idx  = text:find("ring of ")
@@ -26,7 +41,6 @@ local function get_jewellery_name(text)
   return text:sub(idx,#text)
 end
 
-local all_missiles = { " stone", "poisoned dart", "curare", "atropa", "datura", "boomerang", "javelin", "large rock" }
 local function get_missile_name(text)
   for item_name in iter.invent_iterator:new(all_missiles) do
     if text:find(item_name) then
@@ -45,9 +59,6 @@ local function get_missile_name(text)
   end
 end
 
-local all_misc =  { "box of beasts", "condenser vane", "figurine of a ziggurat",
-                    "Gell's gravitambourine", "horn of Geryon", "lightning rod",
-                    "phantom mirror", "phial of floods", "sack of spiders", "tin of tremorstones" }
 local function get_misc_name(text)
   for item_name in iter.invent_iterator:new(all_misc) do
     if text:find(item_name) then return item_name end
@@ -78,9 +89,7 @@ local function get_excludable_scroll_name(text)
 end
 
 
-------------------------------------------
 ------------------ Hook ------------------
-------------------------------------------
 
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
@@ -109,19 +118,3 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
   end
 end
-
--- Init autopickup missiles
-local started_with_ranged = false
-if you.skill("Ranged Weapons") > 2 then
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if it.is_ranged then
-      started_with_ranged = true
-      break
-    end
-  end
-end
-if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
-crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
-if you.race() == "Ogre" or you.race() == "Troll" then crawl.setopt("autopickup_exceptions ^= <large rock") end
-
-if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end

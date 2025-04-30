@@ -1,102 +1,11 @@
-----------------------
----- race-specific ----
-----------------------
-if you.race() == "Demonspawn" then
-  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-elseif you.race() == "Formicid" then
-  crawl.setopt("force_more_message -= monster_warning:curare")
-elseif you.race() == "Gargoyle" then
-  crawl.setopt("force_more_message -= monster_warning:curare")
-elseif you.race() == "Ghoul" then
-  crawl.setopt("force_more_message -= monster_warning:curare")
-  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-elseif you.race() == "Gnoll" then
-  crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
-elseif you.race() == "Mummy" then
-  crawl.setopt("force_more_message -= monster_warning:curare")
-  crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-end
+local dyn_opt_god = "No God"
+local ignoring_spellcasting = false
+local ignoring_spellbooks = false
+local warn_early_levels = false
+local warn_mid_levels = false
+local warn_late_levels = false
 
-
------------------------
----- class-specific ----
------------------------
-if you.class() == "Hunter" then
-  crawl.setopt("view_delay = 20")
-end
-
-
-----------------------
----- god-specific ----
-----------------------
-local cur_god = "No God"
-local function set_god_options()
-  if you.god() ~= cur_god then
-    cur_god = you.god()
-
-    if cur_god == "Ashenzari" then
-      crawl.setopt("runrest_stop_message += god:Ashenzari invites you to partake")
-    elseif cur_god == "Beogh" then
-      crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
-      crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
-      crawl.setopt("force_more_message += Your orc.*dies")
-    elseif cur_god == "Dithmenos" then
-      crawl.setopt("force_more_message += god:You are shrouded in an aura of darkness")
-      crawl.setopt("force_more_message += god:You now sometimes bleed smoke")
-      crawl.setopt("force_more_message += god:You.*no longer.*bleed smoke")
-      crawl.setopt("force_more_message += god:Your shadow no longer tangibly mimics your actions")
-      crawl.setopt("force_more_message += god:Your shadow now sometimes tangibly mimics your actions")
-    elseif cur_god == "Fedhas" then
-      crawl.setopt("force_more_message += god:Fedhas invokes the elements against you")
-    elseif cur_god == "Hepliaklqana" then
-      crawl.setopt("runrest_ignore_message ^= emerges from the mists of memory")
-    elseif cur_god == "Jiyva" then
-      crawl.setopt("force_more_message += god:will now unseal the treasures of the Slime Pits")
-      crawl.setopt("force_more_message += god:Jiyva alters your body")
-      crawl.setopt("force_more_message += god:splits in two")
-      crawl.setopt("force_more_message += god:Your prayer is over.")
-    elseif cur_god == "Kikubaaqudgha" then
-      crawl.setopt("force_more_message += god:Kikubaaqudgha will grant you")
-    elseif cur_god == "Lugonu" then
-      crawl.setopt("force_more_message += god:Lugonu will now corrupt your weapon")
-      crawl.setopt("force_more_message += god:Lugonu sends minions to punish you")
-    elseif cur_god == "Okawaru" then
-      crawl.setopt("force_more_message += god:Okawaru sends forces against you")
-    elseif cur_god == "Ru" then
-      crawl.setopt("runrest_stop_message += god:Ru believes you are ready to make a new sacrifice")
-    elseif cur_god == "Qazlal" then
-      crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
-      crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
-      crawl.setopt("force_more_message -= god:You feel.*protected")
-    elseif cur_god == "The Shining One" then
-      crawl.setopt("force_more_message += god:Your divine shield starts to fade.")
-      crawl.setopt("force_more_message += god:Your divine shield fades away.")
-    elseif cur_god == "Trog" then
-      crawl.setopt("force_more_message += god:You feel the effects of Trog's Hand fading")
-      crawl.setopt("force_more_message += god:You feel less resistant to hostile enchantments")
-    elseif cur_god == "Wu Jian Council" then
-      crawl.setopt("runrest_ignore_message += heavenly storm settles")
-    elseif cur_god == "Xom" then
-      crawl.setopt("force_more_message += god:")
-      crawl.setopt("force_more_message += staircase.*moves")
-      crawl.setopt("force_more_message += Some monsters swap places")
-    elseif cur_god == "Yredelemnul" then
-      crawl.setopt("force_more_message += god:soul is now ripe for the taking")
-      crawl.setopt("force_more_message += god:soul is no longer ripe for the taking")
-      crawl.setopt("force_more_message += god:dark mirror aura disappears")
-    elseif cur_god == "Zin" then
-      crawl.setopt("force_more_message += god:will now cure all your mutations")
-    end
-  end
-end
-
-
-
----------------------
----- xl-specific ----
----------------------
 local early_warnings = {
-
 } -- early_warnings (do not remove this comment)
 
 local mid_warnings = {
@@ -109,7 +18,8 @@ local late_warnings = {
   "danger:goes berserk"
 } -- late_warnings (do not remove this comment)
 
-local function set_warnings(warnings, create)
+
+local function set_dyn_fm(warnings, create)
   for _, v in ipairs(warnings) do
     if create then
       crawl.setopt("force_more_message += "..v)
@@ -119,42 +29,126 @@ local function set_warnings(warnings, create)
   end
 end
 
-local warn_early_levels = false
-local warn_mid_levels = false
-local warn_late_levels = false
 
+---- race-specific ---
+local function set_race_options()
+  if you.race() == "Demonspawn" then
+    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+  elseif you.race() == "Formicid" then
+    crawl.setopt("force_more_message -= monster_warning:curare")
+  elseif you.race() == "Gargoyle" then
+    crawl.setopt("force_more_message -= monster_warning:curare")
+  elseif you.race() == "Gnoll" then
+    crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
+  elseif you.race() == "Mummy" then
+    crawl.setopt("force_more_message -= monster_warning:curare")
+    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+  elseif you.race() == "Poltergeist" then
+    crawl.setopt("force_more_message -= monster_warning:curare")
+    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+  elseif you.race() == "Revenant" then
+    crawl.setopt("force_more_message -= monster_warning:curare")
+    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+  end
+end
+
+---- class-specific ---
+local function set_class_options()
+  if you.class() == "Hunter" then
+    crawl.setopt("view_delay = 20")
+  end
+end
+
+---- god-specific ----
+local function set_god_options()
+  if you.god() ~= dyn_opt_god then
+    dyn_opt_god = you.god()
+
+    if dyn_opt_god == "Ashenzari" then
+      crawl.setopt("runrest_stop_message += god:Ashenzari invites you to partake")
+    elseif dyn_opt_god == "Beogh" then
+      crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
+      crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
+      crawl.setopt("force_more_message += Your orc.*dies")
+    elseif dyn_opt_god == "Dithmenos" then
+      crawl.setopt("force_more_message += god:You are shrouded in an aura of darkness")
+      crawl.setopt("force_more_message += god:You now sometimes bleed smoke")
+      crawl.setopt("force_more_message += god:You.*no longer.*bleed smoke")
+      crawl.setopt("force_more_message += god:Your shadow no longer tangibly mimics your actions")
+      crawl.setopt("force_more_message += god:Your shadow now sometimes tangibly mimics your actions")
+    elseif dyn_opt_god == "Fedhas" then
+      crawl.setopt("force_more_message += god:Fedhas invokes the elements against you")
+    elseif dyn_opt_god == "Hepliaklqana" then
+      crawl.setopt("runrest_ignore_message ^= emerges from the mists of memory")
+    elseif dyn_opt_god == "Jiyva" then
+      crawl.setopt("force_more_message += god:will now unseal the treasures of the Slime Pits")
+      crawl.setopt("force_more_message += god:Jiyva alters your body")
+      crawl.setopt("force_more_message += god:splits in two")
+      crawl.setopt("force_more_message += god:Your prayer is over.")
+    elseif dyn_opt_god == "Kikubaaqudgha" then
+      crawl.setopt("force_more_message += god:Kikubaaqudgha will grant you")
+    elseif dyn_opt_god == "Lugonu" then
+      crawl.setopt("force_more_message += god:Lugonu will now corrupt your weapon")
+      crawl.setopt("force_more_message += god:Lugonu sends minions to punish you")
+    elseif dyn_opt_god == "Okawaru" then
+      crawl.setopt("force_more_message += god:Okawaru sends forces against you")
+    elseif dyn_opt_god == "Ru" then
+      crawl.setopt("runrest_stop_message += god:Ru believes you are ready to make a new sacrifice")
+    elseif dyn_opt_god == "Qazlal" then
+      crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
+      crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
+      crawl.setopt("force_more_message -= god:You feel.*protected")
+    elseif dyn_opt_god == "The Shining One" then
+      crawl.setopt("force_more_message += god:Your divine shield starts to fade.")
+      crawl.setopt("force_more_message += god:Your divine shield fades away.")
+    elseif dyn_opt_god == "Trog" then
+      crawl.setopt("force_more_message += god:You feel the effects of Trog's Hand fading")
+      crawl.setopt("force_more_message += god:You feel less resistant to hostile enchantments")
+    elseif dyn_opt_god == "Wu Jian Council" then
+      crawl.setopt("runrest_ignore_message += heavenly storm settles")
+    elseif dyn_opt_god == "Xom" then
+      crawl.setopt("force_more_message += god:")
+      crawl.setopt("force_more_message += staircase.*moves")
+      crawl.setopt("force_more_message += Some monsters swap places")
+    elseif dyn_opt_god == "Yredelemnul" then
+      crawl.setopt("force_more_message += god:soul is now ripe for the taking")
+      crawl.setopt("force_more_message += god:soul is no longer ripe for the taking")
+      crawl.setopt("force_more_message += god:dark mirror aura disappears")
+    elseif dyn_opt_god == "Zin" then
+      crawl.setopt("force_more_message += god:will now cure all your mutations")
+    end
+  end
+end
+
+---- xl-specific ----
 local function set_xl_options()
   if not warn_early_levels and you.xl() <= 5 then
     warn_early_levels = true
-    set_warnings(early_warnings, true)
+    set_dyn_fm(early_warnings, true)
   elseif warn_early_levels and you.xl() > 5 then
     warn_early_levels = false
-    set_warnings(early_warnings, false)
+    set_dyn_fm(early_warnings, false)
   end
 
   if not warn_mid_levels and you.xl() <= 10 then
     warn_mid_levels = true
-    set_warnings(mid_warnings, true)
+    set_dyn_fm(mid_warnings, true)
   elseif warn_mid_levels and you.xl() > 10 then
     warn_mid_levels = false
-    set_warnings(mid_warnings, false)
+    set_dyn_fm(mid_warnings, false)
   end
 
   if not warn_late_levels and you.xl() <= 15 then
     warn_late_levels = true
-    set_warnings(late_warnings, true)
+    set_dyn_fm(late_warnings, true)
   elseif not warn_late_levels and you.xl() > 15 then
     warn_late_levels = false
-    set_warnings(late_warnings, false)
+    set_dyn_fm(late_warnings, false)
   end
 end
 
 
-------------------------
 ---- skill-specific ----
-------------------------
-local ignoring_spellcasting = false
-local ignoring_spellbooks = false
 local function set_skill_options()
   -- Ignore spellbook reading if you have no spellcasting skill
   -- Ignore all spellcaster items if wearing heavy armour or not much armour skill
@@ -181,11 +175,13 @@ local function set_skill_options()
 end
 
 
-
-------------------------------------------
 ------------------ Hook ------------------
-------------------------------------------
 function ready_dynamic_options()
+  if you.turns() == 0 then
+    set_race_options()
+    set_class_options()
+  end
+
   set_god_options()
   set_xl_options()
   set_skill_options()

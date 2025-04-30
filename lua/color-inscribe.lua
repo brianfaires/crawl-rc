@@ -55,9 +55,7 @@ local colorize_tags = {
   {   "MP"..neg_num, 8 },
 } --colorize_tags (do not remove this comment)
 
----------------------------------------------
 ------------------- Hooks -------------------
----------------------------------------------
 function c_assign_invletter_color_inscribe(it)
   local text = it.inscription
   for _, tag in ipairs(colorize_tags) do

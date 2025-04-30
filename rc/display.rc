@@ -1,6 +1,3 @@
-# This file needs original attribution
-# LMK who put in the time on all those msg's
-
 #####################################
 ############## Display ##############
 #####################################
@@ -127,6 +124,10 @@ $mp := lightcyan
 # Set Alias & clear defaults
 msc := message_colour
 msc =
+
+#### MUTES Be careful with these!
+message_colour += mute:plain:No target in view!
+message_colour += mute:There is a.*door here
 
 msc += $mp:You feel your power returning
 

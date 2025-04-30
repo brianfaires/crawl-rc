@@ -1,19 +1,17 @@
 if loaded_pa_data then return end
 loaded_pa_data = true
 dofile("crawl-rc/lua/util.lua")
--------------------------------------------------------------------------------
+dofile("crawl-rc/lua/config.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
 ---------------------------- Begin persistent data ----------------------------
--------------------------------------------------------------------------------
 if not level_alerts or you.turns() == 0 then
   level_alerts = { }
   items_picked = { }
   items_alerted = { }
-  rare_items = {  "broad axe", "executioner's axe", "eveningstar", "demon whip",
-                  "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
-                  "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
-                  "crystal plate armour", "gold dragon scales", "pearl dragon scales",
-                  "storm dragon scales", "shadow dragon scales", "wand of digging",
-                  "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield" }
+  rare_items = { }
+  for _,v in ipairs(one_time_alerts) do
+    table.insert(rare_items, v)
+  end
 
   armour_high_score = 0
   alerted_first_ranged_one_handed = 0
@@ -76,9 +74,7 @@ table.insert(chk_lua_save,
       weapon_high_score) end)
 
 
-----------------------------------------
 ---- Accessors into persistent data ----
-----------------------------------------
 function get_rare_item_index(it)
   local qualname = it.name("qual")
   for i,v in ipairs(rare_items) do
@@ -109,10 +105,7 @@ function previously_alerted(it)
   return util.contains(items_alerted, name)
 end
 
-
--------------------------------
 --- Multi store/remove data ---
--------------------------------
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
@@ -153,9 +146,7 @@ function remove_item_and_less_enchanted(table_ref, it)
 end
 
 
-----------------------------------
 --- Set all single high scores ---
-----------------------------------
 function update_high_scores(it)
   local ret_val = nil
 
@@ -196,9 +187,7 @@ function update_high_scores(it)
 end
 
 
---------------------
 --- Startup code ---
---------------------
 -- Starting items: Remove from rare_items, and add to items_picked
 if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do

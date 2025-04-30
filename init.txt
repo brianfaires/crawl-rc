@@ -1,3 +1,6 @@
+## Config at top
+lua_file = crawl-rc/lua/config.lua
+
 ############################
 ####### Main options #######
 ############################
@@ -17,7 +20,6 @@ drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, stone
 
 
-
 ###############################
 ####### Explore options #######
 ###############################
@@ -26,7 +28,7 @@ explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
-view_delay = 100
+view_delay = 50
 show_travel_trail = true
 
 explore_greedy_visit = artefacts,glowing_items,stacks
@@ -41,6 +43,8 @@ ae := autopickup_exceptions
 ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
 ae ^= >useless_item, <misc
+ae += staff of.*, .*talisman
+
 # Exclude the 3rd copy of any ring
 {
   add_autopickup_func(function (it, name)
@@ -58,8 +62,12 @@ ae ^= >useless_item, <misc
 
 
 ########################
-####### RC files #######
+####### Includes #######
 ########################
+### Shared files; do not disable
+lua_file = crawl-rc/lua/constants.lua
+lua_file = crawl-rc/lua/util.lua
+
 ### Mostly normal RC options ###
 include = crawl-rc/rc/autoinscribe.rc
 include = crawl-rc/rc/display.rc
@@ -68,16 +76,6 @@ include = crawl-rc/rc/macros.rc
 include = crawl-rc/rc/runrest.rc
 include = crawl-rc/rc/slot-defaults.rc
 
-
-
-#########################
-####### Lua Files #######
-#########################
-### Pickup and alert ###
-lua_file = crawl-rc/lua/pickup-alert/pa-armour.lua
-lua_file = crawl-rc/lua/pickup-alert/pa-misc.lua
-lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
-
 ### Features ###
 lua_file = crawl-rc/lua/after-shaft.lua
 lua_file = crawl-rc/lua/announce-damage.lua
@@ -85,6 +83,7 @@ lua_file = crawl-rc/lua/color-inscribe.lua
 lua_file = crawl-rc/lua/drop-inferior.lua
 lua_file = crawl-rc/lua/dynamic-options.lua
 lua_file = crawl-rc/lua/exclude-dropped.lua
+lua_file = crawl-rc/lua/fully-rest.lua
 lua_file = crawl-rc/lua/fm-monsters.lua
 lua_file = crawl-rc/lua/inscribe-stats.lua
 lua_file = crawl-rc/lua/misc-alerts.lua
@@ -95,31 +94,30 @@ lua_file = crawl-rc/lua/safe-stairs.lua
 lua_file = crawl-rc/lua/startup.lua
 lua_file = crawl-rc/lua/weapon-slots.lua
 
+### Pickup and alert ###
+lua_file = crawl-rc/lua/pickup-alert/pa-armour.lua
+lua_file = crawl-rc/lua/pickup-alert/pa-misc.lua
+lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
+
 
 ####################################################################
 ######################## Lua Hook Functions ########################
-####################################################################
 {
-----------------------------------
 ---------- c_message() -----------
-----------------------------------
 function c_message(text, channel)
   if c_message_remind_identify then c_message_remind_identify(text, channel) end
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
-  if c_message_search_altars_in_temple then c_message_search_altars_in_temple(text, channel) end
   if c_message_fully_recover then c_message_fully_recover(text, channel) end
   if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
-  if c_message_ignore_gauntlet_msgs then c_message_ignore_gauntlet_msgs(text, channel) end
+  if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_delayed then c_message_fm_delayed(text, channel) end
 end
 
 
--------------------------------------------
 ---------- c_assign_inv_letter() ----------
--------------------------------------------
 function c_assign_invletter(it)
   -- Calls with no return values; just triggering on new item pickup
   if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
@@ -136,17 +134,13 @@ function c_assign_invletter(it)
 end
 
 
----------------------------
----- ch_stop_running() ----
----------------------------
+-------- ch_stop_running() --------
 function ch_stop_running(kind)
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
 end
 
 
------------------------------
----- Prompt auto-answers ----
------------------------------
+-------- Prompt auto-answers --------
 function c_answer_prompt(prompt)
   if prompt:find("cheaper one?") then
     crawl.mpr("Replacing shopping list items", "plain")
@@ -155,13 +149,12 @@ function c_answer_prompt(prompt)
 end
 
 
----------------------------
 --------- ready() ---------
----------------------------
-local last_turn = -1
+local efficient_ready_last_turn = -1
 function ready()
-  if you.turns() ~= last_turn then
-    last_turn = you.turns()
+  if you.turns() ~= efficient_ready_last_turn then
+    efficient_ready_last_turn = you.turns()
+
     if ready_force_mores then ready_force_mores() end
     if ready_fm_delayed then ready_fm_delayed() end
     if ready_dynamic_options then ready_dynamic_options() end
@@ -169,19 +162,17 @@ function ready()
     if ready_weapon_slots then ready_weapon_slots() end
     if ready_safe_consumables then ready_safe_consumables() end
     if ready_mute_swaps then ready_mute_swaps() end
-    if ready_ignore_altars then ready_ignore_altars() end
-    if ready_ignore_exits then ready_ignore_exits() end
+    if ready_runrest_features then ready_runrest_features() end
     if ready_after_shaft then ready_after_shaft() end
     if ready_fully_recover then ready_fully_recover() end
     if ready_safe_stairs then ready_safe_stairs() end
-    if ready_stop_on_pan_gates then ready_stop_on_pan_gates() end
-
     if ready_announce_damage then ready_announce_damage() end
     if ready_item_alerts then ready_item_alerts() end
     if ready_misc_alerts then ready_misc_alerts() end
   end
 end
---Call ready() once before autopickup/alerts trigger
-ready()
 
+--Startup hygeine
+ready()
+crawl.redraw_screen()
 }

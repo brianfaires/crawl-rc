@@ -1,7 +1,12 @@
 if loaded_pa_main then return end
 loaded_pa_main = true
+dofile("crawl-rc/lua/config.lua")
 dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
+
+local pause_pickup_alert = false
+local last_ready_item_alerts_turn = 0
 
 function alert_item(it, alert_type)
   local name = it.name("plain")
@@ -29,11 +34,7 @@ end
 crawl.setopt("runrest_stop_message += Item alert, ")
 
 
-
-
----------------------------------------------
 ------------------- Hooks -------------------
----------------------------------------------
 function c_assign_invletter_item_alerts(it)
   if is_weapon(it) or is_armour(it) then
     if not previously_picked(it) then
@@ -47,10 +48,9 @@ function c_assign_invletter_item_alerts(it)
   util.remove(level_alerts, it.name("plain"))
 end
 
-local disable_pa = false
 function c_message_item_alerts(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
-    disable_pa = true
+    pause_pickup_alert = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
     for v in iter.invent_iterator:new(level_alerts) do
@@ -66,32 +66,31 @@ function c_message_item_alerts(text, _)
   end
 end
 
-local last_ready_item_alerts_turn = 0
 function ready_item_alerts()
   if you.turns() == last_ready_item_alerts_turn then return end
   last_ready_item_alerts_turn = you.turns()
 
-  if not disable_pa then
+  if not pause_pickup_alert then
     generate_inv_weap_arrays()
     update_high_scores(items.equipped_at("armour"))
   else
-    disable_pa = false
+    pause_pickup_alert = false
   end
 end
 
 
-
--------------------------
 ---- Autopickup main ----
--------------------------
 add_autopickup_func(function (it, _)
-  if disable_pa then return end
+  if pause_pickup_alert then return end
 
   -- Check for pickup
   local retVal = false
-  if is_armour(it) and loaded_pa_armour then retVal = pickup_armour(it)
-  elseif is_weapon(it) and loaded_pa_weapons then retVal = pickup_weapons(it)
-  elseif is_staff(it) and loaded_pa_misc then retVal = pickup_staff(it)
+  if is_armour(it) and loaded_pa_armour and CONFIG.pickup_armour then
+    retVal = pickup_armour(it)
+  elseif is_weapon(it) and loaded_pa_weapons and CONFIG.pickup_weapons then
+    retVal = pickup_weapons(it)
+  elseif is_staff(it) and loaded_pa_misc and CONFIG.pickup_misc then
+    retVal = pickup_staff(it)
   end
 
   if retVal == true then
@@ -100,16 +99,16 @@ add_autopickup_func(function (it, _)
   end
 
   -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
-  ready_item_alerts()
+  if CONFIG.item_alerts then ready_item_alerts() end
 
   -- Not picking up this item. Check for alerts
-  if loaded_pa_misc then
+  if loaded_pa_misc and CONFIG.misc_alerts then
     alert_rare_items(it)
     if is_staff(it) then alert_staff(it) end
   end
 
-  if is_orb(it) and loaded_pa_misc then alert_orb(it)
-  elseif is_armour(it) and loaded_pa_armour then alert_armour(it)
-  elseif is_weapon(it) and loaded_pa_weapons then alert_weapons(it)
+  if is_orb(it) and loaded_pa_misc and CONFIG.alert_misc then alert_orb(it)
+  elseif is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then alert_armour(it)
+  elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then alert_weapons(it)
   end
 end)

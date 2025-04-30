@@ -1,12 +1,12 @@
 if loaded_pa_misc then return end
 loaded_pa_misc = true
 dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
---------------------------
+
 ---- Alert rare items ----
---------------------------
 function alert_rare_items(it)
   local index = get_rare_item_index(it)
   if index == -1 then return end
@@ -29,10 +29,7 @@ function alert_rare_items(it)
   remove_from_rare_items(it)
 end
 
-
---------------------
 ---- Alert orbs ----
---------------------
 function alert_orb(it)
   if it.is_identified and not have_shield() then
     alert_item(it, "New orb")
@@ -40,9 +37,8 @@ function alert_orb(it)
 end
 
 
-----------------------------------
+
 ---- Alert for needed resists ----
-----------------------------------
 function alert_staff(it)
   if not it.is_identified then return false end
   local needRes = false
@@ -61,9 +57,7 @@ function alert_staff(it)
 end
 
 
-----------------------------
 ---- Smart staff pickup ----
-----------------------------
 function pickup_staff(it)
   if it.is_useless or not it.is_identified then return false end
   local school = get_staff_school(it)

@@ -1,126 +1,43 @@
---------------------------------
----- Fully rest off effects ----
---------------------------------
-local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
-    "confused", "marked", "tree%-form", "sluggish" }
+-- A collection of simple features related to resting and auto-explore stops
+dofile("crawl-rc/lua/config.lua")
+dofile("crawl-rc/lua/constants.lua")
 
-crawl.setopt("runrest_ignore_message += recovery:.*")
-crawl.setopt("runrest_ignore_message += duration:.*")
-
-local function fully_recovered()
-  -- Confirm sure HP and MP are full
-  local hp, mhp = you.hp()
-  if hp ~= mhp then return false end
-  local mp, mmp = you.mp()
-  if mp ~= mmp then return false end
-
-  -- Statuses that will always rest off
-  local status = you.status()
-
-  for s in iter.invent_iterator:new(status_to_wait_off) do
-    if status:find(s) then return false end
-  end
-
-  -- If negative stats, don't rest off slow
-  if status:find("slowed") then
-    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
-  end
-
-  return true
-end
-
-local waiting_for_recovery = false
-local explore_after_recovery = false
-
--- Attach full recovery to auto-explore
-function explore_full_recovery()
-  if fully_recovered() then
-    crawl.do_commands({"CMD_EXPLORE"})
-  else
-    explore_after_recovery = true
-    crawl.do_commands({"CMD_REST"})
-  end
-end
-crawl.setopt("macros += M o ===explore_full_recovery")
-
-
-
--------------------------------------
----- Hooks (All functions below) ----
--------------------------------------
-
---------------------------------
----- rest off effects cont. ----
---------------------------------
-function ch_stop_running_full_recovery(kind)
-  if kind == "run" and not fully_recovered() then
-    waiting_for_recovery = true
-    crawl.setopt("message_colour += mute:You start waiting.")
-  end
-end
-
-function c_message_fully_recover(text, _)
-  if text:find("You start waiting.") or text:find("You start resting.") then
-    if not fully_recovered() then
-      waiting_for_recovery = true
-      crawl.setopt("message_colour += mute:You start waiting.")
-    end
-  elseif waiting_for_recovery and channel == "timed_portal" then
-    you.stop_activity()
-    waiting_for_recovery = false
-    crawl.setopt("message_colour -= mute:You start waiting.")
-    explore_after_recovery = false
-  end
-end
-
-function ready_fully_recover()
-  if waiting_for_recovery then
-    if fully_recovered() then
-      you.stop_activity()
-      crawl.setopt("message_colour -= mute:You start waiting.")
-      waiting_for_recovery = false
-      crawl.mpr("Fully recovered.")
-
-      if explore_after_recovery then
-        crawl.sendkeys("o")
-        explore_after_recovery = false
-      end
-    elseif not you.feel_safe() then
-      you.stop_activity()
-      waiting_for_recovery = false
-      explore_after_recovery = false
-    else
-      crawl.do_commands({"CMD_SAFE_WAIT"})
-    end
-  else
-    explore_after_recovery = false
-  end
-end
-
----------------------------------------------------------------------
----- End Fully rest off effects (Hooks for other features cont.) ----
----------------------------------------------------------------------
-
-----------------------
----- Ignore altars ----
------------------------
 local stop_on_altars = true
+local stop_on_portals = true
+local stop_on_pan_gates = false
+local ignoring_all_gauntlet = false
 
-function ready_ignore_altars()
-  if stop_on_altars and (you.god() ~= "No God" or you.branch() == "Temple") then
+
+---- Ignore exit portals ----
+local function ready_ignore_exits()
+  local branch = you.branch()
+  if stop_on_portals and util.contains(all_portal_names, branch) then
+    stop_on_portals = false
+    crawl.setopt("explore_stop -= portals")
+  elseif not stop_on_portals and not util.contains(all_portal_names, branch) then
+    stop_on_portals = true
+    crawl.setopt("explore_stop += portals")
+  end
+end
+
+---- Ignore altars ----
+local function religion_is_handled()
+  return you.god() ~= "No God" or you.race() == "Demigod" or 
+    (you.good_god() and you.xl() > 9)
+end
+
+local function ready_ignore_altars()
+  if stop_on_altars and religion_is_handled() then
     stop_on_altars = false
     crawl.setopt("explore_stop -= altars")
-  elseif not stop_on_altars and you.god() == "No God" and you.branch() ~= "Temple" then
+  elseif not stop_on_altars and not religion_is_handled() then
     stop_on_altars = true
     crawl.setopt("explore_stop += altars")
   end
 end
 
-
-----------------------------------
 ---- Automated temple actions ----
-----------------------------------
-function c_message_search_altars_in_temple(text, _)
+local function c_message_search_altars_in_temple(text, _)
   if you.branch() == "Temple" then
     if text:find("explor") then
       crawl.sendkeys({ 6, "altar\r" })
@@ -130,32 +47,8 @@ function c_message_search_altars_in_temple(text, _)
   end
 end
 
-
------------------------------
----- Ignore exit portals ----
------------------------------
-local ignore_exit_brances = { "Bailey", "Bazaar", "Gauntlet", "Ice Cave", "Ossuary",
-                              "Sewer", "Trove", "Volcano", "Ziggurat" }
-local stop_on_portals = true
-
-function ready_ignore_exits()
-  local branch = you.branch()
-  if stop_on_portals and util.contains(ignore_exit_brances, branch) then
-    stop_on_portals = false
-    crawl.setopt("explore_stop -= portals")
-  elseif not stop_on_portals and not util.contains(ignore_exit_brances, branch) then
-    stop_on_portals = true
-    crawl.setopt("explore_stop += portals")
-  end
-end
-
-
----------------------------
 ---- Stop on Pan Gates ----
----------------------------
-local stop_on_pan_gates = false
-
-function ready_stop_on_pan_gates()
+local function ready_stop_on_pan_gates()
   local branch = you.branch()
   if stop_on_pan_gates and branch ~= "Pan" then
     stop_on_pan_gates = false
@@ -166,12 +59,8 @@ function ready_stop_on_pan_gates()
   end
 end
 
-
-----------------------------------------------
----- Ignore gauntlet msgs while exploring ----
-----------------------------------------------
-local ignoring_all_gauntlet = false
-function c_message_ignore_gauntlet_msgs(text, _)
+---- Ignore gauntlet msgs ----
+local function c_message_ignore_gauntlet_msgs(text, _)
   if ignoring_all_gauntlet then
     if you.branch() ~= "Gauntlet" or text:find("Done exploring.") or text:find("Partly explored") then
       ignoring_all_gauntlet = false
@@ -183,4 +72,16 @@ function c_message_ignore_gauntlet_msgs(text, _)
       crawl.setopt("runrest_ignore_message ^= .*")
     end
   end
+end
+
+---------------- Hooks ----------------
+function ready_runrest_features()
+  if CONFIG.ignore_altars then ready_ignore_altars() end
+  if CONFIG.ignore_portal_exits then ready_ignore_exits() end
+  if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
+end
+
+function c_message_runrest_features(text, _)
+  if CONFIG.search_altars_in_temple then c_message_search_altars_in_temple(text, _) end
+  if CONFIG.ignore_gauntlet_msgs then c_message_ignore_gauntlet_msgs(text, _) end
 end

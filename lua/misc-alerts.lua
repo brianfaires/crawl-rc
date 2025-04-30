@@ -1,8 +1,7 @@
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
-------------------------------------------
+
 ------ Max piety w/ amulet of faith ------
-------------------------------------------
 if not alerted_max_piety or you.turns() == 0 then
   alerted_max_piety = 0
 end
@@ -25,9 +24,7 @@ local function alert_remove_faith()
   end
 end
 
--------------------------------------------------
 ----- Alert once at a specific HP threshold -----
--------------------------------------------------
 -- Throw a force_more() at ~50% hp; don't throw again until fully healed
 local HP_THRESHOLD = 0.5
 local hp, mhp = you.hp()
@@ -45,9 +42,7 @@ local function alert_low_hp()
   end
 end
 
-------------------------------------------
 ------------------ Hook ------------------
-------------------------------------------
 function ready_misc_alerts()
   alert_remove_faith()
   alert_low_hp()

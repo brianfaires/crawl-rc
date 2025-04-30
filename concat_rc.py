@@ -7,9 +7,11 @@ LUA_PREFX = f"lua_file = {REPO_ROOT}"
 def recurse_write_lines(infile, outfile, prevfiles):
   print("Writing " + infile.name)
   if infile.name.endswith(".lua"):
-    outfile.writelines("-------- Begin " + infile.name + " --------\n\n")
+    outfile.writelines("-------------------------------------------------------------------------------\n")
+    outfile.writelines("-------- Begin " + infile.name + " --------\n")
   else:
-    outfile.writelines("######## Begin " + infile.name + " ########\n\n")
+    outfile.writelines("###############################################################################\n")
+    outfile.writelines("######## Begin " + infile.name + " ########\n")
   for line in infile.readlines():
     if (line.startswith(RC_PREFIX)):
       inc_filename = line.replace(RC_PREFIX, "").strip()
@@ -36,9 +38,11 @@ def recurse_write_lines(infile, outfile, prevfiles):
       outfile.writelines(line)
 
   if infile.name.endswith(".lua"):
-    outfile.writelines("\n\n-------- End " + infile.name + " --------")
+    outfile.writelines("\n-------- End " + infile.name + " --------\n")
+    outfile.writelines("-------------------------------------------------------------------------------\n")
   else:
-    outfile.writelines("\n\n######## End " + infile.name + " ########\n\n\n")
+    outfile.writelines("\n######## End " + infile.name + " ########\n")
+    outfile.writelines("###############################################################################\n")
 
 
 files_opened = [INIT_FILE_NAME]

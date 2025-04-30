@@ -4,9 +4,7 @@ dofile("crawl-rc/lua/util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
---------------------------
 ---- Begin inv arrays ----
---------------------------
 -- Use these arrays to compare potential upgrades against entire inventory
 -- But only update these arrays once per turn, in ready()
 
@@ -32,9 +30,21 @@ local function make_weapon_struct(it)
   return weap_data
 end
 
+-- High scores for melee/ranged, 1/2-handed, branded/unbranded
+-- (Don't put these closing curly braces on a line by themself)
 local top_school = "unarmed combat"
-local all_weap_schools = { "axes", "maces & flails", "polearms", "long blades",
-    "short blades", "staves", "unarmed combat", "ranged weapons" }
+local egos = { }
+
+local inv_max_dmg = { 
+  melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
+  ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0, melee_only = 0
+} -- inv_max_dmg (do not remove this comment)
+
+local inv_max_dmg_acc = { 
+  melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
+  ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0, melee_only = 0
+} -- inv_max_dmg_acc (do not remove this comment)
+
 
 local function set_top_school()
   local max = 0
@@ -46,17 +56,6 @@ local function set_top_school()
     end
   end
 end
-
--- High scores for melee/ranged, 1/2-handed, branded/unbranded
-    -- (Don't put these closing curly braces on a line by themself)
-local inv_max_dmg = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
-                      ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0,
-                      melee_only = 0 }
-local inv_max_dmg_acc = { melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
-                          ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0,
-                          melee_only = 0 }
-local egos = { }
-
 
 local function get_weap_tag(it)
   local ret_val = if_el(it.is_ranged, "ranged_", "melee_")
@@ -118,15 +117,8 @@ function generate_inv_weap_arrays()
   enforce_dmg_floor("melee_2", "melee_1")
   enforce_dmg_floor("melee_2b", "melee_1b")
 end
-------------------------
----- End inv arrays ----
-------------------------
 
 
-
--------------------------------
----- alert_early_weapons() ----
--------------------------------
 -- Alert strong weapons early
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
@@ -162,9 +154,6 @@ local function alert_early_weapons(it)
 end
 
 
-----------------------------
----- Alert first ranged ----
-----------------------------
 local function alert_first_ranged(it)
   if not it.is_ranged then return false end
 
@@ -191,9 +180,7 @@ local function alert_first_ranged(it)
 end
 
 
------------------------------------
----- Begin pickup_weapons util ----
------------------------------------
+---- pickup_weapons util ----
 local function no_upgrade_possible(it, inv)
   if get_hands(it) > inv.hands then return true end
   if it.is_ranged ~= inv.is_ranged then return true end
@@ -235,9 +222,6 @@ local function need_first_weapon(it)
 end
 
 
---------------------------------
----- Begin pickup_weapons() ----
---------------------------------
 local function pickup_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match
@@ -279,13 +263,7 @@ function pickup_weapons(it)
   return need_first_weapon(it)
 end
 
-------------------------------
----- End pickup_weapons() ----
-------------------------------
 
--------------------------------------------
----- Begin alert_interesting_weapons() ----
--------------------------------------------
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then return alert_item(it, "Artefact weapon") end
 
@@ -387,9 +365,6 @@ local function alert_interesting_weapons(it)
 
   return false
 end
------------------------------------------
----- End alert_interesting_weapons() ----
------------------------------------------
 
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)

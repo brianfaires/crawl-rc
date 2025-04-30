@@ -11,9 +11,7 @@ local function persist_shaft_values()
 end
 table.insert(chk_lua_save, persist_shaft_values)
 
----------------------------------------------
 ------------------- Hooks -------------------
----------------------------------------------
 function c_message_after_shaft(text, _)
   if shaft_depth ~= 0 then return end
   if text:find("fall into a shaft") then

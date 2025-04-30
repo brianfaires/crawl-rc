@@ -1,6 +1,3 @@
--------------------------------------
----- Unidentified items reminder ----
--------------------------------------
 local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
     if not it.is_identified then
@@ -17,10 +14,7 @@ end
 crawl.setopt("runrest_stop_message += You have something to identify")
 
 
-
----------------------------------------------
 ------------------- Hooks -------------------
----------------------------------------------
 function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 

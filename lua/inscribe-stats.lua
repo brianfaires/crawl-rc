@@ -1,4 +1,5 @@
 dofile("crawl-rc/lua/util.lua")
+dofile("crawl-rc/lua/config.lua")
 
 local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
@@ -42,17 +43,15 @@ local function inscribe_weapon_stats(it)
   return new_inscr
 end
 
-
 local skipped_first_redraw = false
-------------------------------------------
+
 ------------------ Hook ------------------
-------------------------------------------
 function ready_inscribe_stats()
   for it in iter.invent_iterator:new(items.inventory()) do
     if is_weapon(it) or is_staff(it) then
-      inscribe_weapon_stats(it)
+      if CONFIG.inscribe_weapons then inscribe_weapon_stats(it) end
     elseif is_armour(it) then
-      inscribe_armour_stats(it)
+      if CONFIG.inscribe_armour then inscribe_armour_stats(it) end
     end
   end
 

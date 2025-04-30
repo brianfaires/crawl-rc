@@ -1,0 +1,35 @@
+CONFIG = { }
+
+-- Announce damage emojis
+CONFIG.emojis = true
+
+-- Inscribe stats
+CONFIG.inscribe_weapons = true
+CONFIG.inscribe_armour = true
+
+---- Pickup/Alert system
+CONFIG.pickup_armour = true
+CONFIG.pickup_weapons = true
+CONFIG.pickup_misc = true
+CONFIG.alert_rare_items = true
+
+CONFIG.alert_armour = true
+CONFIG.alert_weapons = true
+CONFIG.alert_misc = true
+CONFIG.item_alerts = true
+
+one_time_alerts = {
+  "broad axe", "executioner's axe", "eveningstar", "demon whip",
+  "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
+  "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
+  "crystal plate armour", "gold dragon scales", "pearl dragon scales",
+  "storm dragon scales", "shadow dragon scales", "wand of digging",
+  "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
+} -- one_time_alerts (do not remove this comment)
+
+-- Runrest features
+CONFIG.ignore_altars = true
+CONFIG.ignore_exit_portals = true
+CONFIG.ignore_gauntlet_msgs = true
+CONFIG.stop_on_pan_gates = true
+CONFIG.search_altars_in_temple = true

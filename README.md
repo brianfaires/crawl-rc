@@ -35,8 +35,8 @@ Automatically inscribe items, mostly to add warnings to consumables
 
 ### [rc/display.rc](rc/display.rc)
 Various display related settings, including 1000's of colors for customized messages. 
-They're a little dated, but a great starting point to build on.
-*This section needs attribution - would really like to list the original author.*
+Some are a bit dated, but a great starting point to build on.
+*If anyone knows who hand-wrote all of these, LMK so I can attribute*
 
 ### [rc/fm-messages.rc](rc/fm-messages.rc)
 Settings for force_more messages
