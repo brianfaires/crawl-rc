@@ -27,17 +27,16 @@ end
 
 ----- Alert once at a specific HP threshold -----
 -- Throw a force_more() at ~50% hp; don't throw again until fully healed
-local HP_THRESHOLD = 0.5
 local hp, mhp = you.hp()
-local below_hp_threshold = hp <= HP_THRESHOLD * mhp
+local below_hp_threshold = hp <= CONFIG.alert_low_hp_threshold * mhp
 
 local function alert_low_hp()
   hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= HP_THRESHOLD * mhp then
+  elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local threshold_perc = 100 * HP_THRESHOLD
+    local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
     crawl.mpr("<red>!!! Dropped below "..threshold_perc.."% HP !!!</red>")
     crawl.more()
   end
@@ -46,5 +45,5 @@ end
 ------------------ Hook ------------------
 function ready_misc_alerts()
   if CONFIG.alert_remove_faith then alert_remove_faith() end
-  if CONFIG.alert_low_hp then alert_low_hp() end
+  if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
 end
