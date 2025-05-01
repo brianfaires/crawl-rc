@@ -10,14 +10,15 @@ CONFIG.inscribe_armour = true
 ---- Pickup/Alert system
 CONFIG.pickup_armour = true
 CONFIG.pickup_weapons = true
-CONFIG.pickup_misc = true
-CONFIG.alert_rare_items = true
+CONFIG.pickup_staves = true
 
+CONFIG.alert_system_enabled = true
 CONFIG.alert_armour = true
 CONFIG.alert_weapons = true
-CONFIG.alert_misc = true
-CONFIG.item_alerts = true
-
+CONFIG.alert_orbs = true
+CONFIG.alert_talismans = true
+CONFIG.alert_staff_resists = true
+CONFIG.alert_one_time_items = true
 one_time_alerts = {
   "broad axe", "executioner's axe", "eveningstar", "demon whip",
   "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
@@ -29,7 +30,7 @@ one_time_alerts = {
 
 -- Runrest features
 CONFIG.ignore_altars = true
-CONFIG.ignore_exit_portals = true
+CONFIG.ignore_portal_exits = true
 CONFIG.ignore_gauntlet_msgs = true
 CONFIG.stop_on_pan_gates = true
 CONFIG.search_altars_in_temple = true

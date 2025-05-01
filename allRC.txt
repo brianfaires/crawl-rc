@@ -18,14 +18,15 @@ CONFIG.inscribe_armour = true
 ---- Pickup/Alert system
 CONFIG.pickup_armour = true
 CONFIG.pickup_weapons = true
-CONFIG.pickup_misc = true
-CONFIG.alert_rare_items = true
+CONFIG.pickup_staves = true
 
+CONFIG.alert_system_enabled = true
 CONFIG.alert_armour = true
 CONFIG.alert_weapons = true
-CONFIG.alert_misc = true
-CONFIG.item_alerts = true
-
+CONFIG.alert_orbs = true
+CONFIG.alert_talismans = true
+CONFIG.alert_staff_resists = true
+CONFIG.alert_one_time_items = true
 one_time_alerts = {
   "broad axe", "executioner's axe", "eveningstar", "demon whip",
   "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
@@ -249,6 +250,10 @@ end
 
 function is_orb(it)
   return it and it.name("base") == "orb"
+end
+
+function is_talisman(it)
+  return it and it.name("base") == "talisman"
 end
 
 function get_mut(mutation, include_temp)
@@ -3347,6 +3352,8 @@ item_slot ^= wand of paralysis:J
 ######## Spell Slots #########
 ##############################
 spell_slot ^= Alistair's Intoxication:AITX
+spell_slot ^= Alistair’s Walking Alembic:AWKLMBSTEI
+spell_slot ^= Anguish:ANGUISH
 spell_slot ^= Animate Armour:ANMT
 spell_slot ^= Animate Dead:ADNMT
 spell_slot ^= Arcjolt:AJCOLT
@@ -3354,56 +3361,73 @@ spell_slot ^= Blink:BLNK
 spell_slot ^= Borgnjor's Revivification:BRVF
 spell_slot ^= Call Canine Familiar:CFN
 spell_slot ^= Call Imp:ICMP
+spell_slot ^= Cause Fear:CFSUR
 spell_slot ^= Chain Lightning:LCHGNT
 spell_slot ^= Cigotuvi's Dreadful Rot:CDRVT
 spell_slot ^= Confusing Touch:CTF
 spell_slot ^= Conjure Ball Lightning:BLCTN
+spell_slot ^= Construct Spike Launcher:CSLPKNRAUE
 spell_slot ^= Corpse Rot:CRPS
+spell_slot ^= Dazzling Flash:DZFLSHNG
 spell_slot ^= Death Channel:DCNL
 spell_slot ^= Death's Door:DROTHEA
+spell_slot ^= Detonation Catalyst:DCTNYTSAEO
+spell_slot ^= Diamond Sawblades:DSWBLNIAO
 spell_slot ^= Discord:DISCORD
 spell_slot ^= Disjunction:DJNIS
 spell_slot ^= Dispersal:DPLIS
 spell_slot ^= Dragon's Call:DCRGN
-#spell_slot ^= Eringya's Noxious Bog:NBE
-#spell_slot ^= Flame Wave:FLW
-#spell_slot ^= Frozen Ramparts:FRZ
-spell_slot ^= Iskenderun's Battlespehere:BSI
+spell_slot ^= Forge Monarch Bomb:FMBONRCHGEA
+spell_slot ^= Forge Phalanx Beetle:FPBENXORG
+spell_slot ^= Fortress Blast:FBRTSLA
+spell_slot ^= Foxfire:FXOIRE
+spell_slot ^= Fugue of the Fallen:FUGALNE
+spell_slot ^= Fulsome Fusillade:FLSOMADE
+spell_slot ^= Hoarfrost Cannonade:HCORFND
 spell_slot ^= Ice Form:IFORM
 spell_slot ^= Ignite Poison:IPOSN
 spell_slot ^= Ignition:IGNTO
+spell_slot ^= Infestation:INFESTAON
 spell_slot ^= Irradiate:IRADTE
+spell_slot ^= Iskenderun's Battlespehere:BSI
 spell_slot ^= Iskenderun's Mystic Blast:IMB
-spell_slot ^= Kindle Blastsparks:KBS
+spell_slot ^= Jinxbite:JNXBITE
 spell_slot ^= Leda's Liquefaction:LQFND
 spell_slot ^= Malign Gateway:MGWTN
 spell_slot ^= Manifold Assault:MANFT
+spell_slot ^= Martyr's Knell:MKNARTYEL
 spell_slot ^= Maxwell's Capacitive Coupling:MCXW
 spell_slot ^= Metabolic Englaciation:MENC
 spell_slot ^= Monstrous Menagerie:MNGR
-spell_slot ^= Necromutation:NMCT
+spell_slot ^= Nazja’s Percussive Tempering:NPTZJACUE
 spell_slot ^= Olgreb's Toxic Radiance:TOR
 spell_slot ^= Ozocubu's Armour:OAMR
 spell_slot ^= Ozocubu's Refrigeration:ROZFG
+spell_slot ^= Permafrost Eruption:PERUTFMAOSTIN
+spell_slot ^= Platinum Paragon:PLTGNMAO
 spell_slot ^= Polar Vortex:PVXT
-#spell_slot ^= Scorch:SCORH
+spell_slot ^= Rending Blade:RBENDALG
+spell_slot ^= Scorch:SCORH
 spell_slot ^= Shatter:SHTR
+spell_slot ^= Sigil of Binding:SBGILDNG
 spell_slot ^= Silence:SICL
 spell_slot ^= Spellforged Servitor:SVFR
-spell_slot ^= Spider Form:SPFM
+spell_slot ^= Sphinx Sisters:SPHINXR
 spell_slot ^= Starburst:SBUT
 spell_slot ^= Static Discharge:DSCGT
+spell_slot ^= Sublimation of Blood:SBLM
+spell_slot ^= Summon Blazeheart Golem:SBGLZOM
 spell_slot ^= Summon Cactus Giant:CGS
 spell_slot ^= Summon Forest:FSRTM
-spell_slot ^= Summon Guardian Golem:GSOM
 spell_slot ^= Summon Horrible Things:HST
 spell_slot ^= Summon Hydra:HYDRA
 spell_slot ^= Summon Ice Beast:ISB
 spell_slot ^= Summon Lightning Spire:SMLIRNG
 spell_slot ^= Summon Mana Viper:MSV
-spell_slot ^= Statue Form:STFM
-spell_slot ^= Sublimation of Blood:SBLM
+spell_slot ^= Summon Seismosaurus Egg:EGSMIEOAU
+spell_slot ^= Summon Small Mammal:SMLAUON
 spell_slot ^= Swiftness:SWIFT
+spell_slot ^= Volatile Blastmotes:VBOLMASTE
 :if you.class() == "Summoner" then
   spell_slot ^= (summon|call):abcdefgh
 :end
@@ -4984,8 +5008,9 @@ end
 {
 -------------------------------------------------------------------------------
 -------- Begin lua/startup.lua --------
----- Skill menu on startup (by rwbarton) ----
-if you.turns() == 0 then
+---- Skill menu on startup (orig by rwbarton) ----
+local show_skills_on_startup = (you.race() ~= Gnoll or you.class() == "Wanderer")
+if you.turns() == 0 and show_skills_on_startup then
   crawl.sendkeys("m!!")
 end
 
@@ -5780,7 +5805,7 @@ end
 if loaded_pa_main then return end
 loaded_pa_main = true
 
-local pause_pickup_alert = false
+local pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 
 function alert_item(it, alert_type)
@@ -5825,7 +5850,7 @@ end
 
 function c_message_item_alerts(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
-    pause_pickup_alert = true
+    pause_pickup_alert_sys = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
     for v in iter.invent_iterator:new(level_alerts) do
@@ -5845,26 +5870,26 @@ function ready_item_alerts()
   if you.turns() == last_ready_item_alerts_turn then return end
   last_ready_item_alerts_turn = you.turns()
 
-  if not pause_pickup_alert then
+  if not pause_pickup_alert_sys then
     generate_inv_weap_arrays()
     update_high_scores(items.equipped_at("armour"))
   else
-    pause_pickup_alert = false
+    pause_pickup_alert_sys = false
   end
 end
 
 
 ---- Autopickup main ----
 add_autopickup_func(function (it, _)
-  if pause_pickup_alert then return end
+  if pause_pickup_alert_sys then return end
 
   -- Check for pickup
   local retVal = false
-  if is_armour(it) and loaded_pa_armour and CONFIG.pickup_armour then
+  if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
     retVal = pickup_armour(it)
-  elseif is_weapon(it) and loaded_pa_weapons and CONFIG.pickup_weapons then
+  elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
     retVal = pickup_weapons(it)
-  elseif is_staff(it) and loaded_pa_misc and CONFIG.pickup_misc then
+  elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
     retVal = pickup_staff(it)
   end
 
@@ -5873,18 +5898,23 @@ add_autopickup_func(function (it, _)
     return true
   end
 
-  -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
-  if CONFIG.item_alerts then ready_item_alerts() end
+  if CONFIG.alert_system_enabled then
+    -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
+    ready_item_alerts()
 
-  -- Not picking up this item. Check for alerts
-  if loaded_pa_misc and CONFIG.misc_alerts then
-    alert_rare_items(it)
-    if is_staff(it) then alert_staff(it) end
-  end
+    -- Not picking up this item. Check for alerts
+    if loaded_pa_misc then
+      if CONFIG.alert_one_time_items then alert_rare_items(it) end
+      
+      if is_staff(it) and CONFIG.alert_staff_resists then alert_staff(it)
+      elseif is_orb(it) and CONFIG.alert_orbs then alert_orb(it)
+      elseif is_talisman(it) and CONFIG.alert_talismans then alert_talisman(it)
+      end
+    end
 
-  if is_orb(it) and loaded_pa_misc and CONFIG.alert_misc then alert_orb(it)
-  elseif is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then alert_armour(it)
-  elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then alert_weapons(it)
+    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then alert_armour(it)
+    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then alert_weapons(it)
+    end
   end
 end)
 
@@ -6204,7 +6234,12 @@ function alert_orb(it)
   end
 end
 
-
+---- Alert talismans ----
+function alert_talisman(it)
+  if it.is_identified then
+    alert_item(it, "New talisman")
+  end
+end
 
 ---- Alert for needed resists ----
 function alert_staff(it)

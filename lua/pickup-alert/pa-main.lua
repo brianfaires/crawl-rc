@@ -5,7 +5,7 @@ dofile("crawl-rc/lua/util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
 dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
 
-local pause_pickup_alert = false
+local pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 
 function alert_item(it, alert_type)
@@ -50,7 +50,7 @@ end
 
 function c_message_item_alerts(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
-    pause_pickup_alert = true
+    pause_pickup_alert_sys = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
     for v in iter.invent_iterator:new(level_alerts) do
@@ -70,26 +70,26 @@ function ready_item_alerts()
   if you.turns() == last_ready_item_alerts_turn then return end
   last_ready_item_alerts_turn = you.turns()
 
-  if not pause_pickup_alert then
+  if not pause_pickup_alert_sys then
     generate_inv_weap_arrays()
     update_high_scores(items.equipped_at("armour"))
   else
-    pause_pickup_alert = false
+    pause_pickup_alert_sys = false
   end
 end
 
 
 ---- Autopickup main ----
 add_autopickup_func(function (it, _)
-  if pause_pickup_alert then return end
+  if pause_pickup_alert_sys then return end
 
   -- Check for pickup
   local retVal = false
-  if is_armour(it) and loaded_pa_armour and CONFIG.pickup_armour then
+  if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
     retVal = pickup_armour(it)
-  elseif is_weapon(it) and loaded_pa_weapons and CONFIG.pickup_weapons then
+  elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
     retVal = pickup_weapons(it)
-  elseif is_staff(it) and loaded_pa_misc and CONFIG.pickup_misc then
+  elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
     retVal = pickup_staff(it)
   end
 
@@ -98,17 +98,22 @@ add_autopickup_func(function (it, _)
     return true
   end
 
-  -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
-  if CONFIG.item_alerts then ready_item_alerts() end
+  if CONFIG.alert_system_enabled then
+    -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
+    ready_item_alerts()
 
-  -- Not picking up this item. Check for alerts
-  if loaded_pa_misc and CONFIG.misc_alerts then
-    alert_rare_items(it)
-    if is_staff(it) then alert_staff(it) end
-  end
+    -- Not picking up this item. Check for alerts
+    if loaded_pa_misc then
+      if CONFIG.alert_one_time_items then alert_rare_items(it) end
+      
+      if is_staff(it) and CONFIG.alert_staff_resists then alert_staff(it)
+      elseif is_orb(it) and CONFIG.alert_orbs then alert_orb(it)
+      elseif is_talisman(it) and CONFIG.alert_talismans then alert_talisman(it)
+      end
+    end
 
-  if is_orb(it) and loaded_pa_misc and CONFIG.alert_misc then alert_orb(it)
-  elseif is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then alert_armour(it)
-  elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then alert_weapons(it)
+    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then alert_armour(it)
+    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then alert_weapons(it)
+    end
   end
 end)

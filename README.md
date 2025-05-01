@@ -25,10 +25,10 @@ And don't manualy copy-paste the same file more than once.
     If you're playing locally, you should restart the app when you switch characters.
 
 ## Standard(-ish) Settings
-
 ### [init.txt](init.txt)
-A handful of my preferred main and explore options. Contains references to other files.
-Importantly, it ends with a lua code block for all hook functions (which connect features to crawl).
+- My preferred main, explore, and autopickup options.
+- Contains references to other files.
+- Importantly, it ends with all hook functions (to connect features to crawl).
 
 ### [rc/autoinscribe.rc](rc/autoinscribe.rc)
 Automatically inscribe items, mostly to add warnings to consumables
@@ -88,6 +88,9 @@ Dynamic force_mores only trigger in certain scenarios, based on:
 - Resistances: Fire/Cold/Drain/Elec/Pois/Mut
 
 Currently this section is configured to trigger when a monster threatens to take ~half of your current hp.
+
+### [lua/fully-rest.lua](lua/fully-rest.lua)
+Updates resting to fully rest off temporary, negative statuses.
 
 ### [lua/inscribe-stats.lua](lua/inscribe-stats.lua)
 Weapons in inventory are inscribed with their stats and an idealized DPS (ie max damage per 10 aut, including brand). 
@@ -165,17 +168,52 @@ Picks up staves when you are training the relevant spell school. Alerts generate
 - The first instance of anything in the "rare_items" list. Each shield type is included, so "rare" is a bit of a misnomer.
 - First orb of each type
 
-## Dev notes
-- I wrote this over 2 years ago and recently picked it back up when writing inscriptions via lua was enabled in 0.33. 
+### Other files for pickup-alert system
+These are auto-included as necessary. Just listed for reference.
+- [lua/pickup-alert/pa-util.lua](lua/pickup-alert/pa-util.lua): Like [lua/util.lua](lua/util.lua) but specific to the pickup-alert system.
+- [lua/pickup-alert/pa-data.lua](lua/pickup-alert/pa-data.lua): Handles persistent data, saved with your character.
+- [lua/pickup-alert/pa-main.lua](lua/pickup-alert/pa-main.lua): The core logic that connects the features to crawl.
+
+## Core files
+### [lua/config.lua](lua/config.lua)
+This gets included first in [allRC.txt](allRC.txt), so you can toggle features on/off without digging into the code 
+or rebuilding [allRC.txt](allRC.txt). The toggles should be obvious based on the descriptions above.
+
+### [lua/constants.lua](lua/constants.lua)
+In an attempt to future-proof this, lists like `all_weap_schools` and `all_portal_names` are here. Update as needed.
+
+### [lua/util.lua](lua/util.lua)
+Required a lot of places. Nothing in here is necessarily specific to this repo.
+
+## Notes
+I wrote this over 2 years ago and recently picked it back up when inscriptions via lua was enabled in 0.33. 
 I've run it with several characters, but can't cover everything. 
 Please LMK if you find bugs, outdated notes, suggestions, etc.
 
-### TODO list
-1. 0.33.1 Updates: spells, runrest_status's, rare_items, misc_items(talismans)
-1. Separate toggles for pickup & alert
+## TODO dev list
 1. Disable all auto explore stops in gauntlets until fully explored
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
 1. fm-monsters to use lists like {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
 1. dynamic-options to use lists like {god name, [fm-prompts]}
 1. Better colorizing of rF+, rC+, etc (needs crawl PR?)
 1. Wait for allies to heal (needs crawl PR?)
+
+## Resources
+### How to learn RC file options
+http://crawl.akrasiac.org/docs/options_guide.txt
+
+### How to include Lua in your RC
+https://github.com/gammafunk/dcss-rc#1-include-the-rc-or-lua-file-in-your-rc
+https://doc.dcss.io/index.html
+
+### How to lookup a players RC file?
+http://crawl.akrasiac.org/rcfiles/crawl-0.25/magusnn.rc
+
+### RC Examples & sources used in this repo
+https://github.com/magus/dcss
+https://github.com/gammafunk/dcss-rc
+https://tavern.dcss.io/t/whats-in-your-rc-file/160/4
+
+https://underhound.eu/crawl/rcfiles/crawl-0.30/Elmgren.rc
+http://crawl.berotato.org/crawl/rcfiles/crawl-0.23/Freakazoid.rc
+https://github.com/HilariousDeathArtist/DCSSConfigFile/blob/master/HilariousDeathArtist.txt

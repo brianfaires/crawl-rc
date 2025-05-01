@@ -36,7 +36,12 @@ function alert_orb(it)
   end
 end
 
-
+---- Alert talismans ----
+function alert_talisman(it)
+  if it.is_identified then
+    alert_item(it, "New talisman")
+  end
+end
 
 ---- Alert for needed resists ----
 function alert_staff(it)

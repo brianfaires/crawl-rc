@@ -8,6 +8,7 @@ function withColor(color, str)
   return string.format("<%s>%s</%s>", color, str, color)
 end
 
+-- Removes color tags from text, and optionally escapes special characters --
 function cleanup_text(text, escape_chars)
   local keep_going = true
   while keep_going do
@@ -79,6 +80,10 @@ end
 
 function is_orb(it)
   return it and it.name("base") == "orb"
+end
+
+function is_talisman(it)
+  return it and it.name("base") == "talisman"
 end
 
 function get_mut(mutation, include_temp)
