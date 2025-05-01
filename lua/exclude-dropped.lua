@@ -1,9 +1,8 @@
-if loaded_exclude_dropped then return end
-local loaded_exclude_dropped = true
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
-
+if loaded_exclude_dropped then return end
+local loaded_exclude_dropped = true
 loadfile("crawl-rc/lua/constants.lua")
 
 ---------------- Persistent data ----------------
@@ -90,7 +89,6 @@ end
 
 
 ------------------ Hook ------------------
-
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
 

@@ -1,6 +1,4 @@
-############################
 ####### Item Slots #########
-############################
 # Rings to P/p for easy swapping
 item_slot += ring of:Pp
 
@@ -61,9 +59,7 @@ item_slot ^= wand of paralysis:J
 
 
 
-##############################
 ######## Spell Slots #########
-##############################
 spell_slot ^= Alistair's Intoxication:AITX
 spell_slot ^= Alistair’s Walking Alembic:AWKLMBSTEI
 spell_slot ^= Anguish:ANGUISH

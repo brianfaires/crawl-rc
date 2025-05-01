@@ -1,8 +1,3 @@
-#####################################
-############## Display ##############
-#####################################
-show_more = false
-small_more = true
 stat_colour = 3:red, 7:lightred
 
 hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
@@ -14,10 +9,7 @@ tile_font_msg_family  = Lucida Console
 tile_font_lbl_family  = Lucida Console
 
 
-
-###########################
 ####### Menu Colors #######
-###########################
 # Set Alias & clear defaults
 menu := menu_colour
 menu =
@@ -96,12 +88,7 @@ menu += $positive:deck of summoning
 menu += $danger:deck of destruction
 
 
-
-
-##################################
 ######## Message coloring ########
-##################################
-
 # black, blue, green, cyan, red, magenta, brown, lightgrey,
 # darkgrey, lightblue, lightgreen, lightcyan, lightred,
 # lightmagenta, yellow, white

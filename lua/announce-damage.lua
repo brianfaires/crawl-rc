@@ -1,4 +1,4 @@
--- Initially from https://github.com/magus/dcss/blob/master/compile-rc/parts/AnnounceDamage.lua
+----- Initially from https://github.com/magus/dcss -----
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/constants.lua")
 loadfile("crawl-rc/lua/util.lua")

@@ -1,6 +1,6 @@
+----- Inscribe stats on items -----
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/util.lua")
-
 
 local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values

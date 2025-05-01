@@ -1,3 +1,4 @@
+----- Prevent accidental stairs usage -----
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
 local last_stair_turn = 0
 

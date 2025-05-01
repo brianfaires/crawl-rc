@@ -1,3 +1,4 @@
+----- Remind to identify items when you have scroll of ID + unidentified item -----
 local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
     if not it.is_identified then

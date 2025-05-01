@@ -8,8 +8,7 @@ end
 crawl.setopt("force_more_message += monster_warning:" ..
               "(?-i:[A-Z]).*comes? into view")
 
--- Everything included in this list will cause a more() prompt.
--- It should contain monsters that always need alerts, regardless of HP, xl, willpower, and resistances
+-- Everything that always causes a more()
 local force_more_monsters = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
@@ -33,7 +32,7 @@ local force_more_monsters = {
 ------------------- force_mores w/ turn delay -------------------
 -- The following monsters will only cause a force_more() once every # of turns; ie one alert per pack
 local fm_delayed = { "dream sheep", "shrike", "boggart", "floating eye" }
-local turns_to_delay = 10
+local turns_to_delay = 15
 
 local last_fm_turn = {}
 local monsters_to_mute = {}
@@ -70,6 +69,8 @@ end
 
 ------------------- Dynamic force_mores config -------------------
 -- hp-specific force_mores() by gammafunk, extended by buehler
+local notify_fm = false -- Set to true to get a message when the fm change
+
 local fm_patterns = {
   -- Fast, early game Dungeon problems for chars with low mhp.
   {name = "30hp", cond = "hp", cutoff = 30, pattern = "hound"},
@@ -185,14 +186,8 @@ local fm_patterns = {
   {name = "drain_190", cond = "drain", cutoff = 190,
       pattern = "shadow dragon" },
 } -- end fm_patterns (do not remove this comment)
-
 ------------------- End config section -------------------
 
--- Set to true to get a message when the fm change
-local notify_fm = false
-
-
--- Add the non-dynamic force_mores()  (moved code down here for easier configuration)
 local fm_mon_str = nil
 for v in iter.invent_iterator:new(force_more_monsters) do
   if not fm_mon_str then
@@ -202,7 +197,6 @@ for v in iter.invent_iterator:new(force_more_monsters) do
   end
 end
 set_monster_fm("+", fm_mon_str)
-
 
 -- Keep track of active force_mores()
 local active_fm = {}
@@ -221,7 +215,6 @@ local function get_three_pip_action(active, hp, cutoff, res)
     if hp < cutoff/div then return "+" end
   end
 end
-
 
 
 ------------------- Hook -------------------

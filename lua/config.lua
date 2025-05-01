@@ -9,6 +9,19 @@ CONFIG.emojis = true
 CONFIG.inscribe_weapons = true
 CONFIG.inscribe_armour = true
 
+-- Runrest features
+CONFIG.ignore_altars = true
+CONFIG.ignore_portal_exits = true
+CONFIG.ignore_gauntlet_msgs = true
+CONFIG.stop_on_pan_gates = true
+CONFIG.search_altars_in_temple = true
+
+-- Misc alerts
+CONFIG.alert_remove_faith = true
+CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable
+CONFIG.annotate_v5 = true
+CONFIG.save_with_msg = true
+
 ---- Pickup/Alert system
 CONFIG.pickup_armour = true
 CONFIG.pickup_weapons = true
@@ -29,14 +42,3 @@ one_time_alerts = {
   "storm dragon scales", "shadow dragon scales", "wand of digging",
   "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
 } -- one_time_alerts (do not remove this comment)
-
--- Runrest features
-CONFIG.ignore_altars = true
-CONFIG.ignore_portal_exits = true
-CONFIG.ignore_gauntlet_msgs = true
-CONFIG.stop_on_pan_gates = true
-CONFIG.search_altars_in_temple = true
-
--- Misc alerts
-CONFIG.alert_remove_faith = true
-CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable

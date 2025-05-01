@@ -3,7 +3,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 
 ## Basics
 - All features are enabled and included via [init.txt](init.txt). If you want a single file, 
-    [allRC.txt](allRC.txt) contains [init.txt](init.txt) and all the files it references.
+    [buehler.rc](buehler.rc) contains [init.txt](init.txt) and all the files it references.
 - To merge [init.txt](init.txt) into an existing RC file, make sure any Lua hook functions are only 
     defined once (at the bottom of the RC file). If duplicate functions exist, combine them.
 - Features can be individually toggled off. The simplest way is:
@@ -11,7 +11,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
     
         e.g. `lua_file = xxxx.lua` -> `#lua_file = xxxx.lua`
 
-    2. Run `python concat_rc.py` to regenerate [allRC.txt](allRC.txt) without the features included.    
+    2. Run `python concat_rc.py` to regenerate [buehler.rc](buehler.rc) without the features included.    
 
 - You can copy-paste individual files into another RC, as long as you also copy any other files they reference. 
 References are at the top of the file. 
@@ -98,6 +98,7 @@ Updates in real time with skill/stats/etc.
 Armour is inscribed with its AC (or SH) and EV.
 
 ### [lua/misc-alerts.lua](lua/misc-alerts.lua)
+- Add a warning before entering Vaults:5
 - A one-time force-more when dropping below 50% HP.
 - A msg when you hit 6* piety while wearing an amulet of faith
 
@@ -177,8 +178,8 @@ These are auto-included as necessary. Just listed for reference.
 
 ## Core files
 ### [lua/config.lua](lua/config.lua)
-This gets included first in [allRC.txt](allRC.txt), so you can toggle features on/off without digging into the code 
-or rebuilding [allRC.txt](allRC.txt). The toggles should be obvious based on the descriptions above.
+This gets included first in [buehler.rc](buehler.rc), so you can toggle features on/off without digging into the code 
+or rebuilding [buehler.rc](buehler.rc). The toggles should be obvious based on the descriptions above.
 
 ### [lua/constants.lua](lua/constants.lua)
 In an attempt to future-proof this, lists like `all_weap_schools` and `all_portal_names` are here. Update as needed.
@@ -190,7 +191,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 - I wrote this over 2 years ago and recently picked it back up when inscriptions via lua was enabled in 0.33. 
 I've run it with several characters, but can't cover everything. 
 Please LMK if you find bugs, outdated notes, suggestions, etc.
-- It's recommended to use [allRC.txt](allRC.txt) when playing locally. Lua files are not re-loaded when switching between 
+- It's recommended to use [buehler.rc](buehler.rc) when playing locally. Lua files are not re-loaded when switching between 
 characters, which will cause issues. If you like using the individual files (e.g. for development), just relaunch crawl 
 after exiting a character.
 - Many lua files begin with an [include guard](https://en.wikipedia.org/wiki/Include_guard), followed by `loadfile()` 
@@ -198,6 +199,8 @@ calls for all of their dependencies. They protect against multiple imports and f
 and you can ignore them. Probably best to leave in place.
 
 ## TODO dev list
+1. Configurable starting skills+thresholds (e.g. Stealth/Fighting to 2)
+1. Screen flashes: distortion, some alerts, massive damage
 1. Disable all auto explore stops in gauntlets until fully explored
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events. Goal is one autoexplore for everything.
 1. fm-monsters to use lists like {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
@@ -219,8 +222,5 @@ http://crawl.akrasiac.org/rcfiles/crawl-0.25/magusnn.rc
 ### RC Examples & sources used in this repo
 https://github.com/magus/dcss
 https://github.com/gammafunk/dcss-rc
-https://tavern.dcss.io/t/whats-in-your-rc-file/160/4
-
 https://underhound.eu/crawl/rcfiles/crawl-0.30/Elmgren.rc
-http://crawl.berotato.org/crawl/rcfiles/crawl-0.23/Freakazoid.rc
-https://github.com/HilariousDeathArtist/DCSSConfigFile/blob/master/HilariousDeathArtist.txt
+https://tavern.dcss.io/t/whats-in-your-rc-file/160/4

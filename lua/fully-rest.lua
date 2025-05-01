@@ -1,4 +1,4 @@
----- Fully rest off effects ----
+----- Fully rest off effects -----
 local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
     "confused", "marked", "tree%-form", "sluggish" }
 

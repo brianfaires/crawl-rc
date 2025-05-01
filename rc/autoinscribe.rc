@@ -47,9 +47,8 @@ ai += staff of poison:rPois
   local no_inscription_needed = {
     "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
     "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation"}
-  ---------------------------------------------
+
   ------------------- Hook -------------------
-  ---------------------------------------------
   function ready_safe_consumables()
     -- Remove the default "!r" and "!q" inscriptions after identify
     for it in iter.invent_iterator:new(items.inventory()) do

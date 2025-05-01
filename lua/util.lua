@@ -33,6 +33,10 @@ function cleanup_text(text, escape_chars)
   return text
 end
 
+--- Modify keypress ---
+function control_key(c)
+  return string.char(string.byte(c) - string.byte('a') + 1)
+end
 
 --- Code readability ---
 function if_el(cond, a, b)

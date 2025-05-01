@@ -1,3 +1,4 @@
+------- Auto-tag inferior items and add to drop list -----
 loadfile("crawl-rc/lua/util.lua")
 
 local DROP_KEY = "~~DROP_ME"

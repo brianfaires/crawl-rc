@@ -1,28 +1,29 @@
 ## Config at top
 lua_file = crawl-rc/lua/config.lua
 
-############################
+
 ####### Main options #######
-############################
-autofight_stop = 65
-hp_warning = 20
+easy_confirm = all
+show_more = false
+small_more = true
 mouse_input = false
-item_stack_summary_minimum = 8
-fail_severity_to_confirm = 4
 default_manual_training = true
 drop_disables_autopickup = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
-easy_confirm = all
+
+autofight_stop = 65
+hp_warning = 20
+item_stack_summary_minimum = 8
+fail_severity_to_confirm = 4
+
 sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
 drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, stone
 
 
-###############################
 ####### Explore options #######
-###############################
 #TODO: evaluate this wall bias
 explore_wall_bias = 6
 explore_delay = -1
@@ -36,9 +37,7 @@ explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
 
-#####################################
 ####### Autopickup exceptions #######
-#####################################
 ae := autopickup_exceptions
 ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
@@ -61,9 +60,7 @@ ae += staff of.*, .*talisman
 }
 
 
-########################
 ####### Includes #######
-########################
 ### Shared files; do not disable
 lua_file = crawl-rc/lua/constants.lua
 lua_file = crawl-rc/lua/util.lua
@@ -100,8 +97,7 @@ lua_file = crawl-rc/lua/pickup-alert/pa-misc.lua
 lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 
 
-####################################################################
-######################## Lua Hook Functions ########################
+############## Lua Hook Functions ##############
 {
 ---------- c_message() -----------
 function c_message(text, channel)

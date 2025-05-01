@@ -1,12 +1,11 @@
-loadfile("crawl-rc/lua/util.lua")
-
 ---- Cleanup weapon slots ----
 --Whenever you drop an item:
-    -- Assign weapons to slots a and b
-        -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless skill
-        -- 3:magical staff, 4:polearm, 5:ranged
-    -- Assign weap to w: ranged/polearm/any
+  -- Assign weapons to slots a and b
+      -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless skill
+      -- 3:magical staff, 4:polearm, 5:ranged
+  -- Assign weap to w: ranged/polearm/any
 
+loadfile("crawl-rc/lua/util.lua")
 
 local do_cleanup_weapon_slots = false
 local priorities_ab = nil

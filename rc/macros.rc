@@ -1,6 +1,5 @@
 bindkey = [~] CMD_LUA_CONSOLE
 
-
 # Numpad keymaps
 macros += K \{-1019} f
 macros += K \{-1018} 3

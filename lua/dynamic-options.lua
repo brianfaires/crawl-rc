@@ -1,3 +1,4 @@
+----- Set any options based on game state -----
 local dyn_opt_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
