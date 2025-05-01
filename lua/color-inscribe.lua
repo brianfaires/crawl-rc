@@ -1,7 +1,5 @@
--- Long inscriptions can break certain menus.
--- In-game inscriptions seem limited to 78 chars.
--- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed.
--- A final tag is added to resume writing in lightgrey.
+-- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
+-- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
 local INSCRIPTION_MAX_LENGTH = 70
 local function colorize_text(text, s, tag)
   local idx = text:find(s)

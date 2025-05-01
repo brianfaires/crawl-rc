@@ -1,5 +1,6 @@
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
+loadfile("crawl-rc/lua/config.lua")
 
 ------ Max piety w/ amulet of faith ------
 if not alerted_max_piety or you.turns() == 0 then
@@ -44,6 +45,6 @@ end
 
 ------------------ Hook ------------------
 function ready_misc_alerts()
-  alert_remove_faith()
-  alert_low_hp()
+  if CONFIG.alert_remove_faith then alert_remove_faith() end
+  if CONFIG.alert_low_hp then alert_low_hp() end
 end

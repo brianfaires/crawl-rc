@@ -1,6 +1,6 @@
 -- A collection of simple features related to resting and auto-explore stops
-dofile("crawl-rc/lua/config.lua")
-dofile("crawl-rc/lua/constants.lua")
+loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/constants.lua")
 
 local stop_on_altars = true
 local stop_on_portals = true
@@ -22,7 +22,7 @@ end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  return you.god() ~= "No God" or you.race() == "Demigod" or 
+  return you.god() ~= "No God" or you.race() == "Demigod" or
     (you.good_god() and you.xl() > 9)
 end
 

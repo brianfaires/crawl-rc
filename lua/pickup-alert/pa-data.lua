@@ -1,25 +1,24 @@
 if loaded_pa_data then return end
 loaded_pa_data = true
-dofile("crawl-rc/lua/util.lua")
-dofile("crawl-rc/lua/config.lua")
-dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
+loadfile("crawl-rc/lua/util.lua")
+loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
 ---------------------------- Begin persistent data ----------------------------
-if not level_alerts or you.turns() == 0 then
-  level_alerts = { }
-  items_picked = { }
-  items_alerted = { }
-  rare_items = { }
+if not pa_all_level_alerts or you.turns() == 0 then
+  pa_all_level_alerts = { }
+  pa_items_picked = { }
+  pa_items_alerted = { }
+  pa_single_alert_items = { }
   for _,v in ipairs(one_time_alerts) do
-    table.insert(rare_items, v)
+    table.insert(pa_single_alert_items, v)
   end
 
-  armour_high_score = 0
   alerted_first_ranged_one_handed = 0
   alerted_first_ranged_two_handed = 0
+  armour_high_score = 0
+  weapon_high_score = 0
+  unbranded_high_score = 0
   polearm_high_score = 0
   polearm_onehand_high_score = 0
-  unbranded_high_score = 0
-  weapon_high_score = 0
 end
 
 
@@ -40,17 +39,17 @@ end
 
 
 table.insert(chk_lua_save,
-  function() return persist_table("level_alerts",
-      level_alerts) end)
+  function() return persist_table("pa_all_level_alerts",
+      pa_all_level_alerts) end)
 table.insert(chk_lua_save,
-  function() return persist_table("rare_items",
-      rare_items) end)
+  function() return persist_table("pa_single_alert_items",
+      pa_single_alert_items) end)
 table.insert(chk_lua_save,
-  function() return persist_table("items_picked",
-      items_picked) end)
+  function() return persist_table("pa_items_picked",
+      pa_items_picked) end)
 table.insert(chk_lua_save,
-  function() return persist_table("items_alerted",
-      items_alerted) end)
+  function() return persist_table("pa_items_alerted",
+      pa_items_alerted) end)
 table.insert(chk_lua_save,
   function() return persist_var("armour_high_score",
       armour_high_score) end)
@@ -77,32 +76,32 @@ table.insert(chk_lua_save,
 ---- Accessors into persistent data ----
 function get_rare_item_index(it)
   local qualname = it.name("qual")
-  for i,v in ipairs(rare_items) do
+  for i,v in ipairs(pa_single_alert_items) do
     if v ~= "" and qualname:find(v) then return i end
   end
   return -1
 end
 
-function remove_from_rare_items(it)
+function remove_from_pa_single_alert_items(it)
   local idx = get_rare_item_index(it)
   if idx ~= -1 then
-    util.remove(rare_items, rare_items[idx])
+    util.remove(pa_single_alert_items, pa_single_alert_items[idx])
     return true
   end
 
   return false
 end
 
-function previously_picked(it)
+function pa_previously_picked(it)
   local name = it.name("plain")
   if not it.is_identified then name = "+0 " .. name end
-  return util.contains(items_picked, name)
+  return util.contains(pa_items_picked, name)
 end
 
-function previously_alerted(it)
+function pa_previously_alerted(it)
   local name = it.name("plain")
   if not it.is_identified then name = "+0 " .. name end
-  return util.contains(items_alerted, name)
+  return util.contains(pa_items_alerted, name)
 end
 
 --- Multi store/remove data ---
@@ -188,11 +187,11 @@ end
 
 
 --- Startup code ---
--- Starting items: Remove from rare_items, and add to items_picked
+-- Starting items: Remove from pa_single_alert_items, and add to pa_items_picked
 if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
-    if idx ~= -1 then util.remove(rare_items, rare_items[idx]) end
-    insert_item_and_less_enchanted(items_picked, inv)
+    if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
+    insert_item_and_less_enchanted(pa_items_picked, inv)
   end
 end

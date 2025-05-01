@@ -1,4 +1,4 @@
-dofile("crawl-rc/lua/util.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 local DROP_KEY = "~~DROP_ME"
 

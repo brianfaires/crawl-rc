@@ -1,8 +1,9 @@
 if loaded_pa_weapons then return end
 loaded_pa_weapons = true
-dofile("crawl-rc/lua/util.lua")
-dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
-dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
+loadfile("crawl-rc/lua/util.lua")
+loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
+loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
+loadfile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
 ---- Begin inv arrays ----
 -- Use these arrays to compare potential upgrades against entire inventory
@@ -35,12 +36,12 @@ end
 local top_school = "unarmed combat"
 local egos = { }
 
-local inv_max_dmg = { 
+local inv_max_dmg = {
   melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
   ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0, melee_only = 0
 } -- inv_max_dmg (do not remove this comment)
 
-local inv_max_dmg_acc = { 
+local inv_max_dmg_acc = {
   melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
   ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0, melee_only = 0
 } -- inv_max_dmg_acc (do not remove this comment)
@@ -126,7 +127,7 @@ local function alert_early_weapons(it)
     if it.is_identified and it.is_ranged then
       if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
         if get_hands(it) == 1 or not have_shield() or you.skill("shield") <= 8 then
-          return alert_item(it, "Ranged weapon")
+          return pa_alert_item(it, "Ranged weapon")
         end
       end
     end
@@ -148,7 +149,7 @@ local function alert_early_weapons(it)
         end
       end
 
-      return alert_item(it, "Early weapon")
+      return pa_alert_item(it, "Early weapon")
     end
   end
 end
@@ -164,7 +165,7 @@ local function alert_first_ranged(it)
       for inv in iter.invent_iterator:new(inv_weap_data) do
         if inv.is_ranged and inv.hands == 2 then return true end
       end
-      return alert_item(it, "Ranged weapon")
+      return pa_alert_item(it, "Ranged weapon")
     end
   else
     if alerted_first_ranged_one_handed == 0 then
@@ -172,7 +173,7 @@ local function alert_first_ranged(it)
       for inv in iter.invent_iterator:new(inv_weap_data) do
         if inv.is_ranged then return true end
       end
-      return alert_item(it, "Ranged weapon")
+      return pa_alert_item(it, "Ranged weapon")
     end
   end
 
@@ -254,7 +255,7 @@ local function pickup_weapon(it, cur)
 end
 
 
-function pickup_weapons(it)
+function do_pa_weapon_pickup(it)
   if it.is_useless then return false end
   for cur in iter.invent_iterator:new(inv_weap_data) do
     if pickup_weapon(it, cur) then return true end
@@ -265,12 +266,12 @@ end
 
 
 local function alert_interesting_weapon(it, cur)
-  if it.artefact and it.is_identified then return alert_item(it, "Artefact weapon") end
+  if it.artefact and it.is_identified then return pa_alert_item(it, "Artefact weapon") end
 
   if cur.subtype == it.subtype() then
     -- Exact weapon type match
-    if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then return alert_item(it, "New ego") end
-    if get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then return alert_item(it, "Stronger weapon") end
+    if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then return pa_alert_item(it, "New ego") end
+    if get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then return pa_alert_item(it, "Stronger weapon") end
   elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
@@ -282,26 +283,26 @@ local function alert_interesting_weapon(it, cur)
     if get_hands(it) == 2 and cur.hands == 1 then
       -- Item requires an extra hand
       if has_ego(it) and not cur.branded then
-        if get_weap_dps(it) > 0.8*cur.dps then return alert_item(it, "2-handed weapon") end
+        if get_weap_dps(it) > 0.8*cur.dps then return pa_alert_item(it, "2-handed weapon") end
       end
 
       if not have_shield() then
         if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
           not util.contains(egos, it.ego()) then
-            return alert_item(it, "New ego4")
+            return pa_alert_item(it, "New ego4")
         end
         if not cur.branded and
           get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
-            return alert_item(it, "2-handed weapon")
+            return pa_alert_item(it, "2-handed weapon")
         end
         if cur.branded and not has_ego(it) and
         get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
-          return alert_item(it, "2-handed weapon")
+          return pa_alert_item(it, "2-handed weapon")
         end
       elseif you.skill("shields") <= 4 then
         -- Not really training shields; may be interested in big upgrades
         if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then
-          return alert_item(it, "2-handed weapon")
+          return pa_alert_item(it, "2-handed weapon")
         end
       end
     else
@@ -312,11 +313,11 @@ local function alert_interesting_weapon(it, cur)
         local dmg_delta_ratio = dmg_delta / get_weap_dps(it)
 
         if not cur.branded then
-          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego") end
+          if dmg_delta_ratio >= -0.2 then return pa_alert_item(it, "New ego") end
         elseif it.ego() == cur.ego then
-          if dmg_delta_ratio >= 0 then return alert_item(it, "Stronger weapon") end
+          if dmg_delta_ratio >= 0 then return pa_alert_item(it, "Stronger weapon") end
         elseif not util.contains(egos, it.ego()) then
-          if dmg_delta_ratio >= -0.2 then return alert_item(it, "New ego") end
+          if dmg_delta_ratio >= -0.2 then return pa_alert_item(it, "New ego") end
         end
       else
         -- Not branded
@@ -324,7 +325,7 @@ local function alert_interesting_weapon(it, cur)
         -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
         if cur.branded and cur.weap_skill == it.weap_skill then
           if get_weap_dps(it, true) > get_weap_dps(it, true) then
-              return alert_item(it, "Stronger weapon")
+              return pa_alert_item(it, "Stronger weapon")
           end
         else
           local dmg_delta, other_acc
@@ -336,10 +337,10 @@ local function alert_interesting_weapon(it, cur)
             other_acc = inv_max_dmg_acc[get_weap_tag(it)]
           end
 
-          if dmg_delta > 0 then return alert_item(it, "Stronger weapon") end
+          if dmg_delta > 0 then return pa_alert_item(it, "Stronger weapon") end
           local it_plus = if_el(it.plus, it.plus, 0)
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then
-            return alert_item(it, "Higher accuracy")
+            return pa_alert_item(it, "Higher accuracy")
           end
         end
       end
@@ -358,7 +359,7 @@ local function alert_interesting_weapons(it)
   if it.is_ranged and not ranged_weap_in_inv then
     if it.artefact or has_ego(it) and it.plus >= 4 then
       if get_hands(it) == 1 or not have_shield() then
-        return alert_item(it, "Ranged Weapon")
+        return pa_alert_item(it, "Ranged Weapon")
       end
     end
   end
@@ -368,10 +369,10 @@ end
 
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
-  if category then alert_item(it, category) end
+  if category then pa_alert_item(it, category) end
 end
 
-function alert_weapons(it)
+function do_pa_weapon_alerts(it)
   if it.is_useless then return end
   if (it.artefact or has_ego(it)) and not it.is_identified then return end
 

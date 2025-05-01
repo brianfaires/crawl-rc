@@ -17,7 +17,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 References are at the top of the file. 
 You must also include the hook functions from [init.txt](init.txt). 
 If you copy-paste a file with a dependency (e.g. `include = xxxxx.rc`), you'll want to replace any `include`, 
-and `dofile()` statements with a copy-paste of the referenced file. Do the same for any lua files (`lua_file =`), 
+and `loadfile()` statements with a copy-paste of the referenced file. Do the same for any lua files (`lua_file =`), 
 but add curly braces around the file contents to mark it as lua code `{ <file_contents> }`. 
 And don't manualy copy-paste the same file more than once.
 
@@ -165,8 +165,9 @@ Picking up pure-upgrades is straightforward enough. Alerts are generated for:
 ### [pa-misc.rc](lua/pickup-alert/pa-misc.lua) (Misc)
 Picks up staves when you are training the relevant spell school. Alerts generated for:
 - Staves that provide you a needed resistance
-- The first instance of anything in the "rare_items" list. Each shield type is included, so "rare" is a bit of a misnomer.
+- The first instance of anything in the `CONFIG.one_time_alerts` list.
 - First orb of each type
+- First talisman of each type
 
 ### Other files for pickup-alert system
 These are auto-included as necessary. Just listed for reference.
@@ -186,9 +187,15 @@ In an attempt to future-proof this, lists like `all_weap_schools` and `all_porta
 Required a lot of places. Nothing in here is necessarily specific to this repo.
 
 ## Notes
-I wrote this over 2 years ago and recently picked it back up when inscriptions via lua was enabled in 0.33. 
+- I wrote this over 2 years ago and recently picked it back up when inscriptions via lua was enabled in 0.33. 
 I've run it with several characters, but can't cover everything. 
 Please LMK if you find bugs, outdated notes, suggestions, etc.
+- It's recommended to use [allRC.txt](allRC.txt) when playing locally. Lua files are not re-loaded when switching between 
+characters, which will cause issues. If you like using the individual files (e.g. for development), just relaunch crawl 
+after exiting a character.
+- Many lua files begin with an [include guard](https://en.wikipedia.org/wiki/Include_guard), followed by `loadfile()` 
+calls for all of their dependencies. They protect against multiple imports and future changes. They're just for hygeine 
+and you can ignore them. Probably best to leave in place.
 
 ## TODO dev list
 1. Disable all auto explore stops in gauntlets until fully explored

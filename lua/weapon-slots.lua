@@ -1,4 +1,4 @@
-dofile("crawl-rc/lua/util.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 ---- Cleanup weapon slots ----
 --Whenever you drop an item:

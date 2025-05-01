@@ -31,7 +31,7 @@ local function fully_recovered()
 end
 
 -- Attach full recovery to auto-explore
-function explore_full_recovery()
+function macro_explore_full_recovery()
   if fully_recovered() then
     crawl.do_commands({"CMD_EXPLORE"})
   else
@@ -39,7 +39,7 @@ function explore_full_recovery()
     crawl.do_commands({"CMD_REST"})
   end
 end
-crawl.setopt("macros += M o ===explore_full_recovery")
+crawl.setopt("macros += M o ===macro_explore_full_recovery")
 
 
 function ch_stop_running_full_recovery(kind)

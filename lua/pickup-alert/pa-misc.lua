@@ -1,50 +1,50 @@
 if loaded_pa_misc then return end
 loaded_pa_misc = true
-dofile("crawl-rc/lua/util.lua")
-dofile("crawl-rc/lua/pickup-alert/pa-util.lua")
-dofile("crawl-rc/lua/pickup-alert/pa-data.lua")
-dofile("crawl-rc/lua/pickup-alert/pa-main.lua")
+loadfile("crawl-rc/lua/util.lua")
+loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
+loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
+loadfile("crawl-rc/lua/pickup-alert/pa-main.lua")
 
 
 ---- Alert rare items ----
-function alert_rare_items(it)
+function pa_alert_rare_item(it)
   local index = get_rare_item_index(it)
   if index == -1 then return end
 
   local do_alert = true
   -- Don't alert if already wearing a larger shield
-  if rare_items[index] == "buckler" then
+  if pa_single_alert_items[index] == "buckler" then
     local sh = items.equipped_at("shield")
     if sh and sh.name("base") ~= "orb" then do_alert = false end
-  elseif rare_items[index] == "kite shield" then
+  elseif pa_single_alert_items[index] == "kite shield" then
     local sh = items.equipped_at("shield")
     if sh and sh.name("base"):find("tower shield") then do_alert = false end
   end
 
   if do_alert then
-    show_alert_msg("It's your first ", rare_items[index].."!")
+    pa_show_alert_msg("It's your first ", pa_single_alert_items[index].."!")
     crawl.more()
   end
 
-  remove_from_rare_items(it)
+  remove_from_pa_single_alert_items(it)
 end
 
 ---- Alert orbs ----
-function alert_orb(it)
+function pa_alert_orb(it)
   if it.is_identified and not have_shield() then
-    alert_item(it, "New orb")
+    pa_alert_item(it, "New orb")
   end
 end
 
 ---- Alert talismans ----
-function alert_talisman(it)
+function pa_alert_staff(it)
   if it.is_identified then
-    alert_item(it, "New talisman")
+    pa_alert_item(it, "New talisman")
   end
 end
 
 ---- Alert for needed resists ----
-function alert_staff(it)
+function pa_alert_staff(it)
   if not it.is_identified then return false end
   local needRes = false
   local basename = it.name("base")
@@ -57,19 +57,19 @@ function alert_staff(it)
   end
 
   if needRes then
-    alert_item(it, "Staff resistance")
+    pa_alert_item(it, "Staff resistance")
   end
 end
 
 
 ---- Smart staff pickup ----
-function pickup_staff(it)
+function pa_pickup_staff(it)
   if it.is_useless or not it.is_identified then return false end
   local school = get_staff_school(it)
   if you.skill(school) == 0 then return false end
 
   -- Check for previously picked staves
-  for v in iter.invent_iterator:new(items_picked) do
+  for v in iter.invent_iterator:new(pa_items_picked) do
     if v:find(it.name("base")) then return false end
   end
 

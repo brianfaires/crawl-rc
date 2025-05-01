@@ -1,6 +1,6 @@
 -- Lists of things that may need to be updated as crawl changes
-if loaded_lua_globals then return end
-local loaded_lua_globals = true
+if loaded_lua_constants_file then return end
+local loaded_lua_constants_file = true
 
 all_missiles = {
   " stone", "poisoned dart", "atropa", "curare", "datura",

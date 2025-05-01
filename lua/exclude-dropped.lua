@@ -4,7 +4,7 @@ local loaded_exclude_dropped = true
 -- Exclusion is removed when you pick the item back up
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
 
-dofile("crawl-rc/lua/constants.lua")
+loadfile("crawl-rc/lua/constants.lua")
 
 ---------------- Persistent data ----------------
 if not dropped_item_exclusions or you.turns() == 0 then

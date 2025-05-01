@@ -1,8 +1,8 @@
--- This file contains util functions specific to the pickup-alert plugin
--- They're a little too specific for the util.lua file
-dofile("crawl-rc/lua/util.lua")
+if loaded_pa_util then return end
+loaded_pa_util = true
+loadfile("crawl-rc/lua/util.lua")
 
-function show_alert_msg(alert_text, item_name)
+function pa_show_alert_msg(alert_text, item_name)
     crawl.mpr("<cyan>----<magenta>"..alert_text.."<yellow>"..item_name.."</yellow></magenta>----</cyan>")
     you.stop_activity()
   end

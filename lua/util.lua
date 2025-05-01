@@ -1,10 +1,9 @@
 if loaded_util_lua then return end
 local loaded_util_lua = true
-
-dofile("crawl-rc/lua/constants.lua")
+loadfile("crawl-rc/lua/constants.lua")
 
 ---- Text Formatting ----
-function withColor(color, str)
+function colorize_itext(color, str)
   return string.format("<%s>%s</%s>", color, str, color)
 end
 
@@ -46,7 +45,7 @@ end
 
 --- Helper ---
 function you_have_allies()
-  return you.skill("Summonings") + you.skill("Necromancy") > 0 or 
+  return you.skill("Summonings") + you.skill("Necromancy") > 0 or
       util.contains(gods_with_allies, you.god())
 end
 

@@ -27,7 +27,7 @@ def recurse_write_lines(infile, outfile, prevfiles):
           outfile.writelines("\n### BEGIN LUA ###\n{\n")
           recurse_write_lines(inc_file, outfile, prevfiles)
           outfile.writelines("\n}\n### END LUA ###\n")
-    elif line.startswith("dofile("):
+    elif line.startswith("loadfile("):
       inc_filename = line.split('"')[1]
       inc_filename = inc_filename.replace(REPO_ROOT, "")
       if inc_filename not in prevfiles:

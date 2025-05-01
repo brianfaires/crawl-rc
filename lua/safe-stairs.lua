@@ -1,8 +1,8 @@
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
 local last_stair_turn = 0
 
-crawl.setopt("macros += M > ===safe_downstairs")
-crawl.setopt("macros += M < ===safe_upstairs")
+crawl.setopt("macros += M > ===macro_do_safe_downstairs")
+crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 
 local function check_new_location(key)
   local cur_location = you.branch()..you.depth()
@@ -20,11 +20,11 @@ local function check_new_location(key)
   end
 end
 
-function safe_upstairs()
+function macro_do_safe_upstairs()
   check_new_location("<")
 end
 
-function safe_downstairs()
+function macro_do_safe_downstairs()
   check_new_location(">")
 end
 

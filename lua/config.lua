@@ -1,3 +1,5 @@
+if loaded_lua_config_file then return end
+loaded_lua_config_file = true
 CONFIG = { }
 
 -- Announce damage emojis
@@ -34,3 +36,7 @@ CONFIG.ignore_portal_exits = true
 CONFIG.ignore_gauntlet_msgs = true
 CONFIG.stop_on_pan_gates = true
 CONFIG.search_altars_in_temple = true
+
+-- Misc alerts
+CONFIG.alert_remove_faith = true
+CONFIG.alert_low_hp = true

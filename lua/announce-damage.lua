@@ -1,17 +1,17 @@
--- from https://github.com/magus/dcss/blob/master/compile-rc/parts/AnnounceDamage.lua
-dofile("crawl-rc/lua/config.lua")
-dofile("crawl-rc/lua/constants.lua")
-dofile("crawl-rc/lua/util.lua")
+-- Initially from https://github.com/magus/dcss/blob/master/compile-rc/parts/AnnounceDamage.lua
+loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/constants.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 local AD_Messages = {
   ["HPSimple"] = function(delta)
-    return withColor(COLORS.white,
+    return colorize_itext(COLORS.white,
       string.format("HP[%s]", delta_color(0 - delta))
     )
   end,
-  ["HPMax"] = function (color, hp, hpm, delta)
+  ["HPMax"] = function (_, _, hpm, delta)
     crawl.mpr(
-      withColor(COLORS.lightgreen,
+      colorize_itext(COLORS.lightgreen,
         string.format("You now have %s max hp (%s).", hpm, delta_color(delta))
       )
     )
@@ -19,57 +19,57 @@ local AD_Messages = {
   ["HPLoss"] = function (color, hp, hpm, loss)
     crawl.mpr(
       string.format("%s%s",
-        withColor(COLORS.red, string.format("You take %s damage,", loss)),
-        withColor(color, string.format(" and now have %s/%s hp.", hp, hpm))
+        colorize_itext(COLORS.red, string.format("You take %s damage,", loss)),
+        colorize_itext(color, string.format(" and now have %s/%s hp.", hp, hpm))
       )
     )
   end,
   ["HPGain"] = function (color, hp, hpm, gain)
     crawl.mpr(
       string.format("%s%s",
-        withColor(COLORS.lightgreen, string.format("You regained %s hp,", gain)),
-        withColor(color, string.format(" and now have %s/%s hp.", hp, hpm))
+        colorize_itext(COLORS.lightgreen, string.format("You regained %s hp,", gain)),
+        colorize_itext(color, string.format(" and now have %s/%s hp.", hp, hpm))
       )
     )
   end,
-  ["HPFull"] = function (color, hp)
+  ["HPFull"] = function (_, hp)
     crawl.mpr(
-      withColor(COLORS.lightgreen,
+      colorize_itext(COLORS.lightgreen,
         string.format("Your hp is fully restored (%s).", hp)
       )
     )
   end,
   ["HPMassivePause"] = function ()
     crawl.mpr(
-      withColor(COLORS.lightred,
+      colorize_itext(COLORS.lightred,
         string.format("MASSIVE DAMAGE!! (%s)", PAUSE_MORE)
       )
     )
   end,
   ["MPSimple"] = function(delta)
-    return withColor(COLORS.white,
+    return colorize_itext(COLORS.white,
       string.format("MP[%s]", delta_color(0 - delta))
     )
   end,
   ["MPLoss"] = function (color, mp, mpm, loss)
     crawl.mpr(
       string.format("%s%s",
-        withColor(COLORS.cyan, string.format("You lost %s mp,", loss)),
-        withColor(color, string.format(" and now have %s/%s mp.", mp, mpm))
+        colorize_itext(COLORS.cyan, string.format("You lost %s mp,", loss)),
+        colorize_itext(color, string.format(" and now have %s/%s mp.", mp, mpm))
       )
     )
   end,
   ["MPGain"] = function (color, mp, mpm, gain)
     crawl.mpr(
       string.format("%s%s",
-        withColor(COLORS.cyan, string.format("You regained %s mp,", gain)),
-        withColor(color, string.format(" and now have %s/%s mp.", mp, mpm))
+        colorize_itext(COLORS.cyan, string.format("You regained %s mp,", gain)),
+        colorize_itext(color, string.format(" and now have %s/%s mp.", mp, mpm))
       )
     )
   end,
-  ["MPFull"] = function (color, mp)
+  ["MPFull"] = function (_, mp)
     crawl.mpr(
-      withColor(COLORS.cyan, string.format("Your mp is fully restored (%s).", mp))
+      colorize_itext(COLORS.cyan, string.format("Your mp is fully restored (%s).", mp))
     )
   end,
   [""]="",
@@ -80,18 +80,12 @@ local prev_hp_max = 0
 local prev_mp = 0
 local prev_mp_max = 0
 
-function delta_color(delta)
-  local color = delta < 0 and COLORS.red or COLORS.green
-  local signDelta = delta < 0 and delta or "+"..delta
-  return string.format("<%s>%s</%s>", color, signDelta, color)
-end
-
 -- Simplified condensed HP and MP output
 -- Print a single condensed line showing HP & MP change
 -- e.g.😨 HP[-2] MP[-1]
-function simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
-  local emoji = ""
-  local message = nil
+local function simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
+  local emoji
+  local message
 
   -- MP[-1]
   if hp_diff == 0 and mp_diff ~= 0 then
@@ -128,7 +122,7 @@ function simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
 end
 
 -- Try to sync with colors defined in Interface.rc
-function color_by_max(message_func, curr, max, diff)
+local function color_by_max(message_func, curr, max, diff)
   if curr <= (max * 0.25) then
     message_func(COLORS.red, curr, max, diff)
   elseif curr <= (max * 0.50) then
@@ -178,7 +172,7 @@ function announce_damage()
       -- Remove the negative sign by taking absolute value
       local hp_gain = math.abs(hp_diff)
 
-      if (hp_gain > 1) and not (cur_hp == max_hp) then
+      if (hp_gain > 1) and (cur_hp ~= max_hp) then
         color_by_max(AD_Messages.HPGain, cur_hp, max_hp, hp_gain)
       end
 
@@ -193,7 +187,7 @@ function announce_damage()
       -- Remove the negative sign by taking absolute value
       local mp_gain = math.abs(mp_diff)
 
-      if (mp_gain > 1) and not (cur_mp == max_mp) then
+      if (mp_gain > 1) and (cur_mp ~= max_mp) then
         color_by_max(AD_Messages.MPGain, cur_mp, max_mp, mp_gain)
       end
 
