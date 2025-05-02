@@ -7,7 +7,7 @@ function colorize_itext(color, str)
   return string.format("<%s>%s</%s>", color, str, color)
 end
 
--- Removes color tags from text, and optionally escapes special characters --
+-- Removes tags from text, and optionally escapes special characters --
 function cleanup_text(text, escape_chars)
   local keep_going = true
   while keep_going do

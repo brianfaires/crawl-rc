@@ -23,8 +23,6 @@ fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped
 
 
 ####### Explore options #######
-#TODO: evaluate this wall bias
-explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1

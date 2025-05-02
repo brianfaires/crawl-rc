@@ -1,9 +1,8 @@
-################################### Begin init.txt ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
 ## Config at top
+
+################################### Begin lua/config.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/config.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_lua_config_file then return end
 loaded_lua_config_file = true
 CONFIG = { }
@@ -55,10 +54,9 @@ CONFIG.auto_set_skill_targets = {
   {"Stealth", 2},
   {"Fighting", 2}
 } -- auto_set_skill_targets (do not remove this comment)
-------------------------------- End lua/config.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/config.lua ###############################
+##########################################################################################
 
 ## (Resuming init.txt) ##
 
@@ -84,8 +82,6 @@ fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped
 
 
 ####### Explore options #######
-#TODO: evaluate this wall bias
-explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
@@ -122,9 +118,10 @@ ae += staff of.*, .*talisman
 
 ####### Includes #######
 ### Shared files; do not disable
+
+################################### Begin lua/constants.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/constants.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 -- Lists of things that may need to be updated as crawl changes
 if loaded_lua_constants_file then return end
 local loaded_lua_constants_file = true
@@ -171,13 +168,16 @@ all_training_skills = {
   "Staves", "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
 } -- all_training_skills (do not remove this comment)
 
+-- Color map to single digit tags (less text than explicit)
+-- 0:black, 1:blue, 2:green, 3:cyan, 4:red, 5:magenta, 6:brown,
+-- 7:lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightcyan,
+-- 12:lightred, 13:lightmagenta, 14:yellow, 15:white
 COLORS = {
-  darkgrey = "darkgrey", lightgrey = "lightgrey", white = "white",
-  blue = "blue", lightblue = "lightblue", green = "green",
-  lightgreen = "lightgreen", cyan = "cyan", lightcyan = "lightcyan",
-  red = "red", lightred = "lightred", magenta = "magenta",
-  lightmagenta = "lightmagenta", yellow = "yellow", brown = "brown",
-  black = "black",
+  blue = 1, green = 2, cyan = 3, red = 4, magenta = 5,
+  brown = 6, lightgrey = 7, darkgrey = 8, lightblue = 9,
+  lightgreen = 10, lightcyan = 11, lightred = 12,
+  lightmagenta = 13, yellow = 14, white = "w",
+  black = 0,
 } -- COLORS (do not remove this comment)
 
 RACE_SIZE = { VERY_SMALL = -2, SMALL = -1, NORMAL = 0, LARGE = 1, VERY_LARGE = 2 }
@@ -190,14 +190,13 @@ function get_size_penalty()
   else return RACE_SIZE.NORMAL
   end
 end
-------------------------------- End lua/constants.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/constants.lua ###############################
+##########################################################################################
 
+################################### Begin lua/util.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/util.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_util_lua then return end
 local loaded_util_lua = true
 
@@ -206,7 +205,7 @@ function colorize_itext(color, str)
   return string.format("<%s>%s</%s>", color, str, color)
 end
 
--- Removes color tags from text, and optionally escapes special characters --
+-- Removes tags from text, and optionally escapes special characters --
 function cleanup_text(text, escape_chars)
   local keep_going = true
   while keep_going do
@@ -307,14 +306,14 @@ end
 function get_body_armour()
   return items.equipped_at("armour")
 end
-------------------------------- End lua/util.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/util.lua ###############################
+##########################################################################################
 
 ## (Resuming init.txt) ##
 
 ### Mostly normal RC options ###
+
 ################################### Begin rc/autoinscribe.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 ai := autoinscribe
@@ -354,7 +353,6 @@ ai += staff of cold:rC+
 ai += staff of death:rN+
 ai += staff of fire:rF+
 ai += staff of poison:rPois
-
 
 
 {
@@ -3496,9 +3494,10 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 ## (Resuming init.txt) ##
 
 ### Features ###
+
+################################### Begin lua/after-shaft.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/after-shaft.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ----- Add stops for stairs after being shafted -----
 if loaded_after_shaft then return end
 local loaded_after_shaft = true
@@ -3532,14 +3531,13 @@ function ready_after_shaft()
     end
   end
 end
-------------------------------- End lua/after-shaft.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/after-shaft.lua ###############################
+##########################################################################################
 
+################################### Begin lua/announce-damage.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/announce-damage.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ----- Initially from https://github.com/magus/dcss -----
 
 local AD_Messages = {
@@ -3750,18 +3748,19 @@ function announce_damage()
   prev_mp = cur_mp
   prev_mp_max = max_mp
 end
-------------------------------- End lua/announce-damage.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/announce-damage.lua ###############################
+##########################################################################################
 
+################################### Begin lua/color-inscribe.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/color-inscribe.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 -- Colorize inscriptions --
 -- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
 -- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
+
 local INSCRIPTION_MAX_LENGTH = 70
+
 local function colorize_text(text, s, tag)
   local idx = text:find(s)
   if not idx then return text end
@@ -3775,43 +3774,40 @@ local function colorize_text(text, s, tag)
   return retval
 end
 
--- Color map to single digit tags:
-  -- 0:black, 1:lightblue, 2:green, 3:cyan, 4:red, 5:magenta,
-  -- 6:brown, 7: lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightyan, 12:lightred,
-  -- 13:lightmagenta, 14:yellow, 15:white
+
 local multi_plus = "%++"
 local multi_minus = "%-+"
 local pos_num = "%+%d+%.?%d*"
 local neg_num = "%-%d+%.?%d*"
 local colorize_tags = {
-  { "rF"..multi_plus, 12 },
-  { "rC"..multi_plus, 9 },
-  { "rN"..multi_plus, 13 },
-  { "rF"..multi_minus, 4 },
-  { "rC"..multi_minus, 1 },
-  { "rN"..multi_minus, 5 },
-  { "rPois", 2 },
-  { "rElec", 11 },
-  { "rCorr", 14 },
-  { "rMut", 6 },
-  { "Slay"..pos_num, 15},
-  {  "Str"..pos_num, 15 },
-  {  "Dex"..pos_num, 15 },
-  {  "Int"..pos_num, 15 },
-  {   "AC"..pos_num, 15 },
-  {   "EV"..pos_num, 15 },
-  {   "SH"..pos_num, 15 },
-  {   "HP"..pos_num, 15 },
-  {   "MP"..pos_num, 15 },
-  { "Slay"..neg_num, 8 },
-  {  "Str"..neg_num, 8 },
-  {  "Dex"..neg_num, 8 },
-  {  "Int"..neg_num, 8 },
-  {   "AC"..neg_num, 8 },
-  {   "EV"..neg_num, 8 },
-  {   "SH"..neg_num, 8 },
-  {   "HP"..neg_num, 8 },
-  {   "MP"..neg_num, 8 },
+  { "rF"..multi_plus, COLORS.lightred },
+  { "rC"..multi_plus, COLORS.lightblue },
+  { "rN"..multi_plus, COLORS.lightmagenta },
+  { "rF"..multi_minus, COLORS.red },
+  { "rC"..multi_minus, COLORS.blue },
+  { "rN"..multi_minus, COLORS.magenta },
+  { "rPois", COLORS.green },
+  { "rElec", COLORS.lightcyan },
+  { "rCorr", COLORS.yellow },
+  { "rMut", COLORS.brown },
+  { "Slay"..pos_num, COLORS.white},
+  {  "Str"..pos_num, COLORS.white },
+  {  "Dex"..pos_num, COLORS.white },
+  {  "Int"..pos_num, COLORS.white },
+  {   "AC"..pos_num, COLORS.white },
+  {   "EV"..pos_num, COLORS.white },
+  {   "SH"..pos_num, COLORS.white },
+  {   "HP"..pos_num, COLORS.white },
+  {   "MP"..pos_num, COLORS.white },
+  { "Slay"..neg_num, COLORS.darkgrey },
+  {  "Str"..neg_num, COLORS.darkgrey },
+  {  "Dex"..neg_num, COLORS.darkgrey },
+  {  "Int"..neg_num, COLORS.darkgrey },
+  {   "AC"..neg_num, COLORS.darkgrey },
+  {   "EV"..neg_num, COLORS.darkgrey },
+  {   "SH"..neg_num, COLORS.darkgrey },
+  {   "HP"..neg_num, COLORS.darkgrey },
+  {   "MP"..neg_num, COLORS.darkgrey },
 } --colorize_tags (do not remove this comment)
 
 ------------------- Hooks -------------------
@@ -3827,7 +3823,7 @@ function c_assign_invletter_color_inscribe(it)
   it.inscribe(text, false)
 end
 
--- TODO: To colorize more, need a way to:
+-- To colorize more, need a way to:
   -- intercept messages before they're displayed
   -- insert tags that affect menus
   -- colorize artefact text
@@ -3843,14 +3839,13 @@ end
 
 --   crawl.mpr(text)
 -- end
-------------------------------- End lua/color-inscribe.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/color-inscribe.lua ###############################
+##########################################################################################
 
+################################### Begin lua/drop-inferior.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/drop-inferior.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ------- Auto-tag inferior items and add to drop list -----
 
 local DROP_KEY = "~~DROP_ME"
@@ -3907,14 +3902,13 @@ function c_assign_invletter_exclude_dropped(it)
  -- Remove DROP_KEY inscription on pickup
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 end
-------------------------------- End lua/drop-inferior.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/drop-inferior.lua ###############################
+##########################################################################################
 
+################################### Begin lua/dynamic-options.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/dynamic-options.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ----- Set any options based on game state -----
 local dyn_opt_god = "No God"
 local ignoring_spellcasting = false
@@ -4056,14 +4050,13 @@ function ready_dynamic_options()
   set_xl_options()
   set_skill_options()
 end
-------------------------------- End lua/dynamic-options.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/dynamic-options.lua ###############################
+##########################################################################################
 
+################################### Begin lua/exclude-dropped.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/exclude-dropped.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 -- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
 -- Exclusion is removed when you pick the item back up
 -- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
@@ -4181,14 +4174,13 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
   end
 end
-------------------------------- End lua/exclude-dropped.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/exclude-dropped.lua ###############################
+##########################################################################################
 
+################################### Begin lua/fully-rest.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/fully-rest.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ----- Fully rest off effects -----
 local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
     "confused", "marked", "tree%-form", "sluggish" }
@@ -4277,14 +4269,13 @@ function ready_fully_recover()
     explore_after_recovery = false
   end
 end
-------------------------------- End lua/fully-rest.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/fully-rest.lua ###############################
+##########################################################################################
 
+################################### Begin lua/fm-monsters.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/fm-monsters.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 local function set_monster_fm(sign, monster_str)
   local fm_str = "monster_warning:(?<!spectral )("..monster_str..
       ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
@@ -4604,14 +4595,13 @@ function ready_force_mores()
     crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", "), "plain")
   end
 end
-------------------------------- End lua/fm-monsters.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/fm-monsters.lua ###############################
+##########################################################################################
 
+################################### Begin lua/inscribe-stats.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/inscribe-stats.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ----- Inscribe stats on items -----
 
 local function inscribe_armour_stats(it)
@@ -4674,14 +4664,13 @@ function ready_inscribe_stats()
   else skipped_first_redraw = true
   end
 end
-------------------------------- End lua/inscribe-stats.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/inscribe-stats.lua ###############################
+##########################################################################################
 
+################################### Begin lua/misc-alerts.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/misc-alerts.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
 
@@ -4767,14 +4756,13 @@ function ready_misc_alerts()
   if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
   if CONFIG.annotate_v5 then ready_annotate_v5() end
 end
-------------------------------- End lua/misc-alerts.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/misc-alerts.lua ###############################
+##########################################################################################
 
+################################### Begin lua/mute-swaps.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/mute-swaps.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 -- When an item is moved to its assigned slot, mute the messages for the item that was previously in that slot
 -- If we cared what slot the item was in, it'd already be assigned somewhere
 -- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
@@ -4821,14 +4809,13 @@ function c_message_mute_swaps(text, channel)
 
   unmute_items()
 end
-------------------------------- End lua/mute-swaps.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/mute-swaps.lua ###############################
+##########################################################################################
 
+################################### Begin lua/remind-id.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/remind-id.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ----- Remind to identify items when you have scroll of ID + unidentified item -----
 local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
@@ -4858,14 +4845,13 @@ end
 function c_assign_invletter_remind_identify(it)
   if not it.is_identified then remind_unidentified_items() end
 end
-------------------------------- End lua/remind-id.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/remind-id.lua ###############################
+##########################################################################################
 
+################################### Begin lua/runrest-features.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/runrest-features.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 -- A collection of simple features related to resting and auto-explore stops
 
 local stop_on_altars = true
@@ -4951,14 +4937,13 @@ function c_message_runrest_features(text, _)
   if CONFIG.search_altars_in_temple then c_message_search_altars_in_temple(text, _) end
   if CONFIG.ignore_gauntlet_msgs then c_message_ignore_gauntlet_msgs(text, _) end
 end
-------------------------------- End lua/runrest-features.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/runrest-features.lua ###############################
+##########################################################################################
 
+################################### Begin lua/safe-stairs.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/safe-stairs.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ----- Prevent accidental stairs usage -----
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
 local last_stair_turn = 0
@@ -4995,14 +4980,13 @@ function ready_safe_stairs()
   prev_location = temp_location
   temp_location = you.branch()..you.depth()
 end
-------------------------------- End lua/safe-stairs.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/safe-stairs.lua ###############################
+##########################################################################################
 
+################################### Begin lua/startup.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/startup.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 
 if you.turns() == 0 then
   ---- Skill menu on startup (by rwbarton, edits by buehler) ----
@@ -5029,14 +5013,13 @@ if you.turns() == 0 then
   end
 
 end
-------------------------------- End lua/startup.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/startup.lua ###############################
+##########################################################################################
 
+################################### Begin lua/weapon-slots.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/weapon-slots.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 ---- Cleanup weapon slots ----
 --Whenever you drop an item:
   -- Assign weapons to slots a and b
@@ -5166,19 +5149,20 @@ function ready_weapon_slots()
     do_cleanup_weapon_slots = false
   end
 end
-------------------------------- End lua/weapon-slots.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/weapon-slots.lua ###############################
+##########################################################################################
 
 ## (Resuming init.txt) ##
 
 ### Pickup and alert ###
+
+################################### Begin lua/pickup-alert/pa-armour.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/pickup-alert/pa-armour.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_pa_armour then return end
 loaded_pa_armour = true
+
 ----------------------------------- Begin lua/pickup-alert/pa-util.lua -----------------------------------
 --------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_pa_util then return end
@@ -5555,7 +5539,7 @@ function get_weapon_info(it)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
 
-  --TODO: This would be awesome if it didn't ruin the main UI
+  --This would be awesome if it didn't ruin the main UI
   --dps_str = "DPS=<white>"..dps_str.."</white> "
   --return dps_str.."(<red>"..dmg_str.."</red>/<blue>"..delay_str.."</blue>), Acc<white>"..acc.."</white>"
   dps_str = "DPS="..dps_str.." "
@@ -6193,14 +6177,13 @@ function pa_alert_armour(it)
   if it.is_identified or not has_ego(it) then alert_interesting_armour(it) end
 end
 
-------------------------------- End lua/pickup-alert/pa-armour.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/pickup-alert/pa-armour.lua ###############################
+##########################################################################################
 
+################################### Begin lua/pickup-alert/pa-misc.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/pickup-alert/pa-misc.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_pa_misc then return end
 loaded_pa_misc = true
 
@@ -6274,14 +6257,13 @@ function pa_pickup_staff(it)
 
   return true
 end
-------------------------------- End lua/pickup-alert/pa-misc.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/pickup-alert/pa-misc.lua ###############################
+##########################################################################################
 
+################################### Begin lua/pickup-alert/pa-weapons.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------ Begin lua/pickup-alert/pa-weapons.lua -----------------------------------
---------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_pa_weapons then return end
 loaded_pa_weapons = true
 
@@ -6663,10 +6645,9 @@ function do_pa_weapon_alerts(it)
   -- Skip high score alerts if not using weapons
   if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it) end
 end
-------------------------------- End lua/pickup-alert/pa-weapons.lua -------------------------------
-------------------------------------------------------------------------------------------
-
 }
+############################### End lua/pickup-alert/pa-weapons.lua ###############################
+##########################################################################################
 
 ## (Resuming init.txt) ##
 
@@ -6746,7 +6727,3 @@ end
 ready()
 crawl.redraw_screen()
 }
-
-############################### End init.txt ###############################
-##########################################################################################
-

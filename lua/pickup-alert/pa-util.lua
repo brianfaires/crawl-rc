@@ -373,7 +373,7 @@ function get_weapon_info(it)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+"..acc end
 
-  --TODO: This would be awesome if it didn't ruin the main UI
+  --This would be awesome if it didn't ruin the main UI
   --dps_str = "DPS=<white>"..dps_str.."</white> "
   --return dps_str.."(<red>"..dmg_str.."</red>/<blue>"..delay_str.."</blue>), Acc<white>"..acc.."</white>"
   dps_str = "DPS="..dps_str.." "

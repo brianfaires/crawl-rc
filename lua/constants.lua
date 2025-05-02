@@ -44,13 +44,16 @@ all_training_skills = {
   "Staves", "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
 } -- all_training_skills (do not remove this comment)
 
+-- Color map to single digit tags (less text than explicit)
+-- 0:black, 1:blue, 2:green, 3:cyan, 4:red, 5:magenta, 6:brown,
+-- 7:lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightcyan,
+-- 12:lightred, 13:lightmagenta, 14:yellow, 15:white
 COLORS = {
-  darkgrey = "darkgrey", lightgrey = "lightgrey", white = "white",
-  blue = "blue", lightblue = "lightblue", green = "green",
-  lightgreen = "lightgreen", cyan = "cyan", lightcyan = "lightcyan",
-  red = "red", lightred = "lightred", magenta = "magenta",
-  lightmagenta = "lightmagenta", yellow = "yellow", brown = "brown",
-  black = "black",
+  blue = 1, green = 2, cyan = 3, red = 4, magenta = 5,
+  brown = 6, lightgrey = 7, darkgrey = 8, lightblue = 9,
+  lightgreen = 10, lightcyan = 11, lightred = 12,
+  lightmagenta = 13, yellow = 14, white = "w",
+  black = 0,
 } -- COLORS (do not remove this comment)
 
 RACE_SIZE = { VERY_SMALL = -2, SMALL = -1, NORMAL = 0, LARGE = 1, VERY_LARGE = 2 }
