@@ -48,13 +48,19 @@ one_time_alerts = {
   "storm dragon scales", "shadow dragon scales", "wand of digging",
   "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
 } -- one_time_alerts (do not remove this comment)
+
+-- Startup
+CONFIG.show_skills_on_startup = true
+CONFIG.auto_set_skill_targets = {
+  {"Stealth", 2},
+  {"Fighting", 2}
+} -- auto_set_skill_targets (do not remove this comment)
 ------------------------------- End lua/config.lua -------------------------------
 ------------------------------------------------------------------------------------------
 
 }
 
 ## (Resuming init.txt) ##
-
 
 ####### Main options #######
 easy_confirm = all
@@ -83,7 +89,7 @@ explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
-view_delay = 50
+view_delay = 80
 show_travel_trail = true
 
 explore_greedy_visit = artefacts,glowing_items,stacks
@@ -124,7 +130,7 @@ if loaded_lua_constants_file then return end
 local loaded_lua_constants_file = true
 
 all_undead_races = {
-  "Demonspawn", "Mummy", "Poltergeist", "Revenant" 
+  "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- all_undead_races (do not remove this comment)
 
 all_missiles = {
@@ -144,7 +150,7 @@ staff_schools = {
 } -- staff_schools (do not remove this comment)
 
 gods_with_allies = {
-  "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul"
+  "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul",
 } -- gods_with_allies (do not remove this comment)
 
 all_weap_schools = {
@@ -157,6 +163,14 @@ all_portal_names = {
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Ziggurat",
 } -- all_portal_names (do not remove this comment)
 
+all_training_skills = {
+  "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging",
+  "Earth Magic", "Evocations", "Fighting", "Fire Magic", "Forgecraft", "Hexes",
+  "Ice Magic", "Invocations", "Long Blades", "Maces & Flails", "Necromancy",
+  "Polearms", "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting",
+  "Staves", "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
+} -- all_training_skills (do not remove this comment)
+
 COLORS = {
   darkgrey = "darkgrey", lightgrey = "lightgrey", white = "white",
   blue = "blue", lightblue = "lightblue", green = "green",
@@ -165,6 +179,17 @@ COLORS = {
   lightmagenta = "lightmagenta", yellow = "yellow", brown = "brown",
   black = "black",
 } -- COLORS (do not remove this comment)
+
+RACE_SIZE = { VERY_SMALL = -2, SMALL = -1, NORMAL = 0, LARGE = 1, VERY_LARGE = 2 }
+function get_size_penalty()
+  local race = you.race()
+  if race == "Spriggan" then return RACE_SIZE.VERY_SMALL
+  elseif race == "Kobold" then return RACE_SIZE.SMALL
+  elseif race == "Formicid" or race == "Armataur" or race == "Naga" then return RACE_SIZE.LARGE
+  elseif race == "Oni" or race == "Troll" then return RACE_SIZE.VERY_LARGE
+  else return RACE_SIZE.NORMAL
+  end
+end
 ------------------------------- End lua/constants.lua -------------------------------
 ------------------------------------------------------------------------------------------
 
@@ -228,7 +253,7 @@ function you_have_allies()
 end
 
 function you_are_undead()
-  return all_undead_races.contains(you.race())
+  return util.contains(all_undead_races, you.race())
 end
 
 function you_are_pois_immune()
@@ -3040,6 +3065,7 @@ channel.orb = $awesome
 ################################### Begin rc/fm-messages.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 more := force_more_message
+flash := flash_screen_message
 
 # Remove annoying defaults
 more -= You have reached level
@@ -3062,49 +3088,50 @@ more += unholy channel is weakening
 
 
 # Monsters doing things
-more += monster_warning:wielding.*of chaos
+more += monster_warning:wielding.*of (distortion|chaos)
 more += monster_warning:carrying a wand of
 more += monster_warning:curare
-more += The forest starts to sway and rumble
+flash += The forest starts to sway and rumble
 more += begins to recite a word of recall
-#more += doors? slams? shut
-#more += blows on a signal horn
+flash += doors? slams? shut
+flash += blows on a signal horn
 more += The.*offers itself to Yredelemnul
-more += Deactivating autopickup
+flash += Deactivating autopickup
 more += Your?.*suddenly stops? moving
 more += There is.*feeling in your soul
-#more += Its appearance distorts for a moment
+flash += Its appearance distorts for a moment
 more += wretched star pulses
 more += Strange energies course through your body
 
 
 # Crowd control
-more += You ((?<!( too|less)) confused|blown|knocked back|mesmerised|trampled|stumble backwards|encased|(?<!hands )slow.*down|lose consciousness)
+more += You ((?<!( too|less)) confused|(?<!hands )slow.*down|lose consciousness)
+flash += You ((?<!( too|less)) blown|knocked back|mesmerised|trampled|stumble backwards|encased)
 more += infuriates you
-more += danger:Space.*around you
 more += hits you.*distortion
-more += The pull of.*song draws you forward
-more += The.*engulfs you in water
+more += Space.*around you
+flash += The pull of.*song draws you forward
+flash += The.*engulfs you in water
 more += surroundings become eerily quiet
 more += Your limbs are stiffening
-more += Your magical effects are unraveling
-more += Your magical defenses are stripped away
-more += You stop (a|de)scending the stairs
-more += A sentinel's mark forms upon you
+flash += Your magical effects are unraveling
+flash += Your magical defenses are stripped away
+flash += You stop (a|de)scending the stairs
+flash += A sentinel's mark forms upon you
 
 
 # Clouds
 more += danger:(calcify|mutagenic)
 more += You.*re engulfed in.*miasma
-more += Miasma billows from the
+flash += Miasma billows from the
 
 
 # You Screwed Up
-more += power of Zot
+flash += power of Zot
 more += is no longer ready
 more += You really shouldn't be using
 more += You don't have enough magic to cast this spell
-more += Your body shudders with the violent release
+flash += Your body shudders with the violent release
 
 
 # Found something important
@@ -3118,15 +3145,16 @@ more += byssal rune
 
 
 # Translocations
-more += You blink
-more += danger:You feel strangely .*stable
+flash += You blink
+flash += danger:You feel strangely .*stable
 more += danger:sense of stasis
 more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
-more += delayed
+flash += delayed
 
 
 # Big damage
+more += MASSIVE DAMAGE!!
 more += your body is wracked
 more += Ouch! That really hurt!
 more += The poison in your body grows stronger
@@ -3137,13 +3165,13 @@ more += You.*re.*terribly
 
 # Hit by something
 more += Terrible wounds open
-more += danger:corrodes you
+flash += danger:corrodes you
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
 more += You feel.*(?<!less )(haunted|rot|vulnerable)
-more += Your damage is reflected back at you
-more += (?<!You.*)reflects
+flash += Your damage is reflected back at you
+flash += (?<!You.*)reflects
 
 
 # FYI
@@ -3888,24 +3916,16 @@ end
 
 ---- race-specific ---
 local function set_race_options()
-  if am_undead_race() then
-  if you.race() == "Demonspawn" then
+  if you_are_undead() then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  elseif you.race() == "Formicid" then
+  end
+
+  if you_are_pois_immune() then
     crawl.setopt("force_more_message -= monster_warning:curare")
-  elseif you.race() == "Gargoyle" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-  elseif you.race() == "Gnoll" then
+  end
+
+  if you.race() == "Gnoll" then
     crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
-  elseif you.race() == "Mummy" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  elseif you.race() == "Poltergeist" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  elseif you.race() == "Revenant" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 end
 
@@ -4078,7 +4098,7 @@ if you.skill("Ranged Weapons") > 2 then
 end
 if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
-if get_race_armour_penalty() >= RACE_SIZE.VERY_LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
+if get_size_penalty() >= RACE_SIZE.VERY_LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
@@ -4990,10 +5010,31 @@ end
 {
 ----------------------------------- Begin lua/startup.lua -----------------------------------
 --------------- https://github.com/brianfaires/crawl-rc/ ---------------
----- Skill menu on startup (by rwbarton, edits by buehler) ----
-local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
-if you.turns() == 0 and show_skills_on_startup then
-  crawl.sendkeys("m!!")
+
+if you.turns() == 0 then
+  ---- Skill menu on startup (by rwbarton, edits by buehler) ----
+  if CONFIG.show_skills_on_startup then
+    local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
+    if show_skills_on_startup then
+      crawl.sendkeys("m")
+    end
+  end
+
+  ---- Auto-set default skill targets ----
+  if CONFIG.auto_set_skill_targets then
+    for _, skill_target in ipairs(CONFIG.auto_set_skill_targets) do
+      local skill, target = unpack(skill_target)
+      if you.skill(skill) < target then
+        for _, s in ipairs(all_training_skills) do
+          you.train_skill (s, 0)
+        end
+        you.set_training_target (skill, target)
+        you.train_skill (skill, 2)
+        break
+      end
+    end
+  end
+
 end
 ------------------------------- End lua/startup.lua -------------------------------
 ------------------------------------------------------------------------------------------
@@ -5176,17 +5217,6 @@ end
 
 
 --------- Armour (Shadowing crawl calcs) ---------
-RACE_SIZE = { VERY_SMALL = -2, SMALL = -1, NORMAL = 0, LARGE = 1, VERY_LARGE = 2 }
-function get_size_penalty()
-  local race = you.race()
-  if race == "Spriggan" then return RACE_SIZE.VERY_SMALL
-  elseif race == "Kobold" then return RACE_SIZE.SMALL
-  elseif race == "Formicid" or race == "Armataur" or race == "Naga" then return RACE_SIZE.LARGE
-  elseif race == "Oni" or race == "Troll" then return RACE_SIZE.VERY_LARGE
-  else return RACE_SIZE.NORMAL
-  end
-end
-
 function get_shield_penalty(sh)
   local pen = 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_size_penalty()) * (27 - you.skill("Shields")) / 27
   -- Round to 2 decimals, which mimics scale==100

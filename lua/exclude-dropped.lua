@@ -4,6 +4,7 @@
 if loaded_exclude_dropped then return end
 local loaded_exclude_dropped = true
 loadfile("crawl-rc/lua/constants.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 ---------------- Persistent data ----------------
 if not dropped_item_exclusions or you.turns() == 0 then
@@ -26,7 +27,7 @@ if you.skill("Ranged Weapons") > 2 then
 end
 if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
-if get_race_armour_penalty() >= RACE_SIZE.VERY_LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
+if get_size_penalty() >= RACE_SIZE.VERY_LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 

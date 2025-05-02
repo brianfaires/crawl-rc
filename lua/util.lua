@@ -54,7 +54,7 @@ function you_have_allies()
 end
 
 function you_are_undead()
-  return all_undead_races.contains(you.race())
+  return util.contains(all_undead_races, you.race())
 end
 
 function you_are_pois_immune()

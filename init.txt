@@ -1,7 +1,6 @@
 ## Config at top
 lua_file = crawl-rc/lua/config.lua
 
-
 ####### Main options #######
 easy_confirm = all
 show_more = false
@@ -29,7 +28,7 @@ explore_wall_bias = 6
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
-view_delay = 50
+view_delay = 80
 show_travel_trail = true
 
 explore_greedy_visit = artefacts,glowing_items,stacks

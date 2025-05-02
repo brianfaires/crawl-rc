@@ -33,24 +33,16 @@ end
 
 ---- race-specific ---
 local function set_race_options()
-  if am_undead_race() then
-  if you.race() == "Demonspawn" then
+  if you_are_undead() then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  elseif you.race() == "Formicid" then
+  end
+
+  if you_are_pois_immune() then
     crawl.setopt("force_more_message -= monster_warning:curare")
-  elseif you.race() == "Gargoyle" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-  elseif you.race() == "Gnoll" then
+  end
+
+  if you.race() == "Gnoll" then
     crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
-  elseif you.race() == "Mummy" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  elseif you.race() == "Poltergeist" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  elseif you.race() == "Revenant" then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 end
 

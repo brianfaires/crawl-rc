@@ -42,3 +42,10 @@ one_time_alerts = {
   "storm dragon scales", "shadow dragon scales", "wand of digging",
   "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
 } -- one_time_alerts (do not remove this comment)
+
+-- Startup
+CONFIG.show_skills_on_startup = true
+CONFIG.auto_set_skill_targets = {
+  {"Stealth", 2},
+  {"Fighting", 2}
+} -- auto_set_skill_targets (do not remove this comment)
