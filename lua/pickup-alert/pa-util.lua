@@ -28,18 +28,19 @@ end
 
 
 --------- Armour (Shadowing crawl calcs) ---------
-function get_race_size()
+RACE_SIZE = { VERY_SMALL = -2, SMALL = -1, NORMAL = 0, LARGE = 1, VERY_LARGE = 2 }
+function get_size_penalty()
   local race = you.race()
-  if race == "Spriggan" then return -2
-  elseif race == "Kobold" then return -1
-  elseif race == "Formicid" or race == "Armataur" or race == "Naga" then return 1
-  elseif race == "Ogre" or race == "Troll" then return 2
-  else return 0
+  if race == "Spriggan" then return RACE_SIZE.VERY_SMALL
+  elseif race == "Kobold" then return RACE_SIZE.SMALL
+  elseif race == "Formicid" or race == "Armataur" or race == "Naga" then return RACE_SIZE.LARGE
+  elseif race == "Oni" or race == "Troll" then return RACE_SIZE.VERY_LARGE
+  else return RACE_SIZE.NORMAL
   end
 end
 
 function get_shield_penalty(sh)
-  local pen = 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_race_size()) * (27 - you.skill("Shields")) / 27
+  local pen = 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_size_penalty()) * (27 - you.skill("Shields")) / 27
   -- Round to 2 decimals, which mimics scale==100
   return math.floor(100 * pen) / 100
 end
@@ -98,7 +99,7 @@ function get_armour_ev(it)
 
   if str <= 0 then str = 1 end
 
-  local size_factor = -2 * get_race_size()
+  local size_factor = -2 * get_size_penalty()
 
   local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
@@ -143,7 +144,7 @@ function get_shield_sh(it)
   else sh_size = -2
   end
 
-  local base_sh = it.ac * 2 + sh_size*get_race_size()
+  local base_sh = it.ac * 2 + sh_size*get_size_penalty()
   local shield = base_sh * (50 + skill*5/2)
   shield = shield + 200*it_plus
   shield = shield + if_el(skill < 3, 76*skill, 38*(3+skill))

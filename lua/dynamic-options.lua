@@ -33,6 +33,7 @@ end
 
 ---- race-specific ---
 local function set_race_options()
+  if am_undead_race() then
   if you.race() == "Demonspawn" then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   elseif you.race() == "Formicid" then

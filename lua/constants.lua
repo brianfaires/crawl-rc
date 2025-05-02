@@ -2,6 +2,10 @@
 if loaded_lua_constants_file then return end
 local loaded_lua_constants_file = true
 
+all_undead_races = {
+  "Demonspawn", "Mummy", "Poltergeist", "Revenant" 
+} -- all_undead_races (do not remove this comment)
+
 all_missiles = {
   " stone", "poisoned dart", "atropa", "curare", "datura",
   "boomerang", "javelin", "large rock", "throwing net",

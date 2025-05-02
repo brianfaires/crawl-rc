@@ -53,6 +53,14 @@ function you_have_allies()
       util.contains(gods_with_allies, you.god())
 end
 
+function you_are_undead()
+  return all_undead_races.contains(you.race())
+end
+
+function you_are_pois_immune()
+  return you.res_poison() >= 3
+end
+
 function is_body_armour(it)
   return it and it.subtype() == "body"
 end
