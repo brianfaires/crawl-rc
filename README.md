@@ -201,8 +201,7 @@ calls for all of their dependencies. They protect against multiple imports and f
 and you can ignore them. Probably best to leave in place.
 
 ## TODO dev list
-1. fm-monsters to use lists like {name, is_mutator, max_dmg, max_fire_dmg, ... , max_elec_dmg};
-1. dynamic-options to use lists like {god name, [fm-prompts]}
+1. fm-monsters list updated for 0.33.1
 1. Disable all auto explore stops in gauntlets until fully explored
     - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events.
 1. Better colorizing of rF+, rC+, etc (needs crawl PR?)

@@ -49,67 +49,26 @@ end
 ---- class-specific ---
 local function set_class_options()
   if you.class() == "Hunter" then
-    crawl.setopt("view_delay = 20")
+    crawl.setopt("view_delay = 30")
   end
 end
 
 ---- god-specific ----
+-- force_mores that you don't mind on everyone are in fm-message.rc
 local function set_god_options()
   if you.god() ~= dyn_opt_god then
     dyn_opt_god = you.god()
 
-    if dyn_opt_god == "Ashenzari" then
-      crawl.setopt("runrest_stop_message += god:Ashenzari invites you to partake")
-    elseif dyn_opt_god == "Beogh" then
-      crawl.setopt("autopickup_exceptions ^= >scrolls? of immolation")
-      crawl.setopt("runrest_ignore_message += no longer looks unusually strong")
+    if dyn_opt_god == "Beogh" then
+      crawl.setopt("runrest_ignore_message += no longer looks.*")
       crawl.setopt("force_more_message += Your orc.*dies")
-    elseif dyn_opt_god == "Dithmenos" then
-      crawl.setopt("force_more_message += god:You are shrouded in an aura of darkness")
-      crawl.setopt("force_more_message += god:You now sometimes bleed smoke")
-      crawl.setopt("force_more_message += god:You.*no longer.*bleed smoke")
-      crawl.setopt("force_more_message += god:Your shadow no longer tangibly mimics your actions")
-      crawl.setopt("force_more_message += god:Your shadow now sometimes tangibly mimics your actions")
-    elseif dyn_opt_god == "Fedhas" then
-      crawl.setopt("force_more_message += god:Fedhas invokes the elements against you")
-    elseif dyn_opt_god == "Hepliaklqana" then
-      crawl.setopt("runrest_ignore_message ^= emerges from the mists of memory")
     elseif dyn_opt_god == "Jiyva" then
-      crawl.setopt("force_more_message += god:will now unseal the treasures of the Slime Pits")
-      crawl.setopt("force_more_message += god:Jiyva alters your body")
       crawl.setopt("force_more_message += god:splits in two")
       crawl.setopt("force_more_message += god:Your prayer is over.")
-    elseif dyn_opt_god == "Kikubaaqudgha" then
-      crawl.setopt("force_more_message += god:Kikubaaqudgha will grant you")
-    elseif dyn_opt_god == "Lugonu" then
-      crawl.setopt("force_more_message += god:Lugonu will now corrupt your weapon")
-      crawl.setopt("force_more_message += god:Lugonu sends minions to punish you")
-    elseif dyn_opt_god == "Okawaru" then
-      crawl.setopt("force_more_message += god:Okawaru sends forces against you")
-    elseif dyn_opt_god == "Ru" then
-      crawl.setopt("runrest_stop_message += god:Ru believes you are ready to make a new sacrifice")
     elseif dyn_opt_god == "Qazlal" then
-      crawl.setopt("force_more_message += god:resistances upon receiving elemental damage")
-      crawl.setopt("force_more_message += god:You are surrounded by a storm which can block enemy attacks")
       crawl.setopt("force_more_message -= god:You feel.*protected")
-    elseif dyn_opt_god == "The Shining One" then
-      crawl.setopt("force_more_message += god:Your divine shield starts to fade.")
-      crawl.setopt("force_more_message += god:Your divine shield fades away.")
-    elseif dyn_opt_god == "Trog" then
-      crawl.setopt("force_more_message += god:You feel the effects of Trog's Hand fading")
-      crawl.setopt("force_more_message += god:You feel less resistant to hostile enchantments")
-    elseif dyn_opt_god == "Wu Jian Council" then
-      crawl.setopt("runrest_ignore_message += heavenly storm settles")
     elseif dyn_opt_god == "Xom" then
       crawl.setopt("force_more_message += god:")
-      crawl.setopt("force_more_message += staircase.*moves")
-      crawl.setopt("force_more_message += Some monsters swap places")
-    elseif dyn_opt_god == "Yredelemnul" then
-      crawl.setopt("force_more_message += god:soul is now ripe for the taking")
-      crawl.setopt("force_more_message += god:soul is no longer ripe for the taking")
-      crawl.setopt("force_more_message += god:dark mirror aura disappears")
-    elseif dyn_opt_god == "Zin" then
-      crawl.setopt("force_more_message += god:will now cure all your mutations")
     end
   end
 end

@@ -71,3 +71,10 @@ ignore ^= our.*fades into mist
 ignore ^= our.*looks more healthy
 ignore ^= our.*is no longer (corroded|moving slowly)
 ignore ^= our.*dissolves into a puddle of slime
+
+# Ru
+stop += god:Ru believes you are ready to make a new sacrifice
+# Hepliaklqana
+ignore ^= emerges from the mists of memory
+# Wu Jian Council
+ignore += heavenly storm settles
