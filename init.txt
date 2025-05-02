@@ -12,7 +12,7 @@ autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
 
-autofight_stop = 65
+autofight_stop = 50
 hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4

@@ -18,7 +18,7 @@ CONFIG.search_altars_in_temple = true
 
 -- Misc alerts
 CONFIG.alert_remove_faith = true
-CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable
+CONFIG.alert_low_hp_threshold = 0.7 -- % max HP to alert; 0 to disable
 CONFIG.annotate_v5 = true
 CONFIG.save_with_msg = true
 
