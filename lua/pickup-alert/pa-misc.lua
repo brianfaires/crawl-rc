@@ -37,7 +37,7 @@ function pa_alert_orb(it)
 end
 
 ---- Alert talismans ----
-function pa_alert_staff(it)
+function pa_alert_talisman(it)
   if it.is_identified then
     pa_alert_item(it, "New talisman")
   end
@@ -66,7 +66,7 @@ end
 function pa_pickup_staff(it)
   if it.is_useless or not it.is_identified then return false end
   local school = get_staff_school(it)
-  if you.skill(school) == 0 then return false end
+  if get_skill(school) == 0 then return false end
 
   -- Check for previously picked staves
   for v in iter.invent_iterator:new(pa_items_picked) do

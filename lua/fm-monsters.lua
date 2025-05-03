@@ -68,7 +68,7 @@ end
 
 
 ------------------- Dynamic force_mores config -------------------
--- hp-specific force_mores() by gammafunk, extended by buehler
+-- hp-specific force_mores() by gammafunk, edits by buehler
 local notify_fm = false -- Set to true to get a message when the fm change
 
 local fm_patterns = {

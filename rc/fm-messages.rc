@@ -63,8 +63,8 @@ more += You don't have enough magic to cast this spell
 flash += Your body shudders with the violent release
 
 # Found something important
-more += Found.*the Ecumenical Temple
-more += timed_portal:.*
+flash += Found.*the Ecumenical Temple
+flash += timed_portal:.*
 more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat
 more += .*resides here

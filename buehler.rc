@@ -9,6 +9,9 @@ CONFIG = { }
 
 -- Announce damage emojis
 CONFIG.emojis = true
+-- Announce HP/MP when change is greater than this value
+CONFIG.ANNOUNCE_HP_THRESHOLD = 2
+CONFIG.ANNOUNCE_MP_THRESHOLD = 2
 
 -- Inscribe stats
 CONFIG.inscribe_weapons = true
@@ -23,9 +26,11 @@ CONFIG.search_altars_in_temple = true
 
 -- Misc alerts
 CONFIG.alert_remove_faith = true
-CONFIG.alert_low_hp_threshold = 0.7 -- % max HP to alert; 0 to disable
+CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable
 CONFIG.annotate_v5 = true
 CONFIG.save_with_msg = true
+CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
+CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions
 
 ---- Pickup/Alert system
 CONFIG.pickup_armour = true
@@ -71,7 +76,7 @@ autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
 
-autofight_stop = 50
+autofight_stop = 66
 hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
@@ -98,7 +103,7 @@ ae := autopickup_exceptions
 ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
 ae ^= >useless_item, <misc
-ae += staff of.*, .*talisman
+ae ^= >staff of.*
 
 # Exclude the 3rd copy of any ring
 {
@@ -288,11 +293,11 @@ function is_amulet(it)
 end
 
 function is_orb(it)
-  return it and it.name("base") == "orb"
+  return it and it.name("base"):find("orb of ")
 end
 
 function is_talisman(it)
-  return it and it.name("base") == "talisman"
+  return it and it.name("base"):find("talisman")
 end
 
 function get_mut(mutation, include_temp)
@@ -3127,8 +3132,8 @@ more += You don't have enough magic to cast this spell
 flash += Your body shudders with the violent release
 
 # Found something important
-more += Found.*the Ecumenical Temple
-more += timed_portal:.*
+flash += Found.*the Ecumenical Temple
+flash += timed_portal:.*
 more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat
 more += .*resides here
@@ -3692,10 +3697,8 @@ function announce_damage()
       AD_Messages.HPMax(COLORS.yellow, cur_hp, max_hp, max_hp_diff)
     end
 
-    -- HP Loss
-    -- Ensure we lost MORE than the change in max hp
-    -- i.e. a change in max hp should not be considered damage
-    if (hp_diff > 0 and hp_diff > math.abs(max_hp_diff)) then
+    -- HP Loss relative to max HP change
+    if (hp_diff - max_hp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
       color_by_max(AD_Messages.HPLoss, cur_hp, max_hp, hp_diff)
 
       if hp_diff > (max_hp * 0.20) then
@@ -3704,8 +3707,7 @@ function announce_damage()
     end
 
     -- HP Gain
-    -- More than 1 HP gained
-    if (hp_diff < 0) then
+    if (hp_diff - max_hp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local hp_gain = math.abs(hp_diff)
 
@@ -3720,7 +3722,7 @@ function announce_damage()
 
     -- MP Gain
     -- More than 1 MP gained
-    if (mp_diff < 0) then
+    if (mp_diff - max_mp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local mp_gain = math.abs(mp_diff)
 
@@ -3736,7 +3738,7 @@ function announce_damage()
     -- MP Loss
     -- Ensure we lost MORE than the change in max mp
     -- i.e. a change in max mp should not be considered loss
-    if (mp_diff > 0 and mp_diff > math.abs(max_mp_diff)) then
+    if (mp_diff - max_mp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
       color_by_max(AD_Messages.MPLoss, cur_mp, max_mp, mp_diff)
     end
 
@@ -4346,7 +4348,7 @@ end
 
 
 ------------------- Dynamic force_mores config -------------------
--- hp-specific force_mores() by gammafunk, extended by buehler
+-- hp-specific force_mores() by gammafunk, edits by buehler
 local notify_fm = false -- Set to true to get a message when the fm change
 
 local fm_patterns = {
@@ -4608,7 +4610,7 @@ local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
   -- This gsub's stats individually to avoid overwriting <color> tags
   -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
-  local NUM_PATTERN = "[%+%-]%d+%.%d*"
+  local NUM_PATTERN = "[%+%-%=]%d+%.%d*"
   local abbr = if_el(is_shield(it), "SH", "AC")
   local primary, ev = get_armour_info_strings(it)
 
@@ -4723,21 +4725,12 @@ function ready_annotate_v5()
 end
 
 ----- Save with message -----
--- credit: gammafunk
-if CONFIG.save_with_msg then
-  crawl.setopt("macros += M S ===macro_save_with_message")
-
-  if c_persist.message and c_persist.message ~= "" then
-    crawl.mpr("MESSAGE: " .. c_persist.message, message_color)
-    c_persist.message = nil
-  end
+-- by gammafunk, edits by buehler
+local function persist_save_game_msg()
+  return "saved_game_msg = \""..saved_game_msg.."\""..string.char(10)
 end
 
 function macro_save_with_message()
-  if you.turns() == 0 then
-    crawl.sendkeys("S")
-    return
-  end
   crawl.formatted_mpr("Save game and exit?", "prompt")
   local res = crawl.getch()
   if not (string.char(res) == "y" or string.char(res) == "Y") then
@@ -4745,9 +4738,17 @@ function macro_save_with_message()
     return
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
-  res = crawl.c_input_line()
-  c_persist.message = res
+  saved_game_msg = crawl.c_input_line()
+  table.insert(chk_lua_save, persist_save_game_msg)
   crawl.sendkeys(control_key("s"))
+end
+
+if CONFIG.save_with_msg then
+  crawl.setopt("macros += M S ===macro_save_with_message")
+  if saved_game_msg and saved_game_msg ~= "" then
+    crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
+    saved_game_msg = nil
+  end
 end
 
 ------------------ Hook ------------------
@@ -4760,69 +4761,20 @@ end
 ############################### End lua/misc-alerts.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/mute-swaps.lua ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-{
--- When an item is moved to its assigned slot, mute the messages for the item that was previously in that slot
--- If we cared what slot the item was in, it'd already be assigned somewhere
--- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
-
-local muted_items = {}
-
--- Must define this separate from ready() if we want to call it from c_message_mute_swaps as well
-local function unmute_items()
-  for v in iter.invent_iterator:new(muted_items) do
-    crawl.setopt("message_colour -= mute: - "..v)
-  end
-  muted_items = {}
-end
-
-------------------- Hooks -------------------
-function ready_mute_swaps()
-  unmute_items()
-end
-
-local last_pickup_turn = -1
-function c_assign_invletter_mute_swaps(_)
-  -- this causes an unmute command on the message
-  -- we can't unmute in time from this hook
-  if you.turns() == last_pickup_turn or crawl.messages(1):find(" %- ") then
-    unmute_items()
-  else
-    last_pickup_turn = you.turns()
-  end
-end
-
-function c_message_mute_swaps(text, channel)
-  -- Mute subsequent item re-assignments in a single turn, for everything after the first item.
-  -- Multiple slots for the same item will still be shown
-  if channel == "plain" then
-    text = cleanup_text(text, true)
-    if text:sub(2,4) == " - " then
-      local item = text:sub(5, #text)
-      local mute_str = "(?!.*("..item.."))"
-      table.insert(muted_items, mute_str)
-      crawl.setopt("message_colour ^= mute: - "..mute_str)
-      return
-    end
-  end
-
-  unmute_items()
-end
-}
-############################### End lua/mute-swaps.lua ###############################
-##########################################################################################
+## (Resuming init.txt) ##
+#lua_file = crawl-rc/lua/mute-swaps.lua
 
 ################################### Begin lua/remind-id.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------ Remind to identify items when you have scroll of ID + unidentified item -----
+---- Remind to identify items when you have scroll of ID + unidentified item ----
 local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
     if not it.is_identified then
       for s in iter.invent_iterator:new(items.inventory()) do
         if s and s.name("qual"):find("scroll of identify") then
           crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
+          break
         end
       end
 
@@ -4833,17 +4785,43 @@ end
 crawl.setopt("runrest_stop_message += You have something to identify")
 
 
+---- Track if found ID yet ----
+if not found_scroll_of_id or you.turns() == 0 then
+  found_scroll_of_id = 0
+end
+
+local function persist_found_scroll_of_id()
+  return "found_scroll_of_id = "..found_scroll_of_id..string.char(10)
+end
+table.insert(chk_lua_save, persist_found_scroll_of_id)
+
+
 ------------------- Hooks -------------------
 function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
-  if text:find(" of identify") and not text:find("drop") and not text:find("read") then
-    remind_unidentified_items()
+  if text:find(" of identify") then
+    found_scroll_of_id = 1
+    if not text:find("drop") and not text:find("read") then
+      remind_unidentified_items()
+    end
+  elseif found_scroll_of_id == 0 then
+    local idx = text:find(" %- ")
+    if idx then
+      local slot = text:sub(idx - 1, idx - 1)
+      local it = items.inslot(items.letter_to_index(slot))
+      if it.class(true) == "scroll" and it.quantity >= CONFIG.stop_on_scrolls_count or
+          it.class(true) == "potion" and it.quantity >= CONFIG.stop_on_pots_count then
+        you.stop_activity()
+      end
+    end
   end
 end
 
 function c_assign_invletter_remind_identify(it)
-  if not it.is_identified then remind_unidentified_items() end
+  if not it.is_identified or it.name("qual"):find("scroll of identify") then
+    remind_unidentified_items()
+  end
 end
 }
 ############################### End lua/remind-id.lua ###############################
@@ -4959,11 +4937,14 @@ local function check_new_location(key)
     local res = crawl.getch()
     if string.lower(string.char(res)) == "y" then
       crawl.sendkeys(key)
-	  last_stair_turn = you.turns()
+	    last_stair_turn = you.turns()
+    else
+      crawl.formatted_mpr("Okay, then.", "prompt")
+      return
     end
   else
     crawl.sendkeys(key)
-	last_stair_turn = you.turns()
+	  last_stair_turn = you.turns()
   end
 end
 
@@ -5222,7 +5203,7 @@ function get_armour_ac(it)
 
   end
 
-  return math.max(0, ac - 0.05)
+  return ac
 end
 
 function get_aevp(encumb, str)
@@ -5335,7 +5316,7 @@ function get_weap_min_delay(it)
 end
 
 function get_weap_delay(it, ignore_brands)
-  local delay = it.delay - you.skill(it.weap_skill)/2
+  local delay = it.delay - get_skill(it.weap_skill)/2
   local min_delay = get_weap_min_delay(it)
   if delay < min_delay then delay = min_delay end
 
@@ -5428,7 +5409,7 @@ function get_staff_bonus_dmg(it, no_brand_dmg)
   local school = get_staff_school(it)
   if not school then return 0 end
 
-  local spell_skill = you.skill(school)
+  local spell_skill = get_skill(school)
   local chance = (evo_skill + spell_skill/2) / 15
   if chance > 1 then chance = 1 end
   -- 0.625 is an acceptable approximation
@@ -5470,7 +5451,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + you.skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
@@ -5546,21 +5527,25 @@ function get_weapon_info(it)
   return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
 end
 
-local function format_stat(abbr, val)
+local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
-  if val >= 0 then stat_str = "+"..stat_str end
+  if is_worn then
+    stat_str = "="..stat_str
+  elseif val >= 0 then
+    stat_str = "+"..stat_str
+  end
   return abbr..stat_str
 end
 
 function get_armour_info_strings(it)
-  if not is_armour(it) then return end
-  if is_orb(it) then return "", "" end
+  if not is_armour(it) or is_orb(it) then return "", "" end
 
   local cur = items.equipped_at(it.equip_type)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  if cur and not (cur.ininventory and cur.slot == it.slot) then
+  local is_worn = it.ininventory and cur and cur.slot == it.slot
+  if cur and not is_worn then
     -- Only show deltas if not same item
     if is_shield(cur) then
       cur_sh = get_shield_sh(cur)
@@ -5572,15 +5557,30 @@ function get_armour_info_strings(it)
   end
 
   if is_shield(it) then
-    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh)
-    local ev_str = format_stat("EV", get_shield_penalty(it) - cur_ev)
+    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh, is_worn)
+    local ev_str = format_stat("EV", get_shield_penalty(it) - cur_ev, is_worn)
     return sh_str, ev_str
   else
-    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac)
+    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac, is_worn)
     if not is_body_armour(it) then return ac_str end
-    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev)
+    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev, is_worn)
     return ac_str, ev_str
   end
+end
+
+function get_skill(skill)
+  if not skill:find(",") then
+    return you.skill(skill)
+  end
+
+  local skills = crawl.split(skill, ",")
+  local sum = 0
+  local count = 0
+  for _, s in ipairs(skills) do
+    sum = sum + you.skill(s)
+    count = count + 1
+  end
+  return sum/count
 end
 ------------------------------- End lua/pickup-alert/pa-util.lua -------------------------------
 ------------------------------------------------------------------------------------------
@@ -5894,7 +5894,7 @@ add_autopickup_func(function (it, _)
 
       if is_staff(it) and CONFIG.alert_staff_resists then pa_alert_staff(it)
       elseif is_orb(it) and CONFIG.alert_orbs then pa_alert_orb(it)
-      elseif is_talisman(it) and CONFIG.alert_talismans then pa_alert_staff(it)
+      elseif is_talisman(it) and CONFIG.alert_talismans then pa_alert_talisman(it)
       end
     end
 
@@ -5932,7 +5932,7 @@ local function alert_armour_upgrades(it)
 end
 
 
--- Equipment autopickup (by Medar, gammafunk, sockthot, and various others)
+-- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
   if it.is_useless then return false end
 
@@ -5960,7 +5960,7 @@ function pa_pickup_armour(it)
 
     -- Exclusions
     if not cur then return false end
-    if not it.is_identified or is_orb(it) then return false end
+    if not it.is_identified then return false end
     if cur.name("base") ~= it.name("base") then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos
@@ -5973,6 +5973,7 @@ function pa_pickup_armour(it)
     if it.branded then return true end
     return it.plus > cur.plus
   else
+    if is_orb(it) then return false end
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
     local st, _ = it.subtype()
 
@@ -6219,7 +6220,7 @@ function pa_alert_orb(it)
 end
 
 ---- Alert talismans ----
-function pa_alert_staff(it)
+function pa_alert_talisman(it)
   if it.is_identified then
     pa_alert_item(it, "New talisman")
   end
@@ -6248,7 +6249,7 @@ end
 function pa_pickup_staff(it)
   if it.is_useless or not it.is_identified then return false end
   local school = get_staff_school(it)
-  if you.skill(school) == 0 then return false end
+  if get_skill(school) == 0 then return false end
 
   -- Check for previously picked staves
   for v in iter.invent_iterator:new(pa_items_picked) do
@@ -6287,7 +6288,7 @@ local function make_weapon_struct(it)
   weap_data.artefact = it.artefact
   weap_data.plus = it.plus
   weap_data.weap_skill = it.weap_skill
-  weap_data.skill_lvl = you.skill(it.weap_skill)
+  weap_data.skill_lvl = get_skill(it.weap_skill)
 
   --weap_data.it = it
   return weap_data
@@ -6313,8 +6314,8 @@ local function set_top_school()
   local max = 0
 
   for v in iter.invent_iterator:new(all_weap_schools) do
-    if you.skill(v) > max then
-      max = you.skill(v)
+    if get_skill(v) > max then
+      max = get_skill(v)
       top_school = v
     end
   end
@@ -6396,7 +6397,7 @@ local function alert_early_weapons(it)
   end
 
   -- Skip items when we're clearly going another route
-  if you.skill(top_school) - you.skill(it.weap_skill) > 1.5*you.xl()+3 then return end
+  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*you.xl()+3 then return end
 
 
   if you.xl() < 8 then
@@ -6494,8 +6495,8 @@ local function pickup_weapon(it, cur)
       return get_weap_dps(it) > 0.85*cur.dps
     end
     if cur.branded and not has_ego(it) then return false end
-    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps
-  --elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
+    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
+  --elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     if no_upgrade_possible(it, cur) then return false end
 
@@ -6504,7 +6505,7 @@ local function pickup_weapon(it, cur)
     if it.branded and not it.is_identified then return false end
     --if cur.branded and not it.branded then return false end
 
-    if it.is_ranged then return get_weap_dps(it) > cur.dps end
+    if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
 
     local it_plus = if_el(it.plus, it.plus, 0)
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
@@ -6534,13 +6535,13 @@ local function alert_interesting_weapon(it, cur)
     -- Exact weapon type match
     if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then return pa_alert_item(it, "New ego") end
     if get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then return pa_alert_item(it, "Stronger weapon") end
-  elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
+  elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
 
     --local penalty = 1
     --if it.weap_skill == top_school then penalty = 0.5 end
-    local penalty = (you.skill(it.weap_skill)+8) / (you.skill(top_school)+8)
+    local penalty = (get_skill(it.weap_skill)+8) / (get_skill(top_school)+8)
 
     if get_hands(it) == 2 and cur.hands == 1 then
       -- Item requires an extra hand
@@ -6726,4 +6727,5 @@ end
 --Startup hygeine
 ready()
 crawl.redraw_screen()
+--crawl.call_dlua("crawl.redraw_stats()")
 }

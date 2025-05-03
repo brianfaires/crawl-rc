@@ -155,10 +155,8 @@ function announce_damage()
       AD_Messages.HPMax(COLORS.yellow, cur_hp, max_hp, max_hp_diff)
     end
 
-    -- HP Loss
-    -- Ensure we lost MORE than the change in max hp
-    -- i.e. a change in max hp should not be considered damage
-    if (hp_diff > 0 and hp_diff > math.abs(max_hp_diff)) then
+    -- HP Loss relative to max HP change
+    if (hp_diff - max_hp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
       color_by_max(AD_Messages.HPLoss, cur_hp, max_hp, hp_diff)
 
       if hp_diff > (max_hp * 0.20) then
@@ -167,8 +165,7 @@ function announce_damage()
     end
 
     -- HP Gain
-    -- More than 1 HP gained
-    if (hp_diff < 0) then
+    if (hp_diff - max_hp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local hp_gain = math.abs(hp_diff)
 
@@ -183,7 +180,7 @@ function announce_damage()
 
     -- MP Gain
     -- More than 1 MP gained
-    if (mp_diff < 0) then
+    if (mp_diff - max_mp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local mp_gain = math.abs(mp_diff)
 
@@ -199,7 +196,7 @@ function announce_damage()
     -- MP Loss
     -- Ensure we lost MORE than the change in max mp
     -- i.e. a change in max mp should not be considered loss
-    if (mp_diff > 0 and mp_diff > math.abs(max_mp_diff)) then
+    if (mp_diff - max_mp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
       color_by_max(AD_Messages.MPLoss, cur_mp, max_mp, mp_diff)
     end
 

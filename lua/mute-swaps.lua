@@ -1,3 +1,6 @@
+-- THIS FEATURE DOES NOT WORK;
+-- Can't mute messages already in the message buffer
+-- Can't mute early enough to stop the next items from being buffered
 -- When an item is moved to its assigned slot, mute the messages for the item that was previously in that slot
 -- If we cared what slot the item was in, it'd already be assigned somewhere
 -- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
@@ -30,14 +33,17 @@ end
 
 function c_message_mute_swaps(text, channel)
   -- Mute subsequent item re-assignments in a single turn, for everything after the first item.
-  -- Multiple slots for the same item will still be shown
+  -- Multiple slots for the same item are still shown
   if channel == "plain" then
-    text = cleanup_text(text, true)
+    text = cleanup_text(text)
     if text:sub(2,4) == " - " then
       local item = text:sub(5, #text)
-      local mute_str = "(?!.*("..item.."))"
+      item = crawl.split(item, "{")[1]
+      local mute_str = "(?!"..item..")"
       table.insert(muted_items, mute_str)
-      crawl.setopt("message_colour ^= mute: - "..mute_str)
+      local cmd = "message_colour += mute: - "..mute_str
+      crawl.setopt(cmd)
+      ready()
       return
     end
   end

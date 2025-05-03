@@ -25,7 +25,7 @@ local function make_weapon_struct(it)
   weap_data.artefact = it.artefact
   weap_data.plus = it.plus
   weap_data.weap_skill = it.weap_skill
-  weap_data.skill_lvl = you.skill(it.weap_skill)
+  weap_data.skill_lvl = get_skill(it.weap_skill)
 
   --weap_data.it = it
   return weap_data
@@ -51,8 +51,8 @@ local function set_top_school()
   local max = 0
 
   for v in iter.invent_iterator:new(all_weap_schools) do
-    if you.skill(v) > max then
-      max = you.skill(v)
+    if get_skill(v) > max then
+      max = get_skill(v)
       top_school = v
     end
   end
@@ -134,7 +134,7 @@ local function alert_early_weapons(it)
   end
 
   -- Skip items when we're clearly going another route
-  if you.skill(top_school) - you.skill(it.weap_skill) > 1.5*you.xl()+3 then return end
+  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*you.xl()+3 then return end
 
 
   if you.xl() < 8 then
@@ -232,8 +232,8 @@ local function pickup_weapon(it, cur)
       return get_weap_dps(it) > 0.85*cur.dps
     end
     if cur.branded and not has_ego(it) then return false end
-    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps
-  --elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
+    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
+  --elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     if no_upgrade_possible(it, cur) then return false end
 
@@ -242,7 +242,7 @@ local function pickup_weapon(it, cur)
     if it.branded and not it.is_identified then return false end
     --if cur.branded and not it.branded then return false end
 
-    if it.is_ranged then return get_weap_dps(it) > cur.dps end
+    if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
 
     local it_plus = if_el(it.plus, it.plus, 0)
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
@@ -272,13 +272,13 @@ local function alert_interesting_weapon(it, cur)
     -- Exact weapon type match
     if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then return pa_alert_item(it, "New ego") end
     if get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then return pa_alert_item(it, "Stronger weapon") end
-  elseif you.skill(it.weap_skill) >= 0.5 * you.skill(cur.weap_skill) then
+  elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
     -- A usable weapon school
     if it.is_ranged ~= cur.is_ranged then return false end
 
     --local penalty = 1
     --if it.weap_skill == top_school then penalty = 0.5 end
-    local penalty = (you.skill(it.weap_skill)+8) / (you.skill(top_school)+8)
+    local penalty = (get_skill(it.weap_skill)+8) / (get_skill(top_school)+8)
 
     if get_hands(it) == 2 and cur.hands == 1 then
       -- Item requires an extra hand

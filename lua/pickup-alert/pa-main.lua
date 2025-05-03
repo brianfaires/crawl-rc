@@ -108,7 +108,7 @@ add_autopickup_func(function (it, _)
 
       if is_staff(it) and CONFIG.alert_staff_resists then pa_alert_staff(it)
       elseif is_orb(it) and CONFIG.alert_orbs then pa_alert_orb(it)
-      elseif is_talisman(it) and CONFIG.alert_talismans then pa_alert_staff(it)
+      elseif is_talisman(it) and CONFIG.alert_talismans then pa_alert_talisman(it)
       end
     end
 
