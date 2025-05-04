@@ -1,3 +1,5 @@
+## Mutes are at end of file, so they override the rest
+
 stat_colour = 3:red, 7:lightred
 
 hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
@@ -32,9 +34,8 @@ $awesome := lightmagenta
 menu += $boring:(melded)
 menu += $boring:.*useless_item.*
 menu += $item_dmg:.*evil_item.*
-#menu += inventory:$interface:.*equipped.*
+menu += inventory:$interface:.*equipped.*
 #menu += $decent:.*artefact.*
-menu += $awesome:manual
 
 menu += $warning:^unidentified .*(jewellery|potion|scroll|wand).*
 menu += $good:^unidentified .*weapon.*(runed|glowing)
@@ -111,10 +112,6 @@ $mp := lightcyan
 # Set Alias & clear defaults
 msc := message_colour
 msc =
-
-#### MUTES Be careful with these!
-message_colour += mute:plain:No target in view!
-message_colour += mute:There is a.*door here
 
 msc += $mp:You feel your power returning
 
@@ -230,7 +227,6 @@ msc += $danger:The sound of falling rocks suddenly begins to subside
 msc += $danger:The walls and floor vibrate strangely for a moment
 msc += $danger:Your.*(armour|shield) melts away
 msc += $danger:drains you
-msc += $danger:You need to eat something NOW
 msc += $danger:feel drained
 msc += $danger:strangely unstable
 msc += $danger:curare-tipped.*hits you
@@ -446,7 +442,6 @@ msc += $danger:picks up.*throwing net
 msc += $danger:You feel less protected from physical attacks
 msc ^= $danger:Your.*falters for a moment
 msc += $danger:Mutagenic energy flows through the plutonium sword
-msc += $danger:Your spectral weapon fades away
 msc += $danger:Your.*is incinerated
 msc ^= $danger:begins absorbing vital energies
 msc += $danger:Blessed fire suddenly surrounds you
@@ -635,7 +630,7 @@ msc += $warning:You feel that your aim is more steady
 msc += $warning:There's a creature in the
 msc += $warning:They are\:
 msc += $warning:A card falls out of the deck
-msc += $warning:(dart|javelin|large rock|stone|tomahawk) disappears in a puff of smoke
+msc += $warning:(dart|javelin|large rock|stone|boomerang) disappears in a puff of smoke
 msc += $warning:You can't close doors while held in a net
 msc += $warning:A slime creature suddenly
 msc += $warning:You feel closer to the material plane
@@ -712,7 +707,6 @@ msc += $warning:blinks
 msc += $warning:You are starting to lose your buoyancy
 msc += $warning:You float gracefully downwards
 msc += $warning:Your surroundings suddenly seem different
-msc += $warning:You feel your bond with your spectral weapon wane
 msc += $warning:It (begins to drip with poison|bursts into flame|glows with a cold blue light|softly glows with a divine radiance|stops glowing)
 msc += $warning:Your.*drips with poison
 msc += $warning:You sense an unholy aura
@@ -1034,7 +1028,6 @@ msc += $warning:The lightning arc suddenly appears
 msc += $warning:The bush is engulfed in roaring flames
 msc += $warning:A yell rips itself from your throat
 msc += $warning:Purgy wonders. \"What am I doing in here\?\"
-msc += $warning:Your spectral.*fades into mist
 msc += $warning:You create some ball lightning
 msc += $warning:dances into the air
 msc += $warning:appears
@@ -1412,7 +1405,6 @@ msc += $boring:tears the web
 msc += $boring:lashes its tail
 msc += $boring:smirks and points a slender finger
 msc += $boring:The orb of destruction dissipates
-msc += $boring:spectral weapon stumbles backwards
 msc += $boring:Your (claws|elbows|hands|wings) glow momentarily
 msc += $boring:Weird images run through your mind
 msc += $boring:safely over a trap
@@ -1485,6 +1477,7 @@ msc += $boring:leaps into the air
 msc += $boring:body glows momentarily
 msc += $boring:shimmers violently
 msc += $boring:makes a popping sound
+msc += $boring:your.*spectral.*
 
 # Enemies taking damage
 msc += $good:You (beat|bite|bludgeon|burn|carve|chop|claw|constrict|crush|cut|devastate|dice|drain|electrocute|eviscerate)
@@ -2174,7 +2167,7 @@ msc += $negative:(shocks|skewers|slaps|smites|stings|tail-slaps|tentacle-slaps|t
 msc += $negative:(defenestrates|elbows|flogs|headlocks|pinches|pokes|pounds|prods|squeezes|strangle-hugs|teases|tickles|trip-wires|wrestles) your?
 msc += $negative:Your.*burned by acid
 msc += $negative:Your?.*is struck by the.*spines
-msc += $negative:Your spectral weapon shares its damage
+msc += $negative:Your.*spectral.* shares its damage
 msc += $negative:The.*begins to radiate
 msc += $negative:The.*toxic radiance grows
 msc += $negative:Your.*loses its grip
@@ -2579,57 +2572,6 @@ msc += $interface:Aborting
 msc += $interface:Created macro
 msc += $interface:Saving macro
 
-# Muted - unnecessary
-msc += mute:HP restored
-msc += mute:Magic restored
-msc += mute:A chill wind blows around you
-msc += mute:The.*dissolves into shadows
-msc += mute:The (bush|fungus|plant) is (engulfed|struck)
-#msc += mute:Cast which spell
-msc += mute:Use which ability
-msc += mute:Evoke which item
-#msc += mute:Confirm with
-msc += mute:You can\'t see any susceptible monsters within range
-msc += mute:for a list of commands and other information
-#msc += mute:Firing \(i
-msc += mute:Fire\/throw which item\?
-msc += mute:You swap places
-
-msc += mute:Moving in this stuff is going to be slow
-msc += mute:You enter the shallow water
-msc += mute:There is a.*(staircase).*here
-
-msc ^= mute:is lightly (damaged|wounded)
-msc ^= mute:is moderately (damaged|wounded)
-msc ^= mute:is heavily (damaged|wounded)
-msc ^= mute:is severely (damaged|wounded)
-msc ^= mute:is almost (dead|destroyed)
-
-msc += mute:Was it this warm in here before
-msc += mute:The flames dance
-msc += mute:Your shadow attacks
-msc += mute:Marking area around
-msc += mute:Placed new exclusion
-msc += mute:Reduced exclusion size to a single square
-msc += mute:Removed exclusion
-msc += mute:You can access your shopping list by pressing
-msc += mute:As you enter the labyrinth
-msc += mute:previously moving walls settle noisily into place
-msc += mute:The plant looks sick
-msc += mute:Press\: \? \- help\, Q \- select action\, \(\/\) \- cycle
-msc += mute:Shift\-Dir \- straight line\, f \- 
-msc += mute:Your foxfire dissipates
-msc += mute:evades? a web
-msc += mute:An electric hum fills the air
-msc += mute:You pick up a book of
-
-: if string.find(you.god(), "Jiyva") then
-  msc += mute:You hear a.*slurping noise
-  msc += mute:You hear a.*squelching noise
-  msc += mute:You feel a little less hungry
-: end
-
-
 
 # 3-k Message Channels
 # --------------------
@@ -2664,3 +2606,57 @@ channel.multiturn = $boring
 #channel.tutorial =
 channel.orb = $awesome
 #channel.hell_effect = -either danger/warning/boring
+
+
+#### MUTES Be careful with these! Last, so they override the rest
+msc ^= mute:plain:No target in view!
+msc ^= mute:There is a.*door here
+
+# Unnecessary
+msc ^= mute:HP restored
+msc ^= mute:Magic restored
+msc ^= mute:A chill wind blows around you
+msc ^= mute:The.*dissolves into shadows
+msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
+#msc ^= mute:Cast which spell
+msc ^= mute:Use which ability
+msc ^= mute:Evoke which item
+#msc ^= mute:Confirm with
+msc ^= mute:You can\'t see any susceptible monsters within range
+msc ^= mute:for a list of commands and other information
+#msc ^= mute:Firing \(i
+msc ^= mute:Fire\/throw which item\?
+msc ^= mute:You swap places
+msc ^= mute:Your.*spectral.*disappears
+msc ^= mute:There is an open.*door here
+
+
+msc ^= mute:Moving in this stuff is going to be slow
+msc ^= mute:You enter the shallow water
+msc ^= mute:There is a.*(staircase).*here
+
+msc ^= mute:is lightly (damaged|wounded)
+msc ^= mute:is moderately (damaged|wounded)
+msc ^= mute:is heavily (damaged|wounded)
+msc ^= mute:is severely (damaged|wounded)
+msc ^= mute:is almost (dead|destroyed)
+
+msc ^= mute:Was it this warm in here before
+msc ^= mute:The flames dance
+msc ^= mute:Your shadow attacks
+msc ^= mute:Marking area around
+msc ^= mute:Placed new exclusion
+msc ^= mute:Reduced exclusion size to a single square
+msc ^= mute:Removed exclusion
+msc ^= mute:You can access your shopping list by pressing
+msc ^= mute:As you enter the labyrinth
+msc ^= mute:previously moving walls settle noisily into place
+msc ^= mute:The plant looks sick
+msc ^= mute:Press\: \? \- help\, Q \- select action\, \(\/\) \- cycle
+msc ^= mute:Shift\-Dir \- straight line\, f \- 
+msc ^= mute:Your foxfire dissipates
+msc ^= mute:evades? a web
+msc ^= mute:An electric hum fills the air
+msc ^= mute:You pick up a book of
+msc ^= mute:accepts your kill
+msc ^= mute:Okawaru is honored by your kill

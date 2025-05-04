@@ -236,7 +236,8 @@ function cleanup_text(text, escape_chars)
   return text
 end
 
---- Modify keypress ---
+--- Key codes & modifiers ---
+KEYS = { LF = string.char(10), CR = string.char(13) }
 function control_key(c)
   return string.char(string.byte(c) - string.byte('a') + 1)
 end
@@ -396,6 +397,8 @@ ai += staff of poison:rPois
 
 ################################### Begin rc/display.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
+## Mutes are at end of file, so they override the rest
+
 stat_colour = 3:red, 7:lightred
 
 hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
@@ -430,9 +433,8 @@ $awesome := lightmagenta
 menu += $boring:(melded)
 menu += $boring:.*useless_item.*
 menu += $item_dmg:.*evil_item.*
-#menu += inventory:$interface:.*equipped.*
+menu += inventory:$interface:.*equipped.*
 #menu += $decent:.*artefact.*
-menu += $awesome:manual
 
 menu += $warning:^unidentified .*(jewellery|potion|scroll|wand).*
 menu += $good:^unidentified .*weapon.*(runed|glowing)
@@ -509,10 +511,6 @@ $mp := lightcyan
 # Set Alias & clear defaults
 msc := message_colour
 msc =
-
-#### MUTES Be careful with these!
-message_colour += mute:plain:No target in view!
-message_colour += mute:There is a.*door here
 
 msc += $mp:You feel your power returning
 
@@ -628,7 +626,6 @@ msc += $danger:The sound of falling rocks suddenly begins to subside
 msc += $danger:The walls and floor vibrate strangely for a moment
 msc += $danger:Your.*(armour|shield) melts away
 msc += $danger:drains you
-msc += $danger:You need to eat something NOW
 msc += $danger:feel drained
 msc += $danger:strangely unstable
 msc += $danger:curare-tipped.*hits you
@@ -844,7 +841,6 @@ msc += $danger:picks up.*throwing net
 msc += $danger:You feel less protected from physical attacks
 msc ^= $danger:Your.*falters for a moment
 msc += $danger:Mutagenic energy flows through the plutonium sword
-msc += $danger:Your spectral weapon fades away
 msc += $danger:Your.*is incinerated
 msc ^= $danger:begins absorbing vital energies
 msc += $danger:Blessed fire suddenly surrounds you
@@ -1033,7 +1029,7 @@ msc += $warning:You feel that your aim is more steady
 msc += $warning:There's a creature in the
 msc += $warning:They are\:
 msc += $warning:A card falls out of the deck
-msc += $warning:(dart|javelin|large rock|stone|tomahawk) disappears in a puff of smoke
+msc += $warning:(dart|javelin|large rock|stone|boomerang) disappears in a puff of smoke
 msc += $warning:You can't close doors while held in a net
 msc += $warning:A slime creature suddenly
 msc += $warning:You feel closer to the material plane
@@ -1110,7 +1106,6 @@ msc += $warning:blinks
 msc += $warning:You are starting to lose your buoyancy
 msc += $warning:You float gracefully downwards
 msc += $warning:Your surroundings suddenly seem different
-msc += $warning:You feel your bond with your spectral weapon wane
 msc += $warning:It (begins to drip with poison|bursts into flame|glows with a cold blue light|softly glows with a divine radiance|stops glowing)
 msc += $warning:Your.*drips with poison
 msc += $warning:You sense an unholy aura
@@ -1432,7 +1427,6 @@ msc += $warning:The lightning arc suddenly appears
 msc += $warning:The bush is engulfed in roaring flames
 msc += $warning:A yell rips itself from your throat
 msc += $warning:Purgy wonders. \"What am I doing in here\?\"
-msc += $warning:Your spectral.*fades into mist
 msc += $warning:You create some ball lightning
 msc += $warning:dances into the air
 msc += $warning:appears
@@ -1810,7 +1804,6 @@ msc += $boring:tears the web
 msc += $boring:lashes its tail
 msc += $boring:smirks and points a slender finger
 msc += $boring:The orb of destruction dissipates
-msc += $boring:spectral weapon stumbles backwards
 msc += $boring:Your (claws|elbows|hands|wings) glow momentarily
 msc += $boring:Weird images run through your mind
 msc += $boring:safely over a trap
@@ -1883,6 +1876,7 @@ msc += $boring:leaps into the air
 msc += $boring:body glows momentarily
 msc += $boring:shimmers violently
 msc += $boring:makes a popping sound
+msc += $boring:your.*spectral.*
 
 # Enemies taking damage
 msc += $good:You (beat|bite|bludgeon|burn|carve|chop|claw|constrict|crush|cut|devastate|dice|drain|electrocute|eviscerate)
@@ -2572,7 +2566,7 @@ msc += $negative:(shocks|skewers|slaps|smites|stings|tail-slaps|tentacle-slaps|t
 msc += $negative:(defenestrates|elbows|flogs|headlocks|pinches|pokes|pounds|prods|squeezes|strangle-hugs|teases|tickles|trip-wires|wrestles) your?
 msc += $negative:Your.*burned by acid
 msc += $negative:Your?.*is struck by the.*spines
-msc += $negative:Your spectral weapon shares its damage
+msc += $negative:Your.*spectral.* shares its damage
 msc += $negative:The.*begins to radiate
 msc += $negative:The.*toxic radiance grows
 msc += $negative:Your.*loses its grip
@@ -2977,57 +2971,6 @@ msc += $interface:Aborting
 msc += $interface:Created macro
 msc += $interface:Saving macro
 
-# Muted - unnecessary
-msc += mute:HP restored
-msc += mute:Magic restored
-msc += mute:A chill wind blows around you
-msc += mute:The.*dissolves into shadows
-msc += mute:The (bush|fungus|plant) is (engulfed|struck)
-#msc += mute:Cast which spell
-msc += mute:Use which ability
-msc += mute:Evoke which item
-#msc += mute:Confirm with
-msc += mute:You can\'t see any susceptible monsters within range
-msc += mute:for a list of commands and other information
-#msc += mute:Firing \(i
-msc += mute:Fire\/throw which item\?
-msc += mute:You swap places
-
-msc += mute:Moving in this stuff is going to be slow
-msc += mute:You enter the shallow water
-msc += mute:There is a.*(staircase).*here
-
-msc ^= mute:is lightly (damaged|wounded)
-msc ^= mute:is moderately (damaged|wounded)
-msc ^= mute:is heavily (damaged|wounded)
-msc ^= mute:is severely (damaged|wounded)
-msc ^= mute:is almost (dead|destroyed)
-
-msc += mute:Was it this warm in here before
-msc += mute:The flames dance
-msc += mute:Your shadow attacks
-msc += mute:Marking area around
-msc += mute:Placed new exclusion
-msc += mute:Reduced exclusion size to a single square
-msc += mute:Removed exclusion
-msc += mute:You can access your shopping list by pressing
-msc += mute:As you enter the labyrinth
-msc += mute:previously moving walls settle noisily into place
-msc += mute:The plant looks sick
-msc += mute:Press\: \? \- help\, Q \- select action\, \(\/\) \- cycle
-msc += mute:Shift\-Dir \- straight line\, f \- 
-msc += mute:Your foxfire dissipates
-msc += mute:evades? a web
-msc += mute:An electric hum fills the air
-msc += mute:You pick up a book of
-
-: if string.find(you.god(), "Jiyva") then
-  msc += mute:You hear a.*slurping noise
-  msc += mute:You hear a.*squelching noise
-  msc += mute:You feel a little less hungry
-: end
-
-
 
 # 3-k Message Channels
 # --------------------
@@ -3062,6 +3005,61 @@ channel.multiturn = $boring
 #channel.tutorial =
 channel.orb = $awesome
 #channel.hell_effect = -either danger/warning/boring
+
+
+#### MUTES Be careful with these! Last, so they override the rest
+msc ^= mute:plain:No target in view!
+msc ^= mute:There is a.*door here
+
+# Unnecessary
+msc ^= mute:HP restored
+msc ^= mute:Magic restored
+msc ^= mute:A chill wind blows around you
+msc ^= mute:The.*dissolves into shadows
+msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
+#msc ^= mute:Cast which spell
+msc ^= mute:Use which ability
+msc ^= mute:Evoke which item
+#msc ^= mute:Confirm with
+msc ^= mute:You can\'t see any susceptible monsters within range
+msc ^= mute:for a list of commands and other information
+#msc ^= mute:Firing \(i
+msc ^= mute:Fire\/throw which item\?
+msc ^= mute:You swap places
+msc ^= mute:Your.*spectral.*disappears
+msc ^= mute:There is an open.*door here
+
+
+msc ^= mute:Moving in this stuff is going to be slow
+msc ^= mute:You enter the shallow water
+msc ^= mute:There is a.*(staircase).*here
+
+msc ^= mute:is lightly (damaged|wounded)
+msc ^= mute:is moderately (damaged|wounded)
+msc ^= mute:is heavily (damaged|wounded)
+msc ^= mute:is severely (damaged|wounded)
+msc ^= mute:is almost (dead|destroyed)
+
+msc ^= mute:Was it this warm in here before
+msc ^= mute:The flames dance
+msc ^= mute:Your shadow attacks
+msc ^= mute:Marking area around
+msc ^= mute:Placed new exclusion
+msc ^= mute:Reduced exclusion size to a single square
+msc ^= mute:Removed exclusion
+msc ^= mute:You can access your shopping list by pressing
+msc ^= mute:As you enter the labyrinth
+msc ^= mute:previously moving walls settle noisily into place
+msc ^= mute:The plant looks sick
+msc ^= mute:Press\: \? \- help\, Q \- select action\, \(\/\) \- cycle
+msc ^= mute:Shift\-Dir \- straight line\, f \- 
+msc ^= mute:Your foxfire dissipates
+msc ^= mute:evades? a web
+msc ^= mute:An electric hum fills the air
+msc ^= mute:You pick up a book of
+msc ^= mute:accepts your kill
+msc ^= mute:Okawaru is honored by your kill
+
 ############################### End rc/display.rc ###############################
 ##########################################################################################
 
@@ -3089,7 +3087,7 @@ more += life is in your own
 more += unholy channel is weakening
 
 # Monsters doing things
-more += monster_warning:wielding.*of (distortion|chaos
+more += monster_warning:wielding.*of (distortion|chaos)
 more += monster_warning:carrying a wand of
 more += monster_warning:curare
 flash += The forest starts to sway and rumble
@@ -3105,8 +3103,8 @@ more += wretched star pulses
 more += Strange energies course through your body
 
 # Crowd control
-more += You ((?<!( too|less)) confused|(?<!hands )slow.*down|lose consciousness
-flash += You ((?<!( too|less)) blown|knocked back|mesmerised|trampled|stumble backwards|encased
+more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness
+flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased
 more += infuriates you
 more += hits you.*distortion
 more += Space.*around you
@@ -3132,7 +3130,7 @@ more += You don't have enough magic to cast this spell
 flash += Your body shudders with the violent release
 
 # Found something important
-flash += Found.*the Ecumenical Temple
+more += Found.*the Ecumenical Temple
 flash += timed_portal:.*
 more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat
@@ -3156,7 +3154,8 @@ more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse
 more += You feel a (horrible|terrible) chill
-more += You.*re.*terribly
+more += Your.*terribly
+more += You are.*terribly
 
 # Hit by something
 more += Terrible wounds open
@@ -3220,6 +3219,26 @@ more += god:soul is no.* ripe for the taking
 more += god:dark mirror aura disappears
 # Zin
 more += god:will now cure all your mutations
+
+
+{
+-- Exclusions; for built-in force_mores that can't just be -='d
+local fm_exclude_messages = {
+  "Okawaru grants you throwing weapons",
+  "need to enable at least one skill for training",
+} -- fm_exclude_messages (Do not remove this comment)
+
+function c_message_fm_exclude(text, _)
+  for _,v in ipairs(fm_exclude_messages) do
+    if text:find(v) then
+      crawl.enable_more(false)
+      return
+    end
+  end
+
+  crawl.enable_more(true)
+end
+}
 ############################### End rc/fm-messages.rc ###############################
 ##########################################################################################
 
@@ -3511,9 +3530,16 @@ if not as_shaft_depth or you.turns() == 0 then
   as_shaft_depth = 0
   as_shaft_branch = "NA"
 end
+
+if as_shaft_depth ~= 0 then
+  crawl.setopt("explore_stop += stairs")
+else
+  crawl.setopt("explore_stop -= stairs")
+end
+
 local function persist_shaft_values()
-  return "as_shaft_depth = "..as_shaft_depth..string.char(10) ..
-    "as_shaft_branch = \""..as_shaft_branch.."\""..string.char(10)
+  return "as_shaft_depth = "..as_shaft_depth..KEYS.LF ..
+    "as_shaft_branch = \""..as_shaft_branch.."\""..KEYS.LF
 end
 table.insert(chk_lua_save, persist_shaft_values)
 
@@ -3912,7 +3938,7 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Set any options based on game state -----
-local dyn_opt_god = "No God"
+local dyn_opt_prev_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
 local warn_early_levels = false
@@ -3969,20 +3995,28 @@ end
 ---- god-specific ----
 -- force_mores that you don't mind on everyone are in fm-message.rc
 local function set_god_options()
-  if you.god() ~= dyn_opt_god then
-    dyn_opt_god = you.god()
-
-    if dyn_opt_god == "Beogh" then
+  local new_god = you.god()
+  if new_god then
+    crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
+    crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
+    crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
+  end
+  if new_god ~= dyn_opt_prev_god then
+    if new_god == "Beogh" then
       crawl.setopt("runrest_ignore_message += no longer looks.*")
       crawl.setopt("force_more_message += Your orc.*dies")
-    elseif dyn_opt_god == "Jiyva" then
+    elseif new_god == "Jiyva" then
       crawl.setopt("force_more_message += god:splits in two")
       crawl.setopt("force_more_message += god:Your prayer is over.")
-    elseif dyn_opt_god == "Qazlal" then
+      crawl.setopt("message_colour ^= mute:You hear a.*(slurping|squelching) noise")
+      crawl.setopt("message_colour ^= mute:You feel a little less hungry")
+    elseif new_god == "Qazlal" then
       crawl.setopt("force_more_message -= god:You feel.*protected")
-    elseif dyn_opt_god == "Xom" then
+    elseif new_god == "Xom" then
       crawl.setopt("force_more_message += god:")
     end
+
+    dyn_opt_prev_god = new_god
   end
 end
 
@@ -4070,7 +4104,7 @@ if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
 end
 local function persist_dropped_item_exclusions()
-  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
+  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..KEYS.LF
 end
 table.insert(chk_lua_save, persist_dropped_item_exclusions)
 
@@ -4682,7 +4716,7 @@ if not alerted_max_piety or you.turns() == 0 then
 end
 
 local function persist_alerted_max_piety()
-  return "alerted_max_piety = "..alerted_max_piety..string.char(10)
+  return "alerted_max_piety = "..alerted_max_piety..KEYS.LF
 end
 table.insert(chk_lua_save, persist_alerted_max_piety)
 
@@ -4719,7 +4753,7 @@ end
 local annotated_v5 = false
 function ready_annotate_v5()
   if (not annotated_v5) and (you.branch() == "Vaults") then
-    crawl.sendkeys("!v5" .. string.char(13) .. "<red>!V:5 Warning!</red>" .. string.char(13))
+    crawl.sendkeys("!v5" .. KEYS.CR .. "<red>!V:5 Warning!</red>" .. KEYS.CR)
     annotated_v5 = true
   end
 end
@@ -4727,7 +4761,7 @@ end
 ----- Save with message -----
 -- by gammafunk, edits by buehler
 local function persist_save_game_msg()
-  return "saved_game_msg = \""..saved_game_msg.."\""..string.char(10)
+  return "saved_game_msg = \""..saved_game_msg.."\""..KEYS.LF
 end
 
 function macro_save_with_message()
@@ -4791,7 +4825,7 @@ if not found_scroll_of_id or you.turns() == 0 then
 end
 
 local function persist_found_scroll_of_id()
-  return "found_scroll_of_id = "..found_scroll_of_id..string.char(10)
+  return "found_scroll_of_id = "..found_scroll_of_id..KEYS.LF
 end
 table.insert(chk_lua_save, persist_found_scroll_of_id)
 
@@ -5617,11 +5651,11 @@ local function persist_table(table_name, table)
     cmd = cmd.."\""..v.."\""
   end
 
-  return cmd .. "}" .. string.char(10)
+  return cmd .. "}" .. KEYS.LF
 end
 
 local function persist_var(var_name, var)
-  return var_name .. " = " .. var .. string.char(10)
+  return var_name .. " = " .. var .. KEYS.LF
 end
 
 
@@ -5680,13 +5714,13 @@ function remove_from_pa_single_alert_items(it)
 end
 
 function pa_previously_picked(it)
-  local name = it.name("plain")
+  local name = it.name("qual")
   if not it.is_identified then name = "+0 " .. name end
   return util.contains(pa_items_picked, name)
 end
 
 function pa_previously_alerted(it)
-  local name = it.name("plain")
+  local name = it.name("qual")
   if not it.is_identified then name = "+0 " .. name end
   return util.contains(pa_items_alerted, name)
 end
@@ -5695,7 +5729,7 @@ end
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = it.name("plain")
+  local name = it.name("qual")
   if not it.is_identified then name = "+0 " .. name end
   if util.contains(table_ref, name) ~= remove_item then return end
 
@@ -5796,7 +5830,11 @@ local last_ready_item_alerts_turn = 0
 
 function pa_alert_item(it, alert_type)
   local name = it.name("plain")
-  if not it.is_identified then name = "+0 " .. name end
+  local qualname = it.name("qual")
+  if not (is_talisman(it) or it.is_identified) then
+    name = "+0 " .. name
+    qualname = "+0 " .. qualname
+  end
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
@@ -5811,14 +5849,13 @@ function pa_alert_item(it, alert_type)
     end
 
     insert_item_and_less_enchanted(pa_items_alerted, it)
-    table.insert(pa_all_level_alerts, name)
+    table.insert(pa_all_level_alerts, qualname)
   end
 
   -- Returns true to make other code more concise; indicates that we tried to alert this item
   return true
 end
 crawl.setopt("runrest_stop_message += Item alert, ")
-
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
@@ -5831,7 +5868,7 @@ function c_assign_invletter_item_alerts(it)
   end
 
   remove_item_and_less_enchanted(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, it.name("plain"))
+  util.remove(pa_all_level_alerts, it.name("qual"))
 end
 
 function c_message_item_alerts(text, _)
@@ -6552,7 +6589,7 @@ local function alert_interesting_weapon(it, cur)
       if not have_shield() then
         if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
           not util.contains(egos, it.ego()) then
-            return pa_alert_item(it, "New ego4")
+            return pa_alert_item(it, "New ego")
         end
         if not cur.branded and
           get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
@@ -6666,6 +6703,7 @@ function c_message(text, channel)
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_delayed then c_message_fm_delayed(text, channel) end
+  if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
 end
 
 

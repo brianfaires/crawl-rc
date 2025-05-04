@@ -35,6 +35,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 
 ### [rc/fm-messages.rc](rc/fm-messages.rc)
 - Settings for force_more and flash_screen events.
+- Lua code block at the end to skip force_more_messages defined in crawl (not configured).
 
 ### [rc/macros.rc](rc/macros.rc)
 - Numpad has a handful of common actions

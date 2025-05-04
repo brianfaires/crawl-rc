@@ -20,7 +20,7 @@ more += life is in your own
 more += unholy channel is weakening
 
 # Monsters doing things
-more += monster_warning:wielding.*of (distortion|chaos
+more += monster_warning:wielding.*of (distortion|chaos)
 more += monster_warning:carrying a wand of
 more += monster_warning:curare
 flash += The forest starts to sway and rumble
@@ -36,8 +36,8 @@ more += wretched star pulses
 more += Strange energies course through your body
 
 # Crowd control
-more += You ((?<!( too|less)) confused|(?<!hands )slow.*down|lose consciousness
-flash += You ((?<!( too|less)) blown|knocked back|mesmerised|trampled|stumble backwards|encased
+more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness
+flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased
 more += infuriates you
 more += hits you.*distortion
 more += Space.*around you
@@ -63,7 +63,7 @@ more += You don't have enough magic to cast this spell
 flash += Your body shudders with the violent release
 
 # Found something important
-flash += Found.*the Ecumenical Temple
+more += Found.*the Ecumenical Temple
 flash += timed_portal:.*
 more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat
@@ -87,7 +87,8 @@ more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse
 more += You feel a (horrible|terrible) chill
-more += You.*re.*terribly
+more += Your.*terribly
+more += You are.*terribly
 
 # Hit by something
 more += Terrible wounds open
@@ -151,3 +152,23 @@ more += god:soul is no.* ripe for the taking
 more += god:dark mirror aura disappears
 # Zin
 more += god:will now cure all your mutations
+
+
+{
+-- Exclusions; for built-in force_mores that can't just be -='d
+local fm_exclude_messages = {
+  "Okawaru grants you throwing weapons",
+  "need to enable at least one skill for training",
+} -- fm_exclude_messages (Do not remove this comment)
+
+function c_message_fm_exclude(text, _)
+  for _,v in ipairs(fm_exclude_messages) do
+    if text:find(v) then
+      crawl.enable_more(false)
+      return
+    end
+  end
+
+  crawl.enable_more(true)
+end
+}

@@ -1,5 +1,5 @@
 ----- Set any options based on game state -----
-local dyn_opt_god = "No God"
+local dyn_opt_prev_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
 local warn_early_levels = false
@@ -56,20 +56,28 @@ end
 ---- god-specific ----
 -- force_mores that you don't mind on everyone are in fm-message.rc
 local function set_god_options()
-  if you.god() ~= dyn_opt_god then
-    dyn_opt_god = you.god()
-
-    if dyn_opt_god == "Beogh" then
+  local new_god = you.god()
+  if new_god then
+    crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
+    crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
+    crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
+  end
+  if new_god ~= dyn_opt_prev_god then
+    if new_god == "Beogh" then
       crawl.setopt("runrest_ignore_message += no longer looks.*")
       crawl.setopt("force_more_message += Your orc.*dies")
-    elseif dyn_opt_god == "Jiyva" then
+    elseif new_god == "Jiyva" then
       crawl.setopt("force_more_message += god:splits in two")
       crawl.setopt("force_more_message += god:Your prayer is over.")
-    elseif dyn_opt_god == "Qazlal" then
+      crawl.setopt("message_colour ^= mute:You hear a.*(slurping|squelching) noise")
+      crawl.setopt("message_colour ^= mute:You feel a little less hungry")
+    elseif new_god == "Qazlal" then
       crawl.setopt("force_more_message -= god:You feel.*protected")
-    elseif dyn_opt_god == "Xom" then
+    elseif new_god == "Xom" then
       crawl.setopt("force_more_message += god:")
     end
+
+    dyn_opt_prev_god = new_god
   end
 end
 

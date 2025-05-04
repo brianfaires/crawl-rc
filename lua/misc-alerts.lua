@@ -1,6 +1,7 @@
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
 loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 ------ Max piety w/ amulet of faith reminder ----
 if not alerted_max_piety or you.turns() == 0 then
@@ -8,7 +9,7 @@ if not alerted_max_piety or you.turns() == 0 then
 end
 
 local function persist_alerted_max_piety()
-  return "alerted_max_piety = "..alerted_max_piety..string.char(10)
+  return "alerted_max_piety = "..alerted_max_piety..KEYS.LF
 end
 table.insert(chk_lua_save, persist_alerted_max_piety)
 
@@ -45,7 +46,7 @@ end
 local annotated_v5 = false
 function ready_annotate_v5()
   if (not annotated_v5) and (you.branch() == "Vaults") then
-    crawl.sendkeys("!v5" .. string.char(13) .. "<red>!V:5 Warning!</red>" .. string.char(13))
+    crawl.sendkeys("!v5" .. KEYS.CR .. "<red>!V:5 Warning!</red>" .. KEYS.CR)
     annotated_v5 = true
   end
 end
@@ -53,7 +54,7 @@ end
 ----- Save with message -----
 -- by gammafunk, edits by buehler
 local function persist_save_game_msg()
-  return "saved_game_msg = \""..saved_game_msg.."\""..string.char(10)
+  return "saved_game_msg = \""..saved_game_msg.."\""..KEYS.LF
 end
 
 function macro_save_with_message()

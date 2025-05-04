@@ -1,4 +1,5 @@
 loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/util.lua")
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
 local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
@@ -23,7 +24,7 @@ if not found_scroll_of_id or you.turns() == 0 then
 end
 
 local function persist_found_scroll_of_id()
-  return "found_scroll_of_id = "..found_scroll_of_id..string.char(10)
+  return "found_scroll_of_id = "..found_scroll_of_id..KEYS.LF
 end
 table.insert(chk_lua_save, persist_found_scroll_of_id)
 

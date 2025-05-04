@@ -289,7 +289,7 @@ local function alert_interesting_weapon(it, cur)
       if not have_shield() then
         if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
           not util.contains(egos, it.ego()) then
-            return pa_alert_item(it, "New ego4")
+            return pa_alert_item(it, "New ego")
         end
         if not cur.branded and
           get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then

@@ -33,7 +33,8 @@ function cleanup_text(text, escape_chars)
   return text
 end
 
---- Modify keypress ---
+--- Key codes & modifiers ---
+KEYS = { LF = string.char(10), CR = string.char(13) }
 function control_key(c)
   return string.char(string.byte(c) - string.byte('a') + 1)
 end

@@ -10,7 +10,11 @@ local last_ready_item_alerts_turn = 0
 
 function pa_alert_item(it, alert_type)
   local name = it.name("plain")
-  if not it.is_identified then name = "+0 " .. name end
+  local qualname = it.name("qual")
+  if not (is_talisman(it) or it.is_identified) then
+    name = "+0 " .. name
+    qualname = "+0 " .. qualname
+  end
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
@@ -25,14 +29,13 @@ function pa_alert_item(it, alert_type)
     end
 
     insert_item_and_less_enchanted(pa_items_alerted, it)
-    table.insert(pa_all_level_alerts, name)
+    table.insert(pa_all_level_alerts, qualname)
   end
 
   -- Returns true to make other code more concise; indicates that we tried to alert this item
   return true
 end
 crawl.setopt("runrest_stop_message += Item alert, ")
-
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
@@ -45,7 +48,7 @@ function c_assign_invletter_item_alerts(it)
   end
 
   remove_item_and_less_enchanted(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, it.name("plain"))
+  util.remove(pa_all_level_alerts, it.name("qual"))
 end
 
 function c_message_item_alerts(text, _)

@@ -107,6 +107,7 @@ function c_message(text, channel)
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_delayed then c_message_fm_delayed(text, channel) end
+  if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
 end
 
 
