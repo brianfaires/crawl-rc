@@ -3058,7 +3058,7 @@ msc ^= mute:evades? a web
 msc ^= mute:An electric hum fills the air
 msc ^= mute:You pick up a book of
 msc ^= mute:accepts your kill
-msc ^= mute:Okawaru is honored by your kill
+msc ^= mute:Okawaru is honoured by your kill
 
 ############################### End rc/display.rc ###############################
 ##########################################################################################
@@ -3093,7 +3093,7 @@ more += monster_warning:curare
 flash += The forest starts to sway and rumble
 more += begins to recite a word of recall
 flash += doors? slams? shut
-flash += blows on a signal horn
+flash += blows.*on a signal horn
 more += The.*offers itself to Yredelemnul
 flash += Deactivating autopickup
 more += Your?.*suddenly stops? moving
@@ -3225,6 +3225,7 @@ more += god:will now cure all your mutations
 -- Exclusions; for built-in force_mores that can't just be -='d
 local fm_exclude_messages = {
   "Okawaru grants you throwing weapons",
+  "Okawaru offers you a choice",
   "need to enable at least one skill for training",
 } -- fm_exclude_messages (Do not remove this comment)
 
@@ -3938,7 +3939,7 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Set any options based on game state -----
-local dyn_opt_prev_god = "No God"
+local dynopt_cur_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
 local warn_early_levels = false
@@ -4001,7 +4002,7 @@ local function set_god_options()
     crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
     crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
   end
-  if new_god ~= dyn_opt_prev_god then
+  if new_god ~= dynopt_cur_god then
     if new_god == "Beogh" then
       crawl.setopt("runrest_ignore_message += no longer looks.*")
       crawl.setopt("force_more_message += Your orc.*dies")
@@ -4016,7 +4017,7 @@ local function set_god_options()
       crawl.setopt("force_more_message += god:")
     end
 
-    dyn_opt_prev_god = new_god
+    dynopt_cur_god = new_god
   end
 end
 

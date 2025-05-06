@@ -1,5 +1,5 @@
 ----- Set any options based on game state -----
-local dyn_opt_prev_god = "No God"
+local dynopt_cur_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
 local warn_early_levels = false
@@ -62,7 +62,7 @@ local function set_god_options()
     crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
     crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
   end
-  if new_god ~= dyn_opt_prev_god then
+  if new_god ~= dynopt_cur_god then
     if new_god == "Beogh" then
       crawl.setopt("runrest_ignore_message += no longer looks.*")
       crawl.setopt("force_more_message += Your orc.*dies")
@@ -77,7 +77,7 @@ local function set_god_options()
       crawl.setopt("force_more_message += god:")
     end
 
-    dyn_opt_prev_god = new_god
+    dynopt_cur_god = new_god
   end
 end
 
