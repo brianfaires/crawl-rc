@@ -1,0 +1,175 @@
+more := force_more_message
+flash := flash_screen_message
+
+# Remove annoying defaults
+more -= You have reached level
+more -= The lock glows eerily
+more -= Heavy smoke blows from the lock
+more -= The gate opens wide
+more -= With a soft hiss the gate opens wide
+more -= You pick up the .* rune and feel its power
+more -= welcomes you( back)?!
+
+# Significant spells/effects ending
+more += is no longer charmed
+more += You.*re starting to lose your buoyancy
+# Death's Door
+more += time is.*running out
+more += life is in your own
+# Death channel
+more += unholy channel is weakening
+
+# Monsters doing things
+more += monster_warning:wielding.*of (distortion|chaos)
+more += monster_warning:carrying a wand of
+more += monster_warning:curare
+flash += The forest starts to sway and rumble
+more += begins to recite a word of recall
+flash += doors? slams? shut
+flash += blows.*on a signal horn
+more += The.*offers itself to Yredelemnul
+flash += Deactivating autopickup
+more += Your?.*suddenly stops? moving
+more += There is.*feeling in your soul
+flash += Its appearance distorts for a moment
+more += wretched star pulses
+more += Strange energies course through your body
+
+# Crowd control
+more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness
+flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased
+more += infuriates you
+more += hits you.*distortion
+more += Space.*around you
+flash += The pull of.*song draws you forward
+flash += The.*engulfs you in water
+more += surroundings become eerily quiet
+more += Your limbs are stiffening
+flash += Your magical effects are unraveling
+flash += Your magical defenses are stripped away
+flash += You stop (a|de)scending the stairs
+flash += A sentinel's mark forms upon you
+
+# Clouds
+more += danger:(calcify|mutagenic
+more += You.*re engulfed in.*miasma
+flash += Miasma billows from the
+
+# You Screwed Up
+flash += power of Zot
+more += is no longer ready
+more += You really shouldn't be using
+more += You don't have enough magic to cast this spell
+flash += Your body shudders with the violent release
+
+# Found something important
+more += Found.*the Ecumenical Temple
+flash += timed_portal:.*
+more += walls and floor vibrate strangely for a moment
+more += Found.*(treasure|bazaar|ziggurat
+more += .*resides here
+more += You have a vision of.*gates?
+more += byssal rune
+
+# Translocations
+flash += You blink
+flash += danger:You feel strangely .*stable
+more += danger:sense of stasis
+more += Your surroundings.*(different|flicker
+more += You.*re suddenly pulled into a different region
+flash += delayed
+
+# Big damage
+more += MASSIVE DAMAGE!!
+more += your body is wracked
+more += Ouch! That really hurt!
+more += The poison in your body grows stronger
+more += You.*re lethally poisoned
+more += danger:You convulse
+more += You feel a (horrible|terrible) chill
+more += Your.*terribly
+more += You are.*terribly
+
+# Hit by something
+more += Terrible wounds open
+flash += danger:corrodes you
+more += The air around.*erupts in flames
+more += The air twists around and violently strikes you in flight
+more += You shudder from the earth-shattering force
+more += You feel.*(?<!less )(haunted|rot|vulnerable
+flash += Your damage is reflected back at you
+flash += (?<!You.*)reflects
+
+# FYI
+more += seems mollified
+more += You have finished your manual
+
+# Unexpected monsters
+more += appears in a (shower|flash
+more += appears out of thin air
+more += You sense the presence of something unfriendly
+more += Wisps of shadow swirl around
+
+# Misc
+more += hell effect:.*
+more += god:wrath finds you
+more += The walls disappear
+
+# Ashenzari
+more += god:Ashenzari invites you to partake
+# Dithmenos
+more += god:You are shrouded in an aura of darkness
+more += god:You now sometimes bleed smoke
+more += god:You.*no longer.*bleed smoke
+more += god:Your shadow no longer tangibly mimics your actions
+more += god:Your shadow now sometimes tangibly mimics your actions
+# Fedhas
+more += god:Fedhas invokes the elements against you
+# Jivya
+more += god:will now unseal the treasures of the Slime Pits
+more += god:Jiyva alters your body
+# Kikubaaqudgha
+more += god:Kikubaaqudgha will grant you
+# Lugonu
+more += god:Lugonu will now corrupt your weapon
+more += god:Lugonu sends minions to punish you
+# Okawaru
+more += god:Okawaru sends forces against you
+# Qazlal
+flash += god:resistances upon receiving elemental damage
+flash += god:You are surrounded by a storm which can block enemy attacks
+# The Shining One
+more += god:Your divine shield starts to fade
+more += god:Your divine shield fades away
+# Trog
+more += god:You feel the effects of Trog's Hand fading
+more += god:You feel less resistant to hostile enchantments
+# Xom
+more += staircase.*moves
+more += Some monsters swap places
+# Yredelemnul
+more += god:soul is no.* ripe for the taking
+more += god:dark mirror aura disappears
+# Zin
+more += god:will now cure all your mutations
+
+
+{
+-- Exclusions; for built-in force_mores that can't just be -='d
+local fm_exclude_messages = {
+  "Okawaru grants you throwing weapons",
+  "Okawaru offers you a choice",
+  "need to enable at least one skill for training",
+} -- fm_exclude_messages (Do not remove this comment)
+
+function c_message_fm_exclude(text, _)
+  for _,v in ipairs(fm_exclude_messages) do
+    if text:find(v) then
+      crawl.enable_more(false)
+      return
+    end
+  end
+
+  crawl.enable_more(true)
+end
+}

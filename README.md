@@ -1,116 +1,218 @@
 # crawl-rc
-Settings files for use in dcss (some features won't work until my PRs are merged into trunk...namely anything that generates inscriptions)
+Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/crawl) v0.33.1
 
-All files are loaded through init.txt via include statements. Features can be cherry-picked pretty easily. There are a few ways to do it:
-1) Start with the included init.txt, and remove the lines "include = xxxx.rc", to remove unwanted features.
-2) Use your own file and add "include = xxxxx.rc" to add each feature. Then, you need to add the lua hook functions to your RC file. You can copy the entire section straight over from init.txt (at the bottom). If you're already using lua hook functions such as ready(), you will need to merge the two functions since you can only have one of each hook defined.
-3) Copy-paste the contents of a file into your RC file. Same deal as option 2 with adding the hook functions to your RC, and make sure they come after the file contents that you pasted.
+## Usage
+- All features are enabled and included via [init.txt](init.txt). If you want a single file,
+  [buehler.rc](buehler.rc) contains [init.txt](init.txt) and all the files it references.
+- To merge with an existing RC file, make sure any Lua hook functions are only defined
+  once (at the bottom of the RC file). If duplicate functions exist, combine them.
+- Features can be configured. See [config.lua section](#luaconfiglua) below.
+- Features can also be excluded at the file-level.
+  - If you have access to python:
+    1. In [init.txt](init.txt), comment out `include =` or `lua_file =` statements by adding a `#` at the start of the line.
+    1. Run `python concat_rc.py` to regenerate [buehler.rc](buehler.rc) without the features included.
+  - Alternatively, just remove or comment out everything between the `Begin <filename>` and `<End filename>` markers in [buehler.rc](buehler.rc).
+- If copy-paste individual files into another RC, be sure to include:
+  1. The hook functions from [init.txt](init.txt).
+  1. Any file dependencies. These are listed at the top of each file.
+    Copy-paste the referenced file in place of any `include` or `loadfile()` statements.
+    Do the same for any lua files (`lua_file =`), but add curly braces around the file contents to mark it as lua code `{ <file_contents> }`.
+  Don't manualy copy-paste the same file more than once. (e.g. [lua/config.lua](lua/config.lua) or [lua/util.lua](lua/util.lua))
 
-You are not required to edit the lua hook functions as you remove features - removing the include statements is enough and won't cause errors.
+## Standard(-ish) Settings
+### [init.txt](init.txt)
+- My preferred main, explore, and autopickup options.
+- References all other files.
+- Importantly, ends with all hook functions (connecting the features to crawl).
 
-The included python script concat_rc.py will build a single RC file from all of these components. Just put it in the same folder as init.txt and run. If you don't want to run the script, a copy of the single init file is stored here as "allRC.txt", though I can't guarantee it'll always be up to date.
+### [rc/autoinscribe.rc](rc/autoinscribe.rc)
+- Automatically inscribe items, mostly to add warnings to consumables.
 
-Here's an overview of all files, starting with the simplest:
-## Standard RC options
+### [rc/display.rc](rc/display.rc)
+- Various display related settings, including customized colors for 1000's of messages.
+  Some are a bit dated, but a great starting point to build on.
+  *(If anyone knows who meticulously hand-wrote all of these, LMK so I can attribute.)*
 
-### init.txt
-A handful of my preferred main and explore options. Contains include statements to all required files, followed by a lua code block for the hook functions.
+### [rc/fm-messages.rc](rc/fm-messages.rc)
+- Settings for force_more and flash_screen events.
+- Lua code block at the end to skip force_more_messages defined in crawl (not configured).
 
-### slots.rc
-item_slot and spell_slot assignments. All one-click spells are put on capital letters.
+### [rc/macros.rc](rc/macros.rc)
+- Numpad has a handful of common actions
+- Number keys perform spellcasting, and confirm targeting (so you can double-tap to fire a targeted spell)
 
-### macros.rc
-Default macros and keybinds for a US keyboard:
-* The first macro automatically activates the drop filter when you go to drop items.
-* Numperpad has a handful of common actions
-* Number keys perform spellcasting, and confirm targeting (so you can double-tap the key to fire a targeted spell)
+### [rc/runrest.rc](rc/runrest.rc)
+- Settings for exploration/resting stop messages.
 
-### runrest.rc
-Settings to add or ignore exploration/resting stop messages
-
-### fm-messages.rc
-Settings to add or remove force_more messages
-
-### fm-monsters.rc
-Generates force_more prompts when monsters come into view. Includes all uniques/pan lords, a list of monsters, and a section for dynamic force_mores. Dynamic force_mores will only trigger in certain scenarios, based on:
-- Current or max HP
-- Experience level
-- Willpower
-- Current intelligence
-- Resistances: Fire/Cold/Drain/Elec/Pois/Mut
-
-Currently this section is configured to trigger force_more when a monster threatens to take ~half of your current hp.
-
-### startup.rc
-One-time actions on startup: Opens skills menu and sets travel speed to slowest ally
-
-
-## Standalone Features
-
-### inscribe-stats.rc
-Weapons in inventory are inscribed with DPS (ie damage output per 10 aut) and accuracy - updates in real time with skill/stats/etc.
-Armour is inscribed with its AC (or SH) and EV.
-
-### remind-id.rc
-When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
-
-### weapon-slots.rc
-Keeps weapons in slots a/b/w. Reassignments happen whenever you drop an item, and it will only kick non-weapons out of these slots.  It'll favor putting ranged and polearms in w.
-
-### exclude-dropped.rc
-It'll stop picking up jewellery and missiles by name when you drop them... No more picking up every ring of ice you come across. By default it will pick up everything at first - just drop those stones when you're done with them and move on. If you pick up the item again it will resume picking up more.
-
-### safe-consumables.rc
-Makes sure there's a confirmation prompt on all 1-click consumables. The standard autoinscribe command doesn't update when items are ID'd so I wrote this.
-
-### drop-inferior.rc
-Adds items to the drop list when you pick up a strictly better one.
-
-### runrest-features.rc
-Fancy runrest settings:
-* Fully rest off duration/recovery effects when resting/waiting. Attached to rest before exploration.
-* No altar stops if you have a god or are in the temple (and auto search for altars after exploring the temple)
-* Don't stop exploration on portals leading out of gauntlets/baileys/etc
-
-### mute-swaps.rc
-Minimizes spam when swapping/ID'ing items. When multiple messages with " - " show up in a single turn, it mutes all except those for the first item.  e.g. You read an unidentified scroll, and it's scroll of identify. You identify a potion of curing. The scroll and potion are both moved to their assigned item_slot. Output will be: "x - potion of curing; c - a potion of curing". Without this feature, another 3-4 messages would be displayed, showing the scroll of ID moving to slot i, and whatever items were previously in slots c/i. I find that irrelevant and confusing.
-
-### after-shaft.rc
-Stops on stairs until you get back to the level you were shafted from.
-
-### safe-stairs.rc
-Prompt user before immediately returning to same stairwell. (To prevent fat-fingering "<>" or "><").
+### [rc/slot-defaults.rc](rc/slot-defaults.rc)
+- item_slot assignments: Rings on P/p, etc.
+- spell_slot assignments for one-click spells on capital letters. 
 
 
+## Lua files - mostly one per feature
+### [lua/after-shaft.lua](lua/after-shaft.lua)
+- Stops travel on stairs until you get back to the level you were shafted from.
 
+### [lua/announce-damage.lua](lua/announce-damage.lua)
+- Writes messages for HP and MP changes.
 
+### [lua/color-inscribe.lua](lua/color-inscribe.lua)
+- Colors item inscriptions for resistances, stat modifiers, etc.
+
+### [lua/drop-inferior.lua](lua/drop-inferior.lua)
+- Marks items with `~~DROP_ME` when you pick up a strictly better one.
+  These items are added to the `drop_list`, so press `,` in the drop menu to select them all.
+
+### [lua/dynamic-options.lua](lua/dynamic-options.lua)
+- Any options that change based on XL, God, Class, etc.
+
+### [lua/exclude-dropped.lua](lua/exclude-dropped.lua)
+- Stops autopickup for items you drop.
+  Resumes when you pick it up again.
+
+### [lua/fm-monsters.lua](lua/fm-monsters.lua)
+*(Needs a v0.33 update)*
+- Generates force_more prompts when monsters come into view.
+  Includes all uniques and a list of 'always alert' monsters
+- Dynamic force_mores that trigger based on: HP, Resistances, XL, Willpower, Int
+  *(Roughly configured to fire when a monster can take 50% HP in one hit)*
+- Avoids triggering on zombies, skeleton, etc
+
+### [lua/fully-rest.lua](lua/fully-rest.lua)
+- Updates resting to fully rest off temporary, negative statuses.
+
+### [lua/inscribe-stats.lua](lua/inscribe-stats.lua)
+- Weapons in inventory are inscribed with their stats and a their ideal DPS (ie max damage per 10 aut, including brand).
+- Armour is inscribed with stats relative to what you're wearing.
+- Updates in real time with skill/stats/etc.
+
+### [lua/misc-alerts.lua](lua/misc-alerts.lua)
+- Add a warning before entering Vaults:5
+- A one-time force-more when dropping below 50% HP (configurable).
+- A msg when you hit 6* piety while wearing an amulet of faith
+
+### [lua/mute-swaps.rc](lua/mute-swaps.lua)
+*(This feature isn't working in 0.33; maybe it never did)*
+- Minimizes spam. When multiple messages with " - " show up in a single turn,
+  it mutes all except those for the first item.
+  This mostly applies during identification and item_slot assignment.
+
+### [lua/remind-id.lua](lua/remind-id.lua)
+- When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
+- Before finding scroll of ID, stops travel when you have un-ID'd stacks of size specified in CONFIG.
+
+### [lua/runrest-features.lua](lua/runrest-features.lua)
+- No altar stops if you have a god
+- Don't stop exploration on portals leading out of baileys/sewers/etc
+- Stop travel on gates in Pan
+- Disable many auto-explore stops in gauntlets
+- Search for `altar` after exploring temple. Runs to exit after worship.
+
+### [lua/safe-stairs.rc](lua/safe-stairs.lua)
+- Protects against fat-fingering `<>` or `><`, by prompting before immediately returning to the previous floor.
+
+### [lua/startup.lua](lua/startup.lua)
+- One-time actions on new games:
+  - Open the skills menu
+  - Exclusively train the first skill in CONFIG.auto_set_skill_targets below its target
+
+### [lua/weapon-slots.lua](lua/weapon-slots.lua)
+- Keeps weapons in slots a/b/w. Reassignments happen whenever you drop an item.
+  It'll only kick non-weapons out of these slots. Favors putting ranged and polearms in w.
 
 ## Pickup and Alert system
-Intelligent autopickup based on your character and items in your inventory. Pickup tries to only grab items you *definitely* want, so there is also an alert system to flag items that seem noteworthy. You can enable this for any combination of armour/weapons/misc. There are 3 support files (util/data/main) that do not need include statements, but must be present for the others to work.
+Intelligent autopickup based on your character and items in your inventory.
+  Tries to only pickup items you *definitely* want, so there is an alert system to flag items that seem noteworthy.
 
-To prevent spamming, item alerts are not generated for items that are covered by previous alerts/pickups.  e.g. If you're alerted to a +1 chain mail as a potential upgrade to your scale mail, no more alerts will be generated for +1 or +0 chain mails, unless they are branded. Alerts are one-line messages that stop travel and are formatted to gently stand out from other text.
+Alerts are one-line messages that stop travel and are formatted to stand out.
+To avoid spam, alerts aren't generated for items previously alerted/picked up.
 
-### Armour (pa-armour.rc)
-Picks up usable armour that is a pure upgrade to what you currently have. e.g. It will pick up any usable cloak if you don't have one. It will then pick up a +1 cloak, and then a +1 cloak of resistance. It will also pick up new brands and artefacts for aux armour (boots/gloves/cloak/helmet/barding).
+> e.g. If you're alerted to a +1 broad axe as a potential upgrade, no more alerts are generated
+> for +1 or +0 broad axes, unless they're branded.
+
+### [pa-armour.rc](lua/pickup-alert/pa-armour.lua) (Armour)
+Picks up armour that is a pure upgrade to what you currently have, or has a new ego.
 
 Alerts are generated for:
-* The highest AC body armour seen so far (only if training armour and through xl 12)
-* Aux armour that is good but conflicts with non-innate mutations
-* Items that gain AC but lose a brand
-* New body armour egos
-* Heavier/lighter body armour that passes some additional checks. In general, 1 AC is valued ~1.2EV, and alerts are generated when it seems like an armour might be an overall improvement, factoring in brands/AC/EV.
+- The highest AC body armour seen so far (only if training armour and through xl 12)
+- Aux armour that is good but conflicts with non-innate mutations
+- Items that gain AC but lose a brand
+- New body armour egos
+- Heavier/lighter body armour that passes some additional checks. In general, 1 AC is valued ~1.2EV,
+  and alerts are generated when it seems like an armour might be an overall improvement.
 
-### Weapons (pa-weapons.rc)
-Picking up pure-upgrades is straightforward enough, but this file does a lot more. It generates a DPS value for each weapon (damage / speed), that factors in your stats, skills, and slaying bonuses. It considers accuracy, weapon type, skill levels, and other factors. It's not straightforward to describe everything but here are some features:
-* Alerts strong weapons early on, with little regard for what skills are trained
-* Alerts on the first one-handed ranged weapon (and two-handed if not wearing a shield)
-* High scores: Alerts items that set a new record for: Overall damage, Damage w/o brand, and if using allies: Strongest polearm/1-handed polearm
-* Alerts DPS upgrades and new egos, with complex logic around brands/handedness/weapon skill
-
-### Misc (pa-misc.rc)
-Picks up staves when you are training the relevant spell school. Alerts generated for:
-* Staves that provide you a needed resistance
-* Keeps a list of "rare_items" that will always generate an alert when the first one is found. Each shield type is included, so "rare" is a bit of a misnomer.
-* First orb of each type
+###  [pa-weapons.rc](lua/pickup-alert/pa-weapons.lua) (Weapons)
+Picking up upgrades is straightforward enough. Alerts are generated for:
+- Strong weapons early on, with little regard for what skills are trained
+- The first one-handed ranged weapon (and two-handed if not wearing a shield)
+- DPS upgrades and new egos, with various heuristics based off brands/handedness/weapon skill
+- High scores: items that set a new record for:
+  - Overall damage
+  - Damage w/o brand
+  - If using allies, Strongest polearm/1-handed polearm
 
 
+### [pa-misc.rc](lua/pickup-alert/pa-misc.lua) (Misc)
+Picks up staves when you are training the relevant spell school. Alerts are generated for:
+- The first instance of anything in the `CONFIG.one_time_alerts` list.
+- First orb of each type
+- First talisman of each type
+- Staves that provide you a needed resistance
+
+### Other files for pickup-alert system
+These are auto-included as necessary. Just listing for reference.
+- [lua/pickup-alert/pa-util.lua](lua/pickup-alert/pa-util.lua):
+  Like [lua/util.lua](lua/util.lua) but specific to the pickup-alert system.
+- [lua/pickup-alert/pa-data.lua](lua/pickup-alert/pa-data.lua):
+  Handles persistent data, saved with your character.
+- [lua/pickup-alert/pa-main.lua](lua/pickup-alert/pa-main.lua):
+  Defines the order of operations in the autopickup function.
+
+## Core files
+### [lua/config.lua](lua/config.lua)
+This comes first in [buehler.rc](buehler.rc), so you can toggle features on/off
+  without digging into the code or rebuilding [buehler.rc](buehler.rc).
+  The toggles should be obvious based on the descriptions above.
+
+### [lua/constants.lua](lua/constants.lua)
+In an attempt to future-proof, contains definitions for things like
+  `all_weap_schools` and `all_portal_names`. Update as needed.
+
+### [lua/util.lua](lua/util.lua)
+Required a lot of places. Nothing in here is necessarily specific to this repo.
+
+## Notes
+- I wrote this over 2 years ago and recently fixed it all up to work v0.33.1.
+  Please send me any bugs, outdated notes, suggestions, etc.
+- It's intended for use in webtiles.
+  It does work locally as well, but doesn't get reloaded when you swap characters, which will cause issues.
+  Just relaunch crawl after exiting a character.
+- Many lua files begin with an [include guard](https://en.wikipedia.org/wiki/Include_guard),
+  followed by `loadfile()` for all of their dependencies.
+  This helps with local development and protects against multiple imports.
+  They're harmless and you can ignore them. Or delete if they really bug you.
+
+## TODO dev list
+1. fm-monsters list updated for 0.33.1
+1. Disable all auto explore stops in gauntlets until fully explored
+  - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events.)
+1. Wait for allies to heal (needs crawl PR?)
+1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs
+1. Fix mute_swaps.lua (needs crawl PR? - to intercept msgs)
+
+## Resources
+### How to learn RC file options
+http://crawl.akrasiac.org/docs/options_guide.txt
+
+### How to include Lua in your RC
+https://github.com/gammafunk/dcss-rc#1-include-the-rc-or-lua-file-in-your-rc
+https://doc.dcss.io/index.html
+
+### How to lookup a players RC file?
+http://crawl.akrasiac.org/rcfiles/crawl-0.25/magusnn.rc
+
+### RC Examples & sources used in this repo
+https://github.com/magus/dcss
+https://github.com/gammafunk/dcss-rc
+https://underhound.eu/crawl/rcfiles/crawl-0.30/Elmgren.rc
+https://tavern.dcss.io/t/whats-in-your-rc-file/160/4

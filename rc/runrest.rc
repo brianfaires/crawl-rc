@@ -10,10 +10,6 @@ ignore ^= "sense a monster nearby"
 # Monsters to ignore at a distance
 runrest_ignore_monster += fire vortex:1
 
-# Message mutes: CAREFUL WITH THESE!
-message_colour += mute:plain:No target in view!
-message_colour += mute:There is a.*door here
-
 # Stop for consumables you want to use immediately
 stop += potions? of experience
 stop += scrolls? of acquirement
@@ -75,3 +71,10 @@ ignore ^= our.*fades into mist
 ignore ^= our.*looks more healthy
 ignore ^= our.*is no longer (corroded|moving slowly)
 ignore ^= our.*dissolves into a puddle of slime
+
+# Ru
+stop += god:Ru believes you are ready to make a new sacrifice
+# Hepliaklqana
+ignore ^= emerges from the mists of memory
+# Wu Jian Council
+ignore += heavenly storm settles
