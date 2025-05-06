@@ -11,7 +11,7 @@ if not dropped_item_exclusions or you.turns() == 0 then
   dropped_item_exclusions = ""
 end
 local function persist_dropped_item_exclusions()
-  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..string.char(10)
+  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..KEYS.LF
 end
 table.insert(chk_lua_save, persist_dropped_item_exclusions)
 

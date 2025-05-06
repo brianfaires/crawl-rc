@@ -4,6 +4,9 @@ CONFIG = { }
 
 -- Announce damage emojis
 CONFIG.emojis = true
+-- Announce HP/MP when change is greater than this value
+CONFIG.ANNOUNCE_HP_THRESHOLD = 2
+CONFIG.ANNOUNCE_MP_THRESHOLD = 2
 
 -- Inscribe stats
 CONFIG.inscribe_weapons = true
@@ -18,9 +21,11 @@ CONFIG.search_altars_in_temple = true
 
 -- Misc alerts
 CONFIG.alert_remove_faith = true
-CONFIG.alert_low_hp_threshold = 0.7 -- % max HP to alert; 0 to disable
+CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable
 CONFIG.annotate_v5 = true
 CONFIG.save_with_msg = true
+CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
+CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions
 
 ---- Pickup/Alert system
 CONFIG.pickup_armour = true

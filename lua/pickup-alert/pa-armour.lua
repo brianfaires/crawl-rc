@@ -29,7 +29,7 @@ local function alert_armour_upgrades(it)
 end
 
 
--- Equipment autopickup (by Medar, gammafunk, sockthot, and various others)
+-- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
   if it.is_useless then return false end
 
@@ -57,7 +57,7 @@ function pa_pickup_armour(it)
 
     -- Exclusions
     if not cur then return false end
-    if not it.is_identified or is_orb(it) then return false end
+    if not it.is_identified then return false end
     if cur.name("base") ~= it.name("base") then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos
@@ -70,6 +70,7 @@ function pa_pickup_armour(it)
     if it.branded then return true end
     return it.plus > cur.plus
   else
+    if is_orb(it) then return false end
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
     local st, _ = it.subtype()
 

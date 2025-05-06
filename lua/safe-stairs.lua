@@ -13,11 +13,14 @@ local function check_new_location(key)
     local res = crawl.getch()
     if string.lower(string.char(res)) == "y" then
       crawl.sendkeys(key)
-	  last_stair_turn = you.turns()
+	    last_stair_turn = you.turns()
+    else
+      crawl.formatted_mpr("Okay, then.", "prompt")
+      return
     end
   else
     crawl.sendkeys(key)
-	last_stair_turn = you.turns()
+	  last_stair_turn = you.turns()
   end
 end
 

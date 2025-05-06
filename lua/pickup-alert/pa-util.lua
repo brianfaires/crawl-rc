@@ -56,7 +56,7 @@ function get_armour_ac(it)
 
   end
 
-  return math.max(0, ac - 0.05)
+  return ac
 end
 
 function get_aevp(encumb, str)
@@ -169,7 +169,7 @@ function get_weap_min_delay(it)
 end
 
 function get_weap_delay(it, ignore_brands)
-  local delay = it.delay - you.skill(it.weap_skill)/2
+  local delay = it.delay - get_skill(it.weap_skill)/2
   local min_delay = get_weap_min_delay(it)
   if delay < min_delay then delay = min_delay end
 
@@ -262,7 +262,7 @@ function get_staff_bonus_dmg(it, no_brand_dmg)
   local school = get_staff_school(it)
   if not school then return 0 end
 
-  local spell_skill = you.skill(school)
+  local spell_skill = get_skill(school)
   local chance = (evo_skill + spell_skill/2) / 15
   if chance > 1 then chance = 1 end
   -- 0.625 is an acceptable approximation
@@ -304,7 +304,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + you.skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
@@ -380,21 +380,25 @@ function get_weapon_info(it)
   return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
 end
 
-local function format_stat(abbr, val)
+local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
-  if val >= 0 then stat_str = "+"..stat_str end
+  if is_worn then
+    stat_str = "="..stat_str
+  elseif val >= 0 then
+    stat_str = "+"..stat_str
+  end
   return abbr..stat_str
 end
 
 function get_armour_info_strings(it)
-  if not is_armour(it) then return end
-  if is_orb(it) then return "", "" end
+  if not is_armour(it) or is_orb(it) then return "", "" end
 
   local cur = items.equipped_at(it.equip_type)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  if cur and not (cur.ininventory and cur.slot == it.slot) then
+  local is_worn = it.ininventory and cur and cur.slot == it.slot
+  if cur and not is_worn then
     -- Only show deltas if not same item
     if is_shield(cur) then
       cur_sh = get_shield_sh(cur)
@@ -406,13 +410,28 @@ function get_armour_info_strings(it)
   end
 
   if is_shield(it) then
-    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh)
-    local ev_str = format_stat("EV", get_shield_penalty(it) - cur_ev)
+    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh, is_worn)
+    local ev_str = format_stat("EV", get_shield_penalty(it) - cur_ev, is_worn)
     return sh_str, ev_str
   else
-    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac)
+    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac, is_worn)
     if not is_body_armour(it) then return ac_str end
-    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev)
+    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev, is_worn)
     return ac_str, ev_str
   end
+end
+
+function get_skill(skill)
+  if not skill:find(",") then
+    return you.skill(skill)
+  end
+
+  local skills = crawl.split(skill, ",")
+  local sum = 0
+  local count = 0
+  for _, s in ipairs(skills) do
+    sum = sum + you.skill(s)
+    count = count + 1
+  end
+  return sum/count
 end

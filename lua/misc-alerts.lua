@@ -1,6 +1,7 @@
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
 loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 ------ Max piety w/ amulet of faith reminder ----
 if not alerted_max_piety or you.turns() == 0 then
@@ -8,7 +9,7 @@ if not alerted_max_piety or you.turns() == 0 then
 end
 
 local function persist_alerted_max_piety()
-  return "alerted_max_piety = "..alerted_max_piety..string.char(10)
+  return "alerted_max_piety = "..alerted_max_piety..KEYS.LF
 end
 table.insert(chk_lua_save, persist_alerted_max_piety)
 
@@ -45,27 +46,18 @@ end
 local annotated_v5 = false
 function ready_annotate_v5()
   if (not annotated_v5) and (you.branch() == "Vaults") then
-    crawl.sendkeys("!v5" .. string.char(13) .. "<red>!V:5 Warning!</red>" .. string.char(13))
+    crawl.sendkeys("!v5" .. KEYS.CR .. "<red>!V:5 Warning!</red>" .. KEYS.CR)
     annotated_v5 = true
   end
 end
 
 ----- Save with message -----
--- credit: gammafunk
-if CONFIG.save_with_msg then
-  crawl.setopt("macros += M S ===macro_save_with_message")
-
-  if c_persist.message and c_persist.message ~= "" then
-    crawl.mpr("MESSAGE: " .. c_persist.message, message_color)
-    c_persist.message = nil
-  end
+-- by gammafunk, edits by buehler
+local function persist_save_game_msg()
+  return "saved_game_msg = \""..saved_game_msg.."\""..KEYS.LF
 end
 
 function macro_save_with_message()
-  if you.turns() == 0 then
-    crawl.sendkeys("S")
-    return
-  end
   crawl.formatted_mpr("Save game and exit?", "prompt")
   local res = crawl.getch()
   if not (string.char(res) == "y" or string.char(res) == "Y") then
@@ -73,9 +65,17 @@ function macro_save_with_message()
     return
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
-  res = crawl.c_input_line()
-  c_persist.message = res
+  saved_game_msg = crawl.c_input_line()
+  table.insert(chk_lua_save, persist_save_game_msg)
   crawl.sendkeys(control_key("s"))
+end
+
+if CONFIG.save_with_msg then
+  crawl.setopt("macros += M S ===macro_save_with_message")
+  if saved_game_msg and saved_game_msg ~= "" then
+    crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
+    saved_game_msg = nil
+  end
 end
 
 ------------------ Hook ------------------

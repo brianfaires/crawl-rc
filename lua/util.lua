@@ -33,7 +33,8 @@ function cleanup_text(text, escape_chars)
   return text
 end
 
---- Modify keypress ---
+--- Key codes & modifiers ---
+KEYS = { LF = string.char(10), CR = string.char(13) }
 function control_key(c)
   return string.char(string.byte(c) - string.byte('a') + 1)
 end
@@ -90,11 +91,11 @@ function is_amulet(it)
 end
 
 function is_orb(it)
-  return it and it.name("base") == "orb"
+  return it and it.name("base"):find("orb of ")
 end
 
 function is_talisman(it)
-  return it and it.name("base") == "talisman"
+  return it and it.name("base"):find("talisman")
 end
 
 function get_mut(mutation, include_temp)

@@ -30,11 +30,11 @@ local function persist_table(table_name, table)
     cmd = cmd.."\""..v.."\""
   end
 
-  return cmd .. "}" .. string.char(10)
+  return cmd .. "}" .. KEYS.LF
 end
 
 local function persist_var(var_name, var)
-  return var_name .. " = " .. var .. string.char(10)
+  return var_name .. " = " .. var .. KEYS.LF
 end
 
 
@@ -93,13 +93,13 @@ function remove_from_pa_single_alert_items(it)
 end
 
 function pa_previously_picked(it)
-  local name = it.name("plain")
+  local name = it.name("qual")
   if not it.is_identified then name = "+0 " .. name end
   return util.contains(pa_items_picked, name)
 end
 
 function pa_previously_alerted(it)
-  local name = it.name("plain")
+  local name = it.name("qual")
   if not it.is_identified then name = "+0 " .. name end
   return util.contains(pa_items_alerted, name)
 end
@@ -108,7 +108,7 @@ end
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = it.name("plain")
+  local name = it.name("qual")
   if not it.is_identified then name = "+0 " .. name end
   if util.contains(table_ref, name) ~= remove_item then return end
 
