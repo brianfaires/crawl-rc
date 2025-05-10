@@ -9,28 +9,53 @@ end
 
 -- Removes tags from text, and optionally escapes special characters --
 function cleanup_text(text, escape_chars)
-  local keep_going = true
-  while keep_going do
-    local opening = text:find("<")
-    local closing = text:find(">")
-
-    if opening and closing and opening < closing then
-      local new_text = ""
-      if opening > 1 then new_text = text:sub(1, opening-1) end
-      if closing < #text then new_text = new_text..text:sub(closing+1, #text) end
-      text = new_text
-    else
-      keep_going = false
-    end
+  local SPECIAL_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
+  -- Fast path: if no tags, just handle newlines and escaping
+  if not text:find("<") then
+      if not escape_chars then
+          return text:gsub("\n", "")
+      end
+      return text:gsub("\n", ""):gsub(SPECIAL_CHARS, "%%%1")
   end
-
-  text = text:gsub("\n", "")
+  
+  -- Use a table to build the result instead of string concatenation
+  local result = {}
+  local pos = 1
+  local len = #text
+  
+  while pos <= len do
+      local tag_start = text:find("<", pos)
+      if not tag_start then
+          -- No more tags, append remaining text
+          result[#result + 1] = text:sub(pos)
+          break
+      end
+      
+      -- Append text before tag
+      if tag_start > pos then
+          result[#result + 1] = text:sub(pos, tag_start - 1)
+      end
+      
+      -- Find end of tag
+      local tag_end = text:find(">", tag_start)
+      if not tag_end then
+          -- Malformed tag, append remaining text
+          result[#result + 1] = text:sub(pos)
+          break
+      end
+      
+      pos = tag_end + 1
+  end
+  
+  -- Join all parts and handle newlines
+  local cleaned = table.concat(result):gsub("\n", "")
+  
+  -- Handle escaping if needed
   if escape_chars then
-    local special_characters = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
-    text = text:gsub(special_characters, "%%%1")
+      return cleaned:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
   end
-
-  return text
+  
+  return cleaned
 end
 
 --- Key codes & modifiers ---
