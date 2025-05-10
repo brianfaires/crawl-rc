@@ -383,7 +383,7 @@ end
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
   if is_worn then
-    stat_str = "="..stat_str
+    stat_str = ":"..stat_str
   elseif val >= 0 then
     stat_str = "+"..stat_str
   end

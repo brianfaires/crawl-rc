@@ -6,7 +6,7 @@ local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
   -- This gsub's stats individually to avoid overwriting <color> tags
   -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
-  local NUM_PATTERN = "[%+%-%=]%d+%.%d*"
+  local NUM_PATTERN = "[%+%-:]%d+%.%d*"
   local abbr = if_el(is_shield(it), "SH", "AC")
   local primary, ev = get_armour_info_strings(it)
 
