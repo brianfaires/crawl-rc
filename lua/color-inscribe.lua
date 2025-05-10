@@ -1,7 +1,7 @@
 -- Colorize inscriptions --
 -- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
 -- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
-loadfile("lua/constants.lua")
+loadfile("crawl-rc/lua/constants.lua")
 
 local INSCRIPTION_MAX_LENGTH = 70
 

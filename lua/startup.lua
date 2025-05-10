@@ -1,5 +1,5 @@
-loadfile("lua/config.lua")
-loadfile("lua/constants.lua")
+loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/constants.lua")
 
 if you.turns() == 0 then
   ---- Skill menu on startup (by rwbarton, edits by buehler) ----

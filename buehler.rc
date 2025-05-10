@@ -60,6 +60,7 @@ CONFIG.auto_set_skill_targets = {
   {"Stealth", 2},
   {"Fighting", 2}
 } -- auto_set_skill_targets (do not remove this comment)
+
 }
 ############################### End lua/config.lua ###############################
 ##########################################################################################
@@ -196,6 +197,7 @@ function get_size_penalty()
   else return RACE_SIZE.NORMAL
   end
 end
+
 }
 ############################### End lua/constants.lua ###############################
 ##########################################################################################
@@ -419,6 +421,7 @@ ai += staff of poison:rPois
     end
   end
 }
+
 ############################### End rc/autoinscribe.rc ###############################
 ##########################################################################################
 
@@ -3263,6 +3266,7 @@ function c_message_fm_exclude(text, _)
   crawl.enable_more(true)
 end
 }
+
 ############################### End rc/fm-messages.rc ###############################
 ##########################################################################################
 
@@ -3304,6 +3308,7 @@ macros += K2 7 \{13}
 macros += K2 8 \{13}
 macros += K2 9 \{13}
 macros += K2 0 \{13}
+
 ############################### End rc/macros.rc ###############################
 ##########################################################################################
 
@@ -3389,6 +3394,7 @@ stop += god:Ru believes you are ready to make a new sacrifice
 ignore ^= emerges from the mists of memory
 # Wu Jian Council
 ignore += heavenly storm settles
+
 ############################### End rc/runrest.rc ###############################
 ##########################################################################################
 
@@ -3536,6 +3542,7 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 :if you.class() == "Summoner" then
   spell_slot ^= (summon|call):abcdefgh
 :end
+
 ############################### End rc/slot-defaults.rc ###############################
 ##########################################################################################
 
@@ -3586,6 +3593,7 @@ function ready_after_shaft()
     end
   end
 end
+
 }
 ############################### End lua/after-shaft.lua ###############################
 ##########################################################################################
@@ -3800,6 +3808,7 @@ function announce_damage()
   prev_mp = cur_mp
   prev_mp_max = max_mp
 end
+
 }
 ############################### End lua/announce-damage.lua ###############################
 ##########################################################################################
@@ -3891,6 +3900,7 @@ end
 
 --   crawl.mpr(text)
 -- end
+
 }
 ############################### End lua/color-inscribe.lua ###############################
 ##########################################################################################
@@ -3954,6 +3964,7 @@ function c_assign_invletter_exclude_dropped(it)
  -- Remove DROP_KEY inscription on pickup
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 end
+
 }
 ############################### End lua/drop-inferior.lua ###############################
 ##########################################################################################
@@ -4110,6 +4121,7 @@ function ready_dynamic_options()
   set_xl_options()
   set_skill_options()
 end
+
 }
 ############################### End lua/dynamic-options.lua ###############################
 ##########################################################################################
@@ -4234,6 +4246,7 @@ function c_message_exclude_dropped(text, channel)
     dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
   end
 end
+
 }
 ############################### End lua/exclude-dropped.lua ###############################
 ##########################################################################################
@@ -4329,6 +4342,7 @@ function ready_fully_recover()
     explore_after_recovery = false
   end
 end
+
 }
 ############################### End lua/fully-rest.lua ###############################
 ##########################################################################################
@@ -4655,6 +4669,7 @@ function ready_force_mores()
     crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", "), "plain")
   end
 end
+
 }
 ############################### End lua/fm-monsters.lua ###############################
 ##########################################################################################
@@ -4724,6 +4739,7 @@ function ready_inscribe_stats()
   else skipped_first_redraw = true
   end
 end
+
 }
 ############################### End lua/inscribe-stats.lua ###############################
 ##########################################################################################
@@ -4805,6 +4821,7 @@ function ready_misc_alerts()
   if CONFIG.alert_remove_faith then alert_remove_faith() end
   if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
 end
+
 }
 ############################### End lua/misc-alerts.lua ###############################
 ##########################################################################################
@@ -4871,6 +4888,7 @@ function c_assign_invletter_remind_identify(it)
     remind_unidentified_items()
   end
 end
+
 }
 ############################### End lua/remind-id.lua ###############################
 ##########################################################################################
@@ -4963,6 +4981,7 @@ function c_message_runrest_features(text, _)
   if CONFIG.search_altars_in_temple then c_message_search_altars_in_temple(text, _) end
   if CONFIG.ignore_gauntlet_msgs then c_message_ignore_gauntlet_msgs(text, _) end
 end
+
 }
 ############################### End lua/runrest-features.lua ###############################
 ##########################################################################################
@@ -5016,6 +5035,7 @@ function ready_safe_stairs()
   prev_location = temp_location
   temp_location = you.branch()..you.depth()
 end
+
 }
 ############################### End lua/safe-stairs.lua ###############################
 ##########################################################################################
@@ -5049,6 +5069,7 @@ if you.turns() == 0 then
   end
 
 end
+
 }
 ############################### End lua/startup.lua ###############################
 ##########################################################################################
@@ -5185,6 +5206,7 @@ function ready_weapon_slots()
     do_cleanup_weapon_slots = false
   end
 end
+
 }
 ############################### End lua/weapon-slots.lua ###############################
 ##########################################################################################
@@ -5637,6 +5659,7 @@ function get_skill(skill)
   end
   return sum/count
 end
+
 ------------------------------- End lua/pickup-alert/pa-util.lua -------------------------------
 ------------------------------------------------------------------------------------------
 
@@ -5961,6 +5984,7 @@ add_autopickup_func(function (it, _)
     end
   end
 end)
+
 ------------------------------- End lua/pickup-alert/pa-main.lua -------------------------------
 ------------------------------------------------------------------------------------------
 
@@ -6316,6 +6340,7 @@ function pa_pickup_staff(it)
 
   return true
 end
+
 }
 ############################### End lua/pickup-alert/pa-misc.lua ###############################
 ##########################################################################################
@@ -6704,6 +6729,7 @@ function do_pa_weapon_alerts(it)
   -- Skip high score alerts if not using weapons
   if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it) end
 end
+
 }
 ############################### End lua/pickup-alert/pa-weapons.lua ###############################
 ##########################################################################################

@@ -1,4 +1,4 @@
-loadfile("lua/config.lua")
+loadfile("crawl-rc/lua/config.lua")
 
 ----- Prevent accidental stairs usage -----
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()

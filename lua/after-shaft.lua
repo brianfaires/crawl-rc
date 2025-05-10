@@ -1,4 +1,4 @@
-loadfile("lua/util.lua")
+loadfile("crawl-rc/lua/util.lua")
 ----- Add stops for stairs after being shafted -----
 if loaded_after_shaft then return end
 local loaded_after_shaft = true
