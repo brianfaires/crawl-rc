@@ -1,3 +1,5 @@
+loadfile("lua/config.lua")
+
 ----- Prevent accidental stairs usage -----
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
 local last_stair_turn = 0
@@ -8,20 +10,26 @@ crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 local function check_new_location(key)
   local cur_location = you.branch()..you.depth()
   local turn_diff = you.turns() - last_stair_turn
-  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < 5 then
-    crawl.formatted_mpr("Really go right back? (y/n)", "prompt")
+  local question = nil
+  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
+    question = "Really go right back? (y/n)"
+  elseif CONFIG.warn_v5 and cur_location == "Vaults4" and key == ">" then
+    -- V5 warning idea by rypofalem --
+    question = "Really go to Vaults:5? (y/n)"
+    CONFIG.warn_v5 = false
+  end
+
+  if question then
+    crawl.formatted_mpr(question, "prompt")
     local res = crawl.getch()
-    if string.lower(string.char(res)) == "y" then
-      crawl.sendkeys(key)
-	    last_stair_turn = you.turns()
-    else
-      crawl.formatted_mpr("Okay, then.", "prompt")
+    if string.lower(string.char(res)) ~= "y" then
+      crawl.mpr("Okay, then.")
       return
     end
-  else
-    crawl.sendkeys(key)
-	  last_stair_turn = you.turns()
   end
+
+  crawl.sendkeys(key)
+  last_stair_turn = you.turns()
 end
 
 function macro_do_safe_upstairs()

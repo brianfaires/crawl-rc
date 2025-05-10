@@ -42,15 +42,6 @@ local function alert_low_hp()
   end
 end
 
------ Annotate Vaults:5 (by rypofalem) -----
-local annotated_v5 = false
-function ready_annotate_v5()
-  if (not annotated_v5) and (you.branch() == "Vaults") then
-    crawl.sendkeys("!v5" .. KEYS.CR .. "<red>!V:5 Warning!</red>" .. KEYS.CR)
-    annotated_v5 = true
-  end
-end
-
 ----- Save with message -----
 -- by gammafunk, edits by buehler
 local function persist_save_game_msg()
@@ -58,7 +49,7 @@ local function persist_save_game_msg()
 end
 
 function macro_save_with_message()
-  crawl.formatted_mpr("Save game and exit?", "prompt")
+  crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
   local res = crawl.getch()
   if not (string.char(res) == "y" or string.char(res) == "Y") then
     crawl.formatted_mpr("Okay, then.", "prompt")
@@ -82,5 +73,4 @@ end
 function ready_misc_alerts()
   if CONFIG.alert_remove_faith then alert_remove_faith() end
   if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
-  if CONFIG.annotate_v5 then ready_annotate_v5() end
 end

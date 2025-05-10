@@ -25,9 +25,10 @@ CONFIG.stop_on_pan_gates = true
 CONFIG.search_altars_in_temple = true
 
 -- Misc alerts
+CONFIG.warn_v5 = true
+CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
 CONFIG.alert_remove_faith = true
 CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable
-CONFIG.annotate_v5 = true
 CONFIG.save_with_msg = true
 CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
 CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions
@@ -1534,7 +1535,6 @@ msc += $boring:The reaper draws a finger across its throat
 msc += $boring:Your.*seems to dim momentarily
 msc += $boring:Your.*is briefly tinged with black
 msc += $boring:Your.*shivers with cold
-msc += $boring:Your.*has a weird expression for a moment
 msc += $boring:A malignant aura surrounds your
 msc += $boring:Your.*twitches violently
 msc += $boring:The world appears momentarily distorted
@@ -3023,8 +3023,6 @@ msc ^= mute:Evoke which item
 #msc ^= mute:Confirm with
 msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
-#msc ^= mute:Firing \(i
-msc ^= mute:Fire\/throw which item\?
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears
 msc ^= mute:There is an open.*door here
@@ -3051,8 +3049,7 @@ msc ^= mute:You can access your shopping list by pressing
 msc ^= mute:As you enter the labyrinth
 msc ^= mute:previously moving walls settle noisily into place
 msc ^= mute:The plant looks sick
-msc ^= mute:Press\: \? \- help\, Q \- select action\, \(\/\) \- cycle
-msc ^= mute:Shift\-Dir \- straight line\, f \- 
+msc ^= mute:Shift\-Dir \- straight line
 msc ^= mute:Your foxfire dissipates
 msc ^= mute:evades? a web
 msc ^= mute:An electric hum fills the air
@@ -3103,8 +3100,8 @@ more += wretched star pulses
 more += Strange energies course through your body
 
 # Crowd control
-more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness
-flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased
+more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness)
+flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased)
 more += infuriates you
 more += hits you.*distortion
 more += Space.*around you
@@ -3118,7 +3115,7 @@ flash += You stop (a|de)scending the stairs
 flash += A sentinel's mark forms upon you
 
 # Clouds
-more += danger:(calcify|mutagenic
+more += danger:(calcify|mutagenic)
 more += You.*re engulfed in.*miasma
 flash += Miasma billows from the
 
@@ -3133,7 +3130,7 @@ flash += Your body shudders with the violent release
 more += Found.*the Ecumenical Temple
 flash += timed_portal:.*
 more += walls and floor vibrate strangely for a moment
-more += Found.*(treasure|bazaar|ziggurat
+more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
 more += byssal rune
@@ -3142,7 +3139,7 @@ more += byssal rune
 flash += You blink
 flash += danger:You feel strangely .*stable
 more += danger:sense of stasis
-more += Your surroundings.*(different|flicker
+more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
 flash += delayed
 
@@ -3163,7 +3160,7 @@ flash += danger:corrodes you
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
-more += You feel.*(?<!less )(haunted|rot|vulnerable
+more += You feel.*(?<!less )(haunted|rot|vulnerable)
 flash += Your damage is reflected back at you
 flash += (?<!You.*)reflects
 
@@ -3172,7 +3169,7 @@ more += seems mollified
 more += You have finished your manual
 
 # Unexpected monsters
-more += appears in a (shower|flash
+more += appears in a (shower|flash)
 more += appears out of thin air
 more += You sense the presence of something unfriendly
 more += Wisps of shadow swirl around
@@ -4750,15 +4747,6 @@ local function alert_low_hp()
   end
 end
 
------ Annotate Vaults:5 (by rypofalem) -----
-local annotated_v5 = false
-function ready_annotate_v5()
-  if (not annotated_v5) and (you.branch() == "Vaults") then
-    crawl.sendkeys("!v5" .. KEYS.CR .. "<red>!V:5 Warning!</red>" .. KEYS.CR)
-    annotated_v5 = true
-  end
-end
-
 ----- Save with message -----
 -- by gammafunk, edits by buehler
 local function persist_save_game_msg()
@@ -4766,7 +4754,7 @@ local function persist_save_game_msg()
 end
 
 function macro_save_with_message()
-  crawl.formatted_mpr("Save game and exit?", "prompt")
+  crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
   local res = crawl.getch()
   if not (string.char(res) == "y" or string.char(res) == "Y") then
     crawl.formatted_mpr("Okay, then.", "prompt")
@@ -4790,7 +4778,6 @@ end
 function ready_misc_alerts()
   if CONFIG.alert_remove_faith then alert_remove_faith() end
   if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
-  if CONFIG.annotate_v5 then ready_annotate_v5() end
 end
 }
 ############################### End lua/misc-alerts.lua ###############################
@@ -4957,6 +4944,7 @@ end
 ################################### Begin lua/safe-stairs.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
+
 ----- Prevent accidental stairs usage -----
 local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
 local last_stair_turn = 0
@@ -4967,20 +4955,26 @@ crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 local function check_new_location(key)
   local cur_location = you.branch()..you.depth()
   local turn_diff = you.turns() - last_stair_turn
-  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < 5 then
-    crawl.formatted_mpr("Really go right back? (y/n)", "prompt")
+  local question = nil
+  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
+    question = "Really go right back? (y/n)"
+  elseif CONFIG.warn_v5 and cur_location == "Vaults4" and key == ">" then
+    -- V5 warning idea by rypofalem --
+    question = "Really go to Vaults:5? (y/n)"
+    CONFIG.warn_v5 = false
+  end
+
+  if question then
+    crawl.formatted_mpr(question, "prompt")
     local res = crawl.getch()
-    if string.lower(string.char(res)) == "y" then
-      crawl.sendkeys(key)
-	    last_stair_turn = you.turns()
-    else
-      crawl.formatted_mpr("Okay, then.", "prompt")
+    if string.lower(string.char(res)) ~= "y" then
+      crawl.mpr("Okay, then.")
       return
     end
-  else
-    crawl.sendkeys(key)
-	  last_stair_turn = you.turns()
   end
+
+  crawl.sendkeys(key)
+  last_stair_turn = you.turns()
 end
 
 function macro_do_safe_upstairs()

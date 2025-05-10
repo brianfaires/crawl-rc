@@ -20,9 +20,10 @@ CONFIG.stop_on_pan_gates = true
 CONFIG.search_altars_in_temple = true
 
 -- Misc alerts
+CONFIG.warn_v5 = true
+CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
 CONFIG.alert_remove_faith = true
 CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable
-CONFIG.annotate_v5 = true
 CONFIG.save_with_msg = true
 CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
 CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions

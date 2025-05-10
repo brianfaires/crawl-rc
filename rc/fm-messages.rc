@@ -36,8 +36,8 @@ more += wretched star pulses
 more += Strange energies course through your body
 
 # Crowd control
-more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness
-flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased
+more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness)
+flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased)
 more += infuriates you
 more += hits you.*distortion
 more += Space.*around you
@@ -51,7 +51,7 @@ flash += You stop (a|de)scending the stairs
 flash += A sentinel's mark forms upon you
 
 # Clouds
-more += danger:(calcify|mutagenic
+more += danger:(calcify|mutagenic)
 more += You.*re engulfed in.*miasma
 flash += Miasma billows from the
 
@@ -66,7 +66,7 @@ flash += Your body shudders with the violent release
 more += Found.*the Ecumenical Temple
 flash += timed_portal:.*
 more += walls and floor vibrate strangely for a moment
-more += Found.*(treasure|bazaar|ziggurat
+more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
 more += byssal rune
@@ -75,7 +75,7 @@ more += byssal rune
 flash += You blink
 flash += danger:You feel strangely .*stable
 more += danger:sense of stasis
-more += Your surroundings.*(different|flicker
+more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
 flash += delayed
 
@@ -96,7 +96,7 @@ flash += danger:corrodes you
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
-more += You feel.*(?<!less )(haunted|rot|vulnerable
+more += You feel.*(?<!less )(haunted|rot|vulnerable)
 flash += Your damage is reflected back at you
 flash += (?<!You.*)reflects
 
@@ -105,7 +105,7 @@ more += seems mollified
 more += You have finished your manual
 
 # Unexpected monsters
-more += appears in a (shower|flash
+more += appears in a (shower|flash)
 more += appears out of thin air
 more += You sense the presence of something unfriendly
 more += Wisps of shadow swirl around
