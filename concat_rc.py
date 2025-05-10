@@ -82,4 +82,4 @@ with open(INIT_FILE_NAME, 'r') as readfile:
     with open(OUT_FILE_NAME, 'w') as outfile:
         recurse_write_lines(readfile, outfile, files_opened)
 
-input(f"\nDone writing to {OUT_FILE_NAME}\nPress enter to close.")
+print(f"\nDone writing to {OUT_FILE_NAME}")
