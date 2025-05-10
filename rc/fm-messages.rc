@@ -23,32 +23,35 @@ more += unholy channel is weakening
 more += monster_warning:wielding.*of (distortion|chaos)
 more += monster_warning:carrying a wand of
 more += monster_warning:curare
-flash += The forest starts to sway and rumble
 more += begins to recite a word of recall
-flash += doors? slams? shut
-flash += blows.*on a signal horn
-more += The.*offers itself to Yredelemnul
-flash += Deactivating autopickup
-more += Your?.*suddenly stops? moving
 more += There is.*feeling in your soul
-flash += Its appearance distorts for a moment
 more += wretched star pulses
 more += Strange energies course through your body
 
+flash += doors? slams? shut
+flash += blows.*on a signal horn
+flash += Deactivating autopickup
+flash += Its appearance distorts for a moment
+flash += The.*offers itself to Yredelemnul
+flash += The forest starts to sway and rumble
+flash += Your?.*suddenly stops? moving
+
+
 # Crowd control
-more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness)
-flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased)
+more += You.*((?<!(too|less)).*confused
+more += You.*|(?<!(hands|graspers) slow.*down|lose consciousness)
 more += infuriates you
 more += hits you.*distortion
 more += Space.*around you
-flash += The pull of.*song draws you forward
-flash += The.*engulfs you in water
 more += surroundings become eerily quiet
 more += Your limbs are stiffening
-flash += Your magical effects are unraveling
-flash += Your magical defenses are stripped away
+
+flash += You.*(blown|knocked back|mesmerised|trampled|stumble backwards|encased)
+flash += Your magical (effects|defenses) are (unraveling|stripped away)
 flash += You stop (a|de)scending the stairs
 flash += A sentinel's mark forms upon you
+flash += The pull of.*song draws you forward
+flash += The.*engulfs you in water
 
 # Clouds
 more += danger:(calcify|mutagenic)
@@ -56,27 +59,27 @@ more += You.*re engulfed in.*miasma
 flash += Miasma billows from the
 
 # You Screwed Up
-flash += power of Zot
 more += is no longer ready
 more += You really shouldn't be using
 more += You don't have enough magic to cast this spell
 flash += Your body shudders with the violent release
+flash += power of Zot
 
 # Found something important
 more += Found.*the Ecumenical Temple
-flash += timed_portal:.*
 more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
 more += byssal rune
+flash += timed_portal:.*
 
 # Translocations
-flash += You blink
-flash += danger:You feel strangely .*stable
 more += danger:sense of stasis
 more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
+flash += You blink
+flash += danger:You feel strangely .*stable
 flash += delayed
 
 # Big damage
@@ -92,11 +95,11 @@ more += You are.*terribly
 
 # Hit by something
 more += Terrible wounds open
-flash += danger:corrodes you
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
 more += You feel.*(?<!less )(haunted|rot|vulnerable)
+flash += danger:corrodes you
 flash += Your damage is reflected back at you
 flash += (?<!You.*)reflects
 
