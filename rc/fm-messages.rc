@@ -163,7 +163,7 @@ local fm_exclude_messages = {
   "Okawaru grants you throwing weapons",
   "Okawaru offers you a choice",
   "need to enable at least one skill for training",
-} -- fm_exclude_messages (Do not remove this comment)
+} -- fm_exclude_messages (do not remove this comment)
 
 function c_message_fm_exclude(text, _)
   for _,v in ipairs(fm_exclude_messages) do

@@ -106,7 +106,7 @@ function c_message(text, channel)
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
-  if c_message_fm_delayed then c_message_fm_delayed(text, channel) end
+  if c_message_fm_pack then c_message_fm_pack(text, channel) end
   if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
 end
 
@@ -150,7 +150,7 @@ function ready()
     efficient_ready_last_turn = you.turns()
 
     if ready_force_mores then ready_force_mores() end
-    if ready_fm_delayed then ready_fm_delayed() end
+    if ready_fm_pack then ready_fm_pack() end
     if ready_dynamic_options then ready_dynamic_options() end
     if ready_inscribe_stats then ready_inscribe_stats() end
     if ready_weapon_slots then ready_weapon_slots() end
