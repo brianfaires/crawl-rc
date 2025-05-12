@@ -6,14 +6,7 @@ local loaded_exclude_dropped = true
 loadfile("crawl-rc/lua/constants.lua")
 loadfile("crawl-rc/lua/util.lua")
 
----------------- Persistent data ----------------
-if not dropped_item_exclusions or you.turns() == 0 then
-  dropped_item_exclusions = ""
-end
-local function persist_dropped_item_exclusions()
-  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..KEYS.LF
-end
-table.insert(chk_lua_save, persist_dropped_item_exclusions)
+create_persistent_data("dropped_item_exclusions", "")
 
 -- Init autopickup missiles
 local started_with_ranged = false

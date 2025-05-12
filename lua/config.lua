@@ -40,7 +40,7 @@ CONFIG.alert_orbs = true
 CONFIG.alert_talismans = true
 CONFIG.alert_staff_resists = true
 CONFIG.alert_one_time_items = true
-one_time_alerts = {
+CONFIG.one_time_alerts = {
   "broad axe", "executioner's axe", "eveningstar", "demon whip",
   "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
   "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",

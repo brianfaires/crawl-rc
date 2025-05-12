@@ -24,5 +24,4 @@ if you.turns() == 0 then
       end
     end
   end
-
 end

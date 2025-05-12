@@ -45,7 +45,7 @@ CONFIG.alert_orbs = true
 CONFIG.alert_talismans = true
 CONFIG.alert_staff_resists = true
 CONFIG.alert_one_time_items = true
-one_time_alerts = {
+CONFIG.one_time_alerts = {
   "broad axe", "executioner's axe", "eveningstar", "demon whip",
   "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
   "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
@@ -3586,8 +3586,8 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 ################################### Begin lua/after-shaft.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------ Add stops for stairs after being shafted -----
 
+----- Add stops for stairs after being shafted -----
 create_persistent_data("as_shaft_depth", 0)
 create_persistent_data("as_shaft_branch", "NA")
 
@@ -4160,14 +4160,7 @@ end
 if loaded_exclude_dropped then return end
 local loaded_exclude_dropped = true
 
----------------- Persistent data ----------------
-if not dropped_item_exclusions or you.turns() == 0 then
-  dropped_item_exclusions = ""
-end
-local function persist_dropped_item_exclusions()
-  return "dropped_item_exclusions = \""..dropped_item_exclusions.."\""..KEYS.LF
-end
-table.insert(chk_lua_save, persist_dropped_item_exclusions)
+create_persistent_data("dropped_item_exclusions", "")
 
 -- Init autopickup missiles
 local started_with_ranged = false
@@ -4380,7 +4373,7 @@ end
 -- WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
 -- Note: If you want an alert to silenceable by the fm_pack feature,
 -- It must be on an alert by itself (not part of a multi-monster pattern)
-local notify_fm = false -- Set to true to get a message when the fm change
+local debug_fm_monsters = false -- Set to true to get a message when the fm change
 local turns_to_delay = 15 -- Turns before alerting for a pack monster again
 
 -- Stop on all Uniques & Pan lords
@@ -4678,7 +4671,7 @@ function ready_force_mores()
       set_monster_fm(action, fm_mon_str)
       active_fm[i] = not active_fm[i]
 
-      if notify_fm then
+      if debug_fm_monsters then
         if action == "+" then
           activated[#activated + 1] = fm_name
         elseif action == "-" then
@@ -4688,7 +4681,7 @@ function ready_force_mores()
     end
   end
 
-  if notify_fm then
+  if debug_fm_monsters then
     if #activated > 0 then
       crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
     end
@@ -4770,6 +4763,8 @@ end
 {
 ----- Inscribe stats on items -----
 
+local skipped_first_redraw = false
+
 local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
   -- This gsub's stats individually to avoid overwriting <color> tags
@@ -4812,7 +4807,6 @@ local function inscribe_weapon_stats(it)
   return new_inscr
 end
 
-local skipped_first_redraw = false
 
 ------------------ Hook ------------------
 function ready_inscribe_stats()
@@ -4842,15 +4836,7 @@ if loaded_misc_alerts then return end
 loaded_misc_alerts = true
 
 ------ Max piety w/ amulet of faith reminder ----
-if not alerted_max_piety or you.turns() == 0 then
-  alerted_max_piety = 0
-end
-
-local function persist_alerted_max_piety()
-  return "alerted_max_piety = "..alerted_max_piety..KEYS.LF
-end
-table.insert(chk_lua_save, persist_alerted_max_piety)
-
+create_persistent_data("alerted_max_piety", 0)
 
 local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
@@ -4882,10 +4868,6 @@ end
 
 ----- Save with message -----
 -- by gammafunk, edits by buehler
-local function persist_save_game_msg()
-  return "saved_game_msg = \""..saved_game_msg.."\""..KEYS.LF
-end
-
 function macro_save_with_message()
   crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
   local res = crawl.getch()
@@ -4895,7 +4877,7 @@ function macro_save_with_message()
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
   saved_game_msg = crawl.c_input_line()
-  table.insert(chk_lua_save, persist_save_game_msg)
+  create_persistent_data("saved_game_msg", saved_game_msg)
   crawl.sendkeys(control_key("s"))
 end
 
@@ -4923,6 +4905,10 @@ end
 ################################### Begin lua/remind-id.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
+
+---- Track if found ID yet ----
+create_persistent_data("found_scroll_of_id", 0)
+
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
 local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
@@ -4939,18 +4925,6 @@ local function remind_unidentified_items()
   end
 end
 crawl.setopt("runrest_stop_message += You have something to identify")
-
-
----- Track if found ID yet ----
-if not found_scroll_of_id or you.turns() == 0 then
-  found_scroll_of_id = 0
-end
-
-local function persist_found_scroll_of_id()
-  return "found_scroll_of_id = "..found_scroll_of_id..KEYS.LF
-end
-table.insert(chk_lua_save, persist_found_scroll_of_id)
-
 
 ------------------- Hooks -------------------
 function c_message_remind_identify(text, channel)
@@ -5158,7 +5132,6 @@ if you.turns() == 0 then
       end
     end
   end
-
 end
 
 }
@@ -5758,75 +5731,19 @@ end
 --------------- https://github.com/brianfaires/crawl-rc/ ---------------
 if loaded_pa_data then return end
 loaded_pa_data = true
----------------------------- Begin persistent data ----------------------------
-if not pa_all_level_alerts or you.turns() == 0 then
-  pa_all_level_alerts = { }
-  pa_items_picked = { }
-  pa_items_alerted = { }
-  pa_single_alert_items = { }
-  for _,v in ipairs(one_time_alerts) do
-    table.insert(pa_single_alert_items, v)
-  end
 
-  alerted_first_ranged_one_handed = 0
-  alerted_first_ranged_two_handed = 0
-  armour_high_score = 0
-  weapon_high_score = 0
-  unbranded_high_score = 0
-  polearm_high_score = 0
-  polearm_onehand_high_score = 0
-end
-
-
-local function persist_table(table_name, table)
-  local cmd_init = table_name.." = {"
-  local cmd = cmd_init
-  for v in iter.invent_iterator:new(table) do
-    if cmd ~= cmd_init then cmd = cmd..", " end
-    cmd = cmd.."\""..v.."\""
-  end
-
-  return cmd .. "}" .. KEYS.LF
-end
-
-local function persist_var(var_name, var)
-  return var_name .. " = " .. var .. KEYS.LF
-end
-
-
-table.insert(chk_lua_save,
-  function() return persist_table("pa_all_level_alerts",
-      pa_all_level_alerts) end)
-table.insert(chk_lua_save,
-  function() return persist_table("pa_single_alert_items",
-      pa_single_alert_items) end)
-table.insert(chk_lua_save,
-  function() return persist_table("pa_items_picked",
-      pa_items_picked) end)
-table.insert(chk_lua_save,
-  function() return persist_table("pa_items_alerted",
-      pa_items_alerted) end)
-table.insert(chk_lua_save,
-  function() return persist_var("armour_high_score",
-      armour_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("alerted_first_ranged_one_handed",
-      alerted_first_ranged_one_handed) end)
-table.insert(chk_lua_save,
-  function() return persist_var("alerted_first_ranged_two_handed",
-      alerted_first_ranged_two_handed) end)
-table.insert(chk_lua_save,
-  function() return persist_var("polearm_high_score",
-      polearm_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("polearm_onehand_high_score",
-      polearm_onehand_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("unbranded_high_score",
-      unbranded_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("weapon_high_score",
-      weapon_high_score) end)
+create_persistent_data("pa_single_alert_items", CONFIG.one_time_alerts)
+create_persistent_data("pa_all_level_alerts", {})
+create_persistent_data("pa_items_picked", {})
+create_persistent_data("pa_items_alerted", {})
+create_persistent_data("alerted_first_ranged_two_handed", 0)
+create_persistent_data("alerted_first_ranged_one_handed", 0)
+create_persistent_data("alerted_first_ranged_two_handed", 0)
+create_persistent_data("armour_high_score", 0)
+create_persistent_data("weapon_high_score", 0)
+create_persistent_data("unbranded_high_score", 0)
+create_persistent_data("polearm_high_score", 0)
+create_persistent_data("polearm_onehand_high_score", 0)
 
 
 ---- Accessors into persistent data ----

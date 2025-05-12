@@ -2,75 +2,19 @@ if loaded_pa_data then return end
 loaded_pa_data = true
 loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
----------------------------- Begin persistent data ----------------------------
-if not pa_all_level_alerts or you.turns() == 0 then
-  pa_all_level_alerts = { }
-  pa_items_picked = { }
-  pa_items_alerted = { }
-  pa_single_alert_items = { }
-  for _,v in ipairs(one_time_alerts) do
-    table.insert(pa_single_alert_items, v)
-  end
 
-  alerted_first_ranged_one_handed = 0
-  alerted_first_ranged_two_handed = 0
-  armour_high_score = 0
-  weapon_high_score = 0
-  unbranded_high_score = 0
-  polearm_high_score = 0
-  polearm_onehand_high_score = 0
-end
-
-
-local function persist_table(table_name, table)
-  local cmd_init = table_name.." = {"
-  local cmd = cmd_init
-  for v in iter.invent_iterator:new(table) do
-    if cmd ~= cmd_init then cmd = cmd..", " end
-    cmd = cmd.."\""..v.."\""
-  end
-
-  return cmd .. "}" .. KEYS.LF
-end
-
-local function persist_var(var_name, var)
-  return var_name .. " = " .. var .. KEYS.LF
-end
-
-
-table.insert(chk_lua_save,
-  function() return persist_table("pa_all_level_alerts",
-      pa_all_level_alerts) end)
-table.insert(chk_lua_save,
-  function() return persist_table("pa_single_alert_items",
-      pa_single_alert_items) end)
-table.insert(chk_lua_save,
-  function() return persist_table("pa_items_picked",
-      pa_items_picked) end)
-table.insert(chk_lua_save,
-  function() return persist_table("pa_items_alerted",
-      pa_items_alerted) end)
-table.insert(chk_lua_save,
-  function() return persist_var("armour_high_score",
-      armour_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("alerted_first_ranged_one_handed",
-      alerted_first_ranged_one_handed) end)
-table.insert(chk_lua_save,
-  function() return persist_var("alerted_first_ranged_two_handed",
-      alerted_first_ranged_two_handed) end)
-table.insert(chk_lua_save,
-  function() return persist_var("polearm_high_score",
-      polearm_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("polearm_onehand_high_score",
-      polearm_onehand_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("unbranded_high_score",
-      unbranded_high_score) end)
-table.insert(chk_lua_save,
-  function() return persist_var("weapon_high_score",
-      weapon_high_score) end)
+create_persistent_data("pa_single_alert_items", CONFIG.one_time_alerts)
+create_persistent_data("pa_all_level_alerts", {})
+create_persistent_data("pa_items_picked", {})
+create_persistent_data("pa_items_alerted", {})
+create_persistent_data("alerted_first_ranged_two_handed", 0)
+create_persistent_data("alerted_first_ranged_one_handed", 0)
+create_persistent_data("alerted_first_ranged_two_handed", 0)
+create_persistent_data("armour_high_score", 0)
+create_persistent_data("weapon_high_score", 0)
+create_persistent_data("unbranded_high_score", 0)
+create_persistent_data("polearm_high_score", 0)
+create_persistent_data("polearm_onehand_high_score", 0)
 
 
 ---- Accessors into persistent data ----

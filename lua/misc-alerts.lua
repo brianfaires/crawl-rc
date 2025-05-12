@@ -4,15 +4,7 @@ loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/util.lua")
 
 ------ Max piety w/ amulet of faith reminder ----
-if not alerted_max_piety or you.turns() == 0 then
-  alerted_max_piety = 0
-end
-
-local function persist_alerted_max_piety()
-  return "alerted_max_piety = "..alerted_max_piety..KEYS.LF
-end
-table.insert(chk_lua_save, persist_alerted_max_piety)
-
+create_persistent_data("alerted_max_piety", 0)
 
 local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
@@ -44,10 +36,6 @@ end
 
 ----- Save with message -----
 -- by gammafunk, edits by buehler
-local function persist_save_game_msg()
-  return "saved_game_msg = \""..saved_game_msg.."\""..KEYS.LF
-end
-
 function macro_save_with_message()
   crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
   local res = crawl.getch()
@@ -57,7 +45,7 @@ function macro_save_with_message()
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
   saved_game_msg = crawl.c_input_line()
-  table.insert(chk_lua_save, persist_save_game_msg)
+  create_persistent_data("saved_game_msg", saved_game_msg)
   crawl.sendkeys(control_key("s"))
 end
 

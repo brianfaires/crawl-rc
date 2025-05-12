@@ -3,7 +3,7 @@
 -- WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
 -- Note: If you want an alert to silenceable by the fm_pack feature,
 -- It must be on an alert by itself (not part of a multi-monster pattern)
-local notify_fm = false -- Set to true to get a message when the fm change
+local debug_fm_monsters = false -- Set to true to get a message when the fm change
 local turns_to_delay = 15 -- Turns before alerting for a pack monster again
 
 -- Stop on all Uniques & Pan lords
@@ -301,7 +301,7 @@ function ready_force_mores()
       set_monster_fm(action, fm_mon_str)
       active_fm[i] = not active_fm[i]
 
-      if notify_fm then
+      if debug_fm_monsters then
         if action == "+" then
           activated[#activated + 1] = fm_name
         elseif action == "-" then
@@ -311,7 +311,7 @@ function ready_force_mores()
     end
   end
 
-  if notify_fm then
+  if debug_fm_monsters then
     if #activated > 0 then
       crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
     end

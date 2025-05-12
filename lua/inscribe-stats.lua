@@ -2,6 +2,8 @@
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/util.lua")
 
+local skipped_first_redraw = false
+
 local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
   -- This gsub's stats individually to avoid overwriting <color> tags
@@ -44,7 +46,6 @@ local function inscribe_weapon_stats(it)
   return new_inscr
 end
 
-local skipped_first_redraw = false
 
 ------------------ Hook ------------------
 function ready_inscribe_stats()

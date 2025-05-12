@@ -6,6 +6,7 @@
 -- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
 
 local muted_items = {}
+local last_pickup_turn = -1
 
 -- Must define this separate from ready() if we want to call it from c_message_mute_swaps as well
 local function unmute_items()
@@ -20,7 +21,6 @@ function ready_mute_swaps()
   unmute_items()
 end
 
-local last_pickup_turn = -1
 function c_assign_invletter_mute_swaps(_)
   -- this causes an unmute command on the message
   -- we can't unmute in time from this hook

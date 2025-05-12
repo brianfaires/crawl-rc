@@ -1,5 +1,9 @@
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/util.lua")
+
+---- Track if found ID yet ----
+create_persistent_data("found_scroll_of_id", 0)
+
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
 local function remind_unidentified_items()
   for it in iter.invent_iterator:new(items.inventory()) do
@@ -16,18 +20,6 @@ local function remind_unidentified_items()
   end
 end
 crawl.setopt("runrest_stop_message += You have something to identify")
-
-
----- Track if found ID yet ----
-if not found_scroll_of_id or you.turns() == 0 then
-  found_scroll_of_id = 0
-end
-
-local function persist_found_scroll_of_id()
-  return "found_scroll_of_id = "..found_scroll_of_id..KEYS.LF
-end
-table.insert(chk_lua_save, persist_found_scroll_of_id)
-
 
 ------------------- Hooks -------------------
 function c_message_remind_identify(text, channel)
