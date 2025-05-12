@@ -134,3 +134,68 @@ end
 function get_body_armour()
   return items.equipped_at("armour")
 end
+
+-- Data persistence --
+local persist_data_type_handlers = {
+    str = function(name)
+        return name.." = \"".._G[name].."\""..KEYS.LF
+    end,
+    
+    int = function(name)
+        return name.." = ".._G[name]..KEYS.LF
+    end,
+    
+    bool = function(name)
+        return name.." = "..if_el(_G[name], "true", "false")..KEYS.LF
+    end,
+    
+    list = function(name)
+        local cmd_init = name.." = {"
+        local cmd = cmd_init
+        for _,v in ipairs(_G[name]) do
+            if cmd ~= cmd_init then cmd = cmd..", " end
+            cmd = cmd.."\""..v.."\""
+        end
+        return cmd.."}"..KEYS.LF
+    end,
+    
+    dict = function(name)
+        local cmd_init = name.." = {"
+        local cmd = cmd_init
+        for k,v in pairs(_G[name]) do
+            if cmd ~= cmd_init then cmd = cmd..", " end
+            cmd = cmd..k.."=\""..v.."\""
+        end
+        return cmd.."}"..KEYS.LF
+    end
+} -- data_persist_type_handlers (do not remove this comment)
+
+local function get_var_type(value)
+    if type(value) == "string" then return "str"
+    elseif type(value) == "number" then return "int"
+    elseif type(value) == "boolean" then return "bool"
+    elseif type(value) == "table" then
+        if #value > 0 then return "list"
+        else return "dict"
+        end
+    end
+    crawl.mpr("Unsupported type: " .. type(value))
+end
+
+-- Creates a persistent global variable, initialized to the default value
+-- Once initialized, the variable is persisted across saves without re-init
+function create_persistent_data(name, default_value)
+    if _G[name] == nil then
+        _G[name] = default_value
+    end
+    
+    table.insert(chk_lua_save,
+        function()
+            local type = get_var_type(_G[name])
+            if not persist_data_type_handlers[type] then
+                crawl.mpr("Unknown persistence type: " .. type)
+                return
+            end
+            return persist_data_type_handlers[type](name)
+        end)
+end
