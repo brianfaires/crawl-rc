@@ -96,7 +96,7 @@ function is_armour(it)
 end
 
 function is_shield(it)
-  return it and it.subtype() == "shield"
+  return it and it.class(true) == "armour" and it.subtype() == "offhand"
 end
 
 function is_weapon(it)
@@ -116,7 +116,7 @@ function is_amulet(it)
 end
 
 function is_orb(it)
-  return it and it.name("base"):find("orb of ")
+  return it and it.subtype() == "offhand" and it.class(true) ~= "armour"
 end
 
 function is_talisman(it)
