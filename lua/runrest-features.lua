@@ -22,7 +22,7 @@ end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  return you.god() ~= "No God" or you.race() == "Demigod" or
+  return you.god() ~= "No God" or l_cache.race == "Demigod" or
     (you.good_god() and you.xl() > 9)
 end
 

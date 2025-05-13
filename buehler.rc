@@ -100,27 +100,6 @@ explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
 
-####### Autopickup exceptions #######
-ae := autopickup_exceptions
-ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
-ae ^= <scrolls? of immolation, <scrolls? of poison
-ae ^= >useless_item, <misc
-ae ^= >staff of.*
-
-# Exclude the 3rd copy of any ring
-{
-  add_autopickup_func(function (it, name)
-    if it.class(true) ~= "jewellery" or it.artefact or you.race() == "Octopode" then return end
-    local st = it.subtype()
-    local found_first = false
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.class(true) == "jewellery" and inv.subtype() == st then
-        if found_first then return false end
-        found_first = true
-      end
-    end
-  end)
-}
 
 
 ####### Includes #######
@@ -187,16 +166,7 @@ COLORS = {
   black = 0,
 } -- COLORS (do not remove this comment)
 
-RACE_SIZE = { VERY_SMALL = -2, SMALL = -1, NORMAL = 0, LARGE = 1, VERY_LARGE = 2 }
-function get_size_penalty()
-  local race = you.race()
-  if race == "Spriggan" then return RACE_SIZE.VERY_SMALL
-  elseif race == "Kobold" then return RACE_SIZE.SMALL
-  elseif race == "Formicid" or race == "Armataur" or race == "Naga" then return RACE_SIZE.LARGE
-  elseif race == "Oni" or race == "Troll" then return RACE_SIZE.VERY_LARGE
-  else return RACE_SIZE.NORMAL
-  end
-end
+SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 
 }
 ############################### End lua/constants.lua ###############################
@@ -285,14 +255,6 @@ function you_have_allies()
       util.contains(gods_with_allies, you.god())
 end
 
-function you_are_undead()
-  return util.contains(all_undead_races, you.race())
-end
-
-function you_are_pois_immune()
-  return you.res_poison() >= 3
-end
-
 function is_body_armour(it)
   return it and it.subtype() == "body"
 end
@@ -322,6 +284,7 @@ function is_amulet(it)
 end
 
 function is_orb(it)
+  -- return it and it.name("base"):find("orb of ") -- TODO: check which is more efficient
   return it and it.subtype() == "offhand" and it.class(true) ~= "armour"
 end
 
@@ -410,6 +373,51 @@ end
 ############################### End lua/util.lua ###############################
 ##########################################################################################
 
+################################### Begin lua/cache.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-- Cache of commonly pulled values, for increased performance
+if loaded_cache then return end
+loaded_cache = true
+
+l_cache = {}
+
+l_cache.class = you.class()
+l_cache.race = you.race()
+if l_cache.race == "Spriggan" then l_cache.size_penalty = SIZE_PENALTY.LITTLE
+elseif l_cache.race == "Kobold" then l_cache.size_penalty = SIZE_PENALTY.SMALL
+elseif l_cache.race == "Armataur" or l_cache.race == "Naga" or
+    l_cache.race == "Oni" or l_cache.race == "Troll" then l_cache.size_penalty = SIZE_PENALTY.LARGE
+else l_cache.size_penalty = SIZE_PENALTY.NORMAL
+end
+
+l_cache.undead =  util.contains(all_undead_races, l_cache.race)
+l_cache.poison_immune = you.res_poison() >= 3
+
+
+function ready_l_cache()
+  l_cache.turn = you.turns()
+  l_cache.str = you.strength()
+  l_cache.dex = you.dexterity()
+  l_cache.int = you.intelligence()
+  l_cache.will = you.willpower()
+  
+  l_cache.hp, l_cache.mhp = you.hp()
+  l_cache.mp, l_cache.mmp = you.mp()
+
+  l_cache.god = you.god()
+  l_cache.xl = you.xl()
+
+  l_cache.s_armour = you.skill("Armour")
+  l_cache.s_shields = you.skill("Shields")
+  l_cache.s_dodging = you.skill("Dodging")
+  l_cache.s_fighting = you.skill("Fighting")
+end
+
+}
+############################### End lua/cache.lua ###############################
+##########################################################################################
+
 ## (Resuming init.txt) ##
 
 ### Mostly normal RC options ###
@@ -488,6 +496,33 @@ ai += staff of poison:rPois
 }
 
 ############################### End rc/autoinscribe.rc ###############################
+##########################################################################################
+
+################################### Begin rc/autopickup.rc ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+####### Autopickup exceptions #######
+ae := autopickup_exceptions
+ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
+ae ^= <scrolls? of immolation, <scrolls? of poison
+ae ^= >useless_item, <misc
+ae ^= >staff of.*
+
+# Exclude the 3rd copy of any ring
+{
+  add_autopickup_func(function (it, name)
+    if it.class(true) ~= "jewellery" or it.artefact or l_cache.race == "Octopode" then return end
+    local st = it.subtype()
+    local found_first = false
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if inv.class(true) == "jewellery" and inv.subtype() == st then
+        if found_first then return false end
+        found_first = true
+      end
+    end
+  end)
+}
+
+############################### End rc/autopickup.rc ###############################
 ##########################################################################################
 
 ################################### Begin rc/display.rc ###################################
@@ -3572,7 +3607,7 @@ spell_slot ^= Summon Seismosaurus Egg:EGSMIEOAU
 spell_slot ^= Summon Small Mammal:SMLAUON
 spell_slot ^= Swiftness:SWIFT
 spell_slot ^= Volatile Blastmotes:VBOLMASTE
-:if you.class() == "Summoner" then
+:if l_cache.class == "Summoner" then
   spell_slot ^= (summon|call):abcdefgh
 :end
 
@@ -4032,22 +4067,22 @@ end
 
 ---- race-specific ---
 local function set_race_options()
-  if you_are_undead() then
+  if l_cache.undead then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if you_are_pois_immune() then
+  if l_cache.poison_immune then
     crawl.setopt("force_more_message -= monster_warning:curare")
   end
 
-  if you.race() == "Gnoll" then
+  if l_cache.race == "Gnoll" then
     crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
   end
 end
 
 ---- class-specific ---
 local function set_class_options()
-  if you.class() == "Hunter" then
+  if l_cache.class == "Hunter" then
     crawl.setopt("view_delay = 30")
   end
 end
@@ -4174,7 +4209,7 @@ if you.skill("Ranged Weapons") > 2 then
 end
 if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, <boomerang") end
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
-if get_size_penalty() >= RACE_SIZE.VERY_LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
+if l_cache.size_penalty >= SIZE_PENALTY.LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
 if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
 
@@ -4983,7 +5018,7 @@ end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  return you.god() ~= "No God" or you.race() == "Demigod" or
+  return you.god() ~= "No God" or l_cache.race == "Demigod" or
     (you.good_god() and you.xl() > 9)
 end
 
@@ -5112,7 +5147,7 @@ end
 if you.turns() == 0 then
   ---- Skill menu on startup (by rwbarton, edits by buehler) ----
   if CONFIG.show_skills_on_startup then
-    local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
+    local show_skills_on_startup = (l_cache.race ~= "Gnoll" or l_cache.class == "Wanderer")
     if show_skills_on_startup then
       crawl.sendkeys("m")
     end
@@ -5317,18 +5352,13 @@ end
 
 --------- Armour (Shadowing crawl calcs) ---------
 function get_shield_penalty(sh)
-  local pen = 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_size_penalty()) * (27 - you.skill("Shields")) / 27
-  -- Round to 2 decimals, which mimics scale==100
-  return math.floor(100 * pen) / 100
+  return 2 * sh.encumbrance * sh.encumbrance
+        * (27 - you.skill("Shields")) / 27
+        / (25 + 5 * you.strength())
 end
 
 function get_armour_ac(it)
-  local it_plus = if_el(it.plus, it.plus, 0)
-
-  if it.artefact and it.is_identified then
-    local art_ac = it.artprops["AC"]
-    if art_ac then it_plus = it_plus + art_ac end
-  end
+  local it_plus = it.plus or 0
 
   if it.artefact and it.is_identified then
     local art_ac = it.artprops["AC"]
@@ -5341,14 +5371,15 @@ function get_armour_ac(it)
   local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
   if pseudopods or (deformed and is_body_armour(it)) then
     ac = ac - it.ac / 2
-
   end
 
   return ac
 end
 
-function get_aevp(encumb, str)
-  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (str + 3) * 45)
+function get_aevp(encumb, strength)
+  encumb = encumb - 2*you.get_base_mutation_level("sturdy frame")
+  if encumb < 0 then encumb = 0 end
+  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (strength + 3) * 45)
 end
 
 function get_armour_ev(it)
@@ -5376,7 +5407,7 @@ function get_armour_ev(it)
 
   if str <= 0 then str = 1 end
 
-  local size_factor = -2 * get_size_penalty()
+  local size_factor = -2 * l_cache.size_penalty
 
   local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
@@ -5421,7 +5452,7 @@ function get_shield_sh(it)
   else sh_size = -2
   end
 
-  local base_sh = it.ac * 2 + sh_size*get_size_penalty()
+  local base_sh = it.ac * 2 + sh_size*l_cache.size_penalty
   local shield = base_sh * (50 + skill*5/2)
   shield = shield + 200*it_plus
   shield = shield + if_el(skill < 3, 76*skill, 38*(3+skill))
@@ -5432,7 +5463,7 @@ end
 
 --------- Weapons (Shadowing crawl calcs) ---------
 function get_hands(it)
-  if you.race() ~= "Formicid" then return it.hands end
+  if l_cache.race ~= "Formicid" then return it.hands end
   local st, _ = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
@@ -5524,7 +5555,7 @@ function get_slay_bonuses()
     end
   end
 
-  if you.race() == "Demonspawn" then
+  if l_cache.race == "Demonspawn" then
     sum = sum + 3 * get_mut("augmentation", true)
     sum = sum + get_mut("sharp scales", true)
   end
@@ -5630,13 +5661,12 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   return pre_brand_dmg
 end
 
-
 function get_weap_dps(it, no_brand_dmg, no_weight_all_brands)
   return get_weap_dmg(it, no_brand_dmg, no_weight_all_brands) / get_weap_delay(it)
 end
 
 
----- Weapon info strings ----
+---- Stat string formatting ----
 function get_weapon_info(it)
   if not it.delay then return end
 
@@ -5670,12 +5700,13 @@ end
 
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
-  if is_worn then
-    stat_str = ":"..stat_str
-  elseif val >= 0 then
-    stat_str = "+"..stat_str
+  if val < 0 then
+    return abbr..stat_str
+  elseif is_worn then
+    return abbr..':'..stat_str
+  else
+    return abbr..'+'..stat_str
   end
-  return abbr..stat_str
 end
 
 function get_armour_info_strings(it)
@@ -6588,7 +6619,7 @@ local function pickup_weapon(it, cur)
     if cur.branded and not has_ego(it) then return false end
     return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
   --elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
-  elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
+  elseif it.weap_skill == cur.weap_skill or l_cache.race == "Gnoll" then
     if no_upgrade_possible(it, cur) then return false end
 
     if it.artefact then return true end
@@ -6797,6 +6828,7 @@ end
 --------- ready() ---------
 local efficient_ready_last_turn = -1
 function ready()
+  ready_l_cache()
   if you.turns() ~= efficient_ready_last_turn then
     efficient_ready_last_turn = you.turns()
 

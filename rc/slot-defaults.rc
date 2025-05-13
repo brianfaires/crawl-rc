@@ -137,6 +137,6 @@ spell_slot ^= Summon Seismosaurus Egg:EGSMIEOAU
 spell_slot ^= Summon Small Mammal:SMLAUON
 spell_slot ^= Swiftness:SWIFT
 spell_slot ^= Volatile Blastmotes:VBOLMASTE
-:if you.class() == "Summoner" then
+:if l_cache.class == "Summoner" then
   spell_slot ^= (summon|call):abcdefgh
 :end

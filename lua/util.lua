@@ -79,14 +79,6 @@ function you_have_allies()
       util.contains(gods_with_allies, you.god())
 end
 
-function you_are_undead()
-  return util.contains(all_undead_races, you.race())
-end
-
-function you_are_pois_immune()
-  return you.res_poison() >= 3
-end
-
 function is_body_armour(it)
   return it and it.subtype() == "body"
 end
@@ -116,6 +108,7 @@ function is_amulet(it)
 end
 
 function is_orb(it)
+  -- return it and it.name("base"):find("orb of ") -- TODO: check which is more efficient
   return it and it.subtype() == "offhand" and it.class(true) ~= "armour"
 end
 

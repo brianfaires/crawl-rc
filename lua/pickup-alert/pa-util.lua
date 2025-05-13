@@ -29,18 +29,13 @@ end
 
 --------- Armour (Shadowing crawl calcs) ---------
 function get_shield_penalty(sh)
-  local pen = 2/5 * sh.encumbrance * sh.encumbrance / (20 + 6 * get_size_penalty()) * (27 - you.skill("Shields")) / 27
-  -- Round to 2 decimals, which mimics scale==100
-  return math.floor(100 * pen) / 100
+  return 2 * sh.encumbrance * sh.encumbrance
+        * (27 - you.skill("Shields")) / 27
+        / (25 + 5 * you.strength())
 end
 
 function get_armour_ac(it)
-  local it_plus = if_el(it.plus, it.plus, 0)
-
-  if it.artefact and it.is_identified then
-    local art_ac = it.artprops["AC"]
-    if art_ac then it_plus = it_plus + art_ac end
-  end
+  local it_plus = it.plus or 0
 
   if it.artefact and it.is_identified then
     local art_ac = it.artprops["AC"]
@@ -53,14 +48,15 @@ function get_armour_ac(it)
   local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
   if pseudopods or (deformed and is_body_armour(it)) then
     ac = ac - it.ac / 2
-
   end
 
   return ac
 end
 
-function get_aevp(encumb, str)
-  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (str + 3) * 45)
+function get_aevp(encumb, strength)
+  encumb = encumb - 2*you.get_base_mutation_level("sturdy frame")
+  if encumb < 0 then encumb = 0 end
+  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (strength + 3) * 45)
 end
 
 function get_armour_ev(it)
@@ -88,7 +84,7 @@ function get_armour_ev(it)
 
   if str <= 0 then str = 1 end
 
-  local size_factor = -2 * get_size_penalty()
+  local size_factor = -2 * l_cache.size_penalty
 
   local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
@@ -133,7 +129,7 @@ function get_shield_sh(it)
   else sh_size = -2
   end
 
-  local base_sh = it.ac * 2 + sh_size*get_size_penalty()
+  local base_sh = it.ac * 2 + sh_size*l_cache.size_penalty
   local shield = base_sh * (50 + skill*5/2)
   shield = shield + 200*it_plus
   shield = shield + if_el(skill < 3, 76*skill, 38*(3+skill))
@@ -144,7 +140,7 @@ end
 
 --------- Weapons (Shadowing crawl calcs) ---------
 function get_hands(it)
-  if you.race() ~= "Formicid" then return it.hands end
+  if l_cache.race ~= "Formicid" then return it.hands end
   local st, _ = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
@@ -236,7 +232,7 @@ function get_slay_bonuses()
     end
   end
 
-  if you.race() == "Demonspawn" then
+  if l_cache.race == "Demonspawn" then
     sum = sum + 3 * get_mut("augmentation", true)
     sum = sum + get_mut("sharp scales", true)
   end
@@ -342,13 +338,12 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   return pre_brand_dmg
 end
 
-
 function get_weap_dps(it, no_brand_dmg, no_weight_all_brands)
   return get_weap_dmg(it, no_brand_dmg, no_weight_all_brands) / get_weap_delay(it)
 end
 
 
----- Weapon info strings ----
+---- Stat string formatting ----
 function get_weapon_info(it)
   if not it.delay then return end
 
@@ -382,12 +377,13 @@ end
 
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
-  if is_worn then
-    stat_str = ":"..stat_str
-  elseif val >= 0 then
-    stat_str = "+"..stat_str
+  if val < 0 then
+    return abbr..stat_str
+  elseif is_worn then
+    return abbr..':'..stat_str
+  else
+    return abbr..'+'..stat_str
   end
-  return abbr..stat_str
 end
 
 function get_armour_info_strings(it)

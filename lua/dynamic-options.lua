@@ -33,22 +33,22 @@ end
 
 ---- race-specific ---
 local function set_race_options()
-  if you_are_undead() then
+  if l_cache.undead then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if you_are_pois_immune() then
+  if l_cache.poison_immune then
     crawl.setopt("force_more_message -= monster_warning:curare")
   end
 
-  if you.race() == "Gnoll" then
+  if l_cache.race == "Gnoll" then
     crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
   end
 end
 
 ---- class-specific ---
 local function set_class_options()
-  if you.class() == "Hunter" then
+  if l_cache.class == "Hunter" then
     crawl.setopt("view_delay = 30")
   end
 end

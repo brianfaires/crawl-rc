@@ -234,7 +234,7 @@ local function pickup_weapon(it, cur)
     if cur.branded and not has_ego(it) then return false end
     return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
   --elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
-  elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
+  elseif it.weap_skill == cur.weap_skill or l_cache.race == "Gnoll" then
     if no_upgrade_possible(it, cur) then return false end
 
     if it.artefact then return true end

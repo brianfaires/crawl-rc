@@ -34,36 +34,17 @@ explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
 
-####### Autopickup exceptions #######
-ae := autopickup_exceptions
-ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
-ae ^= <scrolls? of immolation, <scrolls? of poison
-ae ^= >useless_item, <misc
-ae ^= >staff of.*
-
-# Exclude the 3rd copy of any ring
-{
-  add_autopickup_func(function (it, name)
-    if it.class(true) ~= "jewellery" or it.artefact or you.race() == "Octopode" then return end
-    local st = it.subtype()
-    local found_first = false
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.class(true) == "jewellery" and inv.subtype() == st then
-        if found_first then return false end
-        found_first = true
-      end
-    end
-  end)
-}
 
 
 ####### Includes #######
 ### Shared files; do not disable
 lua_file = crawl-rc/lua/constants.lua
 lua_file = crawl-rc/lua/util.lua
+lua_file = crawl-rc/lua/cache.lua
 
 ### Mostly normal RC options ###
 include = crawl-rc/rc/autoinscribe.rc
+include = crawl-rc/rc/autopickup.rc
 include = crawl-rc/rc/display.rc
 include = crawl-rc/rc/fm-messages.rc
 include = crawl-rc/rc/macros.rc
@@ -146,6 +127,7 @@ end
 --------- ready() ---------
 local efficient_ready_last_turn = -1
 function ready()
+  ready_l_cache()
   if you.turns() ~= efficient_ready_last_turn then
     efficient_ready_last_turn = you.turns()
 
