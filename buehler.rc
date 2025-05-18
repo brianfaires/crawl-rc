@@ -3798,22 +3798,22 @@ function announce_damage()
   --Skips message on initializing game
   if prev_hp > 0 then
     local hp_diff = prev_hp - l_cache.hp
-    local l_cache.mhp_diff = l_cache.mhp - prev_hp_max
+    local mhp_diff = l_cache.mhp - prev_hp_max
     local mp_diff = prev_mp - l_cache.mp
-    local l_cache.mmp_diff = l_cache.mmp - prev_mp_max
+    local mmp_diff = l_cache.mmp - prev_mp_max
 
     -- Simplified condensed HP and MP output
     simple_announce_damage(hp_diff, mp_diff)
 
     -- HP Max
-    if l_cache.mhp_diff > 0 then
-      AD_Messages.HPMax(COLORS.green, l_cache.hp, l_cache.mhp, l_cache.mhp_diff)
-    elseif l_cache.mhp_diff < 0 then
-      AD_Messages.HPMax(COLORS.yellow, l_cache.hp, l_cache.mhp, l_cache.mhp_diff)
+    if mhp_diff > 0 then
+      AD_Messages.HPMax(COLORS.green, l_cache.hp, l_cache.mhp, mhp_diff)
+    elseif mhp_diff < 0 then
+      AD_Messages.HPMax(COLORS.yellow, l_cache.hp, l_cache.mhp, mhp_diff)
     end
 
     -- HP Loss relative to max HP change
-    if (hp_diff - l_cache.mhp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
+    if (hp_diff - mhp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
       color_by_max(AD_Messages.HPLoss, l_cache.hp, l_cache.mhp, hp_diff)
 
       if hp_diff > (l_cache.mhp * 0.20) then
@@ -3822,7 +3822,7 @@ function announce_damage()
     end
 
     -- HP Gain
-    if (hp_diff - l_cache.mhp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
+    if (hp_diff - mhp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local hp_gain = math.abs(hp_diff)
 
@@ -3837,7 +3837,7 @@ function announce_damage()
 
     -- MP Gain
     -- More than 1 MP gained
-    if (mp_diff - l_cache.mmp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
+    if (mp_diff - mmp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local mp_gain = math.abs(mp_diff)
 
@@ -3853,7 +3853,7 @@ function announce_damage()
     -- MP Loss
     -- Ensure we lost MORE than the change in max mp
     -- i.e. a change in max mp should not be considered loss
-    if (mp_diff - l_cache.mmp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
+    if (mp_diff - mmp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
       color_by_max(AD_Messages.MPLoss, l_cache.mp, l_cache.mmp, mp_diff)
     end
 
@@ -5353,9 +5353,6 @@ function get_aevp(body_arm_pen, strength)
   if body_arm_pen <= 0 then return 0 end
   return 2 * body_arm_pen * body_arm_pen * (45 - l_cache.s_armour) / (525 * (strength + 3))
 end
-// New formula for effect of str on aevp: (2/5) * evp^2 / (str+3)
-    return 2 * base_ev_penalty * base_ev_penalty * (450 - skill(SK_ARMOUR, 10))
-           / (5 * (strength() + 3)) / 450;
 
 function get_armour_ac(it)
   -- dcss v0.33
@@ -5560,10 +5557,11 @@ end
 
 function get_staff_bonus_dmg(it, no_brand_dmg)
   -- dcss v0.33
-  if no_brand_dmg and
+  if no_brand_dmg then
     local basename = it.name("base")
-    basename ~= "staff of earth" and basename ~= "staff of conjuration" then
-    return 0
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
+      return 0
+    end
   end
 
   local school = get_staff_school(it)
@@ -6002,10 +6000,10 @@ add_autopickup_func(function (it, _)
   end
 
   if CONFIG.alert_system_enabled then
-    -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
+    -- Not picking up this item. Check for alerts.
+    -- Update inventory high scores first, in case XP gained same turn item is dropped
     ready_item_alerts()
 
-    -- Not picking up this item. Check for alerts
     if loaded_pa_misc then
       if CONFIG.alert_one_time_items then pa_alert_rare_item(it) end
 
@@ -6074,11 +6072,11 @@ function pa_pickup_armour(it)
       return ac_delta >= 0
     end
   elseif is_shield(it) then
-    local cur = items.equipped_at("shield")
+    local cur = items.equipped_at("offhand")
 
     -- Exclusions
-    if not cur then return false end
     if not it.is_identified then return false end
+    if not cur or not is_shield(cur) then return false end
     if cur.name("base") ~= it.name("base") then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos

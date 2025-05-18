@@ -53,11 +53,11 @@ function pa_pickup_armour(it)
       return ac_delta >= 0
     end
   elseif is_shield(it) then
-    local cur = items.equipped_at("shield")
+    local cur = items.equipped_at("offhand")
 
     -- Exclusions
-    if not cur then return false end
     if not it.is_identified then return false end
+    if not cur or not is_shield(cur) then return false end
     if cur.name("base") ~= it.name("base") then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos

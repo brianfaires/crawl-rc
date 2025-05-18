@@ -138,22 +138,22 @@ function announce_damage()
   --Skips message on initializing game
   if prev_hp > 0 then
     local hp_diff = prev_hp - l_cache.hp
-    local l_cache.mhp_diff = l_cache.mhp - prev_hp_max
+    local mhp_diff = l_cache.mhp - prev_hp_max
     local mp_diff = prev_mp - l_cache.mp
-    local l_cache.mmp_diff = l_cache.mmp - prev_mp_max
+    local mmp_diff = l_cache.mmp - prev_mp_max
 
     -- Simplified condensed HP and MP output
     simple_announce_damage(hp_diff, mp_diff)
 
     -- HP Max
-    if l_cache.mhp_diff > 0 then
-      AD_Messages.HPMax(COLORS.green, l_cache.hp, l_cache.mhp, l_cache.mhp_diff)
-    elseif l_cache.mhp_diff < 0 then
-      AD_Messages.HPMax(COLORS.yellow, l_cache.hp, l_cache.mhp, l_cache.mhp_diff)
+    if mhp_diff > 0 then
+      AD_Messages.HPMax(COLORS.green, l_cache.hp, l_cache.mhp, mhp_diff)
+    elseif mhp_diff < 0 then
+      AD_Messages.HPMax(COLORS.yellow, l_cache.hp, l_cache.mhp, mhp_diff)
     end
 
     -- HP Loss relative to max HP change
-    if (hp_diff - l_cache.mhp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
+    if (hp_diff - mhp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
       color_by_max(AD_Messages.HPLoss, l_cache.hp, l_cache.mhp, hp_diff)
 
       if hp_diff > (l_cache.mhp * 0.20) then
@@ -162,7 +162,7 @@ function announce_damage()
     end
 
     -- HP Gain
-    if (hp_diff - l_cache.mhp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
+    if (hp_diff - mhp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local hp_gain = math.abs(hp_diff)
 
@@ -177,7 +177,7 @@ function announce_damage()
 
     -- MP Gain
     -- More than 1 MP gained
-    if (mp_diff - l_cache.mmp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
+    if (mp_diff - mmp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local mp_gain = math.abs(mp_diff)
 
@@ -193,7 +193,7 @@ function announce_damage()
     -- MP Loss
     -- Ensure we lost MORE than the change in max mp
     -- i.e. a change in max mp should not be considered loss
-    if (mp_diff - l_cache.mmp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
+    if (mp_diff - mmp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
       color_by_max(AD_Messages.MPLoss, l_cache.mp, l_cache.mmp, mp_diff)
     end
 

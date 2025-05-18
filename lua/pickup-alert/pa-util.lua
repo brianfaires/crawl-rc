@@ -33,9 +33,6 @@ function get_aevp(body_arm_pen, strength)
   if body_arm_pen <= 0 then return 0 end
   return 2 * body_arm_pen * body_arm_pen * (45 - l_cache.s_armour) / (525 * (strength + 3))
 end
-// New formula for effect of str on aevp: (2/5) * evp^2 / (str+3)
-    return 2 * base_ev_penalty * base_ev_penalty * (450 - skill(SK_ARMOUR, 10))
-           / (5 * (strength() + 3)) / 450;
 
 function get_armour_ac(it)
   -- dcss v0.33
@@ -240,10 +237,11 @@ end
 
 function get_staff_bonus_dmg(it, no_brand_dmg)
   -- dcss v0.33
-  if no_brand_dmg and
+  if no_brand_dmg then
     local basename = it.name("base")
-    basename ~= "staff of earth" and basename ~= "staff of conjuration" then
-    return 0
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
+      return 0
+    end
   end
 
   local school = get_staff_school(it)

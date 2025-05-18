@@ -117,7 +117,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
   - Exclusively train the first skill in CONFIG.auto_set_skill_targets below its target
 
 ### [lua/weapon-slots.lua](lua/weapon-slots.lua)
-- Keeps weapons in slots a/b/w. Reassignments happen whenever you drop an item.
+- Keeps weapons in slots a/b/w. Reassignments happen whenever you pickup or drop an item.
   It'll only kick non-weapons out of these slots. Favors putting ranged and polearms in w.
 
 ## Pickup and Alert system

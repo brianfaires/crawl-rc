@@ -102,10 +102,10 @@ add_autopickup_func(function (it, _)
   end
 
   if CONFIG.alert_system_enabled then
-    -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
+    -- Not picking up this item. Check for alerts.
+    -- Update inventory high scores first, in case XP gained same turn item is dropped
     ready_item_alerts()
 
-    -- Not picking up this item. Check for alerts
     if loaded_pa_misc then
       if CONFIG.alert_one_time_items then pa_alert_rare_item(it) end
 
