@@ -123,7 +123,7 @@ end
 -- Alert strong weapons early
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
-  if you.xl() <= 14 then
+  if l_cache.xl <= 14 then
     if it.is_identified and it.is_ranged then
       if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
         if get_hands(it) == 1 or not have_shield() or you.skill("shield") <= 8 then
@@ -134,10 +134,10 @@ local function alert_early_weapons(it)
   end
 
   -- Skip items when we're clearly going another route
-  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*you.xl()+3 then return end
+  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*l_cache.xl+3 then return end
 
 
-  if you.xl() < 8 then
+  if l_cache.xl < 8 then
     if has_ego(it) or it.plus and it.plus >= 4 then
       -- Make sure we don't alert a pure downgrade to something in inventory
       for inv in iter.invent_iterator:new(inv_weap_data) do
@@ -299,7 +299,7 @@ local function alert_interesting_weapon(it, cur)
         get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
           return pa_alert_item(it, "2-handed weapon")
         end
-      elseif you.skill("shields") <= 4 then
+      elseif l_cache.s_shields <= 4 then
         -- Not really training shields; may be interested in big upgrades
         if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then
           return pa_alert_item(it, "2-handed weapon")

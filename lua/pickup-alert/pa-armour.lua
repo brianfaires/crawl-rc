@@ -9,8 +9,8 @@ loadfile("crawl-rc/lua/pickup-alert/pa-main.lua")
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 local function alert_armour_upgrades(it)
   if not is_body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
-  if you.xl() > 12 then return false end
+  if l_cache.s_armour == 0 then return false end
+  if l_cache.xl > 12 then return false end
   if (it.artefact or it.branded) and not it.is_identified then return false end
 
   if armour_high_score == 0 then

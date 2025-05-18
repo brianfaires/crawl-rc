@@ -24,7 +24,7 @@ local function fully_recovered()
 
   -- If stat drain, don't wait for slow
   if status:find("slowed") then
-    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+    return l_cache.str <= 0 or l_cache.dex <= 0 or l_cache.int <= 0
   end
 
   return true

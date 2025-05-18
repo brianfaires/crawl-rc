@@ -56,7 +56,7 @@ end
 ---- god-specific ----
 -- force_mores that you don't mind on everyone are in fm-message.rc
 local function set_god_options()
-  local new_god = you.god()
+  local new_god = l_cache.god
   if new_god then
     crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
     crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
@@ -83,26 +83,26 @@ end
 
 ---- xl-specific ----
 local function set_xl_options()
-  if not warn_early_levels and you.xl() <= 5 then
+  if not warn_early_levels and l_cache.xl <= 5 then
     warn_early_levels = true
     set_dyn_fm(early_warnings, true)
-  elseif warn_early_levels and you.xl() > 5 then
+  elseif warn_early_levels and l_cache.xl > 5 then
     warn_early_levels = false
     set_dyn_fm(early_warnings, false)
   end
 
-  if not warn_mid_levels and you.xl() <= 10 then
+  if not warn_mid_levels and l_cache.xl <= 10 then
     warn_mid_levels = true
     set_dyn_fm(mid_warnings, true)
-  elseif warn_mid_levels and you.xl() > 10 then
+  elseif warn_mid_levels and l_cache.xl > 10 then
     warn_mid_levels = false
     set_dyn_fm(mid_warnings, false)
   end
 
-  if not warn_late_levels and you.xl() <= 15 then
+  if not warn_late_levels and l_cache.xl <= 15 then
     warn_late_levels = true
     set_dyn_fm(late_warnings, true)
-  elseif not warn_late_levels and you.xl() > 15 then
+  elseif not warn_late_levels and l_cache.xl > 15 then
     warn_late_levels = false
     set_dyn_fm(late_warnings, false)
   end
@@ -123,7 +123,7 @@ local function set_skill_options()
   end
 
   local arm = items.equipped_at("armour")
-  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + you.skill("Armour")/2
+  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + l_cache.s_armour/2
   if not ignoring_spellcasting and heavy_arm then
     ignoring_spellcasting = true
     crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")

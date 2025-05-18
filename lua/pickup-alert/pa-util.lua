@@ -31,7 +31,7 @@ end
 function get_aevp(encumb, strength)
   encumb = encumb - 2*you.get_base_mutation_level("sturdy frame")
   if encumb < 0 then encumb = 0 end
-  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (strength + 3) * 45)
+  return 2 * encumb * encumb * (45 - l_cache.s_armour) / (5 * (strength + 3) * 45)
 end
 
 function get_armour_ac(it)
@@ -45,7 +45,7 @@ function get_armour_ac(it)
   local deformed = get_mut("deformed body", true) > 0
   local pseudopods = get_mut("pseudopods", true) > 0
 
-  local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
+  local ac = it.ac * (l_cache.s_armour / 22 + 1) + it_plus
   if pseudopods or (deformed and is_body_armour(it)) then
     ac = ac - it.ac / 2
   end
@@ -56,8 +56,8 @@ end
 function get_armour_ev(it)
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
   -- Factors in stat changes from this armour and removing current one
-  local str = you.strength()
-  local dex = you.dexterity()
+  local str = l_cache.str
+  local dex = l_cache.dex
   local art_ev = 0
 
   -- Adjust str/dex/EV for artefact stat changes
@@ -80,8 +80,8 @@ function get_armour_ev(it)
 
   local size_factor = -2 * l_cache.size_penalty
 
-  local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
-  local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
+  local dodge_bonus = 8*(10 + l_cache.s_dodging * dex) / (20 - size_factor) / 10
+  local normalize_zero_to_zero = 8*(10 + l_cache.s_dodging * no_art_dex) / (20 - size_factor) / 10
 
   local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
@@ -157,7 +157,7 @@ function get_weap_delay(it, ignore_brands)
   if it.is_ranged then
     local body = items.equipped_at("armour")
     if body then
-      local str = you.strength()
+      local str = l_cache.str
       if it.artefact then
         if it.artprops["Str"] then str = str + it.artprops["Str"] end
       end
@@ -268,8 +268,8 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   local it_plus = if_el(it.plus, it.plus, 0)
 
   -- Adjust str/dex/slay from artefacts
-  local str = you.strength()
-  local dex = you.dexterity()
+  local str = l_cache.str
+  local dex = l_cache.dex
 
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
@@ -292,7 +292,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + l_cache.s_fighting/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod

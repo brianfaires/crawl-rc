@@ -10,7 +10,7 @@ local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if you.god() == "Uskayaw" or you.god() == "Kikubaaqudgha" then return end
+      if l_cache.god == "Uskayaw" or l_cache.god == "Kikubaaqudgha" then return end
       crawl.mpr("<cyan>6 star piety! Maybe ditch that amulet soon.</cyan>")
       crawl.more()
       alerted_max_piety = 1

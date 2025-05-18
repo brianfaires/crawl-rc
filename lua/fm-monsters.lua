@@ -230,7 +230,7 @@ function ready_force_mores()
   local res_fire = you.res_fire()
   local res_cold = you.res_cold()
   local res_drain = you.res_draining()
-  local int, _ = you.intelligence()
+  local int, _ = l_cache.int
 
   for i,v in ipairs(fm_patterns) do
     local action = nil
@@ -238,8 +238,8 @@ function ready_force_mores()
     if not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
-      if active_fm[i] and you.xl() >= v.cutoff then action = "-"
-      elseif not active_fm[i] and you.xl() < v.cutoff then action = "+"
+      if active_fm[i] and l_cache.xl >= v.cutoff then action = "-"
+      elseif not active_fm[i] and l_cache.xl < v.cutoff then action = "+"
       end
     elseif v.cond == "maxhp" then
       if active_fm[i] and maxhp >= v.cutoff then action = "-"

@@ -252,7 +252,7 @@ end
 --- Helper ---
 function you_have_allies()
   return you.skill("Summonings") + you.skill("Necromancy") > 0 or
-      util.contains(gods_with_allies, you.god())
+      util.contains(gods_with_allies, l_cache.god)
 end
 
 function is_body_armour(it)
@@ -3743,7 +3743,7 @@ local prev_mp_max = 0
 -- Simplified condensed HP and MP output
 -- Print a single condensed line showing HP & MP change
 -- e.g.😨 HP[-2] MP[-1]
-local function simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
+local function simple_announce_damage(hp_diff, mp_diff)
   local emoji
   local message
 
@@ -3760,13 +3760,13 @@ local function simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
   end
 
   if message ~= nil then
-    if cur_hp <= (max_hp * 0.25) then
+    if l_cache.hp <= (l_cache.mhp * 0.25) then
       emoji = "😱"
-    elseif cur_hp <= (max_hp * 0.50) then
+    elseif l_cache.hp <= (l_cache.mhp * 0.50) then
       emoji = "😨"
-    elseif cur_hp <= (max_hp *  0.75) then
+    elseif l_cache.hp <= (l_cache.mhp *  0.75) then
       emoji = "😮"
-    elseif cur_hp < max_hp then
+    elseif l_cache.hp < l_cache.mhp then
       emoji = "😕"
     else
       emoji = "😎"
@@ -3795,78 +3795,75 @@ local function color_by_max(message_func, curr, max, diff)
 end
 
 function announce_damage()
-  local cur_hp, max_hp = you.hp()
-  local cur_mp, max_mp = you.mp()
-
   --Skips message on initializing game
   if prev_hp > 0 then
-    local hp_diff = prev_hp - cur_hp
-    local max_hp_diff = max_hp - prev_hp_max
-    local mp_diff = prev_mp - cur_mp
-    local max_mp_diff = max_mp - prev_mp_max
+    local hp_diff = prev_hp - l_cache.hp
+    local l_cache.mhp_diff = l_cache.mhp - prev_hp_max
+    local mp_diff = prev_mp - l_cache.mp
+    local l_cache.mmp_diff = l_cache.mmp - prev_mp_max
 
     -- Simplified condensed HP and MP output
-    simple_announce_damage(cur_hp, max_hp, hp_diff, mp_diff)
+    simple_announce_damage(hp_diff, mp_diff)
 
     -- HP Max
-    if max_hp_diff > 0 then
-      AD_Messages.HPMax(COLORS.green, cur_hp, max_hp, max_hp_diff)
-    elseif max_hp_diff < 0 then
-      AD_Messages.HPMax(COLORS.yellow, cur_hp, max_hp, max_hp_diff)
+    if l_cache.mhp_diff > 0 then
+      AD_Messages.HPMax(COLORS.green, l_cache.hp, l_cache.mhp, l_cache.mhp_diff)
+    elseif l_cache.mhp_diff < 0 then
+      AD_Messages.HPMax(COLORS.yellow, l_cache.hp, l_cache.mhp, l_cache.mhp_diff)
     end
 
     -- HP Loss relative to max HP change
-    if (hp_diff - max_hp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
-      color_by_max(AD_Messages.HPLoss, cur_hp, max_hp, hp_diff)
+    if (hp_diff - l_cache.mhp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
+      color_by_max(AD_Messages.HPLoss, l_cache.hp, l_cache.mhp, hp_diff)
 
-      if hp_diff > (max_hp * 0.20) then
+      if hp_diff > (l_cache.mhp * 0.20) then
         AD_Messages.HPMassivePause()
       end
     end
 
     -- HP Gain
-    if (hp_diff - max_hp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
+    if (hp_diff - l_cache.mhp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local hp_gain = math.abs(hp_diff)
 
-      if (hp_gain > 1) and (cur_hp ~= max_hp) then
-        color_by_max(AD_Messages.HPGain, cur_hp, max_hp, hp_gain)
+      if (hp_gain > 1) and (l_cache.hp ~= l_cache.mhp) then
+        color_by_max(AD_Messages.HPGain, l_cache.hp, l_cache.mhp, hp_gain)
       end
 
-      if (cur_hp == max_hp) then
-        AD_Messages.HPFull(nil, cur_hp)
+      if (l_cache.hp == l_cache.mhp) then
+        AD_Messages.HPFull(nil, l_cache.hp)
       end
     end
 
     -- MP Gain
     -- More than 1 MP gained
-    if (mp_diff - max_mp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
+    if (mp_diff - l_cache.mmp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
       -- Remove the negative sign by taking absolute value
       local mp_gain = math.abs(mp_diff)
 
-      if (mp_gain > 1) and (cur_mp ~= max_mp) then
-        color_by_max(AD_Messages.MPGain, cur_mp, max_mp, mp_gain)
+      if (mp_gain > 1) and (l_cache.mp ~= l_cache.mmp) then
+        color_by_max(AD_Messages.MPGain, l_cache.mp, l_cache.mmp, mp_gain)
       end
 
-      if (cur_mp == max_mp) then
-        AD_Messages.MPFull(nil, cur_mp)
+      if (l_cache.mp == l_cache.mmp) then
+        AD_Messages.MPFull(nil, l_cache.mp)
       end
     end
 
     -- MP Loss
     -- Ensure we lost MORE than the change in max mp
     -- i.e. a change in max mp should not be considered loss
-    if (mp_diff - max_mp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
-      color_by_max(AD_Messages.MPLoss, cur_mp, max_mp, mp_diff)
+    if (mp_diff - l_cache.mmp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
+      color_by_max(AD_Messages.MPLoss, l_cache.mp, l_cache.mmp, mp_diff)
     end
 
   end
 
   --Set previous hp/mp and form at end of turn
-  prev_hp = cur_hp
-  prev_hp_max = max_hp
-  prev_mp = cur_mp
-  prev_mp_max = max_mp
+  prev_hp = l_cache.hp
+  prev_hp_max = l_cache.mhp
+  prev_mp = l_cache.mp
+  prev_mp_max = l_cache.mmp
 end
 
 }
@@ -4090,7 +4087,7 @@ end
 ---- god-specific ----
 -- force_mores that you don't mind on everyone are in fm-message.rc
 local function set_god_options()
-  local new_god = you.god()
+  local new_god = l_cache.god
   if new_god then
     crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
     crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
@@ -4117,26 +4114,26 @@ end
 
 ---- xl-specific ----
 local function set_xl_options()
-  if not warn_early_levels and you.xl() <= 5 then
+  if not warn_early_levels and l_cache.xl <= 5 then
     warn_early_levels = true
     set_dyn_fm(early_warnings, true)
-  elseif warn_early_levels and you.xl() > 5 then
+  elseif warn_early_levels and l_cache.xl > 5 then
     warn_early_levels = false
     set_dyn_fm(early_warnings, false)
   end
 
-  if not warn_mid_levels and you.xl() <= 10 then
+  if not warn_mid_levels and l_cache.xl <= 10 then
     warn_mid_levels = true
     set_dyn_fm(mid_warnings, true)
-  elseif warn_mid_levels and you.xl() > 10 then
+  elseif warn_mid_levels and l_cache.xl > 10 then
     warn_mid_levels = false
     set_dyn_fm(mid_warnings, false)
   end
 
-  if not warn_late_levels and you.xl() <= 15 then
+  if not warn_late_levels and l_cache.xl <= 15 then
     warn_late_levels = true
     set_dyn_fm(late_warnings, true)
-  elseif not warn_late_levels and you.xl() > 15 then
+  elseif not warn_late_levels and l_cache.xl > 15 then
     warn_late_levels = false
     set_dyn_fm(late_warnings, false)
   end
@@ -4157,7 +4154,7 @@ local function set_skill_options()
   end
 
   local arm = items.equipped_at("armour")
-  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + you.skill("Armour")/2
+  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + l_cache.s_armour/2
   if not ignoring_spellcasting and heavy_arm then
     ignoring_spellcasting = true
     crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
@@ -4333,7 +4330,7 @@ local function fully_recovered()
 
   -- If stat drain, don't wait for slow
   if status:find("slowed") then
-    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+    return l_cache.str <= 0 or l_cache.dex <= 0 or l_cache.int <= 0
   end
 
   return true
@@ -4635,7 +4632,7 @@ function ready_force_mores()
   local res_fire = you.res_fire()
   local res_cold = you.res_cold()
   local res_drain = you.res_draining()
-  local int, _ = you.intelligence()
+  local int, _ = l_cache.int
 
   for i,v in ipairs(fm_patterns) do
     local action = nil
@@ -4643,8 +4640,8 @@ function ready_force_mores()
     if not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
-      if active_fm[i] and you.xl() >= v.cutoff then action = "-"
-      elseif not active_fm[i] and you.xl() < v.cutoff then action = "+"
+      if active_fm[i] and l_cache.xl >= v.cutoff then action = "-"
+      elseif not active_fm[i] and l_cache.xl < v.cutoff then action = "+"
       end
     elseif v.cond == "maxhp" then
       if active_fm[i] and maxhp >= v.cutoff then action = "-"
@@ -4877,7 +4874,7 @@ local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if you.god() == "Uskayaw" or you.god() == "Kikubaaqudgha" then return end
+      if l_cache.god == "Uskayaw" or l_cache.god == "Kikubaaqudgha" then return end
       crawl.mpr("<cyan>6 star piety! Maybe ditch that amulet soon.</cyan>")
       crawl.more()
       alerted_max_piety = 1
@@ -5018,8 +5015,8 @@ end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  return you.god() ~= "No God" or l_cache.race == "Demigod" or
-    (you.good_god() and you.xl() > 9)
+  return l_cache.god ~= "No God" or l_cache.race == "Demigod" or
+    (you.good_god() and l_cache.xl > 9)
 end
 
 local function ready_ignore_altars()
@@ -5354,7 +5351,7 @@ end
 function get_aevp(encumb, strength)
   encumb = encumb - 2*you.get_base_mutation_level("sturdy frame")
   if encumb < 0 then encumb = 0 end
-  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (strength + 3) * 45)
+  return 2 * encumb * encumb * (45 - l_cache.s_armour) / (5 * (strength + 3) * 45)
 end
 
 function get_armour_ac(it)
@@ -5368,7 +5365,7 @@ function get_armour_ac(it)
   local deformed = get_mut("deformed body", true) > 0
   local pseudopods = get_mut("pseudopods", true) > 0
 
-  local ac = it.ac * (you.skill("Armour") / 22 + 1) + it_plus
+  local ac = it.ac * (l_cache.s_armour / 22 + 1) + it_plus
   if pseudopods or (deformed and is_body_armour(it)) then
     ac = ac - it.ac / 2
   end
@@ -5379,8 +5376,8 @@ end
 function get_armour_ev(it)
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
   -- Factors in stat changes from this armour and removing current one
-  local str = you.strength()
-  local dex = you.dexterity()
+  local str = l_cache.str
+  local dex = l_cache.dex
   local art_ev = 0
 
   -- Adjust str/dex/EV for artefact stat changes
@@ -5403,8 +5400,8 @@ function get_armour_ev(it)
 
   local size_factor = -2 * l_cache.size_penalty
 
-  local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
-  local normalize_zero_to_zero = 8*(10 + you.skill("Dodging") * no_art_dex) / (20 - size_factor) / 10
+  local dodge_bonus = 8*(10 + l_cache.s_dodging * dex) / (20 - size_factor) / 10
+  local normalize_zero_to_zero = 8*(10 + l_cache.s_dodging * no_art_dex) / (20 - size_factor) / 10
 
   local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
   if encumb < 0 then encumb = 0 end
@@ -5480,7 +5477,7 @@ function get_weap_delay(it, ignore_brands)
   if it.is_ranged then
     local body = items.equipped_at("armour")
     if body then
-      local str = you.strength()
+      local str = l_cache.str
       if it.artefact then
         if it.artprops["Str"] then str = str + it.artprops["Str"] end
       end
@@ -5591,8 +5588,8 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   local it_plus = if_el(it.plus, it.plus, 0)
 
   -- Adjust str/dex/slay from artefacts
-  local str = you.strength()
-  local dex = you.dexterity()
+  local str = l_cache.str
+  local dex = l_cache.dex
 
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
@@ -5615,7 +5612,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + l_cache.s_fighting/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
@@ -6027,8 +6024,8 @@ end)
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 local function alert_armour_upgrades(it)
   if not is_body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
-  if you.xl() > 12 then return false end
+  if l_cache.s_armour == 0 then return false end
+  if l_cache.xl > 12 then return false end
   if (it.artefact or it.branded) and not it.is_identified then return false end
 
   if armour_high_score == 0 then
@@ -6502,7 +6499,7 @@ end
 -- Alert strong weapons early
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
-  if you.xl() <= 14 then
+  if l_cache.xl <= 14 then
     if it.is_identified and it.is_ranged then
       if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
         if get_hands(it) == 1 or not have_shield() or you.skill("shield") <= 8 then
@@ -6513,10 +6510,10 @@ local function alert_early_weapons(it)
   end
 
   -- Skip items when we're clearly going another route
-  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*you.xl()+3 then return end
+  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*l_cache.xl+3 then return end
 
 
-  if you.xl() < 8 then
+  if l_cache.xl < 8 then
     if has_ego(it) or it.plus and it.plus >= 4 then
       -- Make sure we don't alert a pure downgrade to something in inventory
       for inv in iter.invent_iterator:new(inv_weap_data) do
@@ -6678,7 +6675,7 @@ local function alert_interesting_weapon(it, cur)
         get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
           return pa_alert_item(it, "2-handed weapon")
         end
-      elseif you.skill("shields") <= 4 then
+      elseif l_cache.s_shields <= 4 then
         -- Not really training shields; may be interested in big upgrades
         if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then
           return pa_alert_item(it, "2-handed weapon")
