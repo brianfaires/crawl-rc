@@ -5,7 +5,7 @@ loadfile("crawl-rc/lua/util.lua")
 function pa_show_alert_msg(alert_text, item_name)
     crawl.mpr("<cyan>----<magenta>"..alert_text.."<yellow>"..item_name.."</yellow></magenta>----</cyan>")
     you.stop_activity()
-  end
+end
 
 
 --- Custom def of ego/branded ---
@@ -28,10 +28,10 @@ end
 
 
 --------- Armour (Shadowing crawl calcs) ---------
-function get_shield_penalty(sh)
-  return 2 * sh.encumbrance * sh.encumbrance
-        * (27 - you.skill("Shields")) / 27
-        / (25 + 5 * you.strength())
+function get_aevp(encumb, strength)
+  encumb = encumb - 2*you.get_base_mutation_level("sturdy frame")
+  if encumb < 0 then encumb = 0 end
+  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (strength + 3) * 45)
 end
 
 function get_armour_ac(it)
@@ -51,12 +51,6 @@ function get_armour_ac(it)
   end
 
   return ac
-end
-
-function get_aevp(encumb, strength)
-  encumb = encumb - 2*you.get_base_mutation_level("sturdy frame")
-  if encumb < 0 then encumb = 0 end
-  return 2 * encumb * encumb * (45 - you.skill("Armour")) / (5 * (strength + 3) * 45)
 end
 
 function get_armour_ev(it)
@@ -105,9 +99,16 @@ function get_armour_ev(it)
   return dodge_bonus - aevp + art_ev - normalize_zero_to_zero
 end
 
+function get_shield_penalty(sh)
+  -- dcss v0.33
+  return 2 * sh.encumbrance * sh.encumbrance
+        * (27 - l_cache.s_shields) / 27
+        / (25 + 5 * l_cache.str)
+end
 
 function get_shield_sh(it)
-  local dex = you.dexterity()
+  -- dcss v0.33
+  local dex = l_cache.dex
   if it.artefact and it.is_identified then
     local art_dex = it.artprops["Dex"]
     if art_dex then dex = dex + art_dex end
@@ -119,22 +120,13 @@ function get_shield_sh(it)
     if art_dex then dex = dex - art_dex end
   end
 
-  local it_plus = if_el(it.plus, it.plus, 0)
+  local it_plus = it.plus or 0
 
-  local skill = you.skill("Shields")
-  local basename = it.name("base")
-  local sh_size
-  if basename:find("tower shield") then sh_size = 0
-  elseif basename:find("kite shield") then sh_size = -1
-  else sh_size = -2
-  end
-
-  local base_sh = it.ac * 2 + sh_size*l_cache.size_penalty
-  local shield = base_sh * (50 + skill*5/2)
-  shield = shield + 200*it_plus
-  shield = shield + if_el(skill < 3, 76*skill, 38*(3+skill))
-  shield = shield + dex*38*(base_sh+13)/26
-  return (shield + 50) / 200
+  local base_sh = it.ac * 2
+  local shield = base_sh * (50 + l_cache.s_shields*5/2)
+  shield = shield + 200 * it_plus
+  shield = shield + 38 * (l_cache.s_shields + 3 + dex * (base_sh + 13) / 26)
+  return shield / 200
 end
 
 
@@ -144,24 +136,6 @@ function get_hands(it)
   local st, _ = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
-end
-
-function get_weap_min_delay(it)
-  -- This is an abbreviated version of the actual calculation.
-  -- Intended only to be used to prevent skill from reducing too far in get_weap_delay()
-  local basename = it.name("base")
-
-  local adj_base_delay = it.delay / 2
-  if it.ego() == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
-  local min_delay = math.floor(adj_base_delay)
-
-  if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
-  if min_delay > 7 then min_delay = 7 end
-
-  if basename:find("longbow") then min_delay = 6
-  elseif (basename:find("crossbow") or basename:find("arbalest")) and min_delay < 10 then min_delay = 10 end
-
-  return min_delay
 end
 
 function get_weap_delay(it, ignore_brands)
@@ -198,6 +172,25 @@ function get_weap_delay(it, ignore_brands)
 
   return delay / 10
 end
+
+function get_weap_min_delay(it)
+  -- This is an abbreviated version of the actual calculation.
+  -- Intended only to be used to prevent skill from reducing too far in get_weap_delay()
+  local basename = it.name("base")
+
+  local adj_base_delay = it.delay / 2
+  if it.ego() == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
+  local min_delay = math.floor(adj_base_delay)
+
+  if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
+  if min_delay > 7 then min_delay = 7 end
+
+  if basename:find("longbow") then min_delay = 6
+  elseif (basename:find("crossbow") or basename:find("arbalest")) and min_delay < 10 then min_delay = 10 end
+
+  return min_delay
+end
+
 
 --------- Other damage calcs ---------
 -- Count all slay bonuses from weapons/armour/jewellery
@@ -240,13 +233,6 @@ function get_slay_bonuses()
   return sum
 end
 
-
-function get_staff_school(it)
-  for k,v in pairs(staff_schools) do
-    if it.name("base") == "staff of "..k then return v end
-	end
-end
-
 function get_staff_bonus_dmg(it, no_brand_dmg)
   if no_brand_dmg and
      it.name("base") ~= "staff of earth" and
@@ -265,6 +251,12 @@ function get_staff_bonus_dmg(it, no_brand_dmg)
   -- Earth magic does more, but reduced by armour. Poison/draining bonus effects are ignored.
   local avg_dmg = 0.625 * (evo_skill/2 + spell_skill)
   return avg_dmg*chance
+end
+
+function get_staff_school(it)
+  for k,v in pairs(staff_schools) do
+    if it.name("base") == "staff of "..k then return v end
+	end
 end
 
 
@@ -344,7 +336,49 @@ end
 
 
 ---- Stat string formatting ----
-function get_weapon_info(it)
+local function format_stat(abbr, val, is_worn)
+  local stat_str = string.format("%.1f", val)
+  if val < 0 then
+    return abbr..stat_str
+  elseif is_worn then
+    return abbr..':'..stat_str
+  else
+    return abbr..'+'..stat_str
+  end
+end
+
+function get_armour_info_strings(it)
+  if not is_armour(it) or is_orb(it) then return "", "" end
+
+  local cur = items.equipped_at(it.equip_type)
+  local cur_ac = 0
+  local cur_sh = 0
+  local cur_ev = 0
+  local is_worn = it.ininventory and cur and cur.slot == it.slot
+  if cur and not is_worn then
+    -- Only show deltas if not same item
+    if is_shield(cur) then
+      cur_sh = get_shield_sh(cur)
+      cur_ev = -get_shield_penalty(cur)
+    else
+      cur_ac = get_armour_ac(cur)
+      cur_ev = get_armour_ev(cur)
+    end
+  end
+
+  if is_shield(it) then
+    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh, is_worn)
+    local ev_str = format_stat("EV", -get_shield_penalty(it) - cur_ev, is_worn)
+    return sh_str, ev_str
+  else
+    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac, is_worn)
+    if not is_body_armour(it) then return ac_str end
+    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev, is_worn)
+    return ac_str, ev_str
+  end
+end
+
+function get_weapon_info_string(it)
   if not it.delay then return end
 
   local dmg = get_weap_dmg(it)
@@ -375,48 +409,8 @@ function get_weapon_info(it)
   return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
 end
 
-local function format_stat(abbr, val, is_worn)
-  local stat_str = string.format("%.1f", val)
-  if val < 0 then
-    return abbr..stat_str
-  elseif is_worn then
-    return abbr..':'..stat_str
-  else
-    return abbr..'+'..stat_str
-  end
-end
 
-function get_armour_info_strings(it)
-  if not is_armour(it) or is_orb(it) then return "", "" end
-
-  local cur = items.equipped_at(it.equip_type)
-  local cur_ac = 0
-  local cur_sh = 0
-  local cur_ev = 0
-  local is_worn = it.ininventory and cur and cur.slot == it.slot
-  if cur and not is_worn then
-    -- Only show deltas if not same item
-    if is_shield(cur) then
-      cur_sh = get_shield_sh(cur)
-      cur_ev = get_shield_penalty(cur)
-    else
-      cur_ac = get_armour_ac(cur)
-      cur_ev = get_armour_ev(cur)
-    end
-  end
-
-  if is_shield(it) then
-    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh, is_worn)
-    local ev_str = format_stat("EV", get_shield_penalty(it) - cur_ev, is_worn)
-    return sh_str, ev_str
-  else
-    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac, is_worn)
-    if not is_body_armour(it) then return ac_str end
-    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev, is_worn)
-    return ac_str, ev_str
-  end
-end
-
+---- Util ----
 function get_skill(skill)
   if not skill:find(",") then
     return you.skill(skill)

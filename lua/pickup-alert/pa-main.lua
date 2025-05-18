@@ -18,7 +18,7 @@ function pa_alert_item(it, alert_type)
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
+      pa_show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info_string(it))
 	  elseif is_body_armour(it) then
       local ac, ev = get_armour_info_strings(it)
       pa_show_alert_msg("Item alert, "..alert_type..": ", name.." "..ac..", "..ev)

@@ -32,7 +32,7 @@ local function inscribe_armour_stats(it)
 end
 
 local function inscribe_weapon_stats(it)
-  local new_inscr = get_weapon_info(it)
+  local new_inscr = get_weapon_info_string(it)
 
   local idx = it.inscription:find("DPS:")
   if idx then
