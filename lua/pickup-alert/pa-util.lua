@@ -28,13 +28,17 @@ end
 
 
 --------- Armour (Shadowing crawl calcs) ---------
-function get_aevp(encumb, strength)
-  encumb = encumb - 2*you.get_base_mutation_level("sturdy frame")
-  if encumb < 0 then encumb = 0 end
-  return 2 * encumb * encumb * (45 - l_cache.s_armour) / (5 * (strength + 3) * 45)
+function get_aevp(body_arm_pen, strength)
+  -- dcss v0.33
+  if body_arm_pen <= 0 then return 0 end
+  return 2 * body_arm_pen * body_arm_pen * (45 - l_cache.s_armour) / (525 * (strength + 3))
 end
+// New formula for effect of str on aevp: (2/5) * evp^2 / (str+3)
+    return 2 * base_ev_penalty * base_ev_penalty * (450 - skill(SK_ARMOUR, 10))
+           / (5 * (strength() + 3)) / 450;
 
 function get_armour_ac(it)
+  -- dcss v0.33
   local it_plus = it.plus or 0
 
   if it.artefact and it.is_identified then
@@ -42,22 +46,25 @@ function get_armour_ac(it)
     if art_ac then it_plus = it_plus + art_ac end
   end
 
+  local ac = it.ac * (1 + l_cache.s_armour / 22) + it_plus
+  if not is_body_armour(it) then return ac end
+
   local deformed = get_mut("deformed body", true) > 0
   local pseudopods = get_mut("pseudopods", true) > 0
-
-  local ac = it.ac * (l_cache.s_armour / 22 + 1) + it_plus
-  if pseudopods or (deformed and is_body_armour(it)) then
-    ac = ac - it.ac / 2
+  if pseudopods or deformed then
+    return ac * 6/10
   end
 
   return ac
 end
 
 function get_armour_ev(it)
+  -- dcss v0.33
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
   -- Factors in stat changes from this armour and removing current one
   local str = l_cache.str
   local dex = l_cache.dex
+  local no_art_dex = dex
   local art_ev = 0
 
   -- Adjust str/dex/EV for artefact stat changes
@@ -67,8 +74,6 @@ function get_armour_ev(it)
     if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
     if worn.artprops["EV"] then art_ev = art_ev - worn.artprops["EV"] end
   end
-
-  local no_art_dex = dex
 
   if it.artefact then
     if it.artprops["Str"] then str = str + it.artprops["Str"] end
@@ -81,13 +86,13 @@ function get_armour_ev(it)
   local size_factor = -2 * l_cache.size_penalty
 
   local dodge_bonus = 8*(10 + l_cache.s_dodging * dex) / (20 - size_factor) / 10
-  local normalize_zero_to_zero = 8*(10 + l_cache.s_dodging * no_art_dex) / (20 - size_factor) / 10
+  local normalize_comparison = 8*(10 + l_cache.s_dodging * no_art_dex) / (20 - size_factor) / 10
 
-  local encumb = it.encumbrance - 2 * get_mut("sturdy frame", true)
-  if encumb < 0 then encumb = 0 end
-  local armour_penalty = encumb - 3
-
-  if armour_penalty > 0 then
+  local body_arm_pen = it.encumbrance - 2 * get_mut("sturdy frame", true)
+  local armour_penalty = body_arm_pen - 3
+  if armour_penalty <= 0 then
+    armour_penalty = 0
+  else
     if armour_penalty >= str then
       dodge_bonus = dodge_bonus * (str / (armour_penalty * 2))
     else
@@ -95,8 +100,8 @@ function get_armour_ev(it)
     end
   end
 
-  local aevp = get_aevp(encumb, str)
-  return dodge_bonus - aevp + art_ev - normalize_zero_to_zero
+  local aevp = get_aevp(body_arm_pen, str)
+  return dodge_bonus - aevp + art_ev - normalize_comparison
 end
 
 function get_shield_penalty(sh)
@@ -234,22 +239,23 @@ function get_slay_bonuses()
 end
 
 function get_staff_bonus_dmg(it, no_brand_dmg)
+  -- dcss v0.33
   if no_brand_dmg and
-     it.name("base") ~= "staff of earth" and
-     it.name("base") ~= "staff of conjuration" then
+    local basename = it.name("base")
+    basename ~= "staff of earth" and basename ~= "staff of conjuration" then
     return 0
   end
 
-  local evo_skill = you.skill("Evocations")
   local school = get_staff_school(it)
   if not school then return 0 end
-
   local spell_skill = get_skill(school)
-  local chance = (evo_skill + spell_skill/2) / 15
+  local evo_skill = you.skill("Evocations")
+  
+  local chance = (2*evo_skill + spell_skill) / 30
   if chance > 1 then chance = 1 end
-  -- 0.625 is an acceptable approximation
-  -- Earth magic does more, but reduced by armour. Poison/draining bonus effects are ignored.
-  local avg_dmg = 0.625 * (evo_skill/2 + spell_skill)
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local avg_dmg = 3/4 * (evo_skill/2 + spell_skill)
   return avg_dmg*chance
 end
 
