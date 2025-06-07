@@ -5914,7 +5914,7 @@ function pa_alert_item(it, alert_type)
     end
 
     insert_item_and_less_enchanted(pa_items_alerted, it)
-    table.insert(pa_all_level_alerts, qualname)
+    table.insert(pa_all_level_alerts, name)
   end
 
   -- Returns true to make other code more concise; indicates that we tried to alert this item
