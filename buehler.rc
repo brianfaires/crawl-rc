@@ -5886,7 +5886,8 @@ end
 if loaded_pa_main then return end
 loaded_pa_main = true
 
-local pause_pickup_alert_sys = false
+-- Global var for access by autopickup function
+pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 
 function pa_alert_item(it, alert_type)

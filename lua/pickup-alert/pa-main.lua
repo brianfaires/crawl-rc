@@ -5,7 +5,8 @@ loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
 
-local pause_pickup_alert_sys = false
+-- Global var for access by autopickup function
+pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 
 function pa_alert_item(it, alert_type)
