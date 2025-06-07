@@ -476,19 +476,19 @@ ai += staff of poison:rPois
   ------------------- Hook -------------------
   function ready_safe_consumables()
     -- Remove the default "!r" and "!q" inscriptions after identify
-    for it in iter.invent_iterator:new(items.inventory()) do
-      local it_class = it.class(true)
-      if it_class == "potion" or it_class == "scroll" then
-        local st, _ = it.subtype()
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      local inv_class = inv.class(true)
+      if inv_class == "potion" or inv_class == "scroll" then
+        local st, _ = inv.subtype()
         if (st == "poison" and you.res_poison() > 0)
           or (st == "torment" and you.torment_immune())
           or util.contains(no_inscription_needed, st) then
-            if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
-            if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
-        elseif it_class == "scroll" and not it.inscription:find("!r") then
-            it.inscribe("!r")
-        elseif it_class == "potion" and not it.inscription:find("!q") then
-            it.inscribe("!q")
+            if inv.inscription:find("%!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
+            if inv.inscription:find("%!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+        elseif inv_class == "scroll" and not inv.inscription:find("!r") then
+            inv.inscribe("!r")
+        elseif inv_class == "potion" and not inv.inscription:find("!q") then
+            inv.inscribe("!q")
         end
       end
     end
@@ -4197,8 +4197,8 @@ create_persistent_data("dropped_item_exclusions", "")
 -- Init autopickup missiles
 local started_with_ranged = false
 if you.skill("Ranged Weapons") > 2 then
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if it.is_ranged then
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.is_ranged then
       started_with_ranged = true
       break
     end
@@ -4221,7 +4221,7 @@ local function get_jewellery_name(text)
 end
 
 local function get_missile_name(text)
-  for item_name in iter.invent_iterator:new(all_missiles) do
+  for _,item_name in ipairs(all_missiles) do
     if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
@@ -4239,14 +4239,16 @@ local function get_missile_name(text)
 end
 
 local function get_misc_name(text)
-  for item_name in iter.invent_iterator:new(all_misc) do
+  for _,item_name in ipairs(all_misc) do
     if text:find(item_name) then return item_name end
   end
 end
 
 local function has_enchantable_weap_in_inv()
-  for cur in iter.invent_iterator:new(items.inventory()) do
-    if cur.class(true) == "weapon" and not cur.artefact and cur.plus < 9 then return true end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if it.delay ~= nil and inv.plus < 9 and (not inv.artefact or you.race() == "Mountain Dwarf") then
+      return true
+    end
   end
 
   return false
@@ -4324,7 +4326,7 @@ local function fully_recovered()
   -- Statuses that will always rest off
   local status = you.status()
 
-  for s in iter.invent_iterator:new(status_to_wait_off) do
+  for _,s in ipairs(status_to_wait_off) do
     if status:find(s) then return false end
   end
 
@@ -4842,11 +4844,11 @@ end
 
 ------------------ Hook ------------------
 function ready_inscribe_stats()
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(it) or is_staff(it) then
-      if CONFIG.inscribe_weapons then inscribe_weapon_stats(it) end
-    elseif is_armour(it) then
-      if CONFIG.inscribe_armour then inscribe_armour_stats(it) end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) or is_staff(inv) then
+      if CONFIG.inscribe_weapons then inscribe_weapon_stats(inv) end
+    elseif is_armour(inv) then
+      if CONFIG.inscribe_armour then inscribe_armour_stats(inv) end
     end
   end
 
@@ -4943,10 +4945,10 @@ create_persistent_data("found_scroll_of_id", 0)
 
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
 local function remind_unidentified_items()
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if not it.is_identified then
-      for s in iter.invent_iterator:new(items.inventory()) do
-        if s and s.name("qual"):find("scroll of identify") then
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if not inv.is_identified then
+      for inv_id in iter.invent_iterator:new(items.inventory()) do
+        if inv_id and inv_id.name("qual"):find("scroll of identify") then
           crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
           break
         end
@@ -5225,18 +5227,18 @@ local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
   priorities_w = { -1, -1, -1 }
 
-  for it in iter.invent_iterator:new(items.inventory()) do
-    local p = get_priority_w(it)
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local p = get_priority_w(inv)
     if p > 0 then
-      if priorities_w[p] == -1 then priorities_w[p] = it.slot
-      else priorities_w[p+1] = it.slot
+      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
+      else priorities_w[p+1] = inv.slot
       end
     end
 
-    p = get_priority_ab(it)
+    p = get_priority_ab(inv)
     if p > 0 then
-      if priorities_ab[p] == -1 then priorities_ab[p] = it.slot
-      else priorities_ab[p+1] = it.slot
+      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
+      else priorities_ab[p+1] = inv.slot
       end
     end
   end
@@ -5954,7 +5956,7 @@ function c_message_item_alerts(text, _)
     pause_pickup_alert_sys = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
-    for v in iter.invent_iterator:new(pa_all_level_alerts) do
+    for _,v in ipairs(pa_all_level_alerts) do
       if all_alerts == "" then all_alerts = v
       else all_alerts = all_alerts..", "..v
       end
@@ -6368,7 +6370,7 @@ function pa_pickup_staff(it)
   if get_skill(school) == 0 then return false end
 
   -- Check for previously picked staves
-  for v in iter.invent_iterator:new(pa_items_picked) do
+  for _,v in ipairs(pa_items_picked) do
     if v:find(it.name("base")) then return false end
   end
 
@@ -6430,7 +6432,7 @@ local inv_max_dmg_acc = {
 local function set_top_school()
   local max = 0
 
-  for v in iter.invent_iterator:new(all_weap_schools) do
+  for _,v in ipairs(all_weap_schools) do
     if get_skill(v) > max then
       max = get_skill(v)
       top_school = v
@@ -6461,24 +6463,24 @@ function generate_inv_weap_arrays()
 
   set_top_school()
 
-  for cur in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(cur) and not is_staff(cur) then
-      update_high_scores(cur)
-      inv_weap_data[#inv_weap_data + 1] = make_weapon_struct(cur)
-      if has_ego(cur) then table.insert(egos, get_ego(cur)) end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and not is_staff(inv) then
+      update_high_scores(inv)
+      inv_weap_data[#inv_weap_data + 1] = make_weapon_struct(inv)
+      if has_ego(inv) then table.insert(egos, get_ego(inv)) end
 
       local dmg = inv_weap_data[#inv_weap_data].dps
-      local weap_type = get_weap_tag(cur)
+      local weap_type = get_weap_tag(inv)
       if dmg > inv_max_dmg[weap_type] then
         inv_max_dmg[weap_type] = dmg
-        local cur_plus = cur.plus
-        if not cur_plus then cur_plus = 0 end
-        inv_max_dmg_acc[weap_type] = cur.accuracy + cur_plus
+        local inv_plus = inv.plus
+        if not inv_plus then inv_plus = 0 end
+        inv_max_dmg_acc[weap_type] = inv.accuracy + inv_plus
 
     -- Keep a separate count for all melee weapons
     if weap_type:find("melee") then
       inv_max_dmg["melee_only"] = dmg
-      inv_max_dmg_acc["melee_only"] = cur.accuracy + cur_plus
+      inv_max_dmg_acc["melee_only"] = inv.accuracy + inv_plus
     end
       end
     end
@@ -6520,7 +6522,7 @@ local function alert_early_weapons(it)
   if l_cache.xl < 8 then
     if has_ego(it) or it.plus and it.plus >= 4 then
       -- Make sure we don't alert a pure downgrade to something in inventory
-      for inv in iter.invent_iterator:new(inv_weap_data) do
+      for _,inv in ipairs(inv_weap_data) do
         if inv.basename == it.name("base") then
           if inv.plus >= it.plus then
             if not has_ego(it) then return end
@@ -6542,7 +6544,7 @@ local function alert_first_ranged(it)
     if have_shield() then return false end
     if alerted_first_ranged_two_handed == 0 then
       alerted_first_ranged_two_handed = 1
-      for inv in iter.invent_iterator:new(inv_weap_data) do
+      for _,inv in ipairs(inv_weap_data) do
         if inv.is_ranged and inv.hands == 2 then return true end
       end
       return pa_alert_item(it, "Ranged weapon")
@@ -6550,7 +6552,7 @@ local function alert_first_ranged(it)
   else
     if alerted_first_ranged_one_handed == 0 then
       alerted_first_ranged_one_handed = 1
-      for inv in iter.invent_iterator:new(inv_weap_data) do
+      for _,inv in ipairs(inv_weap_data) do
         if inv.is_ranged then return true end
       end
       return pa_alert_item(it, "Ranged weapon")
@@ -6637,7 +6639,7 @@ end
 
 function do_pa_weapon_pickup(it)
   if it.is_useless then return false end
-  for cur in iter.invent_iterator:new(inv_weap_data) do
+  for _,cur in ipairs(inv_weap_data) do
     if pickup_weapon(it, cur) then return true end
   end
 
@@ -6730,7 +6732,7 @@ end
 
 local function alert_interesting_weapons(it)
   local ranged_weap_in_inv = false
-  for cur in iter.invent_iterator:new(inv_weap_data) do
+  for _,cur in ipairs(inv_weap_data) do
     if alert_interesting_weapon(it, cur) then return true end
     if cur.is_ranged then ranged_weap_in_inv = true end
   end

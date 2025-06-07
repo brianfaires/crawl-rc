@@ -6,10 +6,10 @@ create_persistent_data("found_scroll_of_id", 0)
 
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
 local function remind_unidentified_items()
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if not it.is_identified then
-      for s in iter.invent_iterator:new(items.inventory()) do
-        if s and s.name("qual"):find("scroll of identify") then
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if not inv.is_identified then
+      for inv_id in iter.invent_iterator:new(items.inventory()) do
+        if inv_id and inv_id.name("qual"):find("scroll of identify") then
           crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
           break
         end

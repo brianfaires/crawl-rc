@@ -49,11 +49,11 @@ end
 
 ------------------ Hook ------------------
 function ready_inscribe_stats()
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(it) or is_staff(it) then
-      if CONFIG.inscribe_weapons then inscribe_weapon_stats(it) end
-    elseif is_armour(it) then
-      if CONFIG.inscribe_armour then inscribe_armour_stats(it) end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) or is_staff(inv) then
+      if CONFIG.inscribe_weapons then inscribe_weapon_stats(inv) end
+    elseif is_armour(inv) then
+      if CONFIG.inscribe_armour then inscribe_armour_stats(inv) end
     end
   end
 

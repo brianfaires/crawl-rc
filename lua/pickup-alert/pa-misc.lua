@@ -69,7 +69,7 @@ function pa_pickup_staff(it)
   if get_skill(school) == 0 then return false end
 
   -- Check for previously picked staves
-  for v in iter.invent_iterator:new(pa_items_picked) do
+  for _,v in ipairs(pa_items_picked) do
     if v:find(it.name("base")) then return false end
   end
 

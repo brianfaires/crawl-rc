@@ -10,7 +10,7 @@ local last_pickup_turn = -1
 
 -- Must define this separate from ready() if we want to call it from c_message_mute_swaps as well
 local function unmute_items()
-  for v in iter.invent_iterator:new(muted_items) do
+  for _,v in ipairs(muted_items) do
     crawl.setopt("message_colour -= mute: - "..v)
   end
   muted_items = {}

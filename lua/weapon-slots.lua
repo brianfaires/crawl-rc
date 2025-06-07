@@ -51,18 +51,18 @@ local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
   priorities_w = { -1, -1, -1 }
 
-  for it in iter.invent_iterator:new(items.inventory()) do
-    local p = get_priority_w(it)
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local p = get_priority_w(inv)
     if p > 0 then
-      if priorities_w[p] == -1 then priorities_w[p] = it.slot
-      else priorities_w[p+1] = it.slot
+      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
+      else priorities_w[p+1] = inv.slot
       end
     end
 
-    p = get_priority_ab(it)
+    p = get_priority_ab(inv)
     if p > 0 then
-      if priorities_ab[p] == -1 then priorities_ab[p] = it.slot
-      else priorities_ab[p+1] = it.slot
+      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
+      else priorities_ab[p+1] = inv.slot
       end
     end
   end

@@ -11,8 +11,8 @@ create_persistent_data("dropped_item_exclusions", "")
 -- Init autopickup missiles
 local started_with_ranged = false
 if you.skill("Ranged Weapons") > 2 then
-  for it in iter.invent_iterator:new(items.inventory()) do
-    if it.is_ranged then
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.is_ranged then
       started_with_ranged = true
       break
     end
@@ -35,7 +35,7 @@ local function get_jewellery_name(text)
 end
 
 local function get_missile_name(text)
-  for item_name in iter.invent_iterator:new(all_missiles) do
+  for _,item_name in ipairs(all_missiles) do
     if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
@@ -53,14 +53,16 @@ local function get_missile_name(text)
 end
 
 local function get_misc_name(text)
-  for item_name in iter.invent_iterator:new(all_misc) do
+  for _,item_name in ipairs(all_misc) do
     if text:find(item_name) then return item_name end
   end
 end
 
 local function has_enchantable_weap_in_inv()
-  for cur in iter.invent_iterator:new(items.inventory()) do
-    if cur.class(true) == "weapon" and not cur.artefact and cur.plus < 9 then return true end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if it.delay ~= nil and inv.plus < 9 and (not inv.artefact or you.race() == "Mountain Dwarf") then
+      return true
+    end
   end
 
   return false

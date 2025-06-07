@@ -18,7 +18,7 @@ local function fully_recovered()
   -- Statuses that will always rest off
   local status = you.status()
 
-  for s in iter.invent_iterator:new(status_to_wait_off) do
+  for _,s in ipairs(status_to_wait_off) do
     if status:find(s) then return false end
   end
 

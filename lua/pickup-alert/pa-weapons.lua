@@ -50,7 +50,7 @@ local inv_max_dmg_acc = {
 local function set_top_school()
   local max = 0
 
-  for v in iter.invent_iterator:new(all_weap_schools) do
+  for _,v in ipairs(all_weap_schools) do
     if get_skill(v) > max then
       max = get_skill(v)
       top_school = v
@@ -81,24 +81,24 @@ function generate_inv_weap_arrays()
 
   set_top_school()
 
-  for cur in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(cur) and not is_staff(cur) then
-      update_high_scores(cur)
-      inv_weap_data[#inv_weap_data + 1] = make_weapon_struct(cur)
-      if has_ego(cur) then table.insert(egos, get_ego(cur)) end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and not is_staff(inv) then
+      update_high_scores(inv)
+      inv_weap_data[#inv_weap_data + 1] = make_weapon_struct(inv)
+      if has_ego(inv) then table.insert(egos, get_ego(inv)) end
 
       local dmg = inv_weap_data[#inv_weap_data].dps
-      local weap_type = get_weap_tag(cur)
+      local weap_type = get_weap_tag(inv)
       if dmg > inv_max_dmg[weap_type] then
         inv_max_dmg[weap_type] = dmg
-        local cur_plus = cur.plus
-        if not cur_plus then cur_plus = 0 end
-        inv_max_dmg_acc[weap_type] = cur.accuracy + cur_plus
+        local inv_plus = inv.plus
+        if not inv_plus then inv_plus = 0 end
+        inv_max_dmg_acc[weap_type] = inv.accuracy + inv_plus
 
     -- Keep a separate count for all melee weapons
     if weap_type:find("melee") then
       inv_max_dmg["melee_only"] = dmg
-      inv_max_dmg_acc["melee_only"] = cur.accuracy + cur_plus
+      inv_max_dmg_acc["melee_only"] = inv.accuracy + inv_plus
     end
       end
     end
@@ -140,7 +140,7 @@ local function alert_early_weapons(it)
   if l_cache.xl < 8 then
     if has_ego(it) or it.plus and it.plus >= 4 then
       -- Make sure we don't alert a pure downgrade to something in inventory
-      for inv in iter.invent_iterator:new(inv_weap_data) do
+      for _,inv in ipairs(inv_weap_data) do
         if inv.basename == it.name("base") then
           if inv.plus >= it.plus then
             if not has_ego(it) then return end
@@ -162,7 +162,7 @@ local function alert_first_ranged(it)
     if have_shield() then return false end
     if alerted_first_ranged_two_handed == 0 then
       alerted_first_ranged_two_handed = 1
-      for inv in iter.invent_iterator:new(inv_weap_data) do
+      for _,inv in ipairs(inv_weap_data) do
         if inv.is_ranged and inv.hands == 2 then return true end
       end
       return pa_alert_item(it, "Ranged weapon")
@@ -170,7 +170,7 @@ local function alert_first_ranged(it)
   else
     if alerted_first_ranged_one_handed == 0 then
       alerted_first_ranged_one_handed = 1
-      for inv in iter.invent_iterator:new(inv_weap_data) do
+      for _,inv in ipairs(inv_weap_data) do
         if inv.is_ranged then return true end
       end
       return pa_alert_item(it, "Ranged weapon")
@@ -257,7 +257,7 @@ end
 
 function do_pa_weapon_pickup(it)
   if it.is_useless then return false end
-  for cur in iter.invent_iterator:new(inv_weap_data) do
+  for _,cur in ipairs(inv_weap_data) do
     if pickup_weapon(it, cur) then return true end
   end
 
@@ -350,7 +350,7 @@ end
 
 local function alert_interesting_weapons(it)
   local ranged_weap_in_inv = false
-  for cur in iter.invent_iterator:new(inv_weap_data) do
+  for _,cur in ipairs(inv_weap_data) do
     if alert_interesting_weapon(it, cur) then return true end
     if cur.is_ranged then ranged_weap_in_inv = true end
   end

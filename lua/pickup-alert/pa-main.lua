@@ -56,7 +56,7 @@ function c_message_item_alerts(text, _)
     pause_pickup_alert_sys = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
     local all_alerts = ""
-    for v in iter.invent_iterator:new(pa_all_level_alerts) do
+    for _,v in ipairs(pa_all_level_alerts) do
       if all_alerts == "" then all_alerts = v
       else all_alerts = all_alerts..", "..v
       end
