@@ -38,6 +38,39 @@ function pa_alert_item(it, alert_type)
 end
 crawl.setopt("runrest_stop_message += Item alert, ")
 
+
+local function dump_persistent_arrays()
+  local tables = {
+    "pa_items_picked" = pa_items_picked,
+    "pa_items_alerted" = pa_items_alerted,
+    "pa_all_level_alerts" = pa_all_level_alerts,
+    "pa_single_alert_items" = pa_single_alert_items,
+  }
+
+  local dicts = {
+  }
+  
+  local summary = "---DEBUGGING ARRAYS---\n"
+  
+  for name,table in pairs(tables) do
+    summary = summary .. name .. ":\n"
+    for _,item in ipairs(table) do
+      summary = summary .. "\t" .. item .. "\n"
+    end
+    summary = summary .. "\n"
+  end
+
+  for name,dict in pairs(dicts) do
+    summary = summary .. name .. ":\n"
+    for k,v in pairs(dict) do
+      summary = summary .. "\t" .. k .. " = " .. v .. "\n"
+    end
+    summary = summary .. "\n"
+  end
+
+  crawl.add_note(summary)
+  crawl.dump_char()
+
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
   if is_weapon(it) or is_armour(it) then
@@ -71,6 +104,10 @@ function c_message_item_alerts(text, _)
 end
 
 function ready_item_alerts()
+  if CONFIG.debug_pa_array_freq > 0 and you.turns() % CONFIG.debug_pa_array_freq == 0 then
+    dump_persistent_arrays()
+  end
+
   if you.turns() == last_ready_item_alerts_turn then return end
   last_ready_item_alerts_turn = you.turns()
 

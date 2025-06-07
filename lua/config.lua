@@ -55,3 +55,6 @@ CONFIG.auto_set_skill_targets = {
   {"Stealth", 2},
   {"Fighting", 2}
 } -- auto_set_skill_targets (do not remove this comment)
+
+-- Debugging
+CONFIG.debug_pa_array_freq = 1000 -- 0 to disable
