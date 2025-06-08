@@ -39,37 +39,25 @@ end
 crawl.setopt("runrest_stop_message += Item alert, ")
 
 
+local function dump_table(name, table)
+  local summary = ""
+  summary = summary .. name .. ":\n"
+  for _,item in ipairs(table) do
+    summary = summary .. "\t" .. item .. "\n"
+  end
+  return summary
+end
+
+
 local function dump_persistent_arrays()
-  local tables = {
-    "pa_items_picked" = pa_items_picked,
-    "pa_items_alerted" = pa_items_alerted,
-    "pa_all_level_alerts" = pa_all_level_alerts,
-    "pa_single_alert_items" = pa_single_alert_items,
-  }
-
-  local dicts = {
-  }
-  
   local summary = "---DEBUGGING ARRAYS---\n"
-  
-  for name,table in pairs(tables) do
-    summary = summary .. name .. ":\n"
-    for _,item in ipairs(table) do
-      summary = summary .. "\t" .. item .. "\n"
-    end
-    summary = summary .. "\n"
-  end
-
-  for name,dict in pairs(dicts) do
-    summary = summary .. name .. ":\n"
-    for k,v in pairs(dict) do
-      summary = summary .. "\t" .. k .. " = " .. v .. "\n"
-    end
-    summary = summary .. "\n"
-  end
-
+  summary = summary .. dump_table("pa_items_picked", pa_items_picked)
+  summary = summary .. dump_table("pa_items_alerted", pa_items_alerted)
+  summary = summary .. dump_table("pa_all_level_alerts", pa_all_level_alerts)
+  summary = summary .. dump_table("pa_single_alert_items", pa_single_alert_items)
   crawl.add_note(summary)
   crawl.dump_char()
+end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)

@@ -60,7 +60,7 @@ end
 
 local function has_enchantable_weap_in_inv()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if it.delay ~= nil and inv.plus < 9 and (not inv.artefact or you.race() == "Mountain Dwarf") then
+    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or you.race() == "Mountain Dwarf") then
       return true
     end
   end
