@@ -385,6 +385,7 @@ loaded_cache = true
 
 l_cache = {}
 
+-- Once per game
 l_cache.class = you.class()
 l_cache.race = you.race()
 if l_cache.race == "Spriggan" then l_cache.size_penalty = SIZE_PENALTY.LITTLE
@@ -393,11 +394,11 @@ elseif l_cache.race == "Armataur" or l_cache.race == "Naga" or
     l_cache.race == "Oni" or l_cache.race == "Troll" then l_cache.size_penalty = SIZE_PENALTY.LARGE
 else l_cache.size_penalty = SIZE_PENALTY.NORMAL
 end
-
 l_cache.undead =  util.contains(all_undead_races, l_cache.race)
 l_cache.poison_immune = you.res_poison() >= 3
 
 
+-- Once per turn
 function ready_l_cache()
   l_cache.turn = you.turns()
   l_cache.str = you.strength()
@@ -415,6 +416,16 @@ function ready_l_cache()
   l_cache.s_shields = you.skill("Shields")
   l_cache.s_dodging = you.skill("Dodging")
   l_cache.s_fighting = you.skill("Fighting")
+  l_cache.s_spellcasting = you.skill("Spellcasting")
+
+  l_cache.rMut = you.res_mutation()
+  l_cache.rPois = you.res_poison()
+  l_cache.rElec = you.res_shock()
+  l_cache.rCorr = you.res_corr()
+  l_cache.rF = you.res_fire()
+  l_cache.rC = you.res_cold()
+  l_cache.rN = you.res_draining()
+
 end
 
 }
@@ -4014,6 +4025,7 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Set any options based on game state -----
+
 local dynopt_cur_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
@@ -4128,7 +4140,7 @@ end
 local function set_skill_options()
   -- Ignore spellbook reading if you have no spellcasting skill
   -- Ignore all spellcaster items if wearing heavy armour or not much armour skill
-  local zero_spellcasting = you.skill("Spellcasting") == 0
+  local zero_spellcasting = l_cache.s_spellcasting == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
     crawl.setopt("explore_stop_pickup_ignore += ^book of")
@@ -4153,7 +4165,7 @@ end
 
 ------------------ Hook ------------------
 function ready_dynamic_options()
-  if you.turns() == 0 then
+  if l_cache.turn == 0 then
     set_race_options()
     set_class_options()
   end
@@ -4391,6 +4403,9 @@ end
 -- WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
 -- Note: If you want an alert to silenceable by the fm_pack feature,
 -- It must be on an alert by itself (not part of a multi-monster pattern)
+
+
+
 local debug_fm_monsters = false -- Set to true to get a message when the fm change
 local turns_to_delay = 15 -- Turns before alerting for a pack monster again
 
@@ -4609,16 +4624,17 @@ function ready_force_mores()
   local activated = {}
   local deactivated = {}
 
-  local hp, maxhp = you.hp()
-  local willpower = you.willpower()
-  local res_mut = you.res_mutation()
-  local res_pois = you.res_poison()
-  local res_elec = you.res_shock()
-  local res_corr = you.res_corr()
-  local res_fire = you.res_fire()
-  local res_cold = you.res_cold()
-  local res_drain = you.res_draining()
-  local int, _ = l_cache.int
+  local hp = l_cache.hp
+  local maxhp = l_cache.mhp
+  local willpower = l_cache.will
+  local res_mut = l_cache.rMut
+  local res_pois = l_cache.rPois
+  local res_elec = l_cache.rElec
+  local res_corr = l_cache.rCorr
+  local res_fire = l_cache.rF
+  local res_cold = l_cache.rC
+  local res_drain = l_cache.rN
+  local int = l_cache.int
 
   for i,v in ipairs(fm_patterns) do
     local action = nil
@@ -4714,7 +4730,7 @@ function c_message_fm_pack(text, _)
   if not text:find("comes? into view") then return end
   for _, v in ipairs(fm_pack) do
     if text:find(v) and last_fm_turn[v] == -1 then
-      last_fm_turn[v] = you.turns()
+      last_fm_turn[v] = l_cache.turn
       monsters_to_mute[#monsters_to_mute+1] = v
     end
   end
@@ -4729,7 +4745,7 @@ function ready_fm_pack()
 
   -- Remove mutes that have expired
   for _, v in ipairs(fm_pack) do
-    if you.turns() == last_fm_turn[v] + turns_to_delay then
+    if l_cache.turn == last_fm_turn[v] + turns_to_delay then
       set_monster_fm("+", v)
       last_fm_turn[v] = -1
     end
@@ -4737,7 +4753,7 @@ function ready_fm_pack()
 
   -- For no-init pack monsters, just deactivate the fm
   for _, v in ipairs(fm_pack_no_init_add) do
-    if you.turns() == last_fm_turn[v] + turns_to_delay then
+    if l_cache.turn == last_fm_turn[v] + turns_to_delay then
       active_fm[active_fm_index[v]] = false
       last_fm_turn[v] = -1
     end
@@ -5082,7 +5098,7 @@ crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 
 local function check_new_location(key)
   local cur_location = you.branch()..you.depth()
-  local turn_diff = you.turns() - last_stair_turn
+  local turn_diff = l_cache.turn - last_stair_turn
   local question = nil
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
     question = "Really go right back? (y/n)"
@@ -5102,7 +5118,7 @@ local function check_new_location(key)
   end
 
   crawl.sendkeys(key)
-  last_stair_turn = you.turns()
+  last_stair_turn = l_cache.turn
 end
 
 function macro_do_safe_upstairs()
@@ -5892,6 +5908,7 @@ loaded_pa_main = true
 -- Global var for access by autopickup function
 pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
+local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type)
   local name = it.name("plain")
@@ -5939,9 +5956,12 @@ local function dump_persistent_arrays()
   summary = summary .. dump_table("pa_items_alerted", pa_items_alerted)
   summary = summary .. dump_table("pa_all_level_alerts", pa_all_level_alerts)
   summary = summary .. dump_table("pa_single_alert_items", pa_single_alert_items)
-  crawl.add_note(summary)
+  
+  crawl.mpr(summary)
+  crawl.take_note(summary)
   crawl.dump_char()
 end
+
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
@@ -5976,12 +5996,13 @@ function c_message_item_alerts(text, _)
 end
 
 function ready_item_alerts()
-  if CONFIG.debug_pa_array_freq > 0 and you.turns() % CONFIG.debug_pa_array_freq == 0 then
+  if l_cache.turn == last_ready_item_alerts_turn then return end
+  last_ready_item_alerts_turn = l_cache.turn
+
+  if CONFIG.debug_pa_array_freq > 0 and l_cache.turn - last_pa_dump_turn > CONFIG.debug_pa_array_freq then
+    last_pa_dump_turn = l_cache.turn
     dump_persistent_arrays()
   end
-
-  if you.turns() == last_ready_item_alerts_turn then return end
-  last_ready_item_alerts_turn = you.turns()
 
   if not pause_pickup_alert_sys then
     generate_inv_weap_arrays()
@@ -6859,5 +6880,4 @@ end
 --Startup hygeine
 ready()
 crawl.redraw_screen()
---crawl.call_dlua("crawl.redraw_stats()")
 }

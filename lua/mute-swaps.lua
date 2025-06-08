@@ -5,6 +5,8 @@
 -- If we cared what slot the item was in, it'd already be assigned somewhere
 -- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
 
+loadfile("lua/cache.lua")
+
 local muted_items = {}
 local last_pickup_turn = -1
 
@@ -24,10 +26,10 @@ end
 function c_assign_invletter_mute_swaps(_)
   -- this causes an unmute command on the message
   -- we can't unmute in time from this hook
-  if you.turns() == last_pickup_turn or crawl.messages(1):find(" %- ") then
+  if l_cache.turn == last_pickup_turn or crawl.messages(1):find(" %- ") then
     unmute_items()
   else
-    last_pickup_turn = you.turns()
+    last_pickup_turn = l_cache.turn
   end
 end
 

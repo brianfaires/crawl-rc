@@ -1,4 +1,6 @@
 ----- Set any options based on game state -----
+loadfile("lua/cache.lua")
+
 local dynopt_cur_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
@@ -113,7 +115,7 @@ end
 local function set_skill_options()
   -- Ignore spellbook reading if you have no spellcasting skill
   -- Ignore all spellcaster items if wearing heavy armour or not much armour skill
-  local zero_spellcasting = you.skill("Spellcasting") == 0
+  local zero_spellcasting = l_cache.s_spellcasting == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
     crawl.setopt("explore_stop_pickup_ignore += ^book of")
@@ -138,7 +140,7 @@ end
 
 ------------------ Hook ------------------
 function ready_dynamic_options()
-  if you.turns() == 0 then
+  if l_cache.turn == 0 then
     set_race_options()
     set_class_options()
   end

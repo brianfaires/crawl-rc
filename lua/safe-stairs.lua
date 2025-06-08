@@ -1,3 +1,4 @@
+loadfile("lua/cache.lua")
 loadfile("crawl-rc/lua/config.lua")
 
 ----- Prevent accidental stairs usage -----
@@ -9,7 +10,7 @@ crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 
 local function check_new_location(key)
   local cur_location = you.branch()..you.depth()
-  local turn_diff = you.turns() - last_stair_turn
+  local turn_diff = l_cache.turn - last_stair_turn
   local question = nil
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
     question = "Really go right back? (y/n)"
@@ -29,7 +30,7 @@ local function check_new_location(key)
   end
 
   crawl.sendkeys(key)
-  last_stair_turn = you.turns()
+  last_stair_turn = l_cache.turn
 end
 
 function macro_do_safe_upstairs()

@@ -3,6 +3,10 @@
 -- WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
 -- Note: If you want an alert to silenceable by the fm_pack feature,
 -- It must be on an alert by itself (not part of a multi-monster pattern)
+
+loadfile("lua/cache.lua")
+
+
 local debug_fm_monsters = false -- Set to true to get a message when the fm change
 local turns_to_delay = 15 -- Turns before alerting for a pack monster again
 
@@ -221,16 +225,17 @@ function ready_force_mores()
   local activated = {}
   local deactivated = {}
 
-  local hp, maxhp = you.hp()
-  local willpower = you.willpower()
-  local res_mut = you.res_mutation()
-  local res_pois = you.res_poison()
-  local res_elec = you.res_shock()
-  local res_corr = you.res_corr()
-  local res_fire = you.res_fire()
-  local res_cold = you.res_cold()
-  local res_drain = you.res_draining()
-  local int, _ = l_cache.int
+  local hp = l_cache.hp
+  local maxhp = l_cache.mhp
+  local willpower = l_cache.will
+  local res_mut = l_cache.rMut
+  local res_pois = l_cache.rPois
+  local res_elec = l_cache.rElec
+  local res_corr = l_cache.rCorr
+  local res_fire = l_cache.rF
+  local res_cold = l_cache.rC
+  local res_drain = l_cache.rN
+  local int = l_cache.int
 
   for i,v in ipairs(fm_patterns) do
     local action = nil
@@ -326,7 +331,7 @@ function c_message_fm_pack(text, _)
   if not text:find("comes? into view") then return end
   for _, v in ipairs(fm_pack) do
     if text:find(v) and last_fm_turn[v] == -1 then
-      last_fm_turn[v] = you.turns()
+      last_fm_turn[v] = l_cache.turn
       monsters_to_mute[#monsters_to_mute+1] = v
     end
   end
@@ -341,7 +346,7 @@ function ready_fm_pack()
 
   -- Remove mutes that have expired
   for _, v in ipairs(fm_pack) do
-    if you.turns() == last_fm_turn[v] + turns_to_delay then
+    if l_cache.turn == last_fm_turn[v] + turns_to_delay then
       set_monster_fm("+", v)
       last_fm_turn[v] = -1
     end
@@ -349,7 +354,7 @@ function ready_fm_pack()
 
   -- For no-init pack monsters, just deactivate the fm
   for _, v in ipairs(fm_pack_no_init_add) do
-    if you.turns() == last_fm_turn[v] + turns_to_delay then
+    if l_cache.turn == last_fm_turn[v] + turns_to_delay then
       active_fm[active_fm_index[v]] = false
       last_fm_turn[v] = -1
     end

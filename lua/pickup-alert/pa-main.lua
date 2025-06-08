@@ -1,5 +1,6 @@
 if loaded_pa_main then return end
 loaded_pa_main = true
+loadfile("lua/cache.lua")
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
@@ -8,6 +9,7 @@ loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
 -- Global var for access by autopickup function
 pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
+local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type)
   local name = it.name("plain")
@@ -55,9 +57,12 @@ local function dump_persistent_arrays()
   summary = summary .. dump_table("pa_items_alerted", pa_items_alerted)
   summary = summary .. dump_table("pa_all_level_alerts", pa_all_level_alerts)
   summary = summary .. dump_table("pa_single_alert_items", pa_single_alert_items)
-  crawl.add_note(summary)
+  
+  crawl.mpr(summary)
+  crawl.take_note(summary)
   crawl.dump_char()
 end
+
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
@@ -92,12 +97,13 @@ function c_message_item_alerts(text, _)
 end
 
 function ready_item_alerts()
-  if CONFIG.debug_pa_array_freq > 0 and you.turns() % CONFIG.debug_pa_array_freq == 0 then
+  if l_cache.turn == last_ready_item_alerts_turn then return end
+  last_ready_item_alerts_turn = l_cache.turn
+
+  if CONFIG.debug_pa_array_freq > 0 and l_cache.turn - last_pa_dump_turn > CONFIG.debug_pa_array_freq then
+    last_pa_dump_turn = l_cache.turn
     dump_persistent_arrays()
   end
-
-  if you.turns() == last_ready_item_alerts_turn then return end
-  last_ready_item_alerts_turn = you.turns()
 
   if not pause_pickup_alert_sys then
     generate_inv_weap_arrays()

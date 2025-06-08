@@ -151,5 +151,4 @@ end
 --Startup hygeine
 ready()
 crawl.redraw_screen()
---crawl.call_dlua("crawl.redraw_stats()")
 }
