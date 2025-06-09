@@ -100,8 +100,8 @@ show_travel_trail = true
 
 explore_greedy_visit = artefacts,glowing_items,stacks
 explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
-explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
-
+explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin, ^book of
+: crawl.setopt("explore_stop_pickup_ignore += ^book of")
 
 
 
@@ -3251,7 +3251,7 @@ more += Terrible wounds open
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
-more += You feel.*(?<!less )(haunted|rot|vulnerable)
+more += You feel.*(?<!less).*( haunted| rot| vulnerable)
 flash += danger:corrodes you
 flash += Your damage is reflected back at you
 flash += (?<!You.*)reflects
@@ -4144,21 +4144,29 @@ local function set_skill_options()
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
     crawl.setopt("explore_stop_pickup_ignore += ^book of")
+    crawl.setopt("runrest_ignore_message += You add the spell")
+    crawl.mpr("ignoring spellbooks")
   elseif ignoring_spellbooks and not zero_spellcasting then
     ignoring_spellbooks = false
     crawl.setopt("explore_stop_pickup_ignore -= ^book of")
+    crawl.setopt("runrest_ignore_message -= You add the spell")
+    crawl.mpr("not ignoring spellbooks")
   end
 
   local arm = items.equipped_at("armour")
   local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + l_cache.s_armour/2
   if not ignoring_spellcasting and heavy_arm then
     ignoring_spellcasting = true
+    crawl.setopt("explore_stop_pickup_ignore += ^book of")
     crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
     crawl.setopt("runrest_ignore_message += You add the spell")
+    crawl.mpr("ignoring spellcasting")
   elseif ignoring_spellcasting and not heavy_arm then
     ignoring_spellcasting = false
+    crawl.setopt("explore_stop_pickup_ignore -= ^book of")
     crawl.setopt("autopickup_exceptions -= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
     crawl.setopt("runrest_ignore_message -= You add the spell")
+    crawl.mpr("not ignoring spellcasting")
   end
 end
 
