@@ -5350,10 +5350,30 @@ end
 
 
 --------- Armour (Shadowing crawl calcs) ---------
-function get_aevp(body_arm_pen, strength)
+function get_unadjusted_armour_pen(encumb)
   -- dcss v0.33
-  if body_arm_pen <= 0 then return 0 end
-  return 2 * body_arm_pen * body_arm_pen * (45 - l_cache.s_armour) / (525 * (strength + 3))
+  local pen = encumb - 2 * get_mut("sturdy frame", true)
+  if pen > 0 then return pen end
+  return 0
+end
+
+function get_adjusted_armour_pen(encumb, str)
+  -- dcss v0.33
+  local base_pen = get_unadjusted_armour_pen(encumb)
+  return 2 * base_pen * base_pen * (45 - l_cache.s_armour) / 45 / (5 * (str + 3))
+end
+
+function get_adjusted_dodge_bonus(encumb, str, dex)
+  -- dcss v0.33
+  local size_factor = -2 * l_cache.size_penalty
+  local dodge_bonus = 8*(10 + l_cache.s_dodging * dex) / (20 - size_factor) / 10
+  local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
+  if armour_dodge_penalty <= 0 then return dodge_bonus end
+
+  if armour_dodge_penalty >= str then
+    return dodge_bonus * str / (armour_dodge_penalty * 2)
+  end
+  return dodge_bonus - dodge_bonus * armour_dodge_penalty / (str * 2)
 end
 
 function get_armour_ac(it)
@@ -5383,6 +5403,7 @@ function get_armour_ev(it)
   -- Factors in stat changes from this armour and removing current one
   local str = l_cache.str
   local dex = l_cache.dex
+  local no_art_str = str
   local no_art_dex = dex
   local art_ev = 0
 
@@ -5402,25 +5423,9 @@ function get_armour_ev(it)
 
   if str <= 0 then str = 1 end
 
-  local size_factor = -2 * l_cache.size_penalty
-
-  local dodge_bonus = 8*(10 + l_cache.s_dodging * dex) / (20 - size_factor) / 10
-  local normalize_comparison = 8*(10 + l_cache.s_dodging * no_art_dex) / (20 - size_factor) / 10
-
-  local body_arm_pen = it.encumbrance - 2 * get_mut("sturdy frame", true)
-  local armour_penalty = body_arm_pen - 3
-  if armour_penalty <= 0 then
-    armour_penalty = 0
-  else
-    if armour_penalty >= str then
-      dodge_bonus = dodge_bonus * (str / (armour_penalty * 2))
-    else
-      dodge_bonus = dodge_bonus * (1 - armour_penalty / (str * 2))
-    end
-  end
-
-  local aevp = get_aevp(body_arm_pen, str)
-  return dodge_bonus - aevp + art_ev - normalize_comparison
+  local dodge_bonus = get_adjusted_dodge_bonus(it.encumbrance, str, dex)
+  local naked_dodge_bonus = get_adjusted_dodge_bonus(0, no_art_str, no_art_dex)
+  return (dodge_bonus - naked_dodge_bonus) + art_ev - get_adjusted_armour_pen(it.encumbrance, str)
 end
 
 function get_shield_penalty(sh)
@@ -5490,7 +5495,7 @@ function get_weap_delay(it, ignore_brands)
         if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
       end
 
-      delay = delay + get_aevp(body.encumbrance, str)
+      delay = delay + get_adjusted_armour_pen(body.encumbrance, str)
     end
   end
 
