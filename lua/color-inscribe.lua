@@ -5,7 +5,7 @@ loadfile("crawl-rc/lua/constants.lua")
 
 local INSCRIPTION_MAX_LENGTH = 70
 
-local function colorize_text(text, s, tag)
+local function colorize_subtext(text, s, tag)
   local idx = text:find(s)
   if not idx then return text end
   if idx > 1 then
@@ -58,7 +58,7 @@ local colorize_tags = {
 function c_assign_invletter_color_inscribe(it)
   local text = it.inscription
   for _, tag in ipairs(colorize_tags) do
-    text = colorize_text(text, tag[1], tag[2])
+    text = colorize_subtext(text, tag[1], tag[2])
   end
 
   if text:len() > INSCRIPTION_MAX_LENGTH then
@@ -73,7 +73,7 @@ end
   -- colorize artefact text
 -- function c_message_color_inscribe(text, _)
 --   local orig_text = text
---   text = colorize_text(text)
+--   text = colorize_subtext(text)
 --   if text == orig_text then return end
 
 --   local cleaned = cleanup_text(text)

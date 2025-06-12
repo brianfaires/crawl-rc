@@ -10,7 +10,7 @@ local function remind_unidentified_items()
     if not inv.is_identified then
       for inv_id in iter.invent_iterator:new(items.inventory()) do
         if inv_id and inv_id.name("qual"):find("scroll of identify") then
-          crawl.mpr("<magenta>----You have something to identify.----</magenta>", "plain")
+          crawl.mpr(CACHE.EMOJI.REMIND_IDENTIFY .. " <magenta> You have something to identify. </magenta>" .. CACHE.EMOJI.REMIND_IDENTIFY, "plain")
           break
         end
       end

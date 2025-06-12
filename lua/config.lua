@@ -2,11 +2,14 @@ if loaded_lua_config_file then return end
 loaded_lua_config_file = true
 CONFIG = { }
 
--- Announce damage emojis
-CONFIG.emojis = true
+-- Use emojis in alerts and damage announcements
+CONFIG.emojis = false
+
 -- Announce HP/MP when change is greater than this value
-CONFIG.ANNOUNCE_HP_THRESHOLD = 2
-CONFIG.ANNOUNCE_MP_THRESHOLD = 2
+CONFIG.ANNOUNCE_HP_THRESHOLD = 1
+CONFIG.ANNOUNCE_MP_THRESHOLD = 0
+-- Force more prompt for losing this percentage of max HP
+CONFIG.ANNOUNCE_HP_MASSIVE_THRESHOLD = 0.20
 
 -- Inscribe stats
 CONFIG.inscribe_weapons = true

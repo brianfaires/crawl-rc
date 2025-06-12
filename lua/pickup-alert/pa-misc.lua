@@ -22,7 +22,7 @@ function pa_alert_rare_item(it)
   end
 
   if do_alert then
-    pa_show_alert_msg("It's your first ", pa_single_alert_items[index].."!")
+    pa_show_alert_msg("It's your first ", pa_single_alert_items[index].."!", CACHE.EMOJI.RARE_ITEM)
     crawl.more()
   end
 
@@ -32,14 +32,14 @@ end
 ---- Alert orbs ----
 function pa_alert_orb(it)
   if it.is_identified and not have_shield() then
-    pa_alert_item(it, "New orb")
+    pa_alert_item(it, "New orb", CACHE.EMOJI.ORB)
   end
 end
 
 ---- Alert talismans ----
 function pa_alert_talisman(it)
   if it.is_identified then
-    pa_alert_item(it, "New talisman")
+    pa_alert_item(it, "New talisman", CACHE.EMOJI.TALISMAN)
   end
 end
 
@@ -57,7 +57,7 @@ function pa_alert_staff(it)
   end
 
   if needRes then
-    pa_alert_item(it, "Staff resistance")
+    pa_alert_item(it, "Staff resistance", CACHE.EMOJI.STAFF_RESISTANCE)
   end
 end
 

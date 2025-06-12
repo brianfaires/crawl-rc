@@ -26,10 +26,10 @@ end
 function c_assign_invletter_mute_swaps(_)
   -- this causes an unmute command on the message
   -- we can't unmute in time from this hook
-  if l_cache.turn == last_pickup_turn or crawl.messages(1):find(" %- ") then
+  if CACHE.turn == last_pickup_turn or crawl.messages(1):find(" %- ") then
     unmute_items()
   else
-    last_pickup_turn = l_cache.turn
+    last_pickup_turn = CACHE.turn
   end
 end
 

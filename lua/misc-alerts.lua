@@ -10,7 +10,7 @@ local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if l_cache.god == "Uskayaw" or l_cache.god == "Kikubaaqudgha" then return end
+      if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
       crawl.mpr("<cyan>6 star piety! Maybe ditch that amulet soon.</cyan>")
       crawl.more()
       alerted_max_piety = 1
@@ -29,7 +29,7 @@ local function alert_low_hp()
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
-    crawl.mpr("<red>!!! Dropped below "..threshold_perc.."% HP !!!</red>")
+    crawl.mpr(CACHE.EMOJI.EXCLAMATION .. " <red>Dropped below "..threshold_perc.."% HP </red>" .. CACHE.EMOJI.EXCLAMATION)
     crawl.more()
   end
 end

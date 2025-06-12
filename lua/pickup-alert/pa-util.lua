@@ -2,9 +2,14 @@ if loaded_pa_util then return end
 loaded_pa_util = true
 loadfile("crawl-rc/lua/util.lua")
 
-function pa_show_alert_msg(alert_text, item_name)
-    crawl.mpr("<cyan>----<magenta>"..alert_text.."<yellow>"..item_name.."</yellow></magenta>----</cyan>")
-    you.stop_activity()
+function pa_show_alert_msg(alert_text, item_name, emoji)
+  tokens = { "<cyan>----<magenta>", alert_text, "</magenta><yellow>", item_name, "</yellow>----</cyan>" }
+  if emoji then
+    table.insert(tokens, 1, emoji .. " ")
+    table.insert(tokens, " " .. emoji)
+  end
+  crawl.mpr(table.concat(tokens))
+  you.stop_activity()
 end
 
 
@@ -38,13 +43,13 @@ end
 function get_adjusted_armour_pen(encumb, str)
   -- dcss v0.33
   local base_pen = get_unadjusted_armour_pen(encumb)
-  return 2 * base_pen * base_pen * (45 - l_cache.s_armour) / 45 / (5 * (str + 3))
+  return 2 * base_pen * base_pen * (45 - CACHE.s_armour) / 45 / (5 * (str + 3))
 end
 
 function get_adjusted_dodge_bonus(encumb, str, dex)
   -- dcss v0.33
-  local size_factor = -2 * l_cache.size_penalty
-  local dodge_bonus = 8*(10 + l_cache.s_dodging * dex) / (20 - size_factor) / 10
+  local size_factor = -2 * CACHE.size_penalty
+  local dodge_bonus = 8*(10 + CACHE.s_dodging * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
   if armour_dodge_penalty <= 0 then return dodge_bonus end
 
@@ -63,7 +68,7 @@ function get_armour_ac(it)
     if art_ac then it_plus = it_plus + art_ac end
   end
 
-  local ac = it.ac * (1 + l_cache.s_armour / 22) + it_plus
+  local ac = it.ac * (1 + CACHE.s_armour / 22) + it_plus
   if not is_body_armour(it) then return ac end
 
   local deformed = get_mut("deformed body", true) > 0
@@ -79,8 +84,8 @@ function get_armour_ev(it)
   -- dcss v0.33
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
   -- Factors in stat changes from this armour and removing current one
-  local str = l_cache.str
-  local dex = l_cache.dex
+  local str = CACHE.str
+  local dex = CACHE.dex
   local no_art_str = str
   local no_art_dex = dex
   local art_ev = 0
@@ -109,13 +114,13 @@ end
 function get_shield_penalty(sh)
   -- dcss v0.33
   return 2 * sh.encumbrance * sh.encumbrance
-        * (27 - l_cache.s_shields) / 27
-        / (25 + 5 * l_cache.str)
+        * (27 - CACHE.s_shields) / 27
+        / (25 + 5 * CACHE.str)
 end
 
 function get_shield_sh(it)
   -- dcss v0.33
-  local dex = l_cache.dex
+  local dex = CACHE.dex
   if it.artefact and it.is_identified then
     local art_dex = it.artprops["Dex"]
     if art_dex then dex = dex + art_dex end
@@ -130,16 +135,16 @@ function get_shield_sh(it)
   local it_plus = it.plus or 0
 
   local base_sh = it.ac * 2
-  local shield = base_sh * (50 + l_cache.s_shields*5/2)
+  local shield = base_sh * (50 + CACHE.s_shields*5/2)
   shield = shield + 200 * it_plus
-  shield = shield + 38 * (l_cache.s_shields + 3 + dex * (base_sh + 13) / 26)
+  shield = shield + 38 * (CACHE.s_shields + 3 + dex * (base_sh + 13) / 26)
   return shield / 200
 end
 
 
 --------- Weapons (Shadowing crawl calcs) ---------
 function get_hands(it)
-  if l_cache.race ~= "Formicid" then return it.hands end
+  if CACHE.race ~= "Formicid" then return it.hands end
   local st, _ = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
@@ -164,7 +169,7 @@ function get_weap_delay(it, ignore_brands)
   if it.is_ranged then
     local body = items.equipped_at("armour")
     if body then
-      local str = l_cache.str
+      local str = CACHE.str
       if it.artefact then
         if it.artprops["Str"] then str = str + it.artprops["Str"] end
       end
@@ -232,7 +237,7 @@ function get_slay_bonuses()
     end
   end
 
-  if l_cache.race == "Demonspawn" then
+  if CACHE.race == "Demonspawn" then
     sum = sum + 3 * get_mut("augmentation", true)
     sum = sum + get_mut("sharp scales", true)
   end
@@ -277,8 +282,8 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   local it_plus = if_el(it.plus, it.plus, 0)
 
   -- Adjust str/dex/slay from artefacts
-  local str = l_cache.str
-  local dex = l_cache.dex
+  local str = CACHE.str
+  local dex = CACHE.dex
 
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
@@ -301,7 +306,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + l_cache.s_fighting/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + CACHE.s_fighting/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod

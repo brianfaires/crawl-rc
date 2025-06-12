@@ -225,17 +225,17 @@ function ready_force_mores()
   local activated = {}
   local deactivated = {}
 
-  local hp = l_cache.hp
-  local maxhp = l_cache.mhp
-  local willpower = l_cache.will
-  local res_mut = l_cache.rMut
-  local res_pois = l_cache.rPois
-  local res_elec = l_cache.rElec
-  local res_corr = l_cache.rCorr
-  local res_fire = l_cache.rF
-  local res_cold = l_cache.rC
-  local res_drain = l_cache.rN
-  local int = l_cache.int
+  local hp = CACHE.hp
+  local maxhp = CACHE.mhp
+  local willpower = CACHE.will
+  local res_mut = CACHE.rMut
+  local res_pois = CACHE.rPois
+  local res_elec = CACHE.rElec
+  local res_corr = CACHE.rCorr
+  local res_fire = CACHE.rF
+  local res_cold = CACHE.rC
+  local res_drain = CACHE.rN
+  local int = CACHE.int
 
   for i,v in ipairs(fm_patterns) do
     local action = nil
@@ -243,8 +243,8 @@ function ready_force_mores()
     if not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
-      if active_fm[i] and l_cache.xl >= v.cutoff then action = "-"
-      elseif not active_fm[i] and l_cache.xl < v.cutoff then action = "+"
+      if active_fm[i] and CACHE.xl >= v.cutoff then action = "-"
+      elseif not active_fm[i] and CACHE.xl < v.cutoff then action = "+"
       end
     elseif v.cond == "maxhp" then
       if active_fm[i] and maxhp >= v.cutoff then action = "-"
@@ -331,7 +331,7 @@ function c_message_fm_pack(text, _)
   if not text:find("comes? into view") then return end
   for _, v in ipairs(fm_pack) do
     if text:find(v) and last_fm_turn[v] == -1 then
-      last_fm_turn[v] = l_cache.turn
+      last_fm_turn[v] = CACHE.turn
       monsters_to_mute[#monsters_to_mute+1] = v
     end
   end
@@ -346,7 +346,7 @@ function ready_fm_pack()
 
   -- Remove mutes that have expired
   for _, v in ipairs(fm_pack) do
-    if l_cache.turn == last_fm_turn[v] + turns_to_delay then
+    if CACHE.turn == last_fm_turn[v] + turns_to_delay then
       set_monster_fm("+", v)
       last_fm_turn[v] = -1
     end
@@ -354,7 +354,7 @@ function ready_fm_pack()
 
   -- For no-init pack monsters, just deactivate the fm
   for _, v in ipairs(fm_pack_no_init_add) do
-    if l_cache.turn == last_fm_turn[v] + turns_to_delay then
+    if CACHE.turn == last_fm_turn[v] + turns_to_delay then
       active_fm[active_fm_index[v]] = false
       last_fm_turn[v] = -1
     end

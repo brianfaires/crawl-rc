@@ -4,7 +4,7 @@ loadfile("crawl-rc/lua/constants.lua")
 if you.turns() == 0 then
   ---- Skill menu on startup (by rwbarton, edits by buehler) ----
   if CONFIG.show_skills_on_startup then
-    local show_skills_on_startup = (l_cache.race ~= "Gnoll" or l_cache.class == "Wanderer")
+    local show_skills_on_startup = (CACHE.race ~= "Gnoll" or CACHE.class == "Wanderer")
     if show_skills_on_startup then
       crawl.sendkeys("m")
     end

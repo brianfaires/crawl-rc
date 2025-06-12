@@ -24,7 +24,7 @@ local function fully_recovered()
 
   -- If stat drain, don't wait for slow
   if status:find("slowed") then
-    return l_cache.str <= 0 or l_cache.dex <= 0 or l_cache.int <= 0
+    return CACHE.str <= 0 or CACHE.dex <= 0 or CACHE.int <= 0
   end
 
   return true

@@ -8,7 +8,7 @@ ae ^= >staff of.*
 # Exclude the 3rd copy of any ring
 {
   add_autopickup_func(function (it, name)
-    if it.class(true) ~= "jewellery" or it.artefact or l_cache.race == "Octopode" then return end
+    if it.class(true) ~= "jewellery" or it.artefact or CACHE.race == "Octopode" then return end
     local st = it.subtype()
     local found_first = false
     for inv in iter.invent_iterator:new(items.inventory()) do

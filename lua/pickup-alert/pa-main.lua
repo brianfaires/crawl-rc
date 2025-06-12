@@ -11,7 +11,7 @@ pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
 
-function pa_alert_item(it, alert_type)
+function pa_alert_item(it, alert_type, emoji)
   local name = it.name("plain")
   local qualname = it.name("qual")
   if not (is_talisman(it) or it.is_identified) then
@@ -21,14 +21,34 @@ function pa_alert_item(it, alert_type)
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info_string(it))
+      pa_show_alert_msg(
+        table.concat({
+          "Item alert, ", alert_type, ": ", name, " ", get_weapon_info_string(it)
+        }),
+        emoji or CACHE.EMOJI.WEAPON
+      )
 	  elseif is_body_armour(it) then
       local ac, ev = get_armour_info_strings(it)
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name.." "..ac..", "..ev)
+      pa_show_alert_msg(
+        table.concat({
+          "Item alert, ", alert_type, ": ", name, " ", ac, ", ", ev
+        }),
+        emoji or CACHE.EMOJI.BODY_ARMOUR
+      )
     elseif is_armour(it) then
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name)
+      pa_show_alert_msg(
+        table.concat({
+          "Item alert, ", alert_type, ": ", name
+        }),
+        emoji or CACHE.EMOJI.ARMOUR
+      )
     else
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name)
+      pa_show_alert_msg(
+        table.concat({
+          "Item alert, ", alert_type, ": ", name
+        }),
+        emoji or CACHE.EMOJI.MISC
+      )
     end
 
     insert_item_and_less_enchanted(pa_items_alerted, it)
@@ -97,11 +117,11 @@ function c_message_item_alerts(text, _)
 end
 
 function ready_item_alerts()
-  if l_cache.turn == last_ready_item_alerts_turn then return end
-  last_ready_item_alerts_turn = l_cache.turn
+  if CACHE.turn == last_ready_item_alerts_turn then return end
+  last_ready_item_alerts_turn = CACHE.turn
 
-  if CONFIG.debug_pa_array_freq > 0 and l_cache.turn - last_pa_dump_turn > CONFIG.debug_pa_array_freq then
-    last_pa_dump_turn = l_cache.turn
+  if CONFIG.debug_pa_array_freq > 0 and CACHE.turn - last_pa_dump_turn > CONFIG.debug_pa_array_freq then
+    last_pa_dump_turn = CACHE.turn
     dump_persistent_arrays()
   end
 

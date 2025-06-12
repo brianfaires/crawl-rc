@@ -9,8 +9,8 @@ loadfile("crawl-rc/lua/pickup-alert/pa-main.lua")
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 local function alert_armour_upgrades(it)
   if not is_body_armour(it) then return false end
-  if l_cache.s_armour == 0 then return false end
-  if l_cache.xl > 12 then return false end
+  if CACHE.s_armour == 0 then return false end
+  if CACHE.xl > 12 then return false end
   if (it.artefact or it.branded) and not it.is_identified then return false end
 
   if armour_high_score == 0 then
@@ -21,7 +21,7 @@ local function alert_armour_upgrades(it)
     local itAC = get_armour_ac(it)
     if itAC > armour_high_score then
       armour_high_score = itAC
-      return pa_alert_item(it, "Strongest armour yet")
+      return pa_alert_item(it, "Strongest armour yet", CACHE.EMOJI.STRONGEST)
     end
   end
 
@@ -134,9 +134,13 @@ local function alert_armour_while_mutated(it, type)
     local touch_lvl = get_mut("demonic touch", true)
 
     if claws_lvl > 0 or touch_lvl >= 3 then
-      if it.artefact or it.branded then pa_alert_item(it, "Branded gloves") end
+      if it.artefact or it.branded then
+        pa_alert_item(it, "Branded gloves", CACHE.EMOJI.GLOVES)
+      end
       local cur_gloves = items.equipped_at("gloves")
-      if not cur_gloves or it_plus > cur_gloves.plus then pa_alert_item(it, "Enchanted gloves") end
+      if not cur_gloves or it_plus > cur_gloves.plus then
+        pa_alert_item(it, "Enchanted gloves", CACHE.EMOJI.GLOVES)
+      end
     end
   elseif type == "boots" then
     local hooves_lvl_innate = get_mut("hooves", false)
@@ -149,9 +153,13 @@ local function alert_armour_while_mutated(it, type)
     local talons_lvl = get_mut("talons", true)
 
     if hooves_lvl + talons_lvl > 0 then
-      if it.artefact or it.branded then pa_alert_item(it, "Branded boots") end
+      if it.artefact or it.branded then
+        pa_alert_item(it, "Branded boots", CACHE.EMOJI.BOOTS)
+      end
       local cur_boots = items.equipped_at("boots")
-      if not cur_boots or it_plus > cur_boots.plus then pa_alert_item(it, "Enchanted boots") end
+      if not cur_boots or it_plus > cur_boots.plus then
+        pa_alert_item(it, "Enchanted boots", CACHE.EMOJI.BOOTS)
+      end
     end
   elseif type == "helmet" then
     local horns_lvl_innate = get_mut("horns", false)
@@ -171,9 +179,13 @@ local function alert_armour_while_mutated(it, type)
     local antennae_lvl = get_mut("antennae", true)
     local beak_lvl = get_mut("beak", true)
     if horns_lvl + antennae_lvl + beak_lvl > 0 then
-      if it.artefact or it.branded then pa_alert_item(it, "Branded headgear") end
+      if it.artefact or it.branded then
+        pa_alert_item(it, "Branded headgear", CONFIG.EMOJI.HAT)
+      end
       local cur_helmet = items.equipped_at("helmet")
-      if not cur_helmet or it_plus > cur_helmet.plus then pa_alert_item(it, "Enchanted headgear") end
+      if not cur_helmet or it_plus > cur_helmet.plus then
+        pa_alert_item(it, "Enchanted headgear", CACHE.EMOJI.HAT)
+      end
     end
   end
 end
@@ -190,7 +202,9 @@ end
 -- If you want a specific alert to occur more or less often, look for the line of code below with the alert text,
 -- Then modify the values in the same line of code.
 local function alert_interesting_armour(it)
-  if it.artefact then return pa_alert_item(it, "Artefact armour") end
+  if it.artefact then
+    return pa_alert_item(it, "Artefact armour", CACHE.EMOJI.ARTEFACT)
+  end
 
   if is_body_armour(it) then
     local cur = get_body_armour()
@@ -198,10 +212,16 @@ local function alert_interesting_armour(it)
 
     if it.encumbrance == cur.encumbrance then
       if has_ego(it) then
-        if not has_ego(cur) then return pa_alert_item(it, "Gain ego") end
-        if get_ego(it) ~= get_ego(cur) then return pa_alert_item(it, "Diff ego") end
+        if not has_ego(cur) then
+          return pa_alert_item(it, "Gain ego", CACHE.EMOJI.EGO)
+        end
+        if get_ego(it) ~= get_ego(cur) then
+          return pa_alert_item(it, "Diff ego", CACHE.EMOJI.EGO)
+        end
       end
-      --if get_armour_ac(it) > get_armour_ac(cur) then return pa_alert_item(it, "Stronger armour") end
+      --if get_armour_ac(it) > get_armour_ac(cur) then
+        --return pa_alert_item(it, "Stronger armour", CACHE.EMOJI.STRONGER)
+      --end
 
     elseif it.encumbrance < cur.encumbrance then
       -- Lighter armour
@@ -210,18 +230,28 @@ local function alert_interesting_armour(it)
 
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ev_gain/ac_lost >= 0.6 or ac_lost <= 4 then return pa_alert_item(it, "Gain ego (Lighter armour)") end
+          if ev_gain/ac_lost >= 0.6 or ac_lost <= 4 then
+            return pa_alert_item(it, "Gain ego (Lighter armour)", CACHE.EMOJI.EGO)
+          end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ev_gain/ac_lost >= 0.8 or ac_lost <= 4 then return pa_alert_item(it, "Diff ego (Lighter armour)") end
+          if ev_gain/ac_lost >= 0.8 or ac_lost <= 4 then
+            return pa_alert_item(it, "Diff ego (Lighter armour)", CACHE.EMOJI.EGO)
+          end
         else
-          if ev_gain/ac_lost >= 1.2 then return pa_alert_item(it, "Lighter armour (Same ego)") end
+          if ev_gain/ac_lost >= 1.2 then
+            return pa_alert_item(it, "Lighter armour (Same ego)", CACHE.EMOJI.LIGHTER)
+          end
         end
       else
         if cur.artefact or has_ego(cur) then
-          if ev_gain/ac_lost >= 2 and ev_gain >= 3 then return pa_alert_item(it, "Lighter armour (Lost ego)") end
+          if ev_gain/ac_lost >= 2 and ev_gain >= 3 then
+            return pa_alert_item(it, "Lighter armour (Lost ego)", CACHE.EMOJI.LIGHTER)
+          end
         else
           -- Neither has ego
-          if ev_gain/ac_lost >= 1.2 then return pa_alert_item(it, "Lighter armour") end
+          if ev_gain/ac_lost >= 1.2 then
+            return pa_alert_item(it, "Lighter armour", CACHE.EMOJI.LIGHTER)
+          end
         end
       end
     else
@@ -236,18 +266,28 @@ local function alert_interesting_armour(it)
 
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ac_gain/total_loss >= 0.4 or total_loss <= 6 then return pa_alert_item(it, "Gain ego (Heavier armour)") end
+          if ac_gain/total_loss >= 0.4 or total_loss <= 6 then
+            return pa_alert_item(it, "Gain ego (Heavier armour)", CACHE.EMOJI.EGO)
+          end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain/total_loss >= 0.7 or total_loss <= 6 then return pa_alert_item(it, "Diff ego (Heavier armour)") end
+          if ac_gain/total_loss >= 0.7 or total_loss <= 6 then
+            return pa_alert_item(it, "Diff ego (Heavier armour)", CACHE.EMOJI.EGO)
+          end
         else
-          if ac_gain/total_loss >= 0.8 then return pa_alert_item(it, "Heavier armour (Same ego)") end
+          if ac_gain/total_loss >= 0.8 then
+            return pa_alert_item(it, "Heavier armour (Same ego)", CACHE.EMOJI.HEAVIER)
+          end
         end
       else
         if cur.artefact or has_ego(cur) then
-          if ac_gain/total_loss >= 2 and ac_gain >= 3 then return pa_alert_item(it, "Heavier armour (Lost ego)") end
+          if ac_gain/total_loss >= 2 and ac_gain >= 3 then
+            return pa_alert_item(it, "Heavier armour (Lost ego)", CACHE.EMOJI.HEAVIER)
+          end
         else
           -- Neither has ego
-          if ac_gain/total_loss >= 0.8 then return pa_alert_item(it, "Heavier armour") end
+          if ac_gain/total_loss >= 0.8 then
+            return pa_alert_item(it, "Heavier armour", CACHE.EMOJI.HEAVIER)
+          end
         end
       end
     end
@@ -256,15 +296,17 @@ local function alert_interesting_armour(it)
     local cur = items.equipped_at("shield")
     if not cur then return false end
     if it.branded and it.ego() ~= cur.ego() then
-      return pa_alert_item(it, "New ego")
+      return pa_alert_item(it, "New ego", CACHE.EMOJI.EGO)
     end
   else
     -- Aux armour
     local st, _ = it.subtype()
     local cur = items.equipped_at(st)
-    if not cur then return
-    elseif get_armour_ac(it) > get_armour_ac(cur) then pa_alert_item(it, "Stronger armour")
-    else alert_armour_while_mutated(it, st)
+    if not cur then return end
+    if get_armour_ac(it) > get_armour_ac(cur) then
+      pa_alert_item(it, "Stronger armour", CACHE.EMOJI.STRONGER)
+    else
+      alert_armour_while_mutated(it, st)
     end
   end
 end

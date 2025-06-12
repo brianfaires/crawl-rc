@@ -35,22 +35,22 @@ end
 
 ---- race-specific ---
 local function set_race_options()
-  if l_cache.undead then
+  if CACHE.undead then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if l_cache.poison_immune then
+  if CACHE.poison_immune then
     crawl.setopt("force_more_message -= monster_warning:curare")
   end
 
-  if l_cache.race == "Gnoll" then
+  if CACHE.race == "Gnoll" then
     crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
   end
 end
 
 ---- class-specific ---
 local function set_class_options()
-  if l_cache.class == "Hunter" then
+  if CACHE.class == "Hunter" then
     crawl.setopt("view_delay = 30")
   end
 end
@@ -58,7 +58,7 @@ end
 ---- god-specific ----
 -- force_mores that you don't mind on everyone are in fm-message.rc
 local function set_god_options()
-  local new_god = l_cache.god
+  local new_god = CACHE.god
   if new_god then
     crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
     crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
@@ -85,26 +85,26 @@ end
 
 ---- xl-specific ----
 local function set_xl_options()
-  if not warn_early_levels and l_cache.xl <= 5 then
+  if not warn_early_levels and CACHE.xl <= 5 then
     warn_early_levels = true
     set_dyn_fm(early_warnings, true)
-  elseif warn_early_levels and l_cache.xl > 5 then
+  elseif warn_early_levels and CACHE.xl > 5 then
     warn_early_levels = false
     set_dyn_fm(early_warnings, false)
   end
 
-  if not warn_mid_levels and l_cache.xl <= 10 then
+  if not warn_mid_levels and CACHE.xl <= 10 then
     warn_mid_levels = true
     set_dyn_fm(mid_warnings, true)
-  elseif warn_mid_levels and l_cache.xl > 10 then
+  elseif warn_mid_levels and CACHE.xl > 10 then
     warn_mid_levels = false
     set_dyn_fm(mid_warnings, false)
   end
 
-  if not warn_late_levels and l_cache.xl <= 15 then
+  if not warn_late_levels and CACHE.xl <= 15 then
     warn_late_levels = true
     set_dyn_fm(late_warnings, true)
-  elseif not warn_late_levels and l_cache.xl > 15 then
+  elseif not warn_late_levels and CACHE.xl > 15 then
     warn_late_levels = false
     set_dyn_fm(late_warnings, false)
   end
@@ -115,32 +115,40 @@ end
 local function set_skill_options()
   -- Ignore spellbook reading if you have no spellcasting skill
   -- Ignore all spellcaster items if wearing heavy armour or not much armour skill
-  local zero_spellcasting = l_cache.s_spellcasting == 0
+  local zero_spellcasting = CACHE.s_spellcasting == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
     crawl.setopt("explore_stop_pickup_ignore += ^book of")
+    crawl.setopt("runrest_ignore_message += You add the spell")
+    crawl.mpr("ignoring spellbooks")
   elseif ignoring_spellbooks and not zero_spellcasting then
     ignoring_spellbooks = false
     crawl.setopt("explore_stop_pickup_ignore -= ^book of")
+    crawl.setopt("runrest_ignore_message -= You add the spell")
+    crawl.mpr("not ignoring spellbooks")
   end
 
   local arm = items.equipped_at("armour")
-  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + l_cache.s_armour/2
+  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
   if not ignoring_spellcasting and heavy_arm then
     ignoring_spellcasting = true
+    crawl.setopt("explore_stop_pickup_ignore += ^book of")
     crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
     crawl.setopt("runrest_ignore_message += You add the spell")
+    crawl.mpr("ignoring spellcasting")
   elseif ignoring_spellcasting and not heavy_arm then
     ignoring_spellcasting = false
+    crawl.setopt("explore_stop_pickup_ignore -= ^book of")
     crawl.setopt("autopickup_exceptions -= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
     crawl.setopt("runrest_ignore_message -= You add the spell")
+    crawl.mpr("not ignoring spellcasting")
   end
 end
 
 
 ------------------ Hook ------------------
 function ready_dynamic_options()
-  if l_cache.turn == 0 then
+  if CACHE.turn == 0 then
     set_race_options()
     set_class_options()
   end

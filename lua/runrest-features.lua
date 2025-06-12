@@ -22,8 +22,8 @@ end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  return l_cache.god ~= "No God" or l_cache.race == "Demigod" or
-    (you.good_god() and l_cache.xl > 9)
+  return CACHE.god ~= "No God" or CACHE.race == "Demigod" or
+    (you.good_god() and CACHE.xl > 9)
 end
 
 local function ready_ignore_altars()

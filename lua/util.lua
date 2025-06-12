@@ -76,7 +76,7 @@ end
 --- Helper ---
 function you_have_allies()
   return you.skill("Summonings") + you.skill("Necromancy") > 0 or
-      util.contains(gods_with_allies, l_cache.god)
+      util.contains(gods_with_allies, CACHE.god)
 end
 
 function is_body_armour(it)
