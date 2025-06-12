@@ -22,31 +22,27 @@ function pa_alert_item(it, alert_type, emoji)
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
       pa_show_alert_msg(
-        table.concat({
-          "Item alert, ", alert_type, ": ", name, " ", get_weapon_info_string(it)
-        }),
+        table.concat({"Item alert, ", alert_type, ": "}),
+        table.concat({name, " ", get_weapon_info_string(it)}),
         emoji or CACHE.EMOJI.WEAPON
       )
 	  elseif is_body_armour(it) then
       local ac, ev = get_armour_info_strings(it)
       pa_show_alert_msg(
-        table.concat({
-          "Item alert, ", alert_type, ": ", name, " ", ac, ", ", ev
-        }),
+        table.concat({"Item alert, ", alert_type, ": "}),
+        table.concat({name, " ", ac, ", ", ev}),
         emoji or CACHE.EMOJI.BODY_ARMOUR
       )
     elseif is_armour(it) then
       pa_show_alert_msg(
-        table.concat({
-          "Item alert, ", alert_type, ": ", name
-        }),
+        table.concat({"Item alert, ", alert_type, ": "}),
+        name,
         emoji or CACHE.EMOJI.ARMOUR
       )
     else
       pa_show_alert_msg(
-        table.concat({
-          "Item alert, ", alert_type, ": ", name
-        }),
+        table.concat({"Item alert, ", alert_type, ": "}),
+        name,
         emoji or CACHE.EMOJI.MISC
       )
     end
