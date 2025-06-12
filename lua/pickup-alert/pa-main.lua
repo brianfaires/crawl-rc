@@ -65,7 +65,7 @@ local function dump_table(name, table)
   local summary = ""
   summary = summary .. name .. ":\n"
   for _,item in ipairs(table) do
-    summary = summary .. "\t" .. item .. "\n"
+    summary = summary .. "  " .. item .. "\n"
   end
   return summary
 end
