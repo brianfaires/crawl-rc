@@ -13,7 +13,7 @@ local last_pickup_turn = -1
 -- Must define this separate from ready() if we want to call it from c_message_mute_swaps as well
 local function unmute_items()
   for _,v in ipairs(muted_items) do
-    crawl.setopt("message_colour -= mute: - "..v)
+    crawl.setopt("message_colour -= mute: - " .. v)
   end
   muted_items = {}
 end
@@ -41,9 +41,9 @@ function c_message_mute_swaps(text, channel)
     if text:sub(2,4) == " - " then
       local item = text:sub(5, #text)
       item = crawl.split(item, "{")[1]
-      local mute_str = "(?!"..item..")"
+      local mute_str = "(?!" .. item .. ")"
       table.insert(muted_items, mute_str)
-      local cmd = "message_colour += mute: - "..mute_str
+      local cmd = "message_colour += mute: - " .. mute_str
       crawl.setopt(cmd)
       ready()
       return

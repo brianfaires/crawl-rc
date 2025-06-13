@@ -22,7 +22,7 @@ function pa_alert_rare_item(it)
   end
 
   if do_alert then
-    pa_show_alert_msg("It's your first ", pa_single_alert_items[index].."!", CACHE.EMOJI.RARE_ITEM)
+    pa_show_alert_msg("It's your first ", pa_single_alert_items[index] .. "!", CACHE.EMOJI.RARE_ITEM)
     crawl.more()
   end
 

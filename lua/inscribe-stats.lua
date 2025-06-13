@@ -13,18 +13,18 @@ local function inscribe_armour_stats(it)
   local primary, ev = get_armour_info_strings(it)
 
   local new_insc
-  if it.inscription:find(abbr..NUM_PATTERN) then
-    new_insc = it.inscription:gsub(abbr..NUM_PATTERN, primary)
+  if it.inscription:find(abbr .. NUM_PATTERN) then
+    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
     if ev and ev ~= "" then
-      new_insc = new_insc:gsub("EV"..NUM_PATTERN, ev)
+      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
     end
   else
     new_insc = primary
     if ev and ev ~= "" then
-      new_insc = new_insc..", "..ev
+      new_insc = new_insc .. ", " .. ev
     end
     if it.inscription and it.inscription ~= "" then
-      new_insc = new_insc.." "..it.inscription
+      new_insc = new_insc .. " " .. it.inscription
     end
   end
 
@@ -37,9 +37,9 @@ local function inscribe_weapon_stats(it)
   local idx = it.inscription:find("DPS:")
   if idx then
     if idx + #new_inscr <= #it.inscription then
-      new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
+      new_inscr = new_inscr .. it.inscription:sub(idx + #new_inscr, #it.inscription)
     end
-    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1)..new_inscr end
+    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1) .. new_inscr end
   end
 
   it.inscribe(new_inscr, false)

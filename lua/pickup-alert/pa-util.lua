@@ -269,7 +269,7 @@ end
 
 function get_staff_school(it)
   for k,v in pairs(staff_schools) do
-    if it.name("base") == "staff of "..k then return v end
+    if it.name("base") == "staff of " .. k then return v end
 	end
 end
 
@@ -353,11 +353,11 @@ end
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
   if val < 0 then
-    return abbr..stat_str
+    return abbr .. stat_str
   elseif is_worn then
-    return abbr..':'..stat_str
+    return abbr .. ':' .. stat_str
   else
-    return abbr..'+'..stat_str
+    return abbr .. '+' .. stat_str
   end
 end
 
@@ -414,13 +414,13 @@ function get_weapon_info_string(it)
 
   local it_plus = if_el(it.plus, it.plus, 0)
   local acc = it.accuracy + it_plus
-  if acc >= 0 then acc = "+"..acc end
+  if acc >= 0 then acc = "+" .. acc end
 
   --This would be awesome if it didn't ruin the main UI
-  --dps_str = "DPS=<white>"..dps_str.."</white> "
-  --return dps_str.."(<red>"..dmg_str.."</red>/<blue>"..delay_str.."</blue>), Acc<white>"..acc.."</white>"
-  dps_str = "DPS="..dps_str.." "
-  return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
+  --dps_str = "DPS=<white>" .. dps_str .. "</white> "
+  --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<white>" .. acc .. "</white>"
+  dps_str = "DPS=" .. dps_str .. " "
+  return dps_str .. "(" .. dmg_str .. "/" .. delay_str .. "), Acc" .. acc
 end
 
 

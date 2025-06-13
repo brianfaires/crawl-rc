@@ -313,35 +313,33 @@ end
 -- Data persistence --
 local persist_data_type_handlers = {
     str = function(name)
-        return name.." = \"".._G[name].."\""..KEYS.LF
+        return name .. " = \"" .. _G[name] .. "\"" .. KEYS.LF
     end,
     
     int = function(name)
-        return name.." = ".._G[name]..KEYS.LF
+        return name .. " = " .. _G[name] .. KEYS.LF
     end,
     
     bool = function(name)
-        return name.." = "..if_el(_G[name], "true", "false")..KEYS.LF
+        return name .. " = " .. if_el(_G[name], "true", "false") .. KEYS.LF
     end,
     
     list = function(name)
-        local cmd_init = name.." = {"
+        local cmd_init = name .. " = {"
         local cmd = cmd_init
         for _,v in ipairs(_G[name]) do
-            if cmd ~= cmd_init then cmd = cmd..", " end
-            cmd = cmd.."\""..v.."\""
+            if cmd ~= cmd_init then cmd = cmd .. ", " end
+            cmd = cmd .. "\"" .. v .. "\""
         end
-        return cmd.."}"..KEYS.LF
+        return cmd .. "}" .. KEYS.LF
     end,
     
     dict = function(name)
-        local cmd_init = name.." = {"
-        local cmd = cmd_init
+        local parts = {}
         for k,v in pairs(_G[name]) do
-            if cmd ~= cmd_init then cmd = cmd..", " end
-            cmd = cmd..k.."=\""..v.."\""
+            table.insert(parts, k .. "=\"" .. v .. "\"")
         end
-        return cmd.."}"..KEYS.LF
+        return name .. " = {" .. table.concat(parts, ", ") .. "}" .. KEYS.LF
     end
 } -- data_persist_type_handlers (do not remove this comment)
 
@@ -1797,7 +1795,7 @@ msc += $boring:A root lunges up near you
 msc += $boring:Maurice looks sneaky
 msc += $boring:Suddenly you are surrounded with a pale green light
 msc += $boring:really hit the spot
-msc += $boring:Mmmm... Yummy
+msc += $boring:Mmmm .. . Yummy
 msc += $boring:Grum bares his teeth
 msc += $boring:Grum sniffs the air and quickly glances around
 msc += $boring:The shadow imp grinds its teeth
@@ -1850,7 +1848,7 @@ msc += $boring:bristles in rage as it notices you
 msc += $boring:You feel forgetful for a moment
 msc += $boring:The briar patch crumbles away
 msc += $boring:You feel momentarily lethargic
-msc += $boring:...but nothing happens
+msc += $boring: .. .but nothing happens
 msc += $boring:Wisps of smoke drift from your
 msc += $boring:You smell salt
 msc += $boring:tries to hide in the shadows
@@ -2368,7 +2366,7 @@ msc ^= $verypositive:rots away and dies
 msc ^= $verypositive:You.*and break free
 msc += $verypositive:The web tears apart
 msc += $verypositive:You disentangle yourself
-msc += $verypositive:Saving game... please wait
+msc += $verypositive:Saving game .. . please wait
 msc += $verypositive:You finish memorising
 msc += $verypositive:You may choose your destination
 msc += $verypositive:You feel yourself speed up
@@ -2863,7 +2861,7 @@ msc ^= $takesaction:begins absorbing vital energies
 msc ^= $takesaction:calls forth a grand avatar
 msc ^= $takesaction:exhales a fierce blast of wind
 msc ^= $takesaction:curls into a ball and starts rolling
-msc ^= $takesaction:You open the lid...
+msc ^= $takesaction:You open the lid .. .
 msc ^= $takesaction:jumps down from its now dead mount
 msc ^= $takesaction:swoops through the air toward you
 msc ^= $takesaction:jumping spider pounces on
@@ -3708,7 +3706,7 @@ end
 
 function delta_color(delta)
   local color = delta < 0 and COLORS.red or COLORS.green
-  local signDelta = delta < 0 and delta or "+"..delta
+  local signDelta = delta < 0 and delta or "+" .. delta
   return string.format("<%s>%s</%s>", color, signDelta, color)
 end
 
@@ -3934,7 +3932,7 @@ local function colorize_subtext(text, s, tag)
     if prev == "!" or prev == ">" then return text end
   end
 
-  local retval = text:gsub("("..s..")", "<"..tag..">%1</"..tag..">")
+  local retval = text:gsub("(" .. s .. ")", "<" .. tag .. ">%1</" .. tag .. ">")
   return retval
 end
 
@@ -3944,34 +3942,34 @@ local multi_minus = "%-+"
 local pos_num = "%+%d+%.?%d*"
 local neg_num = "%-%d+%.?%d*"
 local colorize_tags = {
-  { "rF"..multi_plus, COLORS.lightred },
-  { "rC"..multi_plus, COLORS.lightblue },
-  { "rN"..multi_plus, COLORS.lightmagenta },
-  { "rF"..multi_minus, COLORS.red },
-  { "rC"..multi_minus, COLORS.blue },
-  { "rN"..multi_minus, COLORS.magenta },
+  { "rF" .. multi_plus, COLORS.lightred },
+  { "rC" .. multi_plus, COLORS.lightblue },
+  { "rN" .. multi_plus, COLORS.lightmagenta },
+  { "rF" .. multi_minus, COLORS.red },
+  { "rC" .. multi_minus, COLORS.blue },
+  { "rN" .. multi_minus, COLORS.magenta },
   { "rPois", COLORS.green },
   { "rElec", COLORS.lightcyan },
   { "rCorr", COLORS.yellow },
   { "rMut", COLORS.brown },
-  { "Slay"..pos_num, COLORS.white},
-  {  "Str"..pos_num, COLORS.white },
-  {  "Dex"..pos_num, COLORS.white },
-  {  "Int"..pos_num, COLORS.white },
-  {   "AC"..pos_num, COLORS.white },
-  {   "EV"..pos_num, COLORS.white },
-  {   "SH"..pos_num, COLORS.white },
-  {   "HP"..pos_num, COLORS.white },
-  {   "MP"..pos_num, COLORS.white },
-  { "Slay"..neg_num, COLORS.darkgrey },
-  {  "Str"..neg_num, COLORS.darkgrey },
-  {  "Dex"..neg_num, COLORS.darkgrey },
-  {  "Int"..neg_num, COLORS.darkgrey },
-  {   "AC"..neg_num, COLORS.darkgrey },
-  {   "EV"..neg_num, COLORS.darkgrey },
-  {   "SH"..neg_num, COLORS.darkgrey },
-  {   "HP"..neg_num, COLORS.darkgrey },
-  {   "MP"..neg_num, COLORS.darkgrey },
+  { "Slay" .. pos_num, COLORS.white},
+  {  "Str" .. pos_num, COLORS.white },
+  {  "Dex" .. pos_num, COLORS.white },
+  {  "Int" .. pos_num, COLORS.white },
+  {   "AC" .. pos_num, COLORS.white },
+  {   "EV" .. pos_num, COLORS.white },
+  {   "SH" .. pos_num, COLORS.white },
+  {   "HP" .. pos_num, COLORS.white },
+  {   "MP" .. pos_num, COLORS.white },
+  { "Slay" .. neg_num, COLORS.darkgrey },
+  {  "Str" .. neg_num, COLORS.darkgrey },
+  {  "Dex" .. neg_num, COLORS.darkgrey },
+  {  "Int" .. neg_num, COLORS.darkgrey },
+  {   "AC" .. neg_num, COLORS.darkgrey },
+  {   "EV" .. neg_num, COLORS.darkgrey },
+  {   "SH" .. neg_num, COLORS.darkgrey },
+  {   "HP" .. neg_num, COLORS.darkgrey },
+  {   "MP" .. neg_num, COLORS.darkgrey },
 } --colorize_tags (do not remove this comment)
 
 ------------------- Hooks -------------------
@@ -3982,13 +3980,13 @@ function c_assign_invletter_color_inscribe(it)
   end
 
   if text:len() > INSCRIPTION_MAX_LENGTH then
-    text = text:gsub("<.*>", "").."<7>"
+    text = text:gsub("<.*>", "") .. "<7>"
   end
   it.inscribe(text, false)
 end
 
 -- To colorize more, need a way to:
-  -- intercept messages before they're displayed
+  -- intercept messages before they're displayed (or delete and re-insert)
   -- insert tags that affect menus
   -- colorize artefact text
 -- function c_message_color_inscribe(text, _)
@@ -3998,7 +3996,7 @@ end
 
 --   local cleaned = cleanup_text(text)
 --   if cleaned:sub(2, 4) == " - " then
---     text = " "..text
+--     text = " " .. text
 --   end
 
 --   crawl.mpr(text)
@@ -4015,10 +4013,10 @@ end
 
 local DROP_KEY = "~~DROP_ME"
 
-crawl.setopt("drop_filter += "..DROP_KEY)
+crawl.setopt("drop_filter += " .. DROP_KEY)
 
 local function inscribe_drop(it)
-  local new_inscr = it.inscription:gsub(DROP_KEY, "")..DROP_KEY
+  local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
 end
 
@@ -4101,9 +4099,9 @@ local late_warnings = {
 local function set_dyn_fm(warnings, create)
   for _, v in ipairs(warnings) do
     if create then
-      crawl.setopt("force_more_message += "..v)
+      crawl.setopt("force_more_message += " .. v)
     else
-      crawl.setopt("force_more_message -= "..v)
+      crawl.setopt("force_more_message -= " .. v)
     end
   end
 end
@@ -4263,7 +4261,7 @@ if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, 
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
 if CACHE.size_penalty >= SIZE_PENALTY.LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
-if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
+if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= " .. dropped_item_exclusions) end
 
 local function get_jewellery_name(text)
   local idx  = text:find("ring of ")
@@ -4280,11 +4278,11 @@ local function get_missile_name(text)
     if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
-          item_name = "silver "..item_name
+          item_name = "silver " .. item_name
         elseif text:find("dispersal") then
-          item_name = item_name.."s? of dispersal"
+          item_name = item_name .. "s? of dispersal"
         else
-          item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
+          item_name = "(?<!silver )" .. item_name .. "(?!(s? of dispersal))"
         end
       end
 
@@ -4342,15 +4340,15 @@ function c_message_exclude_dropped(text, channel)
   if not item_name then return end
 
   if exclude then
-    crawl.setopt("autopickup_exceptions ^= >"..item_name)
-    if dropped_item_exclusions ~= "" then dropped_item_exclusions = dropped_item_exclusions.."," end
-    dropped_item_exclusions = dropped_item_exclusions..">"..item_name
+    crawl.setopt("autopickup_exceptions ^= >" .. item_name)
+    if dropped_item_exclusions ~= "" then dropped_item_exclusions = dropped_item_exclusions .. "," end
+    dropped_item_exclusions = dropped_item_exclusions .. ">" .. item_name
   else
-    crawl.setopt("autopickup_exceptions -= >"..item_name)
+    crawl.setopt("autopickup_exceptions -= >" .. item_name)
     -- Remove persistent exclusion (try 3 times to make sure we capture comma)
-    dropped_item_exclusions = dropped_item_exclusions:gsub(",>"..item_name, "")
-    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name..",", "")
-    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(",>" .. item_name, "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">" .. item_name .. ",", "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">" .. item_name, "")
   end
 end
 
@@ -4469,7 +4467,7 @@ local debug_fm_monsters = false -- Set to true to get a message when the fm chan
 local turns_to_delay = 15 -- Turns before alerting for a pack monster again
 
 -- Stop on all Uniques & Pan lords
-crawl.setopt("force_more_message += monster_warning:" ..
+crawl.setopt("force_more_message += monster_warning:" .. 
               "(?-i:[A-Z]).*comes? into view")
 
 -- Always screen flash
@@ -4534,12 +4532,12 @@ local fm_patterns = {
   {name = "90hp", cond = "hp", cutoff = 90,
       pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110,
-      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth"..
+      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" .. 
                   "deep elf high priest|deep troll earth mage|stone giant|cacodemon" },
   {name = "120hp", cond = "hp", cutoff = 120,
       pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
   {name = "160hp", cond = "hp", cutoff = 160,
-      pattern = "brimstone fiend|deep elf sorcerer"..
+      pattern = "brimstone fiend|deep elf sorcerer" .. 
               "hell sentinal|war gargoyle|draconian (knight|scorcher)" },
   {name = "200hp", cond = "hp", cutoff = 200,
       pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
@@ -4549,11 +4547,11 @@ local fm_patterns = {
   {name = "willpower2", cond = "will", cutoff = 2,
       pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)|sphinx marauder" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|"..
-              "merfolk siren|fenstrider witch|cacodemon|"..
-              "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|"..
-              "glowing orange brain|orc sorcerer|"..
-              "ogre mage|satyr|vault sentinel|iron elemental|"..
+      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|" .. 
+              "merfolk siren|fenstrider witch|cacodemon|" .. 
+              "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" .. 
+              "glowing orange brain|orc sorcerer|" .. 
+              "ogre mage|satyr|vault sentinel|iron elemental|" .. 
               "death knight|vampire knight" },
   {name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3,
       pattern = "great orb of eyes" },
@@ -4584,10 +4582,10 @@ local fm_patterns = {
   {name = "elec_80", cond = "elec", cutoff = 80,
       pattern = "shock serpent|raiju|spark wasp" },
   {name = "elec_120", cond = "elec", cutoff = 120,
-      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|"..
+      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" .. 
                 "storm dragon|tengu conjurer" },
   {name = "elec_140", cond = "elec", cutoff = 140,
-      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|"..
+      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" .. 
                 "ball lightning|tengu reaver" },
 
   {name = "corr_60", cond = "corr", cutoff = 60,
@@ -4600,12 +4598,12 @@ local fm_patterns = {
   {name = "fire_100", cond = "fire", cutoff = 100,
       pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
   {name = "fire_120", cond = "fire", cutoff = 120,
-      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|"..
+      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" .. 
                 "ogre mage|molten gargoyle|hell knight" },
   {name = "fire_140", cond = "fire", cutoff = 140,
       pattern = "balrug" },
   {name = "fire_160", cond = "fire", cutoff = 160,
-      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|"..
+      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" .. 
                 "fire dragon|salamander tyrant|tengu reaver" },
   {name = "fire_240", cond = "fire", cutoff = 240,
       pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
@@ -4613,7 +4611,7 @@ local fm_patterns = {
   {name = "cold_80", cond = "cold", cutoff = 80,
       pattern = "rime drake" },
   {name = "cold_120", cond = "cold", cutoff = 120,
-      pattern = "blizzard demon|bog body|ironbound frostheart|"..
+      pattern = "blizzard demon|bog body|ironbound frostheart|" .. 
                 "demonspawn blood saint|white draconian" },
   {name = "cold_160", cond = "cold", cutoff = 160,
       pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
@@ -4640,9 +4638,9 @@ local last_fm_turn = {} -- when the mute started
 
 
 local function set_monster_option(sign, monster_str, option)
-  local fm_str = "monster_warning:(?<!spectral )("..monster_str..
+  local fm_str = "monster_warning:(?<!spectral )(" .. monster_str .. 
       ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
-  crawl.setopt(option .. " " .. sign .. "= "..fm_str)
+  crawl.setopt(option .. " " .. sign .. "= " .. fm_str)
 end
 
 local function set_monster_fm(sign, monster_str)
@@ -4867,18 +4865,18 @@ local function inscribe_armour_stats(it)
   local primary, ev = get_armour_info_strings(it)
 
   local new_insc
-  if it.inscription:find(abbr..NUM_PATTERN) then
-    new_insc = it.inscription:gsub(abbr..NUM_PATTERN, primary)
+  if it.inscription:find(abbr .. NUM_PATTERN) then
+    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
     if ev and ev ~= "" then
-      new_insc = new_insc:gsub("EV"..NUM_PATTERN, ev)
+      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
     end
   else
     new_insc = primary
     if ev and ev ~= "" then
-      new_insc = new_insc..", "..ev
+      new_insc = new_insc .. ", " .. ev
     end
     if it.inscription and it.inscription ~= "" then
-      new_insc = new_insc.." "..it.inscription
+      new_insc = new_insc .. " " .. it.inscription
     end
   end
 
@@ -4891,9 +4889,9 @@ local function inscribe_weapon_stats(it)
   local idx = it.inscription:find("DPS:")
   if idx then
     if idx + #new_inscr <= #it.inscription then
-      new_inscr = new_inscr..it.inscription:sub(idx + #new_inscr, #it.inscription)
+      new_inscr = new_inscr .. it.inscription:sub(idx + #new_inscr, #it.inscription)
     end
-    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1)..new_inscr end
+    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1) .. new_inscr end
   end
 
   it.inscribe(new_inscr, false)
@@ -4954,7 +4952,9 @@ local function alert_low_hp()
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
-    crawl.mpr(CACHE.EMOJI.EXCLAMATION .. " <red>Dropped below "..threshold_perc.."% HP </red>" .. CACHE.EMOJI.EXCLAMATION)
+    crawl.mpr(table.concat({
+      CACHE.EMOJI.EXCLAMATION, " <red>Dropped below ", threshold_perc, "% HP </red>", CACHE.EMOJI.EXCLAMATION
+    }))
     crawl.more()
   end
 end
@@ -5149,14 +5149,15 @@ end
 {
 
 ----- Prevent accidental stairs usage -----
-local prev_location, temp_location = you.branch()..you.depth(), you.branch()..you.depth()
+local prev_location = you.branch() .. you.depth()
+local temp_location = prev_location
 local last_stair_turn = 0
 
 crawl.setopt("macros += M > ===macro_do_safe_downstairs")
 crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 
 local function check_new_location(key)
-  local cur_location = you.branch()..you.depth()
+  local cur_location = you.branch() .. you.depth()
   local turn_diff = CACHE.turn - last_stair_turn
   local question = nil
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
@@ -5191,7 +5192,7 @@ end
 ------------------- Hook -------------------
 function ready_safe_stairs()
   prev_location = temp_location
-  temp_location = you.branch()..you.depth()
+  temp_location = you.branch() .. you.depth()
 end
 
 }
@@ -5650,7 +5651,7 @@ end
 
 function get_staff_school(it)
   for k,v in pairs(staff_schools) do
-    if it.name("base") == "staff of "..k then return v end
+    if it.name("base") == "staff of " .. k then return v end
 	end
 end
 
@@ -5734,11 +5735,11 @@ end
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
   if val < 0 then
-    return abbr..stat_str
+    return abbr .. stat_str
   elseif is_worn then
-    return abbr..':'..stat_str
+    return abbr .. ':' .. stat_str
   else
-    return abbr..'+'..stat_str
+    return abbr .. '+' .. stat_str
   end
 end
 
@@ -5795,13 +5796,13 @@ function get_weapon_info_string(it)
 
   local it_plus = if_el(it.plus, it.plus, 0)
   local acc = it.accuracy + it_plus
-  if acc >= 0 then acc = "+"..acc end
+  if acc >= 0 then acc = "+" .. acc end
 
   --This would be awesome if it didn't ruin the main UI
-  --dps_str = "DPS=<white>"..dps_str.."</white> "
-  --return dps_str.."(<red>"..dmg_str.."</red>/<blue>"..delay_str.."</blue>), Acc<white>"..acc.."</white>"
-  dps_str = "DPS="..dps_str.." "
-  return dps_str.."("..dmg_str.."/"..delay_str.."), Acc"..acc
+  --dps_str = "DPS=<white>" .. dps_str .. "</white> "
+  --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<white>" .. acc .. "</white>"
+  dps_str = "DPS=" .. dps_str .. " "
+  return dps_str .. "(" .. dmg_str .. "/" .. delay_str .. "), Acc" .. acc
 end
 
 
@@ -5897,7 +5898,7 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
     end
 
     for i=plus,1,-1 do
-      name = name:gsub("+"..i, "+"..(i-1))
+      name = name:gsub("+" .. i, "+" .. (i-1))
       if remove_item then util.remove(table_ref, name)
       else table.insert(table_ref, name)
       end
@@ -6068,13 +6069,13 @@ function c_message_item_alerts(text, _)
     local all_alerts = ""
     for _,v in ipairs(pa_all_level_alerts) do
       if all_alerts == "" then all_alerts = v
-      else all_alerts = all_alerts..", "..v
+      else all_alerts = all_alerts .. ", " .. v
       end
     end
 
     pa_all_level_alerts = {}
     if all_alerts ~= "" then
-      crawl.mpr("<magenta>Recent alerts: "..all_alerts.."</magenta>")
+      crawl.mpr("<magenta>Recent alerts: " .. all_alerts .. "</magenta>")
     end
   end
 end
@@ -6480,7 +6481,7 @@ function pa_alert_rare_item(it)
   end
 
   if do_alert then
-    pa_show_alert_msg("It's your first ", pa_single_alert_items[index].."!", CACHE.EMOJI.RARE_ITEM)
+    pa_show_alert_msg("It's your first ", pa_single_alert_items[index] .. "!", CACHE.EMOJI.RARE_ITEM)
     crawl.more()
   end
 
@@ -6599,8 +6600,8 @@ end
 
 local function get_weap_tag(it)
   local ret_val = if_el(it.is_ranged, "ranged_", "melee_")
-  ret_val = ret_val..get_hands(it)
-  if has_ego(it) then ret_val = ret_val.."b" end
+  ret_val = ret_val .. get_hands(it)
+  if has_ego(it) then ret_val = ret_val .. "b" end
   return ret_val
 end
 

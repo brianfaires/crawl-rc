@@ -60,8 +60,8 @@ end
 
 local function get_weap_tag(it)
   local ret_val = if_el(it.is_ranged, "ranged_", "melee_")
-  ret_val = ret_val..get_hands(it)
-  if has_ego(it) then ret_val = ret_val.."b" end
+  ret_val = ret_val .. get_hands(it)
+  if has_ego(it) then ret_val = ret_val .. "b" end
   return ret_val
 end
 

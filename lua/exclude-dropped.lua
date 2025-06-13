@@ -22,7 +22,7 @@ if not started_with_ranged then crawl.setopt("autopickup_exceptions ^= < stone, 
 crawl.setopt("autopickup_exceptions ^= <dart, <javelin")
 if CACHE.size_penalty >= SIZE_PENALTY.LARGE then crawl.setopt("autopickup_exceptions ^= <large rock") end
 
-if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= "..dropped_item_exclusions) end
+if dropped_item_exclusions ~= "" then crawl.setopt("autopickup_exceptions ^= " .. dropped_item_exclusions) end
 
 local function get_jewellery_name(text)
   local idx  = text:find("ring of ")
@@ -39,11 +39,11 @@ local function get_missile_name(text)
     if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
-          item_name = "silver "..item_name
+          item_name = "silver " .. item_name
         elseif text:find("dispersal") then
-          item_name = item_name.."s? of dispersal"
+          item_name = item_name .. "s? of dispersal"
         else
-          item_name = "(?<!silver )"..item_name.."(?!(s? of dispersal))"
+          item_name = "(?<!silver )" .. item_name .. "(?!(s? of dispersal))"
         end
       end
 
@@ -101,14 +101,14 @@ function c_message_exclude_dropped(text, channel)
   if not item_name then return end
 
   if exclude then
-    crawl.setopt("autopickup_exceptions ^= >"..item_name)
-    if dropped_item_exclusions ~= "" then dropped_item_exclusions = dropped_item_exclusions.."," end
-    dropped_item_exclusions = dropped_item_exclusions..">"..item_name
+    crawl.setopt("autopickup_exceptions ^= >" .. item_name)
+    if dropped_item_exclusions ~= "" then dropped_item_exclusions = dropped_item_exclusions .. "," end
+    dropped_item_exclusions = dropped_item_exclusions .. ">" .. item_name
   else
-    crawl.setopt("autopickup_exceptions -= >"..item_name)
+    crawl.setopt("autopickup_exceptions -= >" .. item_name)
     -- Remove persistent exclusion (try 3 times to make sure we capture comma)
-    dropped_item_exclusions = dropped_item_exclusions:gsub(",>"..item_name, "")
-    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name..",", "")
-    dropped_item_exclusions = dropped_item_exclusions:gsub(">"..item_name, "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(",>" .. item_name, "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">" .. item_name .. ",", "")
+    dropped_item_exclusions = dropped_item_exclusions:gsub(">" .. item_name, "")
   end
 end

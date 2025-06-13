@@ -71,7 +71,7 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
     end
 
     for i=plus,1,-1 do
-      name = name:gsub("+"..i, "+"..(i-1))
+      name = name:gsub("+" .. i, "+" .. (i-1))
       if remove_item then util.remove(table_ref, name)
       else table.insert(table_ref, name)
       end

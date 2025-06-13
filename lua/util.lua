@@ -131,35 +131,33 @@ end
 -- Data persistence --
 local persist_data_type_handlers = {
     str = function(name)
-        return name.." = \"".._G[name].."\""..KEYS.LF
+        return name .. " = \"" .. _G[name] .. "\"" .. KEYS.LF
     end,
     
     int = function(name)
-        return name.." = ".._G[name]..KEYS.LF
+        return name .. " = " .. _G[name] .. KEYS.LF
     end,
     
     bool = function(name)
-        return name.." = "..if_el(_G[name], "true", "false")..KEYS.LF
+        return name .. " = " .. if_el(_G[name], "true", "false") .. KEYS.LF
     end,
     
     list = function(name)
-        local cmd_init = name.." = {"
+        local cmd_init = name .. " = {"
         local cmd = cmd_init
         for _,v in ipairs(_G[name]) do
-            if cmd ~= cmd_init then cmd = cmd..", " end
-            cmd = cmd.."\""..v.."\""
+            if cmd ~= cmd_init then cmd = cmd .. ", " end
+            cmd = cmd .. "\"" .. v .. "\""
         end
-        return cmd.."}"..KEYS.LF
+        return cmd .. "}" .. KEYS.LF
     end,
     
     dict = function(name)
-        local cmd_init = name.." = {"
-        local cmd = cmd_init
+        local parts = {}
         for k,v in pairs(_G[name]) do
-            if cmd ~= cmd_init then cmd = cmd..", " end
-            cmd = cmd..k.."=\""..v.."\""
+            table.insert(parts, k .. "=\"" .. v .. "\"")
         end
-        return cmd.."}"..KEYS.LF
+        return name .. " = {" .. table.concat(parts, ", ") .. "}" .. KEYS.LF
     end
 } -- data_persist_type_handlers (do not remove this comment)
 

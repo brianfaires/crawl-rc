@@ -25,9 +25,9 @@ local late_warnings = {
 local function set_dyn_fm(warnings, create)
   for _, v in ipairs(warnings) do
     if create then
-      crawl.setopt("force_more_message += "..v)
+      crawl.setopt("force_more_message += " .. v)
     else
-      crawl.setopt("force_more_message -= "..v)
+      crawl.setopt("force_more_message -= " .. v)
     end
   end
 end

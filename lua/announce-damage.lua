@@ -5,7 +5,7 @@ loadfile("crawl-rc/lua/util.lua")
 
 function delta_color(delta)
   local color = delta < 0 and COLORS.red or COLORS.green
-  local signDelta = delta < 0 and delta or "+"..delta
+  local signDelta = delta < 0 and delta or "+" .. delta
   return string.format("<%s>%s</%s>", color, signDelta, color)
 end
 

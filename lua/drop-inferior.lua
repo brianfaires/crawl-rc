@@ -3,10 +3,10 @@ loadfile("crawl-rc/lua/util.lua")
 
 local DROP_KEY = "~~DROP_ME"
 
-crawl.setopt("drop_filter += "..DROP_KEY)
+crawl.setopt("drop_filter += " .. DROP_KEY)
 
 local function inscribe_drop(it)
-  local new_inscr = it.inscription:gsub(DROP_KEY, "")..DROP_KEY
+  local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
 end
 

@@ -29,7 +29,9 @@ local function alert_low_hp()
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
-    crawl.mpr(CACHE.EMOJI.EXCLAMATION .. " <red>Dropped below "..threshold_perc.."% HP </red>" .. CACHE.EMOJI.EXCLAMATION)
+    crawl.mpr(table.concat({
+      CACHE.EMOJI.EXCLAMATION, " <red>Dropped below ", threshold_perc, "% HP </red>", CACHE.EMOJI.EXCLAMATION
+    }))
     crawl.more()
   end
 end

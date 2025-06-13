@@ -101,13 +101,13 @@ function c_message_item_alerts(text, _)
     local all_alerts = ""
     for _,v in ipairs(pa_all_level_alerts) do
       if all_alerts == "" then all_alerts = v
-      else all_alerts = all_alerts..", "..v
+      else all_alerts = all_alerts .. ", " .. v
       end
     end
 
     pa_all_level_alerts = {}
     if all_alerts ~= "" then
-      crawl.mpr("<magenta>Recent alerts: "..all_alerts.."</magenta>")
+      crawl.mpr("<magenta>Recent alerts: " .. all_alerts .. "</magenta>")
     end
   end
 end
