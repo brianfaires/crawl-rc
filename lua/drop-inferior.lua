@@ -20,8 +20,8 @@ function c_assign_invletter_drop_inferior(it)
 
   local risky_artefact = false
   if it.artefact then
-    local qualname = it.name("qual")
-    if qualname:find("%-") or qualname:find("Harm") or qualname:find("Infuse") then
+    local name = it.name()
+    if name:find("%-") or name:find("harm") or name:find("infusion") then
       risky_artefact = true
     end
   end

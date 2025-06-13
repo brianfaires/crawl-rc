@@ -26,33 +26,32 @@ function get_rare_item_index(it)
 end
 
 function remove_from_pa_single_alert_items(it)
-  local idx = get_rare_item_index(it)
-  if idx ~= -1 then
-    util.remove(pa_single_alert_items, pa_single_alert_items[idx])
-    return true
-  end
+  local alerted = false
+  local idx = -1
+  repeat
+    idx = get_rare_item_index(it)
+    if idx ~= -1 then
+      util.remove(pa_single_alert_items, pa_single_alert_items[idx])
+      alerted = true
+    end
+  until idx == -1
 
-  return false
+  return alerted
 end
 
 function pa_previously_picked(it)
-  local name = it.name("qual")
-  if not it.is_identified then name = "+0 " .. name end
-  return util.contains(pa_items_picked, name)
+  return util.contains(pa_items_picked, get_plussed_name(it))
 end
 
 function pa_previously_alerted(it)
-  local name = it.name("qual")
-  if not it.is_identified then name = "+0 " .. name end
-  return util.contains(pa_items_alerted, name)
+  return util.contains(pa_items_alerted, get_plussed_name(it))
 end
 
 --- Multi store/remove data ---
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = it.name("plain")
-  if not it.is_identified then name = "+0 " .. name end
+  local name = get_plussed_name(it)
   if util.contains(table_ref, name) ~= remove_item then return end
 
   if remove_item then util.remove(table_ref, name)

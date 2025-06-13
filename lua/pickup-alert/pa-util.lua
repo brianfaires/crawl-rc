@@ -32,6 +32,13 @@ function get_ego(it)
 end
 
 
+function get_plussed_name(it)
+  local name = it.name("qual")
+  if is_talisman(it) then return name end
+  if name[1] ~= "+" and name[1] ~= "-" then name = "+0 " .. name end
+  return name
+end
+
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
   -- dcss v0.33

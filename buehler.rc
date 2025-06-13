@@ -51,7 +51,7 @@ CONFIG.alert_one_time_items = true
 CONFIG.one_time_alerts = {
   "broad axe", "executioner's axe", "eveningstar", "demon whip",
   "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
-  "quick blade", "demon blade", "double sword", "triple sword", "eudemon blade",
+  "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
   "crystal plate armour", "gold dragon scales", "pearl dragon scales",
   "storm dragon scales", "shadow dragon scales", "wand of digging",
   "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
@@ -4039,8 +4039,8 @@ function c_assign_invletter_drop_inferior(it)
 
   local risky_artefact = false
   if it.artefact then
-    local qualname = it.name("qual")
-    if qualname:find("%-") or qualname:find("Harm") or qualname:find("Infuse") then
+    local name = it.name()
+    if name:find("%-") or name:find("harm") or name:find("infusion") then
       risky_artefact = true
     end
   end
@@ -5418,6 +5418,13 @@ function get_ego(it)
 end
 
 
+function get_plussed_name(it)
+  local name = it.name("qual")
+  if is_talisman(it) then return name end
+  if name[1] ~= "+" and name[1] ~= "-" then name = "+0 " .. name end
+  return name
+end
+
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
   -- dcss v0.33
@@ -5857,33 +5864,32 @@ function get_rare_item_index(it)
 end
 
 function remove_from_pa_single_alert_items(it)
-  local idx = get_rare_item_index(it)
-  if idx ~= -1 then
-    util.remove(pa_single_alert_items, pa_single_alert_items[idx])
-    return true
-  end
+  local alerted = false
+  local idx = -1
+  repeat
+    idx = get_rare_item_index(it)
+    if idx ~= -1 then
+      util.remove(pa_single_alert_items, pa_single_alert_items[idx])
+      alerted = true
+    end
+  until idx == -1
 
-  return false
+  return alerted
 end
 
 function pa_previously_picked(it)
-  local name = it.name("qual")
-  if not it.is_identified then name = "+0 " .. name end
-  return util.contains(pa_items_picked, name)
+  return util.contains(pa_items_picked, get_plussed_name(it))
 end
 
 function pa_previously_alerted(it)
-  local name = it.name("qual")
-  if not it.is_identified then name = "+0 " .. name end
-  return util.contains(pa_items_alerted, name)
+  return util.contains(pa_items_alerted, get_plussed_name(it))
 end
 
 --- Multi store/remove data ---
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = it.name("plain")
-  if not it.is_identified then name = "+0 " .. name end
+  local name = get_plussed_name(it)
   if util.contains(table_ref, name) ~= remove_item then return end
 
   if remove_item then util.remove(table_ref, name)
@@ -6000,11 +6006,7 @@ local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type, emoji)
-  local name = it.name("plain")
-
-  if not (is_talisman(it) or it.is_identified) then
-    name = "+0 " .. name
-  end
+  local name = get_plussed_name(it)
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
@@ -6078,7 +6080,7 @@ function c_assign_invletter_item_alerts(it)
   end
 
   remove_item_and_less_enchanted(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, it.name("qual"))
+  util.remove(pa_all_level_alerts, get_plussed_name(it))
 end
 
 function c_message_item_alerts(text, _)

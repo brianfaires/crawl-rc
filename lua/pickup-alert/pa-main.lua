@@ -12,11 +12,7 @@ local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type, emoji)
-  local name = it.name("plain")
-
-  if not (is_talisman(it) or it.is_identified) then
-    name = "+0 " .. name
-  end
+  local name = get_plussed_name(it)
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
     if is_weapon(it) or is_staff(it) then
@@ -90,7 +86,7 @@ function c_assign_invletter_item_alerts(it)
   end
 
   remove_item_and_less_enchanted(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, it.name("qual"))
+  util.remove(pa_all_level_alerts, get_plussed_name(it))
 end
 
 function c_message_item_alerts(text, _)
