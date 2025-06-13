@@ -48,7 +48,7 @@ function pa_alert_item(it, alert_type, emoji)
     end
 
     insert_item_and_less_enchanted(pa_items_alerted, it)
-    table.insert(pa_all_level_alerts, name)
+    pa_all_level_alerts[#pa_all_level_alerts+1] = name
   end
 
   -- Returns true to make other code more concise; indicates that we tried to alert this item

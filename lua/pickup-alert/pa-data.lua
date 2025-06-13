@@ -56,7 +56,7 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   if util.contains(table_ref, name) ~= remove_item then return end
 
   if remove_item then util.remove(table_ref, name)
-  else table.insert(table_ref, name)
+  else table_ref[#table_ref+1] = name
   end
 
   if it.artefact then return end
@@ -73,7 +73,7 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
     for i=plus,1,-1 do
       name = name:gsub("+" .. i, "+" .. (i-1))
       if remove_item then util.remove(table_ref, name)
-      else table.insert(table_ref, name)
+      else table_ref[#table_ref+1] = name
       end
     end
   end

@@ -42,7 +42,7 @@ function c_message_mute_swaps(text, channel)
       local item = text:sub(5, #text)
       item = crawl.split(item, "{")[1]
       local mute_str = "(?!" .. item .. ")"
-      table.insert(muted_items, mute_str)
+      muted_items[#muted_items+1] = mute_str
       local cmd = "message_colour += mute: - " .. mute_str
       crawl.setopt(cmd)
       ready()

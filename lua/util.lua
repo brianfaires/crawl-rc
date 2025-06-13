@@ -27,20 +27,20 @@ function cleanup_text(text, escape_chars)
       local tag_start = text:find("<", pos)
       if not tag_start then
           -- No more tags, append remaining text
-          result[#result + 1] = text:sub(pos)
+          result[#result+1] = text:sub(pos)
           break
       end
       
       -- Append text before tag
       if tag_start > pos then
-          result[#result + 1] = text:sub(pos, tag_start - 1)
+          result[#result+1] = text:sub(pos, tag_start - 1)
       end
       
       -- Find end of tag
       local tag_end = text:find(">", tag_start)
       if not tag_end then
           -- Malformed tag, append remaining text
-          result[#result + 1] = text:sub(pos)
+          result[#result+1] = text:sub(pos)
           break
       end
       
@@ -155,7 +155,7 @@ local persist_data_type_handlers = {
     dict = function(name)
         local parts = {}
         for k,v in pairs(_G[name]) do
-            table.insert(parts, k .. "=\"" .. v .. "\"")
+            parts[#parts+1] = k .. "=\"" .. v .. "\""
         end
         return name .. " = {" .. table.concat(parts, ", ") .. "}" .. KEYS.LF
     end

@@ -6,7 +6,7 @@ function pa_show_alert_msg(alert_text, item_name, emoji)
   tokens = { "<cyan>----<magenta>", alert_text, "</magenta><yellow>", item_name, "</yellow>----</cyan>" }
   if emoji then
     table.insert(tokens, 1, emoji .. " ")
-    table.insert(tokens, " " .. emoji)
+    tokens[#tokens+1] = " " .. emoji)
   end
   crawl.mpr(table.concat(tokens))
   you.stop_activity()

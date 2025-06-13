@@ -217,20 +217,20 @@ function cleanup_text(text, escape_chars)
       local tag_start = text:find("<", pos)
       if not tag_start then
           -- No more tags, append remaining text
-          result[#result + 1] = text:sub(pos)
+          result[#result+1] = text:sub(pos)
           break
       end
       
       -- Append text before tag
       if tag_start > pos then
-          result[#result + 1] = text:sub(pos, tag_start - 1)
+          result[#result+1] = text:sub(pos, tag_start - 1)
       end
       
       -- Find end of tag
       local tag_end = text:find(">", tag_start)
       if not tag_end then
           -- Malformed tag, append remaining text
-          result[#result + 1] = text:sub(pos)
+          result[#result+1] = text:sub(pos)
           break
       end
       
@@ -345,7 +345,7 @@ local persist_data_type_handlers = {
     dict = function(name)
         local parts = {}
         for k,v in pairs(_G[name]) do
-            table.insert(parts, k .. "=\"" .. v .. "\"")
+            parts[#parts+1] = k .. "=\"" .. v .. "\""
         end
         return name .. " = {" .. table.concat(parts, ", ") .. "}" .. KEYS.LF
     end
@@ -4764,9 +4764,9 @@ function ready_force_mores()
 
       if debug_fm_monsters then
         if action == "+" then
-          activated[#activated + 1] = fm_name
+          activated[#activated+1] = fm_name
         elseif action == "-" then
-          deactivated[#deactivated + 1] = fm_name
+          deactivated[#deactivated+1] = fm_name
         end
       end
     end
@@ -4842,7 +4842,7 @@ end
 
 -- Init all active_fm to false
 for _,_ in ipairs(fm_patterns) do
-  active_fm[#active_fm + 1] = false
+  active_fm[#active_fm+1] = false
 end
 
 }
@@ -5388,7 +5388,7 @@ function pa_show_alert_msg(alert_text, item_name, emoji)
   tokens = { "<cyan>----<magenta>", alert_text, "</magenta><yellow>", item_name, "</yellow>----</cyan>" }
   if emoji then
     table.insert(tokens, 1, emoji .. " ")
-    table.insert(tokens, " " .. emoji)
+    tokens[#tokens+1] = " " .. emoji)
   end
   crawl.mpr(table.concat(tokens))
   you.stop_activity()
@@ -5883,7 +5883,7 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   if util.contains(table_ref, name) ~= remove_item then return end
 
   if remove_item then util.remove(table_ref, name)
-  else table.insert(table_ref, name)
+  else table_ref[#table_ref+1] = name
   end
 
   if it.artefact then return end
@@ -5900,7 +5900,7 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
     for i=plus,1,-1 do
       name = name:gsub("+" .. i, "+" .. (i-1))
       if remove_item then util.remove(table_ref, name)
-      else table.insert(table_ref, name)
+      else table_ref[#table_ref+1] = name
       end
     end
   end
@@ -6032,7 +6032,7 @@ function pa_alert_item(it, alert_type, emoji)
     end
 
     insert_item_and_less_enchanted(pa_items_alerted, it)
-    table.insert(pa_all_level_alerts, name)
+    pa_all_level_alerts[#pa_all_level_alerts+1] = name
   end
 
   -- Returns true to make other code more concise; indicates that we tried to alert this item
@@ -6640,8 +6640,8 @@ function generate_inv_weap_arrays()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if is_weapon(inv) and not is_staff(inv) then
       update_high_scores(inv)
-      inv_weap_data[#inv_weap_data + 1] = make_weapon_struct(inv)
-      if has_ego(inv) then table.insert(egos, get_ego(inv)) end
+      inv_weap_data[#inv_weap_data+1] = make_weapon_struct(inv)
+      if has_ego(inv) then egos[#egos+1] = get_ego(inv)) end
 
       local dmg = inv_weap_data[#inv_weap_data].dps
       local weap_type = get_weap_tag(inv)

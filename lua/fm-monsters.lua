@@ -308,9 +308,9 @@ function ready_force_mores()
 
       if debug_fm_monsters then
         if action == "+" then
-          activated[#activated + 1] = fm_name
+          activated[#activated+1] = fm_name
         elseif action == "-" then
-          deactivated[#deactivated + 1] = fm_name
+          deactivated[#deactivated+1] = fm_name
         end
       end
     end
@@ -386,5 +386,5 @@ end
 
 -- Init all active_fm to false
 for _,_ in ipairs(fm_patterns) do
-  active_fm[#active_fm + 1] = false
+  active_fm[#active_fm+1] = false
 end

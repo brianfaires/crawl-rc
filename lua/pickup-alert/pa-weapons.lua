@@ -84,8 +84,8 @@ function generate_inv_weap_arrays()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if is_weapon(inv) and not is_staff(inv) then
       update_high_scores(inv)
-      inv_weap_data[#inv_weap_data + 1] = make_weapon_struct(inv)
-      if has_ego(inv) then table.insert(egos, get_ego(inv)) end
+      inv_weap_data[#inv_weap_data+1] = make_weapon_struct(inv)
+      if has_ego(inv) then egos[#egos+1] = get_ego(inv)) end
 
       local dmg = inv_weap_data[#inv_weap_data].dps
       local weap_type = get_weap_tag(inv)
