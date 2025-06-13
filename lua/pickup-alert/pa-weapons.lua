@@ -136,7 +136,6 @@ local function alert_early_weapons(it)
   -- Skip items when we're clearly going another route
   if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*CACHE.xl+3 then return end
 
-
   if CACHE.xl < 8 then
     if has_ego(it) or it.plus and it.plus >= 4 then
       -- Make sure we don't alert a pure downgrade to something in inventory
@@ -256,14 +255,15 @@ end
 
 function do_pa_weapon_pickup(it)
   if it.is_useless then return false end
-  for _,cur in ipairs(inv_weap_data) do
-    if pickup_weapon(it, cur) then return true end
+  for _,inv in ipairs(inv_weap_data) do
+    if pickup_weapon(it, inv) then return true end
   end
 
   return need_first_weapon(it)
 end
 
 
+-- Check if weapon is worth alerting for, informed by a weapon currently in inventory
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
     return pa_alert_item(it, "Artefact weapon", CACHE.EMOJI.ARTEFACT)
@@ -364,21 +364,9 @@ local function alert_interesting_weapon(it, cur)
 end
 
 local function alert_interesting_weapons(it)
-  local ranged_weap_in_inv = false
-  for _,cur in ipairs(inv_weap_data) do
-    if alert_interesting_weapon(it, cur) then return true end
-    if cur.is_ranged then ranged_weap_in_inv = true end
+  for _,inv in ipairs(inv_weap_data) do
+    if alert_interesting_weapon(it, inv) then return true end
   end
-
-  -- Alert for the first ranged weapon found (for 1 and 2 handed separately)
-  if it.is_ranged and not ranged_weap_in_inv then
-    if it.artefact or has_ego(it) and it.plus >= 4 then
-      if get_hands(it) == 1 or not have_shield() then
-        return pa_alert_item(it, "Ranged Weapon", CACHE.EMOJI.RANGED)
-      end
-    end
-  end
-
   return false
 end
 
@@ -392,6 +380,7 @@ function do_pa_weapon_alerts(it)
   if (it.artefact or has_ego(it)) and not it.is_identified then return end
 
   alert_first_ranged(it)
+  alert_first_polearm(it)
   alert_early_weapons(it)
   alert_interesting_weapons(it)
 
