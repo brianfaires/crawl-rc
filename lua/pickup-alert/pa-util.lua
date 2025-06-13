@@ -15,7 +15,7 @@ end
 
 --- Custom def of ego/branded ---
 function has_ego(it)
-  if is_weapon(it) then return it.branded or it.artefact end
+  if is_weapon(it) then return it.artefact or it.branded end
   if it.artefact or it.branded then return true end
   local basename = it.name("base")
   if basename:find("troll leather") then return true end

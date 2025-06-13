@@ -377,12 +377,15 @@ end
 
 function do_pa_weapon_alerts(it)
   if it.is_useless then return end
-  if (it.artefact or has_ego(it)) and not it.is_identified then return end
+  if has_ego(it) and not it.is_identified then return end
 
-  alert_first_ranged(it)
-  alert_first_polearm(it)
-  alert_early_weapons(it)
-  alert_interesting_weapons(it)
+  if not alert_first_ranged(it) then
+    if not alert_first_polearm(it) then
+      if not alert_early_weapons(it) then
+        alert_interesting_weapons(it)
+      end
+    end
+  end
 
   -- Skip high score alerts if not using weapons
   if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it) end

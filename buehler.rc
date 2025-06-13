@@ -5401,7 +5401,7 @@ end
 
 --- Custom def of ego/branded ---
 function has_ego(it)
-  if is_weapon(it) then return it.branded or it.artefact end
+  if is_weapon(it) then return it.artefact or it.branded end
   if it.artefact or it.branded then return true end
   local basename = it.name("base")
   if basename:find("troll leather") then return true end
@@ -5847,6 +5847,7 @@ create_persistent_data("pa_items_picked", {})
 create_persistent_data("pa_items_alerted", {})
 create_persistent_data("alerted_first_ranged_two_handed", 0)
 create_persistent_data("alerted_first_ranged_one_handed", 0)
+create_persistent_data("alerted_first_polearm", 0)
 create_persistent_data("armour_high_score", 0)
 create_persistent_data("weapon_high_score", 0)
 create_persistent_data("unbranded_high_score", 0)
@@ -6401,7 +6402,7 @@ local function alert_interesting_armour(it)
           end
         end
       else
-        if cur.artefact or has_ego(cur) then
+        if has_ego(cur) then
           if ev_gain/ac_lost >= 2 and ev_gain >= 3 then
             return pa_alert_item(it, "Lighter armour (Lost ego)", CACHE.EMOJI.LIGHTER)
           end
@@ -6938,12 +6939,15 @@ end
 
 function do_pa_weapon_alerts(it)
   if it.is_useless then return end
-  if (it.artefact or has_ego(it)) and not it.is_identified then return end
+  if has_ego(it) and not it.is_identified then return end
 
-  alert_first_ranged(it)
-  alert_first_polearm(it)
-  alert_early_weapons(it)
-  alert_interesting_weapons(it)
+  if not alert_first_ranged(it) then
+    if not alert_first_polearm(it) then
+      if not alert_early_weapons(it) then
+        alert_interesting_weapons(it)
+      end
+    end
+  end
 
   -- Skip high score alerts if not using weapons
   if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it) end

@@ -243,7 +243,7 @@ local function alert_interesting_armour(it)
           end
         end
       else
-        if cur.artefact or has_ego(cur) then
+        if has_ego(cur) then
           if ev_gain/ac_lost >= 2 and ev_gain >= 3 then
             return pa_alert_item(it, "Lighter armour (Lost ego)", CACHE.EMOJI.LIGHTER)
           end
