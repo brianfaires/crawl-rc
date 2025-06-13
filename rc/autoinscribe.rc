@@ -1,17 +1,5 @@
 ai := autoinscribe
 
-# General
-ai += resist corrosion:rCorr
-ai += poison resistance:rPois
-ai += resist fire:rF+
-ai += fire resistance:rF+
-ai += resist cold:rC+
-ai += cold resistance:rC+
-ai += resist poison:rPois
-ai += poison resistance:rPois
-ai += positive energy:rN+
-ai += of preservation:rCorr
-
 # Armour
 ai += fire dragon scale:rF++, rC-
 ai += gold dragon scale:rC+, rF+, rPois
@@ -30,8 +18,11 @@ ai += amulet of faith:Faith, !P
 ai += ring of fire:rF+, rC-
 ai += ring of flight:+Fly
 ai += ring of ice:rC+, rF-
-
 ai += ring of magical power:MP+9
+ai += ring of poison resistance:rPois
+ai += ring of protection from cold:rC+
+ai += ring of protection from fire:rF+
+ai += ring of resist corrosion:rCorr
 ai += ring of see invisible:sInv
 ai += ring of wizardry:wiz+
 
