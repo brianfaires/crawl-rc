@@ -112,36 +112,31 @@ end
 
 
 ---- skill-specific ----
+local ignore_spellbook_string = table.concat(all_spellbooks, ", ")
+local spellcasting_items_string = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 local function set_skill_options()
-  -- Ignore spellbook reading if you have no spellcasting skill
-  -- Ignore all spellcaster items if wearing heavy armour or not much armour skill
+  -- If zero spellcasting, don't stop on spellbook pickup 
   local zero_spellcasting = CACHE.s_spellcasting == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
-    crawl.setopt("explore_stop_pickup_ignore += ^book of")
-    crawl.setopt("runrest_ignore_message += You add the spell")
-    crawl.mpr("ignoring spellbooks")
+    crawl.setopt("explore_stop_pickup_ignore += " .. ignore_spellbook_string)
   elseif ignoring_spellbooks and not zero_spellcasting then
     ignoring_spellbooks = false
-    crawl.setopt("explore_stop_pickup_ignore -= ^book of")
-    crawl.setopt("runrest_ignore_message -= You add the spell")
-    crawl.mpr("not ignoring spellbooks")
+    crawl.setopt("explore_stop_pickup_ignore -= " .. ignore_spellbook_string)
   end
 
-  local arm = items.equipped_at("armour")
-  local heavy_arm = zero_spellcasting and arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
-  if not ignoring_spellcasting and heavy_arm then
-    ignoring_spellcasting = true
-    crawl.setopt("explore_stop_pickup_ignore += ^book of")
-    crawl.setopt("autopickup_exceptions ^= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
-    crawl.setopt("runrest_ignore_message += You add the spell")
-    crawl.mpr("ignoring spellcasting")
-  elseif ignoring_spellcasting and not heavy_arm then
-    ignoring_spellcasting = false
-    crawl.setopt("explore_stop_pickup_ignore -= ^book of")
-    crawl.setopt("autopickup_exceptions -= >scrolls? of amnesia, >potions? of brilliance, >ring of wizardry")
-    crawl.setopt("runrest_ignore_message -= You add the spell")
-    crawl.mpr("not ignoring spellcasting")
+  -- If heavy armour and low armour skill, ignore spellcasting items
+  if CACHE.race ~= "Mountain Dwarf" then
+    local arm = items.equipped_at("armour")
+    local heavy_arm = arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
+    local skip_items = zero_spellcasting and heavy_arm
+    if not ignoring_spellcasting and heavy_arm then
+      ignoring_spellcasting = true
+      crawl.setopt("autopickup_exceptions += " .. spellcasting_items_string)
+    elseif ignoring_spellcasting and not heavy_arm then
+      ignoring_spellcasting = false
+      crawl.setopt("autopickup_exceptions -= " .. spellcasting_items_string)
+    end
   end
 end
 

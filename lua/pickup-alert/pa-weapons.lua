@@ -159,25 +159,24 @@ local function alert_first_ranged(it)
   if not it.is_ranged then return false end
 
   if get_hands(it) == 2 then
+    if alerted_first_ranged_two_handed == 0 then return false end
     if have_shield() then return false end
-    if alerted_first_ranged_two_handed == 0 then
-      alerted_first_ranged_two_handed = 1
-      for _,inv in ipairs(inv_weap_data) do
-        if inv.is_ranged and inv.hands == 2 then return true end
-      end
-      return pa_alert_item(it, "Ranged weapon", CACHE.EMOJI.RANGED)
-    end
+    alerted_first_ranged_two_handed = 1
+    return pa_alert_item(it, "Ranged weapon (2-handed)", CACHE.EMOJI.RANGED)
   else
-    if alerted_first_ranged_one_handed == 0 then
-      alerted_first_ranged_one_handed = 1
-      for _,inv in ipairs(inv_weap_data) do
-        if inv.is_ranged then return true end
-      end
-      return pa_alert_item(it, "Ranged weapon", CACHE.EMOJI.RANGED)
-    end
+    if alerted_first_ranged_one_handed ~= 0 then return false end
+    alerted_first_ranged_one_handed = 1
+    return pa_alert_item(it, "Ranged weapon", CACHE.EMOJI.RANGED)
   end
+end
 
-  return false
+
+local function alert_first_polearm(it)
+  if alerted_first_polearm ~= 0 then return false end
+  if it.weap_skill ~= "Polearms" then return false end
+  if get_hands(it) == 2 and have_shield() then return false end
+  alerted_first_polearm = 1  
+  return pa_alert_item(it, "First polearm", CACHE.EMOJI.POLEARM)
 end
 
 

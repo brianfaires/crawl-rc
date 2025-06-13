@@ -130,11 +130,27 @@ end
 
 
 --- Startup code ---
--- Starting items: Remove from pa_single_alert_items, and add to pa_items_picked
+-- Starting items: Remove from pa_single_alert_items, add to pa_items_picked
+-- Update alerts for first polearm/ranged
 if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
-    insert_item_and_less_enchanted(pa_items_picked, inv)
+    
+    if inv.class ~= "potion" and inv.class ~= "scroll" then
+      insert_item_and_less_enchanted(pa_items_picked, inv)
+    end
+
+    if is_weapon(inv) then
+      if inv.weap_skill == "Polearms" then
+        alerted_first_polearm = 1
+      elseif inv.is_ranged then
+        if get_hands(inv) == 2 then
+          alerted_first_ranged_two_handed = 1
+        else
+          alerted_first_ranged_one_handed = 1
+        end
+      end
+    end
   end
 end

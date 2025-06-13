@@ -2,6 +2,14 @@
 if loaded_lua_constants_file then return end
 local loaded_lua_constants_file = true
 
+all_spellbooks = {
+  "book of", "Necronomicon", "Grand Grimoire", "tome of obsoleteness", "Everburning Encyclopedia",
+  "Ozocubu's Autobiography", "Maxwell's Memoranda", "Young Poisoner's Handbook", "Fen Folio",
+  "Inescapable Atlas", "There-And-Back Book", "Great Wizards, Vol. II", "Great Wizards, Vol. VII",
+  "Trismegistus Codex", "the Unrestrained Analects", "Compendium of Siegecraft", "Codex of Conductivity",
+  "Handbook of Applied Construction", "Treatise on Traps", "My Sojourn through Swampland", "Akashic Record",
+} -- all_spellbooks (do not remove this comment)
+
 all_undead_races = {
   "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- all_undead_races (do not remove this comment)

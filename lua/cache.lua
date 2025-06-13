@@ -33,6 +33,7 @@ if CONFIG.emojis then
 
   CACHE.EMOJI.WEAPON = "⚔️"
   CACHE.EMOJI.RANGED = "🏹"
+  CACHE.EMOJI.POLEARM = "🔱"
   CACHE.EMOJI.TWO_HANDED = "🙌"
   CACHE.EMOJI.HAT = "🧢"
   CACHE.EMOJI.GLOVES = "🧤"
@@ -50,14 +51,13 @@ if CONFIG.emojis then
   CACHE.EMOJI.REMIND_IDENTIFY = "🎁"
   CACHE.EMOJI.EXCLAMATION = "‼️"
 
-  -- "🆕" "💎"
 else
   -- Define non-emoji fallbacks
   CACHE.EMOJI.HP_MAX = ":D"
-  CACHE.EMOJI.HP_HIGH = ":|"
-  CACHE.EMOJI.HP_MID = ":/"
-  CACHE.EMOJI.HP_LOW = ":o"
-  CACHE.EMOJI.HP_CRIT = "⊙▂⊙"
+  CACHE.EMOJI.HP_HIGH = ":)"
+  CACHE.EMOJI.HP_MID = ":|"
+  CACHE.EMOJI.HP_LOW = ":("
+  CACHE.EMOJI.HP_CRIT = ":O"
 
   CACHE.EMOJI.REMIND_IDENTIFY = "----"
   CACHE.EMOJI.EXCLAMATION = "!!"
