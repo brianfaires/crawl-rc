@@ -51,7 +51,7 @@ function pa_alert_item(it, alert_type, emoji)
     pa_all_level_alerts[#pa_all_level_alerts+1] = name
   end
 
-  -- Returns true to make other code more concise; indicates that we tried to alert this item
+  -- Returns true to make other code more concise; Indicates this item has been alerted
   return true
 end
 crawl.setopt("runrest_stop_message += Item alert, ")
