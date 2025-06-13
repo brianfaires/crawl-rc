@@ -53,7 +53,7 @@ function ready_inscribe_stats()
     if is_weapon(inv) or is_staff(inv) then
       if CONFIG.inscribe_weapons then inscribe_weapon_stats(inv) end
     elseif is_armour(inv) then
-      if CONFIG.inscribe_armour then inscribe_armour_stats(inv) end
+      if CONFIG.inscribe_armour and not is_scarf(inv) then inscribe_armour_stats(inv) end
     end
   end
 

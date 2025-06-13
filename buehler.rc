@@ -277,6 +277,10 @@ function is_armour(it)
   return it and it.class(true) == "armour"
 end
 
+function is_scarf(it)
+  return it and it.class(true) == "armour" and it.subtype() == "scarf"
+end
+
 function is_shield(it)
   return it and it.class(true) == "armour" and it.subtype() == "offhand"
 end
@@ -4905,7 +4909,7 @@ function ready_inscribe_stats()
     if is_weapon(inv) or is_staff(inv) then
       if CONFIG.inscribe_weapons then inscribe_weapon_stats(inv) end
     elseif is_armour(inv) then
-      if CONFIG.inscribe_armour then inscribe_armour_stats(inv) end
+      if CONFIG.inscribe_armour and not is_scarf(inv) then inscribe_armour_stats(inv) end
     end
   end
 
@@ -5388,7 +5392,7 @@ function pa_show_alert_msg(alert_text, item_name, emoji)
   tokens = { "<cyan>----<magenta>", alert_text, "</magenta><yellow>", item_name, "</yellow>----</cyan>" }
   if emoji then
     table.insert(tokens, 1, emoji .. " ")
-    tokens[#tokens+1] = " " .. emoji)
+    tokens[#tokens+1] = " " .. emoji
   end
   crawl.mpr(table.concat(tokens))
   you.stop_activity()
@@ -5878,7 +5882,7 @@ end
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = it.name("qual")
+  local name = it.name("plain")
   if not it.is_identified then name = "+0 " .. name end
   if util.contains(table_ref, name) ~= remove_item then return end
 
@@ -5964,7 +5968,7 @@ if you.turns() == 0 then
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
     
-    if inv.class ~= "potion" and inv.class ~= "scroll" then
+    if inv.class(true) ~= "potion" and inv.class(true) ~= "scroll" then
       insert_item_and_less_enchanted(pa_items_picked, inv)
     end
 
@@ -5997,10 +6001,9 @@ local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type, emoji)
   local name = it.name("plain")
-  local qualname = it.name("qual")
+
   if not (is_talisman(it) or it.is_identified) then
     name = "+0 " .. name
-    qualname = "+0 " .. qualname
   end
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
@@ -6641,7 +6644,7 @@ function generate_inv_weap_arrays()
     if is_weapon(inv) and not is_staff(inv) then
       update_high_scores(inv)
       inv_weap_data[#inv_weap_data+1] = make_weapon_struct(inv)
-      if has_ego(inv) then egos[#egos+1] = get_ego(inv)) end
+      if has_ego(inv) then egos[#egos+1] = get_ego(inv) end
 
       local dmg = inv_weap_data[#inv_weap_data].dps
       local weap_type = get_weap_tag(inv)

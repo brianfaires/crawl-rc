@@ -87,6 +87,10 @@ function is_armour(it)
   return it and it.class(true) == "armour"
 end
 
+function is_scarf(it)
+  return it and it.class(true) == "armour" and it.subtype() == "scarf"
+end
+
 function is_shield(it)
   return it and it.class(true) == "armour" and it.subtype() == "offhand"
 end

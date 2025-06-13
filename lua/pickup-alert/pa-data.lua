@@ -51,7 +51,7 @@ end
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = it.name("qual")
+  local name = it.name("plain")
   if not it.is_identified then name = "+0 " .. name end
   if util.contains(table_ref, name) ~= remove_item then return end
 
@@ -137,7 +137,7 @@ if you.turns() == 0 then
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
     
-    if inv.class ~= "potion" and inv.class ~= "scroll" then
+    if inv.class(true) ~= "potion" and inv.class(true) ~= "scroll" then
       insert_item_and_less_enchanted(pa_items_picked, inv)
     end
 

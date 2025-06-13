@@ -13,10 +13,9 @@ local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type, emoji)
   local name = it.name("plain")
-  local qualname = it.name("qual")
+
   if not (is_talisman(it) or it.is_identified) then
     name = "+0 " .. name
-    qualname = "+0 " .. qualname
   end
 
   if not pa_previously_alerted(it) and not pa_previously_picked(it) then
