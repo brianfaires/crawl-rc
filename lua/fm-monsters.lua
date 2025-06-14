@@ -318,10 +318,10 @@ function ready_force_mores()
 
   if debug_fm_monsters then
     if #activated > 0 then
-      crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "), "plain")
+      crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "))
     end
     if #deactivated > 0 then
-      crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", "), "plain")
+      crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", "))
     end
   end
 end

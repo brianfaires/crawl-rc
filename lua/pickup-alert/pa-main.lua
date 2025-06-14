@@ -12,44 +12,29 @@ local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type, emoji)
-  local name = get_plussed_name(it)
+  local item_name = get_plussed_name(it)
+  if util.contains(pa_items_picked, item_name) then return false end
+  if util.contains(pa_items_alerted, item_name) then return false end
 
-  if not pa_previously_alerted(it) and not pa_previously_picked(it) then
-    if is_weapon(it) or is_staff(it) then
-      pa_show_alert_msg(
-        table.concat({"Item alert, ", alert_type, ": "}),
-        table.concat({name, " ", get_weapon_info_string(it)}),
-        emoji or CACHE.EMOJI.WEAPON
-      )
-	  elseif is_body_armour(it) then
-      local ac, ev = get_armour_info_strings(it)
-      pa_show_alert_msg(
-        table.concat({"Item alert, ", alert_type, ": "}),
-        table.concat({name, " ", ac, ", ", ev}),
-        emoji or CACHE.EMOJI.BODY_ARMOUR
-      )
-    elseif is_armour(it) then
-      pa_show_alert_msg(
-        table.concat({"Item alert, ", alert_type, ": "}),
-        name,
-        emoji or CACHE.EMOJI.ARMOUR
-      )
-    else
-      pa_show_alert_msg(
-        table.concat({"Item alert, ", alert_type, ": "}),
-        name,
-        emoji or CACHE.EMOJI.MISC
-      )
-    end
-
-    insert_item_and_less_enchanted(pa_items_alerted, it)
-    pa_all_level_alerts[#pa_all_level_alerts+1] = name
+  if is_weapon(it) or is_staff(it) then
+    item_name = table.concat({item_name, " ", get_weapon_info_string(it)})
+  elseif is_body_armour(it) then
+    local ac, ev = get_armour_info_strings(it)
+    item_name = table.concat({item_name, " ", ac, ", ", ev})
   end
+  
+  local tokens = {}
+  tokens[1] = emoji and emoji or "<cyan>----"
+  tokens[#tokens+1] = "<magenta>" .. alert_type .. ":</magenta>"
+  tokens[#tokens+1] = "<yellow> " .. item_name .. " </yellow>"
+  tokens[#tokens+1] = emoji and emoji or "----</cyan>"
+  crawl.mpr(table.concat(tokens))
 
-  -- Returns true to make other code more concise; Indicates this item has been alerted
+  pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
+  insert_item_and_less_enchanted(pa_items_alerted, it)
+  you.stop_activity()
   return true
 end
-crawl.setopt("runrest_stop_message += Item alert, ")
 
 
 local function dump_table(name, table)
@@ -60,7 +45,6 @@ local function dump_table(name, table)
   end
   return summary
 end
-
 
 local function dump_persistent_arrays()
   local summary = "---DEBUGGING ARRAYS---\n"
@@ -74,11 +58,10 @@ local function dump_persistent_arrays()
   crawl.dump_char()
 end
 
-
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
   if is_weapon(it) or is_armour(it) then
-    if not pa_previously_picked(it) then
+    if not util.contains(pa_items_picked, get_plussed_name(it)) then
       insert_item_and_less_enchanted(pa_items_picked, it)
       update_high_scores(it)
       remove_from_pa_single_alert_items(it)

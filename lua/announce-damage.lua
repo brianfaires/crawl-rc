@@ -110,15 +110,15 @@ local function simple_announce_damage(hp_diff, mp_diff)
 
   if message ~= nil then
     if CACHE.hp <= (CACHE.mhp * 0.25) then
-      emoji = CACHE.EMOJI.HP_CRIT
+      emoji = GLOBALS.EMOJI.HP_CRIT
     elseif CACHE.hp <= (CACHE.mhp * 0.50) then
-      emoji = CACHE.EMOJI.HP_LOW
+      emoji = GLOBALS.EMOJI.HP_LOW
     elseif CACHE.hp <= (CACHE.mhp *  0.75) then
-      emoji = CACHE.EMOJI.HP_MID
+      emoji = GLOBALS.EMOJI.HP_MID
     elseif CACHE.hp < CACHE.mhp then
-      emoji = CACHE.EMOJI.HP_HIGH
+      emoji = GLOBALS.EMOJI.HP_HIGH
     else
-      emoji = CACHE.EMOJI.HP_MAX
+      emoji = GLOBALS.EMOJI.HP_MAX
     end
     crawl.mpr(string.format("\n%s %s %s", emoji, message, emoji))
   end

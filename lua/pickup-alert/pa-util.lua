@@ -2,16 +2,6 @@ if loaded_pa_util then return end
 loaded_pa_util = true
 loadfile("crawl-rc/lua/util.lua")
 
-function pa_show_alert_msg(alert_text, item_name, emoji)
-  tokens = { "<cyan>----<magenta>", alert_text, "</magenta><yellow>", item_name, "</yellow>----</cyan>" }
-  if emoji then
-    table.insert(tokens, 1, emoji .. " ")
-    tokens[#tokens+1] = " " .. emoji
-  end
-  crawl.mpr(table.concat(tokens))
-  you.stop_activity()
-end
-
 
 --- Custom def of ego/branded ---
 function has_ego(it)
@@ -35,7 +25,8 @@ end
 function get_plussed_name(it)
   local name = it.name("qual")
   if is_talisman(it) then return name end
-  if name[1] ~= "+" and name[1] ~= "-" then name = "+0 " .. name end
+  local first_char = name:sub(1, 1)
+  if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
   return name
 end
 

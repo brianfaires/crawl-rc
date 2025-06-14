@@ -40,14 +40,6 @@ function remove_from_pa_single_alert_items(it)
   return alerted
 end
 
-function pa_previously_picked(it)
-  return util.contains(pa_items_picked, get_plussed_name(it))
-end
-
-function pa_previously_alerted(it)
-  return util.contains(pa_items_alerted, get_plussed_name(it))
-end
-
 --- Multi store/remove data ---
 local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions

@@ -17,51 +17,6 @@ end
 CACHE.undead =  util.contains(all_undead_races, CACHE.race)
 CACHE.poison_immune = you.res_poison() >= 3
 
-CACHE.EMOJI = {}
-if CONFIG.emojis then
-  CACHE.EMOJI.HP_MAX = "😎"
-  CACHE.EMOJI.HP_HIGH = "😕"
-  CACHE.EMOJI.HP_MID = "😮"
-  CACHE.EMOJI.HP_LOW = "😨"
-  CACHE.EMOJI.HP_CRIT = "😱"
-
-  CACHE.EMOJI.RARE_ITEM = "💎"
-  CACHE.EMOJI.ORB = "🔮"
-  CACHE.EMOJI.TALISMAN = "🧬"
-  CACHE.EMOJI.BODY_ARMOUR = "🛡️"
-  CACHE.EMOJI.ARMOUR = "🛡️"
-
-  CACHE.EMOJI.WEAPON = "⚔️"
-  CACHE.EMOJI.RANGED = "🏹"
-  CACHE.EMOJI.POLEARM = "🔱"
-  CACHE.EMOJI.TWO_HANDED = "🙌"
-  CACHE.EMOJI.HAT = "🧢"
-  CACHE.EMOJI.GLOVES = "🧤"
-  CACHE.EMOJI.BOOTS = "🥾"
-  CACHE.EMOJI.STAFF_RESISTANCE = "🏳️‍🌈"
-
-  CACHE.EMOJI.ACCURACY = "🎯"
-  CACHE.EMOJI.STRONGER = "💪"
-  CACHE.EMOJI.STRONGEST = "💪💪"
-  CACHE.EMOJI.EGO = "🧪"
-  CACHE.EMOJI.LIGHTER = "⏬"
-  CACHE.EMOJI.HEAVIER = "⏫"
-  CACHE.EMOJI.ARTEFACT = "💠"
-
-  CACHE.EMOJI.REMIND_IDENTIFY = "🎁"
-  CACHE.EMOJI.EXCLAMATION = "‼️"
-
-else
-  -- Define non-emoji fallbacks
-  CACHE.EMOJI.HP_MAX = ":D"
-  CACHE.EMOJI.HP_HIGH = ":)"
-  CACHE.EMOJI.HP_MID = ":|"
-  CACHE.EMOJI.HP_LOW = ":("
-  CACHE.EMOJI.HP_CRIT = ":O"
-
-  CACHE.EMOJI.REMIND_IDENTIFY = "----"
-  CACHE.EMOJI.EXCLAMATION = "!!"
-end
 
 -- Once per turn
 function ready_CACHE()
