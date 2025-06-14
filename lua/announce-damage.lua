@@ -38,7 +38,7 @@ local AD_Messages = {
   ["HPGain"] = function (color, hp, hpm, gain)
     crawl.mpr(
       string.format("%s%s",
-        colorize_text(COLORS.lightgreen, string.format("You gained %s hp,", gain)),
+        colorize_text(COLORS.lightgreen, string.format("Gained %s HP,", gain)),
         colorize_text(color, string.format(" and have %s/%s hp.", hp, hpm))
       )
     )
@@ -46,7 +46,7 @@ local AD_Messages = {
   ["HPFull"] = function (_, hp)
     crawl.mpr(
       colorize_text(COLORS.lightgreen,
-        string.format("Your hp is full (%s).", hp)
+        string.format("Full HP (%s).", hp)
       )
     )
   end,
@@ -63,7 +63,7 @@ local AD_Messages = {
   ["MPLoss"] = function (color, mp, mpm, loss)
     crawl.mpr(
       string.format("%s%s",
-        colorize_text(COLORS.cyan, string.format("You lost %s mp,", loss)),
+        colorize_text(COLORS.cyan, string.format("Lost %s mp,", loss)),
         colorize_text(color, string.format(" and have %s/%s mp.", mp, mpm))
       )
     )
@@ -71,14 +71,14 @@ local AD_Messages = {
   ["MPGain"] = function (color, mp, mpm, gain)
     crawl.mpr(
       string.format("%s%s",
-        colorize_text(COLORS.cyan, string.format("You gained %s mp,", gain)),
+        colorize_text(COLORS.cyan, string.format("Gained %s mp,", gain)),
         colorize_text(color, string.format(" and have %s/%s mp.", mp, mpm))
       )
     )
   end,
   ["MPFull"] = function (_, mp)
     crawl.mpr(
-      colorize_text(COLORS.cyan, string.format("Your mp is full (%s).", mp))
+      colorize_text(COLORS.cyan, string.format("Full MP (%s).", mp))
     )
   end,
   [""]="",

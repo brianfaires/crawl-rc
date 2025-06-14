@@ -22,25 +22,20 @@ function pa_alert_rare_item(it)
     if sh and sh.name("base"):find("tower shield") then do_alert = false end
   end
 
-  if do_alert then
-    pa_alert_item(pa_single_alert_items[index], "Rare item", GLOBALS.EMOJI.RARE_ITEM)
-  end
-
   remove_from_pa_single_alert_items(it)
+  if not do_alert then return false end
+  return pa_alert_item(it, "Rare item", GLOBALS.EMOJI.RARE_ITEM)
 end
 
 ---- Alert orbs ----
 function pa_alert_orb(it)
-  if it.is_identified and not have_shield() then
-    return pa_alert_item(it, "New orb", GLOBALS.EMOJI.ORB)
-  end
+  if not it.is_identified then return false end
+  return pa_alert_item(it, "New orb", GLOBALS.EMOJI.ORB)
 end
 
 ---- Alert talismans ----
 function pa_alert_talisman(it)
-  if it.is_identified then
-    return pa_alert_item(it, "New talisman", GLOBALS.EMOJI.TALISMAN)
-  end
+  return pa_alert_item(it, "New talisman", GLOBALS.EMOJI.TALISMAN)
 end
 
 ---- Alert for needed resists ----
@@ -56,9 +51,8 @@ function pa_alert_staff(it)
   elseif basename == "staff of death" then needRes = you.res_draining() == 0
   end
 
-  if needRes then
-    return pa_alert_item(it, "Staff resistance", GLOBALS.EMOJI.STAFF_RESISTANCE)
-  end
+  if not needRes then return false end
+  return pa_alert_item(it, "Staff resistance", GLOBALS.EMOJI.STAFF_RESISTANCE)
 end
 
 

@@ -3758,7 +3758,7 @@ local AD_Messages = {
   ["HPGain"] = function (color, hp, hpm, gain)
     crawl.mpr(
       string.format("%s%s",
-        colorize_text(COLORS.lightgreen, string.format("You gained %s hp,", gain)),
+        colorize_text(COLORS.lightgreen, string.format("Gained %s HP,", gain)),
         colorize_text(color, string.format(" and have %s/%s hp.", hp, hpm))
       )
     )
@@ -3766,7 +3766,7 @@ local AD_Messages = {
   ["HPFull"] = function (_, hp)
     crawl.mpr(
       colorize_text(COLORS.lightgreen,
-        string.format("Your hp is full (%s).", hp)
+        string.format("Full HP (%s).", hp)
       )
     )
   end,
@@ -3783,7 +3783,7 @@ local AD_Messages = {
   ["MPLoss"] = function (color, mp, mpm, loss)
     crawl.mpr(
       string.format("%s%s",
-        colorize_text(COLORS.cyan, string.format("You lost %s mp,", loss)),
+        colorize_text(COLORS.cyan, string.format("Lost %s mp,", loss)),
         colorize_text(color, string.format(" and have %s/%s mp.", mp, mpm))
       )
     )
@@ -3791,14 +3791,14 @@ local AD_Messages = {
   ["MPGain"] = function (color, mp, mpm, gain)
     crawl.mpr(
       string.format("%s%s",
-        colorize_text(COLORS.cyan, string.format("You gained %s mp,", gain)),
+        colorize_text(COLORS.cyan, string.format("Gained %s mp,", gain)),
         colorize_text(color, string.format(" and have %s/%s mp.", mp, mpm))
       )
     )
   end,
   ["MPFull"] = function (_, mp)
     crawl.mpr(
-      colorize_text(COLORS.cyan, string.format("Your mp is full (%s).", mp))
+      colorize_text(COLORS.cyan, string.format("Full MP (%s).", mp))
     )
   end,
   [""]="",
@@ -6026,6 +6026,7 @@ function pa_alert_item(it, alert_type, emoji)
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
   insert_item_and_less_enchanted(pa_items_alerted, it)
   you.stop_activity()
+  crawl.more()
   return true
 end
 
@@ -6126,16 +6127,23 @@ add_autopickup_func(function (it, _)
     ready_item_alerts()
 
     if loaded_pa_misc then
-      if CONFIG.alert_one_time_items then pa_alert_rare_item(it) end
+      if CONFIG.alert_one_time_items then
+        if pa_alert_rare_item(it) then return end
+      end
 
-      if is_staff(it) and CONFIG.alert_staff_resists then pa_alert_staff(it)
-      elseif is_orb(it) and CONFIG.alert_orbs then pa_alert_orb(it)
-      elseif is_talisman(it) and CONFIG.alert_talismans then pa_alert_talisman(it)
+      if is_staff(it) and CONFIG.alert_staff_resists then
+        if pa_alert_staff(it) then return end
+      elseif is_orb(it) and CONFIG.alert_orbs then
+        if pa_alert_orb(it) then return end
+      elseif is_talisman(it) and CONFIG.alert_talismans then
+        if pa_alert_talisman(it) then return end
       end
     end
 
-    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then pa_alert_armour(it)
-    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then do_pa_weapon_alerts(it)
+    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then
+      if pa_alert_armour(it) then return end
+    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then
+      if do_pa_weapon_alerts(it) then return end
     end
   end
 end)
@@ -6265,10 +6273,10 @@ local function alert_armour_while_mutated(it, type)
 
   if type == "gloves" then
     local claws_lvl_innate = get_mut("claws", false)
-    if claws_lvl_innate >= 3 then return end
+    if claws_lvl_innate >= 3 then return false end
 
     local touch_lvl_innate = get_mut("demonic touch", false)
-    if touch_lvl_innate >= 3 then return end
+    if touch_lvl_innate >= 3 then return false end
 
     local claws_lvl = get_mut("claws", true)
     local touch_lvl = get_mut("demonic touch", true)
@@ -6284,10 +6292,10 @@ local function alert_armour_while_mutated(it, type)
     end
   elseif type == "boots" then
     local hooves_lvl_innate = get_mut("hooves", false)
-    if hooves_lvl_innate >= 3 then return end
+    if hooves_lvl_innate >= 3 then return false end
 
     local talons_lvl_innate = get_mut("talons", false)
-    if talons_lvl_innate >= 3 then return end
+    if talons_lvl_innate >= 3 then return false end
 
     local hooves_lvl = get_mut("hooves", true)
     local talons_lvl = get_mut("talons", true)
@@ -6306,13 +6314,13 @@ local function alert_armour_while_mutated(it, type)
     local antennae_lvl_innate = get_mut("antennae", false)
 
     if it.name("base"):find("helmet") then
-      if horns_lvl_innate > 0 then return end
-      if antennae_lvl_innate > 0 then return end
-      if get_mut("beak", false) > 0 then return end
+      if horns_lvl_innate > 0 then return false end
+      if antennae_lvl_innate > 0 then return false end
+      if get_mut("beak", false) > 0 then return false end
     else
       -- hat/crown/etc
-      if horns_lvl_innate >= 3 then return end
-      if antennae_lvl_innate >= 3 then return end
+      if horns_lvl_innate >= 3 then return false end
+      if antennae_lvl_innate >= 3 then return false end
     end
 
     local horns_lvl = get_mut("horns", true)
@@ -6442,19 +6450,20 @@ local function alert_interesting_armour(it)
     -- Aux armour
     local st, _ = it.subtype()
     local cur = items.equipped_at(st)
-    if not cur then return end
+    if not cur then return false end
     if get_armour_ac(it) > get_armour_ac(cur) then
       return pa_alert_item(it, "Stronger armour", GLOBALS.EMOJI.STRONGER)
     else
-      alert_armour_while_mutated(it, st)
+      return alert_armour_while_mutated(it, st)
     end
   end
 end
 
 function pa_alert_armour(it)
-  if it.is_useless then return end
-  alert_armour_upgrades(it)
-  if it.is_identified or not has_ego(it) then alert_interesting_armour(it) end
+  if it.is_useless then return false end
+  if alert_armour_upgrades(it) then return true end
+  if not it.is_identified or has_ego(it) then return false end
+  return alert_interesting_armour(it)
 end
 
 }
@@ -6483,25 +6492,20 @@ function pa_alert_rare_item(it)
     if sh and sh.name("base"):find("tower shield") then do_alert = false end
   end
 
-  if do_alert then
-    pa_alert_item(pa_single_alert_items[index], "Rare item", GLOBALS.EMOJI.RARE_ITEM)
-  end
-
   remove_from_pa_single_alert_items(it)
+  if not do_alert then return false end
+  return pa_alert_item(it, "Rare item", GLOBALS.EMOJI.RARE_ITEM)
 end
 
 ---- Alert orbs ----
 function pa_alert_orb(it)
-  if it.is_identified and not have_shield() then
-    return pa_alert_item(it, "New orb", GLOBALS.EMOJI.ORB)
-  end
+  if not it.is_identified then return false end
+  return pa_alert_item(it, "New orb", GLOBALS.EMOJI.ORB)
 end
 
 ---- Alert talismans ----
 function pa_alert_talisman(it)
-  if it.is_identified then
-    return pa_alert_item(it, "New talisman", GLOBALS.EMOJI.TALISMAN)
-  end
+  return pa_alert_item(it, "New talisman", GLOBALS.EMOJI.TALISMAN)
 end
 
 ---- Alert for needed resists ----
@@ -6517,9 +6521,8 @@ function pa_alert_staff(it)
   elseif basename == "staff of death" then needRes = you.res_draining() == 0
   end
 
-  if needRes then
-    return pa_alert_item(it, "Staff resistance", GLOBALS.EMOJI.STAFF_RESISTANCE)
-  end
+  if not needRes then return false end
+  return pa_alert_item(it, "Staff resistance", GLOBALS.EMOJI.STAFF_RESISTANCE)
 end
 
 
@@ -6676,7 +6679,7 @@ local function alert_early_weapons(it)
   end
 
   -- Skip items when we're clearly going another route
-  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*CACHE.xl+3 then return end
+  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*CACHE.xl+3 then return false end
 
   if CACHE.xl < 8 then
     if has_ego(it) or it.plus and it.plus >= 4 then
@@ -6684,8 +6687,8 @@ local function alert_early_weapons(it)
       for _,inv in ipairs(inv_weap_data) do
         if inv.basename == it.name("base") then
           if inv.plus >= it.plus then
-            if not has_ego(it) then return end
-            if it.ego() == inv.ego then return end
+            if not has_ego(it) then return false end
+            if it.ego() == inv.ego then return false end
           end
         end
       end
@@ -6693,6 +6696,8 @@ local function alert_early_weapons(it)
       return pa_alert_item(it, "Early weapon", GLOBALS.EMOJI.WEAPON)
     end
   end
+
+  return false
 end
 
 
@@ -6914,23 +6919,22 @@ end
 
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
-  if category then return pa_alert_item(it, category) end
+  if not category then return false end
+  return pa_alert_item(it, category)
 end
 
 function do_pa_weapon_alerts(it)
-  if it.is_useless then return end
-  if has_ego(it) and not it.is_identified then return end
+  if it.is_useless then return false end
+  if has_ego(it) and not it.is_identified then return false end
 
-  if not alert_first_ranged(it) then
-    if not alert_first_polearm(it) then
-      if not alert_early_weapons(it) then
-        alert_interesting_weapons(it)
-      end
-    end
-  end
+  if alert_first_ranged(it) then return true end
+  if alert_first_polearm(it) then return true end
+  if alert_early_weapons(it) then return true end
+  if alert_interesting_weapons(it) then return true end
 
   -- Skip high score alerts if not using weapons
-  if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it) end
+  if inv_max_dmg["melee_2"] > 0 then return alert_weap_high_scores(it) end
+  return false
 end
 
 }

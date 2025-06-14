@@ -135,7 +135,7 @@ local function alert_early_weapons(it)
   end
 
   -- Skip items when we're clearly going another route
-  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*CACHE.xl+3 then return end
+  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*CACHE.xl+3 then return false end
 
   if CACHE.xl < 8 then
     if has_ego(it) or it.plus and it.plus >= 4 then
@@ -143,8 +143,8 @@ local function alert_early_weapons(it)
       for _,inv in ipairs(inv_weap_data) do
         if inv.basename == it.name("base") then
           if inv.plus >= it.plus then
-            if not has_ego(it) then return end
-            if it.ego() == inv.ego then return end
+            if not has_ego(it) then return false end
+            if it.ego() == inv.ego then return false end
           end
         end
       end
@@ -152,6 +152,8 @@ local function alert_early_weapons(it)
       return pa_alert_item(it, "Early weapon", GLOBALS.EMOJI.WEAPON)
     end
   end
+
+  return false
 end
 
 
@@ -373,21 +375,20 @@ end
 
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
-  if category then return pa_alert_item(it, category) end
+  if not category then return false end
+  return pa_alert_item(it, category)
 end
 
 function do_pa_weapon_alerts(it)
-  if it.is_useless then return end
-  if has_ego(it) and not it.is_identified then return end
+  if it.is_useless then return false end
+  if has_ego(it) and not it.is_identified then return false end
 
-  if not alert_first_ranged(it) then
-    if not alert_first_polearm(it) then
-      if not alert_early_weapons(it) then
-        alert_interesting_weapons(it)
-      end
-    end
-  end
+  if alert_first_ranged(it) then return true end
+  if alert_first_polearm(it) then return true end
+  if alert_early_weapons(it) then return true end
+  if alert_interesting_weapons(it) then return true end
 
   -- Skip high score alerts if not using weapons
-  if inv_max_dmg["melee_2"] > 0 then alert_weap_high_scores(it) end
+  if inv_max_dmg["melee_2"] > 0 then return alert_weap_high_scores(it) end
+  return false
 end

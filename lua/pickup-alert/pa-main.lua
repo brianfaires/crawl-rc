@@ -33,6 +33,7 @@ function pa_alert_item(it, alert_type, emoji)
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
   insert_item_and_less_enchanted(pa_items_alerted, it)
   you.stop_activity()
+  crawl.more()
   return true
 end
 
@@ -133,16 +134,23 @@ add_autopickup_func(function (it, _)
     ready_item_alerts()
 
     if loaded_pa_misc then
-      if CONFIG.alert_one_time_items then pa_alert_rare_item(it) end
+      if CONFIG.alert_one_time_items then
+        if pa_alert_rare_item(it) then return end
+      end
 
-      if is_staff(it) and CONFIG.alert_staff_resists then pa_alert_staff(it)
-      elseif is_orb(it) and CONFIG.alert_orbs then pa_alert_orb(it)
-      elseif is_talisman(it) and CONFIG.alert_talismans then pa_alert_talisman(it)
+      if is_staff(it) and CONFIG.alert_staff_resists then
+        if pa_alert_staff(it) then return end
+      elseif is_orb(it) and CONFIG.alert_orbs then
+        if pa_alert_orb(it) then return end
+      elseif is_talisman(it) and CONFIG.alert_talismans then
+        if pa_alert_talisman(it) then return end
       end
     end
 
-    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then pa_alert_armour(it)
-    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then do_pa_weapon_alerts(it)
+    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then
+      if pa_alert_armour(it) then return end
+    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then
+      if do_pa_weapon_alerts(it) then return end
     end
   end
 end)

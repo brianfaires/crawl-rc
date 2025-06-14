@@ -126,10 +126,10 @@ local function alert_armour_while_mutated(it, type)
 
   if type == "gloves" then
     local claws_lvl_innate = get_mut("claws", false)
-    if claws_lvl_innate >= 3 then return end
+    if claws_lvl_innate >= 3 then return false end
 
     local touch_lvl_innate = get_mut("demonic touch", false)
-    if touch_lvl_innate >= 3 then return end
+    if touch_lvl_innate >= 3 then return false end
 
     local claws_lvl = get_mut("claws", true)
     local touch_lvl = get_mut("demonic touch", true)
@@ -145,10 +145,10 @@ local function alert_armour_while_mutated(it, type)
     end
   elseif type == "boots" then
     local hooves_lvl_innate = get_mut("hooves", false)
-    if hooves_lvl_innate >= 3 then return end
+    if hooves_lvl_innate >= 3 then return false end
 
     local talons_lvl_innate = get_mut("talons", false)
-    if talons_lvl_innate >= 3 then return end
+    if talons_lvl_innate >= 3 then return false end
 
     local hooves_lvl = get_mut("hooves", true)
     local talons_lvl = get_mut("talons", true)
@@ -167,13 +167,13 @@ local function alert_armour_while_mutated(it, type)
     local antennae_lvl_innate = get_mut("antennae", false)
 
     if it.name("base"):find("helmet") then
-      if horns_lvl_innate > 0 then return end
-      if antennae_lvl_innate > 0 then return end
-      if get_mut("beak", false) > 0 then return end
+      if horns_lvl_innate > 0 then return false end
+      if antennae_lvl_innate > 0 then return false end
+      if get_mut("beak", false) > 0 then return false end
     else
       -- hat/crown/etc
-      if horns_lvl_innate >= 3 then return end
-      if antennae_lvl_innate >= 3 then return end
+      if horns_lvl_innate >= 3 then return false end
+      if antennae_lvl_innate >= 3 then return false end
     end
 
     local horns_lvl = get_mut("horns", true)
@@ -303,17 +303,18 @@ local function alert_interesting_armour(it)
     -- Aux armour
     local st, _ = it.subtype()
     local cur = items.equipped_at(st)
-    if not cur then return end
+    if not cur then return false end
     if get_armour_ac(it) > get_armour_ac(cur) then
       return pa_alert_item(it, "Stronger armour", GLOBALS.EMOJI.STRONGER)
     else
-      alert_armour_while_mutated(it, st)
+      return alert_armour_while_mutated(it, st)
     end
   end
 end
 
 function pa_alert_armour(it)
-  if it.is_useless then return end
-  alert_armour_upgrades(it)
-  if it.is_identified or not has_ego(it) then alert_interesting_armour(it) end
+  if it.is_useless then return false end
+  if alert_armour_upgrades(it) then return true end
+  if not it.is_identified or has_ego(it) then return false end
+  return alert_interesting_armour(it)
 end
