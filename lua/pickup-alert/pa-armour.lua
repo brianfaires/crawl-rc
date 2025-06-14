@@ -181,7 +181,7 @@ local function alert_armour_while_mutated(it, type)
     local beak_lvl = get_mut("beak", true)
     if horns_lvl + antennae_lvl + beak_lvl > 0 then
       if it.artefact or it.branded then
-        return pa_alert_item(it, "Branded headgear", CONFIG.EMOJI.HAT)
+        return pa_alert_item(it, "Branded headgear", GLOBALS.EMOJI.HAT)
       end
       local cur_helmet = items.equipped_at("helmet")
       if not cur_helmet or it_plus > cur_helmet.plus then

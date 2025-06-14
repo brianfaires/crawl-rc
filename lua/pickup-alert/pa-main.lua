@@ -6,6 +6,22 @@ loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
 
+if not loaded_pa_armour then
+  CONFIG.pickup_armour = false
+  CONFIG.alert_armour = false
+end
+if not loaded_pa_weapons then
+  CONFIG.alert_weapons = false
+  CONFIG.pickup_weapons = false
+end
+if not loaded_pa_misc then
+  CONFIG.pickup_staves = false
+  CONFIG.alert_orbs = false
+  CONFIG.alert_talismans = false
+  CONFIG.alert_staff_resists = false
+  CONFIG.alert_one_time_items = false
+end
+
 -- Global var for access by autopickup function
 pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
@@ -22,18 +38,17 @@ function pa_alert_item(it, alert_type, emoji)
     local ac, ev = get_armour_info_strings(it)
     item_name = table.concat({item_name, " ", ac, ", ", ev})
   end
-  
   local tokens = {}
   tokens[1] = emoji and emoji or "<cyan>----"
-  tokens[#tokens+1] = "<magenta>" .. alert_type .. ":</magenta>"
-  tokens[#tokens+1] = "<yellow> " .. item_name .. " </yellow>"
+  tokens[#tokens+1] = " <magenta>" .. alert_type .. ": </magenta>"
+  tokens[#tokens+1] = "<yellow>" .. item_name .. " </yellow>"
   tokens[#tokens+1] = emoji and emoji or "----</cyan>"
+  crawl.mpr("<cyan>" .. ITEM_ALERT_MSG .. "</cyan>")
   crawl.mpr(table.concat(tokens))
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
   insert_item_and_less_enchanted(pa_items_alerted, it)
   you.stop_activity()
-  crawl.more()
   return true
 end
 
@@ -112,11 +127,11 @@ add_autopickup_func(function (it, _)
 
   -- Check for pickup
   local retVal = false
-  if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
+  if CONFIG.pickup_armour and is_armour(it) then
     retVal = pa_pickup_armour(it)
-  elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
+  elseif CONFIG.pickup_weapons and is_weapon(it) then
     retVal = do_pa_weapon_pickup(it)
-  elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
+  elseif CONFIG.pickup_staves and is_staff(it) then
     retVal = pa_pickup_staff(it)
   end
 
@@ -130,23 +145,18 @@ add_autopickup_func(function (it, _)
     -- Update inventory high scores first, in case XP gained same turn item is dropped
     ready_item_alerts()
 
-    if loaded_pa_misc then
-      if CONFIG.alert_one_time_items then
-        if pa_alert_rare_item(it) then return end
-      end
-
-      if is_staff(it) and CONFIG.alert_staff_resists then
-        if pa_alert_staff(it) then return end
-      elseif is_orb(it) and CONFIG.alert_orbs then
-        if pa_alert_orb(it) then return end
-      elseif is_talisman(it) and CONFIG.alert_talismans then
-        if pa_alert_talisman(it) then return end
-      end
+    if CONFIG.alert_one_time_items then
+      if pa_alert_rare_item(it) then return end
     end
-
-    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then
+    if CONFIG.alert_staff_resists and is_staff(it) then
+      if pa_alert_staff(it) then return end
+    elseif CONFIG.alert_orbs and is_orb(it) then
+      if pa_alert_orb(it) then return end
+    elseif CONFIG.alert_talismans and is_talisman(it)then
+      if pa_alert_talisman(it) then return end
+    elseif CONFIG.alert_armour and is_armour(it) then
       if pa_alert_armour(it) then return end
-    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then
+    elseif CONFIG.alert_weapons and is_weapon(it) then
       if do_pa_weapon_alerts(it) then return end
     end
   end

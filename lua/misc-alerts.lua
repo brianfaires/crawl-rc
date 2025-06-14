@@ -6,14 +6,14 @@ loadfile("crawl-rc/lua/util.lua")
 
 ------ Max piety w/ amulet of faith reminder ----
 create_persistent_data("alerted_max_piety", 0)
-
+local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
+crawl.setopt("force_more_message += " .. REMOVE_FAITH_MSG)
 local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
-      crawl.mpr("<cyan>6 star piety! Maybe ditch that amulet soon.</cyan>")
-      crawl.more()
+      crawl.mpr("<cyan>" .. REMOVE_FAITH_MSG .. "</cyan>")
       alerted_max_piety = 1
     end
   end
@@ -22,18 +22,18 @@ end
 ----- Alert once at a specific HP threshold -----
 local hp, mhp = you.hp()
 local below_hp_threshold = hp <= CONFIG.alert_low_hp_threshold * mhp
-
+local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
+local LOW_HP_MSG = "Dropped below " .. threshold_perc .. "% HP"
+crawl.setopt("force_more_message += " .. LOW_HP_MSG)
 local function alert_low_hp()
   hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
     crawl.mpr(table.concat({
-      GLOBALS.EMOJI.EXCLAMATION, " <red>Dropped below ", threshold_perc, "% HP </red>", GLOBALS.EMOJI.EXCLAMATION
+      GLOBALS.EMOJI.EXCLAMATION, "<red> ", LOW_HP_MSG," </red>", GLOBALS.EMOJI.EXCLAMATION
     }))
-    crawl.more()
   end
 end
 
