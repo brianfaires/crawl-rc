@@ -129,7 +129,7 @@ if you.turns() == 0 then
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
 
-    if inv.class(true) ~= "potion" and inv.class(true) ~= "scroll" then
+    if is_weapon(inv) or is_armour(inv) or is_talisman(inv) or is_orb(inv) then
       insert_item_and_less_enchanted(pa_items_picked, inv)
     end
 
