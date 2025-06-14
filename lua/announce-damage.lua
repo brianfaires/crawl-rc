@@ -1,6 +1,7 @@
 ----- Initially from https://github.com/magus/dcss -----
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/constants.lua")
+loadfile("crawl-rc/lua/globals.lua")
 loadfile("crawl-rc/lua/util.lua")
 
 function delta_color(delta)

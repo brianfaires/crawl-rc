@@ -1,5 +1,6 @@
 if loaded_pa_misc then return end
 loaded_pa_misc = true
+loadfile("crawl-rc/lua/globals.lua")
 loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")

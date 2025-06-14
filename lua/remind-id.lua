@@ -1,4 +1,5 @@
 loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/globals.lua")
 loadfile("crawl-rc/lua/util.lua")
 
 ---- Track if found ID yet ----
