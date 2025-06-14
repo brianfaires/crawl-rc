@@ -315,6 +315,5 @@ end
 function pa_alert_armour(it)
   if it.is_useless then return false end
   if alert_armour_upgrades(it) then return true end
-  if not it.is_identified or has_ego(it) then return false end
   return alert_interesting_armour(it)
 end

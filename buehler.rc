@@ -8,7 +8,7 @@ loaded_lua_config_file = true
 CONFIG = { }
 
 -- Use emojis in alerts and damage announcements
-CONFIG.emojis = true
+CONFIG.emojis = false
 
 -- Announce HP/MP when change is greater than this value
 CONFIG.ANNOUNCE_HP_THRESHOLD = 1
@@ -6459,7 +6459,6 @@ end
 function pa_alert_armour(it)
   if it.is_useless then return false end
   if alert_armour_upgrades(it) then return true end
-  if not it.is_identified or has_ego(it) then return false end
   return alert_interesting_armour(it)
 end
 
