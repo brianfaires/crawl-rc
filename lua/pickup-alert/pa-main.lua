@@ -77,17 +77,14 @@ function c_message_item_alerts(text, _)
   if text:find("You start waiting.") or text:find("You start resting.") then
     pause_pickup_alert_sys = true
   elseif text:find("Done exploring.") or text:find("Partly explored") then
-    local all_alerts = ""
+    local tokens = {}
     for _,v in ipairs(pa_all_level_alerts) do
-      if all_alerts == "" then all_alerts = v
-      else all_alerts = all_alerts .. ", " .. v
-      end
+      tokens[#tokens+1] = "\n  " .. v
     end
-
+    if #tokens > 0 then
+      crawl.mpr("<magenta>Recent alerts:" .. table.concat(tokens) .. "</magenta>")
+    end
     pa_all_level_alerts = {}
-    if all_alerts ~= "" then
-      crawl.mpr("<magenta>Recent alerts: " .. all_alerts .. "</magenta>")
-    end
   end
 end
 
