@@ -107,7 +107,7 @@ function c_assign_invletter_weapon_slots(it)
   if not is_weapon(it) and not is_staff(it) then return end
 
   for i=0,2 do
-    local slot = if_el(i==2, items.letter_to_index("w"), i)
+    local slot = i==2 and items.letter_to_index("w") or i
 
     local inv = items.inslot(slot)
     if not inv then return slot end

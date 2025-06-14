@@ -115,7 +115,7 @@ end
 local ignore_spellbook_string = table.concat(all_spellbooks, ", ")
 local spellcasting_items_string = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 local function set_skill_options()
-  -- If zero spellcasting, don't stop on spellbook pickup 
+  -- If zero spellcasting, don't stop on spellbook pickup
   local zero_spellcasting = CACHE.s_spellcasting == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
@@ -130,10 +130,10 @@ local function set_skill_options()
     local arm = items.equipped_at("armour")
     local heavy_arm = arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
     local skip_items = zero_spellcasting and heavy_arm
-    if not ignoring_spellcasting and heavy_arm then
+    if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true
       crawl.setopt("autopickup_exceptions += " .. spellcasting_items_string)
-    elseif ignoring_spellcasting and not heavy_arm then
+    elseif ignoring_spellcasting and not skip_items then
       ignoring_spellcasting = false
       crawl.setopt("autopickup_exceptions -= " .. spellcasting_items_string)
     end

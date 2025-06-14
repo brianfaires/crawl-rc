@@ -11,7 +11,7 @@ local debug_fm_monsters = false -- Set to true to get a message when the fm chan
 local turns_to_delay = 15 -- Turns before alerting for a pack monster again
 
 -- Stop on all Uniques & Pan lords
-crawl.setopt("force_more_message += monster_warning:" .. 
+crawl.setopt("force_more_message += monster_warning:" ..
               "(?-i:[A-Z]).*comes? into view")
 
 -- Always screen flash
@@ -76,12 +76,12 @@ local fm_patterns = {
   {name = "90hp", cond = "hp", cutoff = 90,
       pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110,
-      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" .. 
+      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" ..
                   "deep elf high priest|deep troll earth mage|stone giant|cacodemon" },
   {name = "120hp", cond = "hp", cutoff = 120,
       pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
   {name = "160hp", cond = "hp", cutoff = 160,
-      pattern = "brimstone fiend|deep elf sorcerer" .. 
+      pattern = "brimstone fiend|deep elf sorcerer" ..
               "hell sentinal|war gargoyle|draconian (knight|scorcher)" },
   {name = "200hp", cond = "hp", cutoff = 200,
       pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
@@ -91,11 +91,11 @@ local fm_patterns = {
   {name = "willpower2", cond = "will", cutoff = 2,
       pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)|sphinx marauder" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|" .. 
-              "merfolk siren|fenstrider witch|cacodemon|" .. 
-              "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" .. 
-              "glowing orange brain|orc sorcerer|" .. 
-              "ogre mage|satyr|vault sentinel|iron elemental|" .. 
+      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|" ..
+              "merfolk siren|fenstrider witch|cacodemon|" ..
+              "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" ..
+              "glowing orange brain|orc sorcerer|" ..
+              "ogre mage|satyr|vault sentinel|iron elemental|" ..
               "death knight|vampire knight" },
   {name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3,
       pattern = "great orb of eyes" },
@@ -126,10 +126,10 @@ local fm_patterns = {
   {name = "elec_80", cond = "elec", cutoff = 80,
       pattern = "shock serpent|raiju|spark wasp" },
   {name = "elec_120", cond = "elec", cutoff = 120,
-      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" .. 
+      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" ..
                 "storm dragon|tengu conjurer" },
   {name = "elec_140", cond = "elec", cutoff = 140,
-      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" .. 
+      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" ..
                 "ball lightning|tengu reaver" },
 
   {name = "corr_60", cond = "corr", cutoff = 60,
@@ -142,12 +142,12 @@ local fm_patterns = {
   {name = "fire_100", cond = "fire", cutoff = 100,
       pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
   {name = "fire_120", cond = "fire", cutoff = 120,
-      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" .. 
+      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" ..
                 "ogre mage|molten gargoyle|hell knight" },
   {name = "fire_140", cond = "fire", cutoff = 140,
       pattern = "balrug" },
   {name = "fire_160", cond = "fire", cutoff = 160,
-      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" .. 
+      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" ..
                 "fire dragon|salamander tyrant|tengu reaver" },
   {name = "fire_240", cond = "fire", cutoff = 240,
       pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
@@ -155,7 +155,7 @@ local fm_patterns = {
   {name = "cold_80", cond = "cold", cutoff = 80,
       pattern = "rime drake" },
   {name = "cold_120", cond = "cold", cutoff = 120,
-      pattern = "blizzard demon|bog body|ironbound frostheart|" .. 
+      pattern = "blizzard demon|bog body|ironbound frostheart|" ..
                 "demonspawn blood saint|white draconian" },
   {name = "cold_160", cond = "cold", cutoff = 160,
       pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
@@ -182,7 +182,7 @@ local last_fm_turn = {} -- when the mute started
 
 
 local function set_monster_option(sign, monster_str, option)
-  local fm_str = "monster_warning:(?<!spectral )(" .. monster_str .. 
+  local fm_str = "monster_warning:(?<!spectral )(" .. monster_str ..
       ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
   crawl.setopt(option .. " " .. sign .. "= " .. fm_str)
 end

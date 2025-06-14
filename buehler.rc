@@ -207,12 +207,12 @@ function cleanup_text(text, escape_chars)
       end
       return text:gsub("\n", ""):gsub(SPECIAL_CHARS, "%%%1")
   end
-  
+
   -- Use a table to build the result instead of string concatenation
   local result = {}
   local pos = 1
   local len = #text
-  
+
   while pos <= len do
       local tag_start = text:find("<", pos)
       if not tag_start then
@@ -220,12 +220,12 @@ function cleanup_text(text, escape_chars)
           result[#result+1] = text:sub(pos)
           break
       end
-      
+
       -- Append text before tag
       if tag_start > pos then
           result[#result+1] = text:sub(pos, tag_start - 1)
       end
-      
+
       -- Find end of tag
       local tag_end = text:find(">", tag_start)
       if not tag_end then
@@ -233,18 +233,18 @@ function cleanup_text(text, escape_chars)
           result[#result+1] = text:sub(pos)
           break
       end
-      
+
       pos = tag_end + 1
   end
-  
+
   -- Join all parts and handle newlines
   local cleaned = table.concat(result):gsub("\n", "")
-  
+
   -- Handle escaping if needed
   if escape_chars then
       return cleaned:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
   end
-  
+
   return cleaned
 end
 
@@ -254,14 +254,6 @@ function control_key(c)
   return string.char(string.byte(c) - string.byte('a') + 1)
 end
 
---- Code readability ---
-function if_el(cond, a, b)
-  if cond then
-    return a
-  else
-    return b
-  end
-end
 
 --- Helper ---
 function you_have_allies()
@@ -327,15 +319,15 @@ local persist_data_type_handlers = {
     str = function(name)
         return name .. " = \"" .. _G[name] .. "\"" .. KEYS.LF
     end,
-    
+
     int = function(name)
         return name .. " = " .. _G[name] .. KEYS.LF
     end,
-    
+
     bool = function(name)
-        return name .. " = " .. if_el(_G[name], "true", "false") .. KEYS.LF
+        return name .. " = " .. (_G[name] and "true" or "false") .. KEYS.LF
     end,
-    
+
     list = function(name)
         local cmd_init = name .. " = {"
         local cmd = cmd_init
@@ -345,7 +337,7 @@ local persist_data_type_handlers = {
         end
         return cmd .. "}" .. KEYS.LF
     end,
-    
+
     dict = function(name)
         local parts = {}
         for k,v in pairs(_G[name]) do
@@ -373,7 +365,7 @@ function create_persistent_data(name, default_value)
     if _G[name] == nil then
         _G[name] = default_value
     end
-    
+
     table.insert(chk_lua_save,
         function()
             local type = get_var_type(_G[name])
@@ -4153,7 +4145,7 @@ end
 local ignore_spellbook_string = table.concat(all_spellbooks, ", ")
 local spellcasting_items_string = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 local function set_skill_options()
-  -- If zero spellcasting, don't stop on spellbook pickup 
+  -- If zero spellcasting, don't stop on spellbook pickup
   local zero_spellcasting = CACHE.s_spellcasting == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
@@ -4168,10 +4160,10 @@ local function set_skill_options()
     local arm = items.equipped_at("armour")
     local heavy_arm = arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
     local skip_items = zero_spellcasting and heavy_arm
-    if not ignoring_spellcasting and heavy_arm then
+    if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true
       crawl.setopt("autopickup_exceptions += " .. spellcasting_items_string)
-    elseif ignoring_spellcasting and not heavy_arm then
+    elseif ignoring_spellcasting and not skip_items then
       ignoring_spellcasting = false
       crawl.setopt("autopickup_exceptions -= " .. spellcasting_items_string)
     end
@@ -4426,7 +4418,7 @@ local debug_fm_monsters = false -- Set to true to get a message when the fm chan
 local turns_to_delay = 15 -- Turns before alerting for a pack monster again
 
 -- Stop on all Uniques & Pan lords
-crawl.setopt("force_more_message += monster_warning:" .. 
+crawl.setopt("force_more_message += monster_warning:" ..
               "(?-i:[A-Z]).*comes? into view")
 
 -- Always screen flash
@@ -4491,12 +4483,12 @@ local fm_patterns = {
   {name = "90hp", cond = "hp", cutoff = 90,
       pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110,
-      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" .. 
+      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" ..
                   "deep elf high priest|deep troll earth mage|stone giant|cacodemon" },
   {name = "120hp", cond = "hp", cutoff = 120,
       pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
   {name = "160hp", cond = "hp", cutoff = 160,
-      pattern = "brimstone fiend|deep elf sorcerer" .. 
+      pattern = "brimstone fiend|deep elf sorcerer" ..
               "hell sentinal|war gargoyle|draconian (knight|scorcher)" },
   {name = "200hp", cond = "hp", cutoff = 200,
       pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
@@ -4506,11 +4498,11 @@ local fm_patterns = {
   {name = "willpower2", cond = "will", cutoff = 2,
       pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)|sphinx marauder" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|" .. 
-              "merfolk siren|fenstrider witch|cacodemon|" .. 
-              "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" .. 
-              "glowing orange brain|orc sorcerer|" .. 
-              "ogre mage|satyr|vault sentinel|iron elemental|" .. 
+      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|" ..
+              "merfolk siren|fenstrider witch|cacodemon|" ..
+              "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" ..
+              "glowing orange brain|orc sorcerer|" ..
+              "ogre mage|satyr|vault sentinel|iron elemental|" ..
               "death knight|vampire knight" },
   {name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3,
       pattern = "great orb of eyes" },
@@ -4541,10 +4533,10 @@ local fm_patterns = {
   {name = "elec_80", cond = "elec", cutoff = 80,
       pattern = "shock serpent|raiju|spark wasp" },
   {name = "elec_120", cond = "elec", cutoff = 120,
-      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" .. 
+      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" ..
                 "storm dragon|tengu conjurer" },
   {name = "elec_140", cond = "elec", cutoff = 140,
-      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" .. 
+      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" ..
                 "ball lightning|tengu reaver" },
 
   {name = "corr_60", cond = "corr", cutoff = 60,
@@ -4557,12 +4549,12 @@ local fm_patterns = {
   {name = "fire_100", cond = "fire", cutoff = 100,
       pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
   {name = "fire_120", cond = "fire", cutoff = 120,
-      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" .. 
+      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" ..
                 "ogre mage|molten gargoyle|hell knight" },
   {name = "fire_140", cond = "fire", cutoff = 140,
       pattern = "balrug" },
   {name = "fire_160", cond = "fire", cutoff = 160,
-      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" .. 
+      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" ..
                 "fire dragon|salamander tyrant|tengu reaver" },
   {name = "fire_240", cond = "fire", cutoff = 240,
       pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
@@ -4570,7 +4562,7 @@ local fm_patterns = {
   {name = "cold_80", cond = "cold", cutoff = 80,
       pattern = "rime drake" },
   {name = "cold_120", cond = "cold", cutoff = 120,
-      pattern = "blizzard demon|bog body|ironbound frostheart|" .. 
+      pattern = "blizzard demon|bog body|ironbound frostheart|" ..
                 "demonspawn blood saint|white draconian" },
   {name = "cold_160", cond = "cold", cutoff = 160,
       pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
@@ -4597,7 +4589,7 @@ local last_fm_turn = {} -- when the mute started
 
 
 local function set_monster_option(sign, monster_str, option)
-  local fm_str = "monster_warning:(?<!spectral )(" .. monster_str .. 
+  local fm_str = "monster_warning:(?<!spectral )(" .. monster_str ..
       ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
   crawl.setopt(option .. " " .. sign .. "= " .. fm_str)
 end
@@ -4820,7 +4812,7 @@ local function inscribe_armour_stats(it)
   -- This gsub's stats individually to avoid overwriting <color> tags
   -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
   local NUM_PATTERN = "[%+%-:]%d+%.%d*"
-  local abbr = if_el(is_shield(it), "SH", "AC")
+  local abbr = is_shield(it) and "SH" or "AC"
   local primary, ev = get_armour_info_strings(it)
 
   local new_insc
@@ -5306,7 +5298,7 @@ function c_assign_invletter_weapon_slots(it)
   if not is_weapon(it) and not is_staff(it) then return end
 
   for i=0,2 do
-    local slot = if_el(i==2, items.letter_to_index("w"), i)
+    local slot = i==2 and items.letter_to_index("w") or i
 
     local inv = items.inslot(slot)
     if not inv then return slot end
@@ -5601,7 +5593,7 @@ function get_staff_bonus_dmg(it, no_brand_dmg)
   if not school then return 0 end
   local spell_skill = get_skill(school)
   local evo_skill = you.skill("Evocations")
-  
+
   local chance = (2*evo_skill + spell_skill) / 30
   if chance > 1 then chance = 1 end
   -- 0.75 is an acceptable approximation; most commonly 63/80
@@ -5622,7 +5614,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
-  local it_plus = if_el(it.plus, it.plus, 0)
+  local it_plus = it.plus and it.plus or 0
 
   -- Adjust str/dex/slay from artefacts
   local str = CACHE.str
@@ -5755,7 +5747,7 @@ function get_weapon_info_string(it)
   if dps < 10 then dps_str = string.format("%.2f", dps) end
   if dps > 99.9 then dps_str = ">100" end
 
-  local it_plus = if_el(it.plus, it.plus, 0)
+  local it_plus = it.plus and it.plus or 0
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+" .. acc end
 
@@ -5816,7 +5808,7 @@ end
 
 function remove_from_pa_single_alert_items(it)
   local alerted = false
-  local idx = -1
+  local idx
   repeat
     idx = get_rare_item_index(it)
     if idx ~= -1 then
@@ -5879,7 +5871,7 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Strongest armour" end
     end
   elseif is_weapon(it) then
-    local it_plus = if_el(it.plus, it.plus, 0)
+    local it_plus = it.plus and it.plus or 0
     local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
     if score > weapon_high_score then
       weapon_high_score = score
@@ -5916,7 +5908,7 @@ if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
-    
+
     if inv.class(true) ~= "potion" and inv.class(true) ~= "scroll" then
       insert_item_and_less_enchanted(pa_items_picked, inv)
     end
@@ -6205,7 +6197,7 @@ end
 -- Special cases where you have temporary or innate mutations that interfere with armour
 -- Alert when an ego item is usable but interferes with mutation, or unusable due to temp mutations
 local function alert_armour_while_mutated(it, type)
-  local it_plus = if_el(it.plus, it.plus, 0)
+  local it_plus = it.plus and it.plus or 0
 
   if type == "gloves" then
     local claws_lvl_innate = get_mut("claws", false)
@@ -6545,7 +6537,7 @@ local function set_top_school()
 end
 
 local function get_weap_tag(it)
-  local ret_val = if_el(it.is_ranged, "ranged_", "melee_")
+  local ret_val = it.is_ranged and "ranged_" or "melee_"
   ret_val = ret_val .. get_hands(it)
   if has_ego(it) then ret_val = ret_val .. "b" end
   return ret_val
@@ -6660,7 +6652,7 @@ local function alert_first_polearm(it)
   if alerted_first_polearm ~= 0 then return false end
   if it.weap_skill ~= "Polearms" then return false end
   if get_hands(it) == 2 and have_shield() then return false end
-  alerted_first_polearm = 1  
+  alerted_first_polearm = 1
   return pa_alert_item(it, "First polearm", GLOBALS.EMOJI.POLEARM)
 end
 
@@ -6728,7 +6720,7 @@ local function pickup_weapon(it, cur)
 
     if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
 
-    local it_plus = if_el(it.plus, it.plus, 0)
+    local it_plus = it.plus and it.plus or 0
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
     local cur_score = cur.dps + cur.acc/3
 
@@ -6839,7 +6831,7 @@ local function alert_interesting_weapon(it, cur)
           if dmg_delta > 0 then
             return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
           end
-          local it_plus = if_el(it.plus, it.plus, 0)
+          local it_plus = it.plus and it.plus or 0
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then
             return pa_alert_item(it, "Higher accuracy", GLOBALS.EMOJI.ACCURACY)
           end

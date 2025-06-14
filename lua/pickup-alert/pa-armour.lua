@@ -121,7 +121,7 @@ end
 -- Special cases where you have temporary or innate mutations that interfere with armour
 -- Alert when an ego item is usable but interferes with mutation, or unusable due to temp mutations
 local function alert_armour_while_mutated(it, type)
-  local it_plus = if_el(it.plus, it.plus, 0)
+  local it_plus = it.plus and it.plus or 0
 
   if type == "gloves" then
     local claws_lvl_innate = get_mut("claws", false)

@@ -28,7 +28,7 @@ end
 
 function remove_from_pa_single_alert_items(it)
   local alerted = false
-  local idx = -1
+  local idx
   repeat
     idx = get_rare_item_index(it)
     if idx ~= -1 then
@@ -91,7 +91,7 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Strongest armour" end
     end
   elseif is_weapon(it) then
-    local it_plus = if_el(it.plus, it.plus, 0)
+    local it_plus = it.plus and it.plus or 0
     local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
     if score > weapon_high_score then
       weapon_high_score = score
@@ -128,7 +128,7 @@ if you.turns() == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
-    
+
     if inv.class(true) ~= "potion" and inv.class(true) ~= "scroll" then
       insert_item_and_less_enchanted(pa_items_picked, inv)
     end

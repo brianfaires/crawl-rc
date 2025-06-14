@@ -17,12 +17,12 @@ function cleanup_text(text, escape_chars)
       end
       return text:gsub("\n", ""):gsub(SPECIAL_CHARS, "%%%1")
   end
-  
+
   -- Use a table to build the result instead of string concatenation
   local result = {}
   local pos = 1
   local len = #text
-  
+
   while pos <= len do
       local tag_start = text:find("<", pos)
       if not tag_start then
@@ -30,12 +30,12 @@ function cleanup_text(text, escape_chars)
           result[#result+1] = text:sub(pos)
           break
       end
-      
+
       -- Append text before tag
       if tag_start > pos then
           result[#result+1] = text:sub(pos, tag_start - 1)
       end
-      
+
       -- Find end of tag
       local tag_end = text:find(">", tag_start)
       if not tag_end then
@@ -43,18 +43,18 @@ function cleanup_text(text, escape_chars)
           result[#result+1] = text:sub(pos)
           break
       end
-      
+
       pos = tag_end + 1
   end
-  
+
   -- Join all parts and handle newlines
   local cleaned = table.concat(result):gsub("\n", "")
-  
+
   -- Handle escaping if needed
   if escape_chars then
       return cleaned:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
   end
-  
+
   return cleaned
 end
 
@@ -64,14 +64,6 @@ function control_key(c)
   return string.char(string.byte(c) - string.byte('a') + 1)
 end
 
---- Code readability ---
-function if_el(cond, a, b)
-  if cond then
-    return a
-  else
-    return b
-  end
-end
 
 --- Helper ---
 function you_have_allies()
@@ -137,15 +129,15 @@ local persist_data_type_handlers = {
     str = function(name)
         return name .. " = \"" .. _G[name] .. "\"" .. KEYS.LF
     end,
-    
+
     int = function(name)
         return name .. " = " .. _G[name] .. KEYS.LF
     end,
-    
+
     bool = function(name)
-        return name .. " = " .. if_el(_G[name], "true", "false") .. KEYS.LF
+        return name .. " = " .. (_G[name] and "true" or "false") .. KEYS.LF
     end,
-    
+
     list = function(name)
         local cmd_init = name .. " = {"
         local cmd = cmd_init
@@ -155,7 +147,7 @@ local persist_data_type_handlers = {
         end
         return cmd .. "}" .. KEYS.LF
     end,
-    
+
     dict = function(name)
         local parts = {}
         for k,v in pairs(_G[name]) do
@@ -183,7 +175,7 @@ function create_persistent_data(name, default_value)
     if _G[name] == nil then
         _G[name] = default_value
     end
-    
+
     table.insert(chk_lua_save,
         function()
             local type = get_var_type(_G[name])

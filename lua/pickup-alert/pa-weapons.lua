@@ -59,7 +59,7 @@ local function set_top_school()
 end
 
 local function get_weap_tag(it)
-  local ret_val = if_el(it.is_ranged, "ranged_", "melee_")
+  local ret_val = it.is_ranged and "ranged_" or "melee_"
   ret_val = ret_val .. get_hands(it)
   if has_ego(it) then ret_val = ret_val .. "b" end
   return ret_val
@@ -174,7 +174,7 @@ local function alert_first_polearm(it)
   if alerted_first_polearm ~= 0 then return false end
   if it.weap_skill ~= "Polearms" then return false end
   if get_hands(it) == 2 and have_shield() then return false end
-  alerted_first_polearm = 1  
+  alerted_first_polearm = 1
   return pa_alert_item(it, "First polearm", GLOBALS.EMOJI.POLEARM)
 end
 
@@ -242,7 +242,7 @@ local function pickup_weapon(it, cur)
 
     if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
 
-    local it_plus = if_el(it.plus, it.plus, 0)
+    local it_plus = it.plus and it.plus or 0
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
     local cur_score = cur.dps + cur.acc/3
 
@@ -353,7 +353,7 @@ local function alert_interesting_weapon(it, cur)
           if dmg_delta > 0 then
             return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
           end
-          local it_plus = if_el(it.plus, it.plus, 0)
+          local it_plus = it.plus and it.plus or 0
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then
             return pa_alert_item(it, "Higher accuracy", GLOBALS.EMOJI.ACCURACY)
           end
