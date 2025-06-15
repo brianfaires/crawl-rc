@@ -277,7 +277,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
-  local it_plus = it.plus and it.plus or 0
+  local it_plus = it.plus or 0
 
   -- Adjust str/dex/slay from artefacts
   local str = CACHE.str
@@ -410,7 +410,7 @@ function get_weapon_info_string(it)
   if dps < 10 then dps_str = string.format("%.2f", dps) end
   if dps > 99.9 then dps_str = ">100" end
 
-  local it_plus = it.plus and it.plus or 0
+  local it_plus = it.plus or 0
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+" .. acc end
 

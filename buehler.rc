@@ -363,6 +363,7 @@ function is_orb(it)
 end
 
 function is_talisman(it)
+  crawl.mpr(it.name("base"))
   return it and it.name("base"):find("talisman")
 end
 
@@ -3749,18 +3750,14 @@ local AD_Messages = {
   end,
   ["HPLoss"] = function (color, hp, hpm, loss)
     crawl.mpr(
-      string.format("%s%s",
-        colorize_text(COLORS.red, string.format("You take %s damage <w>-></w> ", loss)),
-        colorize_text(color, string.format("%s<w>/%s</w> HP.", hp, hpm))
-      )
+      colorize_text(COLORS.red, string.format("Took %s damage ", loss)) ..
+      colorize_text(color, string.format("-> %s/%s HP", hp, hpm))
     )
   end,
   ["HPGain"] = function (color, hp, hpm, gain)
     crawl.mpr(
-      string.format("%s%s",
-        colorize_text(COLORS.lightgreen, string.format("Gained %s HP <w>-></w> ", gain)),
-        colorize_text(color, string.format("%s<w>/%s</w> HP.", hp, hpm))
-      )
+      colorize_text(COLORS.lightgreen, string.format("Gained %s HP ", gain)) ..
+      colorize_text(color, string.format("-> %s/%s HP", hp, hpm))
     )
   end,
   ["HPFull"] = function (_, hp)
@@ -3782,18 +3779,14 @@ local AD_Messages = {
   end,
   ["MPLoss"] = function (color, mp, mpm, loss)
     crawl.mpr(
-      string.format("%s%s",
-        colorize_text(COLORS.cyan, string.format("Lost %s MP <w>-></w> ", loss)),
-        colorize_text(color, string.format("%s<w>/%s</w> MP.", mp, mpm))
-      )
+      colorize_text(COLORS.cyan, string.format("Lost %s MP ", loss)) ..
+      colorize_text(color, string.format("-> %s/%s MP", mp, mpm))
     )
   end,
   ["MPGain"] = function (color, mp, mpm, gain)
     crawl.mpr(
-      string.format("%s%s",
-        colorize_text(COLORS.cyan, string.format("Gained %s MP <w>-></w> ", gain)),
-        colorize_text(color, string.format("%s<w>/%s</w> MP.", mp, mpm))
-      )
+      colorize_text(COLORS.cyan, string.format("Gained %s MP ", gain)) ..
+      colorize_text(color, string.format("-> %s/%s MP", mp, mpm))
     )
   end,
   ["MPFull"] = function (_, mp)
@@ -5678,7 +5671,7 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
-  local it_plus = it.plus and it.plus or 0
+  local it_plus = it.plus or 0
 
   -- Adjust str/dex/slay from artefacts
   local str = CACHE.str
@@ -5811,7 +5804,7 @@ function get_weapon_info_string(it)
   if dps < 10 then dps_str = string.format("%.2f", dps) end
   if dps > 99.9 then dps_str = ">100" end
 
-  local it_plus = it.plus and it.plus or 0
+  local it_plus = it.plus or 0
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+" .. acc end
 
@@ -5935,7 +5928,7 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Strongest armour" end
     end
   elseif is_weapon(it) then
-    local it_plus = it.plus and it.plus or 0
+    local it_plus = it.plus or 0
     local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
     if score > weapon_high_score then
       weapon_high_score = score
@@ -6036,7 +6029,6 @@ function pa_alert_item(it, alert_type, emoji)
   tokens[#tokens+1] = " <magenta>" .. alert_type .. ": </magenta>"
   tokens[#tokens+1] = "<yellow>" .. item_name .. " </yellow>"
   tokens[#tokens+1] = emoji and emoji or "----</cyan>"
-  crawl.mpr("<cyan>" .. ITEM_ALERT_MSG .. "</cyan>")
   crawl.mpr(table.concat(tokens))
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
@@ -6134,6 +6126,7 @@ add_autopickup_func(function (it, _)
   end
 
   if CONFIG.alert_system_enabled then
+    crawl.mpr(it.name("base"))
     -- Not picking up this item. Check for alerts.
     -- Update inventory high scores first, in case XP gained same turn item is dropped
     ready_item_alerts()
@@ -6141,15 +6134,25 @@ add_autopickup_func(function (it, _)
     if CONFIG.alert_one_time_items then
       if pa_alert_rare_item(it) then return end
     end
+    crawl.mpr("after2")
+    if CONFIG.alert_talismans then
+      crawl.mpr("ALERT-AAA")
+    end
+
     if CONFIG.alert_staff_resists and is_staff(it) then
+      crawl.mpr("ALERT-A")
       if pa_alert_staff(it) then return end
     elseif CONFIG.alert_orbs and is_orb(it) then
+      crawl.mpr("ALERT-B")
       if pa_alert_orb(it) then return end
-    elseif CONFIG.alert_talismans and is_talisman(it)then
+    elseif CONFIG.alert_talismans and is_talisman(it) then
+      crawl.mpr("IS TAL")
       if pa_alert_talisman(it) then return end
     elseif CONFIG.alert_armour and is_armour(it) then
+      crawl.mpr("ALERT-C")
       if pa_alert_armour(it) then return end
     elseif CONFIG.alert_weapons and is_weapon(it) then
+      crawl.mpr("ALERT-D")
       if do_pa_weapon_alerts(it) then return end
     end
   end
@@ -6276,7 +6279,7 @@ end
 -- Special cases where you have temporary or innate mutations that interfere with armour
 -- Alert when an ego item is usable but interferes with mutation, or unusable due to temp mutations
 local function alert_armour_while_mutated(it, type)
-  local it_plus = it.plus and it.plus or 0
+  local it_plus = it.plus or 0
 
   if type == "gloves" then
     local claws_lvl_innate = get_mut("claws", false)
@@ -6795,7 +6798,7 @@ local function pickup_weapon(it, cur)
 
     if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
 
-    local it_plus = it.plus and it.plus or 0
+    local it_plus = it.plus or 0
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
     local cur_score = cur.dps + cur.acc/3
 
@@ -6906,7 +6909,7 @@ local function alert_interesting_weapon(it, cur)
           if dmg_delta > 0 then
             return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
           end
-          local it_plus = it.plus and it.plus or 0
+          local it_plus = it.plus or 0
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then
             return pa_alert_item(it, "Higher accuracy", GLOBALS.EMOJI.ACCURACY)
           end

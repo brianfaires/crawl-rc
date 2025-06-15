@@ -245,7 +245,7 @@ local function pickup_weapon(it, cur)
 
     if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
 
-    local it_plus = it.plus and it.plus or 0
+    local it_plus = it.plus or 0
     local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
     local cur_score = cur.dps + cur.acc/3
 
@@ -356,7 +356,7 @@ local function alert_interesting_weapon(it, cur)
           if dmg_delta > 0 then
             return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
           end
-          local it_plus = it.plus and it.plus or 0
+          local it_plus = it.plus or 0
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then
             return pa_alert_item(it, "Higher accuracy", GLOBALS.EMOJI.ACCURACY)
           end

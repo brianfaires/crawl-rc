@@ -91,7 +91,7 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Strongest armour" end
     end
   elseif is_weapon(it) then
-    local it_plus = it.plus and it.plus or 0
+    local it_plus = it.plus or 0
     local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
     if score > weapon_high_score then
       weapon_high_score = score
