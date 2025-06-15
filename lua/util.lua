@@ -3,8 +3,8 @@ local loaded_util_lua = true
 loadfile("crawl-rc/lua/constants.lua")
 
 ---- Text Formatting ----
-function colorize_itext(color, str)
-  return string.format("<%s>%s</%s>", color, str, color)
+function with_color(color, text)
+  return string.format("<%s>%s</%s>", color, text, color)
 end
 
 -- Removes tags from text, and optionally escapes special characters --

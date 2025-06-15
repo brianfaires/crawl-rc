@@ -45,19 +45,24 @@ if CONFIG.emojis then
   GLOBALS.EMOJI.HP_0   = "🤍🤍🤍🤍🤍"
 
 else
-  -- Define non-emoji fallbacks
-  GLOBALS.EMOJI.HP_100 = "<w>|</w><lightred>-----</lightred><lightgrey></lightgrey><darkgrey></darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_90  = "<w>|</w><lightred>----</lightred><lightgrey>-</lightgrey><darkgrey></darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_80  = "<w>|</w><lightred>----</lightred><lightgrey></lightgrey><darkgrey>-</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_70  = "<w>|</w><lightred>---</lightred><lightgrey>-</lightgrey><darkgrey>-</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_60  = "<w>|</w><lightred>---</lightred><lightgrey></lightgrey><darkgrey>--</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_50  = "<w>|</w><lightred>--</lightred><lightgrey>-</lightgrey><darkgrey>--</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_40  = "<w>|</w><lightred>--</lightred><lightgrey></lightgrey><darkgrey>---</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_30  = "<w>|</w><lightred>-</lightred><lightgrey>-</lightgrey><darkgrey>---</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_20  = "<w>|</w><lightred>-</lightred><lightgrey></lightgrey><darkgrey>----</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_10  = "<w>|</w><lightred></lightred><lightgrey>-</lightgrey><darkgrey>----</darkgrey><w>|</w>"
-  GLOBALS.EMOJI.HP_0   = "<w>|</w><lightred></lightred><lightgrey></lightgrey><darkgrey>-----</darkgrey><w>|</w>"
+  -- Text fallbacks
+  GLOBALS.EMOJI.REMIND_IDENTIFY = with_color("cyan", "??")
+  GLOBALS.EMOJI.EXCLAMATION = with_color("lightred", "!!")
 
-  GLOBALS.EMOJI.REMIND_IDENTIFY = "<cyan>??</cyan>"
-  GLOBALS.EMOJI.EXCLAMATION = "<lightred>!!</lightred>"
+  local BORDER = with_color("white", "|")
+  local FULL_PIP = with_color("lightred", "+")
+  local PART_PIP = with_color("lightgrey", "+")
+  local EMPTY_PIP = with_color("darkgrey", "-")
+  GLOBALS.EMOJI.HP_100 = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. FULL_PIP .. FULL_PIP .. BORDER
+  GLOBALS.EMOJI.HP_90  = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. FULL_PIP .. PART_PIP .. BORDER
+  GLOBALS.EMOJI.HP_80  = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. PART_PIP .. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_70  = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_60  = BORDER .. FULL_PIP .. FULL_PIP .. PART_PIP .. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_50  = BORDER .. FULL_PIP .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_40  = BORDER .. FULL_PIP .. PART_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_30  = BORDER .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_20  = BORDER .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_10  = BORDER .. PART_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_0   = BORDER .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
+
 end

@@ -10,67 +10,63 @@ function delta_color(delta)
   return string.format("<%s>%s</%s>", color, signDelta, color)
 end
 
-function colorize_text(color, text)
-  return string.format("<%s>%s</%s>", color, text, color)
-end
-
 local AD_Messages = {
   ["HPSimple"] = function(delta)
-    return colorize_text(COLORS.white,
+    return with_color(COLORS.white,
       string.format("HP[%s]", delta_color(0 - delta))
     )
   end,
   ["HPMax"] = function (_, _, hpm, delta)
     crawl.mpr(
-      colorize_text(COLORS.lightgreen,
+      with_color(COLORS.lightgreen,
         string.format("Max HP: %s (%s).", hpm, delta_color(delta))
       )
     )
   end,
   ["HPLoss"] = function (color, hp, hpm, loss)
     crawl.mpr(
-      colorize_text(COLORS.red, string.format("Took %s damage ", loss)) ..
-      colorize_text(color, string.format("-> %s/%s HP", hp, hpm))
+      with_color(COLORS.red, string.format("Took %s damage ", loss)) ..
+      with_color(color, string.format("-> %s/%s HP", hp, hpm))
     )
   end,
   ["HPGain"] = function (color, hp, hpm, gain)
     crawl.mpr(
-      colorize_text(COLORS.lightgreen, string.format("Gained %s HP ", gain)) ..
-      colorize_text(color, string.format("-> %s/%s HP", hp, hpm))
+      with_color(COLORS.lightgreen, string.format("Gained %s HP ", gain)) ..
+      with_color(color, string.format("-> %s/%s HP", hp, hpm))
     )
   end,
   ["HPFull"] = function (_, hp)
     crawl.mpr(
-      colorize_text(COLORS.lightgreen,
+      with_color(COLORS.lightgreen,
         string.format("Full HP (%s).", hp)
       )
     )
   end,
   ["HPMassive"] = function ()
     crawl.mpr(
-      colorize_text(COLORS.lightred, "MASSIVE DAMAGE!!")
+      with_color(COLORS.lightred, "MASSIVE DAMAGE!!")
     )
   end,
   ["MPSimple"] = function(delta)
-    return colorize_text(COLORS.white,
+    return with_color(COLORS.white,
       string.format("MP[%s]", delta_color(0 - delta))
     )
   end,
   ["MPLoss"] = function (color, mp, mpm, loss)
     crawl.mpr(
-      colorize_text(COLORS.cyan, string.format("Lost %s MP ", loss)) ..
-      colorize_text(color, string.format("-> %s/%s MP", mp, mpm))
+      with_color(COLORS.cyan, string.format("Lost %s MP ", loss)) ..
+      with_color(color, string.format("-> %s/%s MP", mp, mpm))
     )
   end,
   ["MPGain"] = function (color, mp, mpm, gain)
     crawl.mpr(
-      colorize_text(COLORS.cyan, string.format("Gained %s MP ", gain)) ..
-      colorize_text(color, string.format("-> %s/%s MP", mp, mpm))
+      with_color(COLORS.cyan, string.format("Gained %s MP ", gain)) ..
+      with_color(color, string.format("-> %s/%s MP", mp, mpm))
     )
   end,
   ["MPFull"] = function (_, mp)
     crawl.mpr(
-      colorize_text(COLORS.cyan, string.format("Full MP (%s).", mp))
+      with_color(COLORS.cyan, string.format("Full MP (%s).", mp))
     )
   end,
   [""]="",

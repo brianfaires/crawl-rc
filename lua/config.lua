@@ -3,7 +3,7 @@ loaded_lua_config_file = true
 CONFIG = { }
 
 -- Use emojis in alerts and damage announcements
-CONFIG.emojis = false
+CONFIG.emojis = true
 
 -- Announce HP/MP when change is greater than this value
 CONFIG.ANNOUNCE_HP_THRESHOLD = 1
