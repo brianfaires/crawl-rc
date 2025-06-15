@@ -84,21 +84,21 @@ local prev_mp_max = 0
 -- Simplified condensed HP and MP output
 -- Print a single condensed line showing HP & MP change
 -- e.g.😨 HP[-2] MP[-1]
-local function simple_announce_damage(hp_diff, mp_diff)
+local function simple_announce_damage(hp_lost, mp_lost)
   local emoji
   local message
   
-  if hp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD then
-    if mp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD then
+  if hp_lost > CONFIG.ANNOUNCE_HP_THRESHOLD then
+    if mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
       -- HP[-2] MP[-1]
-      message = string.format("%s %s", AD_Messages.HPSimple(hp_diff), AD_Messages.MPSimple(mp_diff))
+      message = string.format("%s %s", AD_Messages.HPSimple(hp_lost), AD_Messages.MPSimple(mp_lost))
     else
       -- HP[-2]
-      message = AD_Messages.HPSimple(hp_diff)
+      message = AD_Messages.HPSimple(hp_lost)
     end
-  elseif mp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD then
+  elseif mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
     -- MP[-1]
-    message = AD_Messages.MPSimple(mp_diff)
+    message = AD_Messages.MPSimple(mp_lost)
   end
 
   if message ~= nil then
@@ -133,66 +133,47 @@ end
 function ready_announce_damage()
   --Skips message on initializing game
   if prev_hp > 0 then
-    local hp_diff = prev_hp - CACHE.hp
-    local mhp_diff = CACHE.mhp - prev_hp_max
-    local mp_diff = prev_mp - CACHE.mp
-    local mmp_diff = CACHE.mmp - prev_mp_max
+    local hp_lost = prev_hp - CACHE.hp
+    local mhp_lost = CACHE.mhp - prev_hp_max
+    local hp_lost_relative = hp_lost - mhp_lost
+    local mp_lost = prev_mp - CACHE.mp
+    local mmp_lost = CACHE.mmp - prev_mp_max
+    local mp_lost_relative = mp_lost - mmp_lost
 
     -- Simplified condensed HP and MP output
-    simple_announce_damage(hp_diff, mp_diff)
+    simple_announce_damage(hp_lost, mp_lost)
 
     -- HP Max
-    if mhp_diff > 0 then
-      AD_Messages.HPMax(COLORS.green, CACHE.hp, CACHE.mhp, mhp_diff)
-    elseif mhp_diff < 0 then
-      AD_Messages.HPMax(COLORS.yellow, CACHE.hp, CACHE.mhp, mhp_diff)
+    if mhp_lost > 0 then
+      AD_Messages.HPMax(COLORS.green, CACHE.hp, CACHE.mhp, mhp_lost)
+    elseif mhp_lost < 0 then
+      AD_Messages.HPMax(COLORS.yellow, CACHE.hp, CACHE.mhp, mhp_lost)
     end
 
-    -- HP Loss relative to max HP change
-    if (hp_diff - mhp_diff > CONFIG.ANNOUNCE_HP_THRESHOLD) then
-      color_by_max(AD_Messages.HPLoss, CACHE.hp, CACHE.mhp, hp_diff)
-
-      if hp_diff > (CACHE.mhp * CONFIG.ANNOUNCE_HP_MASSIVE_THRESHOLD) then
+    -- HP Loss/Gain
+    if (hp_lost_relative > CONFIG.ANNOUNCE_HP_THRESHOLD) then
+      color_by_max(AD_Messages.HPLoss, CACHE.hp, CACHE.mhp, hp_lost)
+      if hp_lost > (CACHE.mhp * CONFIG.ANNOUNCE_HP_MASSIVE_THRESHOLD) then
         AD_Messages.HPMassive()
       end
-    end
-
-    -- HP Gain
-    if (hp_diff - mhp_diff < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
-      -- Remove the negative sign by taking absolute value
-      local hp_gain = math.abs(hp_diff)
-
-      if (hp_gain > 1) and (CACHE.hp ~= CACHE.mhp) then
-        color_by_max(AD_Messages.HPGain, CACHE.hp, CACHE.mhp, hp_gain)
-      end
-
+    elseif (hp_lost_relative < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
       if (CACHE.hp == CACHE.mhp) then
         AD_Messages.HPFull(nil, CACHE.hp)
+      elseif (hp_lost < 0) then
+        color_by_max(AD_Messages.HPGain, CACHE.hp, CACHE.mhp, -hp_lost)
       end
     end
 
-    -- MP Gain
-    -- More than 1 MP gained
-    if (mp_diff - mmp_diff < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
-      -- Remove the negative sign by taking absolute value
-      local mp_gain = math.abs(mp_diff)
-
-      if (mp_gain > 1) and (CACHE.mp ~= CACHE.mmp) then
-        color_by_max(AD_Messages.MPGain, CACHE.mp, CACHE.mmp, mp_gain)
-      end
-
+    -- MP Loss/Gain
+    if (mp_lost_relative > CONFIG.ANNOUNCE_MP_THRESHOLD) then
+      color_by_max(AD_Messages.MPLoss, CACHE.mp, CACHE.mmp, mp_lost)
+    elseif (mp_lost_relative < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
       if (CACHE.mp == CACHE.mmp) then
         AD_Messages.MPFull(nil, CACHE.mp)
+      elseif (mp_lost < 0) then
+        color_by_max(AD_Messages.MPGain, CACHE.mp, CACHE.mmp, -mp_lost)
       end
     end
-
-    -- MP Loss
-    -- Ensure we lost MORE than the change in max mp
-    -- i.e. a change in max mp should not be considered loss
-    if (mp_diff - mmp_diff > CONFIG.ANNOUNCE_MP_THRESHOLD) then
-      color_by_max(AD_Messages.MPLoss, CACHE.mp, CACHE.mmp, mp_diff)
-    end
-
   end
 
   --Set previous hp/mp and form at end of turn
