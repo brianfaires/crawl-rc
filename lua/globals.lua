@@ -1,6 +1,7 @@
 if loaded_lua_globals_file then return end
 local loaded_lua_globals_file = true
 loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 GLOBALS = {}
 GLOBALS.EMOJI = {}
@@ -32,37 +33,26 @@ if CONFIG.emojis then
   GLOBALS.EMOJI.REMIND_IDENTIFY = "🎁"
   GLOBALS.EMOJI.EXCLAMATION = "‼️"
 
-  GLOBALS.EMOJI.HP_100 = "❤️❤️❤️❤️❤️"
-  GLOBALS.EMOJI.HP_90  = "❤️❤️❤️❤️❤️‍🩹"
-  GLOBALS.EMOJI.HP_80  = "❤️❤️❤️❤️🤍"
-  GLOBALS.EMOJI.HP_70  = "❤️❤️❤️❤️‍🩹🤍"
-  GLOBALS.EMOJI.HP_60  = "❤️❤️❤️🤍🤍"
-  GLOBALS.EMOJI.HP_50  = "❤️❤️❤️‍🩹🤍🤍"
-  GLOBALS.EMOJI.HP_40  = "❤️❤️🤍🤍🤍"
-  GLOBALS.EMOJI.HP_30  = "❤️❤️‍🩹🤍🤍🤍"
-  GLOBALS.EMOJI.HP_20  = "❤️🤍🤍🤍🤍"
-  GLOBALS.EMOJI.HP_10  = "❤️‍🩹🤍🤍🤍🤍"
-  GLOBALS.EMOJI.HP_0   = "🤍🤍🤍🤍🤍"
+  GLOBALS.EMOJI.HP_FULL_PIP = "❤️"
+  GLOBALS.EMOJI.HP_PART_PIP = "❤️‍🩹"
+  GLOBALS.EMOJI.HP_EMPTY_PIP = "🤍"
 
-else
-  -- Text fallbacks
+  GLOBALS.EMOJI.MP_FULL_PIP = "🟦"
+  GLOBALS.EMOJI.MP_PART_PIP = "🔹"
+  GLOBALS.EMOJI.MP_EMPTY_PIP = "➖"
+
+elseif CONFIG.textmojis then
   GLOBALS.EMOJI.REMIND_IDENTIFY = with_color("cyan", "??")
   GLOBALS.EMOJI.EXCLAMATION = with_color("lightred", "!!")
 
-  local BORDER = with_color("white", "|")
-  local FULL_PIP = with_color("lightred", "+")
-  local PART_PIP = with_color("lightgrey", "+")
-  local EMPTY_PIP = with_color("darkgrey", "-")
-  GLOBALS.EMOJI.HP_100 = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. FULL_PIP .. FULL_PIP .. BORDER
-  GLOBALS.EMOJI.HP_90  = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. FULL_PIP .. PART_PIP .. BORDER
-  GLOBALS.EMOJI.HP_80  = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. PART_PIP .. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_70  = BORDER .. FULL_PIP .. FULL_PIP .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_60  = BORDER .. FULL_PIP .. FULL_PIP .. PART_PIP .. EMPTY_PIP.. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_50  = BORDER .. FULL_PIP .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_40  = BORDER .. FULL_PIP .. PART_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_30  = BORDER .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_20  = BORDER .. FULL_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_10  = BORDER .. PART_PIP .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
-  GLOBALS.EMOJI.HP_0   = BORDER .. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. EMPTY_PIP.. BORDER
+  GLOBALS.EMOJI.HP_BORDER = with_color(COLORS.white, "|")
+  GLOBALS.EMOJI.HP_FULL_PIP = with_color(COLORS.green, "+")
+  GLOBALS.EMOJI.HP_PART_PIP = with_color(COLORS.lightgrey, "+")
+  GLOBALS.EMOJI.HP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
 
+
+  GLOBALS.EMOJI.MP_BORDER = with_color(COLORS.white, "|")
+  GLOBALS.EMOJI.MP_FULL_PIP = with_color(COLORS.lightblue, "+")
+  GLOBALS.EMOJI.MP_PART_PIP = with_color(COLORS.lightgrey, "+")
+  GLOBALS.EMOJI.MP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
 end

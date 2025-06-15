@@ -3,13 +3,16 @@ loaded_lua_config_file = true
 CONFIG = { }
 
 -- Use emojis in alerts and damage announcements
-CONFIG.emojis = true
+CONFIG.emojis = false
+-- Fallback to text-based alternatives when emoji is off
+CONFIG.textmojis = true
 
 -- Announce HP/MP when change is greater than this value
 CONFIG.ANNOUNCE_HP_THRESHOLD = 1
 CONFIG.ANNOUNCE_MP_THRESHOLD = 0
--- Force more prompt for losing this percentage of max HP
-CONFIG.ANNOUNCE_HP_MASSIVE_THRESHOLD = 0.20
+-- Flash/Force more for losing this percentage of max HP
+CONFIG.DAMAGE_FLASH_THRESHOLD = 0.20
+CONFIG.DAMAGE_FORCE_MORE_THRESHOLD = 0.30
 
 -- Inscribe stats
 CONFIG.inscribe_weapons = true
@@ -26,7 +29,7 @@ CONFIG.search_altars_in_temple = true
 CONFIG.warn_v5 = true
 CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
 CONFIG.alert_remove_faith = true
-CONFIG.alert_low_hp_threshold = 0.5 -- % max HP to alert; 0 to disable
+CONFIG.alert_low_hp_threshold = 0.50 -- % max HP to alert; 0 to disable
 CONFIG.save_with_msg = true
 CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
 CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions

@@ -83,7 +83,6 @@ flash += danger:You feel strangely .*stable
 flash += delayed
 
 # Big damage
-more += MASSIVE DAMAGE!!
 more += your body is wracked
 more += Ouch! That really hurt!
 more += The poison in your body grows stronger

@@ -4,10 +4,30 @@ loadfile("crawl-rc/lua/constants.lua")
 loadfile("crawl-rc/lua/globals.lua")
 loadfile("crawl-rc/lua/util.lua")
 
-function delta_color(delta)
+local BIG_DAMAGE_MSG = "BIG DAMAGE!!"
+local MASSIVE_DAMAGE_MSG = "MASSIVE DAMAGE!!"
+crawl.setopt("flash_screen_message += " .. BIG_DAMAGE_MSG)
+crawl.setopt("force_more_message += " .. MASSIVE_DAMAGE_MSG)
+
+local function delta_color(delta)
   local color = delta < 0 and COLORS.red or COLORS.green
   local signDelta = delta < 0 and delta or "+" .. delta
   return string.format("<%s>%s</%s>", color, signDelta, color)
+end
+
+local function create_meter(perc, full, part, empty, border)
+  local decade = math.floor(perc / 10)
+  local full_count = math.floor(decade / 2)
+  local part_count = decade % 2
+  local empty_count = 5 - full_count - part_count
+
+  local tokens = {}
+  if border then tokens[1] = border end
+  for i = 1, full_count do tokens[#tokens + 1] = full end
+  for i = 1, part_count do tokens[#tokens + 1] = part end
+  for i = 1, empty_count do tokens[#tokens + 1] = empty end
+  if border then tokens[#tokens + 1] = border end
+  return table.concat(tokens)
 end
 
 local AD_Messages = {
@@ -42,9 +62,13 @@ local AD_Messages = {
       )
     )
   end,
-  ["HPMassive"] = function ()
+  ["HPBig"] = function ()
     crawl.mpr(
-      with_color(COLORS.lightred, "MASSIVE DAMAGE!!")
+      with_color(COLORS.magenta, BIG_DAMAGE_MSG)
+    )
+  end,["HPMassive"] = function ()
+    crawl.mpr(
+      with_color(COLORS.lightred, MASSIVE_DAMAGE_MSG)
     )
   end,
   ["MPSimple"] = function(delta)
@@ -98,39 +122,24 @@ local function simple_announce_damage(hp_lost, mp_lost)
   end
 
   if message ~= nil then
-    if CACHE.hp == CACHE.mhp then
-      emoji = GLOBALS.EMOJI.HP_100
-    elseif CACHE.hp > (CACHE.mhp * 0.90) then
-      emoji = GLOBALS.EMOJI.HP_90
-    elseif CACHE.hp > (CACHE.mhp * 0.80) then
-      emoji = GLOBALS.EMOJI.HP_80
-    elseif CACHE.hp > (CACHE.mhp * 0.70) then
-      emoji = GLOBALS.EMOJI.HP_70
-    elseif CACHE.hp > (CACHE.mhp * 0.60) then
-      emoji = GLOBALS.EMOJI.HP_60
-    elseif CACHE.hp > (CACHE.mhp * 0.50) then
-      emoji = GLOBALS.EMOJI.HP_50
-    elseif CACHE.hp > (CACHE.mhp * 0.40) then
-      emoji = GLOBALS.EMOJI.HP_40
-    elseif CACHE.hp > (CACHE.mhp * 0.30) then
-      emoji = GLOBALS.EMOJI.HP_30
-    elseif CACHE.hp > (CACHE.mhp * 0.20) then
-      emoji = GLOBALS.EMOJI.HP_20
-    elseif CACHE.hp > (CACHE.mhp * 0.10) then
-      emoji = GLOBALS.EMOJI.HP_10
-    else
-      emoji = GLOBALS.EMOJI.HP_0
-    end
-    crawl.mpr(string.format("\n%s %s %s", emoji, message, emoji))
+    local hp_meter = create_meter(
+      CACHE.hp / CACHE.mhp * 100,
+      GLOBALS.EMOJI.HP_FULL_PIP, GLOBALS.EMOJI.HP_PART_PIP, GLOBALS.EMOJI.HP_EMPTY_PIP, GLOBALS.EMOJI.HP_BORDER
+    )
+    local mp_meter = create_meter(
+      CACHE.mp / CACHE.mmp * 100,
+      GLOBALS.EMOJI.MP_FULL_PIP, GLOBALS.EMOJI.MP_PART_PIP, GLOBALS.EMOJI.MP_EMPTY_PIP, GLOBALS.EMOJI.MP_BORDER
+    )
+    crawl.mpr(string.format("\n%s %s %s", hp_meter, message, mp_meter))
   end
 end
 
--- Try to sync with colors defined in Interface.rc
+
 local function color_by_max(message_func, cur, max, diff)
   if cur <= (max * 0.25) then
-    message_func(COLORS.red, cur, max, diff)
-  elseif cur <= (max * 0.50) then
     message_func(COLORS.lightred, cur, max, diff)
+  elseif cur <= (max * 0.50) then
+    message_func(COLORS.red, cur, max, diff)
   elseif cur <= (max *  0.75) then
     message_func(COLORS.yellow, cur, max, diff)
   else
@@ -148,43 +157,44 @@ function ready_announce_damage()
     local mmp_lost = CACHE.mmp - prev_mp_max
     local mp_lost_relative = mp_lost - mmp_lost
 
-    -- Simplified condensed HP and MP output
+    -- Simplified condensed HP and MP output, with HP meter
     simple_announce_damage(hp_lost, mp_lost)
 
-    -- HP Max
-    if mhp_lost > 0 then
-      AD_Messages.HPMax(COLORS.green, CACHE.hp, CACHE.mhp, mhp_lost)
-    elseif mhp_lost < 0 then
+    -- HP Max Loss/Gain
+    if mhp_lost < 0 then
       AD_Messages.HPMax(COLORS.yellow, CACHE.hp, CACHE.mhp, mhp_lost)
+    elseif mhp_lost > 0 then
+      AD_Messages.HPMax(COLORS.green, CACHE.hp, CACHE.mhp, mhp_lost)
     end
 
-    -- HP Loss/Gain
+    -- HP Loss/Gain/Full
     if (hp_lost_relative > CONFIG.ANNOUNCE_HP_THRESHOLD) then
       color_by_max(AD_Messages.HPLoss, CACHE.hp, CACHE.mhp, hp_lost)
-      if hp_lost > (CACHE.mhp * CONFIG.ANNOUNCE_HP_MASSIVE_THRESHOLD) then
+      if hp_lost > (CACHE.mhp * CONFIG.DAMAGE_FORCE_MORE_THRESHOLD) then
         AD_Messages.HPMassive()
+      elseif (hp_lost_relative > CACHE.mhp * CONFIG.DAMAGE_FLASH_THRESHOLD) then
+        AD_Messages.HPBig()
       end
     elseif (hp_lost_relative < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
-      if (CACHE.hp == CACHE.mhp) then
-        AD_Messages.HPFull(nil, CACHE.hp)
-      elseif (hp_lost < 0) then
+      if (hp_lost < 0) then
         color_by_max(AD_Messages.HPGain, CACHE.hp, CACHE.mhp, -hp_lost)
       end
+    elseif hp_lost_relative ~= 0 and CACHE.hp == CACHE.mhp then
+      AD_Messages.HPFull(nil, CACHE.hp)
     end
 
-    -- MP Loss/Gain
+    -- MP Loss/Gain/Full
     if (mp_lost_relative > CONFIG.ANNOUNCE_MP_THRESHOLD) then
       color_by_max(AD_Messages.MPLoss, CACHE.mp, CACHE.mmp, mp_lost)
     elseif (mp_lost_relative < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
-      if (CACHE.mp == CACHE.mmp) then
-        AD_Messages.MPFull(nil, CACHE.mp)
-      elseif (mp_lost < 0) then
+      if (mp_lost < 0) then
         color_by_max(AD_Messages.MPGain, CACHE.mp, CACHE.mmp, -mp_lost)
       end
+    elseif mp_lost_relative ~= 0 and CACHE.mp == CACHE.mmp then
+      AD_Messages.MPFull(nil, CACHE.mp)
     end
   end
 
-  --Set previous hp/mp and form at end of turn
   prev_hp = CACHE.hp
   prev_hp_max = CACHE.mhp
   prev_mp = CACHE.mp

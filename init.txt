@@ -1,4 +1,4 @@
-## Config at top
+## Always do config first
 lua_file = crawl-rc/lua/config.lua
 
 ####### Main options #######
