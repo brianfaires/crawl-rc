@@ -102,16 +102,28 @@ local function simple_announce_damage(hp_lost, mp_lost)
   end
 
   if message ~= nil then
-    if CACHE.hp <= (CACHE.mhp * 0.25) then
-      emoji = GLOBALS.EMOJI.HP_CRIT
-    elseif CACHE.hp <= (CACHE.mhp * 0.50) then
-      emoji = GLOBALS.EMOJI.HP_LOW
-    elseif CACHE.hp <= (CACHE.mhp *  0.75) then
-      emoji = GLOBALS.EMOJI.HP_MID
-    elseif CACHE.hp < CACHE.mhp then
-      emoji = GLOBALS.EMOJI.HP_HIGH
+    if CACHE.hp == CACHE.mhp then
+      emoji = GLOBALS.EMOJI.HP_100
+    elseif CACHE.hp > (CACHE.mhp * 0.90) then
+      emoji = GLOBALS.EMOJI.HP_90
+    elseif CACHE.hp > (CACHE.mhp * 0.80) then
+      emoji = GLOBALS.EMOJI.HP_80
+    elseif CACHE.hp > (CACHE.mhp * 0.70) then
+      emoji = GLOBALS.EMOJI.HP_70
+    elseif CACHE.hp > (CACHE.mhp * 0.60) then
+      emoji = GLOBALS.EMOJI.HP_60
+    elseif CACHE.hp > (CACHE.mhp * 0.50) then
+      emoji = GLOBALS.EMOJI.HP_50
+    elseif CACHE.hp > (CACHE.mhp * 0.40) then
+      emoji = GLOBALS.EMOJI.HP_40
+    elseif CACHE.hp > (CACHE.mhp * 0.30) then
+      emoji = GLOBALS.EMOJI.HP_30
+    elseif CACHE.hp > (CACHE.mhp * 0.20) then
+      emoji = GLOBALS.EMOJI.HP_20
+    elseif CACHE.hp > (CACHE.mhp * 0.10) then
+      emoji = GLOBALS.EMOJI.HP_10
     else
-      emoji = GLOBALS.EMOJI.HP_MAX
+      emoji = GLOBALS.EMOJI.HP_0
     end
     crawl.mpr(string.format("\n%s %s %s", emoji, message, emoji))
   end

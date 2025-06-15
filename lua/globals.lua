@@ -6,12 +6,6 @@ GLOBALS = {}
 GLOBALS.EMOJI = {}
 
 if CONFIG.emojis then
-  GLOBALS.EMOJI.HP_MAX = "❤️"
-  GLOBALS.EMOJI.HP_HIGH = "💔"
-  GLOBALS.EMOJI.HP_MID = "🧡"
-  GLOBALS.EMOJI.HP_LOW = "💛"
-  GLOBALS.EMOJI.HP_CRIT = "🤍"
-
   GLOBALS.EMOJI.RARE_ITEM = "💎"
   GLOBALS.EMOJI.ORB = "🔮"
   GLOBALS.EMOJI.TALISMAN = "🧬"
@@ -38,19 +32,31 @@ if CONFIG.emojis then
   GLOBALS.EMOJI.REMIND_IDENTIFY = "🎁"
   GLOBALS.EMOJI.EXCLAMATION = "‼️"
 
+  GLOBALS.EMOJI.HP_100 = "❤️❤️❤️❤️❤️"
+  GLOBALS.EMOJI.HP_90  = "❤️❤️❤️❤️❤️‍🩹"
+  GLOBALS.EMOJI.HP_80  = "❤️❤️❤️❤️🤍"
+  GLOBALS.EMOJI.HP_70  = "❤️❤️❤️❤️‍🩹🤍"
+  GLOBALS.EMOJI.HP_60  = "❤️❤️❤️🤍🤍"
+  GLOBALS.EMOJI.HP_50  = "❤️❤️❤️‍🩹🤍🤍"
+  GLOBALS.EMOJI.HP_40  = "❤️❤️🤍🤍🤍"
+  GLOBALS.EMOJI.HP_30  = "❤️❤️‍🩹🤍🤍🤍"
+  GLOBALS.EMOJI.HP_20  = "❤️🤍🤍🤍🤍"
+  GLOBALS.EMOJI.HP_10  = "❤️‍🩹🤍🤍🤍🤍"
+  GLOBALS.EMOJI.HP_0   = "🤍🤍🤍🤍🤍"
+
 else
   -- Define non-emoji fallbacks
-  GLOBALS.EMOJI.HP_MAX = ":D"
-  GLOBALS.EMOJI.HP_HIGH = ":)"
-  GLOBALS.EMOJI.HP_MID = ":|"
-  GLOBALS.EMOJI.HP_LOW = ":("
-  GLOBALS.EMOJI.HP_CRIT = ":O"
-
-  GLOBALS.EMOJI.HP_MAX =  "<red><white>|</white>-----<white>|</white></red>"
-  GLOBALS.EMOJI.HP_HIGH = "<red><white>|</white>----<darkgrey>-</darkgrey><white>|</white></red>"
-  GLOBALS.EMOJI.HP_MID =  "<red><white>|</white>---<darkgrey>--</darkgrey><white>|</white></red>"
-  GLOBALS.EMOJI.HP_LOW =  "<red><white>|</white>--<darkgrey>---</darkgrey><white>|</white></red>"
-  GLOBALS.EMOJI.HP_CRIT = "<red><white>|</white>-<darkgrey>----</darkgrey><white>|</white></red>"
+  GLOBALS.EMOJI.HP_100 = "<w>|</w><lightred>-----</lightred><lightgrey></lightgrey><darkgrey></darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_90  = "<w>|</w><lightred>----</lightred><lightgrey>-</lightgrey><darkgrey></darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_80  = "<w>|</w><lightred>----</lightred><lightgrey></lightgrey><darkgrey>-</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_70  = "<w>|</w><lightred>---</lightred><lightgrey>-</lightgrey><darkgrey>-</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_60  = "<w>|</w><lightred>---</lightred><lightgrey></lightgrey><darkgrey>--</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_50  = "<w>|</w><lightred>--</lightred><lightgrey>-</lightgrey><darkgrey>--</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_40  = "<w>|</w><lightred>--</lightred><lightgrey></lightgrey><darkgrey>---</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_30  = "<w>|</w><lightred>-</lightred><lightgrey>-</lightgrey><darkgrey>---</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_20  = "<w>|</w><lightred>-</lightred><lightgrey></lightgrey><darkgrey>----</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_10  = "<w>|</w><lightred></lightred><lightgrey>-</lightgrey><darkgrey>----</darkgrey><w>|</w>"
+  GLOBALS.EMOJI.HP_0   = "<w>|</w><lightred></lightred><lightgrey></lightgrey><darkgrey>-----</darkgrey><w>|</w>"
 
   GLOBALS.EMOJI.REMIND_IDENTIFY = "<cyan>??</cyan>"
   GLOBALS.EMOJI.EXCLAMATION = "<lightred>!!</lightred>"
