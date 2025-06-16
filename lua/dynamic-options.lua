@@ -1,25 +1,29 @@
 ----- Set any options based on game state -----
 loadfile("lua/cache.lua")
 
+local EARLY_XL = 5
+local MID_XL = 10
+local LATE_XL = 15
+
 local dynopt_cur_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
-local warn_early_levels = false
-local warn_mid_levels = false
-local warn_late_levels = false
+local early_xl_alerts_on = false
+local mid_xl_alerts_on = false
+local late_xl_alerts_on = false
 
-local early_warnings = {
-} -- early_warnings (do not remove this comment)
+local early_alerts = {
+} -- early_alerts (do not remove this comment)
 
-local mid_warnings = {
+local mid_alerts = {
   "wielding.*of electrocution",
   "You.*re more poisoned"
-} -- mid_warnings (do not remove this comment)
+} -- mid_alerts (do not remove this comment)
 
-local late_warnings = {
+local late_alerts = {
   "(?<!You)(?<!yourself) speeds? up",
   "danger:goes berserk"
-} -- late_warnings (do not remove this comment)
+} -- late_alerts (do not remove this comment)
 
 
 local function set_dyn_fm(warnings, create)
@@ -85,28 +89,28 @@ end
 
 ---- xl-specific ----
 local function set_xl_options()
-  if not warn_early_levels and CACHE.xl <= 5 then
-    warn_early_levels = true
-    set_dyn_fm(early_warnings, true)
-  elseif warn_early_levels and CACHE.xl > 5 then
-    warn_early_levels = false
-    set_dyn_fm(early_warnings, false)
+  if not early_xl_alerts_on and CACHE.xl <= EARLY_XL then
+    early_xl_alerts_on = true
+    set_dyn_fm(early_alerts, true)
+  elseif early_xl_alerts_on and CACHE.xl > EARLY_XL then
+    early_xl_alerts_on = false
+    set_dyn_fm(early_alerts, false)
   end
 
-  if not warn_mid_levels and CACHE.xl <= 10 then
-    warn_mid_levels = true
-    set_dyn_fm(mid_warnings, true)
-  elseif warn_mid_levels and CACHE.xl > 10 then
-    warn_mid_levels = false
-    set_dyn_fm(mid_warnings, false)
+  if not mid_xl_alerts_on and CACHE.xl <= MID_XL then
+    mid_xl_alerts_on = true
+    set_dyn_fm(mid_alerts, true)
+  elseif mid_xl_alerts_on and CACHE.xl > MID_XL then
+    mid_xl_alerts_on = false
+    set_dyn_fm(mid_alerts, false)
   end
 
-  if not warn_late_levels and CACHE.xl <= 15 then
-    warn_late_levels = true
-    set_dyn_fm(late_warnings, true)
-  elseif not warn_late_levels and CACHE.xl > 15 then
-    warn_late_levels = false
-    set_dyn_fm(late_warnings, false)
+  if not late_xl_alerts_on and CACHE.xl <= LATE_XL then
+    late_xl_alerts_on = true
+    set_dyn_fm(late_alerts, true)
+  elseif not late_xl_alerts_on and CACHE.xl > LATE_XL then
+    late_xl_alerts_on = false
+    set_dyn_fm(late_alerts, false)
   end
 end
 
@@ -127,7 +131,7 @@ local function set_skill_options()
 
   -- If heavy armour and low armour skill, ignore spellcasting items
   if CACHE.race ~= "Mountain Dwarf" then
-    local arm = items.equipped_at("armour")
+    local arm = get_body_armour()
     local heavy_arm = arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then

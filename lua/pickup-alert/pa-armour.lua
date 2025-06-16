@@ -201,7 +201,7 @@ end
       -- Penalty == 0.75*encumb_change (or 0 if irrelevant)
 -- Adjusting the heuristic values up will mean fewer alerts, and down will alert more often.
 -- If you want a specific alert to occur more or less often, look for the line of code below with the alert text,
--- Then modify the values in the same line of code.
+-- then modify the values in the same line of code.
 local function alert_interesting_armour(it)
   if it.artefact then
     return pa_alert_item(it, "Artefact armour", EMOJI.ARTEFACT)
@@ -260,7 +260,7 @@ local function alert_interesting_armour(it)
       local ac_gain = get_armour_ac(it) - get_armour_ac(cur)
       local ev_lost = get_armour_ev(cur) - get_armour_ev(it)
       local encumb_penalty = 0
-      if you.skill("Spellcasting") + you.skill("Ranged Weapons") > 1 then
+      if CACHE.s_spellcasting + CACHE.s_ranged > 1 then
         encumb_penalty = (it.encumbrance - cur.encumbrance)*0.75
       end
       local total_loss = ev_lost + encumb_penalty
@@ -293,7 +293,6 @@ local function alert_interesting_armour(it)
       end
     end
   elseif is_shield(it) then
-    --if it.is_useless then return end
     local cur = items.equipped_at("shield")
     if not cur then return false end
     if it.branded and it.ego() ~= cur.ego() then

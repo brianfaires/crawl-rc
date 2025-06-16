@@ -4,7 +4,7 @@ loadfile("crawl-rc/lua/constants.lua")
 loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 
-local BIG_DAMAGE_MSG = "BIG DAMAGE!!"
+local BIG_DAMAGE_MSG = "BIG DAMAGE!"
 local MASSIVE_DAMAGE_MSG = "MASSIVE DAMAGE!!"
 crawl.setopt("flash_screen_message += " .. BIG_DAMAGE_MSG)
 crawl.setopt("force_more_message += " .. MASSIVE_DAMAGE_MSG)
@@ -130,7 +130,7 @@ local function simple_announce_damage(hp_lost, mp_lost)
       CACHE.mp / CACHE.mmp * 100,
       EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
     )
-    crawl.mpr(string.format("\n%s %s %s", hp_meter, message, mp_meter))
+    crawl.mpr(string.format("\n%s %s %s", mp_meter, message, hp_meter))
   end
 end
 

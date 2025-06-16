@@ -27,21 +27,21 @@ function pa_alert_item(it, alert_type, emoji)
     item_name = table.concat({item_name, " ", ac, ", ", ev})
   end
   local tokens = {}
-  tokens[1] = emoji and emoji or "<cyan>----"
-  tokens[#tokens+1] = " <magenta>" .. alert_type .. ": </magenta>"
-  tokens[#tokens+1] = "<yellow>" .. item_name .. " </yellow>"
-  tokens[#tokens+1] = emoji and emoji or "----</cyan>"
-  tokens[#tokens+1] = "<black>" .. PA_UNIQUE_TAG .. "</black>"
+  tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
+  tokens[#tokens+1] = with_color(COLORS.yellow, item_name .. " ")
+  tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  tokens[#tokens+1] = with_color(COLORS.black, PA_UNIQUE_TAG)
   crawl.mpr(table.concat(tokens))
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
-  insert_item_and_less_enchanted(pa_items_alerted, it)
+  add_item_and_lesser(pa_items_alerted, it)
   you.stop_activity()
   return true
 end
 
-
-local function dump_table(name, table)
+---- Debugging ----
+local function dump_persistent_table(name, table)
   local summary = ""
   summary = summary .. name .. ":\n"
   for _,item in ipairs(table) do
@@ -52,10 +52,10 @@ end
 
 local function dump_persistent_arrays()
   local summary = "---DEBUGGING ARRAYS---\n"
-  summary = summary .. dump_table("pa_items_picked", pa_items_picked)
-  summary = summary .. dump_table("pa_items_alerted", pa_items_alerted)
-  summary = summary .. dump_table("pa_all_level_alerts", pa_all_level_alerts)
-  summary = summary .. dump_table("pa_single_alert_items", pa_single_alert_items)
+  summary = summary .. dump_persistent_table("pa_items_picked", pa_items_picked)
+  summary = summary .. dump_persistent_table("pa_items_alerted", pa_items_alerted)
+  summary = summary .. dump_persistent_table("pa_all_level_alerts", pa_all_level_alerts)
+  summary = summary .. dump_persistent_table("pa_single_alert_items", pa_single_alert_items)
   
   crawl.mpr(summary)
   crawl.take_note(summary)
@@ -66,13 +66,13 @@ end
 function c_assign_invletter_item_alerts(it)
   if is_weapon(it) or is_armour(it) then
     if not util.contains(pa_items_picked, get_plussed_name(it)) then
-      insert_item_and_less_enchanted(pa_items_picked, it)
+      add_item_and_lesser(pa_items_picked, it)
       update_high_scores(it)
       remove_from_pa_single_alert_items(it)
     end
   end
 
-  remove_item_and_less_enchanted(pa_items_alerted, it)
+  remove_item_and_lesser(pa_items_alerted, it)
   util.remove(pa_all_level_alerts, get_plussed_name(it))
 end
 
@@ -85,7 +85,7 @@ function c_message_item_alerts(text, _)
       tokens[#tokens+1] = "\n  " .. v
     end
     if #tokens > 0 then
-      crawl.mpr("<magenta>Recent alerts:" .. table.concat(tokens) .. "</magenta>")
+      crawl.mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
     end
     pa_all_level_alerts = {}
   end
@@ -102,7 +102,7 @@ function ready_item_alerts()
 
   if not pause_pickup_alert_sys then
     generate_inv_weap_arrays()
-    update_high_scores(items.equipped_at("armour"))
+    update_high_scores(get_body_armour())
   else
     pause_pickup_alert_sys = false
   end

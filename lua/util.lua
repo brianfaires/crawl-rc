@@ -18,8 +18,7 @@ function cleanup_text(text, escape_chars)
       return text:gsub("\n", ""):gsub(SPECIAL_CHARS, "%%%1")
   end
 
-  -- Use a table to build the result instead of string concatenation
-  local result = {}
+  local tokens = {}
   local pos = 1
   local len = #text
 
@@ -27,28 +26,28 @@ function cleanup_text(text, escape_chars)
       local tag_start = text:find("<", pos)
       if not tag_start then
           -- No more tags, append remaining text
-          result[#result+1] = text:sub(pos)
+          tokens[#tokens+1] = text:sub(pos)
           break
       end
 
       -- Append text before tag
       if tag_start > pos then
-          result[#result+1] = text:sub(pos, tag_start - 1)
+          tokens[#tokens+1] = text:sub(pos, tag_start - 1)
       end
 
       -- Find end of tag
       local tag_end = text:find(">", tag_start)
       if not tag_end then
           -- Malformed tag, append remaining text
-          result[#result+1] = text:sub(pos)
+          tokens[#tokens+1] = text:sub(pos)
           break
       end
 
       pos = tag_end + 1
   end
 
-  -- Join all parts and handle newlines
-  local cleaned = table.concat(result):gsub("\n", "")
+  -- Join all parts and remove newlines
+  local cleaned = table.concat(tokens):gsub("\n", "")
 
   -- Handle escaping if needed
   if escape_chars then
@@ -104,8 +103,7 @@ function is_amulet(it)
 end
 
 function is_orb(it)
-  -- return it and it.name("base"):find("orb of ") -- TODO: check which is more efficient
-  return it and it.subtype() == "offhand" and it.class(true) ~= "armour"
+  return it and it.name("base"):find("orb of ")
 end
 
 function is_talisman(it)
@@ -113,7 +111,10 @@ function is_talisman(it)
 end
 
 function get_mut(mutation, include_temp)
-  return you.get_base_mutation_level(mutation, include_temp)
+  local perm = CACHE.mutations[mutation] or 0
+  if not include_temp then return perm end
+  local temp = CACHE.temp_mutations[mutation] or 0
+  return perm + temp
 end
 
 function have_shield()

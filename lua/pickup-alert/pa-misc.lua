@@ -44,11 +44,11 @@ function pa_alert_staff(it)
   local needRes = false
   local basename = it.name("base")
 
-  if basename == "staff of fire" then needRes = you.res_fire() == 0
-  elseif basename == "staff of cold" then needRes = you.res_cold() == 0
-  elseif basename == "staff of air" then needRes = you.res_shock() == 0
-  elseif basename == "staff of poison" then needRes = you.res_poison() == 0
-  elseif basename == "staff of death" then needRes = you.res_draining() == 0
+  if basename == "staff of fire" then needRes = CACHE.rF == 0
+  elseif basename == "staff of cold" then needRes = CACHE.rC == 0
+  elseif basename == "staff of air" then needRes = CACHE.rElec == 0
+  elseif basename == "staff of poison" then needRes = CACHE.rPois == 0
+  elseif basename == "staff of death" then needRes = CACHE.rN == 0
   end
 
   if not needRes then return false end

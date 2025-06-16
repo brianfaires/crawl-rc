@@ -135,6 +135,18 @@ all_undead_races = {
   "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- all_undead_races (do not remove this comment)
 
+all_little_races = {
+  "Spriggan",
+} -- all_little_races (do not remove this comment)
+
+all_small_races = {
+  "Kobold",
+} -- all_small_races (do not remove this comment)
+
+all_large_races = {
+  "Armataur", "Naga", "Oni", "Troll",
+} -- all_large_races (do not remove this comment)
+
 all_missiles = {
   " stone", "poisoned dart", "atropa", "curare", "datura",
   "boomerang", "javelin", "large rock", "throwing net",
@@ -218,8 +230,7 @@ function cleanup_text(text, escape_chars)
       return text:gsub("\n", ""):gsub(SPECIAL_CHARS, "%%%1")
   end
 
-  -- Use a table to build the result instead of string concatenation
-  local result = {}
+  local tokens = {}
   local pos = 1
   local len = #text
 
@@ -227,28 +238,28 @@ function cleanup_text(text, escape_chars)
       local tag_start = text:find("<", pos)
       if not tag_start then
           -- No more tags, append remaining text
-          result[#result+1] = text:sub(pos)
+          tokens[#tokens+1] = text:sub(pos)
           break
       end
 
       -- Append text before tag
       if tag_start > pos then
-          result[#result+1] = text:sub(pos, tag_start - 1)
+          tokens[#tokens+1] = text:sub(pos, tag_start - 1)
       end
 
       -- Find end of tag
       local tag_end = text:find(">", tag_start)
       if not tag_end then
           -- Malformed tag, append remaining text
-          result[#result+1] = text:sub(pos)
+          tokens[#tokens+1] = text:sub(pos)
           break
       end
 
       pos = tag_end + 1
   end
 
-  -- Join all parts and handle newlines
-  local cleaned = table.concat(result):gsub("\n", "")
+  -- Join all parts and remove newlines
+  local cleaned = table.concat(tokens):gsub("\n", "")
 
   -- Handle escaping if needed
   if escape_chars then
@@ -304,8 +315,7 @@ function is_amulet(it)
 end
 
 function is_orb(it)
-  -- return it and it.name("base"):find("orb of ") -- TODO: check which is more efficient
-  return it and it.subtype() == "offhand" and it.class(true) ~= "armour"
+  return it and it.name("base"):find("orb of ")
 end
 
 function is_talisman(it)
@@ -313,7 +323,10 @@ function is_talisman(it)
 end
 
 function get_mut(mutation, include_temp)
-  return you.get_base_mutation_level(mutation, include_temp)
+  local perm = CACHE.mutations[mutation] or 0
+  if not include_temp then return perm end
+  local temp = CACHE.temp_mutations[mutation] or 0
+  return perm + temp
 end
 
 function have_shield()
@@ -456,14 +469,15 @@ if loaded_cache then return end
 loaded_cache = true
 
 CACHE = {}
+CACHE.mutations = {}
+CACHE.temp_mutations = {}
 
 -- Once per game
 CACHE.class = you.class()
 CACHE.race = you.race()
-if CACHE.race == "Spriggan" then CACHE.size_penalty = SIZE_PENALTY.LITTLE
-elseif CACHE.race == "Kobold" then CACHE.size_penalty = SIZE_PENALTY.SMALL
-elseif CACHE.race == "Armataur" or CACHE.race == "Naga" or
-    CACHE.race == "Oni" or CACHE.race == "Troll" then CACHE.size_penalty = SIZE_PENALTY.LARGE
+if util.contains(all_little_races, CACHE.race) then CACHE.size_penalty = SIZE_PENALTY.LITTLE
+elseif util.contains(all_small_races, CACHE.race) then CACHE.size_penalty = SIZE_PENALTY.SMALL
+elseif util.contains(all_large_races, CACHE.race) then CACHE.size_penalty = SIZE_PENALTY.LARGE
 else CACHE.size_penalty = SIZE_PENALTY.NORMAL
 end
 CACHE.undead =  util.contains(all_undead_races, CACHE.race)
@@ -489,6 +503,7 @@ function ready_CACHE()
   CACHE.s_dodging = you.skill("Dodging")
   CACHE.s_fighting = you.skill("Fighting")
   CACHE.s_spellcasting = you.skill("Spellcasting")
+  CACHE.s_ranged = you.skill("Ranged Weapons")
 
   CACHE.rMut = you.res_mutation()
   CACHE.rPois = you.res_poison()
@@ -498,7 +513,16 @@ function ready_CACHE()
   CACHE.rC = you.res_cold()
   CACHE.rN = you.res_draining()
 
+  CACHE.mutations = {}
+  for _,v in ipairs(crawl.split(you.mutation_overview(), ",")) do
+    local key = v:sub(1, -3)
+    local value = tonumber(v:sub(-2))
+    CACHE.mutations[key] = value
+  end
+
+  CACHE.temp_mutations = {} -- TODO: Requires a PR afaict
 end
+
 
 }
 ############################### End lua/cache.lua ###############################
@@ -3726,7 +3750,7 @@ end
 {
 ----- Initially from https://github.com/magus/dcss -----
 
-local BIG_DAMAGE_MSG = "BIG DAMAGE!!"
+local BIG_DAMAGE_MSG = "BIG DAMAGE!"
 local MASSIVE_DAMAGE_MSG = "MASSIVE DAMAGE!!"
 crawl.setopt("flash_screen_message += " .. BIG_DAMAGE_MSG)
 crawl.setopt("force_more_message += " .. MASSIVE_DAMAGE_MSG)
@@ -3852,7 +3876,7 @@ local function simple_announce_damage(hp_lost, mp_lost)
       CACHE.mp / CACHE.mmp * 100,
       EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
     )
-    crawl.mpr(string.format("\n%s %s %s", hp_meter, message, mp_meter))
+    crawl.mpr(string.format("\n%s %s %s", mp_meter, message, hp_meter))
   end
 end
 
@@ -4088,25 +4112,29 @@ end
 {
 ----- Set any options based on game state -----
 
+local EARLY_XL = 5
+local MID_XL = 10
+local LATE_XL = 15
+
 local dynopt_cur_god = "No God"
 local ignoring_spellcasting = false
 local ignoring_spellbooks = false
-local warn_early_levels = false
-local warn_mid_levels = false
-local warn_late_levels = false
+local early_xl_alerts_on = false
+local mid_xl_alerts_on = false
+local late_xl_alerts_on = false
 
-local early_warnings = {
-} -- early_warnings (do not remove this comment)
+local early_alerts = {
+} -- early_alerts (do not remove this comment)
 
-local mid_warnings = {
+local mid_alerts = {
   "wielding.*of electrocution",
   "You.*re more poisoned"
-} -- mid_warnings (do not remove this comment)
+} -- mid_alerts (do not remove this comment)
 
-local late_warnings = {
+local late_alerts = {
   "(?<!You)(?<!yourself) speeds? up",
   "danger:goes berserk"
-} -- late_warnings (do not remove this comment)
+} -- late_alerts (do not remove this comment)
 
 
 local function set_dyn_fm(warnings, create)
@@ -4172,28 +4200,28 @@ end
 
 ---- xl-specific ----
 local function set_xl_options()
-  if not warn_early_levels and CACHE.xl <= 5 then
-    warn_early_levels = true
-    set_dyn_fm(early_warnings, true)
-  elseif warn_early_levels and CACHE.xl > 5 then
-    warn_early_levels = false
-    set_dyn_fm(early_warnings, false)
+  if not early_xl_alerts_on and CACHE.xl <= EARLY_XL then
+    early_xl_alerts_on = true
+    set_dyn_fm(early_alerts, true)
+  elseif early_xl_alerts_on and CACHE.xl > EARLY_XL then
+    early_xl_alerts_on = false
+    set_dyn_fm(early_alerts, false)
   end
 
-  if not warn_mid_levels and CACHE.xl <= 10 then
-    warn_mid_levels = true
-    set_dyn_fm(mid_warnings, true)
-  elseif warn_mid_levels and CACHE.xl > 10 then
-    warn_mid_levels = false
-    set_dyn_fm(mid_warnings, false)
+  if not mid_xl_alerts_on and CACHE.xl <= MID_XL then
+    mid_xl_alerts_on = true
+    set_dyn_fm(mid_alerts, true)
+  elseif mid_xl_alerts_on and CACHE.xl > MID_XL then
+    mid_xl_alerts_on = false
+    set_dyn_fm(mid_alerts, false)
   end
 
-  if not warn_late_levels and CACHE.xl <= 15 then
-    warn_late_levels = true
-    set_dyn_fm(late_warnings, true)
-  elseif not warn_late_levels and CACHE.xl > 15 then
-    warn_late_levels = false
-    set_dyn_fm(late_warnings, false)
+  if not late_xl_alerts_on and CACHE.xl <= LATE_XL then
+    late_xl_alerts_on = true
+    set_dyn_fm(late_alerts, true)
+  elseif not late_xl_alerts_on and CACHE.xl > LATE_XL then
+    late_xl_alerts_on = false
+    set_dyn_fm(late_alerts, false)
   end
 end
 
@@ -4214,7 +4242,7 @@ local function set_skill_options()
 
   -- If heavy armour and low armour skill, ignore spellcasting items
   if CACHE.race ~= "Mountain Dwarf" then
-    local arm = items.equipped_at("armour")
+    local arm = get_body_armour()
     local heavy_arm = arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
@@ -4257,7 +4285,7 @@ create_persistent_data("dropped_item_exclusions", "")
 
 -- Init autopickup missiles
 local started_with_ranged = false
-if you.skill("Ranged Weapons") > 2 then
+if CACHE.s_ranged > 2 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     if inv.is_ranged then
       started_with_ranged = true
@@ -4894,7 +4922,7 @@ end
 local function inscribe_weapon_stats(it)
   local new_inscr = get_weapon_info_string(it)
 
-  local idx = it.inscription:find("DPS:")
+  local idx = it.inscription:find("DPS=")
   if idx then
     if idx + #new_inscr <= #it.inscription then
       new_inscr = new_inscr .. it.inscription:sub(idx + #new_inscr, #it.inscription)
@@ -4943,7 +4971,7 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
-      crawl.mpr("<cyan>" .. REMOVE_FAITH_MSG .. "</cyan>")
+      crawl.mpr(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
       alerted_max_piety = 1
     end
   end
@@ -4962,7 +4990,7 @@ local function alert_low_hp()
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     crawl.mpr(table.concat({
-      EMOJI.EXCLAMATION, "<red> ", LOW_HP_MSG," </red>", EMOJI.EXCLAMATION
+      EMOJI.EXCLAMATION, " ", with_color(COLORS.red, LOW_HP_MSG), " ", EMOJI.EXCLAMATION
     }))
   end
 end
@@ -5018,7 +5046,7 @@ local function remind_unidentified_items()
         if inv_id and inv_id.name("qual"):find("scroll of identify") then
           crawl.mpr(
             EMOJI.REMIND_IDENTIFY ..
-            " <magenta> You have something to identify. </magenta>" ..
+            with_color(COLORS.magenta, " You have something to identify. ") ..
             EMOJI.REMIND_IDENTIFY
           )
           break
@@ -5272,7 +5300,7 @@ local function get_priority_ab(it)
   if is_staff(it) then return 3 end
   if is_weapon(it) then
     if it.is_ranged then
-      if you.skill("Ranged Weapons") >= 4 then return 2 end
+      if CACHE.s_ranged >= 4 then return 2 end
       return 5
     end
 
@@ -5415,7 +5443,6 @@ function get_ego(it)
   return it.ego()
 end
 
-
 function get_plussed_name(it)
   local name = it.name("qual")
   if is_talisman(it) then return name end
@@ -5426,20 +5453,20 @@ end
 
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
-  -- dcss v0.33
+  -- dcss v0.33.1
   local pen = encumb - 2 * get_mut("sturdy frame", true)
   if pen > 0 then return pen end
   return 0
 end
 
 function get_adjusted_armour_pen(encumb, str)
-  -- dcss v0.33
+  -- dcss v0.33.1
   local base_pen = get_unadjusted_armour_pen(encumb)
   return 2 * base_pen * base_pen * (45 - CACHE.s_armour) / 45 / (5 * (str + 3))
 end
 
 function get_adjusted_dodge_bonus(encumb, str, dex)
-  -- dcss v0.33
+  -- dcss v0.33.1
   local size_factor = -2 * CACHE.size_penalty
   local dodge_bonus = 8*(10 + CACHE.s_dodging * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
@@ -5452,7 +5479,7 @@ function get_adjusted_dodge_bonus(encumb, str, dex)
 end
 
 function get_armour_ac(it)
-  -- dcss v0.33
+  -- dcss v0.33.1
   local it_plus = it.plus or 0
 
   if it.artefact and it.is_identified then
@@ -5473,7 +5500,7 @@ function get_armour_ac(it)
 end
 
 function get_armour_ev(it)
-  -- dcss v0.33
+  -- dcss v0.33.1
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
   -- Factors in stat changes from this armour and removing current one
   local str = CACHE.str
@@ -5483,7 +5510,7 @@ function get_armour_ev(it)
   local art_ev = 0
 
   -- Adjust str/dex/EV for artefact stat changes
-  local worn = items.equipped_at("armour")
+  local worn = get_body_armour()
   if worn and worn.artefact then
     if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
     if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
@@ -5504,14 +5531,14 @@ function get_armour_ev(it)
 end
 
 function get_shield_penalty(sh)
-  -- dcss v0.33
+  -- dcss v0.33.1
   return 2 * sh.encumbrance * sh.encumbrance
         * (27 - CACHE.s_shields) / 27
         / (25 + 5 * CACHE.str)
 end
 
 function get_shield_sh(it)
-  -- dcss v0.33
+  -- dcss v0.33.1
   local dex = CACHE.dex
   if it.artefact and it.is_identified then
     local art_dex = it.artprops["Dex"]
@@ -5559,8 +5586,8 @@ function get_weap_delay(it, ignore_brands)
   if sh then delay = delay + get_shield_penalty(sh) end
 
   if it.is_ranged then
-    local body = items.equipped_at("armour")
-    if body then
+    local worn = get_body_armour()
+    if worn then
       local str = CACHE.str
       if it.artefact then
         if it.artprops["Str"] then str = str + it.artprops["Str"] end
@@ -5570,7 +5597,7 @@ function get_weap_delay(it, ignore_brands)
         if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
       end
 
-      delay = delay + get_adjusted_armour_pen(body.encumbrance, str)
+      delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
     end
   end
 
@@ -5638,7 +5665,7 @@ function get_slay_bonuses()
 end
 
 function get_staff_bonus_dmg(it, no_brand_dmg)
-  -- dcss v0.33
+  -- dcss v0.33.1
   if no_brand_dmg then
     local basename = it.name("base")
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
@@ -5808,11 +5835,10 @@ function get_weapon_info_string(it)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+" .. acc end
 
-  --This would be awesome if it didn't ruin the main UI
-  --dps_str = "DPS=<white>" .. dps_str .. "</white> "
-  --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<white>" .. acc .. "</white>"
-  dps_str = "DPS=" .. dps_str .. " "
-  return dps_str .. "(" .. dmg_str .. "/" .. delay_str .. "), Acc" .. acc
+  --This would be awesome if it worked for all UIs
+  --dps_str = "DPS=<w>" .. dps_str .. "</w> "
+  --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
+  return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
 end
 
 
@@ -5844,14 +5870,14 @@ create_persistent_data("pa_single_alert_items", CONFIG.one_time_alerts)
 create_persistent_data("pa_all_level_alerts", {})
 create_persistent_data("pa_items_picked", {})
 create_persistent_data("pa_items_alerted", {})
-create_persistent_data("alerted_first_ranged_two_handed", 0)
-create_persistent_data("alerted_first_ranged_one_handed", 0)
+create_persistent_data("alerted_first_ranged_2h", 0)
+create_persistent_data("alerted_first_ranged_1h", 0)
 create_persistent_data("alerted_first_polearm", 0)
 create_persistent_data("armour_high_score", 0)
 create_persistent_data("weapon_high_score", 0)
 create_persistent_data("unbranded_high_score", 0)
 create_persistent_data("polearm_high_score", 0)
-create_persistent_data("polearm_onehand_high_score", 0)
+create_persistent_data("polearm_1h_high_score", 0)
 
 
 ---- Accessors into persistent data ----
@@ -5864,21 +5890,21 @@ function get_rare_item_index(it)
 end
 
 function remove_from_pa_single_alert_items(it)
-  local alerted = false
+  local found = false
   local idx
   repeat
     idx = get_rare_item_index(it)
     if idx ~= -1 then
       util.remove(pa_single_alert_items, pa_single_alert_items[idx])
-      alerted = true
+      found = true
     end
   until idx == -1
 
-  return alerted
+  return found
 end
 
 --- Multi store/remove data ---
-local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
+local function add_remove_item_and_lesser(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
   local name = get_plussed_name(it)
@@ -5908,16 +5934,17 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   end
 end
 
-function insert_item_and_less_enchanted(table_ref, it)
-  add_remove_item_and_less_enchanted(table_ref, it, false)
+function add_item_and_lesser(table_ref, it)
+  add_remove_item_and_lesser(table_ref, it, false)
 end
 
-function remove_item_and_less_enchanted(table_ref, it)
-  add_remove_item_and_less_enchanted(table_ref, it, true)
+function remove_item_and_lesser(table_ref, it)
+  add_remove_item_and_lesser(table_ref, it, true)
 end
 
 
 --- Set all single high scores ---
+-- Returns a string if item is a new high score, else nil
 function update_high_scores(it)
   local ret_val = nil
 
@@ -5947,8 +5974,8 @@ function update_high_scores(it)
         if not have_shield() and not ret_val then ret_val = "Good polearm" end
       end
 
-      if get_hands(it) == 1 and score > polearm_onehand_high_score then
-        polearm_onehand_high_score = score
+      if get_hands(it) == 1 and score > polearm_1h_high_score then
+        polearm_1h_high_score = score
         if not ret_val then ret_val = "Good polearm" end
       end
     end
@@ -5967,7 +5994,7 @@ if you.turns() == 0 then
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
 
     if is_weapon(inv) or is_armour(inv) or is_talisman(inv) or is_orb(inv) then
-      insert_item_and_less_enchanted(pa_items_picked, inv)
+      add_item_and_lesser(pa_items_picked, inv)
     end
 
     if is_weapon(inv) then
@@ -5975,9 +6002,9 @@ if you.turns() == 0 then
         alerted_first_polearm = 1
       elseif inv.is_ranged then
         if get_hands(inv) == 2 then
-          alerted_first_ranged_two_handed = 1
+          alerted_first_ranged_2h = 1
         else
-          alerted_first_ranged_one_handed = 1
+          alerted_first_ranged_1h = 1
         end
       end
     end
@@ -6013,21 +6040,21 @@ function pa_alert_item(it, alert_type, emoji)
     item_name = table.concat({item_name, " ", ac, ", ", ev})
   end
   local tokens = {}
-  tokens[1] = emoji and emoji or "<cyan>----"
-  tokens[#tokens+1] = " <magenta>" .. alert_type .. ": </magenta>"
-  tokens[#tokens+1] = "<yellow>" .. item_name .. " </yellow>"
-  tokens[#tokens+1] = emoji and emoji or "----</cyan>"
-  tokens[#tokens+1] = "<black>" .. PA_UNIQUE_TAG .. "</black>"
+  tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
+  tokens[#tokens+1] = with_color(COLORS.yellow, item_name .. " ")
+  tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  tokens[#tokens+1] = with_color(COLORS.black, PA_UNIQUE_TAG)
   crawl.mpr(table.concat(tokens))
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
-  insert_item_and_less_enchanted(pa_items_alerted, it)
+  add_item_and_lesser(pa_items_alerted, it)
   you.stop_activity()
   return true
 end
 
-
-local function dump_table(name, table)
+---- Debugging ----
+local function dump_persistent_table(name, table)
   local summary = ""
   summary = summary .. name .. ":\n"
   for _,item in ipairs(table) do
@@ -6038,10 +6065,10 @@ end
 
 local function dump_persistent_arrays()
   local summary = "---DEBUGGING ARRAYS---\n"
-  summary = summary .. dump_table("pa_items_picked", pa_items_picked)
-  summary = summary .. dump_table("pa_items_alerted", pa_items_alerted)
-  summary = summary .. dump_table("pa_all_level_alerts", pa_all_level_alerts)
-  summary = summary .. dump_table("pa_single_alert_items", pa_single_alert_items)
+  summary = summary .. dump_persistent_table("pa_items_picked", pa_items_picked)
+  summary = summary .. dump_persistent_table("pa_items_alerted", pa_items_alerted)
+  summary = summary .. dump_persistent_table("pa_all_level_alerts", pa_all_level_alerts)
+  summary = summary .. dump_persistent_table("pa_single_alert_items", pa_single_alert_items)
   
   crawl.mpr(summary)
   crawl.take_note(summary)
@@ -6052,13 +6079,13 @@ end
 function c_assign_invletter_item_alerts(it)
   if is_weapon(it) or is_armour(it) then
     if not util.contains(pa_items_picked, get_plussed_name(it)) then
-      insert_item_and_less_enchanted(pa_items_picked, it)
+      add_item_and_lesser(pa_items_picked, it)
       update_high_scores(it)
       remove_from_pa_single_alert_items(it)
     end
   end
 
-  remove_item_and_less_enchanted(pa_items_alerted, it)
+  remove_item_and_lesser(pa_items_alerted, it)
   util.remove(pa_all_level_alerts, get_plussed_name(it))
 end
 
@@ -6071,7 +6098,7 @@ function c_message_item_alerts(text, _)
       tokens[#tokens+1] = "\n  " .. v
     end
     if #tokens > 0 then
-      crawl.mpr("<magenta>Recent alerts:" .. table.concat(tokens) .. "</magenta>")
+      crawl.mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
     end
     pa_all_level_alerts = {}
   end
@@ -6088,7 +6115,7 @@ function ready_item_alerts()
 
   if not pause_pickup_alert_sys then
     generate_inv_weap_arrays()
-    update_high_scores(items.equipped_at("armour"))
+    update_high_scores(get_body_armour())
   else
     pause_pickup_alert_sys = false
   end
@@ -6336,7 +6363,7 @@ end
       -- Penalty == 0.75*encumb_change (or 0 if irrelevant)
 -- Adjusting the heuristic values up will mean fewer alerts, and down will alert more often.
 -- If you want a specific alert to occur more or less often, look for the line of code below with the alert text,
--- Then modify the values in the same line of code.
+-- then modify the values in the same line of code.
 local function alert_interesting_armour(it)
   if it.artefact then
     return pa_alert_item(it, "Artefact armour", EMOJI.ARTEFACT)
@@ -6395,7 +6422,7 @@ local function alert_interesting_armour(it)
       local ac_gain = get_armour_ac(it) - get_armour_ac(cur)
       local ev_lost = get_armour_ev(cur) - get_armour_ev(it)
       local encumb_penalty = 0
-      if you.skill("Spellcasting") + you.skill("Ranged Weapons") > 1 then
+      if CACHE.s_spellcasting + CACHE.s_ranged > 1 then
         encumb_penalty = (it.encumbrance - cur.encumbrance)*0.75
       end
       local total_loss = ev_lost + encumb_penalty
@@ -6428,7 +6455,6 @@ local function alert_interesting_armour(it)
       end
     end
   elseif is_shield(it) then
-    --if it.is_useless then return end
     local cur = items.equipped_at("shield")
     if not cur then return false end
     if it.branded and it.ego() ~= cur.ego() then
@@ -6501,11 +6527,11 @@ function pa_alert_staff(it)
   local needRes = false
   local basename = it.name("base")
 
-  if basename == "staff of fire" then needRes = you.res_fire() == 0
-  elseif basename == "staff of cold" then needRes = you.res_cold() == 0
-  elseif basename == "staff of air" then needRes = you.res_shock() == 0
-  elseif basename == "staff of poison" then needRes = you.res_poison() == 0
-  elseif basename == "staff of death" then needRes = you.res_draining() == 0
+  if basename == "staff of fire" then needRes = CACHE.rF == 0
+  elseif basename == "staff of cold" then needRes = CACHE.rC == 0
+  elseif basename == "staff of air" then needRes = CACHE.rElec == 0
+  elseif basename == "staff of poison" then needRes = CACHE.rPois == 0
+  elseif basename == "staff of death" then needRes = CACHE.rN == 0
   end
 
   if not needRes then return false end
@@ -6559,7 +6585,6 @@ local function make_weapon_struct(it)
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = get_skill(it.weap_skill)
 
-  --weap_data.it = it
   return weap_data
 end
 
@@ -6605,6 +6630,8 @@ local function enforce_dmg_floor(target, floor)
 end
 
 function generate_inv_weap_arrays()
+  -- Pulls inventory weapon data, so we don't do it several times per turn
+  -- Could be optimized further with add/drop events
   inv_weap_data = {}
   for k, _ in pairs(inv_max_dmg) do
     inv_max_dmg[k] = 0
@@ -6658,7 +6685,7 @@ local function alert_early_weapons(it)
   if CACHE.xl <= 14 then
     if it.is_identified and it.is_ranged then
       if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
-        if get_hands(it) == 1 or not have_shield() or you.skill("shield") <= 8 then
+        if get_hands(it) == 1 or not have_shield() or CACHE.s_shields <= 8 then
           return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
         end
       end
@@ -6692,13 +6719,13 @@ local function alert_first_ranged(it)
   if not it.is_ranged then return false end
 
   if get_hands(it) == 2 then
-    if alerted_first_ranged_two_handed == 0 then return false end
+    if alerted_first_ranged_2h == 0 then return false end
     if have_shield() then return false end
-    alerted_first_ranged_two_handed = 1
+    alerted_first_ranged_2h = 1
     return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
   else
-    if alerted_first_ranged_one_handed ~= 0 then return false end
-    alerted_first_ranged_one_handed = 1
+    if alerted_first_ranged_1h ~= 0 then return false end
+    alerted_first_ranged_1h = 1
     return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
   end
 end
@@ -6709,6 +6736,7 @@ local function alert_first_polearm(it)
   if it.weap_skill ~= "Polearms" then return false end
   if get_hands(it) == 2 and have_shield() then return false end
   alerted_first_polearm = 1
+  if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
   return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
 end
 

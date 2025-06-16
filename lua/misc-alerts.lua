@@ -13,7 +13,7 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
-      crawl.mpr("<cyan>" .. REMOVE_FAITH_MSG .. "</cyan>")
+      crawl.mpr(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
       alerted_max_piety = 1
     end
   end
@@ -32,7 +32,7 @@ local function alert_low_hp()
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     crawl.mpr(table.concat({
-      EMOJI.EXCLAMATION, "<red> ", LOW_HP_MSG," </red>", EMOJI.EXCLAMATION
+      EMOJI.EXCLAMATION, " ", with_color(COLORS.red, LOW_HP_MSG), " ", EMOJI.EXCLAMATION
     }))
   end
 end

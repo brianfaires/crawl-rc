@@ -15,6 +15,18 @@ all_undead_races = {
   "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- all_undead_races (do not remove this comment)
 
+all_little_races = {
+  "Spriggan",
+} -- all_little_races (do not remove this comment)
+
+all_small_races = {
+  "Kobold",
+} -- all_small_races (do not remove this comment)
+
+all_large_races = {
+  "Armataur", "Naga", "Oni", "Troll",
+} -- all_large_races (do not remove this comment)
+
 all_missiles = {
   " stone", "poisoned dart", "atropa", "curare", "datura",
   "boomerang", "javelin", "large rock", "throwing net",

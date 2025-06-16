@@ -13,7 +13,7 @@ local function remind_unidentified_items()
         if inv_id and inv_id.name("qual"):find("scroll of identify") then
           crawl.mpr(
             EMOJI.REMIND_IDENTIFY ..
-            " <magenta> You have something to identify. </magenta>" ..
+            with_color(COLORS.magenta, " You have something to identify. ") ..
             EMOJI.REMIND_IDENTIFY
           )
           break

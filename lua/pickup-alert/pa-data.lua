@@ -7,14 +7,14 @@ create_persistent_data("pa_single_alert_items", CONFIG.one_time_alerts)
 create_persistent_data("pa_all_level_alerts", {})
 create_persistent_data("pa_items_picked", {})
 create_persistent_data("pa_items_alerted", {})
-create_persistent_data("alerted_first_ranged_two_handed", 0)
-create_persistent_data("alerted_first_ranged_one_handed", 0)
+create_persistent_data("alerted_first_ranged_2h", 0)
+create_persistent_data("alerted_first_ranged_1h", 0)
 create_persistent_data("alerted_first_polearm", 0)
 create_persistent_data("armour_high_score", 0)
 create_persistent_data("weapon_high_score", 0)
 create_persistent_data("unbranded_high_score", 0)
 create_persistent_data("polearm_high_score", 0)
-create_persistent_data("polearm_onehand_high_score", 0)
+create_persistent_data("polearm_1h_high_score", 0)
 
 
 ---- Accessors into persistent data ----
@@ -27,21 +27,21 @@ function get_rare_item_index(it)
 end
 
 function remove_from_pa_single_alert_items(it)
-  local alerted = false
+  local found = false
   local idx
   repeat
     idx = get_rare_item_index(it)
     if idx ~= -1 then
       util.remove(pa_single_alert_items, pa_single_alert_items[idx])
-      alerted = true
+      found = true
     end
   until idx == -1
 
-  return alerted
+  return found
 end
 
 --- Multi store/remove data ---
-local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
+local function add_remove_item_and_lesser(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
   local name = get_plussed_name(it)
@@ -71,16 +71,17 @@ local function add_remove_item_and_less_enchanted(table_ref, it, remove_item)
   end
 end
 
-function insert_item_and_less_enchanted(table_ref, it)
-  add_remove_item_and_less_enchanted(table_ref, it, false)
+function add_item_and_lesser(table_ref, it)
+  add_remove_item_and_lesser(table_ref, it, false)
 end
 
-function remove_item_and_less_enchanted(table_ref, it)
-  add_remove_item_and_less_enchanted(table_ref, it, true)
+function remove_item_and_lesser(table_ref, it)
+  add_remove_item_and_lesser(table_ref, it, true)
 end
 
 
 --- Set all single high scores ---
+-- Returns a string if item is a new high score, else nil
 function update_high_scores(it)
   local ret_val = nil
 
@@ -110,8 +111,8 @@ function update_high_scores(it)
         if not have_shield() and not ret_val then ret_val = "Good polearm" end
       end
 
-      if get_hands(it) == 1 and score > polearm_onehand_high_score then
-        polearm_onehand_high_score = score
+      if get_hands(it) == 1 and score > polearm_1h_high_score then
+        polearm_1h_high_score = score
         if not ret_val then ret_val = "Good polearm" end
       end
     end
@@ -130,7 +131,7 @@ if you.turns() == 0 then
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
 
     if is_weapon(inv) or is_armour(inv) or is_talisman(inv) or is_orb(inv) then
-      insert_item_and_less_enchanted(pa_items_picked, inv)
+      add_item_and_lesser(pa_items_picked, inv)
     end
 
     if is_weapon(inv) then
@@ -138,9 +139,9 @@ if you.turns() == 0 then
         alerted_first_polearm = 1
       elseif inv.is_ranged then
         if get_hands(inv) == 2 then
-          alerted_first_ranged_two_handed = 1
+          alerted_first_ranged_2h = 1
         else
-          alerted_first_ranged_one_handed = 1
+          alerted_first_ranged_1h = 1
         end
       end
     end

@@ -24,7 +24,7 @@ local function get_priority_ab(it)
   if is_staff(it) then return 3 end
   if is_weapon(it) then
     if it.is_ranged then
-      if you.skill("Ranged Weapons") >= 4 then return 2 end
+      if CACHE.s_ranged >= 4 then return 2 end
       return 5
     end
 

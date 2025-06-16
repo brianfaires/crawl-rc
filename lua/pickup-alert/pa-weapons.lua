@@ -28,7 +28,6 @@ local function make_weapon_struct(it)
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = get_skill(it.weap_skill)
 
-  --weap_data.it = it
   return weap_data
 end
 
@@ -74,6 +73,8 @@ local function enforce_dmg_floor(target, floor)
 end
 
 function generate_inv_weap_arrays()
+  -- Pulls inventory weapon data, so we don't do it several times per turn
+  -- Could be optimized further with add/drop events
   inv_weap_data = {}
   for k, _ in pairs(inv_max_dmg) do
     inv_max_dmg[k] = 0
@@ -127,7 +128,7 @@ local function alert_early_weapons(it)
   if CACHE.xl <= 14 then
     if it.is_identified and it.is_ranged then
       if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
-        if get_hands(it) == 1 or not have_shield() or you.skill("shield") <= 8 then
+        if get_hands(it) == 1 or not have_shield() or CACHE.s_shields <= 8 then
           return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
         end
       end
@@ -161,13 +162,13 @@ local function alert_first_ranged(it)
   if not it.is_ranged then return false end
 
   if get_hands(it) == 2 then
-    if alerted_first_ranged_two_handed == 0 then return false end
+    if alerted_first_ranged_2h == 0 then return false end
     if have_shield() then return false end
-    alerted_first_ranged_two_handed = 1
+    alerted_first_ranged_2h = 1
     return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
   else
-    if alerted_first_ranged_one_handed ~= 0 then return false end
-    alerted_first_ranged_one_handed = 1
+    if alerted_first_ranged_1h ~= 0 then return false end
+    alerted_first_ranged_1h = 1
     return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
   end
 end
@@ -178,6 +179,7 @@ local function alert_first_polearm(it)
   if it.weap_skill ~= "Polearms" then return false end
   if get_hands(it) == 2 and have_shield() then return false end
   alerted_first_polearm = 1
+  if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
   return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
 end
 

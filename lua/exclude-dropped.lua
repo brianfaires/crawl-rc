@@ -10,7 +10,7 @@ create_persistent_data("dropped_item_exclusions", "")
 
 -- Init autopickup missiles
 local started_with_ranged = false
-if you.skill("Ranged Weapons") > 2 then
+if CACHE.s_ranged > 2 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     if inv.is_ranged then
       started_with_ranged = true
