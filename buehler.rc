@@ -45,8 +45,7 @@ CONFIG.pickup_weapons = true
 CONFIG.pickup_staves = true
 
 CONFIG.alert_system_enabled = true
-CONFIG.alert_force_more = false
-CONFIG.alert_flash_screen = true
+CONFIG.alert_force_more = true
 CONFIG.alert_armour = true
 CONFIG.alert_weapons = true
 CONFIG.alert_orbs = true
@@ -123,6 +122,7 @@ explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, jave
 if loaded_lua_constants_file then return end
 local loaded_lua_constants_file = true
 
+-- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed
 all_spellbooks = {
   "book of", "Necronomicon", "Grand Grimoire", "tome of obsoleteness", "Everburning Encyclopedia",
   "Ozocubu's Autobiography", "Maxwell's Memoranda", "Young Poisoner's Handbook", "Fen Folio",
@@ -6002,17 +6002,11 @@ local PA_UNIQUE_TAG = "beuhler-PA-tag"
 if CONFIG.alert_force_more then
   crawl.setopt("force_more_message += " .. PA_UNIQUE_TAG)
 end
-if CONFIG.alert_flash_screen then
-  -- This doesn't seem to work; maybee because it gets written during autopickup hook?
-  crawl.setopt("flash_screen_message += " .. PA_UNIQUE_TAG)
-end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_name = get_plussed_name(it)
   if util.contains(pa_items_picked, item_name) then return false end
   if util.contains(pa_items_alerted, item_name) then return false end
-
-  you.stop_activity()
 
   if is_weapon(it) or is_staff(it) then
     item_name = table.concat({item_name, " ", get_weapon_info_string(it)})
@@ -6030,6 +6024,7 @@ function pa_alert_item(it, alert_type, emoji)
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
   insert_item_and_less_enchanted(pa_items_alerted, it)
+  you.stop_activity()
   return true
 end
 

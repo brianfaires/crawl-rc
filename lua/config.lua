@@ -40,8 +40,7 @@ CONFIG.pickup_weapons = true
 CONFIG.pickup_staves = true
 
 CONFIG.alert_system_enabled = true
-CONFIG.alert_force_more = false
-CONFIG.alert_flash_screen = true
+CONFIG.alert_force_more = true
 CONFIG.alert_armour = true
 CONFIG.alert_weapons = true
 CONFIG.alert_orbs = true

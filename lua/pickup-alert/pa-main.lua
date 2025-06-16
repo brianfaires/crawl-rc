@@ -14,17 +14,11 @@ local PA_UNIQUE_TAG = "beuhler-PA-tag"
 if CONFIG.alert_force_more then
   crawl.setopt("force_more_message += " .. PA_UNIQUE_TAG)
 end
-if CONFIG.alert_flash_screen then
-  -- This doesn't seem to work; maybee because it gets written during autopickup hook?
-  crawl.setopt("flash_screen_message += " .. PA_UNIQUE_TAG)
-end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_name = get_plussed_name(it)
   if util.contains(pa_items_picked, item_name) then return false end
   if util.contains(pa_items_alerted, item_name) then return false end
-
-  you.stop_activity()
 
   if is_weapon(it) or is_staff(it) then
     item_name = table.concat({item_name, " ", get_weapon_info_string(it)})
@@ -42,6 +36,7 @@ function pa_alert_item(it, alert_type, emoji)
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
   insert_item_and_less_enchanted(pa_items_alerted, it)
+  you.stop_activity()
   return true
 end
 
