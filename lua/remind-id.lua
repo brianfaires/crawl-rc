@@ -1,5 +1,5 @@
 loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/globals.lua")
+loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 
 ---- Track if found ID yet ----
@@ -12,9 +12,9 @@ local function remind_unidentified_items()
       for inv_id in iter.invent_iterator:new(items.inventory()) do
         if inv_id and inv_id.name("qual"):find("scroll of identify") then
           crawl.mpr(
-            GLOBALS.EMOJI.REMIND_IDENTIFY ..
+            EMOJI.REMIND_IDENTIFY ..
             " <magenta> You have something to identify. </magenta>" ..
-            GLOBALS.EMOJI.REMIND_IDENTIFY
+            EMOJI.REMIND_IDENTIFY
           )
           break
         end

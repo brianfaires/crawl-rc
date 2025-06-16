@@ -39,7 +39,7 @@ explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, jave
 ####### Includes #######
 ### Shared files; do not disable
 lua_file = crawl-rc/lua/constants.lua
-lua_file = crawl-rc/lua/globals.lua
+lua_file = crawl-rc/lua/emojis.lua
 lua_file = crawl-rc/lua/util.lua
 lua_file = crawl-rc/lua/cache.lua
 

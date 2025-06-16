@@ -1,5 +1,5 @@
 if loaded_util_lua then return end
-local loaded_util_lua = true
+loaded_util_lua = true
 loadfile("crawl-rc/lua/constants.lua")
 
 ---- Text Formatting ----

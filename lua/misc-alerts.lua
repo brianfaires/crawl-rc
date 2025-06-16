@@ -1,7 +1,7 @@
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
 loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/globals.lua")
+loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 
 ------ Max piety w/ amulet of faith reminder ----
@@ -32,7 +32,7 @@ local function alert_low_hp()
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     crawl.mpr(table.concat({
-      GLOBALS.EMOJI.EXCLAMATION, "<red> ", LOW_HP_MSG," </red>", GLOBALS.EMOJI.EXCLAMATION
+      EMOJI.EXCLAMATION, "<red> ", LOW_HP_MSG," </red>", EMOJI.EXCLAMATION
     }))
   end
 end

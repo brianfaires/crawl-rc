@@ -1,6 +1,6 @@
 if loaded_pa_misc then return end
 loaded_pa_misc = true
-loadfile("crawl-rc/lua/globals.lua")
+loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
@@ -24,18 +24,18 @@ function pa_alert_rare_item(it)
 
   remove_from_pa_single_alert_items(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item", GLOBALS.EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM)
 end
 
 ---- Alert orbs ----
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  return pa_alert_item(it, "New orb", GLOBALS.EMOJI.ORB)
+  return pa_alert_item(it, "New orb", EMOJI.ORB)
 end
 
 ---- Alert talismans ----
 function pa_alert_talisman(it)
-  return pa_alert_item(it, "New talisman", GLOBALS.EMOJI.TALISMAN)
+  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN)
 end
 
 ---- Alert for needed resists ----
@@ -52,7 +52,7 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  return pa_alert_item(it, "Staff resistance", GLOBALS.EMOJI.STAFF_RESISTANCE)
+  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE)
 end
 
 

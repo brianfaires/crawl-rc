@@ -1,6 +1,6 @@
 -- Lists of things that may need to be updated as crawl changes
 if loaded_lua_constants_file then return end
-local loaded_lua_constants_file = true
+loaded_lua_constants_file = true
 
 -- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed
 all_spellbooks = {

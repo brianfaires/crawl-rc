@@ -1,6 +1,6 @@
 if loaded_pa_weapons then return end
 loaded_pa_weapons = true
-loadfile("crawl-rc/lua/globals.lua")
+loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
@@ -128,7 +128,7 @@ local function alert_early_weapons(it)
     if it.is_identified and it.is_ranged then
       if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
         if get_hands(it) == 1 or not have_shield() or you.skill("shield") <= 8 then
-          return pa_alert_item(it, "Ranged weapon", GLOBALS.EMOJI.RANGED)
+          return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
         end
       end
     end
@@ -149,7 +149,7 @@ local function alert_early_weapons(it)
         end
       end
 
-      return pa_alert_item(it, "Early weapon", GLOBALS.EMOJI.WEAPON)
+      return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
     end
   end
 
@@ -164,11 +164,11 @@ local function alert_first_ranged(it)
     if alerted_first_ranged_two_handed == 0 then return false end
     if have_shield() then return false end
     alerted_first_ranged_two_handed = 1
-    return pa_alert_item(it, "Ranged weapon (2-handed)", GLOBALS.EMOJI.RANGED)
+    return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
   else
     if alerted_first_ranged_one_handed ~= 0 then return false end
     alerted_first_ranged_one_handed = 1
-    return pa_alert_item(it, "Ranged weapon", GLOBALS.EMOJI.RANGED)
+    return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
   end
 end
 
@@ -178,7 +178,7 @@ local function alert_first_polearm(it)
   if it.weap_skill ~= "Polearms" then return false end
   if get_hands(it) == 2 and have_shield() then return false end
   alerted_first_polearm = 1
-  return pa_alert_item(it, "First polearm", GLOBALS.EMOJI.POLEARM)
+  return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
 end
 
 
@@ -269,16 +269,16 @@ end
 -- Check if weapon is worth alerting for, informed by a weapon currently in inventory
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
-    return pa_alert_item(it, "Artefact weapon", GLOBALS.EMOJI.ARTEFACT)
+    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
   if cur.subtype == it.subtype() then
     -- Exact weapon type match
     if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then
-      return pa_alert_item(it, "New ego", GLOBALS.EMOJI.EGO)
+      return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
     if get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
-      return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
+      return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
     end
   elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
     -- A usable weapon school
@@ -292,27 +292,27 @@ local function alert_interesting_weapon(it, cur)
       -- Item requires an extra hand
       if has_ego(it) and not cur.branded then
         if get_weap_dps(it) > 0.8*cur.dps then
-          return pa_alert_item(it, "2-handed weapon", GLOBALS.EMOJI.TWO_HANDED)
+          return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
         end
       end
 
       if not have_shield() then
         if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
           not util.contains(egos, it.ego()) then
-            return pa_alert_item(it, "New ego", GLOBALS.EMOJI.EGO)
+            return pa_alert_item(it, "New ego", EMOJI.EGO)
         end
         if not cur.branded and
           get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
-            return pa_alert_item(it, "2-handed weapon", GLOBALS.EMOJI.TWO_HANDED)
+            return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
         end
         if cur.branded and not has_ego(it) and
           get_weap_dps(it) > inv_max_dmg[get_weap_tag(it)] then
-            return pa_alert_item(it, "2-handed weapon", GLOBALS.EMOJI.TWO_HANDED)
+            return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
         end
       elseif CACHE.s_shields <= 4 then
         -- Not really training shields; may be interested in big upgrades
         if penalty*get_weap_dps(it) >= inv_max_dmg["melee_2"] then
-          return pa_alert_item(it, "2-handed weapon", GLOBALS.EMOJI.TWO_HANDED)
+          return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
         end
       end
     else
@@ -324,15 +324,15 @@ local function alert_interesting_weapon(it, cur)
 
         if not cur.branded then
           if dmg_delta_ratio >= -0.2 then
-            return pa_alert_item(it, "New ego", GLOBALS.EMOJI.EGO)
+            return pa_alert_item(it, "New ego", EMOJI.EGO)
           end
         elseif it.ego() == cur.ego then
           if dmg_delta_ratio >= 0 then
-            return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
+            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
           end
         elseif not util.contains(egos, it.ego()) then
           if dmg_delta_ratio >= -0.2 then
-            return pa_alert_item(it, "New ego", GLOBALS.EMOJI.EGO)
+            return pa_alert_item(it, "New ego", EMOJI.EGO)
           end
         end
       else
@@ -341,7 +341,7 @@ local function alert_interesting_weapon(it, cur)
         -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
         if cur.branded and cur.weap_skill == it.weap_skill then
           if get_weap_dps(it, true) > get_weap_dps(it, true) then
-            return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
+            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
           end
         else
           local dmg_delta, other_acc
@@ -354,11 +354,11 @@ local function alert_interesting_weapon(it, cur)
           end
 
           if dmg_delta > 0 then
-            return pa_alert_item(it, "Stronger weapon", GLOBALS.EMOJI.STRONGER)
+            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
           end
           local it_plus = it.plus or 0
           if dmg_delta == 0 and (it.accuracy+it_plus) > other_acc then
-            return pa_alert_item(it, "Higher accuracy", GLOBALS.EMOJI.ACCURACY)
+            return pa_alert_item(it, "Higher accuracy", EMOJI.ACCURACY)
           end
         end
       end

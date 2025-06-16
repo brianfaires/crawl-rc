@@ -1,7 +1,7 @@
 ----- Initially from https://github.com/magus/dcss -----
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/constants.lua")
-loadfile("crawl-rc/lua/globals.lua")
+loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 
 local BIG_DAMAGE_MSG = "BIG DAMAGE!!"
@@ -124,11 +124,11 @@ local function simple_announce_damage(hp_lost, mp_lost)
   if message ~= nil then
     local hp_meter = create_meter(
       CACHE.hp / CACHE.mhp * 100,
-      GLOBALS.EMOJI.HP_FULL_PIP, GLOBALS.EMOJI.HP_PART_PIP, GLOBALS.EMOJI.HP_EMPTY_PIP, GLOBALS.EMOJI.HP_BORDER
+      EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
     )
     local mp_meter = create_meter(
       CACHE.mp / CACHE.mmp * 100,
-      GLOBALS.EMOJI.MP_FULL_PIP, GLOBALS.EMOJI.MP_PART_PIP, GLOBALS.EMOJI.MP_EMPTY_PIP, GLOBALS.EMOJI.MP_BORDER
+      EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
     )
     crawl.mpr(string.format("\n%s %s %s", hp_meter, message, mp_meter))
   end
