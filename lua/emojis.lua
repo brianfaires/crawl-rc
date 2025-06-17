@@ -30,7 +30,8 @@ if CONFIG.emojis then
   EMOJI.ARTEFACT = "💠"
 
   EMOJI.REMIND_IDENTIFY = "🎁"
-  EMOJI.EXCLAMATION = "‼️"
+  EMOJI.EXCLAMATION = "❗"
+  EMOJI.EXCLAMATION_2 = "‼️"
 
   EMOJI.HP_FULL_PIP = "❤️"
   EMOJI.HP_PART_PIP = "❤️‍🩹"
@@ -42,7 +43,7 @@ if CONFIG.emojis then
 
 elseif CONFIG.textmojis then
   EMOJI.REMIND_IDENTIFY = with_color("cyan", "??")
-  EMOJI.EXCLAMATION = with_color("lightred", "!!")
+  EMOJI.EXCLAMATION_2 = with_color("lightred", "!!")
 
   EMOJI.HP_BORDER = with_color(COLORS.white, "|")
   EMOJI.HP_FULL_PIP = with_color(COLORS.green, "+")

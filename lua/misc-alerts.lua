@@ -31,8 +31,8 @@ local function alert_low_hp()
     below_hp_threshold = hp ~= mhp
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    mpr_with_more(table.concat({
-      EMOJI.EXCLAMATION, " ", with_color(COLORS.red, LOW_HP_MSG), " ", EMOJI.EXCLAMATION
+    enqueue_mpr_opt_more(true, table.concat({
+      EMOJI.EXCLAMATION_2, " ", with_color(COLORS.red, LOW_HP_MSG), " ", EMOJI.EXCLAMATION_2
     }))
   end
 end

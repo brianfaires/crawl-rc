@@ -69,7 +69,7 @@ function ready_fully_recover()
       you.stop_activity()
       crawl.setopt("message_colour -= mute:You start waiting.")
       waiting_for_recovery = false
-      crawl.mpr("Fully recovered.")
+      crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered."))
 
       if explore_after_recovery then
         crawl.sendkeys("o")

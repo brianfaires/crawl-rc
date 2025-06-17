@@ -4,10 +4,30 @@ loadfile("crawl-rc/lua/constants.lua")
 loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 
-local function delta_color(delta)
-  local color = delta < 0 and COLORS.red or COLORS.green
-  local signDelta = delta < 0 and delta or "+" .. delta
-  return string.format("<%s>%s</%s>", color, signDelta, color)
+local function format_delta(delta)
+  if delta > 0 then
+    return with_color(COLORS.green, "+"..delta)
+  elseif delta < 0 then
+    return with_color(COLORS.red, delta)
+  else
+    return with_color(COLORS.darkgrey, delta)
+  end
+end
+
+local function format_ratio(cur, max)
+  local color
+  if cur <= (max * 0.25) then
+    color = COLORS.lightred
+  elseif cur <= (max * 0.50) then
+    color = COLORS.red
+  elseif cur <= (max *  0.75) then
+    color = COLORS.yellow
+  elseif cur < max then
+    color = COLORS.white
+  else
+    color = COLORS.green
+  end
+  return with_color(color, string.format(" -> %s/%s", cur, max))
 end
 
 local function create_meter(perc, full, part, empty, border)
@@ -25,179 +45,79 @@ local function create_meter(perc, full, part, empty, border)
   return table.concat(tokens)
 end
 
-local function hp_meter()
-  return create_meter(
-      CACHE.hp / CACHE.mhp * 100,
-      EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
-    )
-end
-
-local function mp_meter()
-  return create_meter(
-      CACHE.mp / CACHE.mmp * 100,
-      EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
-    )
-end
-
-local AD_Messages = {
-  ["HPSimple"] = function(delta)
-    return with_color(COLORS.white,
-      string.format("HP[%s]", delta_color(0 - delta))
-    )
-  end,
-  ["HPMax"] = function (_, _, hpm, delta)
-    crawl.mpr(
-      with_color(COLORS.lightgreen,
-        string.format("Max HP: %s (%s).", hpm, delta_color(delta))
-      )
-    )
-  end,
-  ["HPLoss"] = function (color, hp, hpm, loss)
-    crawl.mpr(
-      with_color(COLORS.red, string.format("Took %s damage ", loss)) ..
-      with_color(color, string.format("-> %s/%s HP", hp, hpm))
-    )
-  end,
-  ["HPGain"] = function (color, hp, hpm, gain)
-    crawl.mpr(
-      with_color(COLORS.lightgreen, string.format("Gained %s HP ", gain)) ..
-      with_color(color, string.format("-> %s/%s HP", hp, hpm))
-    )
-  end,
-  ["HPFull"] = function (_, hp)
-    crawl.mpr(
-      with_color(COLORS.lightgreen,
-        string.format("Full HP (%s).", hp)
-      )
-    )
-  end,
-  ["HPBig"] = function ()
-    enqueue_mpr_opt_more(false,
-      with_color(COLORS.magenta, "! BIG DAMAGE !")
-    )
-  end,["HPMassive"] = function ()
-    enqueue_mpr_opt_more(true,
-      with_color(COLORS.lightred, "!! MASSIVE DAMAGE !!")
-    )
-  end,
-  ["MPSimple"] = function(delta)
-    return with_color(COLORS.white,
-      string.format("MP[%s]", delta_color(0 - delta))
-    )
-  end,
-  ["MPLoss"] = function (color, mp, mpm, loss)
-    crawl.mpr(
-      with_color(COLORS.cyan, string.format("Lost %s MP ", loss)) ..
-      with_color(color, string.format("-> %s/%s MP", mp, mpm))
-    )
-  end,
-  ["MPGain"] = function (color, mp, mpm, gain)
-    crawl.mpr(
-      with_color(COLORS.cyan, string.format("Gained %s MP ", gain)) ..
-      with_color(color, string.format("-> %s/%s MP", mp, mpm))
-    )
-  end,
-  ["MPFull"] = function (_, mp)
-    crawl.mpr(
-      with_color(COLORS.cyan, string.format("Full MP (%s).", mp))
-    )
-  end,
-  [""]="",
-} --AD_Messages (do not remove this comment)
-
-local prev_hp = 0
-local prev_hp_max = 0
-local prev_mp = 0
-local prev_mp_max = 0
-
--- Simplified condensed HP and MP output
--- Print a single condensed line showing HP & MP changes
--- Includes HP/MP meters
-local function simple_announce_damage(hp_lost, mp_lost)
-  local emoji
-  local message
-  
-  if hp_lost > CONFIG.ANNOUNCE_HP_THRESHOLD then
-    if mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
-      -- HP[-2] MP[-1]
-      message = string.format("%s %s\n%s %s", mp_meter(), AD_Messages.MPSimple(mp_lost), hp_meter(), AD_Messages.HPSimple(hp_lost))
-    else
-      -- HP[-2]
-      message = string.format("\n%s %s", hp_meter(), AD_Messages.HPSimple(hp_lost))
-    end
-  elseif mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
-    -- MP[-1]
-    message = string.format("%s %s\n", mp_meter(), AD_Messages.MPSimple(mp_lost))
-  end
-
-  if message ~= nil then
-    crawl.mpr(message)
-  end
-end
-
-
-local function color_by_max(message_func, cur, max, diff)
-  if cur <= (max * 0.25) then
-    message_func(COLORS.lightred, cur, max, diff)
-  elseif cur <= (max * 0.50) then
-    message_func(COLORS.red, cur, max, diff)
-  elseif cur <= (max *  0.75) then
-    message_func(COLORS.yellow, cur, max, diff)
-  else
-    message_func(COLORS.lightgrey, cur, max, diff)
-  end
-end
+local prev = {}
+prev.hp = 0
+prev.mhp = 0
+prev.mp = 0
+prev.mmp = 0
 
 function ready_announce_damage()
-  --Skips message on initializing game
-  if prev_hp > 0 then
-    local hp_lost = prev_hp - CACHE.hp
-    local mhp_lost = CACHE.mhp - prev_hp_max
-    local hp_lost_relative = hp_lost - mhp_lost
-    local mp_lost = prev_mp - CACHE.mp
-    local mmp_lost = CACHE.mmp - prev_mp_max
-    local mp_lost_relative = mp_lost - mmp_lost
+  -- Skip message on initializing game
+  if prev.hp > 0 then
+    local hp_delta = CACHE.hp - prev.hp
+    local mhp_delta = CACHE.mhp - prev.mhp
+    local damage_taken = mhp_delta -hp_delta
+    local mp_delta = CACHE.mp - prev.mp
+    local mmp_delta = CACHE.mmp - prev.mmp
 
-    -- Simplified condensed HP and MP output, with HP meter
-    simple_announce_damage(hp_lost, mp_lost)
+    local msg_tokens = {}
 
-    -- HP Max Loss/Gain
-    if mhp_lost < 0 then
-      AD_Messages.HPMax(COLORS.yellow, CACHE.hp, CACHE.mhp, mhp_lost)
-    elseif mhp_lost > 0 then
-      AD_Messages.HPMax(COLORS.green, CACHE.hp, CACHE.mhp, mhp_lost)
+    -- MP message
+    if math.abs(mp_delta) > CONFIG.ANNOUNCE_MP_THRESHOLD then
+      msg_tokens[#msg_tokens + 1] = create_meter(
+        CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+      )
+      msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
+      msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.mp, CACHE.mmp)
+      if mmp_delta ~= 0 then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
+      end
+      if CACHE.mp == CACHE.mmp then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
+      end
     end
 
-    -- HP Loss/Gain/Full
-    if (hp_lost_relative > CONFIG.ANNOUNCE_HP_THRESHOLD) then
-      color_by_max(AD_Messages.HPLoss, CACHE.hp, CACHE.mhp, hp_lost)
-      if hp_lost > (CACHE.mhp * CONFIG.DAMAGE_FORCE_MORE_THRESHOLD) then
-        AD_Messages.HPMassive()
-      elseif (hp_lost_relative > CACHE.mhp * CONFIG.DAMAGE_FLASH_THRESHOLD) then
-        AD_Messages.HPBig()
+    -- HP message
+    if math.abs(hp_delta) > CONFIG.ANNOUNCE_HP_THRESHOLD then
+      -- If no MP msg, include empty line
+      msg_tokens[#msg_tokens + 1] = "\n"
+
+      msg_tokens[#msg_tokens + 1] = create_meter(
+        CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+      )
+      msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
+      msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.hp, CACHE.mhp)
+      if mhp_delta ~= 0 then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
       end
-    elseif (hp_lost_relative < -CONFIG.ANNOUNCE_HP_THRESHOLD) then
-      if (hp_lost < 0) then
-        color_by_max(AD_Messages.HPGain, CACHE.hp, CACHE.mhp, -hp_lost)
+      if CACHE.hp == CACHE.mhp then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
       end
-    elseif hp_lost_relative ~= 0 and CACHE.hp == CACHE.mhp then
-      AD_Messages.HPFull(nil, CACHE.hp)
     end
 
-    -- MP Loss/Gain/Full
-    if (mp_lost_relative > CONFIG.ANNOUNCE_MP_THRESHOLD) then
-      color_by_max(AD_Messages.MPLoss, CACHE.mp, CACHE.mmp, mp_lost)
-    elseif (mp_lost_relative < -CONFIG.ANNOUNCE_MP_THRESHOLD) then
-      if (mp_lost < 0) then
-        color_by_max(AD_Messages.MPGain, CACHE.mp, CACHE.mmp, -mp_lost)
+    if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
+    
+    -- Damage-related warnings
+    if (damage_taken >= CACHE.mhp * CONFIG.DAMAGE_FLASH_THRESHOLD) then
+      local summary_tokens = {}
+      local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.DAMAGE_FORCE_MORE_THRESHOLD)
+      if is_force_more_msg then
+        summary_tokens[#summary_tokens + 1] = "\n"
+        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+        summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
+        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+      else
+        summary_tokens[#summary_tokens + 1] = "\n"
+        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+        summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
+        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
       end
-    elseif mp_lost_relative ~= 0 and CACHE.mp == CACHE.mmp then
-      AD_Messages.MPFull(nil, CACHE.mp)
+      enqueue_mpr_opt_more(is_force_more_msg, table.concat(summary_tokens))
     end
   end
 
-  prev_hp = CACHE.hp
-  prev_hp_max = CACHE.mhp
-  prev_mp = CACHE.mp
-  prev_mp_max = CACHE.mmp
+  prev.hp = CACHE.hp
+  prev.mhp = CACHE.mhp
+  prev.mp = CACHE.mp
+  prev.mmp = CACHE.mmp
 end
