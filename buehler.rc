@@ -285,6 +285,52 @@ function control_key(c)
   return string.char(string.byte(c) - string.byte('a') + 1)
 end
 
+--- crawl.mpr enhancements ---
+local delayed_mpr_queue = {}
+
+function mpr_with_more(text, channel)
+  crawl.mpr(text, channel)
+  you.stop_activity()
+  crawl.more()
+  crawl.redraw_screen()
+end
+
+function mpr_with_stop(text, channel)
+  crawl.mpr(text, channel)
+  you.stop_activity()
+end
+
+function mpr_opt_more(show_more, text, channel)
+  if show_more then
+    mpr_with_more(text, channel)
+  else
+    crawl.mpr(text, channel)
+  end
+end
+
+function enqueue_mpr(text, channel)
+  delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = false }
+end
+
+function enqueue_mpr_opt_more(show_more, text, channel)
+  delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = show_more }
+end
+
+function mpr_consume_queue()
+  do_more = false
+  for _, msg in ipairs(delayed_mpr_queue) do
+    crawl.mpr(msg.text, msg.channel)
+    if msg.show_more then do_more = true end
+  end
+
+  if do_more then
+    you.stop_activity()
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  delayed_mpr_queue = {}
+end
 
 --- Helper ---
 function you_have_allies()
@@ -3759,11 +3805,6 @@ end
 {
 ----- Initially from https://github.com/magus/dcss -----
 
-local BIG_DAMAGE_MSG = "BIG DAMAGE!"
-local MASSIVE_DAMAGE_MSG = "MASSIVE DAMAGE!!"
-crawl.setopt("flash_screen_message += " .. BIG_DAMAGE_MSG)
-crawl.setopt("force_more_message += " .. MASSIVE_DAMAGE_MSG)
-
 local function delta_color(delta)
   local color = delta < 0 and COLORS.red or COLORS.green
   local signDelta = delta < 0 and delta or "+" .. delta
@@ -3832,12 +3873,12 @@ local AD_Messages = {
     )
   end,
   ["HPBig"] = function ()
-    crawl.mpr(
-      with_color(COLORS.magenta, BIG_DAMAGE_MSG)
+    enqueue_mpr_opt_more(false,
+      with_color(COLORS.magenta, "! BIG DAMAGE !")
     )
   end,["HPMassive"] = function ()
-    crawl.mpr(
-      with_color(COLORS.lightred, MASSIVE_DAMAGE_MSG)
+    enqueue_mpr_opt_more(true,
+      with_color(COLORS.lightred, "!! MASSIVE DAMAGE !!")
     )
   end,
   ["MPSimple"] = function(delta)
@@ -3880,18 +3921,18 @@ local function simple_announce_damage(hp_lost, mp_lost)
   if hp_lost > CONFIG.ANNOUNCE_HP_THRESHOLD then
     if mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
       -- HP[-2] MP[-1]
-      message = string.format("%s %s %s %s", hp_meter(), AD_Messages.HPSimple(hp_lost), AD_Messages.MPSimple(mp_lost), mp_meter())
+      message = string.format("%s %s\n%s %s", mp_meter(), AD_Messages.MPSimple(mp_lost), hp_meter(), AD_Messages.HPSimple(hp_lost))
     else
       -- HP[-2]
-      message = string.format("%s %s", hp_meter(), AD_Messages.HPSimple(hp_lost))
+      message = string.format("\n%s %s", hp_meter(), AD_Messages.HPSimple(hp_lost))
     end
   elseif mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
     -- MP[-1]
-    message = string.format("%s %s", mp_meter(), AD_Messages.MPSimple(mp_lost))
+    message = string.format("%s %s\n", mp_meter(), AD_Messages.MPSimple(mp_lost))
   end
 
   if message ~= nil then
-    crawl.mpr(string.format("\n%s", message))
+    crawl.mpr(message)
   end
 end
 
@@ -4983,13 +5024,13 @@ loaded_misc_alerts = true
 ------ Max piety w/ amulet of faith reminder ----
 create_persistent_data("alerted_max_piety", 0)
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
-crawl.setopt("force_more_message += " .. REMOVE_FAITH_MSG)
+
 local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
-      crawl.mpr(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
+      mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
       alerted_max_piety = 1
     end
   end
@@ -5000,14 +5041,14 @@ local hp, mhp = you.hp()
 local below_hp_threshold = hp <= CONFIG.alert_low_hp_threshold * mhp
 local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
 local LOW_HP_MSG = "Dropped below " .. threshold_perc .. "% HP"
-crawl.setopt("force_more_message += " .. LOW_HP_MSG)
+
 local function alert_low_hp()
   hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    crawl.mpr(table.concat({
+    mpr_with_more(table.concat({
       EMOJI.EXCLAMATION, " ", with_color(COLORS.red, LOW_HP_MSG), " ", EMOJI.EXCLAMATION
     }))
   end
@@ -5019,7 +5060,7 @@ function macro_save_with_message()
   crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
   local res = crawl.getch()
   if not (string.char(res) == "y" or string.char(res) == "Y") then
-    crawl.formatted_mpr("Okay, then.", "prompt")
+    crawl.mpr("Okay, then.")
     return
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
@@ -5062,7 +5103,7 @@ local function remind_unidentified_items()
     if not inv.is_identified then
       for inv_id in iter.invent_iterator:new(items.inventory()) do
         if inv_id and inv_id.name("qual"):find("scroll of identify") then
-          crawl.mpr(
+          mpr_with_stop(
             EMOJI.REMIND_IDENTIFY ..
             with_color(COLORS.magenta, " You have something to identify. ") ..
             EMOJI.REMIND_IDENTIFY
@@ -5075,7 +5116,6 @@ local function remind_unidentified_items()
     end
   end
 end
-crawl.setopt("runrest_stop_message += You have something to identify")
 
 ------------------- Hooks -------------------
 function c_message_remind_identify(text, channel)
@@ -6041,10 +6081,6 @@ loaded_pa_main = true
 pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
-local PA_UNIQUE_TAG = "beuhler-PA-tag"
-if CONFIG.alert_force_more then
-  crawl.setopt("force_more_message += " .. PA_UNIQUE_TAG)
-end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_name = get_plussed_name(it)
@@ -6062,8 +6098,7 @@ function pa_alert_item(it, alert_type, emoji)
   tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
   tokens[#tokens+1] = with_color(COLORS.yellow, item_name .. " ")
   tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
-  tokens[#tokens+1] = with_color(COLORS.black, PA_UNIQUE_TAG)
-  crawl.mpr(table.concat(tokens))
+  enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
   add_item_and_lesser(pa_items_alerted, it)
@@ -7025,7 +7060,7 @@ end
 -------- Prompt auto-answers --------
 function c_answer_prompt(prompt)
   if prompt:find("cheaper one?") then
-    crawl.mpr("Replacing shopping list items", "plain")
+    crawl.mpr("Replacing shopping list items")
     return true end
   if prompt == "Die?" then return false end  
 end
@@ -7053,6 +7088,8 @@ function ready()
     if ready_item_alerts then ready_item_alerts() end
     if ready_misc_alerts then ready_misc_alerts() end
   end
+
+  mpr_consume_queue()
 end
 
 --Startup hygeine

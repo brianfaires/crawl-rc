@@ -63,6 +63,52 @@ function control_key(c)
   return string.char(string.byte(c) - string.byte('a') + 1)
 end
 
+--- crawl.mpr enhancements ---
+local delayed_mpr_queue = {}
+
+function mpr_with_more(text, channel)
+  crawl.mpr(text, channel)
+  you.stop_activity()
+  crawl.more()
+  crawl.redraw_screen()
+end
+
+function mpr_with_stop(text, channel)
+  crawl.mpr(text, channel)
+  you.stop_activity()
+end
+
+function mpr_opt_more(show_more, text, channel)
+  if show_more then
+    mpr_with_more(text, channel)
+  else
+    crawl.mpr(text, channel)
+  end
+end
+
+function enqueue_mpr(text, channel)
+  delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = false }
+end
+
+function enqueue_mpr_opt_more(show_more, text, channel)
+  delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = show_more }
+end
+
+function mpr_consume_queue()
+  do_more = false
+  for _, msg in ipairs(delayed_mpr_queue) do
+    crawl.mpr(msg.text, msg.channel)
+    if msg.show_more then do_more = true end
+  end
+
+  if do_more then
+    you.stop_activity()
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  delayed_mpr_queue = {}
+end
 
 --- Helper ---
 function you_have_allies()

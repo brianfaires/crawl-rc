@@ -4,11 +4,6 @@ loadfile("crawl-rc/lua/constants.lua")
 loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
 
-local BIG_DAMAGE_MSG = "BIG DAMAGE!"
-local MASSIVE_DAMAGE_MSG = "MASSIVE DAMAGE!!"
-crawl.setopt("flash_screen_message += " .. BIG_DAMAGE_MSG)
-crawl.setopt("force_more_message += " .. MASSIVE_DAMAGE_MSG)
-
 local function delta_color(delta)
   local color = delta < 0 and COLORS.red or COLORS.green
   local signDelta = delta < 0 and delta or "+" .. delta
@@ -77,12 +72,12 @@ local AD_Messages = {
     )
   end,
   ["HPBig"] = function ()
-    crawl.mpr(
-      with_color(COLORS.magenta, BIG_DAMAGE_MSG)
+    enqueue_mpr_opt_more(false,
+      with_color(COLORS.magenta, "! BIG DAMAGE !")
     )
   end,["HPMassive"] = function ()
-    crawl.mpr(
-      with_color(COLORS.lightred, MASSIVE_DAMAGE_MSG)
+    enqueue_mpr_opt_more(true,
+      with_color(COLORS.lightred, "!! MASSIVE DAMAGE !!")
     )
   end,
   ["MPSimple"] = function(delta)
@@ -125,18 +120,18 @@ local function simple_announce_damage(hp_lost, mp_lost)
   if hp_lost > CONFIG.ANNOUNCE_HP_THRESHOLD then
     if mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
       -- HP[-2] MP[-1]
-      message = string.format("%s %s %s %s", hp_meter(), AD_Messages.HPSimple(hp_lost), AD_Messages.MPSimple(mp_lost), mp_meter())
+      message = string.format("%s %s\n%s %s", mp_meter(), AD_Messages.MPSimple(mp_lost), hp_meter(), AD_Messages.HPSimple(hp_lost))
     else
       -- HP[-2]
-      message = string.format("%s %s", hp_meter(), AD_Messages.HPSimple(hp_lost))
+      message = string.format("\n%s %s", hp_meter(), AD_Messages.HPSimple(hp_lost))
     end
   elseif mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
     -- MP[-1]
-    message = string.format("%s %s", mp_meter(), AD_Messages.MPSimple(mp_lost))
+    message = string.format("%s %s\n", mp_meter(), AD_Messages.MPSimple(mp_lost))
   end
 
   if message ~= nil then
-    crawl.mpr(string.format("\n%s", message))
+    crawl.mpr(message)
   end
 end
 

@@ -10,10 +10,6 @@ loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
 pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
-local PA_UNIQUE_TAG = "beuhler-PA-tag"
-if CONFIG.alert_force_more then
-  crawl.setopt("force_more_message += " .. PA_UNIQUE_TAG)
-end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_name = get_plussed_name(it)
@@ -31,8 +27,7 @@ function pa_alert_item(it, alert_type, emoji)
   tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
   tokens[#tokens+1] = with_color(COLORS.yellow, item_name .. " ")
   tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
-  tokens[#tokens+1] = with_color(COLORS.black, PA_UNIQUE_TAG)
-  crawl.mpr(table.concat(tokens))
+  enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
   pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
   add_item_and_lesser(pa_items_alerted, it)

@@ -11,7 +11,7 @@ local function remind_unidentified_items()
     if not inv.is_identified then
       for inv_id in iter.invent_iterator:new(items.inventory()) do
         if inv_id and inv_id.name("qual"):find("scroll of identify") then
-          crawl.mpr(
+          mpr_with_stop(
             EMOJI.REMIND_IDENTIFY ..
             with_color(COLORS.magenta, " You have something to identify. ") ..
             EMOJI.REMIND_IDENTIFY
@@ -24,7 +24,6 @@ local function remind_unidentified_items()
     end
   end
 end
-crawl.setopt("runrest_stop_message += You have something to identify")
 
 ------------------- Hooks -------------------
 function c_message_remind_identify(text, channel)
