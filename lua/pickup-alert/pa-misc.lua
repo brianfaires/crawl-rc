@@ -35,6 +35,10 @@ end
 
 ---- Alert talismans ----
 function pa_alert_talisman(it)
+  if it.artefact then
+    if it.is_identified then return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN) end
+    return false
+  end
   return pa_alert_item(it, "New talisman", EMOJI.TALISMAN)
 end
 

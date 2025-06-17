@@ -12,7 +12,7 @@ local function alert_armour_upgrades(it)
   if not is_body_armour(it) then return false end
   if CACHE.s_armour == 0 then return false end
   if CACHE.xl > 12 then return false end
-  if (it.artefact or it.branded) and not it.is_identified then return false end
+  if has_ego(it) and not it.is_identified then return false end
 
   if armour_high_score == 0 then
     local cur = get_body_armour()
@@ -33,13 +33,13 @@ end
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
   if it.is_useless then return false end
+  if has_ego(it) and not it.is_identified then return false end
 
   if is_body_armour(it) then
     local cur = get_body_armour()
 
     -- Exclusions
     if not cur then return false end
-    if it.branded and not it.is_identified then return false end
     if it.encumbrance > cur.encumbrance then return false end
 
     -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
@@ -204,6 +204,7 @@ end
 -- then modify the values in the same line of code.
 local function alert_interesting_armour(it)
   if it.artefact then
+    if not it.is_identified then return false end
     return pa_alert_item(it, "Artefact armour", EMOJI.ARTEFACT)
   end
 
@@ -261,21 +262,21 @@ local function alert_interesting_armour(it)
       local ev_lost = get_armour_ev(cur) - get_armour_ev(it)
       local encumb_penalty = 0
       if CACHE.s_spellcasting + CACHE.s_ranged > 1 then
-        encumb_penalty = (it.encumbrance - cur.encumbrance)*0.75
+        encumb_penalty = (it.encumbrance - cur.encumbrance)*0.7
       end
       local total_loss = ev_lost + encumb_penalty
 
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ac_gain/total_loss >= 0.4 or total_loss <= 6 then
+          if ac_gain/total_loss >= 0.4 or total_loss <= 8 then
             return pa_alert_item(it, "Gain ego (Heavier armour)", EMOJI.EGO)
           end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain/total_loss >= 0.7 or total_loss <= 6 then
+          if ac_gain/total_loss >= 0.5 or total_loss <= 8 then
             return pa_alert_item(it, "Diff ego (Heavier armour)", EMOJI.EGO)
           end
         else
-          if ac_gain/total_loss >= 0.8 then
+          if ac_gain/total_loss >= 0.7 then
             return pa_alert_item(it, "Heavier armour (Same ego)", EMOJI.HEAVIER)
           end
         end

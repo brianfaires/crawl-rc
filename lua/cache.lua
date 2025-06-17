@@ -4,8 +4,6 @@ loaded_cache = true
 loadfile("crawl-rc/lua/constants.lua")
 
 CACHE = {}
-CACHE.mutations = {}
-CACHE.temp_mutations = {}
 
 -- Once per game
 CACHE.class = you.class()
@@ -17,7 +15,6 @@ else CACHE.size_penalty = SIZE_PENALTY.NORMAL
 end
 CACHE.undead =  util.contains(all_undead_races, CACHE.race)
 CACHE.poison_immune = you.res_poison() >= 3
-
 
 -- Once per turn
 function ready_CACHE()
@@ -58,3 +55,5 @@ function ready_CACHE()
   CACHE.temp_mutations = {} -- TODO: Requires a PR afaict
 end
 
+-- on startup
+ready_CACHE()

@@ -69,11 +69,21 @@ all_training_skills = {
 -- 0:black, 1:blue, 2:green, 3:cyan, 4:red, 5:magenta, 6:brown,
 -- 7:lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightcyan,
 -- 12:lightred, 13:lightmagenta, 14:yellow, 15:white
+
+-- TODO: Use the integer values once they work in all menus (for shorter inscriptions)
+-- COLORS = {
+--   blue = 1, green = 2, cyan = 3, red = 4, magenta = 5,
+--   brown = 6, lightgrey = 7, darkgrey = 8, lightblue = 9,
+--   lightgreen = 10, lightcyan = 11, lightred = 12,
+--   lightmagenta = 13, yellow = 14, white = "w",
+--   black = 0,
+-- } -- COLORS (do not remove this comment)
+
 COLORS = {
-  blue = 1, green = 2, cyan = 3, red = 4, magenta = 5,
-  brown = 6, lightgrey = 7, darkgrey = 8, lightblue = 9,
-  lightgreen = 10, lightcyan = 11, lightred = 12,
-  lightmagenta = 13, yellow = 14, white = "w",
+  blue = "blue", green = "green", cyan = "cyan", red = "red", magenta = "magenta",
+  brown = "brown", lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue",
+  lightgreen = "lightgreen", lightcyan = "lightcyan", lightred = "lightred",
+  lightmagenta = "lightmagenta", yellow = "yellow", white = "w",
   black = 0,
 } -- COLORS (do not remove this comment)
 

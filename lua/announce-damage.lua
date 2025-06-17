@@ -30,6 +30,20 @@ local function create_meter(perc, full, part, empty, border)
   return table.concat(tokens)
 end
 
+local function hp_meter()
+  return create_meter(
+      CACHE.hp / CACHE.mhp * 100,
+      EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+    )
+end
+
+local function mp_meter()
+  return create_meter(
+      CACHE.mp / CACHE.mmp * 100,
+      EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+    )
+end
+
 local AD_Messages = {
   ["HPSimple"] = function(delta)
     return with_color(COLORS.white,
@@ -102,8 +116,8 @@ local prev_mp = 0
 local prev_mp_max = 0
 
 -- Simplified condensed HP and MP output
--- Print a single condensed line showing HP & MP change
--- e.g.😨 HP[-2] MP[-1]
+-- Print a single condensed line showing HP & MP changes
+-- Includes HP/MP meters
 local function simple_announce_damage(hp_lost, mp_lost)
   local emoji
   local message
@@ -111,26 +125,18 @@ local function simple_announce_damage(hp_lost, mp_lost)
   if hp_lost > CONFIG.ANNOUNCE_HP_THRESHOLD then
     if mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
       -- HP[-2] MP[-1]
-      message = string.format("%s %s", AD_Messages.HPSimple(hp_lost), AD_Messages.MPSimple(mp_lost))
+      message = string.format("%s %s %s %s", hp_meter(), AD_Messages.HPSimple(hp_lost), AD_Messages.MPSimple(mp_lost), mp_meter())
     else
       -- HP[-2]
-      message = AD_Messages.HPSimple(hp_lost)
+      message = string.format("%s %s", hp_meter(), AD_Messages.HPSimple(hp_lost))
     end
   elseif mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
     -- MP[-1]
-    message = AD_Messages.MPSimple(mp_lost)
+    message = string.format("%s %s", mp_meter(), AD_Messages.MPSimple(mp_lost))
   end
 
   if message ~= nil then
-    local hp_meter = create_meter(
-      CACHE.hp / CACHE.mhp * 100,
-      EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
-    )
-    local mp_meter = create_meter(
-      CACHE.mp / CACHE.mmp * 100,
-      EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
-    )
-    crawl.mpr(string.format("\n%s %s %s", mp_meter, message, hp_meter))
+    crawl.mpr(string.format("\n%s", message))
   end
 end
 

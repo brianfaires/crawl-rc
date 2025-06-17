@@ -189,11 +189,21 @@ all_training_skills = {
 -- 0:black, 1:blue, 2:green, 3:cyan, 4:red, 5:magenta, 6:brown,
 -- 7:lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightcyan,
 -- 12:lightred, 13:lightmagenta, 14:yellow, 15:white
+
+-- TODO: Use the integer values once they work in all menus (for shorter inscriptions)
+-- COLORS = {
+--   blue = 1, green = 2, cyan = 3, red = 4, magenta = 5,
+--   brown = 6, lightgrey = 7, darkgrey = 8, lightblue = 9,
+--   lightgreen = 10, lightcyan = 11, lightred = 12,
+--   lightmagenta = 13, yellow = 14, white = "w",
+--   black = 0,
+-- } -- COLORS (do not remove this comment)
+
 COLORS = {
-  blue = 1, green = 2, cyan = 3, red = 4, magenta = 5,
-  brown = 6, lightgrey = 7, darkgrey = 8, lightblue = 9,
-  lightgreen = 10, lightcyan = 11, lightred = 12,
-  lightmagenta = 13, yellow = 14, white = "w",
+  blue = "blue", green = "green", cyan = "cyan", red = "red", magenta = "magenta",
+  brown = "brown", lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue",
+  lightgreen = "lightgreen", lightcyan = "lightcyan", lightred = "lightred",
+  lightmagenta = "lightmagenta", yellow = "yellow", white = "w",
   black = 0,
 } -- COLORS (do not remove this comment)
 
@@ -469,8 +479,6 @@ if loaded_cache then return end
 loaded_cache = true
 
 CACHE = {}
-CACHE.mutations = {}
-CACHE.temp_mutations = {}
 
 -- Once per game
 CACHE.class = you.class()
@@ -482,7 +490,6 @@ else CACHE.size_penalty = SIZE_PENALTY.NORMAL
 end
 CACHE.undead =  util.contains(all_undead_races, CACHE.race)
 CACHE.poison_immune = you.res_poison() >= 3
-
 
 -- Once per turn
 function ready_CACHE()
@@ -523,6 +530,8 @@ function ready_CACHE()
   CACHE.temp_mutations = {} -- TODO: Requires a PR afaict
 end
 
+-- on startup
+ready_CACHE()
 
 }
 ############################### End lua/cache.lua ###############################
@@ -3776,6 +3785,20 @@ local function create_meter(perc, full, part, empty, border)
   return table.concat(tokens)
 end
 
+local function hp_meter()
+  return create_meter(
+      CACHE.hp / CACHE.mhp * 100,
+      EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+    )
+end
+
+local function mp_meter()
+  return create_meter(
+      CACHE.mp / CACHE.mmp * 100,
+      EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+    )
+end
+
 local AD_Messages = {
   ["HPSimple"] = function(delta)
     return with_color(COLORS.white,
@@ -3848,8 +3871,8 @@ local prev_mp = 0
 local prev_mp_max = 0
 
 -- Simplified condensed HP and MP output
--- Print a single condensed line showing HP & MP change
--- e.g.😨 HP[-2] MP[-1]
+-- Print a single condensed line showing HP & MP changes
+-- Includes HP/MP meters
 local function simple_announce_damage(hp_lost, mp_lost)
   local emoji
   local message
@@ -3857,26 +3880,18 @@ local function simple_announce_damage(hp_lost, mp_lost)
   if hp_lost > CONFIG.ANNOUNCE_HP_THRESHOLD then
     if mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
       -- HP[-2] MP[-1]
-      message = string.format("%s %s", AD_Messages.HPSimple(hp_lost), AD_Messages.MPSimple(mp_lost))
+      message = string.format("%s %s %s %s", hp_meter(), AD_Messages.HPSimple(hp_lost), AD_Messages.MPSimple(mp_lost), mp_meter())
     else
       -- HP[-2]
-      message = AD_Messages.HPSimple(hp_lost)
+      message = string.format("%s %s", hp_meter(), AD_Messages.HPSimple(hp_lost))
     end
   elseif mp_lost > CONFIG.ANNOUNCE_MP_THRESHOLD then
     -- MP[-1]
-    message = AD_Messages.MPSimple(mp_lost)
+    message = string.format("%s %s", mp_meter(), AD_Messages.MPSimple(mp_lost))
   end
 
   if message ~= nil then
-    local hp_meter = create_meter(
-      CACHE.hp / CACHE.mhp * 100,
-      EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
-    )
-    local mp_meter = create_meter(
-      CACHE.mp / CACHE.mmp * 100,
-      EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
-    )
-    crawl.mpr(string.format("\n%s %s %s", mp_meter, message, hp_meter))
+    crawl.mpr(string.format("\n%s", message))
   end
 end
 
@@ -3958,6 +3973,77 @@ end
 -- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
 -- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
 
+----------------------------------- Begin lua/inscribe-stats.lua -----------------------------------
+--------------- https://github.com/brianfaires/crawl-rc/ ---------------
+----- Inscribe stats on items -----
+
+local skipped_first_redraw = false
+
+local function inscribe_armour_stats(it)
+  -- Will add to the beginning of inscriptions, or replace it's own values
+  -- This gsub's stats individually to avoid overwriting <color> tags
+  -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
+  local NUM_PATTERN = "[%+%-:]%d+%.%d*"
+  local abbr = is_shield(it) and "SH" or "AC"
+  local primary, ev = get_armour_info_strings(it)
+
+  local new_insc
+  if it.inscription:find(abbr .. NUM_PATTERN) then
+    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
+    if ev and ev ~= "" then
+      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
+    end
+  else
+    new_insc = primary
+    if ev and ev ~= "" then
+      new_insc = new_insc .. ", " .. ev
+    end
+    if it.inscription and it.inscription ~= "" then
+      new_insc = new_insc .. " " .. it.inscription
+    end
+  end
+
+  it.inscribe(new_insc, false)
+end
+
+local function inscribe_weapon_stats(it)
+  local new_inscr = get_weapon_info_string(it)
+
+  local idx = it.inscription:find("DPS=")
+  if idx then
+    if idx + #new_inscr <= #it.inscription then
+      new_inscr = new_inscr .. it.inscription:sub(idx + #new_inscr, #it.inscription)
+    end
+    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1) .. new_inscr end
+  end
+
+  it.inscribe(new_inscr, false)
+  return new_inscr
+end
+
+
+------------------ Hook ------------------
+function ready_inscribe_stats()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) or is_staff(inv) then
+      if CONFIG.inscribe_weapons then inscribe_weapon_stats(inv) end
+    elseif is_armour(inv) then
+      if CONFIG.inscribe_armour and not is_scarf(inv) then inscribe_armour_stats(inv) end
+    end
+  end
+
+  -- This redraw can causes crashes if called during an autopickup.
+  -- Be sure not to hook any of this to c_message, or anything that can trigger during an autopickup
+  if skipped_first_redraw then crawl.redraw_screen()
+  else skipped_first_redraw = true
+  end
+end
+
+------------------------------- End lua/inscribe-stats.lua -------------------------------
+------------------------------------------------------------------------------------------
+
+-- (Resuming lua/color-inscribe.lua) --
+
 local INSCRIPTION_MAX_LENGTH = 70
 
 local function colorize_subtext(text, s, tag)
@@ -4011,6 +4097,9 @@ local colorize_tags = {
 
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
+  -- Get stats into inscription before coloring
+  ready_inscribe_stats()
+
   local text = it.inscription
   for _, tag in ipairs(colorize_tags) do
     text = colorize_subtext(text, tag[1], tag[2])
@@ -4885,77 +4974,6 @@ end
 ############################### End lua/fm-monsters.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/inscribe-stats.lua ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-{
------ Inscribe stats on items -----
-
-local skipped_first_redraw = false
-
-local function inscribe_armour_stats(it)
-  -- Will add to the beginning of inscriptions, or replace it's own values
-  -- This gsub's stats individually to avoid overwriting <color> tags
-  -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
-  local NUM_PATTERN = "[%+%-:]%d+%.%d*"
-  local abbr = is_shield(it) and "SH" or "AC"
-  local primary, ev = get_armour_info_strings(it)
-
-  local new_insc
-  if it.inscription:find(abbr .. NUM_PATTERN) then
-    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
-    if ev and ev ~= "" then
-      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
-    end
-  else
-    new_insc = primary
-    if ev and ev ~= "" then
-      new_insc = new_insc .. ", " .. ev
-    end
-    if it.inscription and it.inscription ~= "" then
-      new_insc = new_insc .. " " .. it.inscription
-    end
-  end
-
-  it.inscribe(new_insc, false)
-end
-
-local function inscribe_weapon_stats(it)
-  local new_inscr = get_weapon_info_string(it)
-
-  local idx = it.inscription:find("DPS=")
-  if idx then
-    if idx + #new_inscr <= #it.inscription then
-      new_inscr = new_inscr .. it.inscription:sub(idx + #new_inscr, #it.inscription)
-    end
-    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1) .. new_inscr end
-  end
-
-  it.inscribe(new_inscr, false)
-  return new_inscr
-end
-
-
------------------- Hook ------------------
-function ready_inscribe_stats()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) or is_staff(inv) then
-      if CONFIG.inscribe_weapons then inscribe_weapon_stats(inv) end
-    elseif is_armour(inv) then
-      if CONFIG.inscribe_armour and not is_scarf(inv) then inscribe_armour_stats(inv) end
-    end
-  end
-
-  -- This redraw can causes crashes if called during an autopickup.
-  -- Be sure not to hook any of this to c_message, or anything that can trigger during an autopickup
-  if skipped_first_redraw then crawl.redraw_screen()
-  else skipped_first_redraw = true
-  end
-end
-
-}
-############################### End lua/inscribe-stats.lua ###############################
-##########################################################################################
-
 ################################### Begin lua/misc-alerts.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
@@ -5444,8 +5462,8 @@ function get_ego(it)
 end
 
 function get_plussed_name(it)
+  if is_talisman(it) or is_orb(it) then return it.name() end
   local name = it.name("qual")
-  if is_talisman(it) then return name end
   local first_char = name:sub(1, 1)
   if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
   return name
@@ -6174,7 +6192,7 @@ local function alert_armour_upgrades(it)
   if not is_body_armour(it) then return false end
   if CACHE.s_armour == 0 then return false end
   if CACHE.xl > 12 then return false end
-  if (it.artefact or it.branded) and not it.is_identified then return false end
+  if has_ego(it) and not it.is_identified then return false end
 
   if armour_high_score == 0 then
     local cur = get_body_armour()
@@ -6195,13 +6213,13 @@ end
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
   if it.is_useless then return false end
+  if has_ego(it) and not it.is_identified then return false end
 
   if is_body_armour(it) then
     local cur = get_body_armour()
 
     -- Exclusions
     if not cur then return false end
-    if it.branded and not it.is_identified then return false end
     if it.encumbrance > cur.encumbrance then return false end
 
     -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
@@ -6366,6 +6384,7 @@ end
 -- then modify the values in the same line of code.
 local function alert_interesting_armour(it)
   if it.artefact then
+    if not it.is_identified then return false end
     return pa_alert_item(it, "Artefact armour", EMOJI.ARTEFACT)
   end
 
@@ -6423,21 +6442,21 @@ local function alert_interesting_armour(it)
       local ev_lost = get_armour_ev(cur) - get_armour_ev(it)
       local encumb_penalty = 0
       if CACHE.s_spellcasting + CACHE.s_ranged > 1 then
-        encumb_penalty = (it.encumbrance - cur.encumbrance)*0.75
+        encumb_penalty = (it.encumbrance - cur.encumbrance)*0.7
       end
       local total_loss = ev_lost + encumb_penalty
 
       if has_ego(it) then
         if not cur.artefact and not has_ego(cur) then
-          if ac_gain/total_loss >= 0.4 or total_loss <= 6 then
+          if ac_gain/total_loss >= 0.4 or total_loss <= 8 then
             return pa_alert_item(it, "Gain ego (Heavier armour)", EMOJI.EGO)
           end
         elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain/total_loss >= 0.7 or total_loss <= 6 then
+          if ac_gain/total_loss >= 0.5 or total_loss <= 8 then
             return pa_alert_item(it, "Diff ego (Heavier armour)", EMOJI.EGO)
           end
         else
-          if ac_gain/total_loss >= 0.8 then
+          if ac_gain/total_loss >= 0.7 then
             return pa_alert_item(it, "Heavier armour (Same ego)", EMOJI.HEAVIER)
           end
         end
@@ -6518,6 +6537,10 @@ end
 
 ---- Alert talismans ----
 function pa_alert_talisman(it)
+  if it.artefact then
+    if it.is_identified then return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN) end
+    return false
+  end
   return pa_alert_item(it, "New talisman", EMOJI.TALISMAN)
 end
 
