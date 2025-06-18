@@ -6003,7 +6003,7 @@ function pa_alert_item(it, alert_type, emoji)
   tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
   enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
-  pa_all_level_alerts[#pa_all_level_alerts+1] = basename
+  pa_all_level_alerts[#pa_all_level_alerts+1] = base_name
   add_item_and_lesser(pa_items_alerted, it)
   you.stop_activity()
   return true
