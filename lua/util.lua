@@ -172,6 +172,8 @@ function get_body_armour()
 end
 
 -- Data persistence --
+local persistent_var_names = {}
+local persistent_table_names = {}
 local persist_data_type_handlers = {
     str = function(name)
         return name .. " = \"" .. _G[name] .. "\"" .. KEYS.LF
@@ -216,7 +218,7 @@ local function get_var_type(value)
     crawl.mpr("Unsupported type: " .. type(value))
 end
 
--- Creates a persistent global variable, initialized to the default value
+-- Creates a persistent global variable or table, initialized to the default value
 -- Once initialized, the variable is persisted across saves without re-init
 function create_persistent_data(name, default_value)
     if _G[name] == nil then
@@ -232,4 +234,35 @@ function create_persistent_data(name, default_value)
             end
             return persist_data_type_handlers[type](name)
         end)
+
+    local var_type = get_var_type(_G[name])
+    if var_type == "list" or var_type == "dict" then
+      persistent_table_names[#persistent_table_names+1] = name
+    else
+      persistent_var_names[#persistent_var_names+1] = name
+    end
+end
+
+-- For debugging: dump all persistent data
+function dump_persistent_data()
+  local tokens = { "\n---PERSISTENT ARRAYS---\n" }
+  for _,name in ipairs(persistent_table_names) do
+    tokens[#tokens+1] = name
+    tokens[#tokens+1] = ":\n"
+    for _,item in ipairs(_G[name]) do
+      tokens[#tokens+1] = "  "
+      tokens[#tokens+1] = item
+      tokens[#tokens+1] = "\n"
+    end
+  end
+
+  tokens[#tokens+1] = "\n---PERSISTENT VARIABLES---\n"
+  for _,name in ipairs(persistent_var_names) do
+    tokens[#tokens+1] = name
+    tokens[#tokens+1] = " = "
+    tokens[#tokens+1] = _G[name]
+    tokens[#tokens+1] = "\n"
+  end
+
+  crawl.mpr(table.concat(tokens))
 end

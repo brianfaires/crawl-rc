@@ -43,5 +43,5 @@ end
 ------------------- Hook -------------------
 function ready_safe_stairs()
   prev_location = cur_location
-  cur_location = CACHE.branch .. you.depth
+  cur_location = CACHE.branch .. CACHE.depth
 end

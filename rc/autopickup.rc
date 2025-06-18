@@ -2,7 +2,7 @@
 ae := autopickup_exceptions
 ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
-ae ^= >useless_item, <misc
+ae ^= >useless_item, <missile,<misc
 ae ^= >staff of.*
 
 # Exclude the 3rd copy of any ring

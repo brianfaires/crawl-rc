@@ -19,7 +19,7 @@ fail_severity_to_confirm = 4
 
 sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
 drop_filter += useless_item, forbidden
-fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, stone
+fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, dart, stone
 
 
 ####### Explore options #######
@@ -131,27 +131,33 @@ end
 
 
 --------- ready() ---------
-local efficient_ready_last_turn = -1
+local last_ready_turn = -1
+local last_dump_turn = 0
 function ready()
+  if you.turns() == last_ready_turn then return end
   ready_CACHE()
-  if you.turns() ~= efficient_ready_last_turn then
-    efficient_ready_last_turn = you.turns()
+  last_ready_turn = CACHE.turn
 
-    if ready_force_mores then ready_force_mores() end
-    if ready_fm_pack then ready_fm_pack() end
-    if ready_dynamic_options then ready_dynamic_options() end
-    if ready_inscribe_stats then ready_inscribe_stats() end
-    if ready_weapon_slots then ready_weapon_slots() end
-    if ready_safe_consumables then ready_safe_consumables() end
-    if ready_mute_swaps then ready_mute_swaps() end
-    if ready_runrest_features then ready_runrest_features() end
-    if ready_after_shaft then ready_after_shaft() end
-    if ready_fully_recover then ready_fully_recover() end
-    if ready_safe_stairs then ready_safe_stairs() end
-    if ready_announce_damage then ready_announce_damage() end
-    if ready_item_alerts then ready_item_alerts() end
-    if ready_misc_alerts then ready_misc_alerts() end
+  if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
+    last_dump_turn = CACHE.turn
+    dump_persistent_data()
   end
+
+  -- Features (may not be included)
+  if ready_force_mores then ready_force_mores() end
+  if ready_fm_pack then ready_fm_pack() end
+  if ready_dynamic_options then ready_dynamic_options() end
+  if ready_inscribe_stats then ready_inscribe_stats() end
+  if ready_weapon_slots then ready_weapon_slots() end
+  if ready_safe_consumables then ready_safe_consumables() end
+  if ready_mute_swaps then ready_mute_swaps() end
+  if ready_runrest_features then ready_runrest_features() end
+  if ready_after_shaft then ready_after_shaft() end
+  if ready_fully_recover then ready_fully_recover() end
+  if ready_safe_stairs then ready_safe_stairs() end
+  if ready_announce_damage then ready_announce_damage() end
+  if ready_item_alerts then ready_item_alerts() end
+  if ready_misc_alerts then ready_misc_alerts() end
 
   mpr_consume_queue()
 end

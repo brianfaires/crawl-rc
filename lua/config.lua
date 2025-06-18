@@ -63,4 +63,4 @@ CONFIG.auto_set_skill_targets = {
 } -- auto_set_skill_targets (do not remove this comment)
 
 -- Debugging
-CONFIG.debug_pa_array_freq = 1000 -- 0 to disable
+CONFIG.debug_dump_data_freq = 1000 -- 0 to disable
