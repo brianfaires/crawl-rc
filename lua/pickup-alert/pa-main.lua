@@ -6,8 +6,6 @@ loadfile("crawl-rc/lua/util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
 loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
 
--- Global var for access by autopickup function
-pause_pickup_alert_sys = false
 local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
 
@@ -72,9 +70,7 @@ function c_assign_invletter_item_alerts(it)
 end
 
 function c_message_item_alerts(text, _)
-  if text:find("You start waiting.") or text:find("You start resting.") then
-    pause_pickup_alert_sys = true
-  elseif text:find("Done exploring.") or text:find("Partly explored") then
+  if text:find("Done exploring.") or text:find("Partly explored") then
     local tokens = {}
     for _,v in ipairs(pa_all_level_alerts) do
       tokens[#tokens+1] = "\n  " .. v
@@ -95,18 +91,14 @@ function ready_item_alerts()
     dump_persistent_arrays()
   end
 
-  if not pause_pickup_alert_sys then
-    generate_inv_weap_arrays()
-    update_high_scores(get_body_armour())
-  else
-    pause_pickup_alert_sys = false
-  end
+  generate_inv_weap_arrays()
+  update_high_scores(get_body_armour())
 end
 
 
 ---- Autopickup main ----
 add_autopickup_func(function (it, _)
-  if pause_pickup_alert_sys then return end
+  if not you.turn_is_over() then return end
 
   -- Check for pickup
   local retVal = false

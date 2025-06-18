@@ -109,10 +109,15 @@ function c_assign_invletter(it)
   if ret_val then return ret_val end
 end
 
+-------- ch_start_running() --------
+function ch_start_running(kind)
+  if ch_start_running_item_alerts then ch_start_running_item_alerts(kind) end
+end
 
 -------- ch_stop_running() --------
 function ch_stop_running(kind)
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
+  if ch_stop_running_item_alerts then ch_stop_running_item_alerts(kind) end
 end
 
 
