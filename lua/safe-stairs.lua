@@ -1,33 +1,31 @@
 loadfile("lua/cache.lua")
 loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/util.lua")
 
 ----- Prevent accidental stairs usage -----
-local prev_location = you.branch() .. you.depth()
-local temp_location = prev_location
+local prev_location = CACHE.branch .. CACHE.depth
+local cur_location = prev_location
 local last_stair_turn = 0
+local v5_unwarned = true
 
 crawl.setopt("macros += M > ===macro_do_safe_downstairs")
 crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 
 local function check_new_location(key)
-  local cur_location = you.branch() .. you.depth()
+  local new_location = CACHE.branch .. CACHE.depth
   local turn_diff = CACHE.turn - last_stair_turn
-  local question = nil
-  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
-    question = "Really go right back? (y/n)"
-  elseif CONFIG.warn_v5 and cur_location == "Vaults4" and key == ">" then
-    -- V5 warning idea by rypofalem --
-    question = "Really go to Vaults:5? (y/n)"
-    CONFIG.warn_v5 = false
-  end
-
-  if question then
-    crawl.formatted_mpr(question, "prompt")
-    local res = crawl.getch()
-    if string.lower(string.char(res)) ~= "y" then
+  if prev_location ~= new_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
+    if not crawl.yesno("Really go right back? (y/n)", true) then
       crawl.mpr("Okay, then.")
       return
     end
+  elseif CONFIG.warn_v5 and v5_unwarned and new_location == "Vaults4" and key == ">" then
+    -- V5 warning idea by rypofalem --
+    if not crawl.yesno("Really go to Vaults:5? (y/n)", true) then
+      crawl.mpr("Okay, then.")
+      return
+    end
+    v5_unwarned = false
   end
 
   crawl.sendkeys(key)
@@ -44,6 +42,6 @@ end
 
 ------------------- Hook -------------------
 function ready_safe_stairs()
-  prev_location = temp_location
-  temp_location = you.branch() .. you.depth()
+  prev_location = cur_location
+  cur_location = CACHE.branch .. you.depth
 end

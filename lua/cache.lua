@@ -16,7 +16,7 @@ end
 CACHE.undead =  util.contains(all_undead_races, CACHE.race)
 CACHE.poison_immune = you.res_poison() >= 3
 
--- Once per turn
+-- Updated each turn; Contains anything accessed more than once per turn
 function ready_CACHE()
   CACHE.turn = you.turns()
   CACHE.str = you.strength()
@@ -29,6 +29,9 @@ function ready_CACHE()
 
   CACHE.god = you.god()
   CACHE.xl = you.xl()
+  CACHE.have_orb = you.have_orb()
+  CACHE.branch = you.branch()
+  CACHE.depth = you.depth()
 
   CACHE.s_armour = you.skill("Armour")
   CACHE.s_shields = you.skill("Shields")

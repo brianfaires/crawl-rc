@@ -9,11 +9,10 @@ local stop_on_pan_gates = false
 
 ---- Ignore exit portals ----
 local function ready_ignore_exits()
-  local branch = you.branch()
-  if stop_on_portals and util.contains(all_portal_names, branch) then
+  if stop_on_portals and util.contains(all_portal_names, CACHE.branch) then
     stop_on_portals = false
     crawl.setopt("explore_stop -= portals")
-  elseif not stop_on_portals and not util.contains(all_portal_names, branch) then
+  elseif not stop_on_portals and not util.contains(all_portal_names, CACHE.branch) then
     stop_on_portals = true
     crawl.setopt("explore_stop += portals")
   end
@@ -37,7 +36,7 @@ end
 
 ---- Automated temple actions ----
 local function c_message_search_altars_in_temple(text, _)
-  if you.branch() == "Temple" then
+  if CACHE.branch == "Temple" then
     if text:find("explor") then
       crawl.sendkeys({ 6, "altar\r" })
     elseif text:find("welcomes you!") then
@@ -48,7 +47,7 @@ end
 
 ---- Stop on Pan Gates ----
 local function ready_stop_on_pan_gates()
-  local branch = you.branch()
+  local branch = CACHE.branch
   if stop_on_pan_gates and branch ~= "Pan" then
     stop_on_pan_gates = false
     crawl.setopt("explore_stop -= stairs")

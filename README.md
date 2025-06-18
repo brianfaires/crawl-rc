@@ -192,8 +192,15 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   They're harmless and you can ignore them. Or delete if they really bug you.
 
 ## TODO dev list
+1. Add macro to save skill targets & CONFIG values (by race or race+class)
+1. Before finding ID scroll, only stop travel when stack size is greater than previous
+1. Convert pa arrays to contain: {{"robe", "3"}}, instead of {"+3 robe"}
+1. Write persistent data to c_persist after each level (to recover from crashes)
+1. Cache commonly-accessed items: wielded, worn armour
+1. weap_inv arrays into CACHE, and merge paired lists
+1. Cache temporary mutations (needs crawl PR to do gracefully)
 1. Wait for allies to heal (needs crawl PR?)
-1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs
+1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
 1. Fix mute_swaps.lua (needs crawl PR? - to intercept msgs)
 
 ## Resources

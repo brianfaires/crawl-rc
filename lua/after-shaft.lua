@@ -16,15 +16,15 @@ end
 function c_message_after_shaft(text, _)
   if as_shaft_depth ~= 0 then return end
   if text:find("fall into a shaft") then
-    as_shaft_depth = you.depth()
-    as_shaft_branch = you.branch()
+    as_shaft_depth = CACHE.depth
+    as_shaft_branch = CACHE.branch
     crawl.setopt("explore_stop += stairs")
   end
 end
 
 function ready_after_shaft()
   if as_shaft_depth ~= 0 then
-    if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
+    if CACHE.depth == as_shaft_depth and CACHE.branch == as_shaft_branch then
       crawl.setopt("explore_stop -= stairs")
       as_shaft_depth = 0
       as_shaft_branch = "NA"

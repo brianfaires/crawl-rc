@@ -103,7 +103,7 @@ end
 
 ---- Autopickup main ----
 add_autopickup_func(function (it, _)
-  if not you.turn_is_over() then return end
+  if not you.turn_is_over() or CACHE.have_orb then return end
 
   -- Check for pickup
   local retVal = false
