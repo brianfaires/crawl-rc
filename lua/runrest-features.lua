@@ -5,7 +5,6 @@ loadfile("crawl-rc/lua/constants.lua")
 local stop_on_altars = true
 local stop_on_portals = true
 local stop_on_pan_gates = false
-local ignoring_all_gauntlet = false
 
 
 ---- Ignore exit portals ----
@@ -59,20 +58,6 @@ local function ready_stop_on_pan_gates()
   end
 end
 
----- Ignore gauntlet msgs ----
-local function c_message_ignore_gauntlet_msgs(text, _)
-  if ignoring_all_gauntlet then
-    if you.branch() ~= "Gauntlet" or text:find("Done exploring.") or text:find("Partly explored") then
-      ignoring_all_gauntlet = false
-      crawl.setopt("runrest_ignore_message -= .*")
-    end
-  else
-    if text:find("enter a gauntlet!") then
-      ignoring_all_gauntlet = true
-      crawl.setopt("runrest_ignore_message ^= .*")
-    end
-  end
-end
 
 ---------------- Hooks ----------------
 function ready_runrest_features()
@@ -83,5 +68,4 @@ end
 
 function c_message_runrest_features(text, _)
   if CONFIG.search_altars_in_temple then c_message_search_altars_in_temple(text, _) end
-  if CONFIG.ignore_gauntlet_msgs then c_message_ignore_gauntlet_msgs(text, _) end
 end

@@ -21,7 +21,6 @@ CONFIG.inscribe_armour = true
 -- Runrest features
 CONFIG.ignore_altars = true
 CONFIG.ignore_portal_exits = true
-CONFIG.ignore_gauntlet_msgs = true
 CONFIG.stop_on_pan_gates = true
 CONFIG.search_altars_in_temple = true
 

@@ -105,7 +105,6 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - No altar stops if you have a god
 - Don't stop exploration on portals leading out of baileys/sewers/etc
 - Stop travel on gates in Pan
-- Disable many auto-explore stops in gauntlets
 - Search for `altar` after exploring temple. Runs to exit after worship.
 
 ### [lua/safe-stairs.rc](lua/safe-stairs.lua)
@@ -193,9 +192,6 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   They're harmless and you can ignore them. Or delete if they really bug you.
 
 ## TODO dev list
-1. fm-monsters list updated for 0.33.1
-1. Disable all auto explore stops in gauntlets until fully explored
-  - c_message_ignore_gauntlet_msgs() attempts to do this, but is still stopping for some events.)
 1. Wait for allies to heal (needs crawl PR?)
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs
 1. Fix mute_swaps.lua (needs crawl PR? - to intercept msgs)
