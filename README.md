@@ -203,6 +203,11 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
 1. Fix mute_swaps.lua (needs crawl PR? - to intercept msgs)
 
+# Known issues
+1. Equip/Wear menu doesn't use menu_colour (needs crawl PR?)
+1. DPS inscriptions on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
+1. Running local tiles (webtiles unaffected), initial screen sometimes needs a refresh on startup (for player stats)
+
 ## Resources
 ### How to learn RC file options
 http://crawl.akrasiac.org/docs/options_guide.txt
