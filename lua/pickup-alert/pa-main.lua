@@ -10,24 +10,25 @@ local last_ready_item_alerts_turn = 0
 local last_pa_dump_turn = 0
 
 function pa_alert_item(it, alert_type, emoji)
-  local item_name = get_plussed_name(it)
-  if util.contains(pa_items_picked, item_name) then return false end
-  if util.contains(pa_items_alerted, item_name) then return false end
+  local base_name = get_plussed_name(it, "base")
+  if util.contains(pa_items_picked, base_name) then return false end
+  if util.contains(pa_items_alerted, base_name) then return false end
 
+  local plain_name = get_plussed_name(it, "plain")
   if is_weapon(it) or is_staff(it) then
-    item_name = table.concat({item_name, " ", get_weapon_info_string(it)})
+    plain_name = table.concat({plain_name, " (", get_weapon_info_string(it), ")"})
   elseif is_body_armour(it) then
     local ac, ev = get_armour_info_strings(it)
-    item_name = table.concat({item_name, " ", ac, ", ", ev})
+    plain_name = table.concat({plain_name, " {", ac, ", ", ev, "}"})
   end
   local tokens = {}
   tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
   tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
-  tokens[#tokens+1] = with_color(COLORS.yellow, item_name .. " ")
+  tokens[#tokens+1] = with_color(COLORS.yellow, plain_name .. " ")
   tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
   enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
-  pa_all_level_alerts[#pa_all_level_alerts+1] = item_name
+  pa_all_level_alerts[#pa_all_level_alerts+1] = basename
   add_item_and_lesser(pa_items_alerted, it)
   you.stop_activity()
   return true
@@ -49,7 +50,10 @@ local function dump_persistent_arrays()
   summary = summary .. dump_persistent_table("pa_items_alerted", pa_items_alerted)
   summary = summary .. dump_persistent_table("pa_all_level_alerts", pa_all_level_alerts)
   summary = summary .. dump_persistent_table("pa_single_alert_items", pa_single_alert_items)
-  
+  if dropped_item_exclusions then
+    summary = summary .. "\ndropped_item_exclusions: " .. dropped_item_exclusions
+  end
+
   crawl.mpr(summary)
   crawl.take_note(summary)
   crawl.dump_char()
@@ -57,8 +61,9 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
+  local name = get_plussed_name(it)
   if is_weapon(it) or is_armour(it) then
-    if not util.contains(pa_items_picked, get_plussed_name(it)) then
+    if not util.contains(pa_items_picked, name) then
       add_item_and_lesser(pa_items_picked, it)
       update_high_scores(it)
       remove_from_pa_single_alert_items(it)
@@ -66,7 +71,7 @@ function c_assign_invletter_item_alerts(it)
   end
 
   remove_item_and_lesser(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, get_plussed_name(it))
+  util.remove(pa_all_level_alerts, name)
 end
 
 function c_message_item_alerts(text, _)

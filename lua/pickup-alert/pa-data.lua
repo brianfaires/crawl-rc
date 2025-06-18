@@ -44,7 +44,7 @@ end
 local function add_remove_item_and_lesser(table_ref, it, remove_item)
   -- Add (or remove) an item name to a table, along with all less enchanted versions
   -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = get_plussed_name(it)
+  local name = get_plussed_name(it, "base")
   if util.contains(table_ref, name) ~= remove_item then return end
 
   if remove_item then util.remove(table_ref, name)

@@ -21,9 +21,9 @@ function get_ego(it)
   return it.ego()
 end
 
-function get_plussed_name(it)
+function get_plussed_name(it, name_type)
   if is_talisman(it) or is_orb(it) then return it.name() end
-  local name = it.name("qual")
+  local name = it.name(name_type or "base")
   local first_char = name:sub(1, 1)
   if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
   return name

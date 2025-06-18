@@ -79,8 +79,8 @@ function ready_announce_damage()
 
     -- HP message
     if math.abs(hp_delta) > CONFIG.ANNOUNCE_HP_THRESHOLD then
-      -- If no MP msg, include empty line
-      msg_tokens[#msg_tokens + 1] = "\n"
+      -- If no MP msg, include empty line (w 1-space offset to align)
+      msg_tokens[#msg_tokens + 1] = "\n "
 
       msg_tokens[#msg_tokens + 1] = create_meter(
         CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
