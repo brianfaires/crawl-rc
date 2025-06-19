@@ -209,15 +209,7 @@ local function get_dmg_delta(it, cur, penalty)
 end
 
 local function need_first_weapon(it)
-  if inv_max_dmg["melee_2"] ~= 0 then
-    if inv_max_dmg["melee_only"] == 0 then
-    -- Carrying ranged weapons only
-    return get_weap_dps(it) > inv_max_dmg["melee_2"]
-  end
-  -- Carrying a melee weapon
-  return false
-  end
-
+  if inv_max_dmg["melee_2"] > 0 then return false end
   if you.skill("Unarmed Combat") > 0 then return false end
   if get_mut("claws", true) > 0 then return false end
   if get_mut("demonic touch", true) > 0 then return false end
@@ -227,7 +219,7 @@ end
 
 
 local function pickup_weapon(it, cur)
-  if cur.subtype == it.subtype() then
+  if it.subtype() == cur.subtype then
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
@@ -236,7 +228,6 @@ local function pickup_weapon(it, cur)
     end
     if cur.branded and not has_ego(it) then return false end
     return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
-  --elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
     if no_upgrade_possible(it, cur) then return false end
 

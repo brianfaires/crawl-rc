@@ -49,7 +49,8 @@ function c_assign_invletter_item_alerts(it)
   util.remove(pa_all_level_alerts, name)
 end
 
-function c_message_item_alerts(text, _)
+function c_message_item_alerts(text, channel)
+  if channel ~= "plain" then return end
   if text:find("Done exploring.") or text:find("Partly explored") then
     local tokens = {}
     for _,v in ipairs(pa_all_level_alerts) do
@@ -73,7 +74,7 @@ end
 
 ---- Autopickup main ----
 add_autopickup_func(function (it, _)
-  if not you.turn_is_over() or CACHE.have_orb then return end
+  if CACHE.have_orb then return end
 
   -- Check for pickup
   local retVal = false
@@ -92,7 +93,7 @@ add_autopickup_func(function (it, _)
 
   -- Not picking up this item. Check for alerts.
   -- Update inventory high scores first, in case XP gained same turn item is dropped
-  if not CONFIG.alert_system_enabled then return end
+  if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
   ready_item_alerts()
 
   if loaded_pa_misc and CONFIG.alert_one_time_items then

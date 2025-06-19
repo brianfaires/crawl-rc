@@ -3,14 +3,13 @@ loaded_pa_util = true
 loadfile("crawl-rc/lua/util.lua")
 
 
---- Custom def of ego/branded ---
-function has_ego(it)
-  if is_weapon(it) then return it.artefact or it.branded end
-  if it.artefact or it.branded then return true end
-  local basename = it.name("base")
-  if basename:find("troll leather") then return true end
-  if basename:find("dragon scales") and not basename:find("steam") then return true end
-  return false
+function get_plussed_name(it, name_type)
+  if is_talisman(it) or is_orb(it) then return it.name() end
+  local name = it.name(name_type or "base")
+  if is_staff(it) then return name end
+  local first_char = name:sub(1, 1)
+  if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
+  return name
 end
 
 function get_ego(it)
@@ -21,13 +20,16 @@ function get_ego(it)
   return it.ego()
 end
 
-function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) then return it.name() end
-  local name = it.name(name_type or "base")
-  local first_char = name:sub(1, 1)
-  if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
-  return name
+--- Custom def of ego/branded ---
+function has_ego(it)
+  if is_weapon(it) then return it.artefact or it.branded end
+  if it.artefact or it.branded then return true end
+  local basename = it.name("base")
+  if basename:find("troll leather") then return true end
+  if basename:find("dragon scales") and not basename:find("steam") then return true end
+  return false
 end
+
 
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
@@ -414,7 +416,7 @@ function get_weapon_info_string(it)
   if acc >= 0 then acc = "+" .. acc end
 
   --This would be awesome if it worked for all UIs
-  --dps_str = "DPS=<w>" .. dps_str .. "</w> "
+  --dps_str = "DPS:<w>" .. dps_str .. "</w> "
   --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
   return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
 end

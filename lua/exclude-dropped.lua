@@ -118,5 +118,4 @@ if CACHE.turn == 0 then
     end
   end
   if started_with_ranged then add_exclusions({ " stone", "boomerang" }) end
-  if CACHE.size_penalty >= SIZE_PENALTY.LARGE then add_exclusion("large rock") end
 end

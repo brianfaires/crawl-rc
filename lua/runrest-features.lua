@@ -34,17 +34,6 @@ local function ready_ignore_altars()
   end
 end
 
----- Automated temple actions ----
-local function c_message_search_altars_in_temple(text, _)
-  if CACHE.branch == "Temple" then
-    if text:find("explor") then
-      crawl.sendkeys({ 6, "altar\r" })
-    elseif text:find("welcomes you!") then
-      crawl.sendkeys("X<\r")
-    end
-  end
-end
-
 ---- Stop on Pan Gates ----
 local function ready_stop_on_pan_gates()
   local branch = CACHE.branch
@@ -57,14 +46,46 @@ local function ready_stop_on_pan_gates()
   end
 end
 
+---- Temple actions ----
+local autosearched_temple = false
+local function ready_temple_macro()
+  if CACHE.branch == "Temple" and not autosearched_temple and CACHE.god == "No God" then
+    crawl.sendkeys({ 6, "altar\r" })
+    autosearched_temple = true
+  end
+end
+
+local function c_message_temple_actions(text, _)
+  if CACHE.branch == "Temple" then
+    -- Hit explore to search all altars
+    if text:find("explor") then
+      crawl.sendkeys({ 6, "altar\r" })
+    elseif text:find("welcomes you!") then
+      -- Run to staircase after worship
+      crawl.sendkeys("X<\r")
+    end
+  end
+end
+
+---- Gauntlet actions ----
+local autosearched_gauntlet = false
+local function ready_gauntlet_macro()
+  if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
+    crawl.sendkeys({ 6, ".\r" })
+    autosearched_gauntlet = true
+  end
+end
+
 
 ---------------- Hooks ----------------
 function ready_runrest_features()
   if CONFIG.ignore_altars then ready_ignore_altars() end
   if CONFIG.ignore_portal_exits then ready_ignore_exits() end
   if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
+  if CONFIG.temple_macros then ready_temple_macro() end
+  if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
 end
 
 function c_message_runrest_features(text, _)
-  if CONFIG.search_altars_in_temple then c_message_search_altars_in_temple(text, _) end
+  if CONFIG.temple_macros then c_message_temple_actions(text, _) end
 end

@@ -105,7 +105,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - No altar stops if you have a god
 - Don't stop exploration on portals leading out of baileys/sewers/etc
 - Stop travel on gates in Pan
-- Search for `altar` after exploring temple. Runs to exit after worship.
+- Auto-search items when entering a gauntlet or temple. Run to temple exit after worship.
 
 ### [lua/safe-stairs.rc](lua/safe-stairs.lua)
 - Protects against fat-fingering `<>` or `><`, by prompting before immediately returning to the previous floor.
@@ -192,15 +192,15 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   They're harmless and you can ignore them. Or delete if they really bug you.
 
 ## TODO dev list
-1. Check channel as first step in every c_message_ call
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Before finding ID scroll, only stop travel when stack size is greater than previous
 1. Convert pa arrays to contain: {{"robe", "3"}}, instead of {"+3 robe"}
 1. Write persistent data to c_persist after each level (to recover from crashes)
 1. Cache more: inventory, wielded weap, worn armour
 1. weap_inv arrays into CACHE, and merge paired lists
+1. cleanup/reduce # of display.rc messages
 
-### TODO - requires crawl PR?
+### TODO - requiring crawl PR
 1. Cache temporary mutations (needs crawl PR to do gracefully)
 1. Wait for allies to heal (needs crawl PR?)
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)

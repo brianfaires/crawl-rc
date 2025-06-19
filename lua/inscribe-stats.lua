@@ -24,7 +24,7 @@ local function inscribe_armour_stats(it)
       new_insc = new_insc .. ", " .. ev
     end
     if it.inscription and it.inscription ~= "" then
-      new_insc = new_insc .. " " .. it.inscription
+      new_insc = new_insc .. "; " .. it.inscription
     end
   end
 
@@ -32,18 +32,20 @@ local function inscribe_armour_stats(it)
 end
 
 local function inscribe_weapon_stats(it)
-  local new_inscr = get_weapon_info_string(it)
+  local orig_inscr = it.inscription
+  local dps_inscr = get_weapon_info_string(it)
+  local prefix, suffix = "", ""
 
-  local idx = it.inscription:find("DPS=")
-  if idx then
-    if idx + #new_inscr <= #it.inscription then
-      new_inscr = new_inscr .. it.inscription:sub(idx + #new_inscr, #it.inscription)
+  local idx = orig_inscr:find("DPS:")
+  if not idx then suffix = "; " .. orig_inscr
+  else
+    if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
+    if idx + #dps_inscr - 1 < #orig_inscr then
+      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
     end
-    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1) .. new_inscr end
   end
 
-  it.inscribe(new_inscr, false)
-  return new_inscr
+  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
 

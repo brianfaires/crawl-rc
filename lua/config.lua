@@ -22,7 +22,8 @@ CONFIG.inscribe_armour = true
 CONFIG.ignore_altars = true
 CONFIG.ignore_portal_exits = true
 CONFIG.stop_on_pan_gates = true
-CONFIG.search_altars_in_temple = true
+CONFIG.temple_macros = true
+CONFIG.gauntlet_macros = true
 
 -- Misc alerts
 CONFIG.warn_v5 = true

@@ -326,7 +326,9 @@ function ready_force_mores()
   end
 end
 
-function c_message_fm_pack(text, _)
+function c_message_fm_pack(text, channel)
+  if channel ~= "plain" then return end
+  
   -- Identifies when a mute should be turned on
   if not text:find("comes? into view") then return end
   for _, v in ipairs(fm_pack) do

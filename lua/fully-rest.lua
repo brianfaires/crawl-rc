@@ -49,11 +49,13 @@ function ch_stop_running_full_recovery(kind)
   end
 end
 
-function c_message_fully_recover(text, _)
-  if text:find("You start waiting.") or text:find("You start resting.") then
-    if not fully_recovered() then
-      waiting_for_recovery = true
-      crawl.setopt("message_colour += mute:You start waiting.")
+function c_message_fully_recover(text, channel)
+  if channel == "plain" then
+    if text:find("You start waiting.") or text:find("You start resting.") then
+      if not fully_recovered() then
+        waiting_for_recovery = true
+        crawl.setopt("message_colour += mute:You start waiting.")
+      end
     end
   elseif waiting_for_recovery and channel == "timed_portal" then
     you.stop_activity()

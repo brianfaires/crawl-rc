@@ -13,8 +13,8 @@ end
 
 
 ------------------- Hooks -------------------
-function c_message_after_shaft(text, _)
-  if as_shaft_depth ~= 0 then return end
+function c_message_after_shaft(text, channel)
+  if as_shaft_depth ~= 0 or channel ~= "plain" then return end
   if text:find("fall into a shaft") then
     as_shaft_depth = CACHE.depth
     as_shaft_branch = CACHE.branch
@@ -23,11 +23,9 @@ function c_message_after_shaft(text, _)
 end
 
 function ready_after_shaft()
-  if as_shaft_depth ~= 0 then
-    if CACHE.depth == as_shaft_depth and CACHE.branch == as_shaft_branch then
-      crawl.setopt("explore_stop -= stairs")
-      as_shaft_depth = 0
-      as_shaft_branch = "NA"
-    end
+  if CACHE.depth == as_shaft_depth and CACHE.branch == as_shaft_branch then
+    crawl.setopt("explore_stop -= stairs")
+    as_shaft_depth = 0
+    as_shaft_branch = "NA"
   end
 end

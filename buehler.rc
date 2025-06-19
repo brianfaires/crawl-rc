@@ -27,7 +27,8 @@ CONFIG.inscribe_armour = true
 CONFIG.ignore_altars = true
 CONFIG.ignore_portal_exits = true
 CONFIG.stop_on_pan_gates = true
-CONFIG.search_altars_in_temple = true
+CONFIG.temple_macros = true
+CONFIG.gauntlet_macros = true
 
 -- Misc alerts
 CONFIG.warn_v5 = true
@@ -702,8 +703,8 @@ ai += staff of poison:rPois
 ae := autopickup_exceptions
 ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
-ae ^= >useless_item, <missile,<misc
-ae ^= >staff of.*
+ae ^= <missile, <misc
+ae ^= >staff of.*, >useless_item
 
 # Exclude the 3rd copy of any ring
 {
@@ -1044,7 +1045,6 @@ msc += $danger:Your limbs are stiffening
 msc += $danger:You have turned to stone
 msc += $danger:Draining that being is not a good idea
 msc += $danger:You feel.*ill
-msc += $danger:You can't gag anything down
 msc += $danger:Something feeds on your intellect
 msc += $danger:The barbed spikes become lodged in your body
 msc += $danger:You feel your translocation being delayed
@@ -1200,7 +1200,6 @@ msc += $item_dmg:You feel yourself wasting away
 msc += $item_dmg:You feel angry
 msc += $item_dmg:You feel a little pissed off
 msc += $item_dmg:Your hooves look more like feet
-msc += $item_dmg:You feel a little hungry
 msc += $item_dmg:A piece of fruit is consumed
 msc += $item_dmg:pieces of fruit are consumed
 msc += $item_dmg:You feel slightly disoriented
@@ -1209,10 +1208,8 @@ msc += $item_dmg:You feel even more weirdly uncertain
 msc += $item_dmg:You feel weirdly uncertain
 msc += $item_dmg:The drain falls to bits
 msc += $item_dmg:acid corrodes
-msc += $item_dmg:catch(es)? fire
 msc ^= $item_dmg:freezes? and shatters?
 msc += $item_dmg:covered with spores
-msc += $item_dmg:devours some of your food
 msc += $item_dmg:rots? away
 msc += $item_dmg:It has a very clean taste
 msc += $item_dmg:You feel your flesh rotting away
@@ -1227,7 +1224,6 @@ msc += $item_dmg:GONNNNG
 msc += $item_dmg:BOUMMMMG
 msc += $item_dmg:SHROANNG
 msc += $item_dmg:BONNNG
-msc ^= $item_dmg:This attack would place you under penance
 msc += $item_dmg:You will pay for your transgression. mortal
 msc += $item_dmg:You hear a distant slurping noise
 msc ^= $item_dmg:picks up.*(potions?|scrolls?|wand)
@@ -2389,7 +2385,6 @@ msc += $positive:struggles to blink free from constriction
 msc += $positive:You pull the items towards yourself
 msc += $positive:the former slaves? thanks? you
 msc += $positive:Something gets caught in the net
-msc += $positive:[^y].*rots
 msc += $positive:the hog turns into a human
 msc += $positive:the hogs revert to their human forms
 msc += $positive:You feel the strange sensation of being on two planes at once
@@ -2456,7 +2451,6 @@ msc ^= $positive:You fade into invisibility
 msc ^= $positive:grand avatar fades into the ether
 msc ^= $positive:Your attacks are magically infused
 msc ^= $positive:You feel protected from missiles
-msc ^= $positive:You feel a little less hungry
 msc ^= $positive:Your.*is no longer moving slowly
 msc ^= $positive:You are no longer (entranced|glowing)
 msc ^= $positive:You feel as if something is helping you
@@ -3813,8 +3807,8 @@ end
 
 
 ------------------- Hooks -------------------
-function c_message_after_shaft(text, _)
-  if as_shaft_depth ~= 0 then return end
+function c_message_after_shaft(text, channel)
+  if as_shaft_depth ~= 0 or channel ~= "plain" then return end
   if text:find("fall into a shaft") then
     as_shaft_depth = CACHE.depth
     as_shaft_branch = CACHE.branch
@@ -3823,12 +3817,10 @@ function c_message_after_shaft(text, _)
 end
 
 function ready_after_shaft()
-  if as_shaft_depth ~= 0 then
-    if CACHE.depth == as_shaft_depth and CACHE.branch == as_shaft_branch then
-      crawl.setopt("explore_stop -= stairs")
-      as_shaft_depth = 0
-      as_shaft_branch = "NA"
-    end
+  if CACHE.depth == as_shaft_depth and CACHE.branch == as_shaft_branch then
+    crawl.setopt("explore_stop -= stairs")
+    as_shaft_depth = 0
+    as_shaft_branch = "NA"
   end
 end
 
@@ -3996,7 +3988,7 @@ local function inscribe_armour_stats(it)
       new_insc = new_insc .. ", " .. ev
     end
     if it.inscription and it.inscription ~= "" then
-      new_insc = new_insc .. " " .. it.inscription
+      new_insc = new_insc .. "; " .. it.inscription
     end
   end
 
@@ -4004,18 +3996,20 @@ local function inscribe_armour_stats(it)
 end
 
 local function inscribe_weapon_stats(it)
-  local new_inscr = get_weapon_info_string(it)
+  local orig_inscr = it.inscription
+  local dps_inscr = get_weapon_info_string(it)
+  local prefix, suffix = "", ""
 
-  local idx = it.inscription:find("DPS=")
-  if idx then
-    if idx + #new_inscr <= #it.inscription then
-      new_inscr = new_inscr .. it.inscription:sub(idx + #new_inscr, #it.inscription)
+  local idx = orig_inscr:find("DPS:")
+  if not idx then suffix = "; " .. orig_inscr
+  else
+    if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
+    if idx + #dps_inscr - 1 < #orig_inscr then
+      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
     end
-    if idx > 1 then new_inscr = it.inscription:sub(1, idx-1) .. new_inscr end
   end
 
-  it.inscribe(new_inscr, false)
-  return new_inscr
+  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
 
@@ -4479,7 +4473,6 @@ if CACHE.turn == 0 then
     end
   end
   if started_with_ranged then add_exclusions({ " stone", "boomerang" }) end
-  if CACHE.size_penalty >= SIZE_PENALTY.LARGE then add_exclusion("large rock") end
 end
 
 }
@@ -4540,11 +4533,13 @@ function ch_stop_running_full_recovery(kind)
   end
 end
 
-function c_message_fully_recover(text, _)
-  if text:find("You start waiting.") or text:find("You start resting.") then
-    if not fully_recovered() then
-      waiting_for_recovery = true
-      crawl.setopt("message_colour += mute:You start waiting.")
+function c_message_fully_recover(text, channel)
+  if channel == "plain" then
+    if text:find("You start waiting.") or text:find("You start resting.") then
+      if not fully_recovered() then
+        waiting_for_recovery = true
+        crawl.setopt("message_colour += mute:You start waiting.")
+      end
     end
   elseif waiting_for_recovery and channel == "timed_portal" then
     you.stop_activity()
@@ -4912,7 +4907,9 @@ function ready_force_mores()
   end
 end
 
-function c_message_fm_pack(text, _)
+function c_message_fm_pack(text, channel)
+  if channel ~= "plain" then return end
+  
   -- Identifies when a mute should be turned on
   if not text:find("comes? into view") then return end
   for _, v in ipairs(fm_pack) do
@@ -5150,17 +5147,6 @@ local function ready_ignore_altars()
   end
 end
 
----- Automated temple actions ----
-local function c_message_search_altars_in_temple(text, _)
-  if CACHE.branch == "Temple" then
-    if text:find("explor") then
-      crawl.sendkeys({ 6, "altar\r" })
-    elseif text:find("welcomes you!") then
-      crawl.sendkeys("X<\r")
-    end
-  end
-end
-
 ---- Stop on Pan Gates ----
 local function ready_stop_on_pan_gates()
   local branch = CACHE.branch
@@ -5173,16 +5159,48 @@ local function ready_stop_on_pan_gates()
   end
 end
 
+---- Temple actions ----
+local autosearched_temple = false
+local function ready_temple_macro()
+  if CACHE.branch == "Temple" and not autosearched_temple and CACHE.god == "No God" then
+    crawl.sendkeys({ 6, "altar\r" })
+    autosearched_temple = true
+  end
+end
+
+local function c_message_temple_actions(text, _)
+  if CACHE.branch == "Temple" then
+    -- Hit explore to search all altars
+    if text:find("explor") then
+      crawl.sendkeys({ 6, "altar\r" })
+    elseif text:find("welcomes you!") then
+      -- Run to staircase after worship
+      crawl.sendkeys("X<\r")
+    end
+  end
+end
+
+---- Gauntlet actions ----
+local autosearched_gauntlet = false
+local function ready_gauntlet_macro()
+  if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
+    crawl.sendkeys({ 6, ".\r" })
+    autosearched_gauntlet = true
+  end
+end
+
 
 ---------------- Hooks ----------------
 function ready_runrest_features()
   if CONFIG.ignore_altars then ready_ignore_altars() end
   if CONFIG.ignore_portal_exits then ready_ignore_exits() end
   if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
+  if CONFIG.temple_macros then ready_temple_macro() end
+  if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
 end
 
 function c_message_runrest_features(text, _)
-  if CONFIG.search_altars_in_temple then c_message_search_altars_in_temple(text, _) end
+  if CONFIG.temple_macros then c_message_temple_actions(text, _) end
 end
 
 }
@@ -5427,14 +5445,13 @@ if loaded_pa_util then return end
 loaded_pa_util = true
 
 
---- Custom def of ego/branded ---
-function has_ego(it)
-  if is_weapon(it) then return it.artefact or it.branded end
-  if it.artefact or it.branded then return true end
-  local basename = it.name("base")
-  if basename:find("troll leather") then return true end
-  if basename:find("dragon scales") and not basename:find("steam") then return true end
-  return false
+function get_plussed_name(it, name_type)
+  if is_talisman(it) or is_orb(it) then return it.name() end
+  local name = it.name(name_type or "base")
+  if is_staff(it) then return name end
+  local first_char = name:sub(1, 1)
+  if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
+  return name
 end
 
 function get_ego(it)
@@ -5445,13 +5462,16 @@ function get_ego(it)
   return it.ego()
 end
 
-function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) then return it.name() end
-  local name = it.name(name_type or "base")
-  local first_char = name:sub(1, 1)
-  if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
-  return name
+--- Custom def of ego/branded ---
+function has_ego(it)
+  if is_weapon(it) then return it.artefact or it.branded end
+  if it.artefact or it.branded then return true end
+  local basename = it.name("base")
+  if basename:find("troll leather") then return true end
+  if basename:find("dragon scales") and not basename:find("steam") then return true end
+  return false
 end
+
 
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
@@ -5838,7 +5858,7 @@ function get_weapon_info_string(it)
   if acc >= 0 then acc = "+" .. acc end
 
   --This would be awesome if it worked for all UIs
-  --dps_str = "DPS=<w>" .. dps_str .. "</w> "
+  --dps_str = "DPS:<w>" .. dps_str .. "</w> "
   --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
   return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
 end
@@ -6064,7 +6084,8 @@ function c_assign_invletter_item_alerts(it)
   util.remove(pa_all_level_alerts, name)
 end
 
-function c_message_item_alerts(text, _)
+function c_message_item_alerts(text, channel)
+  if channel ~= "plain" then return end
   if text:find("Done exploring.") or text:find("Partly explored") then
     local tokens = {}
     for _,v in ipairs(pa_all_level_alerts) do
@@ -6088,7 +6109,7 @@ end
 
 ---- Autopickup main ----
 add_autopickup_func(function (it, _)
-  if not you.turn_is_over() or CACHE.have_orb then return end
+  if CACHE.have_orb then return end
 
   -- Check for pickup
   local retVal = false
@@ -6107,7 +6128,7 @@ add_autopickup_func(function (it, _)
 
   -- Not picking up this item. Check for alerts.
   -- Update inventory high scores first, in case XP gained same turn item is dropped
-  if not CONFIG.alert_system_enabled then return end
+  if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
   ready_item_alerts()
 
   if loaded_pa_misc and CONFIG.alert_one_time_items then
@@ -6735,15 +6756,7 @@ local function get_dmg_delta(it, cur, penalty)
 end
 
 local function need_first_weapon(it)
-  if inv_max_dmg["melee_2"] ~= 0 then
-    if inv_max_dmg["melee_only"] == 0 then
-    -- Carrying ranged weapons only
-    return get_weap_dps(it) > inv_max_dmg["melee_2"]
-  end
-  -- Carrying a melee weapon
-  return false
-  end
-
+  if inv_max_dmg["melee_2"] > 0 then return false end
   if you.skill("Unarmed Combat") > 0 then return false end
   if get_mut("claws", true) > 0 then return false end
   if get_mut("demonic touch", true) > 0 then return false end
@@ -6753,7 +6766,7 @@ end
 
 
 local function pickup_weapon(it, cur)
-  if cur.subtype == it.subtype() then
+  if it.subtype() == cur.subtype then
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
@@ -6762,7 +6775,6 @@ local function pickup_weapon(it, cur)
     end
     if cur.branded and not has_ego(it) then return false end
     return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
-  --elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
     if no_upgrade_possible(it, cur) then return false end
 
