@@ -9,6 +9,11 @@ all_spellbooks = {
   "Inescapable Atlas", "There-And-Back Book", "Great Wizards, Vol. II", "Great Wizards, Vol. VII",
   "Trismegistus Codex", "the Unrestrained Analects", "Compendium of Siegecraft", "Codex of Conductivity",
   "Handbook of Applied Construction", "Treatise on Traps", "My Sojourn through Swampland", "Akashic Record",
+  -- Include prefixes for randart books
+  "Almanac", "Anthology", "Atlas", "Book", "Catalogue", "Codex", "Compendium", "Compilation", "Cyclopedia",
+  "Directory", "Elucidation", "Encyclopedia", "Folio", "Grimoire", "Handbook", "Incunable", "Incunabulum",
+  "Octavo", "Omnibus", "Papyrus", "Parchment", "Precepts", "Quarto", "Secrets", "Spellbook", "Tome", "Vellum",
+  "Volume",
 } -- all_spellbooks (do not remove this comment)
 
 all_undead_races = {

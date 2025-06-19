@@ -105,7 +105,7 @@ rest_delay = -1
 view_delay = 80
 show_travel_trail = true
 
-explore_greedy_visit = artefacts,glowing_items,stacks
+#explore_greedy_visit = artefacts,glowing_items,stacks
 explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
@@ -129,6 +129,11 @@ all_spellbooks = {
   "Inescapable Atlas", "There-And-Back Book", "Great Wizards, Vol. II", "Great Wizards, Vol. VII",
   "Trismegistus Codex", "the Unrestrained Analects", "Compendium of Siegecraft", "Codex of Conductivity",
   "Handbook of Applied Construction", "Treatise on Traps", "My Sojourn through Swampland", "Akashic Record",
+  -- Include prefixes for randart books
+  "Almanac", "Anthology", "Atlas", "Book", "Catalogue", "Codex", "Compendium", "Compilation", "Cyclopedia",
+  "Directory", "Elucidation", "Encyclopedia", "Folio", "Grimoire", "Handbook", "Incunable", "Incunabulum",
+  "Octavo", "Omnibus", "Papyrus", "Parchment", "Precepts", "Quarto", "Secrets", "Spellbook", "Tome", "Vellum",
+  "Volume",
 } -- all_spellbooks (do not remove this comment)
 
 all_undead_races = {
@@ -4482,22 +4487,20 @@ end
 ################################### Begin lua/fully-rest.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------ Fully rest off effects -----
-local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
-    "confused", "marked", "tree%-form", "sluggish" }
+----- Fully rest off negative statuses -----
 
-local waiting_for_recovery = false
+local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
+    "confused", "marked", "tree%-form", "sluggish" } -- "slowed" is a special case below
+
+local recovery_start_turn = 0
 local explore_after_recovery = false
 
 crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
 local function fully_recovered()
-  -- Confirm sure HP and MP are full
-  local hp, mhp = you.hp()
-  if hp ~= mhp then return false end
-  local mp, mmp = you.mp()
-  if mp ~= mmp then return false end
+  if CACHE.hp ~= CACHE.mhp then return false end
+  if CACHE.mp ~= CACHE.mmp then return false end
 
   -- Statuses that will always rest off
   local status = you.status()
@@ -4514,6 +4517,33 @@ local function fully_recovered()
   return true
 end
 
+local function start_full_recovery()
+  recovery_start_turn = CACHE.turn
+  crawl.setopt("message_colour += mute:You start waiting.")
+end
+
+local function abort_full_recovery()
+  recovery_start_turn = 0
+  crawl.setopt("message_colour -= mute:You start waiting.")
+  explore_after_recovery = false
+  you.stop_activity()
+end
+
+local function finish_full_recovery()
+  local turns = CACHE.turn - recovery_start_turn
+  local msg = string.format("Fully recovered (%d) turns.", turns)
+  enqueue_mpr(with_color(COLORS.lightgreen, msg))
+  
+  recovery_start_turn = 0
+  crawl.setopt("message_colour -= mute:You start waiting.")
+  you.stop_activity()
+
+  if explore_after_recovery then
+    explore_after_recovery = false
+    crawl.sendkeys("o")
+  end
+end
+
 -- Attach full recovery to auto-explore
 function macro_explore_full_recovery()
   if fully_recovered() then
@@ -4527,46 +4557,26 @@ crawl.setopt("macros += M o ===macro_explore_full_recovery")
 
 
 function ch_stop_running_full_recovery(kind)
-  if kind == "run" and not fully_recovered() then
-    waiting_for_recovery = true
-    crawl.setopt("message_colour += mute:You start waiting.")
-  end
+  if kind == "run" and not fully_recovered() then start_full_recovery() end
 end
 
 function c_message_fully_recover(text, channel)
   if channel == "plain" then
     if text:find("You start waiting.") or text:find("You start resting.") then
-      if not fully_recovered() then
-        waiting_for_recovery = true
-        crawl.setopt("message_colour += mute:You start waiting.")
-      end
+      if not fully_recovered() then start_full_recovery() end
     end
-  elseif waiting_for_recovery and channel == "timed_portal" then
-    you.stop_activity()
-    waiting_for_recovery = false
-    crawl.setopt("message_colour -= mute:You start waiting.")
-    explore_after_recovery = false
+  elseif recovery_start_turn > 0 then
+    if channel == "timed_portal" then abort_full_recovery()
+    elseif fully_recovered() then finish_full_recovery()
+    end
   end
 end
 
 function ready_fully_recover()
-  if waiting_for_recovery then
-    if fully_recovered() then
-      you.stop_activity()
-      crawl.setopt("message_colour -= mute:You start waiting.")
-      waiting_for_recovery = false
-      crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered."))
-
-      if explore_after_recovery then
-        crawl.sendkeys("o")
-        explore_after_recovery = false
-      end
-    elseif not you.feel_safe() then
-      you.stop_activity()
-      waiting_for_recovery = false
-      explore_after_recovery = false
-    else
-      crawl.do_commands({"CMD_SAFE_WAIT"})
+  if recovery_start_turn > 0 then
+    if fully_recovered() then finish_full_recovery()
+    elseif not you.feel_safe() then abort_full_recovery()
+    else crawl.do_commands({"CMD_SAFE_WAIT"})
     end
   else
     explore_after_recovery = false
@@ -4998,13 +5008,13 @@ local function alert_remove_faith()
 end
 
 ----- Alert once at a specific HP threshold -----
-local hp, mhp = you.hp()
+local hp, mhp = CACHE.hp, CACHE.mhp
 local below_hp_threshold = hp <= CONFIG.alert_low_hp_threshold * mhp
 local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
 local LOW_HP_MSG = "Dropped below " .. threshold_perc .. "% HP"
 
 local function alert_low_hp()
-  hp, mhp = you.hp()
+  hp, mhp = CACHE.hp, CACHE.mhp
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
@@ -5114,6 +5124,7 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 -- A collection of simple features related to resting and auto-explore stops
+
 
 local stop_on_altars = true
 local stop_on_portals = true
@@ -5266,7 +5277,7 @@ end
 if you.turns() == 0 then
   ---- Skill menu on startup (by rwbarton, edits by buehler) ----
   if CONFIG.show_skills_on_startup then
-    local show_skills_on_startup = (CACHE.race ~= "Gnoll" or CACHE.class == "Wanderer")
+    local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
     if show_skills_on_startup then
       crawl.sendkeys("m")
     end
@@ -6010,7 +6021,7 @@ end
 --- Startup code ---
 -- Starting items: Remove from pa_single_alert_items, add to pa_items_picked
 -- Update alerts for first polearm/ranged
-if you.turns() == 0 then
+if CACHE.turn == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
@@ -6092,7 +6103,7 @@ function c_message_item_alerts(text, channel)
       tokens[#tokens+1] = "\n  " .. v
     end
     if #tokens > 0 then
-      crawl.mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
+      enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
     end
     pa_all_level_alerts = {}
   end
