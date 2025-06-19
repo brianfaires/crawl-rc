@@ -12,7 +12,7 @@ autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
 
-autofight_stop = 66
+autofight_stop = 60
 hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
@@ -29,11 +29,8 @@ rest_delay = -1
 view_delay = 80
 show_travel_trail = true
 
-explore_greedy_visit = artefacts,glowing_items,stacks
 explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
-
-
 
 
 ####### Includes #######
@@ -126,7 +123,9 @@ function c_answer_prompt(prompt)
   if prompt:find("cheaper one?") then
     crawl.mpr("Replacing shopping list items")
     return true end
-  if prompt == "Die?" then return false end  
+  if prompt == "Die?" then
+    return false
+  end  
 end
 
 

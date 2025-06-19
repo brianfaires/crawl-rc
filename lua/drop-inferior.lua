@@ -18,8 +18,7 @@ function c_assign_invletter_drop_inferior(it)
 
   local risky_artefact = false
   if it.artefact then
-    local name = 
-    if util.contains(dangerous_brands, it.name():lower()) then
+    if util.contains(dangerous_brands, it.name()) then
       risky_artefact = true
     end
   end
