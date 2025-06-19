@@ -125,7 +125,7 @@ end
 --- Startup code ---
 -- Starting items: Remove from pa_single_alert_items, add to pa_items_picked
 -- Update alerts for first polearm/ranged
-if you.turns() == 0 then
+if CACHE.turn == 0 then
   for inv in iter.invent_iterator:new(items.inventory()) do
     local idx = get_rare_item_index(inv)
     if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end

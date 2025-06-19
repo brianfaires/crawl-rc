@@ -57,7 +57,7 @@ function c_message_item_alerts(text, channel)
       tokens[#tokens+1] = "\n  " .. v
     end
     if #tokens > 0 then
-      crawl.mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
+      enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
     end
     pa_all_level_alerts = {}
   end

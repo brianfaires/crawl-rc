@@ -1,5 +1,6 @@
 if loaded_misc_alerts then return end
 loaded_misc_alerts = true
+loadfile("crawl-rc/lua/cache.lua")
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/emojis.lua")
 loadfile("crawl-rc/lua/util.lua")
@@ -20,13 +21,13 @@ local function alert_remove_faith()
 end
 
 ----- Alert once at a specific HP threshold -----
-local hp, mhp = you.hp()
+local hp, mhp = CACHE.hp, CACHE.mhp
 local below_hp_threshold = hp <= CONFIG.alert_low_hp_threshold * mhp
 local threshold_perc = 100 * CONFIG.alert_low_hp_threshold
 local LOW_HP_MSG = "Dropped below " .. threshold_perc .. "% HP"
 
 local function alert_low_hp()
-  hp, mhp = you.hp()
+  hp, mhp = CACHE.hp, CACHE.mhp
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then

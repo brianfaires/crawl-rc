@@ -1,4 +1,6 @@
 -- A collection of simple features related to resting and auto-explore stops
+
+loadfile("crawl-rc/lua/cache.lua")
 loadfile("crawl-rc/lua/config.lua")
 loadfile("crawl-rc/lua/constants.lua")
 

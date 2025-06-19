@@ -1,19 +1,20 @@
------ Fully rest off effects -----
-local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
-    "confused", "marked", "tree%-form", "sluggish" }
+----- Fully rest off negative statuses -----
+loadfile("crawl-rc/lua/cache.lua")
+loadfile("crawl-rc/lua/config.lua")
+loadfile("crawl-rc/lua/util.lua")
 
-local waiting_for_recovery = false
+local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
+    "confused", "marked", "tree%-form", "sluggish" } -- "slowed" is a special case below
+
+local recovery_start_turn = 0
 local explore_after_recovery = false
 
 crawl.setopt("runrest_ignore_message += recovery:.*")
 crawl.setopt("runrest_ignore_message += duration:.*")
 
 local function fully_recovered()
-  -- Confirm sure HP and MP are full
-  local hp, mhp = you.hp()
-  if hp ~= mhp then return false end
-  local mp, mmp = you.mp()
-  if mp ~= mmp then return false end
+  if CACHE.hp ~= CACHE.mhp then return false end
+  if CACHE.mp ~= CACHE.mmp then return false end
 
   -- Statuses that will always rest off
   local status = you.status()
@@ -30,6 +31,33 @@ local function fully_recovered()
   return true
 end
 
+local function start_full_recovery()
+  recovery_start_turn = CACHE.turn
+  crawl.setopt("message_colour += mute:You start waiting.")
+end
+
+local function abort_full_recovery()
+  recovery_start_turn = 0
+  crawl.setopt("message_colour -= mute:You start waiting.")
+  explore_after_recovery = false
+  you.stop_activity()
+end
+
+local function finish_full_recovery()
+  local turns = CACHE.turn - recovery_start_turn
+  local msg = string.format("Fully recovered (%d) turns.", turns)
+  enqueue_mpr(with_color(COLORS.lightgreen, msg))
+  
+  recovery_start_turn = 0
+  crawl.setopt("message_colour -= mute:You start waiting.")
+  you.stop_activity()
+
+  if explore_after_recovery then
+    explore_after_recovery = false
+    crawl.sendkeys("o")
+  end
+end
+
 -- Attach full recovery to auto-explore
 function macro_explore_full_recovery()
   if fully_recovered() then
@@ -43,46 +71,26 @@ crawl.setopt("macros += M o ===macro_explore_full_recovery")
 
 
 function ch_stop_running_full_recovery(kind)
-  if kind == "run" and not fully_recovered() then
-    waiting_for_recovery = true
-    crawl.setopt("message_colour += mute:You start waiting.")
-  end
+  if kind == "run" and not fully_recovered() then start_full_recovery() end
 end
 
 function c_message_fully_recover(text, channel)
   if channel == "plain" then
     if text:find("You start waiting.") or text:find("You start resting.") then
-      if not fully_recovered() then
-        waiting_for_recovery = true
-        crawl.setopt("message_colour += mute:You start waiting.")
-      end
+      if not fully_recovered() then start_full_recovery() end
     end
-  elseif waiting_for_recovery and channel == "timed_portal" then
-    you.stop_activity()
-    waiting_for_recovery = false
-    crawl.setopt("message_colour -= mute:You start waiting.")
-    explore_after_recovery = false
+  elseif recovery_start_turn > 0 then
+    if channel == "timed_portal" then abort_full_recovery()
+    elseif fully_recovered() then finish_full_recovery()
+    end
   end
 end
 
 function ready_fully_recover()
-  if waiting_for_recovery then
-    if fully_recovered() then
-      you.stop_activity()
-      crawl.setopt("message_colour -= mute:You start waiting.")
-      waiting_for_recovery = false
-      crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered."))
-
-      if explore_after_recovery then
-        crawl.sendkeys("o")
-        explore_after_recovery = false
-      end
-    elseif not you.feel_safe() then
-      you.stop_activity()
-      waiting_for_recovery = false
-      explore_after_recovery = false
-    else
-      crawl.do_commands({"CMD_SAFE_WAIT"})
+  if recovery_start_turn > 0 then
+    if fully_recovered() then finish_full_recovery()
+    elseif not you.feel_safe() then abort_full_recovery()
+    else crawl.do_commands({"CMD_SAFE_WAIT"})
     end
   else
     explore_after_recovery = false
