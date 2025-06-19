@@ -148,6 +148,14 @@ function is_amulet(it)
   return it and it.name("base") == "amulet"
 end
 
+function is_dangerous_brand(text)
+  if not text then return false end
+  for _, v in ipairs(dangerous_brands) do
+    if text:find(v) then return true end
+  end
+  return false
+end
+
 function is_orb(it)
   return it and it.name("base"):find("orb of ")
 end

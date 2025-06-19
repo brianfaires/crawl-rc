@@ -70,6 +70,12 @@ all_training_skills = {
   "Staves", "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
 } -- all_training_skills (do not remove this comment)
 
+dangerous_brands = { "chaos", "distortion", "harm", "infusion" }
+
+SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
+
+
+---- COLORS ----
 -- Color map to single digit tags (less text than explicit)
 -- 0:black, 1:blue, 2:green, 3:cyan, 4:red, 5:magenta, 6:brown,
 -- 7:lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightcyan,
@@ -91,5 +97,3 @@ COLORS = {
   lightmagenta = "lightmagenta", yellow = "yellow", white = "w",
   black = 0,
 } -- COLORS (do not remove this comment)
-
-SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }

@@ -13,15 +13,13 @@ end
 ------------------ Hook ------------------
 function c_assign_invletter_drop_inferior(it)
   -- Skip brands that are potentially harmful
-  local it_ego = it.ego()
-  if it_ego == "distortion" or it_ego == "chaos" or it_ego == "infusion" then return end
-
   if not is_weapon(it) and not is_armour(it) then return end
+  if is_dangerous_brand(it.ego()) then return end
 
   local risky_artefact = false
   if it.artefact then
-    local name = it.name()
-    if name:find("%-") or name:find("harm") or name:find("infusion") then
+    local name = 
+    if util.contains(dangerous_brands, it.name():lower()) then
       risky_artefact = true
     end
   end

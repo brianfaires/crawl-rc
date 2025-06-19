@@ -190,6 +190,12 @@ all_training_skills = {
   "Staves", "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
 } -- all_training_skills (do not remove this comment)
 
+dangerous_brands = { "chaos", "distortion", "harm", "infusion" }
+
+SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
+
+
+---- COLORS ----
 -- Color map to single digit tags (less text than explicit)
 -- 0:black, 1:blue, 2:green, 3:cyan, 4:red, 5:magenta, 6:brown,
 -- 7:lightgrey, 8:darkgrey, 9:lightblue, 10:lightgreen, 11:lightcyan,
@@ -211,8 +217,6 @@ COLORS = {
   lightmagenta = "lightmagenta", yellow = "yellow", white = "w",
   black = 0,
 } -- COLORS (do not remove this comment)
-
-SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 
 }
 ############################### End lua/constants.lua ###############################
@@ -373,6 +377,14 @@ end
 
 function is_amulet(it)
   return it and it.name("base") == "amulet"
+end
+
+function is_dangerous_brand(text)
+  if not text then return false end
+  for _, v in ipairs(dangerous_brands) do
+    if text:find(v) then return true end
+  end
+  return false
 end
 
 function is_orb(it)
@@ -4145,15 +4157,13 @@ end
 ------------------ Hook ------------------
 function c_assign_invletter_drop_inferior(it)
   -- Skip brands that are potentially harmful
-  local it_ego = it.ego()
-  if it_ego == "distortion" or it_ego == "chaos" or it_ego == "infusion" then return end
-
   if not is_weapon(it) and not is_armour(it) then return end
+  if is_dangerous_brand(it.ego()) then return end
 
   local risky_artefact = false
   if it.artefact then
-    local name = it.name()
-    if name:find("%-") or name:find("harm") or name:find("infusion") then
+    local name = 
+    if util.contains(dangerous_brands, it.name():lower()) then
       risky_artefact = true
     end
   end
@@ -6264,7 +6274,9 @@ function pa_pickup_armour(it)
     if not it.is_identified then return false end
 
     if it.branded then
-      if get_ego(it) ~= get_ego(cur) then return true end
+      local it_ego = get_ego(it)
+      if is_dangerous_brand(it_ego) then return false end
+      if it_ego ~= get_ego(cur) then return true end
       if get_armour_ac(it) > get_armour_ac(cur) then return true end
     else
       if cur.branded or cur.artefact then return false end

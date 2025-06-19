@@ -106,7 +106,9 @@ function pa_pickup_armour(it)
     if not it.is_identified then return false end
 
     if it.branded then
-      if get_ego(it) ~= get_ego(cur) then return true end
+      local it_ego = get_ego(it)
+      if is_dangerous_brand(it_ego) then return false end
+      if it_ego ~= get_ego(cur) then return true end
       if get_armour_ac(it) > get_armour_ac(cur) then return true end
     else
       if cur.branded or cur.artefact then return false end
