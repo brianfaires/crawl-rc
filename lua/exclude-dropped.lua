@@ -9,50 +9,45 @@ loadfile("crawl-rc/lua/util.lua")
 create_persistent_data("dropped_item_exclusions", {})
 
 local function add_exclusion(item_name)
-  if util.contains(dropped_item_exclusions, item_name) then return end
-  dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
-  crawl.setopt("autopickup_exceptions ^= " .. item_name)
-end
-
-local function add_exclusions(item_names)
-  for _,item_name in ipairs(item_names) do
-    add_exclusion(item_name)
+  if not util.contains(dropped_item_exclusions, item_name) then
+    dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
   end
+  local command = "autopickup_exceptions ^= " .. item_name
+  crawl.setopt(command)
 end
 
 local function remove_exclusion(item_name)
   util.remove(dropped_item_exclusions, item_name)
-  crawl.setopt("autopickup_exceptions -= " .. item_name)
+  local command = "autopickup_exceptions -= " .. item_name
+  crawl.setopt(command)
 end
 
-local function remove_exclusions(item_names)
-  for _,item_name in ipairs(item_names) do
-    remove_exclusion(item_name)
+local function has_enchantable_weap_in_inv()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+      return true
+    end
   end
+  return false
 end
 
 -- Pulls name from text; returns nil if we should NOT exclude anything
-local function get_excludable_name(text)
+local function get_excludable_name(text, for_exclusion)
+  text = cleanup_text(text, false) -- remove tags
+  text = text:gsub("{.*}", "")
+  text = text:gsub("[.]", "")
+  text = text:gsub("%(.*%)", "")
+  text = util.trim(text)
+
   -- jewellery and wands
   local idx = text:find("ring of ") or text:find("amulet of ") or text:find("wand of ")
   if idx then
-    text = text:gsub(" {.*}", "")
-    text = text:gsub("[.]", "")
-    return text:sub(idx,#text)
+    return text:sub(idx, #text)
   end
 
   -- misc items
   for _,item_name in ipairs(all_misc) do
     if text:find(item_name) then return item_name end
-  end
-
-  -- Commonly stashed scrolls; don't stop future pickups
-  if text:find("enchant armour") then
-    return "enchant armour"
-  elseif text:find("enchant weapon") then
-    if not has_enchantable_weap_in_inv() then return "enchant weapon" end
-  elseif text:find("brand weapon") then
-    if not has_enchantable_weap_in_inv() then return "brand weapon" end
   end
 
   -- Missiles; add regex to hit specific missiles
@@ -67,32 +62,36 @@ local function get_excludable_name(text)
           item_name = "(?<!silver )" .. item_name .. "(?!(s? of dispersal))"
         end
       end
-
       return item_name
     end
   end
-end
 
-local function has_enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
-      return true
-    end
+  -- Potions
+  idx = text:find("potions? of")
+  if idx then
+    return "potions? of " .. util.trim(text:sub(idx+10,#text))
   end
-  return false
+
+  -- Scrolls; Enchant scrolls are special; not always excluded
+  idx = text:find("scrolls? of")
+  if idx then
+    -- Enchant/Brand weapon scrolls continue pickup if they're still useful
+    if for_exclusion and not CONFIG.exclude_dropped_enchant_scrolls and
+        text:find(" weapon") and has_enchantable_weap_in_inv() then return
+    end
+    return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
+  end
 end
 
 ------------------ Hook ------------------
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
-
   local exclude
   if text:find("You drop ") then exclude = true
   elseif text:find(" %- ") then exclude = false
-  else return
-  end
+  else return end
 
-  local item_name = get_excludable_name(text)
+  local item_name = get_excludable_name(text, exclude)
   if not item_name then return end
 
   if exclude then
@@ -102,20 +101,7 @@ function c_message_exclude_dropped(text, channel)
   end
 end
 
-
--- Startup logic
+-- Reapply exclusions from persistent data
 for _,v in ipairs(dropped_item_exclusions) do
   add_exclusion(v)
-end
-
--- Missile logic at start of game
-local started_with_ranged = false
-if CACHE.turn == 0 then
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.is_ranged then
-      started_with_ranged = true
-      break
-    end
-  end
-  if started_with_ranged then add_exclusions({ " stone", "boomerang" }) end
 end

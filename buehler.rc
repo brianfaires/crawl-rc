@@ -83,7 +83,6 @@ show_more = false
 small_more = true
 mouse_input = false
 default_manual_training = true
-drop_disables_autopickup = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
@@ -4153,6 +4152,9 @@ end
 
 ------------------ Hook ------------------
 function c_assign_invletter_drop_inferior(it)
+  -- Remove any previous DROP_KEY inscriptions
+  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
+
   -- Skip brands that are potentially harmful
   if not is_weapon(it) and not is_armour(it) then return end
   if is_dangerous_brand(it.ego()) then return end
@@ -4186,12 +4188,6 @@ function c_assign_invletter_drop_inferior(it)
       end
     end
   end
-end
-
-
-function c_assign_invletter_exclude_dropped(it)
- -- Remove DROP_KEY inscription on pickup
-  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 end
 
 }
@@ -4375,50 +4371,45 @@ loaded_exclude_dropped = true
 create_persistent_data("dropped_item_exclusions", {})
 
 local function add_exclusion(item_name)
-  if util.contains(dropped_item_exclusions, item_name) then return end
-  dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
-  crawl.setopt("autopickup_exceptions ^= " .. item_name)
-end
-
-local function add_exclusions(item_names)
-  for _,item_name in ipairs(item_names) do
-    add_exclusion(item_name)
+  if not util.contains(dropped_item_exclusions, item_name) then
+    dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
   end
+  local command = "autopickup_exceptions ^= " .. item_name
+  crawl.setopt(command)
 end
 
 local function remove_exclusion(item_name)
   util.remove(dropped_item_exclusions, item_name)
-  crawl.setopt("autopickup_exceptions -= " .. item_name)
+  local command = "autopickup_exceptions -= " .. item_name
+  crawl.setopt(command)
 end
 
-local function remove_exclusions(item_names)
-  for _,item_name in ipairs(item_names) do
-    remove_exclusion(item_name)
+local function has_enchantable_weap_in_inv()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+      return true
+    end
   end
+  return false
 end
 
 -- Pulls name from text; returns nil if we should NOT exclude anything
-local function get_excludable_name(text)
+local function get_excludable_name(text, for_exclusion)
+  text = cleanup_text(text, false) -- remove tags
+  text = text:gsub("{.*}", "")
+  text = text:gsub("[.]", "")
+  text = text:gsub("%(.*%)", "")
+  text = util.trim(text)
+
   -- jewellery and wands
   local idx = text:find("ring of ") or text:find("amulet of ") or text:find("wand of ")
   if idx then
-    text = text:gsub(" {.*}", "")
-    text = text:gsub("[.]", "")
-    return text:sub(idx,#text)
+    return text:sub(idx, #text)
   end
 
   -- misc items
   for _,item_name in ipairs(all_misc) do
     if text:find(item_name) then return item_name end
-  end
-
-  -- Commonly stashed scrolls; don't stop future pickups
-  if text:find("enchant armour") then
-    return "enchant armour"
-  elseif text:find("enchant weapon") then
-    if not has_enchantable_weap_in_inv() then return "enchant weapon" end
-  elseif text:find("brand weapon") then
-    if not has_enchantable_weap_in_inv() then return "brand weapon" end
   end
 
   -- Missiles; add regex to hit specific missiles
@@ -4433,32 +4424,36 @@ local function get_excludable_name(text)
           item_name = "(?<!silver )" .. item_name .. "(?!(s? of dispersal))"
         end
       end
-
       return item_name
     end
   end
-end
 
-local function has_enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
-      return true
-    end
+  -- Potions
+  idx = text:find("potions? of")
+  if idx then
+    return "potions? of " .. util.trim(text:sub(idx+10,#text))
   end
-  return false
+
+  -- Scrolls; Enchant scrolls are special; not always excluded
+  idx = text:find("scrolls? of")
+  if idx then
+    -- Enchant/Brand weapon scrolls continue pickup if they're still useful
+    if for_exclusion and not CONFIG.exclude_dropped_enchant_scrolls and
+        text:find(" weapon") and has_enchantable_weap_in_inv() then return
+    end
+    return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
+  end
 end
 
 ------------------ Hook ------------------
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
-
   local exclude
   if text:find("You drop ") then exclude = true
   elseif text:find(" %- ") then exclude = false
-  else return
-  end
+  else return end
 
-  local item_name = get_excludable_name(text)
+  local item_name = get_excludable_name(text, exclude)
   if not item_name then return end
 
   if exclude then
@@ -4468,22 +4463,9 @@ function c_message_exclude_dropped(text, channel)
   end
 end
 
-
--- Startup logic
+-- Reapply exclusions from persistent data
 for _,v in ipairs(dropped_item_exclusions) do
   add_exclusion(v)
-end
-
--- Missile logic at start of game
-local started_with_ranged = false
-if CACHE.turn == 0 then
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.is_ranged then
-      started_with_ranged = true
-      break
-    end
-  end
-  if started_with_ranged then add_exclusions({ " stone", "boomerang" }) end
 end
 
 }
@@ -6145,10 +6127,9 @@ add_autopickup_func(function (it, _)
   end
 
   -- Not picking up this item. Check for alerts.
-  -- Update inventory high scores first, in case XP gained same turn item is dropped
   if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
   if util.contains(pa_items_alerted, plus_name) then return end
-  ready_item_alerts()
+  ready_item_alerts() -- Update high scores, to avoid weird cases from small stat increases
 
   if loaded_pa_misc and CONFIG.alert_one_time_items then
     if pa_alert_rare_item(it) then return end
@@ -6977,13 +6958,11 @@ function c_message(text, channel)
   if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
 end
 
-
 ---------- c_assign_inv_letter() ----------
 function c_assign_invletter(it)
   -- Calls with no return values; just triggering on new item pickup
   if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
   if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
-  if c_assign_invletter_exclude_dropped then c_assign_invletter_exclude_dropped(it) end
   if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
   if c_assign_invletter_mute_swaps then c_assign_invletter_mute_swaps(it) end
   if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
@@ -6994,17 +6973,10 @@ function c_assign_invletter(it)
   if ret_val then return ret_val end
 end
 
--------- ch_start_running() --------
-function ch_start_running(kind)
-  if ch_start_running_item_alerts then ch_start_running_item_alerts(kind) end
-end
-
 -------- ch_stop_running() --------
 function ch_stop_running(kind)
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
-  if ch_stop_running_item_alerts then ch_stop_running_item_alerts(kind) end
 end
-
 
 -------- Prompt auto-answers --------
 function c_answer_prompt(prompt)
@@ -7016,15 +6988,17 @@ function c_answer_prompt(prompt)
   end  
 end
 
-
 --------- ready() ---------
 local last_ready_turn = -1
-local last_dump_turn = 0
+local last_dump_turn = -1
 function ready()
+  -- Turn counters
   if you.turns() == last_ready_turn then return end
   ready_CACHE()
   last_ready_turn = CACHE.turn
+  last_dump_turn = CACHE.turn
 
+  -- Debugging
   if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
     last_dump_turn = CACHE.turn
     dump_persistent_data()
@@ -7040,16 +7014,18 @@ function ready()
   if ready_mute_swaps then ready_mute_swaps() end
   if ready_runrest_features then ready_runrest_features() end
   if ready_after_shaft then ready_after_shaft() end
+  if ready_exclude_dropped then ready_exclude_dropped() end
   if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
   if ready_announce_damage then ready_announce_damage() end
   if ready_item_alerts then ready_item_alerts() end
   if ready_misc_alerts then ready_misc_alerts() end
 
+  -- Delayed messages
   mpr_consume_queue()
 end
 
---Startup hygeine
+-- Startup init / hygeine
 ready()
 crawl.redraw_screen()
 }

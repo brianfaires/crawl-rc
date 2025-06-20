@@ -12,6 +12,9 @@ end
 
 ------------------ Hook ------------------
 function c_assign_invletter_drop_inferior(it)
+  -- Remove any previous DROP_KEY inscriptions
+  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
+
   -- Skip brands that are potentially harmful
   if not is_weapon(it) and not is_armour(it) then return end
   if is_dangerous_brand(it.ego()) then return end
@@ -45,10 +48,4 @@ function c_assign_invletter_drop_inferior(it)
       end
     end
   end
-end
-
-
-function c_assign_invletter_exclude_dropped(it)
- -- Remove DROP_KEY inscription on pickup
-  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 end

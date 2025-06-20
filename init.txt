@@ -7,7 +7,6 @@ show_more = false
 small_more = true
 mouse_input = false
 default_manual_training = true
-drop_disables_autopickup = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
@@ -89,13 +88,11 @@ function c_message(text, channel)
   if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
 end
 
-
 ---------- c_assign_inv_letter() ----------
 function c_assign_invletter(it)
   -- Calls with no return values; just triggering on new item pickup
   if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
   if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
-  if c_assign_invletter_exclude_dropped then c_assign_invletter_exclude_dropped(it) end
   if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
   if c_assign_invletter_mute_swaps then c_assign_invletter_mute_swaps(it) end
   if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
@@ -106,17 +103,10 @@ function c_assign_invletter(it)
   if ret_val then return ret_val end
 end
 
--------- ch_start_running() --------
-function ch_start_running(kind)
-  if ch_start_running_item_alerts then ch_start_running_item_alerts(kind) end
-end
-
 -------- ch_stop_running() --------
 function ch_stop_running(kind)
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
-  if ch_stop_running_item_alerts then ch_stop_running_item_alerts(kind) end
 end
-
 
 -------- Prompt auto-answers --------
 function c_answer_prompt(prompt)
@@ -128,15 +118,17 @@ function c_answer_prompt(prompt)
   end  
 end
 
-
 --------- ready() ---------
 local last_ready_turn = -1
-local last_dump_turn = 0
+local last_dump_turn = -1
 function ready()
+  -- Turn counters
   if you.turns() == last_ready_turn then return end
   ready_CACHE()
   last_ready_turn = CACHE.turn
+  last_dump_turn = CACHE.turn
 
+  -- Debugging
   if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
     last_dump_turn = CACHE.turn
     dump_persistent_data()
@@ -152,16 +144,18 @@ function ready()
   if ready_mute_swaps then ready_mute_swaps() end
   if ready_runrest_features then ready_runrest_features() end
   if ready_after_shaft then ready_after_shaft() end
+  if ready_exclude_dropped then ready_exclude_dropped() end
   if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
   if ready_announce_damage then ready_announce_damage() end
   if ready_item_alerts then ready_item_alerts() end
   if ready_misc_alerts then ready_misc_alerts() end
 
+  -- Delayed messages
   mpr_consume_queue()
 end
 
---Startup hygeine
+-- Startup init / hygeine
 ready()
 crawl.redraw_screen()
 }

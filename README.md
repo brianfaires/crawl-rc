@@ -4,20 +4,23 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 ## Usage
 - All features are enabled and included via [init.txt](init.txt). If you want a single file,
   [buehler.rc](buehler.rc) contains [init.txt](init.txt) and all the files it references.
-- To merge with an existing RC file, make sure any Lua hook functions are only defined
-  once (at the bottom of the RC file). If duplicate functions exist, combine them.
+- To merge with an existing RC file, make sure any Lua hook functions (such as `ready()`) are only defined
+  once, at the end of the RC file. If duplicate functions exist, combine them.
 - Features can be configured. See [config.lua section](#luaconfiglua) below.
 - Features can also be excluded at the file-level.
   - If you have access to python:
     1. In [init.txt](init.txt), comment out `include =` or `lua_file =` statements by adding a `#` at the start of the line.
     1. Run `python concat_rc.py` to regenerate [buehler.rc](buehler.rc) without the features included.
-  - Alternatively, just remove or comment out everything between the `Begin <filename>` and `<End filename>` markers in [buehler.rc](buehler.rc).
-- If copy-paste individual files into another RC, be sure to include:
+  - Alternatively, just remove everything between the `Begin <filename>` and `<End filename>` markers in [buehler.rc](buehler.rc).
+- If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
   1. Any file dependencies. These are listed at the top of each file.
     Copy-paste the referenced file in place of any `include` or `loadfile()` statements.
     Do the same for any lua files (`lua_file =`), but add curly braces around the file contents to mark it as lua code `{ <file_contents> }`.
-  Don't manualy copy-paste the same file more than once. (e.g. [lua/config.lua](lua/config.lua) or [lua/util.lua](lua/util.lua))
+  Don't manually copy-paste the same file more than once. (e.g. [lua/config.lua](lua/config.lua) or [lua/util.lua](lua/util.lua))
+- This RC makes heavy use of the character-specific persistent data. These essentially save values when exiting,
+and then reload it when the game starts again. Currently, if the game crashes and the data is not saved, many
+features will 'reset'. To see the values of all persistent data, press '~' to open the lua interpreter, then enter: `dump_persistent_data()`
 
 ## Standard(-ish) Settings
 ### [init.txt](init.txt)
@@ -67,8 +70,10 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - Any options that change based on XL, God, Class, etc.
 
 ### [lua/exclude-dropped.lua](lua/exclude-dropped.lua)
-- Stops autopickup for items you drop.
+- Excludes autopickup for items that you drop your entire stack of.
   Resumes when you pick it up again.
+- Some special behavior for enchant scrolls.
+- (I don't like the behavior of the built-in `drop_disables_autopickup` feature)
 
 ### [lua/fm-monsters.lua](lua/fm-monsters.lua)
 *(Needs a v0.33 update)*
@@ -92,7 +97,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - A msg when you hit 6* piety while wearing an amulet of faith
 
 ### [lua/mute-swaps.rc](lua/mute-swaps.lua)
-*(This feature isn't working in 0.33; maybe it never did)*
+*(This feature isn't working in 0.33; currently excluded)*
 - Minimizes spam. When multiple messages with " - " show up in a single turn,
   it mutes all except those for the first item.
   This mostly applies during identification and item_slot assignment.
@@ -165,7 +170,7 @@ These are auto-included as necessary. Just listing for reference.
 - [lua/pickup-alert/pa-data.lua](lua/pickup-alert/pa-data.lua):
   Handles persistent data, saved with your character.
 - [lua/pickup-alert/pa-main.lua](lua/pickup-alert/pa-main.lua):
-  Defines the order of operations in the autopickup function.
+  Controls all the features, and defines/hooks an autopickup function.
 
 ## Core files
 ### [lua/config.lua](lua/config.lua)
@@ -180,12 +185,21 @@ In an attempt to future-proof, contains definitions for things like
 ### [lua/util.lua](lua/util.lua)
 Required a lot of places. Nothing in here is necessarily specific to this repo.
 
+### [lua/cache.lua](lua/cache.lua)
+- Once per turn, the cache pulls several values from the crawl API, that would otherwise be pulled
+multiple times per turn.
+- This is just for speed and a little code brevity. e.g. You `CACHE.xl` and `you.xl()` are interchangeable.
+- It *is* important that CACHE be updated via `ready_CACHE()` as the first step of ready().
+
+### [lua/emojis.lua](lua/emojis.lua)
+- Define the emojis you want for announce-damage and any alerts
+- Can also define text to replace the emojis.
+
 ## Notes
-- I wrote this over 2 years ago and recently fixed it all up to work v0.33.1.
-  Please send me any bugs, outdated notes, suggestions, etc.
+- I mainly wrote this 2+ years ago and recently fixed it up for v0.33.1.
+  Please report any bugs, outdated notes, suggestions, etc.
 - It's intended for use in webtiles.
-  It does work locally as well, but RC doesn't reload when swapping characters.
-  Just relaunch crawl after exiting a character.
+  It works locally, but AFAICT individual files don't reload/re-execute until you restart crawl.
 - Many lua files begin with an [include guard](https://en.wikipedia.org/wiki/Include_guard),
   followed by `loadfile()` for all of their dependencies.
   This helps with local development and protects against multiple imports.

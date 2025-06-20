@@ -90,10 +90,9 @@ add_autopickup_func(function (it, _)
   end
 
   -- Not picking up this item. Check for alerts.
-  -- Update inventory high scores first, in case XP gained same turn item is dropped
   if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
   if util.contains(pa_items_alerted, plus_name) then return end
-  ready_item_alerts()
+  ready_item_alerts() -- Update high scores, to avoid weird cases from small stat increases
 
   if loaded_pa_misc and CONFIG.alert_one_time_items then
     if pa_alert_rare_item(it) then return end
