@@ -21,11 +21,14 @@ local function check_new_location(key)
     end
   elseif CONFIG.warn_v5 and v5_unwarned and new_location == "Vaults4" and key == ">" then
     -- V5 warning idea by rypofalem --
-    if not crawl.yesno("Really go to Vaults:5? (y/n)", true) then
-      crawl.mpr("Okay, then.")
-      return
+    local feature = view.feature_at (0, 0)
+    if feature:find("down") or feature:find("shaft") then
+      if not crawl.yesno("Really go to Vaults:5? (y/n)", true) then
+        crawl.mpr("Okay, then.")
+        return
+      end
+      v5_unwarned = false
     end
-    v5_unwarned = false
   end
 
   crawl.sendkeys(key)
