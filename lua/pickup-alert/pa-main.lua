@@ -9,25 +9,21 @@ loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
 local last_ready_item_alerts_turn = 0
 
 function pa_alert_item(it, alert_type, emoji)
-  local base_name = get_plussed_name(it, "base")
-  if util.contains(pa_items_picked, base_name) then return false end
-  if util.contains(pa_items_alerted, base_name) then return false end
-
-  local plain_name = get_plussed_name(it, "plain")
+  local item_desc = get_plussed_name(it, "plain")
   if is_weapon(it) or is_staff(it) then
-    plain_name = table.concat({plain_name, " (", get_weapon_info_string(it), ")"})
+    item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
   elseif is_body_armour(it) then
     local ac, ev = get_armour_info_strings(it)
-    plain_name = table.concat({plain_name, " {", ac, ", ", ev, "}"})
+    item_desc = table.concat({item_desc, " {", ac, ", ", ev, "}"})
   end
   local tokens = {}
   tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
   tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
-  tokens[#tokens+1] = with_color(COLORS.yellow, plain_name .. " ")
+  tokens[#tokens+1] = with_color(COLORS.yellow, item_desc .. " ")
   tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
   enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
-  pa_all_level_alerts[#pa_all_level_alerts+1] = base_name
+  pa_all_level_alerts[#pa_all_level_alerts+1] = get_plussed_name(it, "base")
   add_item_and_lesser(pa_items_alerted, it)
   you.stop_activity()
   return true
@@ -75,6 +71,8 @@ end
 ---- Autopickup main ----
 add_autopickup_func(function (it, _)
   if CACHE.have_orb then return end
+  local plus_name = get_plussed_name(it, "base")
+  if util.contains(pa_items_picked, plus_name) then return end
 
   -- Check for pickup
   local retVal = false
@@ -94,6 +92,7 @@ add_autopickup_func(function (it, _)
   -- Not picking up this item. Check for alerts.
   -- Update inventory high scores first, in case XP gained same turn item is dropped
   if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
+  if util.contains(pa_items_alerted, plus_name) then return end
   ready_item_alerts()
 
   if loaded_pa_misc and CONFIG.alert_one_time_items then
