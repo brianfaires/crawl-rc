@@ -19,6 +19,7 @@ function init_pa_main()
 
 
   ---- Autopickup main ----
+  clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
     if CACHE.have_orb then return end
     local plus_name = get_plussed_name(it, "base")
