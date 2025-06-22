@@ -152,6 +152,10 @@ function is_dangerous_brand(text)
   return false
 end
 
+function is_jewellery(it)
+  return it and it.class(true) == "jewellery"
+end
+
 function is_ring(it)
   return it and it.name("base") == "ring"
 end

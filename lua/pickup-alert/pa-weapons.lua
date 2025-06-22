@@ -1,5 +1,4 @@
 ---- Pickup and Alert features for weapons ----
--- TODO: where does this live?
 local inv_weap_data = {}
 local top_school = "unarmed combat"
 local egos = { }

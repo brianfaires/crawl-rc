@@ -7,9 +7,10 @@ ALL_MISC_ITEMS = {
   "phantom mirror", "phial of floods", "sack of spiders", "tin of tremorstones",
 } -- ALL_MISC_ITEMS (do not remove this comment)
 
+-- This is checked against the full text of the pickup message, so use patterns to match
 ALL_MISSILES = {
-  " stone", "poisoned dart", "atropa", "curare", "datura",
-  "boomerang", "javelin", "large rock", "throwing net",
+  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart", "darts? of dispersal",
+  " stone", "boomerang", "silver javelin", "javelin", "large rock", "throwing net",
 } -- ALL_MISSILES (do not remove this comment)
 
 -- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed

@@ -15,6 +15,15 @@ local function remove_exclusion(item_name)
   crawl.setopt(command)
 end
 
+local function has_enchantable_weap_in_inv()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+      return true
+    end
+  end
+  return false
+end
+
 -- Pulls name from text; returns nil if we should NOT exclude anything
 local function get_excludable_name(text, for_exclusion)
   text = cleanup_text(text, false) -- remove tags
@@ -37,15 +46,6 @@ local function get_excludable_name(text, for_exclusion)
   -- Missiles; add regex to hit specific missiles
   for _,item_name in ipairs(ALL_MISSILES) do
     if text:find(item_name) then
-      if item_name == "boomerang" or item_name == "javelin" then
-        if text:find("silver") then
-          item_name = "silver " .. item_name
-        elseif text:find("dispersal") then
-          item_name = item_name .. "s? of dispersal"
-        else
-          item_name = "(?<!silver )" .. item_name .. "(?!(s? of dispersal))"
-        end
-      end
       return item_name
     end
   end
@@ -65,15 +65,6 @@ local function get_excludable_name(text, for_exclusion)
     end
     return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
   end
-end
-
-local function has_enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
-      return true
-    end
-  end
-  return false
 end
 
 
@@ -100,6 +91,16 @@ function c_message_exclude_dropped(text, channel)
   if not item_name then return end
 
   if exclude then
+    -- Don't exclude if we dropped partial stack (except for jewellery)
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if item_name:find(inv.name("qual")) then
+        if is_jewellery(inv) then break end
+        local qty_str = "You drop " .. inv.quantity .. " " .. item_name
+        if inv.quantity == 1 or text:find(qty_str) then break end
+        return
+      end
+    end
+
     add_exclusion(item_name)
   else
     remove_exclusion(item_name)

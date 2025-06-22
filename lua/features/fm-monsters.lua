@@ -170,30 +170,6 @@ local active_fm_index -- lookup table for speed
 local monsters_to_mute -- which packs are muted
 local last_fm_turn -- when the mute started
 
-local function do_pack_mutes()
-  -- Put pending mutes into effect
-  for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v)
-  end
-  monsters_to_mute = {}
-
-  -- Remove mutes that have expired
-  for _, v in ipairs(FM_PACK) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      set_monster_fm("+", v)
-      last_fm_turn[v] = -1
-    end
-  end
-
-  -- For no-init pack monsters, just deactivate the fm
-  for _, v in ipairs(FM_PACK_NO_CREATE) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      active_fm[active_fm_index[v]] = false
-      last_fm_turn[v] = -1
-    end
-  end
-end
-
 -- Util for checking against resistance and hp
 local function get_three_pip_action(active, hp, cutoff, res)
   local div = res+1
@@ -230,6 +206,30 @@ end
 
 local function set_monster_fm(sign, monster_str)
   set_monster_option(sign, monster_str, "force_more_message")
+end
+
+local function do_pack_mutes()
+  -- Put pending mutes into effect
+  for _, v in ipairs(monsters_to_mute) do
+    set_monster_fm("-", v)
+  end
+  monsters_to_mute = {}
+
+  -- Remove mutes that have expired
+  for _, v in ipairs(FM_PACK) do
+    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+      set_monster_fm("+", v)
+      last_fm_turn[v] = -1
+    end
+  end
+
+  -- For no-init pack monsters, just deactivate the fm
+  for _, v in ipairs(FM_PACK_NO_CREATE) do
+    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+      active_fm[active_fm_index[v]] = false
+      last_fm_turn[v] = -1
+    end
+  end
 end
 
 

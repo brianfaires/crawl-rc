@@ -58,5 +58,5 @@ function ready_cache()
     CACHE.mutations[key] = value
   end
 
-  CACHE.temp_mutations = {} -- TODO: Requires a PR afaict
+  CACHE.temp_mutations = {} -- Placeholder for now
 end

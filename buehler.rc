@@ -3347,7 +3347,7 @@ function ready_cache()
     CACHE.mutations[key] = value
   end
 
-  CACHE.temp_mutations = {} -- TODO: Requires a PR afaict
+  CACHE.temp_mutations = {} -- Placeholder for now
 end
 
 }
@@ -3366,9 +3366,10 @@ ALL_MISC_ITEMS = {
   "phantom mirror", "phial of floods", "sack of spiders", "tin of tremorstones",
 } -- ALL_MISC_ITEMS (do not remove this comment)
 
+-- This is checked against the full text of the pickup message, so use patterns to match
 ALL_MISSILES = {
-  " stone", "poisoned dart", "atropa", "curare", "datura",
-  "boomerang", "javelin", "large rock", "throwing net",
+  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart", "darts? of dispersal",
+  " stone", "boomerang", "silver javelin", "javelin", "large rock", "throwing net",
 } -- ALL_MISSILES (do not remove this comment)
 
 -- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed
@@ -3788,6 +3789,10 @@ function is_dangerous_brand(text)
     if text:find(v) then return true end
   end
   return false
+end
+
+function is_jewellery(it)
+  return it and it.class(true) == "jewellery"
 end
 
 function is_ring(it)
@@ -4353,6 +4358,15 @@ local function remove_exclusion(item_name)
   crawl.setopt(command)
 end
 
+local function has_enchantable_weap_in_inv()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+      return true
+    end
+  end
+  return false
+end
+
 -- Pulls name from text; returns nil if we should NOT exclude anything
 local function get_excludable_name(text, for_exclusion)
   text = cleanup_text(text, false) -- remove tags
@@ -4375,15 +4389,6 @@ local function get_excludable_name(text, for_exclusion)
   -- Missiles; add regex to hit specific missiles
   for _,item_name in ipairs(ALL_MISSILES) do
     if text:find(item_name) then
-      if item_name == "boomerang" or item_name == "javelin" then
-        if text:find("silver") then
-          item_name = "silver " .. item_name
-        elseif text:find("dispersal") then
-          item_name = item_name .. "s? of dispersal"
-        else
-          item_name = "(?<!silver )" .. item_name .. "(?!(s? of dispersal))"
-        end
-      end
       return item_name
     end
   end
@@ -4403,15 +4408,6 @@ local function get_excludable_name(text, for_exclusion)
     end
     return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
   end
-end
-
-local function has_enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
-      return true
-    end
-  end
-  return false
 end
 
 
@@ -4438,6 +4434,16 @@ function c_message_exclude_dropped(text, channel)
   if not item_name then return end
 
   if exclude then
+    -- Don't exclude if we dropped partial stack (except for jewellery)
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if item_name:find(inv.name("qual")) then
+        if is_jewellery(inv) then break end
+        local qty_str = "You drop " .. inv.quantity .. " " .. item_name
+        if inv.quantity == 1 or text:find(qty_str) then break end
+        return
+      end
+    end
+
     add_exclusion(item_name)
   else
     remove_exclusion(item_name)
@@ -4735,30 +4741,6 @@ local active_fm_index -- lookup table for speed
 local monsters_to_mute -- which packs are muted
 local last_fm_turn -- when the mute started
 
-local function do_pack_mutes()
-  -- Put pending mutes into effect
-  for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v)
-  end
-  monsters_to_mute = {}
-
-  -- Remove mutes that have expired
-  for _, v in ipairs(FM_PACK) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      set_monster_fm("+", v)
-      last_fm_turn[v] = -1
-    end
-  end
-
-  -- For no-init pack monsters, just deactivate the fm
-  for _, v in ipairs(FM_PACK_NO_CREATE) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      active_fm[active_fm_index[v]] = false
-      last_fm_turn[v] = -1
-    end
-  end
-end
-
 -- Util for checking against resistance and hp
 local function get_three_pip_action(active, hp, cutoff, res)
   local div = res+1
@@ -4795,6 +4777,30 @@ end
 
 local function set_monster_fm(sign, monster_str)
   set_monster_option(sign, monster_str, "force_more_message")
+end
+
+local function do_pack_mutes()
+  -- Put pending mutes into effect
+  for _, v in ipairs(monsters_to_mute) do
+    set_monster_fm("-", v)
+  end
+  monsters_to_mute = {}
+
+  -- Remove mutes that have expired
+  for _, v in ipairs(FM_PACK) do
+    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+      set_monster_fm("+", v)
+      last_fm_turn[v] = -1
+    end
+  end
+
+  -- For no-init pack monsters, just deactivate the fm
+  for _, v in ipairs(FM_PACK_NO_CREATE) do
+    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+      active_fm[active_fm_index[v]] = false
+      last_fm_turn[v] = -1
+    end
+  end
 end
 
 
@@ -5410,40 +5416,6 @@ local function cleanup_w()
   end
 end
 
-local function cleanup_weapon_slots()
-  generate_priorities()
-  cleanup_ab(0)
-  cleanup_ab(1)
-  cleanup_w()
-end
-
-local function generate_priorities()
-  priorities_ab = { -1, -1, -1, -1, -1 }
-  priorities_w = { -1, -1, -1 }
-
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    local p = get_priority_w(inv)
-    if p > 0 then
-      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
-      else priorities_w[p+1] = inv.slot
-      end
-    end
-
-    p = get_priority_ab(inv)
-    if p > 0 then
-      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
-      else priorities_ab[p+1] = inv.slot
-      end
-    end
-  end
-end
-
-local function get_first_empty_slot()
-  for slot=1,52 do
-    if not items.inslot(slot) then return slot end
-  end
-end
-
 local function get_priority_ab(it)
   if not it or not it.weap_skill then return -1 end
   if it.equipped then return 1 end
@@ -5471,6 +5443,40 @@ local function get_priority_w(it)
   if it.is_ranged then return 1 end
   if is_polearm(it) then return 2 end
   return 3
+end
+
+local function generate_priorities()
+  priorities_ab = { -1, -1, -1, -1, -1 }
+  priorities_w = { -1, -1, -1 }
+
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local p = get_priority_w(inv)
+    if p > 0 then
+      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
+      else priorities_w[p+1] = inv.slot
+      end
+    end
+
+    p = get_priority_ab(inv)
+    if p > 0 then
+      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
+      else priorities_ab[p+1] = inv.slot
+      end
+    end
+  end
+end
+
+local function cleanup_weapon_slots()
+  generate_priorities()
+  cleanup_ab(0)
+  cleanup_ab(1)
+  cleanup_w()
+end
+
+local function get_first_empty_slot()
+  for slot=1,52 do
+    if not items.inslot(slot) then return slot end
+  end
 end
 
 
@@ -6636,7 +6642,6 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ---- Pickup and Alert features for weapons ----
--- TODO: where does this live?
 local inv_weap_data = {}
 local top_school = "unarmed combat"
 local egos = { }

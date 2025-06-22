@@ -36,40 +36,6 @@ local function cleanup_w()
   end
 end
 
-local function cleanup_weapon_slots()
-  generate_priorities()
-  cleanup_ab(0)
-  cleanup_ab(1)
-  cleanup_w()
-end
-
-local function generate_priorities()
-  priorities_ab = { -1, -1, -1, -1, -1 }
-  priorities_w = { -1, -1, -1 }
-
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    local p = get_priority_w(inv)
-    if p > 0 then
-      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
-      else priorities_w[p+1] = inv.slot
-      end
-    end
-
-    p = get_priority_ab(inv)
-    if p > 0 then
-      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
-      else priorities_ab[p+1] = inv.slot
-      end
-    end
-  end
-end
-
-local function get_first_empty_slot()
-  for slot=1,52 do
-    if not items.inslot(slot) then return slot end
-  end
-end
-
 local function get_priority_ab(it)
   if not it or not it.weap_skill then return -1 end
   if it.equipped then return 1 end
@@ -97,6 +63,40 @@ local function get_priority_w(it)
   if it.is_ranged then return 1 end
   if is_polearm(it) then return 2 end
   return 3
+end
+
+local function generate_priorities()
+  priorities_ab = { -1, -1, -1, -1, -1 }
+  priorities_w = { -1, -1, -1 }
+
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local p = get_priority_w(inv)
+    if p > 0 then
+      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
+      else priorities_w[p+1] = inv.slot
+      end
+    end
+
+    p = get_priority_ab(inv)
+    if p > 0 then
+      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
+      else priorities_ab[p+1] = inv.slot
+      end
+    end
+  end
+end
+
+local function cleanup_weapon_slots()
+  generate_priorities()
+  cleanup_ab(0)
+  cleanup_ab(1)
+  cleanup_w()
+end
+
+local function get_first_empty_slot()
+  for slot=1,52 do
+    if not items.inslot(slot) then return slot end
+  end
 end
 
 
