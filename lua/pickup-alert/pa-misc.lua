@@ -60,3 +60,17 @@ function pa_pickup_staff(it)
 
   return true
 end
+
+---- Exclude superfluous rings ----
+function is_unneeded_ring(it)
+  if not is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
+  local st = it.subtype()
+  local found_first = false
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_ring(inv) and inv.subtype() == st then
+      if found_first then return true end
+      found_first = true
+    end
+  end
+  return false
+end

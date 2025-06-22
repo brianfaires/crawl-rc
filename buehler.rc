@@ -120,6 +120,8 @@ explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, jave
 
 ################################### Begin rc/autoinscribe.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
+# See safe-consumables.lua for consumable inscriptions
+
 ai := autoinscribe
 
 # Armour
@@ -155,39 +157,6 @@ ai += staff of death:rN+
 ai += staff of fire:rF+
 ai += staff of poison:rPois
 
-
-{
-  -- Protective consumable inscriptions on everything w/o a built-in prompt
-  -- Updates every turn to:
-    -- Inscribe starting items
-    -- Update inscriptions after ID
-  
-  local no_inscription_needed = {
-    "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
-    "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation"}
-
-  ------------------- Hook -------------------
-  function ready_safe_consumables()
-    -- Remove the default "!r" and "!q" inscriptions after identify
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      local inv_class = inv.class(true)
-      if inv_class == "potion" or inv_class == "scroll" then
-        local st, _ = inv.subtype()
-        if (st == "poison" and you.res_poison() > 0)
-          or (st == "torment" and you.torment_immune())
-          or util.contains(no_inscription_needed, st) then
-            if inv.inscription:find("%!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
-            if inv.inscription:find("%!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
-        elseif inv_class == "scroll" and not inv.inscription:find("!r") then
-            inv.inscribe("!r")
-        elseif inv_class == "potion" and not inv.inscription:find("!q") then
-            inv.inscribe("!q")
-        end
-      end
-    end
-  end
-}
-
 ############################### End rc/autoinscribe.rc ###############################
 ##########################################################################################
 
@@ -199,21 +168,6 @@ ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
 ae ^= <missile, <misc
 ae ^= >staff of.*, >useless_item
-
-# Exclude the 3rd copy of any ring
-{
-  add_autopickup_func(function (it, name)
-    if it.class(true) ~= "jewellery" or it.artefact or you.race() == "Octopode" then return end
-    local st = it.subtype()
-    local found_first = false
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.class(true) == "jewellery" and inv.subtype() == st then
-        if found_first then return false end
-        found_first = true
-      end
-    end
-  end)
-}
 
 ############################### End rc/autopickup.rc ###############################
 ##########################################################################################
@@ -2980,27 +2934,6 @@ more += god:dark mirror aura disappears
 # Zin
 more += god:will now cure all your mutations
 
-
-{
--- Exclusions; for built-in force_mores that can't just be -='d
-local fm_exclude_messages = {
-  "Okawaru grants you throwing weapons",
-  "Okawaru offers you a choice",
-  "need to enable at least one skill for training",
-} -- fm_exclude_messages (do not remove this comment)
-
-function c_message_fm_exclude(text, _)
-  for _,v in ipairs(fm_exclude_messages) do
-    if text:find(v) then
-      crawl.enable_more(false)
-      return
-    end
-  end
-
-  crawl.enable_more(true)
-end
-}
-
 ############################### End rc/fm-messages.rc ###############################
 ##########################################################################################
 
@@ -4566,6 +4499,31 @@ end
 ############################### End lua/features/fully-rest.lua ###############################
 ##########################################################################################
 
+################################### Begin lua/features/fm-disable.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-- Disable built-in force_mores that can't just be -='d
+local FM_DISABLES = {
+  "Okawaru grants you throwing weapons",
+  "Okawaru offers you a choice",
+  "need to enable at least one skill for training",
+} -- FM_DISABLES (do not remove this comment)
+
+function c_message_fm_disable(text, _)
+  for _,v in ipairs(FM_DISABLES) do
+    if text:find(v) then
+      crawl.enable_more(false)
+      return
+    end
+  end
+
+  crawl.enable_more(true)
+end
+
+}
+############################### End lua/features/fm-disable.lua ###############################
+##########################################################################################
+
 ################################### Begin lua/features/fm-monsters.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
@@ -5275,6 +5233,43 @@ end
 ############################### End lua/features/runrest-features.lua ###############################
 ##########################################################################################
 
+################################### Begin lua/features/safe-consumables.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+---- Protective consumable inscriptions on everything w/o a built-in prompt --
+-- Updates every turn to:
+  -- Inscribe starting items
+  -- Update inscriptions after ID
+
+local NO_INSCRIPTION_NEEDED = {
+  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
+  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation"}
+
+------------------- Hook -------------------
+function ready_safe_consumables()
+  -- Remove the default "!r" and "!q" inscriptions after identify
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local inv_class = inv.class(true)
+    if inv_class == "potion" or inv_class == "scroll" then
+      local st, _ = inv.subtype()
+      if (st == "poison" and you.res_poison() > 0)
+        or (st == "torment" and you.torment_immune())
+        or util.contains(NO_INSCRIPTION_NEEDED, st) then
+          if inv.inscription:find("%!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
+          if inv.inscription:find("%!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+      elseif inv_class == "scroll" and not inv.inscription:find("!r") then
+          inv.inscribe("!r")
+      elseif inv_class == "potion" and not inv.inscription:find("!q") then
+          inv.inscribe("!q")
+      end
+    end
+  end
+end
+
+}
+############################### End lua/features/safe-consumables.lua ###############################
+##########################################################################################
+
 ################################### Begin lua/features/safe-stairs.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
@@ -5561,6 +5556,8 @@ function init_pa_main()
       retVal = pa_pickup_weapon(it)
     elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
       retVal = pa_pickup_staff(it)
+    elseif loaded_pa_misc and is_unneeded_ring(it) then
+      return false
     end
 
     if retVal == true then
@@ -6634,6 +6631,20 @@ function pa_pickup_staff(it)
   return true
 end
 
+---- Exclude superfluous rings ----
+function is_unneeded_ring(it)
+  if not is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
+  local st = it.subtype()
+  local found_first = false
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_ring(inv) and inv.subtype() == st then
+      if found_first then return true end
+      found_first = true
+    end
+  end
+  return false
+end
+
 }
 ############################### End lua/pickup-alert/pa-misc.lua ###############################
 ##########################################################################################
@@ -7048,7 +7059,7 @@ function c_message(text, channel)
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_pack then c_message_fm_pack(text, channel) end
-  if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
+  if c_message_fm_disable then c_message_fm_disable(text, channel) end
 end
 
 function ch_stop_running(kind)

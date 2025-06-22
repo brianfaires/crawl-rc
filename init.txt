@@ -56,12 +56,14 @@ lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
 lua_file = crawl-rc/lua/features/fully-rest.lua
+lua_file = crawl-rc/lua/features/fm-disable.lua
 lua_file = crawl-rc/lua/features/fm-monsters.lua
 lua_file = crawl-rc/lua/features/inscribe-stats.lua
 lua_file = crawl-rc/lua/features/misc-alerts.lua
 #lua_file = crawl-rc/lua/features/mute-swaps.lua
 lua_file = crawl-rc/lua/features/remind-id.lua
 lua_file = crawl-rc/lua/features/runrest-features.lua
+lua_file = crawl-rc/lua/features/safe-consumables.lua
 lua_file = crawl-rc/lua/features/safe-stairs.lua
 lua_file = crawl-rc/lua/features/startup.lua
 lua_file = crawl-rc/lua/features/weapon-slots.lua
@@ -106,7 +108,7 @@ function c_message(text, channel)
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_pack then c_message_fm_pack(text, channel) end
-  if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
+  if c_message_fm_disable then c_message_fm_disable(text, channel) end
 end
 
 function ch_stop_running(kind)

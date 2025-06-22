@@ -32,6 +32,8 @@ function init_pa_main()
       retVal = pa_pickup_weapon(it)
     elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
       retVal = pa_pickup_staff(it)
+    elseif loaded_pa_misc and is_unneeded_ring(it) then
+      return false
     end
 
     if retVal == true then

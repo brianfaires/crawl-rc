@@ -4,18 +4,3 @@ ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
 ae ^= <scrolls? of immolation, <scrolls? of poison
 ae ^= <missile, <misc
 ae ^= >staff of.*, >useless_item
-
-# Exclude the 3rd copy of any ring
-{
-  add_autopickup_func(function (it, name)
-    if it.class(true) ~= "jewellery" or it.artefact or you.race() == "Octopode" then return end
-    local st = it.subtype()
-    local found_first = false
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.class(true) == "jewellery" and inv.subtype() == st then
-        if found_first then return false end
-        found_first = true
-      end
-    end
-  end)
-}
