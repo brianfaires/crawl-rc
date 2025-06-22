@@ -15,12 +15,12 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
   1. Any file dependencies. These are listed at the top of each file.
-    Copy-paste the referenced file in place of any `include` or `loadfile()` statements.
+    Copy-paste the referenced file in place of any `include` statement.
     Do the same for any lua files (`lua_file =`), but add curly braces around the file contents to mark it as lua code `{ <file_contents> }`.
-  Don't manually copy-paste the same file more than once. (e.g. [lua/config.lua](lua/config.lua) or [lua/util.lua](lua/util.lua))
 - This RC makes heavy use of the character-specific persistent data. These essentially save values when exiting,
-and then reload it when the game starts again. Currently, if the game crashes and the data is not saved, many
-features will 'reset'. To see the values of all persistent data, press '~' to open the lua interpreter, then enter: `dump_persistent_data()`
+  and then reload it when the game starts again. Currently, if the game crashes and the data is not saved, many
+  features will 'reset'. To see the values of all persistent data, press '~' to open the lua interpreter, then
+  enter: `dump_persistent_data()`
 
 ## Standard(-ish) Settings
 ### [init.txt](init.txt)
@@ -180,7 +180,7 @@ This comes first in [buehler.rc](buehler.rc), so you can toggle features on/off
 
 ### [lua/constants.lua](lua/constants.lua)
 In an attempt to future-proof, contains definitions for things like
-  `all_weap_schools` and `all_portal_names`. Update as needed.
+  `ALL_WEAP_SCHOOLS` and `ALL_PORTAL_NAMES`. Update as needed.
 
 ### [lua/util.lua](lua/util.lua)
 Required a lot of places. Nothing in here is necessarily specific to this repo.
@@ -189,7 +189,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 - Once per turn, the cache pulls several values from the crawl API, that would otherwise be pulled
 multiple times per turn.
 - This is just for speed and a little code brevity. e.g. You `CACHE.xl` and `you.xl()` are interchangeable.
-- It *is* important that CACHE be updated via `ready_CACHE()` as the first step of ready().
+- It *is* important that CACHE be updated via `ready_cache()` as the first step of ready().
 
 ### [lua/emojis.lua](lua/emojis.lua)
 - Define the emojis you want for announce-damage and any alerts
@@ -200,10 +200,6 @@ multiple times per turn.
   Please report any bugs, outdated notes, suggestions, etc.
 - It's intended for use in webtiles.
   It works locally, but AFAICT individual files don't reload/re-execute until you restart crawl.
-- Many lua files begin with an [include guard](https://en.wikipedia.org/wiki/Include_guard),
-  followed by `loadfile()` for all of their dependencies.
-  This helps with local development and protects against multiple imports.
-  They're harmless and you can ignore them. Or delete if they really bug you.
 
 ## TODO dev list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)

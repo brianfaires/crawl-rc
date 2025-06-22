@@ -1,12 +1,66 @@
-if loaded_pa_main then return end
-loaded_pa_main = true
-loadfile("lua/cache.lua")
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
+local last_ready_item_alerts_turn
+local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 
-local last_ready_item_alerts_turn = 0
+
+function init_pa_main()
+  init_pa_data()
+
+  if CONFIG.debug_init then crawl.mpr("Initializing pa-main") end
+
+  last_ready_item_alerts_turn = 0
+  loaded_pa_armour = pa_alert_armour and true or false
+  loaded_pa_misc = pa_alert_orb and true or false
+  loaded_pa_weapons = pa_alert_weapon and true or false
+  if CONFIG.debug_init then
+    if loaded_pa_armour then crawl.mpr("pa-armour loaded") end
+    if loaded_pa_misc then crawl.mpr("pa-misc loaded") end
+    if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
+  end
+
+
+  ---- Autopickup main ----
+  add_autopickup_func(function (it, _)
+    if CACHE.have_orb then return end
+    local plus_name = get_plussed_name(it, "base")
+    if util.contains(pa_items_picked, plus_name) then return end
+
+    -- Check for pickup
+    local retVal = false
+    if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
+      retVal = pa_pickup_armour(it)
+    elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
+      retVal = pa_pickup_weapon(it)
+    elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
+      retVal = pa_pickup_staff(it)
+    end
+
+    if retVal == true then
+      remove_from_rare_items(it)
+      return true
+    end
+
+    -- Not picking up this item. Check for alerts.
+    if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
+    if util.contains(pa_items_alerted, plus_name) then return end
+    ready_item_alerts() -- Update high scores, to avoid weird cases from small stat increases
+
+    if loaded_pa_misc and CONFIG.alert_one_time_items then
+      if pa_alert_rare_item(it) then return end
+    end
+
+    if loaded_pa_misc and CONFIG.alert_staff_resists and is_staff(it) then
+      if pa_alert_staff(it) then return end
+    elseif loaded_pa_misc and CONFIG.alert_orbs and is_orb(it) then
+      if pa_alert_orb(it) then return end
+    elseif loaded_pa_misc and CONFIG.alert_talismans and is_talisman(it) then
+      if pa_alert_talisman(it) then return end
+    elseif loaded_pa_armour and CONFIG.alert_armour and is_armour(it) then
+      if pa_alert_armour(it) then return end
+    elseif loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
+      if pa_alert_weapon(it) then return end
+    end
+  end)
+end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_desc = get_plussed_name(it, "plain")
@@ -37,7 +91,7 @@ function c_assign_invletter_item_alerts(it)
     if not util.contains(pa_items_picked, name) then
       add_item_and_lesser(pa_items_picked, it)
       update_high_scores(it)
-      remove_from_pa_single_alert_items(it)
+      remove_from_rare_items(it)
     end
   end
 
@@ -66,47 +120,3 @@ function ready_item_alerts()
   generate_inv_weap_arrays()
   update_high_scores(get_body_armour())
 end
-
-
----- Autopickup main ----
-add_autopickup_func(function (it, _)
-  if CACHE.have_orb then return end
-  local plus_name = get_plussed_name(it, "base")
-  if util.contains(pa_items_picked, plus_name) then return end
-
-  -- Check for pickup
-  local retVal = false
-  if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
-    retVal = pa_pickup_armour(it)
-  elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
-    retVal = do_pa_weapon_pickup(it)
-  elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
-    retVal = pa_pickup_staff(it)
-  end
-
-  if retVal == true then
-    remove_from_pa_single_alert_items(it)
-    return true
-  end
-
-  -- Not picking up this item. Check for alerts.
-  if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
-  if util.contains(pa_items_alerted, plus_name) then return end
-  ready_item_alerts() -- Update high scores, to avoid weird cases from small stat increases
-
-  if loaded_pa_misc and CONFIG.alert_one_time_items then
-    if pa_alert_rare_item(it) then return end
-  end
-
-  if loaded_pa_misc and CONFIG.alert_staff_resists and is_staff(it) then
-    if pa_alert_staff(it) then return end
-  elseif loaded_pa_misc and CONFIG.alert_orbs and is_orb(it) then
-    if pa_alert_orb(it) then return end
-  elseif loaded_pa_misc and CONFIG.alert_talismans and is_talisman(it) then
-    if pa_alert_talisman(it) then return end
-  elseif loaded_pa_armour and CONFIG.alert_armour and is_armour(it) then
-    if pa_alert_armour(it) then return end
-  elseif loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
-    if do_pa_weapon_alerts(it) then return end
-  end
-end)

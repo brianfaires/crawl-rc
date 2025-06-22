@@ -1,10 +1,43 @@
 -- Colorize inscriptions --
 -- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
 -- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
-loadfile("crawl-rc/lua/constants.lua")
-loadfile("crawl-rc/lua/inscribe-stats.lua")
 
 local INSCRIPTION_MAX_LENGTH = 70
+local MULTI_PLUS = "%++"
+local MULTI_MINUS = "%-+"
+local NEG_NUM = "%-%d+%.?%d*"
+local POS_NUM = "%+%d+%.?%d*"
+local COLORIZE_TAGS = {
+  { "rF" .. MULTI_PLUS, COLORS.lightred },
+  { "rC" .. MULTI_PLUS, COLORS.lightblue },
+  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
+  { "rF" .. MULTI_MINUS, COLORS.red },
+  { "rC" .. MULTI_MINUS, COLORS.blue },
+  { "rN" .. MULTI_MINUS, COLORS.magenta },
+  { "rPois", COLORS.green },
+  { "rElec", COLORS.lightcyan },
+  { "rCorr", COLORS.yellow },
+  { "rMut", COLORS.brown },
+  { "Slay" .. POS_NUM, COLORS.white},
+  {  "Str" .. POS_NUM, COLORS.white },
+  {  "Dex" .. POS_NUM, COLORS.white },
+  {  "Int" .. POS_NUM, COLORS.white },
+  {   "AC" .. POS_NUM, COLORS.white },
+  {   "EV" .. POS_NUM, COLORS.white },
+  {   "SH" .. POS_NUM, COLORS.white },
+  {   "HP" .. POS_NUM, COLORS.white },
+  {   "MP" .. POS_NUM, COLORS.white },
+  { "Slay" .. NEG_NUM, COLORS.darkgrey },
+  {  "Str" .. NEG_NUM, COLORS.darkgrey },
+  {  "Dex" .. NEG_NUM, COLORS.darkgrey },
+  {  "Int" .. NEG_NUM, COLORS.darkgrey },
+  {   "AC" .. NEG_NUM, COLORS.darkgrey },
+  {   "EV" .. NEG_NUM, COLORS.darkgrey },
+  {   "SH" .. NEG_NUM, COLORS.darkgrey },
+  {   "HP" .. NEG_NUM, COLORS.darkgrey },
+  {   "MP" .. NEG_NUM, COLORS.darkgrey },
+} --COLORIZE_TAGS (do not remove this comment)
+
 
 local function colorize_subtext(text, s, tag)
   local idx = text:find(s)
@@ -20,48 +53,13 @@ local function colorize_subtext(text, s, tag)
 end
 
 
-local multi_plus = "%++"
-local multi_minus = "%-+"
-local pos_num = "%+%d+%.?%d*"
-local neg_num = "%-%d+%.?%d*"
-local colorize_tags = {
-  { "rF" .. multi_plus, COLORS.lightred },
-  { "rC" .. multi_plus, COLORS.lightblue },
-  { "rN" .. multi_plus, COLORS.lightmagenta },
-  { "rF" .. multi_minus, COLORS.red },
-  { "rC" .. multi_minus, COLORS.blue },
-  { "rN" .. multi_minus, COLORS.magenta },
-  { "rPois", COLORS.green },
-  { "rElec", COLORS.lightcyan },
-  { "rCorr", COLORS.yellow },
-  { "rMut", COLORS.brown },
-  { "Slay" .. pos_num, COLORS.white},
-  {  "Str" .. pos_num, COLORS.white },
-  {  "Dex" .. pos_num, COLORS.white },
-  {  "Int" .. pos_num, COLORS.white },
-  {   "AC" .. pos_num, COLORS.white },
-  {   "EV" .. pos_num, COLORS.white },
-  {   "SH" .. pos_num, COLORS.white },
-  {   "HP" .. pos_num, COLORS.white },
-  {   "MP" .. pos_num, COLORS.white },
-  { "Slay" .. neg_num, COLORS.darkgrey },
-  {  "Str" .. neg_num, COLORS.darkgrey },
-  {  "Dex" .. neg_num, COLORS.darkgrey },
-  {  "Int" .. neg_num, COLORS.darkgrey },
-  {   "AC" .. neg_num, COLORS.darkgrey },
-  {   "EV" .. neg_num, COLORS.darkgrey },
-  {   "SH" .. neg_num, COLORS.darkgrey },
-  {   "HP" .. neg_num, COLORS.darkgrey },
-  {   "MP" .. neg_num, COLORS.darkgrey },
-} --colorize_tags (do not remove this comment)
-
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
   -- Get stats into inscription before coloring
   ready_inscribe_stats()
 
   local text = it.inscription
-  for _, tag in ipairs(colorize_tags) do
+  for _, tag in ipairs(COLORIZE_TAGS) do
     text = colorize_subtext(text, tag[1], tag[2])
   end
 

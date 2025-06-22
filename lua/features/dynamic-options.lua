@@ -1,30 +1,30 @@
 ----- Set any options based on game state -----
-loadfile("lua/cache.lua")
-
 local EARLY_XL = 5
 local MID_XL = 10
 local LATE_XL = 15
 
-local dynopt_cur_god = "No God"
-local ignoring_spellcasting = false
-local ignoring_spellbooks = false
-local early_xl_alerts_on = false
-local mid_xl_alerts_on = false
-local late_xl_alerts_on = false
+local EARLY_XL_FMs = {
+} -- EARLY_XL_FMs (do not remove this comment)
 
-local early_alerts = {
-} -- early_alerts (do not remove this comment)
-
-local mid_alerts = {
+local MID_XL_FMs = {
   "wielding.*of electrocution",
   "You.*re more poisoned"
-} -- mid_alerts (do not remove this comment)
+} -- MID_XL_FMs (do not remove this comment)
 
-local late_alerts = {
+local LATE_XL_FMs = {
   "(?<!You)(?<!yourself) speeds? up",
   "danger:goes berserk"
-} -- late_alerts (do not remove this comment)
+} -- LATE_XL_FMs (do not remove this comment)
 
+local IGNORE_SPELLBOOKS_STRING = table.concat(ALL_SPELLBOOKS, ", ")
+local SPELLCASTING_ITEMS_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
+
+local dynopt_cur_god
+local ignoring_spellcasting
+local ignoring_spellbooks
+local early_xl_alerts_on
+local mid_xl_alerts_on
+local late_xl_alerts_on
 
 local function set_dyn_fm(warnings, create)
   for _, v in ipairs(warnings) do
@@ -36,31 +36,13 @@ local function set_dyn_fm(warnings, create)
   end
 end
 
-
----- race-specific ---
-local function set_race_options()
-  if CACHE.undead then
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  end
-
-  if CACHE.poison_immune then
-    crawl.setopt("force_more_message -= monster_warning:curare")
-  end
-
-  if CACHE.race == "Gnoll" then
-    crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
-  end
-end
-
----- class-specific ---
 local function set_class_options()
   if CACHE.class == "Hunter" then
     crawl.setopt("view_delay = 30")
   end
 end
 
----- god-specific ----
--- force_mores that you don't mind on everyone are in fm-message.rc
+-- Some god-specific force_mores also in fm-message.rc
 local function set_god_options()
   local new_god = CACHE.god
   if new_god then
@@ -87,46 +69,55 @@ local function set_god_options()
   end
 end
 
----- xl-specific ----
+local function set_race_options()
+  if CACHE.undead then
+    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+  end
+
+  if CACHE.poison_immune then
+    crawl.setopt("force_more_message -= monster_warning:curare")
+  end
+
+  if CACHE.race == "Gnoll" then
+    crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
+  end
+end
+
 local function set_xl_options()
   if not early_xl_alerts_on and CACHE.xl <= EARLY_XL then
     early_xl_alerts_on = true
-    set_dyn_fm(early_alerts, true)
+    set_dyn_fm(EARLY_XL_FMs, true)
   elseif early_xl_alerts_on and CACHE.xl > EARLY_XL then
     early_xl_alerts_on = false
-    set_dyn_fm(early_alerts, false)
+    set_dyn_fm(EARLY_XL_FMs, false)
   end
 
   if not mid_xl_alerts_on and CACHE.xl <= MID_XL then
     mid_xl_alerts_on = true
-    set_dyn_fm(mid_alerts, true)
+    set_dyn_fm(MID_XL_FMs, true)
   elseif mid_xl_alerts_on and CACHE.xl > MID_XL then
     mid_xl_alerts_on = false
-    set_dyn_fm(mid_alerts, false)
+    set_dyn_fm(MID_XL_FMs, false)
   end
 
   if not late_xl_alerts_on and CACHE.xl <= LATE_XL then
     late_xl_alerts_on = true
-    set_dyn_fm(late_alerts, true)
+    set_dyn_fm(LATE_XL_FMs, true)
   elseif not late_xl_alerts_on and CACHE.xl > LATE_XL then
     late_xl_alerts_on = false
-    set_dyn_fm(late_alerts, false)
+    set_dyn_fm(LATE_XL_FMs, false)
   end
 end
 
-
----- skill-specific ----
-local ignore_spellbook_string = table.concat(all_spellbooks, ", ")
-local spellcasting_items_string = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 local function set_skill_options()
   -- If zero spellcasting, don't stop on spellbook pickup
   local zero_spellcasting = CACHE.s_spellcasting == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
-    crawl.setopt("explore_stop_pickup_ignore += " .. ignore_spellbook_string)
+    crawl.setopt("explore_stop_pickup_ignore += " .. IGNORE_SPELLBOOKS_STRING)
   elseif ignoring_spellbooks and not zero_spellcasting then
     ignoring_spellbooks = false
-    crawl.setopt("explore_stop_pickup_ignore -= " .. ignore_spellbook_string)
+    crawl.setopt("explore_stop_pickup_ignore -= " .. IGNORE_SPELLBOOKS_STRING)
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
@@ -136,22 +127,32 @@ local function set_skill_options()
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true
-      crawl.setopt("autopickup_exceptions += " .. spellcasting_items_string)
+      crawl.setopt("autopickup_exceptions += " .. SPELLCASTING_ITEMS_STRING)
     elseif ignoring_spellcasting and not skip_items then
       ignoring_spellcasting = false
-      crawl.setopt("autopickup_exceptions -= " .. spellcasting_items_string)
+      crawl.setopt("autopickup_exceptions -= " .. SPELLCASTING_ITEMS_STRING)
     end
   end
 end
 
 
------------------- Hook ------------------
-function ready_dynamic_options()
-  if CACHE.turn == 0 then
-    set_race_options()
-    set_class_options()
-  end
+function init_dynamic_options()
+  if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
 
+  dynopt_cur_god = "No God"
+  ignoring_spellcasting = false
+  ignoring_spellbooks = false
+  early_xl_alerts_on = false
+  mid_xl_alerts_on = false
+  late_xl_alerts_on = false
+
+  set_race_options()
+  set_class_options()
+end
+
+
+------------------ Hooks ------------------
+function ready_dynamic_options()
   set_god_options()
   set_xl_options()
   set_skill_options()

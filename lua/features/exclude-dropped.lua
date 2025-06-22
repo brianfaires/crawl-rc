@@ -1,13 +1,6 @@
--- Add autopickup exclusion for any jewellery/missile/evocable item that is dropped
+-- Add autopickup exclusion for any jewellery/missile/evocable/consumable that is dropped
 -- Exclusion is removed when you pick the item back up
--- Also exclude scrolls of enchant weapon/brand weapon, when no enchantable weapons are in inventory
-if loaded_exclude_dropped then return end
-loaded_exclude_dropped = true
-loadfile("crawl-rc/lua/constants.lua")
-loadfile("crawl-rc/lua/util.lua")
-
-create_persistent_data("dropped_item_exclusions", {})
-
+-- Exclude enchant/brand weapon only when no enchantable weapons are in inventory
 local function add_exclusion(item_name)
   if not util.contains(dropped_item_exclusions, item_name) then
     dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
@@ -20,15 +13,6 @@ local function remove_exclusion(item_name)
   util.remove(dropped_item_exclusions, item_name)
   local command = "autopickup_exceptions -= " .. item_name
   crawl.setopt(command)
-end
-
-local function has_enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
-      return true
-    end
-  end
-  return false
 end
 
 -- Pulls name from text; returns nil if we should NOT exclude anything
@@ -46,12 +30,12 @@ local function get_excludable_name(text, for_exclusion)
   end
 
   -- misc items
-  for _,item_name in ipairs(all_misc) do
+  for _,item_name in ipairs(ALL_MISC_ITEMS) do
     if text:find(item_name) then return item_name end
   end
 
   -- Missiles; add regex to hit specific missiles
-  for _,item_name in ipairs(all_missiles) do
+  for _,item_name in ipairs(ALL_MISSILES) do
     if text:find(item_name) then
       if item_name == "boomerang" or item_name == "javelin" then
         if text:find("silver") then
@@ -76,14 +60,35 @@ local function get_excludable_name(text, for_exclusion)
   idx = text:find("scrolls? of")
   if idx then
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-    if for_exclusion and not CONFIG.exclude_dropped_enchant_scrolls and
+    if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls and
         text:find(" weapon") and has_enchantable_weap_in_inv() then return
     end
     return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
   end
 end
 
------------------- Hook ------------------
+local function has_enchantable_weap_in_inv()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+      return true
+    end
+  end
+  return false
+end
+
+
+function init_exclude_dropped()
+  if CONFIG.debug_init then crawl.mpr("Initializing exclude-dropped") end
+
+  create_persistent_data("dropped_item_exclusions", {})
+
+  for _,v in ipairs(dropped_item_exclusions) do
+    add_exclusion(v)
+  end
+end
+
+
+------------------ Hooks ------------------
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
   local exclude
@@ -99,9 +104,4 @@ function c_message_exclude_dropped(text, channel)
   else
     remove_exclusion(item_name)
   end
-end
-
--- Reapply exclusions from persistent data
-for _,v in ipairs(dropped_item_exclusions) do
-  add_exclusion(v)
 end

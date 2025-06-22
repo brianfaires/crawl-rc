@@ -1,27 +1,17 @@
 ------------------- Dynamic force_mores config -------------------
--- hp-specific force_mores() by gammafunk, edits by buehler
+-- hp-specific force_mores() by gammafunk, extended by buehler
 -- WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
--- Note: If you want an alert to silenceable by the fm_pack feature,
--- It must be on an alert by itself (not part of a multi-monster pattern)
-
-loadfile("lua/cache.lua")
-
-
-local debug_fm_monsters = false -- Set to true to get a message when the fm change
-local turns_to_delay = 15 -- Turns before alerting for a pack monster again
-
--- Stop on all Uniques & Pan lords
-crawl.setopt("force_more_message += monster_warning:" ..
-              "(?-i:[A-Z]).*comes? into view")
+-- Note: If you want an alert to be silenced by the fm_pack feature,
+-- it must be on an alert by itself (not part of a multi-monster pattern)
 
 -- Always screen flash
-local always_flash_screen_monsters = {
+local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
   "vault warden", "vault guardian", "ghost crab"
 } -- always_flash_screen_monsters (do not remove this comment)
 
 -- Always more prompt
-local always_force_more_monsters = {
+local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
   -- Torment
@@ -41,17 +31,17 @@ local always_force_more_monsters = {
 } -- always_force_more_monsters (do not remove this comment)
 
 -- Only alert once per pack
-local fm_pack = {
+local FM_PACK = {
   "dream sheep", "shrike", "boggart", "floating eye"
 } -- fm_pack (do not remove this comment)
 
 -- Once per pack, but alerts created through dynamic adds
-local fm_pack_no_init_add = {
+local FM_PACK_NO_CREATE = {
   "electric eel", "golden eye", "great orb of eyes"
-} -- fm_pack_no_init_add (do not remove this comment)
+} -- FM_PACK_NO_CREATE (do not remove this comment)
 
 
-local fm_patterns = {
+local FM_PATTERNS = {
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
   {name = "30hp", cond = "hp", cutoff = 30,
       pattern = "hound|gnoll"},
@@ -175,24 +165,51 @@ local fm_patterns = {
 } -- end fm_patterns (do not remove this comment)
 ------------------- End config section -------------------
 
-local active_fm = {} -- which ones are on
-local active_fm_index = {} -- lookup table for speed
-local monsters_to_mute = {} -- which packs are muted
-local last_fm_turn = {} -- when the mute started
+local active_fm -- which ones are on
+local active_fm_index -- lookup table for speed
+local monsters_to_mute -- which packs are muted
+local last_fm_turn -- when the mute started
 
+local function do_pack_mutes()
+  -- Put pending mutes into effect
+  for _, v in ipairs(monsters_to_mute) do
+    set_monster_fm("-", v)
+  end
+  monsters_to_mute = {}
+
+  -- Remove mutes that have expired
+  for _, v in ipairs(FM_PACK) do
+    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+      set_monster_fm("+", v)
+      last_fm_turn[v] = -1
+    end
+  end
+
+  -- For no-init pack monsters, just deactivate the fm
+  for _, v in ipairs(FM_PACK_NO_CREATE) do
+    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+      active_fm[active_fm_index[v]] = false
+      last_fm_turn[v] = -1
+    end
+  end
+end
+
+-- Util for checking against resistance and hp
+local function get_three_pip_action(active, hp, cutoff, res)
+  local div = res+1
+  if div == 4 then div = 5 end
+
+  if active then
+    if hp >= cutoff/div then return "-" end
+  else
+    if hp < cutoff/div then return "+" end
+  end
+end
 
 local function set_monster_option(sign, monster_str, option)
   local fm_str = "monster_warning:(?<!spectral )(" .. monster_str ..
       ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
   crawl.setopt(option .. " " .. sign .. "= " .. fm_str)
-end
-
-local function set_monster_fm(sign, monster_str)
-  set_monster_option(sign, monster_str, "force_more_message")
-end
-
-local function set_monster_flash(sign, monster_str)
-  set_monster_option(sign, monster_str, "flash_screen_message")
 end
 
 local function set_all(monster_list, option)
@@ -207,21 +224,72 @@ local function set_all(monster_list, option)
   set_monster_option("+", mon_str, option)
 end
 
-local function get_three_pip_action(active, hp, cutoff, res)
-  -- Util for checks against resistance and hp
-  local div = res+1
-  if div == 4 then div = 5 end
+local function set_monster_flash(sign, monster_str)
+  set_monster_option(sign, monster_str, "flash_screen_message")
+end
 
-  if active then
-    if hp >= cutoff/div then return "-" end
-  else
-    if hp < cutoff/div then return "+" end
+local function set_monster_fm(sign, monster_str)
+  set_monster_option(sign, monster_str, "force_more_message")
+end
+
+
+function init_fm_monsters()
+  if CONFIG.debug_init then crawl.mpr("Initializing fm-monsters") end
+
+  active_fm = {}
+  active_fm_index = {}
+  monsters_to_mute = {}
+  last_fm_turn = {}
+
+
+  -- Stop on all Uniques & Pan lords
+  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z]).*comes? into view")
+
+
+  set_all(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
+  set_all(ALWAYS_FORCE_MORE_MONSTERS, "force_more_message")
+
+  -- Init packs
+  for _, v in ipairs(FM_PACK) do
+    set_monster_fm("+", v)
+    last_fm_turn[v] = -1
+  end
+
+  for _,v in ipairs(FM_PACK_NO_CREATE) do
+    FM_PACK[#FM_PACK+1] = v
+    last_fm_turn[v] = -1
+  end
+
+  -- Build table of indexes, used for fm_pack logic
+  for i,v in ipairs(FM_PATTERNS) do
+    if not v.pattern:find("|") then
+      active_fm_index[v.pattern] = i
+    end
+  end
+
+  -- Init all active_fm to false
+  for _,_ in ipairs(FM_PATTERNS) do
+    active_fm[#active_fm+1] = false
   end
 end
 
 
 ------------------- Hooks -------------------
-function ready_force_mores()
+function c_message_fm_pack(text, channel)
+  if channel ~= "monster_warning" then return end
+  if CONFIG.fm_pack_duration == 0 then return end
+  
+  -- Identifies when a mute should be turned on
+  if not text:find("comes? into view") then return end
+  for _, v in ipairs(FM_PACK) do
+    if text:find(v) and last_fm_turn[v] == -1 then
+      last_fm_turn[v] = CACHE.turn
+      monsters_to_mute[#monsters_to_mute+1] = v
+    end
+  end
+end
+
+function ready_fm_monsters()
   local activated = {}
   local deactivated = {}
 
@@ -237,7 +305,7 @@ function ready_force_mores()
   local res_drain = CACHE.rN
   local int = CACHE.int
 
-  for i,v in ipairs(fm_patterns) do
+  for i,v in ipairs(FM_PATTERNS) do
     local action = nil
 
     if not v.cond and not active_fm[i] then
@@ -245,10 +313,6 @@ function ready_force_mores()
     elseif v.cond == "xl" then
       if active_fm[i] and CACHE.xl >= v.cutoff then action = "-"
       elseif not active_fm[i] and CACHE.xl < v.cutoff then action = "+"
-      end
-    elseif v.cond == "maxhp" then
-      if active_fm[i] and maxhp >= v.cutoff then action = "-"
-      elseif not active_fm[i] and maxhp < v.cutoff then action = "+"
       end
     elseif v.cond == "hp" then
       if active_fm[i] and hp >= v.cutoff then action = "-"
@@ -306,7 +370,7 @@ function ready_force_mores()
       set_monster_fm(action, fm_mon_str)
       active_fm[i] = not active_fm[i]
 
-      if debug_fm_monsters then
+      if CONFIG.debug_fm_monsters then
         if action == "+" then
           activated[#activated+1] = fm_name
         elseif action == "-" then
@@ -316,7 +380,7 @@ function ready_force_mores()
     end
   end
 
-  if debug_fm_monsters then
+  if CONFIG.debug_fm_monsters then
     if #activated > 0 then
       crawl.mpr("Activating force_mores: " .. table.concat(activated, ", "))
     end
@@ -324,69 +388,6 @@ function ready_force_mores()
       crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", "))
     end
   end
-end
 
-function c_message_fm_pack(text, channel)
-  if channel ~= "plain" then return end
-  
-  -- Identifies when a mute should be turned on
-  if not text:find("comes? into view") then return end
-  for _, v in ipairs(fm_pack) do
-    if text:find(v) and last_fm_turn[v] == -1 then
-      last_fm_turn[v] = CACHE.turn
-      monsters_to_mute[#monsters_to_mute+1] = v
-    end
-  end
-end
-
-function ready_fm_pack()
-  -- Put pending mutes into effect
-  for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v)
-  end
-  monsters_to_mute = {}
-
-  -- Remove mutes that have expired
-  for _, v in ipairs(fm_pack) do
-    if CACHE.turn == last_fm_turn[v] + turns_to_delay then
-      set_monster_fm("+", v)
-      last_fm_turn[v] = -1
-    end
-  end
-
-  -- For no-init pack monsters, just deactivate the fm
-  for _, v in ipairs(fm_pack_no_init_add) do
-    if CACHE.turn == last_fm_turn[v] + turns_to_delay then
-      active_fm[active_fm_index[v]] = false
-      last_fm_turn[v] = -1
-    end
-  end
-end
-
-
------- Startup code ------
-set_all(always_flash_screen_monsters, "flash_screen_message")
-set_all(always_force_more_monsters, "force_more_message")
-
--- Init packs
-for _, v in ipairs(fm_pack) do
-  set_monster_fm("+", v)
-  last_fm_turn[v] = -1
-end
-
-for _,v in ipairs(fm_pack_no_init_add) do
-  fm_pack[#fm_pack+1] = v
-  last_fm_turn[v] = -1
-end
-
--- Build table of indexes, used for fm_pack logic
-for i,v in ipairs(fm_patterns) do
-  if not v.pattern:find("|") then
-    active_fm_index[v.pattern] = i
-  end
-end
-
--- Init all active_fm to false
-for _,_ in ipairs(fm_patterns) do
-  active_fm[#active_fm+1] = false
+  if CONFIG.fm_pack_duration > 0 then do_pack_mutes() end
 end

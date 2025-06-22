@@ -1,22 +1,16 @@
 -- A collection of simple features related to resting and auto-explore stops
-
-loadfile("crawl-rc/lua/cache.lua")
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/constants.lua")
-
-local stop_on_altars = true
-local stop_on_portals = true
-local stop_on_pan_gates = false
+local stop_on_altars
+local stop_on_portals
+local stop_on_pan_gates
+local autosearched_temple
+local autosearched_gauntlet
 
 
----- Ignore exit portals ----
-local function ready_ignore_exits()
-  if stop_on_portals and util.contains(all_portal_names, CACHE.branch) then
-    stop_on_portals = false
-    crawl.setopt("explore_stop -= portals")
-  elseif not stop_on_portals and not util.contains(all_portal_names, CACHE.branch) then
-    stop_on_portals = true
-    crawl.setopt("explore_stop += portals")
+---- Gauntlet actions ----
+local function ready_gauntlet_macro()
+  if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
+    crawl.sendkeys({ 6, ".\r" })
+    autosearched_gauntlet = true
   end
 end
 
@@ -36,6 +30,17 @@ local function ready_ignore_altars()
   end
 end
 
+---- Ignore exit portals ----
+local function ready_ignore_exits()
+  if stop_on_portals and util.contains(ALL_PORTAL_NAMES, CACHE.branch) then
+    stop_on_portals = false
+    crawl.setopt("explore_stop -= portals")
+  elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, CACHE.branch) then
+    stop_on_portals = true
+    crawl.setopt("explore_stop += portals")
+  end
+end
+
 ---- Stop on Pan Gates ----
 local function ready_stop_on_pan_gates()
   local branch = CACHE.branch
@@ -49,7 +54,6 @@ local function ready_stop_on_pan_gates()
 end
 
 ---- Temple actions ----
-local autosearched_temple = false
 local function ready_temple_macro()
   if CACHE.branch == "Temple" and not autosearched_temple and CACHE.god == "No God" then
     crawl.sendkeys({ 6, "altar\r" })
@@ -69,25 +73,27 @@ local function c_message_temple_actions(text, _)
   end
 end
 
----- Gauntlet actions ----
-local autosearched_gauntlet = false
-local function ready_gauntlet_macro()
-  if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
-    crawl.sendkeys({ 6, ".\r" })
-    autosearched_gauntlet = true
-  end
+
+function init_runrest_features()
+  if CONFIG.debug_init then crawl.mpr("Initializing runrest-features") end
+
+  stop_on_altars = true
+  stop_on_portals = true
+  stop_on_pan_gates = false
+  autosearched_temple = false
+  autosearched_gauntlet = false
 end
 
 
 ---------------- Hooks ----------------
+function c_message_runrest_features(text, _)
+  if CONFIG.temple_macros then c_message_temple_actions(text, _) end
+end
+
 function ready_runrest_features()
   if CONFIG.ignore_altars then ready_ignore_altars() end
   if CONFIG.ignore_portal_exits then ready_ignore_exits() end
   if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
   if CONFIG.temple_macros then ready_temple_macro() end
   if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
-end
-
-function c_message_runrest_features(text, _)
-  if CONFIG.temple_macros then c_message_temple_actions(text, _) end
 end

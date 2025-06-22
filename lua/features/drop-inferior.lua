@@ -1,16 +1,20 @@
 ------- Auto-tag inferior items and add to drop list -----
-loadfile("crawl-rc/lua/util.lua")
-
 local DROP_KEY = "~~DROP_ME"
-
-crawl.setopt("drop_filter += " .. DROP_KEY)
 
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
 end
 
------------------- Hook ------------------
+
+function init_drop_inferior()
+  if CONFIG.debug_init then crawl.mpr("Initializing drop-inferior") end
+
+  crawl.setopt("drop_filter += " .. DROP_KEY)
+end
+
+
+------------------ Hooks ------------------
 function c_assign_invletter_drop_inferior(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
@@ -21,7 +25,7 @@ function c_assign_invletter_drop_inferior(it)
 
   local risky_artefact = false
   if it.artefact then
-    if util.contains(dangerous_brands, it.name()) then
+    if util.contains(DANGEROUS_BRANDS, it.name()) then
       risky_artefact = true
     end
   end

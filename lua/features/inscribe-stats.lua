@@ -1,8 +1,4 @@
 ----- Inscribe stats on items -----
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/util.lua")
-
-local skipped_first_redraw = false
 
 local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
@@ -49,7 +45,7 @@ local function inscribe_weapon_stats(it)
 end
 
 
------------------- Hook ------------------
+------------------ Hooks ------------------
 function ready_inscribe_stats()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if is_weapon(inv) or is_staff(inv) then
@@ -57,11 +53,5 @@ function ready_inscribe_stats()
     elseif is_armour(inv) then
       if CONFIG.inscribe_armour and not is_scarf(inv) then inscribe_armour_stats(inv) end
     end
-  end
-
-  -- This redraw can causes crashes if called during an autopickup.
-  -- Be sure not to hook any of this to c_message, or anything that can trigger during an autopickup
-  if skipped_first_redraw then crawl.redraw_screen()
-  else skipped_first_redraw = true
   end
 end

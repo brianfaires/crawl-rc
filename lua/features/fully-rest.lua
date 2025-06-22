@@ -1,40 +1,10 @@
 ----- Fully rest off negative statuses -----
-loadfile("crawl-rc/lua/cache.lua")
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/util.lua")
 
-local status_to_wait_off = { "berserk", "short of breath", "corroded", "vulnerable",
+local STATUSES_TO_WAIT_OFF = { "berserk", "short of breath", "corroded", "vulnerable",
     "confused", "marked", "tree%-form", "sluggish" } -- "slowed" is a special case below
 
-local recovery_start_turn = 0
-local explore_after_recovery = false
-
-crawl.setopt("runrest_ignore_message += recovery:.*")
-crawl.setopt("runrest_ignore_message += duration:.*")
-
-local function fully_recovered()
-  if CACHE.hp ~= CACHE.mhp then return false end
-  if CACHE.mp ~= CACHE.mmp then return false end
-
-  -- Statuses that will always rest off
-  local status = you.status()
-
-  for _,s in ipairs(status_to_wait_off) do
-    if status:find(s) then return false end
-  end
-
-  -- If stat drain, don't wait for slow
-  if status:find("slowed") then
-    return CACHE.str <= 0 or CACHE.dex <= 0 or CACHE.int <= 0
-  end
-
-  return true
-end
-
-local function start_full_recovery()
-  recovery_start_turn = CACHE.turn
-  crawl.setopt("message_colour += mute:You start waiting.")
-end
+local recovery_start_turn
+local explore_after_recovery
 
 local function abort_full_recovery()
   recovery_start_turn = 0
@@ -58,6 +28,42 @@ local function finish_full_recovery()
   end
 end
 
+local function fully_recovered()
+  if CACHE.hp ~= CACHE.mhp then return false end
+  if CACHE.mp ~= CACHE.mmp then return false end
+
+  -- Statuses that will always rest off
+  local status = you.status()
+
+  for _,s in ipairs(STATUSES_TO_WAIT_OFF) do
+    if status:find(s) then return false end
+  end
+
+  -- If stat drain, don't wait for slow
+  if status:find("slowed") then
+    return CACHE.str <= 0 or CACHE.dex <= 0 or CACHE.int <= 0
+  end
+
+  return true
+end
+
+local function start_full_recovery()
+  recovery_start_turn = CACHE.turn
+  crawl.setopt("message_colour += mute:You start waiting.")
+end
+
+
+function init_fully_rest()
+  if CONFIG.debug_init then crawl.mpr("Initializing fully-rest") end
+
+  recovery_start_turn = 0
+  explore_after_recovery = false
+  
+  crawl.setopt("runrest_ignore_message += recovery:.*")
+  crawl.setopt("runrest_ignore_message += duration:.*")
+  crawl.setopt("macros += M o ===macro_explore_full_recovery")
+end
+
 -- Attach full recovery to auto-explore
 function macro_explore_full_recovery()
   if fully_recovered() then
@@ -67,13 +73,9 @@ function macro_explore_full_recovery()
     crawl.do_commands({"CMD_REST"})
   end
 end
-crawl.setopt("macros += M o ===macro_explore_full_recovery")
 
 
-function ch_stop_running_full_recovery(kind)
-  if kind == "run" and not fully_recovered() then start_full_recovery() end
-end
-
+------------------- Hooks -------------------
 function c_message_fully_recover(text, channel)
   if channel == "plain" then
     if text:find("You start waiting.") or text:find("You start resting.") then
@@ -84,6 +86,10 @@ function c_message_fully_recover(text, channel)
     elseif fully_recovered() then finish_full_recovery()
     end
   end
+end
+
+function ch_stop_running_full_recovery(kind)
+  if kind == "run" and not fully_recovered() then start_full_recovery() end
 end
 
 function ready_fully_recover()

@@ -1,15 +1,8 @@
-loadfile("lua/cache.lua")
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/util.lua")
-
------ Prevent accidental stairs usage -----
-local prev_location = CACHE.branch .. CACHE.depth
-local cur_location = prev_location
-local last_stair_turn = 0
-local v5_unwarned = true
-
-crawl.setopt("macros += M > ===macro_do_safe_downstairs")
-crawl.setopt("macros += M < ===macro_do_safe_upstairs")
+----- Prevent accidental stairs use -----
+local prev_location
+local cur_location
+local last_stair_turn
+local v5_unwarned
 
 local function check_new_location(key)
   local new_location = CACHE.branch .. CACHE.depth
@@ -35,13 +28,26 @@ local function check_new_location(key)
   last_stair_turn = CACHE.turn
 end
 
-function macro_do_safe_upstairs()
-  check_new_location("<")
+
+function init_safe_stairs()
+  if CONFIG.debug_init then crawl.mpr("Initializing safe-stairs") end
+  prev_location = CACHE.branch .. CACHE.depth
+  cur_location = prev_location
+  last_stair_turn = 0
+  v5_unwarned = true
+
+  crawl.setopt("macros += M > ===macro_do_safe_downstairs")
+  crawl.setopt("macros += M < ===macro_do_safe_upstairs")
 end
 
 function macro_do_safe_downstairs()
   check_new_location(">")
 end
+
+function macro_do_safe_upstairs()
+  check_new_location("<")
+end
+
 
 ------------------- Hook -------------------
 function ready_safe_stairs()

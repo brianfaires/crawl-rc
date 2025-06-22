@@ -1,16 +1,15 @@
-loadfile("crawl-rc/lua/util.lua")
+function init_after_shaft()
+  if CONFIG.debug_init then crawl.mpr("Initializing after-shaft") end
 
------ Add stops for stairs after being shafted -----
-create_persistent_data("as_shaft_depth", 0)
-create_persistent_data("as_shaft_branch", "NA")
+  create_persistent_data("as_shaft_depth", 0)
+  create_persistent_data("as_shaft_branch", "NA")
 
--- Initial logic to maintain persistent state
-if as_shaft_depth ~= 0 then
-  crawl.setopt("explore_stop += stairs")
-else
-  crawl.setopt("explore_stop -= stairs")
+  if as_shaft_depth ~= 0 then
+    crawl.setopt("explore_stop += stairs")
+  else
+    crawl.setopt("explore_stop -= stairs")
+  end
 end
-
 
 ------------------- Hooks -------------------
 function c_message_after_shaft(text, channel)

@@ -5,12 +5,10 @@
 -- If we cared what slot the item was in, it'd already be assigned somewhere
 -- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
 
-loadfile("lua/cache.lua")
+local muted_items
+local last_pickup_turn
 
-local muted_items = {}
-local last_pickup_turn = -1
-
--- Must define this separate from ready() if we want to call it from c_message_mute_swaps as well
+-- Define this separately from ready() to also call it from c_message_mute_swaps
 local function unmute_items()
   for _,v in ipairs(muted_items) do
     crawl.setopt("message_colour -= mute: - " .. v)
@@ -18,11 +16,16 @@ local function unmute_items()
   muted_items = {}
 end
 
-------------------- Hooks -------------------
-function ready_mute_swaps()
-  unmute_items()
+
+function init_mute_swaps()
+  if CONFIG.debug_init then crawl.mpr("Initializing mute-swaps") end
+
+  muted_items = {}
+  last_pickup_turn = -1
 end
 
+
+------------------- Hooks -------------------
 function c_assign_invletter_mute_swaps(_)
   -- this causes an unmute command on the message
   -- we can't unmute in time from this hook
@@ -50,5 +53,9 @@ function c_message_mute_swaps(text, channel)
     end
   end
 
+  unmute_items()
+end
+
+function ready_mute_swaps()
   unmute_items()
 end

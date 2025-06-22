@@ -1,8 +1,88 @@
-if loaded_pa_util then return end
-loaded_pa_util = true
-loadfile("crawl-rc/lua/util.lua")
+---- Utility functions specific to pickup-alert system ----
+--------- Stat string formatting ---------
+local function format_stat(abbr, val, is_worn)
+  local stat_str = string.format("%.1f", val)
+  if val < 0 then
+    return abbr .. stat_str
+  elseif is_worn then
+    return abbr .. ':' .. stat_str
+  else
+    return abbr .. '+' .. stat_str
+  end
+end
+
+function get_armour_info_strings(it)
+  if not is_armour(it) or is_orb(it) then return "", "" end
+
+  local cur = items.equipped_at(it.equip_type)
+  local cur_ac = 0
+  local cur_sh = 0
+  local cur_ev = 0
+  local is_worn = it.ininventory and cur and cur.slot == it.slot
+  if cur and not is_worn then
+    -- Only show deltas if not same item
+    if is_shield(cur) then
+      cur_sh = get_shield_sh(cur)
+      cur_ev = -get_shield_penalty(cur)
+    else
+      cur_ac = get_armour_ac(cur)
+      cur_ev = get_armour_ev(cur)
+    end
+  end
+
+  if is_shield(it) then
+    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh, is_worn)
+    local ev_str = format_stat("EV", -get_shield_penalty(it) - cur_ev, is_worn)
+    return sh_str, ev_str
+  else
+    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac, is_worn)
+    if not is_body_armour(it) then return ac_str end
+    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev, is_worn)
+    return ac_str, ev_str
+  end
+end
+
+function get_weapon_info_string(it)
+  if not it.delay then return end
+
+  local dmg = get_weap_dmg(it)
+  local dmg_str = string.format("%.1f", dmg)
+  if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
+  if dmg > 99.9 then dmg_str = ">100" end
+
+  local delay = get_weap_delay(it)
+  local delay_str = string.format("%.1f", delay)
+  if delay < 1 then
+    delay_str = string.format("%.2f", delay)
+    delay_str = delay_str:sub(2, #delay_str)
+  end
+
+  local dps = get_weap_dps(it)
+  local dps_str = string.format("%.1f", dps)
+  if dps < 10 then dps_str = string.format("%.2f", dps) end
+  if dps > 99.9 then dps_str = ">100" end
+
+  local it_plus = it.plus or 0
+  local acc = it.accuracy + it_plus
+  if acc >= 0 then acc = "+" .. acc end
+
+  --This would be awesome if it worked for all UIs
+  --dps_str = "DPS:<w>" .. dps_str .. "</w> "
+  --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
+  return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
+end
 
 
+--------- Functions for armour and weapons ---------
+function get_ego(it)
+  if it.artefact then return "arte" end
+  local basename = it.name("base")
+  if basename:find("troll leather") then return "Regen+" end
+  if basename:find("dragon scales") and not basename:find("steam") then return basename end
+  return it.ego()
+end
+
+-- Used for data tables
 function get_plussed_name(it, name_type)
   if is_talisman(it) or is_orb(it) then return it.name() end
   local name = it.name(name_type or "base")
@@ -12,15 +92,7 @@ function get_plussed_name(it, name_type)
   return name
 end
 
-function get_ego(it)
-  if it.artefact then return "arte" end
-  local basename = it.name("base")
-  if basename:find("troll leather") then return "Regen+" end
-  if basename:find("dragon scales") and not basename:find("steam") then return basename end
-  return it.ego()
-end
-
---- Custom def of ego/branded ---
+-- Custom def of ego/branded
 function has_ego(it)
   if is_weapon(it) then return it.artefact or it.branded end
   if it.artefact or it.branded then return true end
@@ -141,14 +213,7 @@ function get_shield_sh(it)
 end
 
 
---------- Weapons (Shadowing crawl calcs) ---------
-function get_hands(it)
-  if CACHE.race ~= "Formicid" then return it.hands end
-  local st, _ = it.subtype()
-  if st == "giant club" or st == "giant spiked club" then return 2 end
-  return 1
-end
-
+--------- Weapon stats (Shadowing crawl calcs) ---------
 function get_weap_delay(it, ignore_brands)
   local delay = it.delay - get_skill(it.weap_skill)/2
   local min_delay = get_weap_min_delay(it)
@@ -202,78 +267,10 @@ function get_weap_min_delay(it)
   return min_delay
 end
 
-
---------- Other damage calcs ---------
--- Count all slay bonuses from weapons/armour/jewellery
-function get_slay_bonuses()
-  local sum = 0
-
-  -- Slots can go as high as 18 afaict
-  for i = 0,20 do
-    local it = items.equipped_at(i)
-    if it then
-      if is_ring(it) then
-        if it.artefact then
-          local name = it.name()
-          local idx = name:find("Slay")
-          if idx then
-            local slay = tonumber(name:sub(idx+5, idx+5))
-            if slay == 1 then
-              local next_digit = tonumber(name:sub(idx+6, idx+6))
-              if next_digit then slay = 10 + next_digit end
-            end
-
-            if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
-            else sum = sum - slay end
-          end
-        elseif it.ego(true) == "Slay" then
-          sum = sum + it.plus
-        end
-      elseif it.artefact and (is_armour(it) or is_amulet(it)) then
-          local slay = it.artprops["Slay"]
-          if slay then sum = sum + slay end
-      end
-    end
-  end
-
-  if CACHE.race == "Demonspawn" then
-    sum = sum + 3 * get_mut("augmentation", true)
-    sum = sum + get_mut("sharp scales", true)
-  end
-
-  return sum
+function get_weap_dps(it, no_brand_dmg, no_weight_all_brands)
+  return get_weap_dmg(it, no_brand_dmg, no_weight_all_brands) / get_weap_delay(it)
 end
 
-function get_staff_bonus_dmg(it, no_brand_dmg)
-  -- dcss v0.33.1
-  if no_brand_dmg then
-    local basename = it.name("base")
-    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
-      return 0
-    end
-  end
-
-  local school = get_staff_school(it)
-  if not school then return 0 end
-  local spell_skill = get_skill(school)
-  local evo_skill = you.skill("Evocations")
-
-  local chance = (2*evo_skill + spell_skill) / 30
-  if chance > 1 then chance = 1 end
-  -- 0.75 is an acceptable approximation; most commonly 63/80
-  -- Varies by staff type in sometimes complex ways
-  local avg_dmg = 3/4 * (evo_skill/2 + spell_skill)
-  return avg_dmg*chance
-end
-
-function get_staff_school(it)
-  for k,v in pairs(staff_schools) do
-    if it.name("base") == "staff of " .. k then return v end
-	end
-end
-
-
---------- get_weap_dmg() ---------
 function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
@@ -343,86 +340,16 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   return pre_brand_dmg
 end
 
-function get_weap_dps(it, no_brand_dmg, no_weight_all_brands)
-  return get_weap_dmg(it, no_brand_dmg, no_weight_all_brands) / get_weap_delay(it)
+
+--------- Weap stat helpers ---------
+function get_hands(it)
+  if CACHE.race ~= "Formicid" then return it.hands end
+  local st, _ = it.subtype()
+  if st == "giant club" or st == "giant spiked club" then return 2 end
+  return 1
 end
 
-
----- Stat string formatting ----
-local function format_stat(abbr, val, is_worn)
-  local stat_str = string.format("%.1f", val)
-  if val < 0 then
-    return abbr .. stat_str
-  elseif is_worn then
-    return abbr .. ':' .. stat_str
-  else
-    return abbr .. '+' .. stat_str
-  end
-end
-
-function get_armour_info_strings(it)
-  if not is_armour(it) or is_orb(it) then return "", "" end
-
-  local cur = items.equipped_at(it.equip_type)
-  local cur_ac = 0
-  local cur_sh = 0
-  local cur_ev = 0
-  local is_worn = it.ininventory and cur and cur.slot == it.slot
-  if cur and not is_worn then
-    -- Only show deltas if not same item
-    if is_shield(cur) then
-      cur_sh = get_shield_sh(cur)
-      cur_ev = -get_shield_penalty(cur)
-    else
-      cur_ac = get_armour_ac(cur)
-      cur_ev = get_armour_ev(cur)
-    end
-  end
-
-  if is_shield(it) then
-    local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh, is_worn)
-    local ev_str = format_stat("EV", -get_shield_penalty(it) - cur_ev, is_worn)
-    return sh_str, ev_str
-  else
-    local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac, is_worn)
-    if not is_body_armour(it) then return ac_str end
-    local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev, is_worn)
-    return ac_str, ev_str
-  end
-end
-
-function get_weapon_info_string(it)
-  if not it.delay then return end
-
-  local dmg = get_weap_dmg(it)
-  local dmg_str = string.format("%.1f", dmg)
-  if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
-  if dmg > 99.9 then dmg_str = ">100" end
-
-  local delay = get_weap_delay(it)
-  local delay_str = string.format("%.1f", delay)
-  if delay < 1 then
-    delay_str = string.format("%.2f", delay)
-    delay_str = delay_str:sub(2, #delay_str)
-  end
-
-  local dps = get_weap_dps(it)
-  local dps_str = string.format("%.1f", dps)
-  if dps < 10 then dps_str = string.format("%.2f", dps) end
-  if dps > 99.9 then dps_str = ">100" end
-
-  local it_plus = it.plus or 0
-  local acc = it.accuracy + it_plus
-  if acc >= 0 then acc = "+" .. acc end
-
-  --This would be awesome if it worked for all UIs
-  --dps_str = "DPS:<w>" .. dps_str .. "</w> "
-  --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
-  return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
-end
-
-
----- Util ----
+-- Get skill level, or average for artefacts w/ multiple skills
 function get_skill(skill)
   if not skill:find(",") then
     return you.skill(skill)
@@ -436,4 +363,72 @@ function get_skill(skill)
     count = count + 1
   end
   return sum/count
+end
+
+-- Count all slay bonuses from weapons/armour/jewellery
+function get_slay_bonuses()
+  local sum = 0
+
+  -- Slots can go as high as 18 afaict
+  for i = 0,20 do
+    local it = items.equipped_at(i)
+    if it then
+      if is_ring(it) then
+        if it.artefact then
+          local name = it.name()
+          local idx = name:find("Slay")
+          if idx then
+            local slay = tonumber(name:sub(idx+5, idx+5))
+            if slay == 1 then
+              local next_digit = tonumber(name:sub(idx+6, idx+6))
+              if next_digit then slay = 10 + next_digit end
+            end
+
+            if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
+            else sum = sum - slay end
+          end
+        elseif it.ego(true) == "Slay" then
+          sum = sum + it.plus
+        end
+      elseif it.artefact and (is_armour(it) or is_amulet(it)) then
+          local slay = it.artprops["Slay"]
+          if slay then sum = sum + slay end
+      end
+    end
+  end
+
+  if CACHE.race == "Demonspawn" then
+    sum = sum + 3 * get_mut("augmentation", true)
+    sum = sum + get_mut("sharp scales", true)
+  end
+
+  return sum
+end
+
+function get_staff_bonus_dmg(it, no_brand_dmg)
+  -- dcss v0.33.1
+  if no_brand_dmg then
+    local basename = it.name("base")
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
+      return 0
+    end
+  end
+
+  local school = get_staff_school(it)
+  if not school then return 0 end
+  local spell_skill = get_skill(school)
+  local evo_skill = you.skill("Evocations")
+
+  local chance = (2*evo_skill + spell_skill) / 30
+  if chance > 1 then chance = 1 end
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local avg_dmg = 3/4 * (evo_skill/2 + spell_skill)
+  return avg_dmg*chance
+end
+
+function get_staff_school(it)
+  for k,v in pairs(ALL_STAFF_SCHOOLS) do
+    if it.name("base") == "staff of " .. k then return v end
+	end
 end

@@ -26,6 +26,7 @@ def write_resume(cur_file, outfile):
   outfile.write(f"\n{comment_char * 2} (Resuming {cur_file.name}) {comment_char*2}\n")
 
 def is_new_file(line, prev_files):
+  # this is an artefact from when I used loadfile() for dependency tracking
   if line.startswith(LOAD_LUA_PREFIX):
     line = line.split('"')[1]
   file_name = line.replace(RC_PREFIX, "").strip()

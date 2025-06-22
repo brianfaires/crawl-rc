@@ -1,10 +1,3 @@
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/emojis.lua")
-loadfile("crawl-rc/lua/util.lua")
-
----- Track if found ID yet ----
-create_persistent_data("found_scroll_of_id", 0)
-
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
 local function remind_unidentified_items()
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -25,7 +18,20 @@ local function remind_unidentified_items()
   end
 end
 
+function init_remind_id()
+  if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
+
+  create_persistent_data("found_scroll_of_id", 0)
+end
+
+
 ------------------- Hooks -------------------
+function c_assign_invletter_remind_identify(it)
+  if not it.is_identified or it.name("qual"):find("scroll of identify") then
+    remind_unidentified_items()
+  end
+end
+
 function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
@@ -44,11 +50,5 @@ function c_message_remind_identify(text, channel)
         you.stop_activity()
       end
     end
-  end
-end
-
-function c_assign_invletter_remind_identify(it)
-  if not it.is_identified or it.name("qual"):find("scroll of identify") then
-    remind_unidentified_items()
   end
 end

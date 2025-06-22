@@ -1,8 +1,20 @@
------ Initially from https://github.com/magus/dcss -----
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/constants.lua")
-loadfile("crawl-rc/lua/emojis.lua")
-loadfile("crawl-rc/lua/util.lua")
+----- Announce changes in HP/MP; modified from https://github.com/magus/dcss -----
+local prev
+
+local function create_meter(perc, full, part, empty, border)
+  local decade = math.floor(perc / 10)
+  local full_count = math.floor(decade / 2)
+  local part_count = decade % 2
+  local empty_count = 5 - full_count - part_count
+
+  local tokens = {}
+  if border then tokens[1] = border end
+  for i = 1, full_count do tokens[#tokens + 1] = full end
+  for i = 1, part_count do tokens[#tokens + 1] = part end
+  for i = 1, empty_count do tokens[#tokens + 1] = empty end
+  if border then tokens[#tokens + 1] = border end
+  return table.concat(tokens)
+end
 
 local function format_delta(delta)
   if delta > 0 then
@@ -30,27 +42,19 @@ local function format_ratio(cur, max)
   return with_color(color, string.format(" -> %s/%s", cur, max))
 end
 
-local function create_meter(perc, full, part, empty, border)
-  local decade = math.floor(perc / 10)
-  local full_count = math.floor(decade / 2)
-  local part_count = decade % 2
-  local empty_count = 5 - full_count - part_count
 
-  local tokens = {}
-  if border then tokens[1] = border end
-  for i = 1, full_count do tokens[#tokens + 1] = full end
-  for i = 1, part_count do tokens[#tokens + 1] = part end
-  for i = 1, empty_count do tokens[#tokens + 1] = empty end
-  if border then tokens[#tokens + 1] = border end
-  return table.concat(tokens)
+
+function init_announce_damage()
+  if CONFIG.debug_init then crawl.mpr("Initializing announce-damage") end
+  prev = {}
+  prev.hp = 0
+  prev.mhp = 0
+  prev.mp = 0
+  prev.mmp = 0
 end
 
-local prev = {}
-prev.hp = 0
-prev.mhp = 0
-prev.mp = 0
-prev.mmp = 0
 
+------------------- Hooks -------------------
 function ready_announce_damage()
   -- Skip message on initializing game
   if prev.hp > 0 then

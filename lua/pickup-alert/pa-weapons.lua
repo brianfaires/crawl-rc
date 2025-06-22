@@ -1,41 +1,10 @@
-if loaded_pa_weapons then return end
-loaded_pa_weapons = true
-loadfile("crawl-rc/lua/emojis.lua")
-loadfile("crawl-rc/lua/util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-main.lua")
-
----- Begin inv arrays ----
--- Use these arrays to compare potential upgrades against entire inventory
--- But only update these arrays once per turn, in ready()
-
+---- Pickup and Alert features for weapons ----
+-- TODO: where does this live?
 local inv_weap_data = {}
-local function make_weapon_struct(it)
-  local weap_data = {}
-
-  weap_data.dps = get_weap_dps(it)
-  weap_data.acc = it.accuracy + it.plus
-  weap_data.ego = get_ego(it)
-  weap_data.branded = has_ego(it)
-  weap_data.basename = it.name("base")
-  weap_data.subtype = it.subtype()
-
-  weap_data.is_ranged = it.is_ranged
-  weap_data.hands = get_hands(it)
-  weap_data.artefact = it.artefact
-  weap_data.plus = it.plus
-  weap_data.weap_skill = it.weap_skill
-  weap_data.skill_lvl = get_skill(it.weap_skill)
-
-  return weap_data
-end
-
--- High scores for melee/ranged, 1/2-handed, branded/unbranded
--- (Don't put these closing curly braces on a line by themself)
 local top_school = "unarmed combat"
 local egos = { }
 
+-- High scores for melee/ranged, 1/2-handed, branded/unbranded
 local inv_max_dmg = {
   melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
   ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0, melee_only = 0
@@ -45,218 +14,6 @@ local inv_max_dmg_acc = {
   melee_1 = 0, melee_1b = 0, melee_2 = 0, melee_2b = 0,
   ranged_1 = 0, ranged_1b = 0, ranged_2 = 0, ranged_2b = 0, melee_only = 0
 } -- inv_max_dmg_acc (do not remove this comment)
-
-
-local function set_top_school()
-  local max = 0
-
-  for _,v in ipairs(all_weap_schools) do
-    if get_skill(v) > max then
-      max = get_skill(v)
-      top_school = v
-    end
-  end
-end
-
-local function get_weap_tag(it)
-  local ret_val = it.is_ranged and "ranged_" or "melee_"
-  ret_val = ret_val .. get_hands(it)
-  if has_ego(it) then ret_val = ret_val .. "b" end
-  return ret_val
-end
-
-local function enforce_dmg_floor(target, floor)
-  if inv_max_dmg[target] < inv_max_dmg[floor] then
-    inv_max_dmg[target] = inv_max_dmg[floor]
-    inv_max_dmg_acc[target] = inv_max_dmg_acc[floor]
-  end
-end
-
-function generate_inv_weap_arrays()
-  -- Pulls inventory weapon data, so we don't do it several times per turn
-  -- Could be optimized further with add/drop events
-  inv_weap_data = {}
-  for k, _ in pairs(inv_max_dmg) do
-    inv_max_dmg[k] = 0
-    inv_max_dmg_acc[k] = 0
-  end
-
-  set_top_school()
-
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and not is_staff(inv) then
-      update_high_scores(inv)
-      inv_weap_data[#inv_weap_data+1] = make_weapon_struct(inv)
-      if has_ego(inv) then egos[#egos+1] = get_ego(inv) end
-
-      local dmg = inv_weap_data[#inv_weap_data].dps
-      local weap_type = get_weap_tag(inv)
-      if dmg > inv_max_dmg[weap_type] then
-        inv_max_dmg[weap_type] = dmg
-        local inv_plus = inv.plus
-        if not inv_plus then inv_plus = 0 end
-        inv_max_dmg_acc[weap_type] = inv.accuracy + inv_plus
-
-    -- Keep a separate count for all melee weapons
-    if weap_type:find("melee") then
-      inv_max_dmg["melee_only"] = dmg
-      inv_max_dmg_acc["melee_only"] = inv.accuracy + inv_plus
-    end
-      end
-    end
-  end
-
-  -- Copy max_dmg from more restrictive categories to less restrictive
-  enforce_dmg_floor("ranged_1", "ranged_1b")
-  enforce_dmg_floor("ranged_2", "ranged_2b")
-  enforce_dmg_floor("melee_1", "melee_1b")
-  enforce_dmg_floor("melee_2", "melee_2b")
-
-  enforce_dmg_floor("melee_1", "ranged_1")
-  enforce_dmg_floor("melee_1b", "ranged_1b")
-  enforce_dmg_floor("melee_2", "ranged_2")
-  enforce_dmg_floor("melee_2b", "ranged_2b")
-
-  enforce_dmg_floor("melee_2", "melee_1")
-  enforce_dmg_floor("melee_2b", "melee_1b")
-end
-
-
--- Alert strong weapons early
-local function alert_early_weapons(it)
-  -- Alert really good usable ranged weapons
-  if CACHE.xl <= 14 then
-    if it.is_identified and it.is_ranged then
-      if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
-        if get_hands(it) == 1 or not have_shield() or CACHE.s_shields <= 8 then
-          return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
-        end
-      end
-    end
-  end
-
-  -- Skip items when we're clearly going another route
-  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*CACHE.xl+3 then return false end
-
-  if CACHE.xl < 8 then
-    if has_ego(it) or it.plus and it.plus >= 4 then
-      -- Make sure we don't alert a pure downgrade to something in inventory
-      for _,inv in ipairs(inv_weap_data) do
-        if inv.basename == it.name("base") then
-          if inv.plus >= it.plus then
-            if not has_ego(it) then return false end
-            if it.ego() == inv.ego then return false end
-          end
-        end
-      end
-
-      return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
-    end
-  end
-
-  return false
-end
-
-
-local function alert_first_ranged(it)
-  if not it.is_ranged then return false end
-
-  if get_hands(it) == 2 then
-    if alerted_first_ranged_2h == 0 then return false end
-    if have_shield() then return false end
-    alerted_first_ranged_2h = 1
-    return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
-  else
-    if alerted_first_ranged_1h ~= 0 then return false end
-    alerted_first_ranged_1h = 1
-    return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
-  end
-end
-
-
-local function alert_first_polearm(it)
-  if alerted_first_polearm ~= 0 then return false end
-  if it.weap_skill ~= "Polearms" then return false end
-  if get_hands(it) == 2 and have_shield() then return false end
-  alerted_first_polearm = 1
-  if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
-  return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
-end
-
-
----- pickup_weapons util ----
-local function no_upgrade_possible(it, inv)
-  if get_hands(it) > inv.hands then return true end
-  if it.is_ranged ~= inv.is_ranged then return true end
-  if inv.weap_skill == "Polearms" and it.weap_skill ~= "Polearms" then return true end
-  return false
-end
-
-local function get_dmg_delta(it, cur, penalty)
-  if not penalty then penalty = 1 end
-
-  local delta
-  local dmg_inv = inv_max_dmg[get_weap_tag(it)]
-
-  if cur.dps >= dmg_inv then
-    delta = get_weap_dps(it) - cur.dps
-  else
-    delta = get_weap_dps(it) - dmg_inv
-  end
-
-  if delta > 0 then return delta * penalty end
-  return delta / penalty
-end
-
-local function need_first_weapon(it)
-  if inv_max_dmg["melee_2"] > 0 then return false end
-  if you.skill("Unarmed Combat") > 0 then return false end
-  if get_mut("claws", true) > 0 then return false end
-  if get_mut("demonic touch", true) > 0 then return false end
-
-  return true
-end
-
-
-local function pickup_weapon(it, cur)
-  if it.subtype() == cur.subtype then
-    -- Exact weapon type match
-    if it.artefact then return true end
-    if cur.artefact then return false end
-    if has_ego(it) and it.is_identified and not cur.branded then
-      return get_weap_dps(it) > 0.85*cur.dps
-    end
-    if cur.branded and not has_ego(it) then return false end
-    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
-  elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
-    if no_upgrade_possible(it, cur) then return false end
-
-    if it.artefact then return true end
-    if cur.artefact then return false end
-    if it.branded and not it.is_identified then return false end
-    --if cur.branded and not it.branded then return false end
-
-    if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
-
-    local it_plus = it.plus or 0
-    local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
-    local cur_score = cur.dps + cur.acc/3
-
-    return it_score > 1.1*cur_score
-  end
-
-  return false
-end
-
-
-function do_pa_weapon_pickup(it)
-  if it.is_useless then return false end
-  for _,inv in ipairs(inv_weap_data) do
-    if pickup_weapon(it, inv) then return true end
-  end
-
-  return need_first_weapon(it)
-end
 
 
 -- Check if weapon is worth alerting for, informed by a weapon currently in inventory
@@ -372,7 +129,176 @@ local function alert_weap_high_scores(it)
   return pa_alert_item(it, category)
 end
 
-function do_pa_weapon_alerts(it)
+------ Alert strong weapons early ------
+local function alert_early_weapons(it)
+  -- Alert really good usable ranged weapons
+  if CACHE.xl <= 14 then
+    if it.is_identified and it.is_ranged then
+      if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
+        if get_hands(it) == 1 or not have_shield() or CACHE.s_shields <= 8 then
+          return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
+        end
+      end
+    end
+  end
+
+  -- Skip items when we're clearly going another route
+  if get_skill(top_school) - get_skill(it.weap_skill) > 1.5*CACHE.xl+3 then return false end
+
+  if CACHE.xl < 8 then
+    if has_ego(it) or it.plus and it.plus >= 4 then
+      -- Make sure we don't alert a pure downgrade to something in inventory
+      for _,inv in ipairs(inv_weap_data) do
+        if inv.basename == it.name("base") then
+          if inv.plus >= it.plus then
+            if not has_ego(it) then return false end
+            if it.ego() == inv.ego then return false end
+          end
+        end
+      end
+
+      return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
+    end
+  end
+
+  return false
+end
+
+local function alert_first_polearm(it)
+  if alerted_first_polearm ~= 0 then return false end
+  if not is_polearm(it) then return false end
+  if get_hands(it) == 2 and have_shield() then return false end
+  alerted_first_polearm = 1
+  if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
+  return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
+end
+
+local function alert_first_ranged(it)
+  if not it.is_ranged then return false end
+
+  if get_hands(it) == 2 then
+    if alerted_first_ranged_2h == 0 then return false end
+    if have_shield() then return false end
+    alerted_first_ranged_2h = 1
+    return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
+  else
+    if alerted_first_ranged_1h ~= 0 then return false end
+    alerted_first_ranged_1h = 1
+    return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
+  end
+end
+
+---- pickup_weapons util ----
+local function enforce_dmg_floor(target, floor)
+  if inv_max_dmg[target] < inv_max_dmg[floor] then
+    inv_max_dmg[target] = inv_max_dmg[floor]
+    inv_max_dmg_acc[target] = inv_max_dmg_acc[floor]
+  end
+end
+
+local function get_dmg_delta(it, cur, penalty)
+  if not penalty then penalty = 1 end
+
+  local delta
+  local dmg_inv = inv_max_dmg[get_weap_tag(it)]
+
+  if cur.dps >= dmg_inv then
+    delta = get_weap_dps(it) - cur.dps
+  else
+    delta = get_weap_dps(it) - dmg_inv
+  end
+
+  if delta > 0 then return delta * penalty end
+  return delta / penalty
+end
+
+local function need_first_weapon(it)
+  if inv_max_dmg["melee_2"] > 0 then return false end
+  if you.skill("Unarmed Combat") > 0 then return false end
+  if get_mut("claws", true) > 0 then return false end
+  if get_mut("demonic touch", true) > 0 then return false end
+
+  return true
+end
+
+local function no_upgrade_possible(it, inv)
+  if get_hands(it) > inv.hands then return true end
+  if it.is_ranged ~= inv.is_ranged then return true end
+  if is_polearm(inv) and not is_polearm(it) then return true end
+  return false
+end
+
+local function pickup_weapon(it, cur)
+  if it.subtype() == cur.subtype then
+    -- Exact weapon type match
+    if it.artefact then return true end
+    if cur.artefact then return false end
+    if has_ego(it) and it.is_identified and not cur.branded then
+      return get_weap_dps(it) > 0.85*cur.dps
+    end
+    if cur.branded and not has_ego(it) then return false end
+    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
+  elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
+    if no_upgrade_possible(it, cur) then return false end
+
+    if it.artefact then return true end
+    if cur.artefact then return false end
+    if it.branded and not it.is_identified then return false end
+    --if cur.branded and not it.branded then return false end
+
+    if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
+
+    local it_plus = it.plus or 0
+    local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
+    local cur_score = cur.dps + cur.acc/3
+
+    return it_score > 1.1*cur_score
+  end
+
+  return false
+end
+
+------ Weapon data helpers ------
+local function get_weap_tag(it)
+  local ret_val = it.is_ranged and "ranged_" or "melee_"
+  ret_val = ret_val .. get_hands(it)
+  if has_ego(it) then ret_val = ret_val .. "b" end
+  return ret_val
+end
+
+local function make_weapon_struct(it)
+  local weap_data = {}
+
+  weap_data.dps = get_weap_dps(it)
+  weap_data.acc = it.accuracy + it.plus
+  weap_data.ego = get_ego(it)
+  weap_data.branded = has_ego(it)
+  weap_data.basename = it.name("base")
+  weap_data.subtype = it.subtype()
+
+  weap_data.is_ranged = it.is_ranged
+  weap_data.hands = get_hands(it)
+  weap_data.artefact = it.artefact
+  weap_data.plus = it.plus
+  weap_data.weap_skill = it.weap_skill
+  weap_data.skill_lvl = get_skill(it.weap_skill)
+
+  return weap_data
+end
+
+local function set_top_school()
+  local max = 0
+
+  for _,v in ipairs(ALL_WEAP_SCHOOLS) do
+    if get_skill(v) > max then
+      max = get_skill(v)
+      top_school = v
+    end
+  end
+end
+
+
+function pa_alert_weapon(it)
   if it.is_useless then return false end
   if has_ego(it) and not it.is_identified then return false end
 
@@ -384,4 +310,62 @@ function do_pa_weapon_alerts(it)
   -- Skip high score alerts if not using weapons
   if inv_max_dmg["melee_2"] > 0 then return alert_weap_high_scores(it) end
   return false
+end
+
+function pa_pickup_weapon(it)
+  if it.is_useless then return false end
+  for _,inv in ipairs(inv_weap_data) do
+    if pickup_weapon(it, inv) then return true end
+  end
+
+  return need_first_weapon(it)
+end
+
+function generate_inv_weap_arrays()
+  -- Pulls inventory weapon data, so we don't do it several times per turn
+  -- Could be optimized further with add/drop events
+  inv_weap_data = {}
+  for k, _ in pairs(inv_max_dmg) do
+    inv_max_dmg[k] = 0
+    inv_max_dmg_acc[k] = 0
+  end
+
+  set_top_school()
+
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if is_weapon(inv) and not is_staff(inv) then
+      update_high_scores(inv)
+      inv_weap_data[#inv_weap_data+1] = make_weapon_struct(inv)
+      if has_ego(inv) then egos[#egos+1] = get_ego(inv) end
+
+      local dmg = inv_weap_data[#inv_weap_data].dps
+      local weap_type = get_weap_tag(inv)
+      if dmg > inv_max_dmg[weap_type] then
+        inv_max_dmg[weap_type] = dmg
+        local inv_plus = inv.plus
+        if not inv_plus then inv_plus = 0 end
+        inv_max_dmg_acc[weap_type] = inv.accuracy + inv_plus
+
+    -- Keep a separate count for all melee weapons
+    if weap_type:find("melee") then
+      inv_max_dmg["melee_only"] = dmg
+      inv_max_dmg_acc["melee_only"] = inv.accuracy + inv_plus
+    end
+      end
+    end
+  end
+
+  -- Copy max_dmg from more restrictive categories to less restrictive
+  enforce_dmg_floor("ranged_1", "ranged_1b")
+  enforce_dmg_floor("ranged_2", "ranged_2b")
+  enforce_dmg_floor("melee_1", "melee_1b")
+  enforce_dmg_floor("melee_2", "melee_2b")
+
+  enforce_dmg_floor("melee_1", "ranged_1")
+  enforce_dmg_floor("melee_1b", "ranged_1b")
+  enforce_dmg_floor("melee_2", "ranged_2")
+  enforce_dmg_floor("melee_2b", "ranged_2b")
+
+  enforce_dmg_floor("melee_2", "melee_1")
+  enforce_dmg_floor("melee_2b", "melee_1b")
 end

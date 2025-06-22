@@ -1,8 +1,3 @@
-if loaded_lua_emojis_file then return end
-loaded_lua_emojis_file = true
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/util.lua")
-
 EMOJI = {}
 
 if CONFIG.emojis then
@@ -40,6 +35,8 @@ if CONFIG.emojis then
   EMOJI.MP_FULL_PIP = "🟦"
   EMOJI.MP_PART_PIP = "🔹"
   EMOJI.MP_EMPTY_PIP = "➖"
+
+  EMOJI.SUCCESS = "✅"
 
 elseif CONFIG.textmojis then
   EMOJI.REMIND_IDENTIFY = with_color("cyan", "??")
