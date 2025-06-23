@@ -45,7 +45,7 @@ function init_pa_main()
     -- Not picking up this item. Check for alerts.
     if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
     if util.contains(pa_items_alerted, plus_name) then return end
-    ready_item_alerts() -- Update high scores, to avoid weird cases from small stat increases
+    ready_item_alerts() -- Avoid weird cases from small stat increases
 
     if loaded_pa_misc and CONFIG.alert_one_time_items then
       if pa_alert_rare_item(it) then return end
@@ -120,6 +120,5 @@ function ready_item_alerts()
   if CACHE.turn == last_ready_item_alerts_turn then return end
   last_ready_item_alerts_turn = CACHE.turn
 
-  generate_inv_weap_arrays()
   update_high_scores(get_body_armour())
 end

@@ -6,7 +6,7 @@ local function alert_low_hp()
     below_hp_threshold = CACHE.hp ~= CACHE.mhp
   elseif CACHE.hp <= CONFIG.alert_low_hp_threshold * CACHE.mhp then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. (100*threshold_perc) .. "% HP"
+    local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
     enqueue_mpr_opt_more(true, table.concat({
       EMOJI.EXCLAMATION_2, " ", with_color(COLORS.red, LOW_HP_MSG), " ", EMOJI.EXCLAMATION_2
     }))
