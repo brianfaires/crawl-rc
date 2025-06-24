@@ -24,6 +24,7 @@ ai += ring of magical power:MP+9
 ai += ring of poison resistance:rPois
 ai += ring of protection from cold:rC+
 ai += ring of protection from fire:rF+
+ai += ring of positive energy:rN+
 ai += ring of resist corrosion:rCorr
 ai += ring of see invisible:sInv
 ai += ring of wizardry:wiz+

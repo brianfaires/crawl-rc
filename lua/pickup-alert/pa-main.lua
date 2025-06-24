@@ -1,4 +1,3 @@
-local last_ready_item_alerts_turn
 local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 
 
@@ -7,10 +6,12 @@ function init_pa_main()
 
   if CONFIG.debug_init then crawl.mpr("Initializing pa-main") end
 
-  last_ready_item_alerts_turn = 0
   loaded_pa_armour = pa_alert_armour and true or false
   loaded_pa_misc = pa_alert_orb and true or false
-  loaded_pa_weapons = pa_alert_weapon and true or false
+  if pa_alert_weapon then
+    loaded_pa_weapons = true
+    init_pa_weapons()
+  end
   if CONFIG.debug_init then
     if loaded_pa_armour then crawl.mpr("pa-armour loaded") end
     if loaded_pa_misc then crawl.mpr("pa-misc loaded") end
@@ -117,8 +118,6 @@ function c_message_item_alerts(text, channel)
 end
 
 function ready_item_alerts()
-  if CACHE.turn == last_ready_item_alerts_turn then return end
-  last_ready_item_alerts_turn = CACHE.turn
-
+  ready_pa_weapons()
   update_high_scores(get_body_armour())
 end
