@@ -37,7 +37,7 @@ local function alert_armour_while_mutated(it, type)
     local touch_lvl = get_mut("demonic touch", true)
 
     if claws_lvl > 0 or touch_lvl >= 3 then
-      if it.artefact or it.branded then
+      if has_ego(it) then
         return pa_alert_item(it, "Branded gloves", EMOJI.GLOVES)
       end
       local cur_gloves = items.equipped_at("gloves")
@@ -56,7 +56,7 @@ local function alert_armour_while_mutated(it, type)
     local talons_lvl = get_mut("talons", true)
 
     if hooves_lvl + talons_lvl > 0 then
-      if it.artefact or it.branded then
+      if has_ego(it) then
         return pa_alert_item(it, "Branded boots", EMOJI.BOOTS)
       end
       local cur_boots = items.equipped_at("boots")
@@ -82,7 +82,7 @@ local function alert_armour_while_mutated(it, type)
     local antennae_lvl = get_mut("antennae", true)
     local beak_lvl = get_mut("beak", true)
     if horns_lvl + antennae_lvl + beak_lvl > 0 then
-      if it.artefact or it.branded then
+      if has_ego(it) then
         return pa_alert_item(it, "Branded headgear", EMOJI.HAT)
       end
       local cur_helmet = items.equipped_at("helmet")
@@ -92,6 +92,12 @@ local function alert_armour_while_mutated(it, type)
     end
   end
 end
+
+CONFIG.armour_alert_sensitivity = {
+  lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2, none = 1.2 },
+  heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2, none = 0.8 }
+}
+
 
 -- Alerts armour items that did trigger autopickup, but are worth consideration
 -- Includes: Artefacts, added or changed egos, and
@@ -122,7 +128,7 @@ local function alert_interesting_armour(it)
           return pa_alert_item(it, "Diff ego", EMOJI.EGO)
         end
       end
-      if get_armour_ac(it) > get_armour_ac(cur) + 0.1 then
+      if get_armour_ac(it) > get_armour_ac(cur) + 0.01 then
         return pa_alert_item(it, "Stronger armour", EMOJI.STRONGER)
       end
 
@@ -132,7 +138,7 @@ local function alert_interesting_armour(it)
       local ac_lost = get_armour_ac(cur) - get_armour_ac(it)
 
       if has_ego(it) then
-        if not cur.artefact and not has_ego(cur) then
+        if not has_ego(cur) then
           if ev_gain/ac_lost >= 0.6 or ac_lost <= 4 then
             return pa_alert_item(it, "Gain ego (Lighter armour)", EMOJI.EGO)
           end
@@ -168,7 +174,7 @@ local function alert_interesting_armour(it)
       local total_loss = ev_lost + encumb_penalty
 
       if has_ego(it) then
-        if not cur.artefact and not has_ego(cur) then
+        if not has_ego(cur) then
           if ac_gain/total_loss >= 0.4 or total_loss <= 8 then
             return pa_alert_item(it, "Gain ego (Heavier armour)", EMOJI.EGO)
           end
@@ -182,7 +188,7 @@ local function alert_interesting_armour(it)
           end
         end
       else
-        if cur.artefact or has_ego(cur) then
+        if has_ego(cur) then
           if ac_gain/total_loss >= 2 and ac_gain >= 3 then
             return pa_alert_item(it, "Heavier armour (Lost ego)", EMOJI.HEAVIER)
           end
@@ -301,7 +307,7 @@ function pa_pickup_armour(it)
       if it_ego ~= get_ego(cur) then return true end
       if get_armour_ac(it) > get_armour_ac(cur) then return true end
     else
-      if cur.branded or cur.artefact then return false end
+      if has_ego(cur) then return false end
       if get_armour_ac(it) > get_armour_ac(cur) then return true end
     end
   end
