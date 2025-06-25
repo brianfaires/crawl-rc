@@ -34,13 +34,6 @@ local PERSISTENT_DATA_TYPE_HANDLERS = {
     end
 } -- PERSISTENT_DATA_TYPE_HANDLERS (do not remove this comment)
 
-function init_persistent_data()
-  if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
-
-  persistent_var_names = {}
-  persistent_table_names = {}
-end
-
 
 -- Creates a persistent global variable or table, initialized to the default value
 -- Once initialized, the variable is persisted across saves without re-init
@@ -101,4 +94,12 @@ function get_var_type(value)
       end
   end
   crawl.mpr("Unsupported type: " .. type(value))
+end
+
+
+function init_persistent_data()
+  if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
+
+  persistent_var_names = {}
+  persistent_table_names = {}
 end

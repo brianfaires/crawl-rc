@@ -81,10 +81,11 @@ lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 
 ############## Lua Hook Functions ##############
 {
-local last_ready_turn
 local last_dump_turn
+local buehler_rc_active
 
 function c_assign_invletter(it)
+  if not buehler_rc_active then return end
   -- Calls with no return values; just triggering on new item pickup
   if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
   if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
@@ -99,6 +100,7 @@ function c_assign_invletter(it)
 end
 
 function c_message(text, channel)
+  if not buehler_rc_active then return end
   if c_message_remind_identify then c_message_remind_identify(text, channel) end
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
@@ -112,10 +114,12 @@ function c_message(text, channel)
 end
 
 function ch_stop_running(kind)
+  if not buehler_rc_active then return end
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
 end
 
 function c_answer_prompt(prompt)
+  if not buehler_rc_active then return end
   if prompt:find("cheaper one?") and CACHE.branch ~= "Bazaar" then
     crawl.mpr("Replacing shopping list items")
     return true end
@@ -125,16 +129,16 @@ function c_answer_prompt(prompt)
 end
 
 function ready()
-  -- Turn counters
-  if you.turns() == last_ready_turn then return end
+  if not buehler_rc_active then return end
+  if you.turns() == prev_turn then return end
+
   ready_cache()
-  last_ready_turn = CACHE.turn
-  last_dump_turn = CACHE.turn
+  prev_turn = CACHE.turn
 
   -- Debugging
   if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
-    last_dump_turn = CACHE.turn
     dump_persistent_data()
+    last_dump_turn = CACHE.turn
   end
 
   -- Features (may not be included)
@@ -158,7 +162,7 @@ function ready()
 end
 
 function init_buehler()
-  last_ready_turn = -1
+  buehler_rc_active = false
   last_dump_turn = -1
 
   -- Init core modules
@@ -166,6 +170,40 @@ function init_buehler()
   init_persistent_data()
   init_cache()
   init_util()
+
+  -- Check for unexpected changes
+  local change_detected = false
+  local GAME_CHANGE_MONITORS = {
+    buehler_rc_version = BUEHLER_RC_VERSION,
+    name = you.name(),
+    race = CACHE.race,
+    class = CACHE.class,
+    turn = CACHE.turn
+  } -- GAME_CHANGE_MONITORS (do not remove this comment)
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    create_persistent_data("prev_" .. k, v)
+  end
+
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    local prev = _G["prev_" .. k]
+    if prev ~= v then
+      change_detected = true
+      local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+      crawl.mpr(with_color(COLORS.lightred, msg))
+      crawl.flush_prev_message()
+    end
+  end
+
+  if change_detected and not crawl.yesno("Continue initializing buehler.rc?") then
+    crawl.mpr(with_color(COLORS.lightred, "Aborting initialization. buehler.rc is inactive."))
+    return
+  else
+    buehler_rc_active = true
+    for k, v in pairs(GAME_CHANGE_MONITORS) do
+      _G["prev_" .. k] = v
+    end
+  end
+
 
   -- Init optional features
   if init_after_shaft then init_after_shaft() end
@@ -182,18 +220,21 @@ function init_buehler()
   if init_runrest_features then init_runrest_features() end
   if init_safe_stairs then init_safe_stairs() end
   if init_startup then init_startup() end
-  if init_util then init_util() end
   if init_weapon_slots then init_weapon_slots() end
+
 
   -- Startup hygiene
   ready()
   crawl.redraw_screen()
 
-  -- Result message
+
+  -- Success message
   local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-  local success_msg = success_emoji .. with_color(COLORS.lightblue, " Successfully initialized buehler.rc! ") .. success_emoji
-  crawl.mpr(success_msg)
+  local success_text = string.format("\nSuccessfully initialized buehler.rc v%s!", prev_buehler_rc_version)
+  crawl.mpr(success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
 end
 
+-- This is the only line of top-level code, aside from var declarations with no default values
+-- Gives confidence in initialization order and clean re-inits
 init_buehler()
 }

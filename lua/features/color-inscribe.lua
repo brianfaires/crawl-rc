@@ -55,8 +55,8 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
-  -- Get stats into inscription before coloring
-  ready_inscribe_stats()
+  -- If enabled, call out to inscribe stats before coloring
+  if ready_inscribe_stats then ready_inscribe_stats() end
 
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do

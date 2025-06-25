@@ -206,8 +206,8 @@ multiple times per turn.
 1. Before finding ID scroll, only stop travel when stack size is greater than previous
 1. Convert pa arrays to contain: {{"robe", "3"}}, instead of {"+3 robe"}
 1. Write persistent data to c_persist after each level (to recover from crashes)
+1. Store game identifiers (name/race/class) to detect game changes
 1. Cache more: inventory, wielded weap, worn armour
-1. weap_inv arrays into CACHE, and merge paired lists
 1. cleanup/reduce # of display.rc messages
 
 ### TODO - requiring crawl PR

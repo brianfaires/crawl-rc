@@ -305,6 +305,7 @@ end
 
 -------- Hooks --------
 function ready_pa_weapons()
+  init_pa_weapons()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if is_weapon(inv) and not is_staff(inv) then
       INV_WEAP.add_weapon(inv)

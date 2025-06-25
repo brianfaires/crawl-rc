@@ -3301,7 +3301,8 @@ end
 ################################### Begin lua/core/constants.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
--- Lists of things that may need to be updated as crawl changes
+-- Lists of things that may need to be updated with future changes
+BUEHLER_RC_VERSION = "1.0"
 
 ---- Items ----
 ALL_MISC_ITEMS = {
@@ -3505,13 +3506,6 @@ local PERSISTENT_DATA_TYPE_HANDLERS = {
     end
 } -- PERSISTENT_DATA_TYPE_HANDLERS (do not remove this comment)
 
-function init_persistent_data()
-  if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
-
-  persistent_var_names = {}
-  persistent_table_names = {}
-end
-
 
 -- Creates a persistent global variable or table, initialized to the default value
 -- Once initialized, the variable is persisted across saves without re-init
@@ -3572,6 +3566,14 @@ function get_var_type(value)
       end
   end
   crawl.mpr("Unsupported type: " .. type(value))
+end
+
+
+function init_persistent_data()
+  if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
+
+  persistent_var_names = {}
+  persistent_table_names = {}
 end
 
 }
@@ -4017,8 +4019,8 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
-  -- Get stats into inscription before coloring
-  ready_inscribe_stats()
+  -- If enabled, call out to inscribe stats before coloring
+  if ready_inscribe_stats then ready_inscribe_stats() end
 
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do
@@ -5079,22 +5081,32 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
-local function remind_unidentified_items()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if not inv.is_identified then
-      for inv_id in iter.invent_iterator:new(items.inventory()) do
-        if inv_id and inv_id.name("qual"):find("scroll of identify") then
-          mpr_with_stop(
-            EMOJI.REMIND_IDENTIFY ..
-            with_color(COLORS.magenta, " You have something to identify. ") ..
-            EMOJI.REMIND_IDENTIFY
-          )
-          break
-        end
+---- Before finding scroll of ID, stops for potions/scrolls stack size increases ----
+local function remind_unidentified_items(have_scroll, have_unidentified)
+  if not have_unidentified then
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if not inv.is_identified then
+        have_unidentified = true
+        break
       end
-
-      return
     end
+  end
+
+  if not have_scroll then
+    for inv_id in iter.invent_iterator:new(items.inventory()) do
+      if inv_id and inv_id.name("qual"):find("scroll of identify") then
+        have_scroll = true
+        break
+      end
+    end
+  end
+
+  if have_scroll and have_unidentified then
+    mpr_with_stop(
+      EMOJI.REMIND_IDENTIFY ..
+      with_color(COLORS.magenta, " You have something to identify. ") ..
+      EMOJI.REMIND_IDENTIFY
+    )
   end
 end
 
@@ -5102,13 +5114,17 @@ function init_remind_id()
   if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
 
   create_persistent_data("found_scroll_of_id", 0)
+  create_persistent_data("max_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
+  create_persistent_data("max_stack_size_pots", CONFIG.stop_on_pots_count)
 end
 
 
 ------------------- Hooks -------------------
 function c_assign_invletter_remind_identify(it)
-  if not it.is_identified or it.name("qual"):find("scroll of identify") then
-    remind_unidentified_items()
+  if not it.is_identified then
+    remind_unidentified_items(false, true)
+  elseif it.name("qual"):find("scroll of identify") then
+    remind_unidentified_items(true, false)
   end
 end
 
@@ -5118,15 +5134,25 @@ function c_message_remind_identify(text, channel)
   if text:find(" of identify") then
     found_scroll_of_id = 1
     if not text:find("drop") and not text:find("read") then
-      remind_unidentified_items()
+      remind_unidentified_items(true, false)
     end
   elseif found_scroll_of_id == 0 then
     local idx = text:find(" %- ")
-    if idx then
-      local slot = text:sub(idx - 1, idx - 1)
-      local it = items.inslot(items.letter_to_index(slot))
-      if it.class(true) == "scroll" and it.quantity >= CONFIG.stop_on_scrolls_count or
-          it.class(true) == "potion" and it.quantity >= CONFIG.stop_on_pots_count then
+    if not idx then return end
+
+    local slot = text:sub(idx - 1, idx - 1)
+    local it = items.inslot(items.letter_to_index(slot))
+    if it.identified then return end
+
+    local it_class = it.class(true)
+    if it_class == "scroll" then
+      if it.quantity >= max_stack_size_scrolls then
+        max_stack_size_scrolls = it.quantity
+        you.stop_activity()
+      end
+    elseif it_class == "potion" then 
+      if it.quantity >= max_stack_size_pots then
+        max_stack_size_pots = it.quantity
         you.stop_activity()
       end
     end
@@ -6970,6 +6996,7 @@ end
 
 -------- Hooks --------
 function ready_pa_weapons()
+  init_pa_weapons()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if is_weapon(inv) and not is_staff(inv) then
       INV_WEAP.add_weapon(inv)
@@ -6987,10 +7014,11 @@ end
 
 ############## Lua Hook Functions ##############
 {
-local last_ready_turn
 local last_dump_turn
+local buehler_rc_active
 
 function c_assign_invletter(it)
+  if not buehler_rc_active then return end
   -- Calls with no return values; just triggering on new item pickup
   if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
   if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
@@ -7005,6 +7033,7 @@ function c_assign_invletter(it)
 end
 
 function c_message(text, channel)
+  if not buehler_rc_active then return end
   if c_message_remind_identify then c_message_remind_identify(text, channel) end
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
@@ -7018,10 +7047,12 @@ function c_message(text, channel)
 end
 
 function ch_stop_running(kind)
+  if not buehler_rc_active then return end
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
 end
 
 function c_answer_prompt(prompt)
+  if not buehler_rc_active then return end
   if prompt:find("cheaper one?") and CACHE.branch ~= "Bazaar" then
     crawl.mpr("Replacing shopping list items")
     return true end
@@ -7031,16 +7062,16 @@ function c_answer_prompt(prompt)
 end
 
 function ready()
-  -- Turn counters
-  if you.turns() == last_ready_turn then return end
+  if not buehler_rc_active then return end
+  if you.turns() == prev_turn then return end
+
   ready_cache()
-  last_ready_turn = CACHE.turn
-  last_dump_turn = CACHE.turn
+  prev_turn = CACHE.turn
 
   -- Debugging
   if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
-    last_dump_turn = CACHE.turn
     dump_persistent_data()
+    last_dump_turn = CACHE.turn
   end
 
   -- Features (may not be included)
@@ -7064,7 +7095,7 @@ function ready()
 end
 
 function init_buehler()
-  last_ready_turn = -1
+  buehler_rc_active = false
   last_dump_turn = -1
 
   -- Init core modules
@@ -7072,6 +7103,40 @@ function init_buehler()
   init_persistent_data()
   init_cache()
   init_util()
+
+  -- Check for unexpected changes
+  local change_detected = false
+  local GAME_CHANGE_MONITORS = {
+    buehler_rc_version = BUEHLER_RC_VERSION,
+    name = you.name(),
+    race = CACHE.race,
+    class = CACHE.class,
+    turn = CACHE.turn
+  } -- GAME_CHANGE_MONITORS (do not remove this comment)
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    create_persistent_data("prev_" .. k, v)
+  end
+
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    local prev = _G["prev_" .. k]
+    if prev ~= v then
+      change_detected = true
+      local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+      crawl.mpr(with_color(COLORS.lightred, msg))
+      crawl.flush_prev_message()
+    end
+  end
+
+  if change_detected and not crawl.yesno("Continue initializing buehler.rc?") then
+    crawl.mpr(with_color(COLORS.lightred, "Aborting initialization. buehler.rc is inactive."))
+    return
+  else
+    buehler_rc_active = true
+    for k, v in pairs(GAME_CHANGE_MONITORS) do
+      _G["prev_" .. k] = v
+    end
+  end
+
 
   -- Init optional features
   if init_after_shaft then init_after_shaft() end
@@ -7088,18 +7153,21 @@ function init_buehler()
   if init_runrest_features then init_runrest_features() end
   if init_safe_stairs then init_safe_stairs() end
   if init_startup then init_startup() end
-  if init_util then init_util() end
   if init_weapon_slots then init_weapon_slots() end
+
 
   -- Startup hygiene
   ready()
   crawl.redraw_screen()
 
-  -- Result message
+
+  -- Success message
   local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-  local success_msg = success_emoji .. with_color(COLORS.lightblue, " Successfully initialized buehler.rc! ") .. success_emoji
-  crawl.mpr(success_msg)
+  local success_text = string.format("\nSuccessfully initialized buehler.rc v%s!", prev_buehler_rc_version)
+  crawl.mpr(success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
 end
 
+-- This is the only line of top-level code, aside from var declarations with no default values
+-- Gives confidence in initialization order and clean re-inits
 init_buehler()
 }
