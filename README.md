@@ -104,7 +104,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 
 ### [lua/remind-id.lua](lua/remind-id.lua)
 - When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
-- Before finding scroll of ID, stops travel when you have un-ID'd stacks of size specified in CONFIG.
+- Before finding scroll of ID, stops travel when you get a larger stack of un-ID'd scrolls/pots.
 
 ### [lua/runrest-features.lua](lua/runrest-features.lua)
 - No altar stops if you have a god
