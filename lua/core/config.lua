@@ -4,7 +4,6 @@ function init_config()
   CONFIG = {}
 
   CONFIG.emojis = true -- Use emojis in alerts and damage announcements
-  CONFIG.textmojis = true -- Fallback to text-based alternatives when emoji is off
 
   -- Announce HP/MP when change is greater than this value
   CONFIG.ANNOUNCE_HP_THRESHOLD = 1

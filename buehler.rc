@@ -9,7 +9,6 @@ function init_config()
   CONFIG = {}
 
   CONFIG.emojis = true -- Use emojis in alerts and damage announcements
-  CONFIG.textmojis = true -- Fallback to text-based alternatives when emoji is off
 
   -- Announce HP/MP when change is greater than this value
   CONFIG.ANNOUNCE_HP_THRESHOLD = 1
@@ -3410,57 +3409,61 @@ SIZE_PENALTY = {
 {
 EMOJI = {}
 
-if CONFIG.emojis then
-  EMOJI.RARE_ITEM = "💎"
-  EMOJI.ORB = "🔮"
-  EMOJI.TALISMAN = "🧬"
+function init_emojis()
+  if CONFIG.debug_init then crawl.mpr("Initializing emojis") end
 
-  EMOJI.WEAPON = "⚔️"
-  EMOJI.RANGED = "🏹"
-  EMOJI.POLEARM = "🔱"
-  EMOJI.TWO_HANDED = "✋🤚"
+  if CONFIG.emojis then
+    EMOJI.RARE_ITEM = "💎"
+    EMOJI.ORB = "🔮"
+    EMOJI.TALISMAN = "🧬"
 
-  --EMOJI.ARMOUR = "🛡️"
-  EMOJI.HAT = "🧢"
-  EMOJI.GLOVES = "🧤"
-  EMOJI.BOOTS = "🥾"
-  EMOJI.STAFF_RESISTANCE = "🔥"
+    EMOJI.WEAPON = "⚔️"
+    EMOJI.RANGED = "🏹"
+    EMOJI.POLEARM = "🔱"
+    EMOJI.TWO_HANDED = "✋🤚"
 
-  EMOJI.ACCURACY = "🎯"
-  EMOJI.STRONGER = "💪"
-  EMOJI.STRONGEST = "💪💪"
-  EMOJI.EGO = "✨"
-  EMOJI.LIGHTER = "⏬"
-  EMOJI.HEAVIER = "⏫"
-  EMOJI.ARTEFACT = "💠"
+    --EMOJI.ARMOUR = "🛡️"
+    EMOJI.HAT = "🧢"
+    EMOJI.GLOVES = "🧤"
+    EMOJI.BOOTS = "🥾"
+    EMOJI.STAFF_RESISTANCE = "🔥"
 
-  EMOJI.REMIND_IDENTIFY = "🎁"
-  EMOJI.EXCLAMATION = "❗"
-  EMOJI.EXCLAMATION_2 = "‼️"
+    EMOJI.ACCURACY = "🎯"
+    EMOJI.STRONGER = "💪"
+    EMOJI.STRONGEST = "💪💪"
+    EMOJI.EGO = "✨"
+    EMOJI.LIGHTER = "⏬"
+    EMOJI.HEAVIER = "⏫"
+    EMOJI.ARTEFACT = "💠"
 
-  EMOJI.HP_FULL_PIP = "❤️"
-  EMOJI.HP_PART_PIP = "❤️‍🩹"
-  EMOJI.HP_EMPTY_PIP = "🤍"
+    EMOJI.REMIND_IDENTIFY = "🎁"
+    EMOJI.EXCLAMATION = "❗"
+    EMOJI.EXCLAMATION_2 = "‼️"
 
-  EMOJI.MP_FULL_PIP = "🟦"
-  EMOJI.MP_PART_PIP = "🔹"
-  EMOJI.MP_EMPTY_PIP = "➖"
+    EMOJI.HP_FULL_PIP = "❤️"
+    EMOJI.HP_PART_PIP = "❤️‍🩹"
+    EMOJI.HP_EMPTY_PIP = "🤍"
 
-  EMOJI.SUCCESS = "✅"
+    EMOJI.MP_FULL_PIP = "🟦"
+    EMOJI.MP_PART_PIP = "🔹"
+    EMOJI.MP_EMPTY_PIP = "➖"
 
-elseif CONFIG.textmojis then
-  EMOJI.REMIND_IDENTIFY = with_color("cyan", "??")
-  EMOJI.EXCLAMATION_2 = with_color("lightred", "!!")
+    EMOJI.SUCCESS = "✅"
 
-  EMOJI.HP_BORDER = with_color(COLORS.white, "|")
-  EMOJI.HP_FULL_PIP = with_color(COLORS.green, "+")
-  EMOJI.HP_PART_PIP = with_color(COLORS.lightgrey, "+")
-  EMOJI.HP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
+  else
+    EMOJI.REMIND_IDENTIFY = with_color(COLORS.cyan, "??")
+    EMOJI.EXCLAMATION_2 = with_color(COLORS.lightred, "!!")
 
-  EMOJI.MP_BORDER = with_color(COLORS.white, "|")
-  EMOJI.MP_FULL_PIP = with_color(COLORS.lightblue, "+")
-  EMOJI.MP_PART_PIP = with_color(COLORS.lightgrey, "+")
-  EMOJI.MP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
+    EMOJI.HP_BORDER = with_color(COLORS.white, "|")
+    EMOJI.HP_FULL_PIP = with_color(COLORS.green, "+")
+    EMOJI.HP_PART_PIP = with_color(COLORS.lightgrey, "+")
+    EMOJI.HP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
+
+    EMOJI.MP_BORDER = with_color(COLORS.white, "|")
+    EMOJI.MP_FULL_PIP = with_color(COLORS.lightblue, "+")
+    EMOJI.MP_PART_PIP = with_color(COLORS.lightgrey, "+")
+    EMOJI.MP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
+  end
 end
 
 }
@@ -5016,7 +5019,7 @@ local function alert_low_hp()
     below_hp_threshold = true
     local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
     enqueue_mpr_opt_more(true, table.concat({
-      EMOJI.EXCLAMATION_2, " ", with_color(COLORS.red, LOW_HP_MSG), " ", EMOJI.EXCLAMATION_2
+      EMOJI.EXCLAMATION_2, " ", with_color(COLORS.red, low_hp_msg), " ", EMOJI.EXCLAMATION_2
     }))
   end
 end
@@ -5114,8 +5117,8 @@ function init_remind_id()
   if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
 
   create_persistent_data("found_scroll_of_id", 0)
-  create_persistent_data("max_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
-  create_persistent_data("max_stack_size_pots", CONFIG.stop_on_pots_count)
+  create_persistent_data("next_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
+  create_persistent_data("next_stack_size_pots", CONFIG.stop_on_pots_count)
 end
 
 
@@ -5146,13 +5149,13 @@ function c_message_remind_identify(text, channel)
 
     local it_class = it.class(true)
     if it_class == "scroll" then
-      if it.quantity >= max_stack_size_scrolls then
-        max_stack_size_scrolls = it.quantity
+      if it.quantity >= next_stack_size_scrolls then
+        next_stack_size_scrolls = it.quantity + 1
         you.stop_activity()
       end
     elseif it_class == "potion" then 
-      if it.quantity >= max_stack_size_pots then
-        max_stack_size_pots = it.quantity
+      if it.quantity >= next_stack_size_pots then
+        next_stack_size_pots = it.quantity + 1
         you.stop_activity()
       end
     end
@@ -7100,6 +7103,7 @@ function init_buehler()
 
   -- Init core modules
   init_config()
+  init_emojis()
   init_persistent_data()
   init_cache()
   init_util()

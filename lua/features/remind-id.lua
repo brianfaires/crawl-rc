@@ -32,8 +32,8 @@ function init_remind_id()
   if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
 
   create_persistent_data("found_scroll_of_id", 0)
-  create_persistent_data("max_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
-  create_persistent_data("max_stack_size_pots", CONFIG.stop_on_pots_count)
+  create_persistent_data("next_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
+  create_persistent_data("next_stack_size_pots", CONFIG.stop_on_pots_count)
 end
 
 
@@ -64,13 +64,13 @@ function c_message_remind_identify(text, channel)
 
     local it_class = it.class(true)
     if it_class == "scroll" then
-      if it.quantity >= max_stack_size_scrolls then
-        max_stack_size_scrolls = it.quantity
+      if it.quantity >= next_stack_size_scrolls then
+        next_stack_size_scrolls = it.quantity + 1
         you.stop_activity()
       end
     elseif it_class == "potion" then 
-      if it.quantity >= max_stack_size_pots then
-        max_stack_size_pots = it.quantity
+      if it.quantity >= next_stack_size_pots then
+        next_stack_size_pots = it.quantity + 1
         you.stop_activity()
       end
     end

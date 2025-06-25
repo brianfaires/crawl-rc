@@ -167,6 +167,7 @@ function init_buehler()
 
   -- Init core modules
   init_config()
+  init_emojis()
   init_persistent_data()
   init_cache()
   init_util()
