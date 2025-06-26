@@ -22,6 +22,7 @@ function init_pa_main()
   ---- Autopickup main ----
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
+    if it.is_useless then return end
     if CACHE.have_orb then return end
     local plus_name = get_plussed_name(it, "base")
     if util.contains(pa_items_picked, plus_name) then return end
@@ -29,24 +30,19 @@ function init_pa_main()
     -- Check for pickup
     local retVal = false
     if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
-      retVal = pa_pickup_armour(it)
+      if pa_pickup_armour(it) then return true end
     elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
-      retVal = pa_pickup_weapon(it)
+      if pa_pickup_weapon(it) then return true end
     elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
-      retVal = pa_pickup_staff(it)
+      if pa_pickup_staff(it) then return true end
     elseif loaded_pa_misc and is_unneeded_ring(it) then
       return false
-    end
-
-    if retVal == true then
-      remove_from_rare_items(it)
-      return true
     end
 
     -- Not picking up this item. Check for alerts.
     if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
     if util.contains(pa_items_alerted, plus_name) then return end
-    ready_item_alerts() -- Avoid weird cases from small stat increases
+    -- TODO: (DISABLED after adding turn_is_over()) ready_item_alerts() -- Avoid weird cases from small stat increases
 
     if loaded_pa_misc and CONFIG.alert_one_time_items then
       if pa_alert_rare_item(it) then return end

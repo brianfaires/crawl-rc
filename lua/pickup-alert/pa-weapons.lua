@@ -99,7 +99,6 @@ local function should_pickup_weapon(it, cur)
 end
 
 function pa_pickup_weapon(it)
-  if it.is_useless then return false end
   for _,inv in ipairs(INV_WEAP.weapons) do
     if should_pickup_weapon(it, inv) then return true end
   end
@@ -273,7 +272,6 @@ local function alert_weap_high_scores(it)
 end
 
 function pa_alert_weapon(it)
-  if it.is_useless then return false end
   if has_ego(it) and not it.is_identified then return false end
 
   if alert_first_ranged(it) then return true end

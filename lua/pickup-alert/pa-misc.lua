@@ -49,7 +49,7 @@ end
 
 ---- Smart staff pickup ----
 function pa_pickup_staff(it)
-  if it.is_useless or not it.is_identified then return false end
+  if not it.is_identified then return false end
   local school = get_staff_school(it)
   if get_skill(school) == 0 then return false end
 

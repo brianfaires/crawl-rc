@@ -58,6 +58,14 @@ function init_config()
     "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
   } -- one_time_alerts (do not remove this comment)
 
+  -- For armour of diff encumbrance, alert when ratio of gain/loss (AC|EV) is >= value
+  -- Lower values mean more alerts. gain/diff/same/lose refers to egos. 
+  CONFIG.armour_alert_threshold = {
+    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2 },
+    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2 }
+  } -- CONFIG.armour_alert_threshold (do not remove this comment)
+  CONFIG.ENCUMB_PENALTY_WEIGHT = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+
   -- Startup
   CONFIG.show_skills_on_startup = true
   CONFIG.auto_set_skill_targets = {

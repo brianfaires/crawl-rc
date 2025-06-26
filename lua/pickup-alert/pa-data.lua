@@ -40,7 +40,7 @@ function init_pa_data()
   create_persistent_data("alerted_first_ranged_2h", 0)
   create_persistent_data("alerted_first_ranged_1h", 0)
   create_persistent_data("alerted_first_polearm", 0)
-  create_persistent_data("armour_high_score", 0)
+  create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("unbranded_high_score", 0)
   create_persistent_data("polearm_high_score", 0)
@@ -107,8 +107,8 @@ function update_high_scores(it)
 
   if is_armour(it) then
     local ac = get_armour_ac(it)
-    if ac > armour_high_score then
-      armour_high_score = ac
+    if ac > ac_high_score then
+      ac_high_score = ac
       if not ret_val then ret_val = "Strongest armour" end
     end
   elseif is_weapon(it) then
