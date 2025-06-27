@@ -60,7 +60,10 @@ function c_message_remind_identify(text, channel)
 
     local slot = text:sub(idx - 1, idx - 1)
     local it = items.inslot(items.letter_to_index(slot))
-    if it.identified then return end
+
+    if it.is_identified then return end
+    -- Picking up known items still returns identified == false
+    -- Doing some hacky checks below instead
 
     local it_class = it.class(true)
     if it_class == "scroll" then
@@ -68,7 +71,7 @@ function c_message_remind_identify(text, channel)
         next_stack_size_scrolls = it.quantity + 1
         you.stop_activity()
       end
-    elseif it_class == "potion" then 
+    elseif it_class == "potion" then
       if it.quantity >= next_stack_size_pots then
         next_stack_size_pots = it.quantity + 1
         you.stop_activity()

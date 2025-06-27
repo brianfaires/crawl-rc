@@ -189,7 +189,8 @@ function is_weapon(it)
 end
 
 function offhand_is_free()
-  return you.hands() > 1 and not items.equipped_at("offhand")
+  if get_mut("missing a hand") > 0 then return true end
+  return not items.equipped_at("offhand")
 end
 
 function you_have_allies()

@@ -3860,7 +3860,8 @@ function is_weapon(it)
 end
 
 function offhand_is_free()
-  return you.hands() > 1 and not items.equipped_at("offhand")
+  if get_mut("missing a hand") > 0 then return true end
+  return not items.equipped_at("offhand")
 end
 
 function you_have_allies()
@@ -5232,7 +5233,10 @@ function c_message_remind_identify(text, channel)
 
     local slot = text:sub(idx - 1, idx - 1)
     local it = items.inslot(items.letter_to_index(slot))
-    if it.identified then return end
+
+    if it.is_identified then return end
+    -- Picking up known items still returns identified == false
+    -- Doing some hacky checks below instead
 
     local it_class = it.class(true)
     if it_class == "scroll" then
@@ -5240,7 +5244,7 @@ function c_message_remind_identify(text, channel)
         next_stack_size_scrolls = it.quantity + 1
         you.stop_activity()
       end
-    elseif it_class == "potion" then 
+    elseif it_class == "potion" then
       if it.quantity >= next_stack_size_pots then
         next_stack_size_pots = it.quantity + 1
         you.stop_activity()
@@ -6703,7 +6707,7 @@ end
 ---- Exclude superfluous rings ----
 function is_unneeded_ring(it)
   if not is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = CACHE.mutations["missing a hand"]
+  local missing_hand = get_mut("missing a hand")
   local st = it.subtype()
   local found_first = false
   for inv in iter.invent_iterator:new(items.inventory()) do
