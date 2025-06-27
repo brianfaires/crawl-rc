@@ -4,6 +4,9 @@
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 CONFIG = {}
+TUNING = {}
+WEAPON_BRAND_BONUSES = {}
+
 
 function init_config()
   CONFIG = {}
@@ -11,11 +14,11 @@ function init_config()
   CONFIG.emojis = true -- Use emojis in alerts and damage announcements
 
   -- Announce HP/MP when change is greater than this value
-  CONFIG.ANNOUNCE_HP_THRESHOLD = 1
-  CONFIG.ANNOUNCE_MP_THRESHOLD = 0
+  CONFIG.announce_hp_threshold = 1
+  CONFIG.announce_mp_threshold = 0
   -- Flash/Force more for losing this percentage of max HP
-  CONFIG.DAMAGE_FLASH_THRESHOLD = 0.20
-  CONFIG.DAMAGE_FORCE_MORE_THRESHOLD = 0.30
+  CONFIG.dmg_flash_threshold = 0.20
+  CONFIG.dmg_fm_threshold = 0.30
 
   -- Inscribe stats
   CONFIG.inscribe_weapons = true
@@ -63,14 +66,6 @@ function init_config()
     "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
   } -- one_time_alerts (do not remove this comment)
 
-  -- For armour of diff encumbrance, alert when ratio of gain/loss (AC|EV) is >= value
-  -- Lower values mean more alerts. gain/diff/same/lose refers to egos. 
-  CONFIG.armour_alert_threshold = {
-    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2 },
-    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2 }
-  } -- CONFIG.armour_alert_threshold (do not remove this comment)
-  CONFIG.ENCUMB_PENALTY_WEIGHT = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
-
   -- Startup
   CONFIG.show_skills_on_startup = true
   CONFIG.auto_set_skill_targets = {
@@ -82,6 +77,86 @@ function init_config()
   CONFIG.debug_init = true
   CONFIG.debug_dump_data_freq = 1000 -- 0 to disable
   CONFIG.debug_fm_monsters = false -- Set to true to get a message when fm changes
+
+
+
+  -- Heuristics for tuning the pickup/alert system
+  TUNING = {}
+
+  -- Alerts for armour of diff encumbrance, when ratio of gain/loss (AC|EV) is >= value
+  -- Lower values mean more alerts. gain/diff/same/lose refers to egos. 
+  TUNING.armour = {
+    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2 },
+    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2 },
+    encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+  }
+
+  -- All 'magic numbers' used in the weapon pickup/alert system.
+    -- 1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
+    -- 2. Cutoffs for when alerts are active (XL, skill_level)
+  TUNING.weap = {}
+  TUNING.weap.pickup = {
+    add_ego = 0.85, -- Pickup weapon; gaining a brand if DPS ratio >= `add_ego`
+    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio >= `same_type_melee`
+    same_type_ranged = 1.001, -- Pickup ranged weap of same type if DPS ratio >= `same_type_ranged`
+    accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
+  }
+  
+  TUNING.weap.alert = {
+    -- Alerts for weapons not requiring an extra hand
+    pure_dps = 1.001, -- Alert if DPS ratio >= `pure_dps`
+    gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio >= `gain_ego`
+    new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio >= `new_ego`
+    low_skill_penalty_damping = 8, -- Small values penalize low-trained schools more. Penalty is (skill+damp) / (top_skill+damp)
+
+    -- Alerts for 2-handed weapons, when carrying 1-handed
+    add_hand = {
+      ignore_sh_lvl = 3.9, -- Treat offhand as empty if shield_skill <= `ignore_sh_lvl`
+      add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio >= `add_ego_lose_sh`
+      not_using = 1.001, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio >= `not_using`
+    },
+
+    -- Alerts for good early weapons of all types
+    early = {
+      xl = 8, -- Alert early weapons if XL <= `xl`
+      skill = { factor = 1.5, offset = 2 }, -- Skip weapons with skill diff > XL * factor + offset
+      branded_min_plus = 4 -- Alert branded weapons with plus >= `branded_min_plus`
+    },
+
+    -- Alerts for particularly strong ranged weapons
+    early_ranged = {
+      xl = 14, -- Alert strong ranged weapons if XL <= `xl`
+      min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
+      branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
+      max_shields = 8 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
+    }
+  }
+
+
+
+  -- Defining impact of brands on DPS; used in PA system and weapon inscriptions
+  -- `scoring` includes subtle brands
+  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }
+
+  WEAPON_BRAND_BONUSES = {
+    spectralizing = { factor = 2, offset = 0 },
+    heavy = { factor = 1.8, offset = 0 },
+    flaming = { factor = 1.25, offset = 0 },
+    freezing = { factor = 1.25, offset = 0 },
+    draining = { factor = 1.25, offset = 2 },
+    electrocution = { factor = 1, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
+    venom = { factor = 1, offset = 5 }, -- 5 dmg per poisoning
+    pain = { factor = 1, offset = you.skill("Necromancy")/2 },
+    distortion = { factor = 1, offset = 6 },
+    chaos = { factor = 1.15, offset = 2 }, -- Approximate weighted average
+
+    subtle = { -- Completely made up in attempt to balance vs the damaging brands
+      protection = { factor = 1.15, offset = 0 },
+      vampirism = { factor = 1.2, offset = 0 },
+      holy_wrath = { factor = 1.15, offset = 0 },
+      antimagic = { factor = 1.1, offset = 0 }  
+    }
+  }
 
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end
@@ -259,7 +334,7 @@ menu += $positive:amulet of (faith|reflection|magic regeneration|regeneration)
 menu += $warning:ring of (fire|ice)
 menu += $decent:ring of flight
 menu += $verypositive:ring of (.*slaying)
-menu += $positive:ring of (poison resistance|protection from cold|protection from fire|protection from magic|see invisible|resist corrosion)
+menu += $positive:ring of (poison resistance|protection from |positive energy|see invisible|resist corrosion)
 menu += $good:ring of (.*evasion|.*protection|magical power|wizardry)
 
 # Misc items
@@ -3784,6 +3859,10 @@ function is_weapon(it)
   return it and (it.delay ~= nil)
 end
 
+function offhand_is_free()
+  return you.hands() > 1 and not items.equipped_at("offhand")
+end
+
 function you_have_allies()
   return you.skill("Summonings") + you.skill("Necromancy") > 0 or
       util.contains(GODS_WITH_ALLIES, CACHE.god)
@@ -3907,7 +3986,7 @@ function ready_announce_damage()
     local msg_tokens = {}
 
     -- MP message
-    if math.abs(mp_delta) > CONFIG.ANNOUNCE_MP_THRESHOLD then
+    if math.abs(mp_delta) > CONFIG.announce_mp_threshold then
       msg_tokens[#msg_tokens + 1] = create_meter(
         CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
       )
@@ -3922,7 +4001,7 @@ function ready_announce_damage()
     end
 
     -- HP message
-    if math.abs(hp_delta) > CONFIG.ANNOUNCE_HP_THRESHOLD then
+    if math.abs(hp_delta) > CONFIG.announce_hp_threshold then
       -- If no MP msg, include empty line (w 1-space offset to align)
       msg_tokens[#msg_tokens + 1] = "\n "
 
@@ -3942,9 +4021,9 @@ function ready_announce_damage()
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
     -- Damage-related warnings
-    if (damage_taken >= CACHE.mhp * CONFIG.DAMAGE_FLASH_THRESHOLD) then
+    if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
       local summary_tokens = {}
-      local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.DAMAGE_FORCE_MORE_THRESHOLD)
+      local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
       if is_force_more_msg then
         summary_tokens[#summary_tokens + 1] = "\n"
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
@@ -4091,7 +4170,7 @@ function c_assign_invletter_drop_inferior(it)
 
   -- Skip brands that are potentially harmful
   if not is_weapon(it) and not is_armour(it) then return end
-  if is_dangerous_brand(it.ego()) then return end
+  if is_dangerous_brand(get_ego(it)) then return end
 
   local risky_artefact = false
   if it.artefact then
@@ -5803,7 +5882,6 @@ end
 -- Returns a string if item is a new high score, else nil
 function update_high_scores(it)
   local ret_val = nil
-
   if is_armour(it) then
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
@@ -5812,16 +5890,18 @@ function update_high_scores(it)
     end
   elseif is_weapon(it) then
     local it_plus = it.plus or 0
-    local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
+    local score = it.score or get_weap_score(it)
     if score > weapon_high_score then
       weapon_high_score = score
       if not ret_val then ret_val = "Good weapon" end
     end
 
-    local unbranded_score = get_weap_dps(it, false) + (it.accuracy + it_plus) / 2
-    if unbranded_score > unbranded_high_score then
-      unbranded_high_score = score
-      if not ret_val then ret_val = "High pure damage" end
+    if score > unbranded_high_score then
+      local unbranded_score = it.unbranded_score or get_weap_score(it, true)
+      if unbranded_score > unbranded_high_score then
+        unbranded_high_score = score
+        if not ret_val then ret_val = "High pure damage" end
+      end
     end
 
     if is_polearm(it) and you_have_allies() then
@@ -5893,8 +5973,7 @@ end
 
 function get_weapon_info_string(it)
   if not it.delay then return end
-
-  local dmg = get_weap_dmg(it)
+  local dmg = get_weap_dmg(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -5906,7 +5985,7 @@ function get_weapon_info_string(it)
     delay_str = delay_str:sub(2, #delay_str)
   end
 
-  local dps = get_weap_dps(it)
+  local dps = dmg / delay
   local dps_str = string.format("%.1f", dps)
   if dps < 10 then dps_str = string.format("%.2f", dps) end
   if dps > 99.9 then dps_str = ">100" end
@@ -5915,7 +5994,7 @@ function get_weapon_info_string(it)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+" .. acc end
 
-  --This would be awesome if it worked for all UIs
+  --This would be nice if it worked in all UIs
   --dps_str = "DPS:<w>" .. dps_str .. "</w> "
   --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
   return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
@@ -5923,12 +6002,16 @@ end
 
 
 --------- Functions for armour and weapons ---------
-function get_ego(it)
+function get_ego(it, terse)
   if it.artefact then return "arte" end
-  local basename = it.name("base")
-  if basename:find("troll leather") then return "Regen+" end
-  if basename:find("dragon scales") and not basename:find("steam") then return basename end
-  return it.ego()
+  local ego = it.ego(terse)
+  if ego then return ego end
+
+  if is_armour(it) then
+    local basename = it.name("base")
+    if basename:find("troll leather") then return "Regen+" end
+    if basename:find("dragon scales") and not basename:find("steam") then return basename end
+  end
 end
 
 -- Used for data tables
@@ -5942,15 +6025,21 @@ function get_plussed_name(it, name_type)
 end
 
 -- Custom def of ego/branded
-function has_ego(it)
-  if is_weapon(it) then return it.artefact or it.branded end
+function has_ego(it, exclude_stat_only_egos)
+  if is_weapon(it) then
+    if exclude_stat_only_egos then
+      local ego = get_ego(it)
+      if ego and (ego == "speed" or ego == "heavy") then return false end
+    end
+    return it.artefact or it.branded
+  end
+
   if it.artefact or it.branded then return true end
   local basename = it.name("base")
   if basename:find("troll leather") then return true end
   if basename:find("dragon scales") and not basename:find("steam") then return true end
   return false
 end
-
 
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
@@ -6069,8 +6158,8 @@ function get_weap_delay(it, ignore_brands)
   if delay < min_delay then delay = min_delay end
 
   if not ignore_brands then
-    if it.ego() == "speed" then delay = delay * 2 / 3
-    elseif it.ego() == "heavy" then delay = delay * 1.5
+    if get_ego(it) == "speed" then delay = delay * 2 / 3
+    elseif get_ego(it) == "heavy" then delay = delay * 1.5
     end
   end
 
@@ -6104,7 +6193,7 @@ function get_weap_min_delay(it)
   local basename = it.name("base")
 
   local adj_base_delay = it.delay / 2
-  if it.ego() == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
+  if get_ego(it) == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
   local min_delay = math.floor(adj_base_delay)
 
   if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
@@ -6116,16 +6205,17 @@ function get_weap_min_delay(it)
   return min_delay
 end
 
-function get_weap_dps(it, no_brand_dmg, no_weight_all_brands)
-  return get_weap_dmg(it, no_brand_dmg, no_weight_all_brands) / get_weap_delay(it)
+function get_weap_dps(it, dmg_type)
+  if not dmg_type then dmg_type = DMG_TYPE.scoring end
+  return get_weap_dmg(it, dmg_type) / get_weap_delay(it)
 end
 
-function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
+function get_weap_dmg(it, dmg_type)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
+  if not dmg_type then dmg_type = DMG_TYPE.scoring end
   local it_plus = it.plus or 0
-
   -- Adjust str/dex/slay from artefacts
   local str = CACHE.str
   local dex = CACHE.dex
@@ -6154,39 +6244,32 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + CACHE.s_fighting/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
+
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
   if is_staff(it) then
-    return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg))
+    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type == DMG_TYPE.unbranded))
   end
 
-  local ego = it.ego()
-  if not ego then return pre_brand_dmg end
-
-  if not no_brand_dmg then
-    if ego == "spectralizing" then return 2 * pre_brand_dmg end
-    if ego == "heavy" then return (1.8 * pre_brand_dmg_no_plus + it_plus) end
-    if ego == "flaming" or ego == "freezing" then return 1.25 * pre_brand_dmg end
-    if ego == "draining" then return (1.25 * pre_brand_dmg + 2) end
-    if ego == "electrocution" then return (pre_brand_dmg + 3.5) end
-    -- Ballparking venom as 5 dmg since it totally breaks the paradigm
-    if ego == "venom" then return (pre_brand_dmg + 5) end
-    if ego == "pain" then return (pre_brand_dmg + you.skill("Necromancy")/2) end
-    -- Distortion does 5.025 extra dmg, + 5% chance to banish
-    if ego == "distortion" then return (pre_brand_dmg + 6) end
-    -- Weighted average of all the easily computed brands was ~ 1.17*dmg + 2.13
-    if ego == "chaos" then return (1.25 * pre_brand_dmg + 2) end
-
-    if not no_weight_all_brands then
-      if ego == "protection" then return 1.15 * pre_brand_dmg end
-      if ego == "vampirism" then return 1.25 * pre_brand_dmg end
-      if ego == "holy wrath" then return 1.15 * pre_brand_dmg end
-      if ego == "antimagic" then return 1.1 * pre_brand_dmg end
+  if dmg_type >= DMG_TYPE.branded then
+    local ego = get_ego(it)
+    if ego then
+      local brand_bonus = WEAPON_BRAND_BONUSES[ego]
+      if not brand_bonus and dmg_type == DMG_TYPE.scoring then
+        brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego]
+      end
+      if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + brand_bonus.offset + it_plus end
     end
   end
 
   return pre_brand_dmg
+end
+
+function get_weap_score(it, no_brand_bonus)
+  local it_plus = it.plus or 0
+  local dmg_type = no_brand_bonus and DMG_TYPE.unbranded or DMG_TYPE.scoring
+  return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * TUNING.weap.pickup.accuracy_weight
 end
 
 
@@ -6236,7 +6319,7 @@ function get_slay_bonuses()
             if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
             else sum = sum - slay end
           end
-        elseif it.ego(true) == "Slay" then
+        elseif get_ego(it, true) == "Slay" then
           sum = sum + it.plus
         end
       elseif it.artefact and (is_armour(it) or is_amulet(it)) then
@@ -6254,9 +6337,9 @@ function get_slay_bonuses()
   return sum
 end
 
-function get_staff_bonus_dmg(it, no_brand_dmg)
+function get_staff_bonus_dmg(it, ignore_brand_dmg)
   -- dcss v0.33.1
-  if no_brand_dmg then
+  if ignore_brand_dmg then
     local basename = it.name("base")
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
       return 0
@@ -6437,14 +6520,14 @@ function pa_alert_armour(it)
         return alert_from_map(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
-      if ev_delta / -ac_delta >= CONFIG.armour_alert_threshold.lighter[ego_change_type] then
+      if ev_delta / -ac_delta >= TUNING.armour.lighter[ego_change_type] then
         return alert_from_map(it, ARMOUR_ALERT.lighter[ego_change_type])
         -- TODO: This previously enforced a flat requirement too: <=4 AC for gain/diff; EV>=3 for lost
       end
     else -- Heavier armour
       local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
-      local total_loss = CONFIG.ENCUMB_PENALTY_WEIGHT * encumb_impact * encumb_delta - ev_delta
-      if ac_delta / total_loss >= CONFIG.armour_alert_threshold.heavier[ego_change_type] then
+      local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
+      if ac_delta / total_loss >= TUNING.armour.heavier[ego_change_type] then
         return alert_from_map(it, ARMOUR_ALERT.heavier[ego_change_type])
         -- TODO: previously total_loss <= 8 for gain/diff; ac_delta >= 3 for lost
       end
@@ -6452,7 +6535,7 @@ function pa_alert_armour(it)
   elseif is_shield(it) then
     local cur = items.equipped_at("shield")
     if not cur then return false end
-    if has_ego(it) and it.ego() ~= cur.ego() then
+    if has_ego(it) and get_ego(it) ~= get_ego(cur) then
       return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
   else
@@ -6460,7 +6543,7 @@ function pa_alert_armour(it)
     local st, _ = it.subtype()
     local cur = items.equipped_at(st)
     if not cur then return false end
-    if get_armour_ac(it) > get_armour_ac(cur) then
+    if get_armour_ac(it) > get_armour_ac(cur) + 0.001 then
       return pa_alert_item(it, "Stronger armour", EMOJI.STRONGER)
     else
       return alert_armour_consider_mutations(it, st)
@@ -6639,6 +6722,7 @@ end
 ################################### Begin lua/pickup-alert/pa-weapons.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
+---- Cache weapons in inventory ----
 INV_WEAP = {}
 
 function INV_WEAP.get_key(it)
@@ -6650,12 +6734,15 @@ end
 
 function INV_WEAP.add_weapon(it)
   local weap_data = {}
-
   weap_data.ego = get_ego(it)
   weap_data.branded = weap_data.ego ~= nil
-  weap_data.dps = get_weap_dps(it)
   weap_data.plus = it.plus
   weap_data.acc = it.accuracy + it.plus
+  weap_data.damage = it.damage
+  weap_data.dps = get_weap_dps(it)
+  weap_data.score = get_weap_score(it)
+  weap_data.unbranded_score = get_weap_score(it, true)
+
   weap_data.basename = it.name("base")
   weap_data.subtype = it.subtype()
   weap_data.is_ranged = it.is_ranged
@@ -6697,27 +6784,24 @@ function INV_WEAP.add_weapon(it)
   return weap_data
 end
 
-function INV_WEAP.get_best(it)
-  return INV_WEAP.max_dps[INV_WEAP.get_key(it)]
-end
-
 function INV_WEAP.is_empty()
   return INV_WEAP.max_dps["melee_2"].dps == 0
 end
 
 ---- Weapon pickup ----
 local function should_pickup_weapon(it, cur)
+  -- `cur` comes from INV_WEAP
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
-    if has_ego(it) and it.is_identified and not cur.branded then
-      return get_weap_dps(it) > 0.85*cur.dps
+    if cur.branded and not it.branded then return false end
+    if it.branded and it.is_identified and not cur.branded then
+      return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
     end
-    if cur.branded and not has_ego(it) then return false end
-    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
+    return get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
-    -- Return false if no upgrade possible
+    -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
     if it.is_ranged ~= cur.is_ranged then return false end
     if is_polearm(cur) and not is_polearm(it) then return false end
@@ -6725,28 +6809,23 @@ local function should_pickup_weapon(it, cur)
     if it.artefact then return true end
     if cur.artefact then return false end
     if it.branded and not it.is_identified then return false end
-    --if cur.branded and not it.branded then return false end
-
-    if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
-
-    local it_plus = it.plus or 0
-    local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
-    local cur_score = cur.dps + cur.acc/3
-
-    return it_score > 1.1*cur_score
+    
+    local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
+    return get_weap_score(it) / cur.score >= min_ratio
   end
 
   return false
 end
 
 function pa_pickup_weapon(it)
+  -- Check if we need the first weapon of the game
+  if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut("claws", true) == 0 then
+    return true
+  end
+
   for _,inv in ipairs(INV_WEAP.weapons) do
     if should_pickup_weapon(it, inv) then return true end
   end
-
-  -- Check if we need the first weapon of the game
-  return CACHE.xl < 6 and INV_WEAP.is_empty() and
-      you.skill("Unarmed Combat") == 0 and get_mut("claws", true) == 0
 end
 
 
@@ -6777,22 +6856,25 @@ end
 
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
-  if CACHE.xl <= 14 then
+  if CACHE.xl <= TUNING.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
-      if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
-        if get_hands(it) == 1 or not have_shield() or CACHE.s_shields <= 8 then
-          return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
-        end
+      if it.plus >= TUNING.weap.alert.early_ranged.min_plus and has_ego(it) or
+         it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
+          if get_hands(it) == 1 or not have_shield() or
+            CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
+              return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
+          end
       end
     end
   end
 
-  if CACHE.xl < 8 then
+  if CACHE.xl <= TUNING.weap.alert.early.xl then
     -- Skip items if we're clearly going another route
     local skill_diff = get_skill(CACHE.top_weap_skill) - get_skill(it.weap_skill)
-    if skill_diff > 1.5*CACHE.xl+3 then return false end
+    local max_skill_diff = CACHE.xl * TUNING.weap.alert.early.skill.factor + TUNING.weap.alert.early.skill.offset
+    if skill_diff >= max_skill_diff then return false end
 
-    if has_ego(it) or it.plus and it.plus >= 4 then
+    if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
       return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
     end
   end
@@ -6801,102 +6883,62 @@ local function alert_early_weapons(it)
 end
 
 -- Check if weapon is worth alerting for, informed by a weapon currently in inventory
+-- `cur` comes from INV_WEAP
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
     return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
+  local inv_best = INV_WEAP.max_dps[INV_WEAP.get_key(it)]
+  local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
+  local best_score = math.max(cur.score, inv_best and inv_best.score or 0)
+
   if cur.subtype == it.subtype() then
-    -- Exact weapon type match
-    if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then
-      return pa_alert_item(it, "New ego", EMOJI.EGO)
-    end
-    if get_weap_dps(it) > INV_WEAP.get_best(it).dps then
+    -- Exact weapon type match; alert new egos or higher DPS/weap_score
+    if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
+      return pa_alert_item(it, "Diff ego", EMOJI.EGO)
+    elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
       return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
     end
-  elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
-    -- A usable weapon school
-    if it.is_ranged ~= cur.is_ranged then return false end
+  end
+  
+  if it.is_ranged ~= cur.is_ranged then return false end
+  if 2 * get_skill(it.weap_skill) < get_skill(cur.weap_skill) then return false end
+  
+  -- Penalize lower-trained skills
+  local damp = TUNING.weap.alert.low_skill_penalty_damping
+  local penalty = (get_skill(it.weap_skill) + damp) / (get_skill(CACHE.top_weap_skill) + damp)
+  local score_ratio = penalty * get_weap_score(it) / best_score
 
-
-    -- Create penalty to disfavor weapons from lower-trained skills
-    local penalty = (get_skill(it.weap_skill)+8) / (get_skill(CACHE.top_weap_skill)+8)
-
-    if get_hands(it) == 2 and cur.hands == 1 then
-      -- Item requires an extra hand
-      if has_ego(it) and not cur.branded then
-        if get_weap_dps(it) > 0.8*cur.dps then
+  if get_hands(it) > cur.hands then
+    if offhand_is_free() or (have_shield() and CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+      if has_ego(it, true) and not util.contains(INV_WEAP.weap_egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
+          return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO)
+      elseif score_ratio >= TUNING.weap.alert.add_hand.not_using then
           return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
       end
-
-      if not have_shield() then
-        if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
-          not util.contains(INV_WEAP.weap_egos, it.ego()) then
-            return pa_alert_item(it, "New ego", EMOJI.EGO)
+    elseif has_ego(it) and not cur.branded and score_ratio >= TUNING.weap.alert.add_hand.add_ego_lose_sh then
+      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED)
+    end
+  else -- No extra hand required
+    if cur.artefact then return false end
+    if has_ego(it, true) then
+      local it_ego = get_ego(it)
+      if not cur.branded then
+        if score_ratio >= TUNING.weap.alert.gain_ego then
+          return pa_alert_item(it, "Gain ego", EMOJI.EGO)
         end
-        if not cur.branded and
-          get_weap_dps(it) > INV_WEAP.get_best(it).dps then
-            return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
-        if cur.branded and not has_ego(it) and
-          get_weap_dps(it) > INV_WEAP.get_best(it).dps then
-            return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
-      elseif CACHE.s_shields <= 4 then
-        -- Not really training shields; may be interested in big upgrades
-        if penalty*get_weap_dps(it) >= INV_WEAP.get_best(it).dps then
-          return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
-      end
-    else
-      -- Item uses same number of hands or fewer
-      if cur.artefact then return false end
-      if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") then
-        local it_dps = get_weap_dps(it)
-        local dps_delta = it_dps - INV_WEAP.get_best(it).dps
-        if penalty then
-          if dps_delta >= 0 then dps_delta = dps_delta * penalty end
-        else dps_delta = dps_delta / penalty
-        end
-
-        local dps_delta_ratio = dps_delta / it_dps
-
-        if not cur.branded then
-          if dps_delta_ratio >= -0.2 then
-            return pa_alert_item(it, "New ego", EMOJI.EGO)
-          end
-        elseif it.ego() == cur.ego then
-          if dps_delta_ratio >= 0 then
-            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
-          end
-        elseif not util.contains(INV_WEAP.weap_egos, it.ego()) then
-          if dps_delta_ratio >= -0.2 then
-            return pa_alert_item(it, "New ego", EMOJI.EGO)
-          end
-        end
-      else
-        -- Not branded
-        -- Allowing lower-trained skills triggers too often after picking up an untrained weapon
-        -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
-        if cur.branded and cur.weap_skill == it.weap_skill then
-          if get_weap_dps(it, true) > get_weap_dps(cur, true) then
-            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
-          end
-        else
-          local inv = INV_WEAP.get_best(it)
-          local best = cur.dps > inv.dps and cur or inv
-          local dps_delta = get_weap_dps(it) - best.dps
-
-          if dps_delta > 0 then
-            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
-          elseif dps_delta == 0 and it.accuracy + (it.plus or 0) > best.acc then
-            return pa_alert_item(it, "Higher accuracy", EMOJI.ACCURACY)
-          end
-        end
+      elseif not util.contains(INV_WEAP.weap_egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
+        return pa_alert_item(it, "New ego", EMOJI.EGO)
       end
     end
   end
+
+  -- Catch-all for increased weap_score
+  if score_ratio > TUNING.weap.alert.pure_dps then
+    return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
+  end
+  return false
 end
 
 local function alert_interesting_weapons(it)
@@ -7112,7 +7154,7 @@ function init_buehler()
 
   -- Success message
   local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-  local success_text = string.format("Successfully initialized buehler.rc v%s!", prev_buehler_rc_version)
+  local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
   crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
 end
 

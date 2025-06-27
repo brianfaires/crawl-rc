@@ -142,14 +142,14 @@ function pa_alert_armour(it)
         return alert_from_map(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
-      if ev_delta / -ac_delta >= CONFIG.armour_alert_threshold.lighter[ego_change_type] then
+      if ev_delta / -ac_delta >= TUNING.armour.lighter[ego_change_type] then
         return alert_from_map(it, ARMOUR_ALERT.lighter[ego_change_type])
         -- TODO: This previously enforced a flat requirement too: <=4 AC for gain/diff; EV>=3 for lost
       end
     else -- Heavier armour
       local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
-      local total_loss = CONFIG.ENCUMB_PENALTY_WEIGHT * encumb_impact * encumb_delta - ev_delta
-      if ac_delta / total_loss >= CONFIG.armour_alert_threshold.heavier[ego_change_type] then
+      local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
+      if ac_delta / total_loss >= TUNING.armour.heavier[ego_change_type] then
         return alert_from_map(it, ARMOUR_ALERT.heavier[ego_change_type])
         -- TODO: previously total_loss <= 8 for gain/diff; ac_delta >= 3 for lost
       end
@@ -157,7 +157,7 @@ function pa_alert_armour(it)
   elseif is_shield(it) then
     local cur = items.equipped_at("shield")
     if not cur then return false end
-    if has_ego(it) and it.ego() ~= cur.ego() then
+    if has_ego(it) and get_ego(it) ~= get_ego(cur) then
       return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
   else
@@ -165,7 +165,7 @@ function pa_alert_armour(it)
     local st, _ = it.subtype()
     local cur = items.equipped_at(st)
     if not cur then return false end
-    if get_armour_ac(it) > get_armour_ac(cur) then
+    if get_armour_ac(it) > get_armour_ac(cur) + 0.001 then
       return pa_alert_item(it, "Stronger armour", EMOJI.STRONGER)
     else
       return alert_armour_consider_mutations(it, st)

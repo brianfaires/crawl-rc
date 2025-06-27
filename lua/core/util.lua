@@ -188,6 +188,10 @@ function is_weapon(it)
   return it and (it.delay ~= nil)
 end
 
+function offhand_is_free()
+  return you.hands() > 1 and not items.equipped_at("offhand")
+end
+
 function you_have_allies()
   return you.skill("Summonings") + you.skill("Necromancy") > 0 or
       util.contains(GODS_WITH_ALLIES, CACHE.god)

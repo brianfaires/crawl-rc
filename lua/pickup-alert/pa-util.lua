@@ -44,8 +44,7 @@ end
 
 function get_weapon_info_string(it)
   if not it.delay then return end
-
-  local dmg = get_weap_dmg(it)
+  local dmg = get_weap_dmg(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -57,7 +56,7 @@ function get_weapon_info_string(it)
     delay_str = delay_str:sub(2, #delay_str)
   end
 
-  local dps = get_weap_dps(it)
+  local dps = dmg / delay
   local dps_str = string.format("%.1f", dps)
   if dps < 10 then dps_str = string.format("%.2f", dps) end
   if dps > 99.9 then dps_str = ">100" end
@@ -66,7 +65,7 @@ function get_weapon_info_string(it)
   local acc = it.accuracy + it_plus
   if acc >= 0 then acc = "+" .. acc end
 
-  --This would be awesome if it worked for all UIs
+  --This would be nice if it worked in all UIs
   --dps_str = "DPS:<w>" .. dps_str .. "</w> "
   --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
   return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
@@ -74,12 +73,16 @@ end
 
 
 --------- Functions for armour and weapons ---------
-function get_ego(it)
+function get_ego(it, terse)
   if it.artefact then return "arte" end
-  local basename = it.name("base")
-  if basename:find("troll leather") then return "Regen+" end
-  if basename:find("dragon scales") and not basename:find("steam") then return basename end
-  return it.ego()
+  local ego = it.ego(terse)
+  if ego then return ego end
+
+  if is_armour(it) then
+    local basename = it.name("base")
+    if basename:find("troll leather") then return "Regen+" end
+    if basename:find("dragon scales") and not basename:find("steam") then return basename end
+  end
 end
 
 -- Used for data tables
@@ -93,15 +96,21 @@ function get_plussed_name(it, name_type)
 end
 
 -- Custom def of ego/branded
-function has_ego(it)
-  if is_weapon(it) then return it.artefact or it.branded end
+function has_ego(it, exclude_stat_only_egos)
+  if is_weapon(it) then
+    if exclude_stat_only_egos then
+      local ego = get_ego(it)
+      if ego and (ego == "speed" or ego == "heavy") then return false end
+    end
+    return it.artefact or it.branded
+  end
+
   if it.artefact or it.branded then return true end
   local basename = it.name("base")
   if basename:find("troll leather") then return true end
   if basename:find("dragon scales") and not basename:find("steam") then return true end
   return false
 end
-
 
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
@@ -220,8 +229,8 @@ function get_weap_delay(it, ignore_brands)
   if delay < min_delay then delay = min_delay end
 
   if not ignore_brands then
-    if it.ego() == "speed" then delay = delay * 2 / 3
-    elseif it.ego() == "heavy" then delay = delay * 1.5
+    if get_ego(it) == "speed" then delay = delay * 2 / 3
+    elseif get_ego(it) == "heavy" then delay = delay * 1.5
     end
   end
 
@@ -255,7 +264,7 @@ function get_weap_min_delay(it)
   local basename = it.name("base")
 
   local adj_base_delay = it.delay / 2
-  if it.ego() == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
+  if get_ego(it) == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
   local min_delay = math.floor(adj_base_delay)
 
   if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
@@ -267,16 +276,17 @@ function get_weap_min_delay(it)
   return min_delay
 end
 
-function get_weap_dps(it, no_brand_dmg, no_weight_all_brands)
-  return get_weap_dmg(it, no_brand_dmg, no_weight_all_brands) / get_weap_delay(it)
+function get_weap_dps(it, dmg_type)
+  if not dmg_type then dmg_type = DMG_TYPE.scoring end
+  return get_weap_dmg(it, dmg_type) / get_weap_delay(it)
 end
 
-function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
+function get_weap_dmg(it, dmg_type)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
+  if not dmg_type then dmg_type = DMG_TYPE.scoring end
   local it_plus = it.plus or 0
-
   -- Adjust str/dex/slay from artefacts
   local str = CACHE.str
   local dex = CACHE.dex
@@ -305,39 +315,32 @@ function get_weap_dmg(it, no_brand_dmg, no_weight_all_brands)
   local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + CACHE.s_fighting/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
+
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
   if is_staff(it) then
-    return (pre_brand_dmg + get_staff_bonus_dmg(it, no_brand_dmg))
+    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type == DMG_TYPE.unbranded))
   end
 
-  local ego = it.ego()
-  if not ego then return pre_brand_dmg end
-
-  if not no_brand_dmg then
-    if ego == "spectralizing" then return 2 * pre_brand_dmg end
-    if ego == "heavy" then return (1.8 * pre_brand_dmg_no_plus + it_plus) end
-    if ego == "flaming" or ego == "freezing" then return 1.25 * pre_brand_dmg end
-    if ego == "draining" then return (1.25 * pre_brand_dmg + 2) end
-    if ego == "electrocution" then return (pre_brand_dmg + 3.5) end
-    -- Ballparking venom as 5 dmg since it totally breaks the paradigm
-    if ego == "venom" then return (pre_brand_dmg + 5) end
-    if ego == "pain" then return (pre_brand_dmg + you.skill("Necromancy")/2) end
-    -- Distortion does 5.025 extra dmg, + 5% chance to banish
-    if ego == "distortion" then return (pre_brand_dmg + 6) end
-    -- Weighted average of all the easily computed brands was ~ 1.17*dmg + 2.13
-    if ego == "chaos" then return (1.25 * pre_brand_dmg + 2) end
-
-    if not no_weight_all_brands then
-      if ego == "protection" then return 1.15 * pre_brand_dmg end
-      if ego == "vampirism" then return 1.25 * pre_brand_dmg end
-      if ego == "holy wrath" then return 1.15 * pre_brand_dmg end
-      if ego == "antimagic" then return 1.1 * pre_brand_dmg end
+  if dmg_type >= DMG_TYPE.branded then
+    local ego = get_ego(it)
+    if ego then
+      local brand_bonus = WEAPON_BRAND_BONUSES[ego]
+      if not brand_bonus and dmg_type == DMG_TYPE.scoring then
+        brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego]
+      end
+      if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + brand_bonus.offset + it_plus end
     end
   end
 
   return pre_brand_dmg
+end
+
+function get_weap_score(it, no_brand_bonus)
+  local it_plus = it.plus or 0
+  local dmg_type = no_brand_bonus and DMG_TYPE.unbranded or DMG_TYPE.scoring
+  return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * TUNING.weap.pickup.accuracy_weight
 end
 
 
@@ -387,7 +390,7 @@ function get_slay_bonuses()
             if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
             else sum = sum - slay end
           end
-        elseif it.ego(true) == "Slay" then
+        elseif get_ego(it, true) == "Slay" then
           sum = sum + it.plus
         end
       elseif it.artefact and (is_armour(it) or is_amulet(it)) then
@@ -405,9 +408,9 @@ function get_slay_bonuses()
   return sum
 end
 
-function get_staff_bonus_dmg(it, no_brand_dmg)
+function get_staff_bonus_dmg(it, ignore_brand_dmg)
   -- dcss v0.33.1
-  if no_brand_dmg then
+  if ignore_brand_dmg then
     local basename = it.name("base")
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
       return 0

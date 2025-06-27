@@ -1,3 +1,4 @@
+---- Cache weapons in inventory ----
 INV_WEAP = {}
 
 function INV_WEAP.get_key(it)
@@ -9,12 +10,15 @@ end
 
 function INV_WEAP.add_weapon(it)
   local weap_data = {}
-
   weap_data.ego = get_ego(it)
   weap_data.branded = weap_data.ego ~= nil
-  weap_data.dps = get_weap_dps(it)
   weap_data.plus = it.plus
   weap_data.acc = it.accuracy + it.plus
+  weap_data.damage = it.damage
+  weap_data.dps = get_weap_dps(it)
+  weap_data.score = get_weap_score(it)
+  weap_data.unbranded_score = get_weap_score(it, true)
+
   weap_data.basename = it.name("base")
   weap_data.subtype = it.subtype()
   weap_data.is_ranged = it.is_ranged
@@ -56,27 +60,24 @@ function INV_WEAP.add_weapon(it)
   return weap_data
 end
 
-function INV_WEAP.get_best(it)
-  return INV_WEAP.max_dps[INV_WEAP.get_key(it)]
-end
-
 function INV_WEAP.is_empty()
   return INV_WEAP.max_dps["melee_2"].dps == 0
 end
 
 ---- Weapon pickup ----
 local function should_pickup_weapon(it, cur)
+  -- `cur` comes from INV_WEAP
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
-    if has_ego(it) and it.is_identified and not cur.branded then
-      return get_weap_dps(it) > 0.85*cur.dps
+    if cur.branded and not it.branded then return false end
+    if it.branded and it.is_identified and not cur.branded then
+      return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
     end
-    if cur.branded and not has_ego(it) then return false end
-    return it.ego() == cur.ego and get_weap_dps(it) > cur.dps + 0.001
+    return get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
-    -- Return false if no upgrade possible
+    -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
     if it.is_ranged ~= cur.is_ranged then return false end
     if is_polearm(cur) and not is_polearm(it) then return false end
@@ -84,28 +85,23 @@ local function should_pickup_weapon(it, cur)
     if it.artefact then return true end
     if cur.artefact then return false end
     if it.branded and not it.is_identified then return false end
-    --if cur.branded and not it.branded then return false end
-
-    if it.is_ranged then return get_weap_dps(it) > cur.dps + 0.001 end
-
-    local it_plus = it.plus or 0
-    local it_score = get_weap_dps(it) + (it.accuracy + it_plus)/3
-    local cur_score = cur.dps + cur.acc/3
-
-    return it_score > 1.1*cur_score
+    
+    local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
+    return get_weap_score(it) / cur.score >= min_ratio
   end
 
   return false
 end
 
 function pa_pickup_weapon(it)
+  -- Check if we need the first weapon of the game
+  if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut("claws", true) == 0 then
+    return true
+  end
+
   for _,inv in ipairs(INV_WEAP.weapons) do
     if should_pickup_weapon(it, inv) then return true end
   end
-
-  -- Check if we need the first weapon of the game
-  return CACHE.xl < 6 and INV_WEAP.is_empty() and
-      you.skill("Unarmed Combat") == 0 and get_mut("claws", true) == 0
 end
 
 
@@ -136,22 +132,25 @@ end
 
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
-  if CACHE.xl <= 14 then
+  if CACHE.xl <= TUNING.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
-      if has_ego(it) and it.plus >= 5 or it.plus >= 7 then
-        if get_hands(it) == 1 or not have_shield() or CACHE.s_shields <= 8 then
-          return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
-        end
+      if it.plus >= TUNING.weap.alert.early_ranged.min_plus and has_ego(it) or
+         it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
+          if get_hands(it) == 1 or not have_shield() or
+            CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
+              return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
+          end
       end
     end
   end
 
-  if CACHE.xl < 8 then
+  if CACHE.xl <= TUNING.weap.alert.early.xl then
     -- Skip items if we're clearly going another route
     local skill_diff = get_skill(CACHE.top_weap_skill) - get_skill(it.weap_skill)
-    if skill_diff > 1.5*CACHE.xl+3 then return false end
+    local max_skill_diff = CACHE.xl * TUNING.weap.alert.early.skill.factor + TUNING.weap.alert.early.skill.offset
+    if skill_diff >= max_skill_diff then return false end
 
-    if has_ego(it) or it.plus and it.plus >= 4 then
+    if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
       return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
     end
   end
@@ -160,102 +159,62 @@ local function alert_early_weapons(it)
 end
 
 -- Check if weapon is worth alerting for, informed by a weapon currently in inventory
+-- `cur` comes from INV_WEAP
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
     return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
+  local inv_best = INV_WEAP.max_dps[INV_WEAP.get_key(it)]
+  local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
+  local best_score = math.max(cur.score, inv_best and inv_best.score or 0)
+
   if cur.subtype == it.subtype() then
-    -- Exact weapon type match
-    if not cur.artefact and has_ego(it) and it.ego() ~= cur.ego then
-      return pa_alert_item(it, "New ego", EMOJI.EGO)
-    end
-    if get_weap_dps(it) > INV_WEAP.get_best(it).dps then
+    -- Exact weapon type match; alert new egos or higher DPS/weap_score
+    if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
+      return pa_alert_item(it, "Diff ego", EMOJI.EGO)
+    elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
       return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
     end
-  elseif get_skill(it.weap_skill) >= 0.5 * get_skill(cur.weap_skill) then
-    -- A usable weapon school
-    if it.is_ranged ~= cur.is_ranged then return false end
+  end
+  
+  if it.is_ranged ~= cur.is_ranged then return false end
+  if 2 * get_skill(it.weap_skill) < get_skill(cur.weap_skill) then return false end
+  
+  -- Penalize lower-trained skills
+  local damp = TUNING.weap.alert.low_skill_penalty_damping
+  local penalty = (get_skill(it.weap_skill) + damp) / (get_skill(CACHE.top_weap_skill) + damp)
+  local score_ratio = penalty * get_weap_score(it) / best_score
 
-
-    -- Create penalty to disfavor weapons from lower-trained skills
-    local penalty = (get_skill(it.weap_skill)+8) / (get_skill(CACHE.top_weap_skill)+8)
-
-    if get_hands(it) == 2 and cur.hands == 1 then
-      -- Item requires an extra hand
-      if has_ego(it) and not cur.branded then
-        if get_weap_dps(it) > 0.8*cur.dps then
+  if get_hands(it) > cur.hands then
+    if offhand_is_free() or (have_shield() and CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+      if has_ego(it, true) and not util.contains(INV_WEAP.weap_egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
+          return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO)
+      elseif score_ratio >= TUNING.weap.alert.add_hand.not_using then
           return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
       end
-
-      if not have_shield() then
-        if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") and
-          not util.contains(INV_WEAP.weap_egos, it.ego()) then
-            return pa_alert_item(it, "New ego", EMOJI.EGO)
+    elseif has_ego(it) and not cur.branded and score_ratio >= TUNING.weap.alert.add_hand.add_ego_lose_sh then
+      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED)
+    end
+  else -- No extra hand required
+    if cur.artefact then return false end
+    if has_ego(it, true) then
+      local it_ego = get_ego(it)
+      if not cur.branded then
+        if score_ratio >= TUNING.weap.alert.gain_ego then
+          return pa_alert_item(it, "Gain ego", EMOJI.EGO)
         end
-        if not cur.branded and
-          get_weap_dps(it) > INV_WEAP.get_best(it).dps then
-            return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
-        if cur.branded and not has_ego(it) and
-          get_weap_dps(it) > INV_WEAP.get_best(it).dps then
-            return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
-      elseif CACHE.s_shields <= 4 then
-        -- Not really training shields; may be interested in big upgrades
-        if penalty*get_weap_dps(it) >= INV_WEAP.get_best(it).dps then
-          return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
-        end
-      end
-    else
-      -- Item uses same number of hands or fewer
-      if cur.artefact then return false end
-      if has_ego(it) and not (it.ego() == "heavy" or it.ego() == "speed") then
-        local it_dps = get_weap_dps(it)
-        local dps_delta = it_dps - INV_WEAP.get_best(it).dps
-        if penalty then
-          if dps_delta >= 0 then dps_delta = dps_delta * penalty end
-        else dps_delta = dps_delta / penalty
-        end
-
-        local dps_delta_ratio = dps_delta / it_dps
-
-        if not cur.branded then
-          if dps_delta_ratio >= -0.2 then
-            return pa_alert_item(it, "New ego", EMOJI.EGO)
-          end
-        elseif it.ego() == cur.ego then
-          if dps_delta_ratio >= 0 then
-            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
-          end
-        elseif not util.contains(INV_WEAP.weap_egos, it.ego()) then
-          if dps_delta_ratio >= -0.2 then
-            return pa_alert_item(it, "New ego", EMOJI.EGO)
-          end
-        end
-      else
-        -- Not branded
-        -- Allowing lower-trained skills triggers too often after picking up an untrained weapon
-        -- Only use it to trigger upgrades from a low-value branded weapon to unbranded
-        if cur.branded and cur.weap_skill == it.weap_skill then
-          if get_weap_dps(it, true) > get_weap_dps(cur, true) then
-            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
-          end
-        else
-          local inv = INV_WEAP.get_best(it)
-          local best = cur.dps > inv.dps and cur or inv
-          local dps_delta = get_weap_dps(it) - best.dps
-
-          if dps_delta > 0 then
-            return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
-          elseif dps_delta == 0 and it.accuracy + (it.plus or 0) > best.acc then
-            return pa_alert_item(it, "Higher accuracy", EMOJI.ACCURACY)
-          end
-        end
+      elseif not util.contains(INV_WEAP.weap_egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
+        return pa_alert_item(it, "New ego", EMOJI.EGO)
       end
     end
   end
+
+  -- Catch-all for increased weap_score
+  if score_ratio > TUNING.weap.alert.pure_dps then
+    return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
+  end
+  return false
 end
 
 local function alert_interesting_weapons(it)

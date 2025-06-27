@@ -1,4 +1,7 @@
 CONFIG = {}
+TUNING = {}
+WEAPON_BRAND_BONUSES = {}
+
 
 function init_config()
   CONFIG = {}
@@ -6,11 +9,11 @@ function init_config()
   CONFIG.emojis = true -- Use emojis in alerts and damage announcements
 
   -- Announce HP/MP when change is greater than this value
-  CONFIG.ANNOUNCE_HP_THRESHOLD = 1
-  CONFIG.ANNOUNCE_MP_THRESHOLD = 0
+  CONFIG.announce_hp_threshold = 1
+  CONFIG.announce_mp_threshold = 0
   -- Flash/Force more for losing this percentage of max HP
-  CONFIG.DAMAGE_FLASH_THRESHOLD = 0.20
-  CONFIG.DAMAGE_FORCE_MORE_THRESHOLD = 0.30
+  CONFIG.dmg_flash_threshold = 0.20
+  CONFIG.dmg_fm_threshold = 0.30
 
   -- Inscribe stats
   CONFIG.inscribe_weapons = true
@@ -58,14 +61,6 @@ function init_config()
     "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
   } -- one_time_alerts (do not remove this comment)
 
-  -- For armour of diff encumbrance, alert when ratio of gain/loss (AC|EV) is >= value
-  -- Lower values mean more alerts. gain/diff/same/lose refers to egos. 
-  CONFIG.armour_alert_threshold = {
-    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2 },
-    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2 }
-  } -- CONFIG.armour_alert_threshold (do not remove this comment)
-  CONFIG.ENCUMB_PENALTY_WEIGHT = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
-
   -- Startup
   CONFIG.show_skills_on_startup = true
   CONFIG.auto_set_skill_targets = {
@@ -77,6 +72,86 @@ function init_config()
   CONFIG.debug_init = true
   CONFIG.debug_dump_data_freq = 1000 -- 0 to disable
   CONFIG.debug_fm_monsters = false -- Set to true to get a message when fm changes
+
+
+
+  -- Heuristics for tuning the pickup/alert system
+  TUNING = {}
+
+  -- Alerts for armour of diff encumbrance, when ratio of gain/loss (AC|EV) is >= value
+  -- Lower values mean more alerts. gain/diff/same/lose refers to egos. 
+  TUNING.armour = {
+    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2 },
+    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2 },
+    encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+  }
+
+  -- All 'magic numbers' used in the weapon pickup/alert system.
+    -- 1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
+    -- 2. Cutoffs for when alerts are active (XL, skill_level)
+  TUNING.weap = {}
+  TUNING.weap.pickup = {
+    add_ego = 0.85, -- Pickup weapon; gaining a brand if DPS ratio >= `add_ego`
+    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio >= `same_type_melee`
+    same_type_ranged = 1.001, -- Pickup ranged weap of same type if DPS ratio >= `same_type_ranged`
+    accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
+  }
+  
+  TUNING.weap.alert = {
+    -- Alerts for weapons not requiring an extra hand
+    pure_dps = 1.001, -- Alert if DPS ratio >= `pure_dps`
+    gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio >= `gain_ego`
+    new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio >= `new_ego`
+    low_skill_penalty_damping = 8, -- Small values penalize low-trained schools more. Penalty is (skill+damp) / (top_skill+damp)
+
+    -- Alerts for 2-handed weapons, when carrying 1-handed
+    add_hand = {
+      ignore_sh_lvl = 3.9, -- Treat offhand as empty if shield_skill <= `ignore_sh_lvl`
+      add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio >= `add_ego_lose_sh`
+      not_using = 1.001, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio >= `not_using`
+    },
+
+    -- Alerts for good early weapons of all types
+    early = {
+      xl = 8, -- Alert early weapons if XL <= `xl`
+      skill = { factor = 1.5, offset = 2 }, -- Skip weapons with skill diff > XL * factor + offset
+      branded_min_plus = 4 -- Alert branded weapons with plus >= `branded_min_plus`
+    },
+
+    -- Alerts for particularly strong ranged weapons
+    early_ranged = {
+      xl = 14, -- Alert strong ranged weapons if XL <= `xl`
+      min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
+      branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
+      max_shields = 8 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
+    }
+  }
+
+
+
+  -- Defining impact of brands on DPS; used in PA system and weapon inscriptions
+  -- `scoring` includes subtle brands
+  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }
+
+  WEAPON_BRAND_BONUSES = {
+    spectralizing = { factor = 2, offset = 0 },
+    heavy = { factor = 1.8, offset = 0 },
+    flaming = { factor = 1.25, offset = 0 },
+    freezing = { factor = 1.25, offset = 0 },
+    draining = { factor = 1.25, offset = 2 },
+    electrocution = { factor = 1, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
+    venom = { factor = 1, offset = 5 }, -- 5 dmg per poisoning
+    pain = { factor = 1, offset = you.skill("Necromancy")/2 },
+    distortion = { factor = 1, offset = 6 },
+    chaos = { factor = 1.15, offset = 2 }, -- Approximate weighted average
+
+    subtle = { -- Completely made up in attempt to balance vs the damaging brands
+      protection = { factor = 1.15, offset = 0 },
+      vampirism = { factor = 1.2, offset = 0 },
+      holy_wrath = { factor = 1.15, offset = 0 },
+      antimagic = { factor = 1.1, offset = 0 }  
+    }
+  }
 
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end

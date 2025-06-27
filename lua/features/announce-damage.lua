@@ -67,7 +67,7 @@ function ready_announce_damage()
     local msg_tokens = {}
 
     -- MP message
-    if math.abs(mp_delta) > CONFIG.ANNOUNCE_MP_THRESHOLD then
+    if math.abs(mp_delta) > CONFIG.announce_mp_threshold then
       msg_tokens[#msg_tokens + 1] = create_meter(
         CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
       )
@@ -82,7 +82,7 @@ function ready_announce_damage()
     end
 
     -- HP message
-    if math.abs(hp_delta) > CONFIG.ANNOUNCE_HP_THRESHOLD then
+    if math.abs(hp_delta) > CONFIG.announce_hp_threshold then
       -- If no MP msg, include empty line (w 1-space offset to align)
       msg_tokens[#msg_tokens + 1] = "\n "
 
@@ -102,9 +102,9 @@ function ready_announce_damage()
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
     -- Damage-related warnings
-    if (damage_taken >= CACHE.mhp * CONFIG.DAMAGE_FLASH_THRESHOLD) then
+    if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
       local summary_tokens = {}
-      local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.DAMAGE_FORCE_MORE_THRESHOLD)
+      local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
       if is_force_more_msg then
         summary_tokens[#summary_tokens + 1] = "\n"
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2

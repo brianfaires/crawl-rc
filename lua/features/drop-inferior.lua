@@ -21,7 +21,7 @@ function c_assign_invletter_drop_inferior(it)
 
   -- Skip brands that are potentially harmful
   if not is_weapon(it) and not is_armour(it) then return end
-  if is_dangerous_brand(it.ego()) then return end
+  if is_dangerous_brand(get_ego(it)) then return end
 
   local risky_artefact = false
   if it.artefact then

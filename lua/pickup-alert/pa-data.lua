@@ -104,7 +104,6 @@ end
 -- Returns a string if item is a new high score, else nil
 function update_high_scores(it)
   local ret_val = nil
-
   if is_armour(it) then
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
@@ -113,16 +112,18 @@ function update_high_scores(it)
     end
   elseif is_weapon(it) then
     local it_plus = it.plus or 0
-    local score = get_weap_dps(it) + (it.accuracy + it_plus) / 2
+    local score = it.score or get_weap_score(it)
     if score > weapon_high_score then
       weapon_high_score = score
       if not ret_val then ret_val = "Good weapon" end
     end
 
-    local unbranded_score = get_weap_dps(it, false) + (it.accuracy + it_plus) / 2
-    if unbranded_score > unbranded_high_score then
-      unbranded_high_score = score
-      if not ret_val then ret_val = "High pure damage" end
+    if score > unbranded_high_score then
+      local unbranded_score = it.unbranded_score or get_weap_score(it, true)
+      if unbranded_score > unbranded_high_score then
+        unbranded_high_score = score
+        if not ret_val then ret_val = "High pure damage" end
+      end
     end
 
     if is_polearm(it) and you_have_allies() then

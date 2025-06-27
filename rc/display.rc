@@ -75,7 +75,7 @@ menu += $positive:amulet of (faith|reflection|magic regeneration|regeneration)
 menu += $warning:ring of (fire|ice)
 menu += $decent:ring of flight
 menu += $verypositive:ring of (.*slaying)
-menu += $positive:ring of (poison resistance|protection from cold|protection from fire|protection from magic|see invisible|resist corrosion)
+menu += $positive:ring of (poison resistance|protection from |positive energy|see invisible|resist corrosion)
 menu += $good:ring of (.*evasion|.*protection|magical power|wizardry)
 
 # Misc items
