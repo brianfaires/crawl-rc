@@ -38,20 +38,20 @@ flash += Your?.*suddenly stops? moving
 
 
 # Crowd control
-more += You.*((?<!(too|less)).*confused
-more += You.*|(?<!(hands|graspers) slow.*down|lose consciousness)
+more += You.*(?<!( too|less)) confused
+more += You .*(slow.*down|lose consciousness)
 more += infuriates you
-more += hits you.*distortion
-more += Space.*around you
+more += hits you .* distortion
+more += Space .* around you
 more += surroundings become eerily quiet
 more += Your limbs are stiffening
 
-flash += You.*(blown|knocked back|mesmerised|trampled|stumble backwards|encased)
+flash += You .* (blown|knocked back|mesmerised|trampled|stumble backwards|encased)
 flash += Your magical (effects|defenses) are (unraveling|stripped away)
 flash += You stop (a|de)scending the stairs
 flash += A sentinel's mark forms upon you
 flash += The pull of.*song draws you forward
-flash += The.*engulfs you in water
+flash += engulfs you in water
 
 # Clouds
 more += danger:(calcify|mutagenic)
@@ -97,10 +97,10 @@ more += Terrible wounds open
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
-more += You feel.*(?<!less).*( haunted| rot| vulnerable)
+more += You feel.*(?<!less)( haunted| rot| vulnerable)
 flash += danger:corrodes you
 flash += Your damage is reflected back at you
-flash += (?<!You.*)reflects
+flash += ^(?!Your? ).*reflects
 
 # FYI
 more += seems mollified
@@ -121,10 +121,8 @@ more += The walls disappear
 more += god:Ashenzari invites you to partake
 # Dithmenos
 more += god:You are shrouded in an aura of darkness
-more += god:You now sometimes bleed smoke
-more += god:You.*no longer.*bleed smoke
-more += god:Your shadow no longer tangibly mimics your actions
-more += god:Your shadow now sometimes tangibly mimics your actions
+more += god:You.*bleed smoke
+more += god:Your shadow.*tangibly mimics your actions
 # Fedhas
 more += god:Fedhas invokes the elements against you
 # Jivya

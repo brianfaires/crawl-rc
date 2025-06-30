@@ -79,9 +79,9 @@ local FM_PATTERNS = {
   -- Monsters that can crowd-control you without sufficient willpower
   -- Cutoff ~10% for most spells; lower for more significant spells like banish
   {name = "willpower2", cond = "will", cutoff = 2,
-      pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)|sphinx marauder" },
+      pattern = "basilisk|naga ritualist|vampire(?! (bat|mage|mosquito))|sphinx marauder" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|" ..
+      pattern = "deep elf (demonologist|sorcerer|archer)|occultist|" ..
               "merfolk siren|fenstrider witch|cacodemon|" ..
               "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" ..
               "glowing orange brain|orc sorcerer|" ..
@@ -150,7 +150,7 @@ local FM_PATTERNS = {
   {name = "cold_160", cond = "cold", cutoff = 160,
       pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
   {name = "cold_180", cond = "cold", cutoff = 180,
-      pattern = "(?>!dread)(?>!ancient) lich" },
+      pattern = "(?<!dread)(?<!ancient) lich" },
   {name = "cold_240", cond = "cold", cutoff = 240,
       pattern = "crystal (guardian|echidna)" },
 

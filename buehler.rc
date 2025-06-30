@@ -400,7 +400,6 @@ msc += $danger:Your shadow no longer tangibly mimics your actions
 msc += $danger:You are even more entangled
 msc += $danger:You have drawn Pain
 msc += $danger:Your magical shield disappears
-msc ^= $danger:Your.*appears confused
 msc += $danger:creates some ice likenesses
 msc += $danger:soul is no longer ripe for the taking
 msc += $danger:You are no longer magically infusing your attacks
@@ -629,7 +628,7 @@ msc += $danger:You struggle to detach yourself from the web
 msc += $danger:You are more confused
 msc += $danger:You are confused
 msc += $danger:breaks free
-msc += $danger:(You are|You're) too confused
+msc += $danger:You.*re too confused
 msc += $danger:Your skin stops crawling
 msc += $danger:Your attempt to break free
 msc += $danger:Your resistance to elements expires
@@ -1764,7 +1763,6 @@ msc ^= $positive:Your orcs go into a battle-frenzy
 msc += $positive:falters in the face of your power
 msc += $positive:in retribution by your aura
 msc += $positive:Your slowness suddenly goes away
-msc ^= $positive:Your.*seems less confused
 msc += $positive:is no longer regenerating
 msc += $positive:You repair your equipment
 msc += $positive:You extend your infusion
@@ -2901,20 +2899,20 @@ flash += Your?.*suddenly stops? moving
 
 
 # Crowd control
-more += You.*((?<!(too|less)).*confused
-more += You.*|(?<!(hands|graspers) slow.*down|lose consciousness)
+more += You.*(?<!( too|less)) confused
+more += You .*(slow.*down|lose consciousness)
 more += infuriates you
-more += hits you.*distortion
-more += Space.*around you
+more += hits you .* distortion
+more += Space .* around you
 more += surroundings become eerily quiet
 more += Your limbs are stiffening
 
-flash += You.*(blown|knocked back|mesmerised|trampled|stumble backwards|encased)
+flash += You .* (blown|knocked back|mesmerised|trampled|stumble backwards|encased)
 flash += Your magical (effects|defenses) are (unraveling|stripped away)
 flash += You stop (a|de)scending the stairs
 flash += A sentinel's mark forms upon you
 flash += The pull of.*song draws you forward
-flash += The.*engulfs you in water
+flash += engulfs you in water
 
 # Clouds
 more += danger:(calcify|mutagenic)
@@ -2960,10 +2958,10 @@ more += Terrible wounds open
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
-more += You feel.*(?<!less).*( haunted| rot| vulnerable)
+more += You feel.*(?<!less)( haunted| rot| vulnerable)
 flash += danger:corrodes you
 flash += Your damage is reflected back at you
-flash += (?<!You.*)reflects
+flash += ^(?!Your? ).*reflects
 
 # FYI
 more += seems mollified
@@ -2984,10 +2982,8 @@ more += The walls disappear
 more += god:Ashenzari invites you to partake
 # Dithmenos
 more += god:You are shrouded in an aura of darkness
-more += god:You now sometimes bleed smoke
-more += god:You.*no longer.*bleed smoke
-more += god:Your shadow no longer tangibly mimics your actions
-more += god:Your shadow now sometimes tangibly mimics your actions
+more += god:You.*bleed smoke
+more += god:Your shadow.*tangibly mimics your actions
 # Fedhas
 more += god:Fedhas invokes the elements against you
 # Jivya
@@ -4226,7 +4222,7 @@ local MID_XL_FMs = {
 } -- MID_XL_FMs (do not remove this comment)
 
 local LATE_XL_FMs = {
-  "(?<!You)(?<!yourself) speeds? up",
+  "^(?!.*Your?).*speeds? up",
   "danger:goes berserk"
 } -- LATE_XL_FMs (do not remove this comment)
 
@@ -4713,9 +4709,9 @@ local FM_PATTERNS = {
   -- Monsters that can crowd-control you without sufficient willpower
   -- Cutoff ~10% for most spells; lower for more significant spells like banish
   {name = "willpower2", cond = "will", cutoff = 2,
-      pattern = "basilisk|naga ritualist|vampire(?! bat)(?! mage)(?! mosquito)|sphinx marauder" },
+      pattern = "basilisk|naga ritualist|vampire(?! (bat|mage|mosquito))|sphinx marauder" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = "deep elf (demonologist|sorcerer|archer)|(?<!orc )wizard|" ..
+      pattern = "deep elf (demonologist|sorcerer|archer)|occultist|" ..
               "merfolk siren|fenstrider witch|cacodemon|" ..
               "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" ..
               "glowing orange brain|orc sorcerer|" ..
@@ -4784,7 +4780,7 @@ local FM_PATTERNS = {
   {name = "cold_160", cond = "cold", cutoff = 160,
       pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
   {name = "cold_180", cond = "cold", cutoff = 180,
-      pattern = "(?>!dread)(?>!ancient) lich" },
+      pattern = "(?<!dread)(?<!ancient) lich" },
   {name = "cold_240", cond = "cold", cutoff = 240,
       pattern = "crystal (guardian|echidna)" },
 

@@ -12,7 +12,7 @@ local MID_XL_FMs = {
 } -- MID_XL_FMs (do not remove this comment)
 
 local LATE_XL_FMs = {
-  "(?<!You)(?<!yourself) speeds? up",
+  "^(?!.*Your?).*speeds? up",
   "danger:goes berserk"
 } -- LATE_XL_FMs (do not remove this comment)
 
