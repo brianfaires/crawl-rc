@@ -96,6 +96,10 @@ end
 function pa_pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut("claws", true) == 0 then
+    -- Staves don't go into INV_WEAP; double-check that we're not carrying just a staff
+    for _,inv in ipairs(items.inventory()) do
+      if is_weapon(inv) then return false end -- faster to check weapon than staff
+    end
     return true
   end
 

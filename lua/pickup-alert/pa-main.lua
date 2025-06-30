@@ -42,7 +42,6 @@ function init_pa_main()
     -- Not picking up this item. Check for alerts.
     if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
     if util.contains(pa_items_alerted, plus_name) then return end
-    -- TODO: (DISABLED after adding turn_is_over()) ready_item_alerts() -- Avoid weird cases from small stat increases
 
     if loaded_pa_misc and CONFIG.alert_one_time_items then
       if pa_alert_rare_item(it) then return end

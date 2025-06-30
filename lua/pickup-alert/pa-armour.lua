@@ -9,18 +9,18 @@ ARMOUR_ALERT = {
   lighter = {
     gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
     diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Lighter armour", emoji = EMOJI.EGO },
-    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.EGO }
+    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
   },
   heavier = {
     gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
     diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Heavier Armour", emoji = EMOJI.EGO },
-    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.EGO }
+    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
+    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
   }
 } -- ARMOUR_ALERT (do not remove this comment)
 
-local function alert_from_map(it, alert_type)
+local function send_armour_alert(it, alert_type)
   return pa_alert_item(it, alert_type.msg, alert_type.emoji)
 end
 
@@ -139,19 +139,21 @@ function pa_alert_armour(it)
 
     if encumb_delta == 0 then
       if ego_change_type == "gain" or ego_change_type == "diff" then
-        return alert_from_map(it, ARMOUR_ALERT[ego_change_type])
+        return send_armour_alert(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
       if ev_delta / -ac_delta >= TUNING.armour.lighter[ego_change_type] then
-        return alert_from_map(it, ARMOUR_ALERT.lighter[ego_change_type])
-        -- TODO: This previously enforced a flat requirement too: <=4 AC for gain/diff; EV>=3 for lost
+        if ego_change_type == "lost" and ev_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= "same" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
+        return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
       local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if ac_delta / total_loss >= TUNING.armour.heavier[ego_change_type] then
-        return alert_from_map(it, ARMOUR_ALERT.heavier[ego_change_type])
-        -- TODO: previously total_loss <= 8 for gain/diff; ac_delta >= 3 for lost
+        if ego_change_type == "lost" and ac_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= "same" and total_loss > TUNING.armour.lighter.max_loss then return false end
+        return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
       end
     end
   elseif is_shield(it) then

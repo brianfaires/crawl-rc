@@ -79,10 +79,11 @@ function init_config()
   TUNING = {}
 
   -- Alerts for armour of diff encumbrance, when ratio of gain/loss (AC|EV) is >= value
-  -- Lower values mean more alerts. gain/diff/same/lose refers to egos. 
+  -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
+  -- min_gain/max_loss check against the AC or EV delta when ego changes
   TUNING.armour = {
-    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2 },
-    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2 },
+    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2, min_gain = 3, max_loss = 4 },
+    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2, min_gain = 3, max_loss = 8 },
     encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
   }
 
