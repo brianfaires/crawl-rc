@@ -93,7 +93,7 @@ function c_message_exclude_dropped(text, channel)
   if exclude then
     -- Don't exclude if we dropped partial stack (except for jewellery)
     for inv in iter.invent_iterator:new(items.inventory()) do
-      if item_name:find(inv.name("qual")) then
+      if inv.name("qual"):find(item_name) then
         if is_jewellery(inv) then break end
         local qty_str = "You drop " .. inv.quantity .. " " .. item_name
         if inv.quantity == 1 or text:find(qty_str) then break end
