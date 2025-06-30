@@ -70,3 +70,18 @@ function ready_cache()
 
   CACHE.temp_mutations = {} -- Placeholder for now
 end
+
+function dump_cache()
+  local tokens = { "\n---CACHE---:" }
+  for k,v in pairs(CACHE) do
+    if type(v) == "table" then
+      tokens[#tokens+1] = string.format("  %s:", k)
+      for k2,v2 in pairs(v) do
+        tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
+      end
+    else
+      tokens[#tokens+1] = string.format("  %s: %s", k, v)
+    end
+  end
+  crawl.mpr(table.concat(tokens, "\n"))
+end

@@ -197,3 +197,20 @@ function you_have_allies()
   return you.skill("Summonings") + you.skill("Necromancy") > 0 or
       util.contains(GODS_WITH_ALLIES, CACHE.god)
 end
+
+
+--- Debugging ---
+function dump_inventory(name_type)
+  if not name_type then name_type = "qual" end
+  local tokens = { "\n---INVENTORY---"}
+  for inv in invent_iterator(items.inventory()) do
+    tokens[#tokens+1] = string.format("  %s: (%s) (%s)", inv.slot, inv.quantity, inv.name(name_type))
+  end
+  crawl.mpr(table.concat(tokens, "\n"))
+end
+
+function debug_dump()
+  if dump_persistent_data then dump_persistent_data() end
+  if dump_cache then dump_cache() end
+  dump_inventory()
+end
