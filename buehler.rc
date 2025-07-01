@@ -2897,7 +2897,6 @@ flash += The.*offers itself to Yredelemnul
 flash += The forest starts to sway and rumble
 flash += Your?.*suddenly stops? moving
 
-
 # Crowd control
 more += You.*(?<!( too|less)) confused
 more += You .*(slow.*down|lose consciousness)
@@ -3374,7 +3373,7 @@ function ready_cache()
 end
 
 function dump_cache()
-  local tokens = { "\n---CACHE---:" }
+  local tokens = { "\n---CACHE---" }
   for k,v in pairs(CACHE) do
     if type(v) == "table" then
       tokens[#tokens+1] = string.format("  %s:", k)
@@ -3382,6 +3381,7 @@ function dump_cache()
         tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
       end
     else
+      if v == true then v = "true" elseif v == false then v = "false" end
       tokens[#tokens+1] = string.format("  %s: %s", k, v)
     end
   end
@@ -3632,7 +3632,7 @@ end
 
 -- For debugging: dump all persistent data
 function dump_persistent_data()
-  local tokens = { "\n---PERSISTENT ARRAYS---\n" }
+  local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _,name in ipairs(persistent_table_names) do
     tokens[#tokens+1] = name
     tokens[#tokens+1] = ":\n"
@@ -3848,7 +3848,7 @@ function is_scarf(it)
 end
 
 function is_shield(it)
-  return it and it.class(true) == "armour" and it.subtype() == "offhand"
+  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not is_orb(it)
 end
 
 function is_staff(it)
@@ -3856,11 +3856,11 @@ function is_staff(it)
 end
 
 function is_talisman(it)
-  return it and it.name("base"):find("talisman")
+  return it and it.name("qual"):find("talisman$")
 end
 
 function is_orb(it)
-  return it and it.name("base"):find("orb of ")
+  return it and it.name("qual") == "orb"
 end
 
 function is_polearm(it)
@@ -3883,19 +3883,28 @@ end
 
 
 --- Debugging ---
-function dump_inventory(name_type)
-  if not name_type then name_type = "qual" end
+function describe_inv_slot(inv_num, full_dump)
+  local inv = items.inslot(inv_num)
+  tokens = {}
+  tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s | Base: %s", inv.slot, inv.quantity, inv.name("qual"), inv.name("base"))
+  if full_dump then
+    tokens[#tokens+1] = string.format("    Class: %s, Subtype: %s", inv.class(true), inv.subtype())
+  end
+  return table.concat(tokens, "\n")
+end
+
+function dump_inventory(verbose)
   local tokens = { "\n---INVENTORY---"}
-  for inv in invent_iterator(items.inventory()) do
-    tokens[#tokens+1] = string.format("  %s: (%s) (%s)", inv.slot, inv.quantity, inv.name(name_type))
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    tokens[#tokens+1] = describe_inv_slot(inv.slot, verbose)
   end
   crawl.mpr(table.concat(tokens, "\n"))
 end
 
-function debug_dump()
+function debug_dump(verbose)
   if dump_persistent_data then dump_persistent_data() end
   if dump_cache then dump_cache() end
-  dump_inventory()
+  dump_inventory(verbose)
 end
 
 }
@@ -4442,7 +4451,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("ring of ") or text:find("amulet of ") or text:find("wand of ")
+  local idx = text:find("(ring|amulet|wand) of ")
   if idx then
     return text:sub(idx, #text)
   end
@@ -4470,7 +4479,7 @@ local function get_excludable_name(text, for_exclusion)
   if idx then
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
     if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls and
-        text:find(" weapon") and has_enchantable_weap_in_inv() then return
+        text:find("(enchant|brand) weapon") and has_enchantable_weap_in_inv() then return
     end
     return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
   end
@@ -5214,7 +5223,7 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
 
   if not have_scroll then
     for inv_id in iter.invent_iterator:new(items.inventory()) do
-      if inv_id and inv_id.name("qual"):find("scroll of identify") then
+      if inv_id.name("qual") == "scroll of identify" then
         have_scroll = true
         break
       end
@@ -5228,6 +5237,7 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
       EMOJI.REMIND_IDENTIFY
     )
   end
+  crawl.mpr("did func")
 end
 
 function init_remind_id()
@@ -5243,7 +5253,7 @@ end
 function c_assign_invletter_remind_identify(it)
   if not it.is_identified then
     remind_unidentified_items(false, true)
-  elseif it.name("qual"):find("scroll of identify") then
+  elseif it.name("qual") == "scroll of identify" then
     remind_unidentified_items(true, false)
   end
 end
@@ -5251,9 +5261,9 @@ end
 function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
-  if text:find(" of identify") then
+  if text:find("scrolls? of identify") then
     found_scroll_of_id = 1
-    if not text:find("drop") and not text:find("read") then
+    if not text:find("You (drop|read)") then
       remind_unidentified_items(true, false)
     end
   elseif found_scroll_of_id == 0 then
@@ -5410,17 +5420,18 @@ function ready_safe_consumables()
   -- Remove the default "!r" and "!q" inscriptions after identify
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_class = inv.class(true)
-    if inv_class == "potion" or inv_class == "scroll" then
+    if inv_class == "scroll" then
       local st, _ = inv.subtype()
       if (st == "poison" and you.res_poison() > 0)
         or (st == "torment" and you.torment_immune())
         or util.contains(NO_INSCRIPTION_NEEDED, st) then
           if inv.inscription:find("%!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
-          if inv.inscription:find("%!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
-      elseif inv_class == "scroll" and not inv.inscription:find("!r") then
-          inv.inscribe("!r")
-      elseif inv_class == "potion" and not inv.inscription:find("!q") then
-          inv.inscribe("!q")
+      elseif not inv.inscription:find("%!r") then inv.inscribe("!r")
+      end
+    elseif inv_class == "potion" then
+      if util.contains(NO_INSCRIPTION_NEEDED, st) then
+        if inv.inscription:find("%!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+      elseif not inv.inscription:find("%!q") then inv.inscribe("!q")
       end
     end
   end
@@ -5544,14 +5555,13 @@ local do_cleanup_weapon_slots
 local priorities_ab
 local priorities_w
 
-local function cleanup_ab(ab)
-  local inv
-  inv = items.inslot(ab)
+local function cleanup_ab(slot)
+  local inv = items.inslot(slot)
   if inv and inv.class(true) == "weapon" then return end
 
   for p=1,5 do
-    if priorities_ab[p] > ab then
-      items.swap_slots(priorities_ab[p], ab)
+    if priorities_ab[p] > slot then
+      items.swap_slots(priorities_ab[p], slot)
       priorities_ab[p] = -1
       return
     end
@@ -5784,7 +5794,7 @@ end
 
 function c_message_item_alerts(text, channel)
   if channel ~= "plain" then return end
-  if text:find("Done exploring.") or text:find("Partly explored") then
+  if text:find("(Done exploring|Partly explored)") then
     local tokens = {}
     for _,v in ipairs(pa_all_level_alerts) do
       tokens[#tokens+1] = "\n  " .. v
@@ -6039,10 +6049,8 @@ function get_ego(it, terse)
   local ego = it.ego(terse)
   if ego then return ego end
 
-  if is_armour(it) then
-    local basename = it.name("base")
-    if basename:find("troll leather") then return "Regen+" end
-    if basename:find("dragon scales") and not basename:find("steam") then return basename end
+  if is_body_armour(it) then
+    if it.name("qual"):find("(dragon scales|troll leather)") then return qualname end
   end
 end
 
@@ -6232,7 +6240,7 @@ function get_weap_min_delay(it)
   if min_delay > 7 then min_delay = 7 end
 
   if basename:find("longbow") then min_delay = 6
-  elseif (basename:find("crossbow") or basename:find("arbalest")) and min_delay < 10 then min_delay = 10 end
+  elseif basename:find("(crossbow|arbalest)") and min_delay < 10 then min_delay = 10 end
 
   return min_delay
 end
@@ -6497,7 +6505,7 @@ local function alert_armour_consider_mutations(it, type)
     local horns_lvl_innate = get_mut("horns", false)
     local antennae_lvl_innate = get_mut("antennae", false)
 
-    if it.name("base"):find("helmet") then
+    if it.name("qual"):find("helmet") then
       if horns_lvl_innate > 0 then return false end
       if antennae_lvl_innate > 0 then return false end
       if get_mut("beak", false) > 0 then return false end
@@ -6630,7 +6638,7 @@ function pa_pickup_armour(it)
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
     local body_arm = get_body_armour()
-    if body_arm and body_arm.name("qual"):find("Lear's hauberk") and st ~= "cloak" then return false end
+    if body_arm and body_arm.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
 
     -- No autopickup if mutation interference
     if st == "gloves" then
@@ -6641,7 +6649,7 @@ function pa_pickup_armour(it)
     elseif st == "boots" then
       if get_mut("hooves", true) + get_mut("talons", true) > 0 then return false end
     elseif it.name("base"):find("helmet") then
-      if get_mut("horns", true) + get_mut("beak", true) > 0 + get_mut("antennae", true) > 0 then return false end
+      if get_mut("horns", true) + get_mut("beak", true) + get_mut("antennae", true) > 0 then return false end
     end
 
     if it.artefact then return true end
@@ -6684,10 +6692,10 @@ function pa_alert_rare_item(it)
   -- Don't alert if already wearing a larger shield
   if pa_single_alert_items[index] == "buckler" then
     local sh = items.equipped_at("shield")
-    if sh and sh.name("base") ~= "orb" then do_alert = false end
+    if sh and sh.name("qual") ~= "orb" then do_alert = false end
   elseif pa_single_alert_items[index] == "kite shield" then
     local sh = items.equipped_at("shield")
-    if sh and sh.name("base"):find("tower shield") then do_alert = false end
+    if sh and sh.name("qual") == "tower shield" then do_alert = false end
   end
 
   remove_from_rare_items(it)

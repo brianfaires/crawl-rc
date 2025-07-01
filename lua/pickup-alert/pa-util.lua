@@ -78,10 +78,8 @@ function get_ego(it, terse)
   local ego = it.ego(terse)
   if ego then return ego end
 
-  if is_armour(it) then
-    local basename = it.name("base")
-    if basename:find("troll leather") then return "Regen+" end
-    if basename:find("dragon scales") and not basename:find("steam") then return basename end
+  if is_body_armour(it) then
+    if it.name("qual"):find("(dragon scales|troll leather)") then return qualname end
   end
 end
 
@@ -271,7 +269,7 @@ function get_weap_min_delay(it)
   if min_delay > 7 then min_delay = 7 end
 
   if basename:find("longbow") then min_delay = 6
-  elseif (basename:find("crossbow") or basename:find("arbalest")) and min_delay < 10 then min_delay = 10 end
+  elseif basename:find("(crossbow|arbalest)") and min_delay < 10 then min_delay = 10 end
 
   return min_delay
 end

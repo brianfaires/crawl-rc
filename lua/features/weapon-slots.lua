@@ -9,14 +9,13 @@ local do_cleanup_weapon_slots
 local priorities_ab
 local priorities_w
 
-local function cleanup_ab(ab)
-  local inv
-  inv = items.inslot(ab)
+local function cleanup_ab(slot)
+  local inv = items.inslot(slot)
   if inv and inv.class(true) == "weapon" then return end
 
   for p=1,5 do
-    if priorities_ab[p] > ab then
-      items.swap_slots(priorities_ab[p], ab)
+    if priorities_ab[p] > slot then
+      items.swap_slots(priorities_ab[p], slot)
       priorities_ab[p] = -1
       return
     end

@@ -36,7 +36,6 @@ flash += The.*offers itself to Yredelemnul
 flash += The forest starts to sway and rumble
 flash += Your?.*suddenly stops? moving
 
-
 # Crowd control
 more += You.*(?<!( too|less)) confused
 more += You .*(slow.*down|lose consciousness)

@@ -87,7 +87,7 @@ local function alert_armour_consider_mutations(it, type)
     local horns_lvl_innate = get_mut("horns", false)
     local antennae_lvl_innate = get_mut("antennae", false)
 
-    if it.name("base"):find("helmet") then
+    if it.name("qual"):find("helmet") then
       if horns_lvl_innate > 0 then return false end
       if antennae_lvl_innate > 0 then return false end
       if get_mut("beak", false) > 0 then return false end
@@ -220,7 +220,7 @@ function pa_pickup_armour(it)
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
     local body_arm = get_body_armour()
-    if body_arm and body_arm.name("qual"):find("Lear's hauberk") and st ~= "cloak" then return false end
+    if body_arm and body_arm.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
 
     -- No autopickup if mutation interference
     if st == "gloves" then
@@ -231,7 +231,7 @@ function pa_pickup_armour(it)
     elseif st == "boots" then
       if get_mut("hooves", true) + get_mut("talons", true) > 0 then return false end
     elseif it.name("base"):find("helmet") then
-      if get_mut("horns", true) + get_mut("beak", true) > 0 + get_mut("antennae", true) > 0 then return false end
+      if get_mut("horns", true) + get_mut("beak", true) + get_mut("antennae", true) > 0 then return false end
     end
 
     if it.artefact then return true end

@@ -12,7 +12,7 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
 
   if not have_scroll then
     for inv_id in iter.invent_iterator:new(items.inventory()) do
-      if inv_id and inv_id.name("qual"):find("scroll of identify") then
+      if inv_id.name("qual") == "scroll of identify" then
         have_scroll = true
         break
       end
@@ -26,6 +26,7 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
       EMOJI.REMIND_IDENTIFY
     )
   end
+  crawl.mpr("did func")
 end
 
 function init_remind_id()
@@ -41,7 +42,7 @@ end
 function c_assign_invletter_remind_identify(it)
   if not it.is_identified then
     remind_unidentified_items(false, true)
-  elseif it.name("qual"):find("scroll of identify") then
+  elseif it.name("qual") == "scroll of identify" then
     remind_unidentified_items(true, false)
   end
 end
@@ -49,9 +50,9 @@ end
 function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
-  if text:find(" of identify") then
+  if text:find("scrolls? of identify") then
     found_scroll_of_id = 1
-    if not text:find("drop") and not text:find("read") then
+    if not text:find("You (drop|read)") then
       remind_unidentified_items(true, false)
     end
   elseif found_scroll_of_id == 0 then

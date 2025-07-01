@@ -62,7 +62,7 @@ end
 
 -- For debugging: dump all persistent data
 function dump_persistent_data()
-  local tokens = { "\n---PERSISTENT ARRAYS---\n" }
+  local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _,name in ipairs(persistent_table_names) do
     tokens[#tokens+1] = name
     tokens[#tokens+1] = ":\n"

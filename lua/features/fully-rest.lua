@@ -78,7 +78,7 @@ end
 ------------------- Hooks -------------------
 function c_message_fully_recover(text, channel)
   if channel == "plain" then
-    if text:find("You start waiting.") or text:find("You start resting.") then
+    if text:find("You start (waiting|resting)%.") then
       if not fully_recovered() then start_full_recovery() end
     end
   elseif recovery_start_turn > 0 then

@@ -165,7 +165,7 @@ function is_scarf(it)
 end
 
 function is_shield(it)
-  return it and it.class(true) == "armour" and it.subtype() == "offhand"
+  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not is_orb(it)
 end
 
 function is_staff(it)
@@ -173,11 +173,11 @@ function is_staff(it)
 end
 
 function is_talisman(it)
-  return it and it.name("base"):find("talisman")
+  return it and it.name("qual"):find("talisman$")
 end
 
 function is_orb(it)
-  return it and it.name("base"):find("orb of ")
+  return it and it.name("qual") == "orb"
 end
 
 function is_polearm(it)
@@ -200,17 +200,26 @@ end
 
 
 --- Debugging ---
-function dump_inventory(name_type)
-  if not name_type then name_type = "qual" end
+function describe_inv_slot(inv_num, full_dump)
+  local inv = items.inslot(inv_num)
+  tokens = {}
+  tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s | Base: %s", inv.slot, inv.quantity, inv.name("qual"), inv.name("base"))
+  if full_dump then
+    tokens[#tokens+1] = string.format("    Class: %s, Subtype: %s", inv.class(true), inv.subtype())
+  end
+  return table.concat(tokens, "\n")
+end
+
+function dump_inventory(verbose)
   local tokens = { "\n---INVENTORY---"}
-  for inv in invent_iterator(items.inventory()) do
-    tokens[#tokens+1] = string.format("  %s: (%s) (%s)", inv.slot, inv.quantity, inv.name(name_type))
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    tokens[#tokens+1] = describe_inv_slot(inv.slot, verbose)
   end
   crawl.mpr(table.concat(tokens, "\n"))
 end
 
-function debug_dump()
+function debug_dump(verbose)
   if dump_persistent_data then dump_persistent_data() end
   if dump_cache then dump_cache() end
-  dump_inventory()
+  dump_inventory(verbose)
 end

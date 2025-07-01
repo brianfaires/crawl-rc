@@ -200,6 +200,7 @@ multiple times per turn.
   Please report any bugs, outdated notes, suggestions, etc.
 - It's intended for use in webtiles.
   It works locally, but AFAICT individual files don't reload/re-execute until you restart crawl.
+- Some use of negative lookahead/lookbehind in regexs, which requires crawl built with PCRE and not POSIX.
 
 ## TODO dev list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)

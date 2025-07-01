@@ -72,7 +72,7 @@ function ready_cache()
 end
 
 function dump_cache()
-  local tokens = { "\n---CACHE---:" }
+  local tokens = { "\n---CACHE---" }
   for k,v in pairs(CACHE) do
     if type(v) == "table" then
       tokens[#tokens+1] = string.format("  %s:", k)
@@ -80,6 +80,7 @@ function dump_cache()
         tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
       end
     else
+      if v == true then v = "true" elseif v == false then v = "false" end
       tokens[#tokens+1] = string.format("  %s: %s", k, v)
     end
   end

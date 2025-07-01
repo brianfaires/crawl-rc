@@ -11,10 +11,10 @@ function pa_alert_rare_item(it)
   -- Don't alert if already wearing a larger shield
   if pa_single_alert_items[index] == "buckler" then
     local sh = items.equipped_at("shield")
-    if sh and sh.name("base") ~= "orb" then do_alert = false end
+    if sh and sh.name("qual") ~= "orb" then do_alert = false end
   elseif pa_single_alert_items[index] == "kite shield" then
     local sh = items.equipped_at("shield")
-    if sh and sh.name("base"):find("tower shield") then do_alert = false end
+    if sh and sh.name("qual") == "tower shield" then do_alert = false end
   end
 
   remove_from_rare_items(it)
