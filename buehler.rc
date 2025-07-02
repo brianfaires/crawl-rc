@@ -87,8 +87,8 @@ function init_config()
   -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
   -- min_gain/max_loss check against the AC or EV delta when ego changes
   TUNING.armour = {
-    lighter = {gain = 0.6, diff = 0.8, same = 1.2, lose = 2, min_gain = 3, max_loss = 4 },
-    heavier = {gain = 0.4, diff = 0.5, same = 0.7, lose = 2, min_gain = 3, max_loss = 8 },
+    lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2, min_gain = 3, max_loss = 4 },
+    heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2, min_gain = 3, max_loss = 8 },
     encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
   }
 
@@ -3385,7 +3385,11 @@ function dump_cache()
       tokens[#tokens+1] = string.format("  %s: %s", k, v)
     end
   end
-  crawl.mpr(table.concat(tokens, "\n"))
+
+  tokens[#tokens+1] = "\n"
+  local msg = table.concat(tokens, "\n")
+  crawl.mpr(msg)
+  return msg
 end
 
 }
@@ -3636,10 +3640,20 @@ function dump_persistent_data()
   for _,name in ipairs(persistent_table_names) do
     tokens[#tokens+1] = name
     tokens[#tokens+1] = ":\n"
-    for _,item in ipairs(_G[name]) do
-      tokens[#tokens+1] = "  "
-      tokens[#tokens+1] = item
-      tokens[#tokens+1] = "\n"
+    if get_var_type(_G[name]) == "list" then
+      for _,item in ipairs(_G[name]) do
+        tokens[#tokens+1] = "  "
+        tokens[#tokens+1] = item
+        tokens[#tokens+1] = "\n"
+      end
+    else
+      for k,v in pairs(_G[name]) do
+        tokens[#tokens+1] = "  "
+        tokens[#tokens+1] = k
+        tokens[#tokens+1] = " = "
+        tokens[#tokens+1] = v
+        tokens[#tokens+1] = "\n"
+      end
     end
   end
 
@@ -3651,7 +3665,9 @@ function dump_persistent_data()
     tokens[#tokens+1] = "\n"
   end
 
-  crawl.mpr(table.concat(tokens))
+  local msg = table.concat(tokens)
+  crawl.mpr(msg)
+  return msg
 end
 
 function get_var_type(value)
@@ -5728,8 +5744,7 @@ function init_pa_main()
   add_autopickup_func(function (it, _)
     if it.is_useless then return end
     if CACHE.have_orb then return end
-    local plus_name = get_plussed_name(it, "base")
-    if util.contains(pa_items_picked, plus_name) then return end
+    if already_contains(pa_items_picked, it) then return end
 
     -- Check for pickup
     local retVal = false
@@ -5745,10 +5760,10 @@ function init_pa_main()
 
     -- Not picking up this item. Check for alerts.
     if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
-    if util.contains(pa_items_alerted, plus_name) then return end
+    if already_contains(pa_items_alerted, it) then return end
 
     if loaded_pa_misc and CONFIG.alert_one_time_items then
-      if pa_alert_rare_item(it) then return end
+      if pa_alert_OTA(it) then return end
     end
 
     if loaded_pa_misc and CONFIG.alert_staff_resists and is_staff(it) then
@@ -5780,8 +5795,8 @@ function pa_alert_item(it, alert_type, emoji)
   tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
   enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
-  pa_all_level_alerts[#pa_all_level_alerts+1] = get_plussed_name(it, "base")
-  add_item_and_lesser(pa_items_alerted, it)
+  pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
+  add_to_pa_table(pa_items_alerted, it)
   you.stop_activity()
   return true
 end
@@ -5789,30 +5804,28 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
-  local name = get_plussed_name(it)
-  if is_weapon(it) or is_armour(it) then
-    if not util.contains(pa_items_picked, name) then
-      add_item_and_lesser(pa_items_picked, it)
-      update_high_scores(it)
-      remove_from_rare_items(it)
-    end
-  end
+  add_to_pa_table(pa_items_picked, it)
+  local name, _ = get_pa_keys(it)
+  pa_items_alerted[name] = nil
+  util.remove(pa_recent_alerts, get_plussed_name(it))
+  remove_from_OTA(it)
 
-  remove_item_and_lesser(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, name)
+  if is_weapon(it) or is_armour(it) then
+    update_high_scores(it)
+  end
 end
 
 function c_message_item_alerts(text, channel)
   if channel ~= "plain" then return end
   if text:find("(Done exploring|Partly explored)") then
     local tokens = {}
-    for _,v in ipairs(pa_all_level_alerts) do
+    for _,v in ipairs(pa_recent_alerts) do
       tokens[#tokens+1] = "\n  " .. v
     end
     if #tokens > 0 then
       enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
     end
-    pa_all_level_alerts = {}
+    pa_recent_alerts = {}
   end
 end
 
@@ -5829,42 +5842,26 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ---- Helpers for using persistent tables in pickup-alert system----
-local function add_remove_item_and_lesser(table_ref, it, remove_item)
-  -- Add (or remove) an item name to a table, along with all less enchanted versions
-  -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = get_plussed_name(it, "base")
-  if util.contains(table_ref, name) ~= remove_item then return end
-
-  if remove_item then util.remove(table_ref, name)
-  else table_ref[#table_ref+1] = name
-  end
-
-  if it.artefact then return end
-
-  -- Do less enchanted items too
-  local plus = tonumber(name:sub(2,2))
-  if not plus then return end
-
-  if plus > 0 then
-    if tonumber(name:sub(3,3)) then
-      plus = 10 * plus + tonumber(name:sub(3,3))
-    end
-
-    for i=plus,1,-1 do
-      name = name:gsub("+" .. i, "+" .. (i-1))
-      if remove_item then util.remove(table_ref, name)
-      else table_ref[#table_ref+1] = name
-      end
+function add_to_pa_table(table_ref, it)
+  if is_weapon(it) or is_armour(it) or is_talisman(it) or is_orb(it) then
+    local name, value = get_pa_keys(it)
+    local cur_val = table_ref[name]
+    if not cur_val or value > cur_val then
+      table_ref[name] = value
     end
   end
 end
 
+function already_contains(table_ref, it)
+  local name, value = get_pa_keys(it)
+  return table_ref[name] ~= nil and table_ref[name] >= value
+end
 
 function init_pa_data()
   if CONFIG.debug_init then crawl.mpr("Initializing pa-data") end
 
-  create_persistent_data("pa_single_alert_items", CONFIG.one_time_alerts)
-  create_persistent_data("pa_all_level_alerts", {})
+  create_persistent_data("pa_OTA_items", CONFIG.one_time_alerts)
+  create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
   create_persistent_data("alerted_first_ranged_2h", 0)
@@ -5876,15 +5873,10 @@ function init_pa_data()
   create_persistent_data("polearm_high_score", 0)
   create_persistent_data("polearm_1h_high_score", 0)
 
-  -- Starting items: Remove from pa_single_alert_items, add to pa_items_picked
-  -- Update alerts for first polearm/ranged]
+  -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
-    local idx = get_rare_item_index(inv)
-    if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
-
-    if is_weapon(inv) or is_armour(inv) or is_talisman(inv) or is_orb(inv) then
-      add_item_and_lesser(pa_items_picked, inv)
-    end
+    remove_from_OTA(inv)
+    add_to_pa_table(pa_items_picked, inv)
 
     if is_weapon(inv) then
       if is_polearm(inv) then
@@ -5900,29 +5892,21 @@ function init_pa_data()
   end
 end
 
-function add_item_and_lesser(table_ref, it)
-  add_remove_item_and_lesser(table_ref, it, false)
-end
-
-function remove_item_and_lesser(table_ref, it)
-  add_remove_item_and_lesser(table_ref, it, true)
-end
-
-function get_rare_item_index(it)
+function get_OTA_index(it)
   local qualname = it.name("qual")
-  for i,v in ipairs(pa_single_alert_items) do
+  for i,v in ipairs(pa_OTA_items) do
     if v ~= "" and qualname:find(v) then return i end
   end
   return -1
 end
 
-function remove_from_rare_items(it)
+function remove_from_OTA(it)
   local found = false
   local idx
   repeat
-    idx = get_rare_item_index(it)
+    idx = get_OTA_index(it)
     if idx ~= -1 then
-      util.remove(pa_single_alert_items, pa_single_alert_items[idx])
+      util.remove(pa_OTA_items, pa_OTA_items[idx])
       found = true
     end
   until idx == -1
@@ -6065,13 +6049,19 @@ function get_ego(it, terse)
 end
 
 -- Used for data tables
-function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) then return it.name() end
+function get_pa_keys(it, name_type)
+  if is_talisman(it) or is_orb(it) then return it.name(), 0 end
   local name = it.name(name_type or "base")
-  if is_staff(it) then return name end
-  local first_char = name:sub(1, 1)
-  if first_char ~= "+" and first_char ~= "-" then name = "+0 " .. name end
-  return name
+  local value = tonumber(name:sub(1, 3))
+  if not value then return name, 0 end
+  return util.trim(name:sub(4)), value
+end
+
+function get_plussed_name(it, name_type)
+  if is_talisman(it) or is_orb(it) or is_staff(it) then return it.name() end
+  local name, value = get_pa_keys(it, name_type)
+  if value >= 0 then value = "+" .. value end
+  return value .. " " .. name
 end
 
 -- Custom def of ego/branded
@@ -6559,28 +6549,28 @@ function pa_alert_armour(it)
     local it_ego = get_ego(it)
     local cur_ego = get_ego(cur)
     local ego_change_type
-    if it_ego == cur_ego then ego_change_type = "same"
-    elseif not it_ego then ego_change_type = "lost"
-    elseif not cur_ego then ego_change_type = "gain"
-    else ego_change_type = "diff"
+    if it_ego == cur_ego then ego_change_type = "same_ego"
+    elseif not it_ego then ego_change_type = "lost_ego"
+    elseif not cur_ego then ego_change_type = "gain_ego"
+    else ego_change_type = "diff_ego"
     end
 
     if encumb_delta == 0 then
-      if ego_change_type == "gain" or ego_change_type == "diff" then
+      if ego_change_type == "gain_ego" or ego_change_type == "diff_ego" then
         return send_armour_alert(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
       if ev_delta / -ac_delta >= TUNING.armour.lighter[ego_change_type] then
-        if ego_change_type == "lost" and ev_delta < TUNING.armour.lighter.min_gain then return false end
-        if ego_change_type ~= "same" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
+        if ego_change_type == "lost_ego" and ev_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= "same_ego" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
       local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if ac_delta / total_loss >= TUNING.armour.heavier[ego_change_type] then
-        if ego_change_type == "lost" and ac_delta < TUNING.armour.lighter.min_gain then return false end
-        if ego_change_type ~= "same" and total_loss > TUNING.armour.lighter.max_loss then return false end
+        if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= "same_ego" and total_loss > TUNING.armour.lighter.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
       end
     end
@@ -6694,23 +6684,23 @@ function pa_alert_orb(it)
   return pa_alert_item(it, "New orb", EMOJI.ORB)
 end
 
-function pa_alert_rare_item(it)
-  local index = get_rare_item_index(it)
+function pa_alert_OTA(it)
+  local index = get_OTA_index(it)
   if index == -1 then return end
 
   local do_alert = true
   -- Don't alert if already wearing a larger shield
-  if pa_single_alert_items[index] == "buckler" then
+  if pa_OTA_items[index] == "buckler" then
     local sh = items.equipped_at("shield")
     if sh and sh.name("qual") ~= "orb" then do_alert = false end
-  elseif pa_single_alert_items[index] == "kite shield" then
+  elseif pa_OTA_items[index] == "kite shield" then
     local sh = items.equipped_at("shield")
     if sh and sh.name("qual") == "tower shield" then do_alert = false end
   end
 
-  remove_from_rare_items(it)
+  remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Found first", EMOJI.RARE_ITEM)
 end
 
 ---- Alert for needed resists ----

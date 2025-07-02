@@ -200,6 +200,7 @@ multiple times per turn.
 - The RC is intended for webtiles first. It works fine locally, except switching characters doesn't seem to reload the RC.
   Executing `init_buehler()` will reinitialize everything - equivalent to restarting crawl.
 - Some of the regex's use negative lookahead/lookbehind, and expect crawl built with PCRE and not POSIX.
+  Building crawl locally on MacOS, I use: `make -j4 TILES=y BUILD_PCRE=YesPlease`. I couldn't get emojis to work.
 
 ## TODO dev list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)

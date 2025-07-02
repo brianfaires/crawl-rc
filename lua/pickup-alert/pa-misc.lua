@@ -3,23 +3,23 @@ function pa_alert_orb(it)
   return pa_alert_item(it, "New orb", EMOJI.ORB)
 end
 
-function pa_alert_rare_item(it)
-  local index = get_rare_item_index(it)
+function pa_alert_OTA(it)
+  local index = get_OTA_index(it)
   if index == -1 then return end
 
   local do_alert = true
   -- Don't alert if already wearing a larger shield
-  if pa_single_alert_items[index] == "buckler" then
+  if pa_OTA_items[index] == "buckler" then
     local sh = items.equipped_at("shield")
     if sh and sh.name("qual") ~= "orb" then do_alert = false end
-  elseif pa_single_alert_items[index] == "kite shield" then
+  elseif pa_OTA_items[index] == "kite shield" then
     local sh = items.equipped_at("shield")
     if sh and sh.name("qual") == "tower shield" then do_alert = false end
   end
 
-  remove_from_rare_items(it)
+  remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Found first", EMOJI.RARE_ITEM)
 end
 
 ---- Alert for needed resists ----

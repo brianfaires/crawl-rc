@@ -24,8 +24,7 @@ function init_pa_main()
   add_autopickup_func(function (it, _)
     if it.is_useless then return end
     if CACHE.have_orb then return end
-    local plus_name = get_plussed_name(it, "base")
-    if util.contains(pa_items_picked, plus_name) then return end
+    if already_contains(pa_items_picked, it) then return end
 
     -- Check for pickup
     local retVal = false
@@ -41,10 +40,10 @@ function init_pa_main()
 
     -- Not picking up this item. Check for alerts.
     if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
-    if util.contains(pa_items_alerted, plus_name) then return end
+    if already_contains(pa_items_alerted, it) then return end
 
     if loaded_pa_misc and CONFIG.alert_one_time_items then
-      if pa_alert_rare_item(it) then return end
+      if pa_alert_OTA(it) then return end
     end
 
     if loaded_pa_misc and CONFIG.alert_staff_resists and is_staff(it) then
@@ -76,8 +75,8 @@ function pa_alert_item(it, alert_type, emoji)
   tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
   enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
-  pa_all_level_alerts[#pa_all_level_alerts+1] = get_plussed_name(it, "base")
-  add_item_and_lesser(pa_items_alerted, it)
+  pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
+  add_to_pa_table(pa_items_alerted, it)
   you.stop_activity()
   return true
 end
@@ -85,30 +84,28 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
-  local name = get_plussed_name(it)
-  if is_weapon(it) or is_armour(it) then
-    if not util.contains(pa_items_picked, name) then
-      add_item_and_lesser(pa_items_picked, it)
-      update_high_scores(it)
-      remove_from_rare_items(it)
-    end
-  end
+  add_to_pa_table(pa_items_picked, it)
+  local name, _ = get_pa_keys(it)
+  pa_items_alerted[name] = nil
+  util.remove(pa_recent_alerts, get_plussed_name(it))
+  remove_from_OTA(it)
 
-  remove_item_and_lesser(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, name)
+  if is_weapon(it) or is_armour(it) then
+    update_high_scores(it)
+  end
 end
 
 function c_message_item_alerts(text, channel)
   if channel ~= "plain" then return end
   if text:find("(Done exploring|Partly explored)") then
     local tokens = {}
-    for _,v in ipairs(pa_all_level_alerts) do
+    for _,v in ipairs(pa_recent_alerts) do
       tokens[#tokens+1] = "\n  " .. v
     end
     if #tokens > 0 then
       enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
     end
-    pa_all_level_alerts = {}
+    pa_recent_alerts = {}
   end
 end
 

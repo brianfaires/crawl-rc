@@ -84,5 +84,9 @@ function dump_cache()
       tokens[#tokens+1] = string.format("  %s: %s", k, v)
     end
   end
-  crawl.mpr(table.concat(tokens, "\n"))
+
+  tokens[#tokens+1] = "\n"
+  local msg = table.concat(tokens, "\n")
+  crawl.mpr(msg)
+  return msg
 end

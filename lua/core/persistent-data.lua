@@ -66,10 +66,20 @@ function dump_persistent_data()
   for _,name in ipairs(persistent_table_names) do
     tokens[#tokens+1] = name
     tokens[#tokens+1] = ":\n"
-    for _,item in ipairs(_G[name]) do
-      tokens[#tokens+1] = "  "
-      tokens[#tokens+1] = item
-      tokens[#tokens+1] = "\n"
+    if get_var_type(_G[name]) == "list" then
+      for _,item in ipairs(_G[name]) do
+        tokens[#tokens+1] = "  "
+        tokens[#tokens+1] = item
+        tokens[#tokens+1] = "\n"
+      end
+    else
+      for k,v in pairs(_G[name]) do
+        tokens[#tokens+1] = "  "
+        tokens[#tokens+1] = k
+        tokens[#tokens+1] = " = "
+        tokens[#tokens+1] = v
+        tokens[#tokens+1] = "\n"
+      end
     end
   end
 
@@ -81,7 +91,9 @@ function dump_persistent_data()
     tokens[#tokens+1] = "\n"
   end
 
-  crawl.mpr(table.concat(tokens))
+  local msg = table.concat(tokens)
+  crawl.mpr(msg)
+  return msg
 end
 
 function get_var_type(value)

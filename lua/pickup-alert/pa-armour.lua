@@ -131,28 +131,28 @@ function pa_alert_armour(it)
     local it_ego = get_ego(it)
     local cur_ego = get_ego(cur)
     local ego_change_type
-    if it_ego == cur_ego then ego_change_type = "same"
-    elseif not it_ego then ego_change_type = "lost"
-    elseif not cur_ego then ego_change_type = "gain"
-    else ego_change_type = "diff"
+    if it_ego == cur_ego then ego_change_type = "same_ego"
+    elseif not it_ego then ego_change_type = "lost_ego"
+    elseif not cur_ego then ego_change_type = "gain_ego"
+    else ego_change_type = "diff_ego"
     end
 
     if encumb_delta == 0 then
-      if ego_change_type == "gain" or ego_change_type == "diff" then
+      if ego_change_type == "gain_ego" or ego_change_type == "diff_ego" then
         return send_armour_alert(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
       if ev_delta / -ac_delta >= TUNING.armour.lighter[ego_change_type] then
-        if ego_change_type == "lost" and ev_delta < TUNING.armour.lighter.min_gain then return false end
-        if ego_change_type ~= "same" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
+        if ego_change_type == "lost_ego" and ev_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= "same_ego" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
       local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if ac_delta / total_loss >= TUNING.armour.heavier[ego_change_type] then
-        if ego_change_type == "lost" and ac_delta < TUNING.armour.lighter.min_gain then return false end
-        if ego_change_type ~= "same" and total_loss > TUNING.armour.lighter.max_loss then return false end
+        if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= "same_ego" and total_loss > TUNING.armour.lighter.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
       end
     end

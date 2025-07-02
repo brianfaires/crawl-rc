@@ -1,40 +1,24 @@
 ---- Helpers for using persistent tables in pickup-alert system----
-local function add_remove_item_and_lesser(table_ref, it, remove_item)
-  -- Add (or remove) an item name to a table, along with all less enchanted versions
-  -- e.g. "+3 flail" will add: "+3 flail", "+2 flail", "+1 flail", "+0 flail"
-  local name = get_plussed_name(it, "base")
-  if util.contains(table_ref, name) ~= remove_item then return end
-
-  if remove_item then util.remove(table_ref, name)
-  else table_ref[#table_ref+1] = name
-  end
-
-  if it.artefact then return end
-
-  -- Do less enchanted items too
-  local plus = tonumber(name:sub(2,2))
-  if not plus then return end
-
-  if plus > 0 then
-    if tonumber(name:sub(3,3)) then
-      plus = 10 * plus + tonumber(name:sub(3,3))
-    end
-
-    for i=plus,1,-1 do
-      name = name:gsub("+" .. i, "+" .. (i-1))
-      if remove_item then util.remove(table_ref, name)
-      else table_ref[#table_ref+1] = name
-      end
+function add_to_pa_table(table_ref, it)
+  if is_weapon(it) or is_armour(it) or is_talisman(it) or is_orb(it) then
+    local name, value = get_pa_keys(it)
+    local cur_val = table_ref[name]
+    if not cur_val or value > cur_val then
+      table_ref[name] = value
     end
   end
 end
 
+function already_contains(table_ref, it)
+  local name, value = get_pa_keys(it)
+  return table_ref[name] ~= nil and table_ref[name] >= value
+end
 
 function init_pa_data()
   if CONFIG.debug_init then crawl.mpr("Initializing pa-data") end
 
-  create_persistent_data("pa_single_alert_items", CONFIG.one_time_alerts)
-  create_persistent_data("pa_all_level_alerts", {})
+  create_persistent_data("pa_OTA_items", CONFIG.one_time_alerts)
+  create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
   create_persistent_data("alerted_first_ranged_2h", 0)
@@ -46,15 +30,10 @@ function init_pa_data()
   create_persistent_data("polearm_high_score", 0)
   create_persistent_data("polearm_1h_high_score", 0)
 
-  -- Starting items: Remove from pa_single_alert_items, add to pa_items_picked
-  -- Update alerts for first polearm/ranged]
+  -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
-    local idx = get_rare_item_index(inv)
-    if idx ~= -1 then util.remove(pa_single_alert_items, pa_single_alert_items[idx]) end
-
-    if is_weapon(inv) or is_armour(inv) or is_talisman(inv) or is_orb(inv) then
-      add_item_and_lesser(pa_items_picked, inv)
-    end
+    remove_from_OTA(inv)
+    add_to_pa_table(pa_items_picked, inv)
 
     if is_weapon(inv) then
       if is_polearm(inv) then
@@ -70,29 +49,21 @@ function init_pa_data()
   end
 end
 
-function add_item_and_lesser(table_ref, it)
-  add_remove_item_and_lesser(table_ref, it, false)
-end
-
-function remove_item_and_lesser(table_ref, it)
-  add_remove_item_and_lesser(table_ref, it, true)
-end
-
-function get_rare_item_index(it)
+function get_OTA_index(it)
   local qualname = it.name("qual")
-  for i,v in ipairs(pa_single_alert_items) do
+  for i,v in ipairs(pa_OTA_items) do
     if v ~= "" and qualname:find(v) then return i end
   end
   return -1
 end
 
-function remove_from_rare_items(it)
+function remove_from_OTA(it)
   local found = false
   local idx
   repeat
-    idx = get_rare_item_index(it)
+    idx = get_OTA_index(it)
     if idx ~= -1 then
-      util.remove(pa_single_alert_items, pa_single_alert_items[idx])
+      util.remove(pa_OTA_items, pa_OTA_items[idx])
       found = true
     end
   until idx == -1
