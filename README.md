@@ -14,9 +14,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
   - Alternatively, just remove everything between the `Begin <filename>` and `<End filename>` markers in [buehler.rc](buehler.rc).
 - If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
-  1. Any file dependencies. These are listed at the top of each file.
-    Copy-paste the referenced file in place of any `include` statement.
-    Do the same for any lua files (`lua_file =`), but add curly braces around the file contents to mark it as lua code `{ <file_contents> }`.
+  1. Any/all files from the `core/` folder.
 - This RC makes heavy use of the character-specific persistent data. These essentially save values when exiting,
   and then reload it when the game starts again. Currently, if the game crashes and the data is not saved, many
   features will 'reset'. To see the values of all persistent data, press '~' to open the lua interpreter, then
@@ -196,18 +194,17 @@ multiple times per turn.
 - Can also define text to replace the emojis.
 
 ## Notes
-- I mainly wrote this 2+ years ago and recently fixed it up for v0.33.1.
-  Please report any bugs, outdated notes, suggestions, etc.
-- It's intended for use in webtiles.
-  It works locally, but AFAICT individual files don't reload/re-execute until you restart crawl.
-- Some use of negative lookahead/lookbehind in regexs, which requires crawl built with PCRE and not POSIX.
+- Execute lua commands by opening the lua interpreter with `~`, then entering the command. A couple useful ones below.
+- LMK if you find any bugs! It'd be helpful if you attach a character file after executing `debug_dump()`.
+  This outputs the RC & character state, writes it as a note, and creates a character dump. 
+- The RC is intended for webtiles first. It works fine locally, except switching characters doesn't seem to reload the RC.
+  Executing `init_buehler()` will reinitialize everything - equivalent to restarting crawl.
+- Some of the regex's use negative lookahead/lookbehind, and expect crawl built with PCRE and not POSIX.
 
 ## TODO dev list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
-1. Before finding ID scroll, only stop travel when stack size is greater than previous
 1. Convert pa arrays to contain: {{"robe", "3"}}, instead of {"+3 robe"}
 1. Write persistent data to c_persist after each level (to recover from crashes)
-1. Store game identifiers (name/race/class) to detect game changes
 1. Cache more: inventory, wielded weap, worn armour
 1. cleanup/reduce # of display.rc messages
 
@@ -219,7 +216,7 @@ multiple times per turn.
 
 # Known issues
 1. Equip/Wear menu doesn't use menu_colour (needs crawl PR?)
-1. DPS inscriptions on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
+1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
 1. Running local tiles (webtiles unaffected), initial screen sometimes needs a refresh on startup (for player stats)
 
 ## Resources

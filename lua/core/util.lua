@@ -207,7 +207,9 @@ function describe_inv_slot(inv_num, full_dump)
   if full_dump then
     tokens[#tokens+1] = string.format("    Class: %s, Subtype: %s", inv.class(true), inv.subtype())
   end
-  return table.concat(tokens, "\n")
+  local msg = table.concat(tokens, "\n")  
+  crawl.mpr(msg)
+  return msg
 end
 
 function dump_inventory(verbose)
@@ -215,11 +217,19 @@ function dump_inventory(verbose)
   for inv in iter.invent_iterator:new(items.inventory()) do
     tokens[#tokens+1] = describe_inv_slot(inv.slot, verbose)
   end
-  crawl.mpr(table.concat(tokens, "\n"))
+  local msg = table.concat(tokens, "\n")
+  crawl.mpr(msg)
+  return msg
 end
 
-function debug_dump(verbose)
-  if dump_persistent_data then dump_persistent_data() end
-  if dump_cache then dump_cache() end
-  dump_inventory(verbose)
+function debug_dump(verbose, skip_char_dump)
+  local msg = ""
+  if dump_persistent_data then msg = msg .. dump_persistent_data() end
+  if dump_cache then msg = msg .. dump_cache() end
+  msg = msg .. dump_inventory(verbose)
+  crawl.mpr(msg)
+  if not skip_char_dump then
+    crawl.take_note(msg)
+    crawl.dump_char()
+  end
 end
