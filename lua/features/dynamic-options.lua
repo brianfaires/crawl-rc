@@ -122,8 +122,7 @@ local function set_skill_options()
 
   -- If heavy armour and low armour skill, ignore spellcasting items
   if CACHE.race ~= "Mountain Dwarf" then
-    local arm = get_body_armour()
-    local heavy_arm = arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
+    local heavy_arm = CACHE.eq_armour ~= nil and CACHE.eq_armour.encumbrance > 4 + CACHE.s_armour/2
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true

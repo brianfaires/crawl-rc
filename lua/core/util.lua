@@ -117,10 +117,6 @@ end
 
 
 --- Utility ---
-function get_body_armour()
-  return items.equipped_at("armour")
-end
-
 function get_mut(mutation, include_temp)
   local perm = CACHE.mutations[mutation] or 0
   if not include_temp then return perm end
@@ -129,7 +125,11 @@ function get_mut(mutation, include_temp)
 end
 
 function have_shield()
-  return items.equipped_at("shield") ~= nil
+  return CACHE.eq_shield ~= nil
+end
+
+function have_weapon()
+  return CACHE.eq_weapon ~= nil
 end
 
 function is_amulet(it)

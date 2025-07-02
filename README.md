@@ -204,9 +204,7 @@ multiple times per turn.
 
 ## TODO dev list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
-1. Convert pa arrays to contain: {{"robe", "3"}}, instead of {"+3 robe"}
 1. Write persistent data to c_persist after each level (to recover from crashes)
-1. Cache more: inventory, wielded weap, worn armour
 1. cleanup/reduce # of display.rc messages
 
 ### TODO - requiring crawl PR
@@ -214,6 +212,11 @@ multiple times per turn.
 1. Wait for allies to heal (needs crawl PR?)
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
 1. Fix mute_swaps.lua (needs crawl PR? - to intercept msgs)
+
+## TODO - won't do
+1. remove "~~DROP_ME" when dropping
+1. autorest starts w/autopickup (if inv not full)
+1. level-specific fm ignores (eg vault warden on v:5)
 
 # Known issues
 1. Equip/Wear menu doesn't use menu_colour (needs crawl PR?)

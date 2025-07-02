@@ -1,6 +1,26 @@
 -- Cache of commonly pulled values, for better performance
 CACHE = {}
 
+function dump_cache()
+  local tokens = { "\n---CACHE---" }
+  for k,v in pairs(CACHE) do
+    if type(v) == "table" then
+      tokens[#tokens+1] = string.format("  %s:", k)
+      for k2,v2 in pairs(v) do
+        tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
+      end
+    else
+      if v == true then v = "true" elseif v == false then v = "false" end
+      tokens[#tokens+1] = string.format("  %s: %s", k, v)
+    end
+  end
+
+  tokens[#tokens+1] = "\n"
+  local msg = table.concat(tokens, "\n")
+  crawl.mpr(msg)
+  return msg
+end
+
 function init_cache()
   if CONFIG.debug_init then crawl.mpr("Initializing cache") end
 
@@ -51,6 +71,10 @@ function ready_cache()
   CACHE.s_ranged = you.skill("Ranged Weapons")
   CACHE.s_polearms = you.skill("Polearms")
 
+  CACHE.eq_armour = items.equipped_at("armour")
+  CACHE.eq_shield = items.equipped_at("shield")
+  CACHE.eq_weapon = items.equipped_at("weapon")
+
   CACHE.top_weap_skill = "Unarmed Combat"
   local max_weap_skill = get_skill(CACHE.top_weap_skill)
   for _,v in ipairs(ALL_WEAP_SCHOOLS) do
@@ -69,24 +93,4 @@ function ready_cache()
   end
 
   CACHE.temp_mutations = {} -- Placeholder for now
-end
-
-function dump_cache()
-  local tokens = { "\n---CACHE---" }
-  for k,v in pairs(CACHE) do
-    if type(v) == "table" then
-      tokens[#tokens+1] = string.format("  %s:", k)
-      for k2,v2 in pairs(v) do
-        tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
-      end
-    else
-      if v == true then v = "true" elseif v == false then v = "false" end
-      tokens[#tokens+1] = string.format("  %s: %s", k, v)
-    end
-  end
-
-  tokens[#tokens+1] = "\n"
-  local msg = table.concat(tokens, "\n")
-  crawl.mpr(msg)
-  return msg
 end

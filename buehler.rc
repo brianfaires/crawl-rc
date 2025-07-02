@@ -3302,6 +3302,26 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 -- Cache of commonly pulled values, for better performance
 CACHE = {}
 
+function dump_cache()
+  local tokens = { "\n---CACHE---" }
+  for k,v in pairs(CACHE) do
+    if type(v) == "table" then
+      tokens[#tokens+1] = string.format("  %s:", k)
+      for k2,v2 in pairs(v) do
+        tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
+      end
+    else
+      if v == true then v = "true" elseif v == false then v = "false" end
+      tokens[#tokens+1] = string.format("  %s: %s", k, v)
+    end
+  end
+
+  tokens[#tokens+1] = "\n"
+  local msg = table.concat(tokens, "\n")
+  crawl.mpr(msg)
+  return msg
+end
+
 function init_cache()
   if CONFIG.debug_init then crawl.mpr("Initializing cache") end
 
@@ -3352,6 +3372,10 @@ function ready_cache()
   CACHE.s_ranged = you.skill("Ranged Weapons")
   CACHE.s_polearms = you.skill("Polearms")
 
+  CACHE.eq_armour = items.equipped_at("armour")
+  CACHE.eq_shield = items.equipped_at("shield")
+  CACHE.eq_weapon = items.equipped_at("weapon")
+
   CACHE.top_weap_skill = "Unarmed Combat"
   local max_weap_skill = get_skill(CACHE.top_weap_skill)
   for _,v in ipairs(ALL_WEAP_SCHOOLS) do
@@ -3370,26 +3394,6 @@ function ready_cache()
   end
 
   CACHE.temp_mutations = {} -- Placeholder for now
-end
-
-function dump_cache()
-  local tokens = { "\n---CACHE---" }
-  for k,v in pairs(CACHE) do
-    if type(v) == "table" then
-      tokens[#tokens+1] = string.format("  %s:", k)
-      for k2,v2 in pairs(v) do
-        tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
-      end
-    else
-      if v == true then v = "true" elseif v == false then v = "false" end
-      tokens[#tokens+1] = string.format("  %s: %s", k, v)
-    end
-  end
-
-  tokens[#tokens+1] = "\n"
-  local msg = table.concat(tokens, "\n")
-  crawl.mpr(msg)
-  return msg
 end
 
 }
@@ -3816,10 +3820,6 @@ end
 
 
 --- Utility ---
-function get_body_armour()
-  return items.equipped_at("armour")
-end
-
 function get_mut(mutation, include_temp)
   local perm = CACHE.mutations[mutation] or 0
   if not include_temp then return perm end
@@ -3828,7 +3828,11 @@ function get_mut(mutation, include_temp)
 end
 
 function have_shield()
-  return items.equipped_at("shield") ~= nil
+  return CACHE.eq_shield ~= nil
+end
+
+function have_weapon()
+  return CACHE.eq_weapon ~= nil
 end
 
 function is_amulet(it)
@@ -4399,8 +4403,7 @@ local function set_skill_options()
 
   -- If heavy armour and low armour skill, ignore spellcasting items
   if CACHE.race ~= "Mountain Dwarf" then
-    local arm = get_body_armour()
-    local heavy_arm = arm ~= nil and arm.encumbrance > 4 + CACHE.s_armour/2
+    local heavy_arm = CACHE.eq_armour ~= nil and CACHE.eq_armour.encumbrance > 4 + CACHE.s_armour/2
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true
@@ -5831,7 +5834,7 @@ end
 
 function ready_item_alerts()
   ready_pa_weapons()
-  update_high_scores(get_body_armour())
+  update_high_scores(CACHE.eq_armour)
 end
 
 }
@@ -6140,7 +6143,7 @@ function get_armour_ev(it)
   local art_ev = 0
 
   -- Adjust str/dex/EV for artefact stat changes
-  local worn = get_body_armour()
+  local worn = CACHE.eq_armour
   if worn and worn.artefact then
     if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
     if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
@@ -6175,7 +6178,7 @@ function get_shield_sh(it)
     if art_dex then dex = dex + art_dex end
   end
 
-  local cur = items.equipped_at("shield")
+  local cur = CACHE.eq_shield
   if cur and cur.artefact and cur.slot ~= it.slot then
     local art_dex = cur.artprops["Dex"]
     if art_dex then dex = dex - art_dex end
@@ -6205,17 +6208,16 @@ function get_weap_delay(it, ignore_brands)
 
   if delay < 3 then delay = 3 end
 
-  local sh = items.equipped_at("shield")
-  if sh then delay = delay + get_shield_penalty(sh) end
+  if CACHE.eq_shield then delay = delay + get_shield_penalty(CACHE.eq_shield) end
 
   if it.is_ranged then
-    local worn = get_body_armour()
+    local worn = CACHE.eq_armour
     if worn then
       local str = CACHE.str
       if it.artefact then
         if it.artprops["Str"] then str = str + it.artprops["Str"] end
       end
-      local cur = items.equipped_at("weapon")
+      local cur = CACHE.eq_weapon
       if cur and cur ~= it and cur.artefact then
         if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
       end
@@ -6262,7 +6264,7 @@ function get_weap_dmg(it, dmg_type)
 
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
-    local wielded = items.equipped_at("weapon")
+    local wielded = CACHE.eq_weapon
     if wielded and wielded.artefact then
       if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
       if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
@@ -6450,9 +6452,8 @@ local function alert_ac_high_score(it)
   if has_ego(it) and not it.is_identified then return false end
 
   if ac_high_score == 0 then
-    local cur = get_body_armour()
-    if not cur then return false end
-    ac_high_score = get_armour_ac(cur)
+    if not CACHE.eq_armour then return false end
+    ac_high_score = get_armour_ac(CACHE.eq_armour)
   else
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
@@ -6539,7 +6540,7 @@ function pa_alert_armour(it)
   end
 
   if is_body_armour(it) then
-    local cur = get_body_armour()
+    local cur = CACHE.eq_armour
     if not cur then return false end
 
     local encumb_delta = it.encumbrance - cur.encumbrance
@@ -6575,9 +6576,8 @@ function pa_alert_armour(it)
       end
     end
   elseif is_shield(it) then
-    local cur = items.equipped_at("shield")
-    if not cur then return false end
-    if has_ego(it) and get_ego(it) ~= get_ego(cur) then
+    if not CACHE.eq_shield then return false end
+    if has_ego(it) and get_ego(it) ~= get_ego(CACHE.eq_shield) then
       return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
   else
@@ -6598,7 +6598,7 @@ function pa_pickup_armour(it)
   if has_ego(it) and not it.is_identified then return false end
 
   if is_body_armour(it) then
-    local cur = get_body_armour()
+    local cur = CACHE.eq_armour
 
     -- Exclusions
     if not cur then return false end
@@ -6616,11 +6616,10 @@ function pa_pickup_armour(it)
       return ac_delta >= 0
     end
   elseif is_shield(it) then
-    local cur = items.equipped_at("offhand")
-
     -- Exclusions
     if not it.is_identified then return false end
-    if not cur or not is_shield(cur) then return false end
+    local cur = CACHE.eq_shield
+    if not cur then return false end
     if cur.name("base") ~= it.name("base") then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos
@@ -6637,15 +6636,14 @@ function pa_pickup_armour(it)
     local st, _ = it.subtype()
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
-    local body_arm = get_body_armour()
-    if body_arm and body_arm.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
+    if CACHE.eq_armour and CACHE.eq_armour.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
 
     -- No autopickup if mutation interference
     if st == "gloves" then
       -- Ignore demonic touch if you're wearing a shield
-      if not items.equipped_at("shield") and get_mut("demonic touch", true) >= 3 then return false end
+      if not have_shield() and get_mut("demonic touch", true) >= 3 then return false end
       -- Ignore claws if you're wielding a weapon
-      if not items.equipped_at("weapon") and get_mut("claws", true) > 0 then return false end
+      if not have_weapon() and get_mut("claws", true) > 0 then return false end
     elseif st == "boots" then
       if get_mut("hooves", true) + get_mut("talons", true) > 0 then return false end
     elseif it.name("base"):find("helmet") then

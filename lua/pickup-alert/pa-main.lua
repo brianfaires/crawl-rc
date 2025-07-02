@@ -111,5 +111,5 @@ end
 
 function ready_item_alerts()
   ready_pa_weapons()
-  update_high_scores(get_body_armour())
+  update_high_scores(CACHE.eq_armour)
 end

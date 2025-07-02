@@ -32,9 +32,8 @@ local function alert_ac_high_score(it)
   if has_ego(it) and not it.is_identified then return false end
 
   if ac_high_score == 0 then
-    local cur = get_body_armour()
-    if not cur then return false end
-    ac_high_score = get_armour_ac(cur)
+    if not CACHE.eq_armour then return false end
+    ac_high_score = get_armour_ac(CACHE.eq_armour)
   else
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
@@ -121,7 +120,7 @@ function pa_alert_armour(it)
   end
 
   if is_body_armour(it) then
-    local cur = get_body_armour()
+    local cur = CACHE.eq_armour
     if not cur then return false end
 
     local encumb_delta = it.encumbrance - cur.encumbrance
@@ -157,9 +156,8 @@ function pa_alert_armour(it)
       end
     end
   elseif is_shield(it) then
-    local cur = items.equipped_at("shield")
-    if not cur then return false end
-    if has_ego(it) and get_ego(it) ~= get_ego(cur) then
+    if not CACHE.eq_shield then return false end
+    if has_ego(it) and get_ego(it) ~= get_ego(CACHE.eq_shield) then
       return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
   else
@@ -180,7 +178,7 @@ function pa_pickup_armour(it)
   if has_ego(it) and not it.is_identified then return false end
 
   if is_body_armour(it) then
-    local cur = get_body_armour()
+    local cur = CACHE.eq_armour
 
     -- Exclusions
     if not cur then return false end
@@ -198,11 +196,10 @@ function pa_pickup_armour(it)
       return ac_delta >= 0
     end
   elseif is_shield(it) then
-    local cur = items.equipped_at("offhand")
-
     -- Exclusions
     if not it.is_identified then return false end
-    if not cur or not is_shield(cur) then return false end
+    local cur = CACHE.eq_shield
+    if not cur then return false end
     if cur.name("base") ~= it.name("base") then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos
@@ -219,15 +216,14 @@ function pa_pickup_armour(it)
     local st, _ = it.subtype()
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
-    local body_arm = get_body_armour()
-    if body_arm and body_arm.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
+    if CACHE.eq_armour and CACHE.eq_armour.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
 
     -- No autopickup if mutation interference
     if st == "gloves" then
       -- Ignore demonic touch if you're wearing a shield
-      if not items.equipped_at("shield") and get_mut("demonic touch", true) >= 3 then return false end
+      if not have_shield() and get_mut("demonic touch", true) >= 3 then return false end
       -- Ignore claws if you're wielding a weapon
-      if not items.equipped_at("weapon") and get_mut("claws", true) > 0 then return false end
+      if not have_weapon() and get_mut("claws", true) > 0 then return false end
     elseif st == "boots" then
       if get_mut("hooves", true) + get_mut("talons", true) > 0 then return false end
     elseif it.name("base"):find("helmet") then
