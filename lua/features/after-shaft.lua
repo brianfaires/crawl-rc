@@ -14,7 +14,7 @@ end
 ------------------- Hooks -------------------
 function c_message_after_shaft(text, channel)
   if as_shaft_depth ~= 0 or channel ~= "plain" then return end
-  if text:find("fall into a shaft") then
+  if text:find("You fall into a shaft") or text:find("You are sucked into a shaft") then
     as_shaft_depth = CACHE.depth
     as_shaft_branch = CACHE.branch
     crawl.setopt("explore_stop += stairs")
