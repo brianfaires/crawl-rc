@@ -1,22 +1,22 @@
 ---- Pickup and Alert features for armour ----
 ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-  stronger = { msg = "Stronger armour", emoji = EMOJI.STRONGER },
-  lighter = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-  gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
-  diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+  artefact = { msg = "31 Artefact armour", emoji = EMOJI.ARTEFACT },
+  stronger = { msg = "32 Stronger armour", emoji = EMOJI.STRONGER },
+  lighter = { msg = "33 Lighter armour", emoji = EMOJI.LIGHTER },
+  gain_ego = { msg = "34 Gain ego", emoji = EMOJI.EGO },
+  diff_ego = { msg = "35 Diff ego", emoji = EMOJI.EGO },
 
   lighter = {
-    gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+    gain_ego = { msg = "36 Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "37 Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+    same_ego = { msg = "38 Lighter armour", emoji = EMOJI.LIGHTER },
+    lost_ego = { msg = "39 Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
   },
   heavier = {
-    gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+    gain_ego = { msg = "40 Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "41 Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+    same_ego = { msg = "42 Heavier Armour", emoji = EMOJI.HEAVIER },
+    lost_ego = { msg = "43 Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
   }
 } -- ARMOUR_ALERT (do not remove this comment)
 
@@ -38,6 +38,7 @@ local function alert_ac_high_score(it)
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
+      crawl.mpr("ALERT 1")
       return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST)
     end
   end
@@ -62,10 +63,12 @@ local function alert_armour_consider_mutations(it, type)
 
     if claws_lvl > 0 or touch_lvl >= 3 then
       if has_ego(it) then
+        crawl.mpr("ALERT 2")
         return pa_alert_item(it, "Branded gloves", EMOJI.GLOVES)
       end
       local cur_gloves = items.equipped_at("gloves")
       if not cur_gloves or it_plus > cur_gloves.plus then
+        crawl.mpr("ALERT 3")
         return pa_alert_item(it, "Enchanted gloves", EMOJI.GLOVES)
       end
     end
@@ -75,10 +78,12 @@ local function alert_armour_consider_mutations(it, type)
 
     if get_mut("hooves", true) + get_mut("talons", true) > 0 then
       if has_ego(it) then
+        crawl.mpr("ALERT 4")
         return pa_alert_item(it, "Branded boots", EMOJI.BOOTS)
       end
       local cur_boots = items.equipped_at("boots")
       if not cur_boots or it_plus > cur_boots.plus then
+        crawl.mpr("ALERT 5")
         return pa_alert_item(it, "Enchanted boots", EMOJI.BOOTS)
       end
     end
@@ -101,10 +106,12 @@ local function alert_armour_consider_mutations(it, type)
     local beak_lvl = get_mut("beak", true)
     if horns_lvl + antennae_lvl + beak_lvl > 0 then
       if has_ego(it) then
+        crawl.mpr("ALERT 6")
         return pa_alert_item(it, "Branded headgear", EMOJI.HAT)
       end
       local cur_helmet = items.equipped_at("helmet")
       if not cur_helmet or it_plus > cur_helmet.plus then
+        crawl.mpr("ALERT 7")
         return pa_alert_item(it, "Enchanted headgear", EMOJI.HAT)
       end
     end
@@ -158,6 +165,7 @@ function pa_alert_armour(it)
   elseif is_shield(it) then
     if not CACHE.eq_shield then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(CACHE.eq_shield) then
+      crawl.mpr("ALERT 8")
       return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
   else
@@ -166,6 +174,7 @@ function pa_alert_armour(it)
     local cur = items.equipped_at(st)
     if not cur then return false end
     if get_armour_ac(it) > get_armour_ac(cur) + 0.001 then
+      crawl.mpr("ALERT 9")
       return pa_alert_item(it, "Stronger armour", EMOJI.STRONGER)
     else
       return alert_armour_consider_mutations(it, st)

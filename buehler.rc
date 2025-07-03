@@ -5266,7 +5266,6 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
       EMOJI.REMIND_IDENTIFY
     )
   end
-  crawl.mpr("did func")
 end
 
 function init_remind_id()
@@ -6420,23 +6419,23 @@ end
 {
 ---- Pickup and Alert features for armour ----
 ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-  stronger = { msg = "Stronger armour", emoji = EMOJI.STRONGER },
-  lighter = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-  gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
-  diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+  artefact = { msg = "31 Artefact armour", emoji = EMOJI.ARTEFACT },
+  stronger = { msg = "32 Stronger armour", emoji = EMOJI.STRONGER },
+  lighter = { msg = "33 Lighter armour", emoji = EMOJI.LIGHTER },
+  gain_ego = { msg = "34 Gain ego", emoji = EMOJI.EGO },
+  diff_ego = { msg = "35 Diff ego", emoji = EMOJI.EGO },
 
   lighter = {
-    gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+    gain_ego = { msg = "36 Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "37 Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+    same_ego = { msg = "38 Lighter armour", emoji = EMOJI.LIGHTER },
+    lost_ego = { msg = "39 Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
   },
   heavier = {
-    gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+    gain_ego = { msg = "40 Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "41 Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+    same_ego = { msg = "42 Heavier Armour", emoji = EMOJI.HEAVIER },
+    lost_ego = { msg = "43 Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
   }
 } -- ARMOUR_ALERT (do not remove this comment)
 
@@ -6458,6 +6457,7 @@ local function alert_ac_high_score(it)
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
+      crawl.mpr("ALERT 1")
       return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST)
     end
   end
@@ -6482,10 +6482,12 @@ local function alert_armour_consider_mutations(it, type)
 
     if claws_lvl > 0 or touch_lvl >= 3 then
       if has_ego(it) then
+        crawl.mpr("ALERT 2")
         return pa_alert_item(it, "Branded gloves", EMOJI.GLOVES)
       end
       local cur_gloves = items.equipped_at("gloves")
       if not cur_gloves or it_plus > cur_gloves.plus then
+        crawl.mpr("ALERT 3")
         return pa_alert_item(it, "Enchanted gloves", EMOJI.GLOVES)
       end
     end
@@ -6495,10 +6497,12 @@ local function alert_armour_consider_mutations(it, type)
 
     if get_mut("hooves", true) + get_mut("talons", true) > 0 then
       if has_ego(it) then
+        crawl.mpr("ALERT 4")
         return pa_alert_item(it, "Branded boots", EMOJI.BOOTS)
       end
       local cur_boots = items.equipped_at("boots")
       if not cur_boots or it_plus > cur_boots.plus then
+        crawl.mpr("ALERT 5")
         return pa_alert_item(it, "Enchanted boots", EMOJI.BOOTS)
       end
     end
@@ -6521,10 +6525,12 @@ local function alert_armour_consider_mutations(it, type)
     local beak_lvl = get_mut("beak", true)
     if horns_lvl + antennae_lvl + beak_lvl > 0 then
       if has_ego(it) then
+        crawl.mpr("ALERT 6")
         return pa_alert_item(it, "Branded headgear", EMOJI.HAT)
       end
       local cur_helmet = items.equipped_at("helmet")
       if not cur_helmet or it_plus > cur_helmet.plus then
+        crawl.mpr("ALERT 7")
         return pa_alert_item(it, "Enchanted headgear", EMOJI.HAT)
       end
     end
@@ -6578,6 +6584,7 @@ function pa_alert_armour(it)
   elseif is_shield(it) then
     if not CACHE.eq_shield then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(CACHE.eq_shield) then
+      crawl.mpr("ALERT 8")
       return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
   else
@@ -6586,6 +6593,7 @@ function pa_alert_armour(it)
     local cur = items.equipped_at(st)
     if not cur then return false end
     if get_armour_ac(it) > get_armour_ac(cur) + 0.001 then
+      crawl.mpr("ALERT 9")
       return pa_alert_item(it, "Stronger armour", EMOJI.STRONGER)
     else
       return alert_armour_consider_mutations(it, st)
@@ -6679,6 +6687,7 @@ end
 {
 function pa_alert_orb(it)
   if not it.is_identified then return false end
+  crawl.mpr("ALERT 10")
   return pa_alert_item(it, "New orb", EMOJI.ORB)
 end
 
@@ -6698,6 +6707,7 @@ function pa_alert_OTA(it)
 
   remove_from_OTA(it)
   if not do_alert then return false end
+  crawl.mpr("ALERT 11")
   return pa_alert_item(it, "Found first", EMOJI.RARE_ITEM)
 end
 
@@ -6715,14 +6725,19 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
+  crawl.mpr("ALERT 12")
   return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE)
 end
 
 function pa_alert_talisman(it)
   if it.artefact then
-    if it.is_identified then return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN) end
+    if it.is_identified then
+      crawl.mpr("ALERT 13")
+      return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN)
+    end
     return false
   end
+  crawl.mpr("ALERT 14")
   return pa_alert_item(it, "New talisman", EMOJI.TALISMAN)
 end
 
@@ -6833,25 +6848,42 @@ local function should_pickup_weapon(it, cur)
   -- `cur` comes from INV_WEAP
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
-    if it.artefact then return true end
+    if it.artefact then 
+      crawl.mpr("PICKUP 6")
+      return true
+    end
     if cur.artefact then return false end
     if cur.branded and not it.branded then return false end
     if it.branded and it.is_identified and not cur.branded then
-      return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
+      crawl.mpr("PICKUP 1")
+      if get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego then
+        crawl.mpr("PICKUP 5")
+        return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
+      end
     end
-    return get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001
+    if get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001 then
+      crawl.mpr("PICKUP 4")
+      return get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001
+    end
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
     if it.is_ranged ~= cur.is_ranged then return false end
     if is_polearm(cur) and not is_polearm(it) then return false end
 
-    if it.artefact then return true end
+
+    if it.artefact then
+      crawl.mpr("PICKUP 2")
+      return true end
     if cur.artefact then return false end
     if it.branded and not it.is_identified then return false end
     
     local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
-    return get_weap_score(it) / cur.score >= min_ratio
+    
+    if get_weap_score(it) / cur.score >= min_ratio then
+      crawl.mpr("PICKUP 3")
+      return get_weap_score(it) / cur.score >= min_ratio
+    end
   end
 
   return false
@@ -6881,10 +6913,12 @@ local function alert_first_ranged(it)
     if alerted_first_range_2h == 0 then return false end
     if have_shield() then return false end
     alerted_first_range_2h = 1
+    crawl.mpr("ALERT 15")
     return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
   else
     if alerted_first_range_1h ~= 0 then return false end
     alerted_first_range_1h = 1
+    crawl.mpr("ALERT 16")
     return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
   end
 end
@@ -6895,6 +6929,7 @@ local function alert_first_polearm(it)
   if get_hands(it) == 2 and have_shield() then return false end
   alerted_first_polearm = 1
   if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
+  crawl.mpr("ALERT 17")
   return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
 end
 
@@ -6906,6 +6941,7 @@ local function alert_early_weapons(it)
          it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
           if get_hands(it) == 1 or not have_shield() or
             CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
+              crawl.mpr("ALERT 18")
               return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
           end
       end
@@ -6919,6 +6955,7 @@ local function alert_early_weapons(it)
     if skill_diff >= max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
+      crawl.mpr("ALERT 19")
       return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
     end
   end
@@ -6930,6 +6967,7 @@ end
 -- `cur` comes from INV_WEAP
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
+    crawl.mpr("ALERT 20")
     return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
@@ -6940,8 +6978,10 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
+      crawl.mpr("ALERT 21")
       return pa_alert_item(it, "Diff ego", EMOJI.EGO)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
+      crawl.mpr("ALERT 22")
       return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
     end
   end
@@ -6957,11 +6997,14 @@ local function alert_interesting_weapon(it, cur)
   if get_hands(it) > cur.hands then
     if offhand_is_free() or (have_shield() and CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
       if has_ego(it, true) and not util.contains(INV_WEAP.weap_egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
-          return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO)
+        crawl.mpr("ALERT 23")
+        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO)
       elseif score_ratio >= TUNING.weap.alert.add_hand.not_using then
-          return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
+        crawl.mpr("ALERT 24")
+        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
       end
     elseif has_ego(it) and not cur.branded and score_ratio >= TUNING.weap.alert.add_hand.add_ego_lose_sh then
+      crawl.mpr("ALERT 25")
       return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED)
     end
   else -- No extra hand required
@@ -6970,9 +7013,11 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not cur.branded then
         if score_ratio >= TUNING.weap.alert.gain_ego then
+          crawl.mpr("ALERT 26")
           return pa_alert_item(it, "Gain ego", EMOJI.EGO)
         end
       elseif not util.contains(INV_WEAP.weap_egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
+        crawl.mpr("ALERT 27")
         return pa_alert_item(it, "New ego", EMOJI.EGO)
       end
     end
@@ -6980,6 +7025,7 @@ local function alert_interesting_weapon(it, cur)
 
   -- Catch-all for increased weap_score
   if score_ratio > TUNING.weap.alert.pure_dps then
+    crawl.mpr("ALERT 28")
     return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
   end
   return false
@@ -6995,6 +7041,7 @@ end
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
   if not category then return false end
+  crawl.mpr("ALERT 29")
   return pa_alert_item(it, category)
 end
 

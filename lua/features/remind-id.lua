@@ -26,7 +26,6 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
       EMOJI.REMIND_IDENTIFY
     )
   end
-  crawl.mpr("did func")
 end
 
 function init_remind_id()
