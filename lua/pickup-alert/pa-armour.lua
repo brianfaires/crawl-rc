@@ -32,8 +32,9 @@ local function alert_ac_high_score(it)
   if has_ego(it) and not it.is_identified then return false end
 
   if ac_high_score == 0 then
-    if not CACHE.eq_armour then return false end
-    ac_high_score = get_armour_ac(CACHE.eq_armour)
+    local worn = items.equipped_at("armour")
+    if not worn then return false end
+    ac_high_score = get_armour_ac(worn)
   else
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
@@ -123,11 +124,11 @@ end
 function pa_alert_armour(it)
   if alert_ac_high_score(it) then return true end
   if it.artefact then
-    return it.is_identified and pa_alert(it, ARMOUR_ALERT.artefact)
+    return it.is_identified and send_armour_alert(it, ARMOUR_ALERT.artefact)
   end
 
   if is_body_armour(it) then
-    local cur = CACHE.eq_armour
+    local cur = items.equipped_at("armour")
     if not cur then return false end
 
     local encumb_delta = it.encumbrance - cur.encumbrance
@@ -163,8 +164,9 @@ function pa_alert_armour(it)
       end
     end
   elseif is_shield(it) then
-    if not CACHE.eq_shield then return false end
-    if has_ego(it) and get_ego(it) ~= get_ego(CACHE.eq_shield) then
+    local sh = items.equipped_at("shield")
+    if not sh then return false end
+    if has_ego(it) and get_ego(it) ~= get_ego(sh) then
       crawl.mpr("ALERT 8")
       return pa_alert_item(it, "New ego", EMOJI.EGO)
     end
@@ -187,7 +189,7 @@ function pa_pickup_armour(it)
   if has_ego(it) and not it.is_identified then return false end
 
   if is_body_armour(it) then
-    local cur = CACHE.eq_armour
+    local cur = items.equipped_at("armour")
 
     -- Exclusions
     if not cur then return false end
@@ -197,35 +199,55 @@ function pa_pickup_armour(it)
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
 
     if cur.artefact then return false end
-    if it.artefact and ac_delta > -5 then return true end
+    if it.artefact and ac_delta > -5 then 
+      crawl.mpr("PICKUP A1")
+      return true end
 
     if get_ego(it) == get_ego(cur) then
-      return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance
+      if ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance then  
+        crawl.mpr("PICKUP A6")
+        return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
+      end
     elseif has_ego(it) and not has_ego(cur) then
-      return ac_delta >= 0
+      if ac_delta >= 0 then
+        crawl.mpr("PICKUP A7")
+        return ac_delta >= 0
+      end
     end
   elseif is_shield(it) then
     -- Exclusions
     if not it.is_identified then return false end
-    local cur = CACHE.eq_shield
+    local cur = items.equipped_at("shield")
     if not cur then return false end
     if cur.name("base") ~= it.name("base") then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos
-    if it.artefact then return true end
+    if it.artefact then 
+      crawl.mpr("PICKUP A2")
+      return true end
     if cur.artefact then return false end
     if cur.branded then
-      return get_ego(cur) == get_ego(it) and it.plus > cur.plus
+      if get_ego(cur) == get_ego(it) and it.plus > cur.plus then
+        crawl.mpr("PICKUP A3")
+        return get_ego(cur) == get_ego(it) and it.plus > cur.plus
+      end
     end
-    if it.branded then return true end
-    return it.plus > cur.plus
+    if it.branded then 
+      crawl.mpr("PICKUP A4")
+      return true end
+    if it.plus > cur.plus then
+      crawl.mpr("PICKUP A5")
+      return it.plus > cur.plus
+    end
+    return false
   else
     if is_orb(it) then return false end
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
     local st, _ = it.subtype()
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
-    if CACHE.eq_armour and CACHE.eq_armour.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
+    local worn = items.equipped_at("armour")
+    if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
 
     -- No autopickup if mutation interference
     if st == "gloves" then
@@ -242,17 +264,28 @@ function pa_pickup_armour(it)
     if it.artefact then return true end
 
     local cur = items.equipped_at(st)
-    if not cur then return true end
+    if not cur then 
+      crawl.mpr("PICKUP A8")
+      return true 
+    end
     if not it.is_identified then return false end
 
     if it.branded then
-      local it_ego = get_ego(it)
-      if is_dangerous_brand(it_ego) then return false end
-      if it_ego ~= get_ego(cur) then return true end
-      if get_armour_ac(it) > get_armour_ac(cur) then return true end
+      if has_dangerous_brand(it) then return false end
+      if get_ego(it) ~= get_ego(cur) then 
+        crawl.mpr("PICKUP A9")
+        return true 
+      end
+      if get_armour_ac(it) > get_armour_ac(cur) then 
+        crawl.mpr("PICKUP A10")
+        return true 
+      end
     else
       if has_ego(cur) then return false end
-      if get_armour_ac(it) > get_armour_ac(cur) then return true end
+      if get_armour_ac(it) > get_armour_ac(cur) then 
+        crawl.mpr("PICKUP A11")
+        return true 
+      end
     end
   end
 

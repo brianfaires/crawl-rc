@@ -175,7 +175,7 @@ function get_armour_ev(it)
   local art_ev = 0
 
   -- Adjust str/dex/EV for artefact stat changes
-  local worn = CACHE.eq_armour
+  local worn = items.equipped_at("armour")
   if worn and worn.artefact then
     if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
     if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
@@ -210,7 +210,7 @@ function get_shield_sh(it)
     if art_dex then dex = dex + art_dex end
   end
 
-  local cur = CACHE.eq_shield
+  local cur = items.equipped_at("shield")
   if cur and cur.artefact and cur.slot ~= it.slot then
     local art_dex = cur.artprops["Dex"]
     if art_dex then dex = dex - art_dex end
@@ -240,16 +240,17 @@ function get_weap_delay(it, ignore_brands)
 
   if delay < 3 then delay = 3 end
 
-  if CACHE.eq_shield then delay = delay + get_shield_penalty(CACHE.eq_shield) end
+  local sh = items.equipped_at("shield")
+  if sh then delay = delay + get_shield_penalty(sh) end
 
   if it.is_ranged then
-    local worn = CACHE.eq_armour
+    local worn = items.equipped_at("armour")
     if worn then
       local str = CACHE.str
       if it.artefact then
         if it.artprops["Str"] then str = str + it.artprops["Str"] end
       end
-      local cur = CACHE.eq_weapon
+      local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
         if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
       end
@@ -296,7 +297,7 @@ function get_weap_dmg(it, dmg_type)
 
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
-    local wielded = CACHE.eq_weapon
+    local wielded = items.equipped_at("weapon")
     if wielded and wielded.artefact then
       if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
       if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end

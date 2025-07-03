@@ -97,7 +97,7 @@ end
 
 function c_message_item_alerts(text, channel)
   if channel ~= "plain" then return end
-  if text:find("(Done exploring|Partly explored)") then
+  if text:find("Done exploring") or text:find("Partly explored") then
     local tokens = {}
     for _,v in ipairs(pa_recent_alerts) do
       tokens[#tokens+1] = "\n  " .. v
@@ -111,5 +111,5 @@ end
 
 function ready_item_alerts()
   ready_pa_weapons()
-  update_high_scores(CACHE.eq_armour)
+  update_high_scores(items.equipped_at("armour"))
 end

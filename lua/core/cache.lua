@@ -71,10 +71,6 @@ function ready_cache()
   CACHE.s_ranged = you.skill("Ranged Weapons")
   CACHE.s_polearms = you.skill("Polearms")
 
-  CACHE.eq_armour = items.equipped_at("armour")
-  CACHE.eq_shield = items.equipped_at("shield")
-  CACHE.eq_weapon = items.equipped_at("weapon")
-
   CACHE.top_weap_skill = "Unarmed Combat"
   local max_weap_skill = get_skill(CACHE.top_weap_skill)
   for _,v in ipairs(ALL_WEAP_SCHOOLS) do

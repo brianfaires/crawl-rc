@@ -150,7 +150,6 @@ local function alert_first_polearm(it)
   if get_hands(it) == 2 and have_shield() then return false end
   alerted_first_polearm = 1
   if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
-  crawl.mpr("ALERT 17")
   return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
 end
 
@@ -203,7 +202,7 @@ local function alert_interesting_weapon(it, cur)
       return pa_alert_item(it, "Diff ego", EMOJI.EGO)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
       crawl.mpr("ALERT 22")
-      return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
+      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
     end
   end
   
@@ -246,8 +245,7 @@ local function alert_interesting_weapon(it, cur)
 
   -- Catch-all for increased weap_score
   if score_ratio > TUNING.weap.alert.pure_dps then
-    crawl.mpr("ALERT 28")
-    return pa_alert_item(it, "Stronger weapon", EMOJI.STRONGER)
+    return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
   end
   return false
 end

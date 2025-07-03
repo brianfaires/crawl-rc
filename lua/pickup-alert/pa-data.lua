@@ -2,7 +2,7 @@
 function add_to_pa_table(table_ref, it)
   if is_weapon(it) or is_armour(it) or is_talisman(it) or is_orb(it) then
     local name, value = get_pa_keys(it)
-    local cur_val = table_ref[name]
+    local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
       table_ref[name] = value
     end
@@ -11,7 +11,7 @@ end
 
 function already_contains(table_ref, it)
   local name, value = get_pa_keys(it)
-  return table_ref[name] ~= nil and table_ref[name] >= value
+  return table_ref[name] ~= nil and tonumber(table_ref[name]) >= value
 end
 
 function init_pa_data()

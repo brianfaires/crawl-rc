@@ -125,11 +125,11 @@ function get_mut(mutation, include_temp)
 end
 
 function have_shield()
-  return CACHE.eq_shield ~= nil
+  return items.equipped_at("shield") ~= nil
 end
 
 function have_weapon()
-  return CACHE.eq_weapon ~= nil
+  return items.equipped_at("weapon") ~= nil
 end
 
 function is_amulet(it)
@@ -144,7 +144,8 @@ function is_body_armour(it)
   return it and it.subtype() == "body"
 end
 
-function is_dangerous_brand(text)
+function has_dangerous_brand(it)
+  local text = it.artefact and it.name() or it.ego()
   if not text then return false end
   for _, v in ipairs(DANGEROUS_BRANDS) do
     if text:find(v) then return true end

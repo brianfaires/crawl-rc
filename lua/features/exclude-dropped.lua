@@ -33,7 +33,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("(ring|amulet|wand) of ")
+  local idx = text:find("ring of") or text:find("amulet of") or text:find("wand of")
   if idx then
     return text:sub(idx, #text)
   end
@@ -60,8 +60,10 @@ local function get_excludable_name(text, for_exclusion)
   idx = text:find("scrolls? of")
   if idx then
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-    if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls and
-        text:find("(enchant|brand) weapon") and has_enchantable_weap_in_inv() then return
+    if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls
+    and (text:find("enchant weapon") or text:find("brand weapon"))
+    and has_enchantable_weap_in_inv() then
+      return
     end
     return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
   end
