@@ -1216,7 +1216,6 @@ msc += $warning:The light of Elyvilon almost touches upon
 msc += $warning:[^r]pulls free of the water
 msc += $warning:Your piety has decreased
 msc += $warning:struggles to resist
-msc += $warning:You feel.*more hungry
 msc += $warning:You are outlined in light
 msc += $warning:Your.*is outlined in light
 msc += $warning:You feel momentarily disoriented
@@ -1361,7 +1360,6 @@ msc += $boring:is briefly tinged with black
 msc += $boring:The dust glows
 msc += $boring:Crazy Yiuf scratches his head thoughtfully
 msc += $boring:Crazy Yiuf counts something out on his finger
-msc += $boring:You aren't quite hungry enough to eat that
 msc += $boring:The crystal guardian glitters
 msc += $boring:The wizard's fingertips start to glow
 msc += $boring:You are already empty-
@@ -4302,20 +4300,18 @@ end
 -- Some god-specific force_mores also in fm-message.rc
 local function set_god_options()
   local new_god = CACHE.god
-  if new_god then
-    crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
-    crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
-    crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
-  end
   if new_god ~= dynopt_cur_god then
-    if new_god == "Beogh" then
+    if dynopt_cur_god == "No God" then
+      crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
+      crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
+      crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
+    elseif new_god == "Beogh" then
       crawl.setopt("runrest_ignore_message += no longer looks.*")
       crawl.setopt("force_more_message += Your orc.*dies")
     elseif new_god == "Jiyva" then
       crawl.setopt("force_more_message += god:splits in two")
       crawl.setopt("force_more_message += god:Your prayer is over.")
       crawl.setopt("message_colour ^= mute:You hear a.*(slurping|squelching) noise")
-      crawl.setopt("message_colour ^= mute:You feel a little less hungry")
     elseif new_god == "Qazlal" then
       crawl.setopt("force_more_message -= god:You feel.*protected")
     elseif new_god == "Xom" then
@@ -4396,7 +4392,7 @@ end
 function init_dynamic_options()
   if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
 
-  dynopt_cur_god = "No God"
+  dynopt_cur_god = CACHE.god
   ignoring_spellcasting = false
   ignoring_spellbooks = false
   early_xl_alerts_on = false
@@ -4654,9 +4650,9 @@ end
 {
 -- Disable built-in force_mores that can't just be -='d
 local FM_DISABLES = {
+  "need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
   "Okawaru offers you a choice",
-  "need to enable at least one skill for training",
 } -- FM_DISABLES (do not remove this comment)
 
 function c_message_fm_disable(text, _)
@@ -6748,7 +6744,6 @@ function pa_alert_talisman(it)
     end
     return false
   end
-  crawl.mpr("ALERT 14")
   return pa_alert_item(it, "New talisman", EMOJI.TALISMAN)
 end
 
