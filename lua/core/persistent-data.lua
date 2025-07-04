@@ -17,20 +17,19 @@ local PERSISTENT_DATA_TYPE_HANDLERS = {
 
     list = function(name)
         local cmd_init = name .. " = {"
-        local cmd = cmd_init
+        local tokens = {}
         for _,v in ipairs(_G[name]) do
-            if cmd ~= cmd_init then cmd = cmd .. ", " end
-            cmd = cmd .. "\"" .. v .. "\""
+            tokens[#tokens+1] = "\"" .. v .. "\""
         end
-        return cmd .. "}" .. KEYS.LF
+        return name .. " = {" .. table.concat(tokens, ", ") .. "}" .. KEYS.LF
     end,
 
     dict = function(name)
-        local parts = {}
+        local tokens = {}
         for k,v in pairs(_G[name]) do
-            parts[#parts+1] = k .. "=\"" .. v .. "\""
+          tokens[#tokens+1] = string.format("[\"%s\"]=\"%s\"", k, v) .. KEYS.LF
         end
-        return name .. " = {" .. table.concat(parts, ", ") .. "}" .. KEYS.LF
+        return name .. " = {" .. table.concat(tokens, ", ") .. "}" .. KEYS.LF
     end
 } -- PERSISTENT_DATA_TYPE_HANDLERS (do not remove this comment)
 

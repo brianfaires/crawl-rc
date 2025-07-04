@@ -228,7 +228,7 @@ function debug_dump(verbose, skip_char_dump)
   if dump_persistent_data then msg = msg .. dump_persistent_data() end
   if dump_cache then msg = msg .. dump_cache() end
   msg = msg .. dump_inventory(verbose)
-  crawl.mpr(msg)
+  crawl.mpr(with_color("white", msg))
   if not skip_char_dump then
     crawl.take_note(msg)
     crawl.dump_char()
