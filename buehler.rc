@@ -4233,19 +4233,17 @@ function c_assign_invletter_drop_inferior(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if not is_weapon(it) and not is_armour(it) then return end
+  if not (is_weapon(it) or is_armour(it)) then return end
   if has_dangerous_brand(it) then return end
 
-  local st = it.subtype()
-
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if not inv.artefact and inv.subtype() == it.subtype() then
-    if not has_ego(inv) or get_ego(inv) == get_ego(it) then
-      if is_weapon(it) then
-        if inv.plus <= it.plus then inscribe_drop(inv) end
-      else
-        if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
-      end
+    if not inv.artefact and inv.subtype() == it.subtype() and
+      (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
+        if is_weapon(it) then
+          if inv.plus <= it.plus then inscribe_drop(inv) end
+        else
+          if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
+        end
     end
   end
 end
@@ -5115,12 +5113,13 @@ local function inscribe_weapon_stats(it)
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:")
-  if not idx then suffix = "; " .. orig_inscr
-  else
+  if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then
       suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
     end
+  elseif #orig_inscr > 0 then
+    suffix = "; " .. orig_inscr
   end
 
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
@@ -6610,10 +6609,7 @@ function pa_pickup_armour(it)
         return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
       end
     elseif has_ego(it) and not has_ego(cur) then
-      if ac_delta >= 0 then
-        crawl.mpr("PICKUP A7")
-        return ac_delta >= 0
-      end
+      return ac_delta >= 0
     end
   elseif is_shield(it) then
     -- Exclusions
@@ -6870,13 +6866,8 @@ local function should_pickup_weapon(it, cur)
     if cur.artefact then return false end
     if cur.branded and not it.branded then return false end
     if it.branded and it.is_identified and not cur.branded then
-      crawl.mpr("PICKUP 1")
-      if get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego then
-        crawl.mpr("PICKUP 5")
-        return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
-      end
-    end
-    if get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001 then
+      return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
+    elseif get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001 then
       crawl.mpr("PICKUP 4")
       return get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001
     end

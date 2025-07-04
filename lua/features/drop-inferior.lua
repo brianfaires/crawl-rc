@@ -19,37 +19,17 @@ function c_assign_invletter_drop_inferior(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  -- Skip brands that are potentially harmful
-  if not is_weapon(it) and not is_armour(it) then return end
-  if is_dangerous_brand(get_ego(it)) then return end
-
-  local risky_artefact = false
-  if it.artefact then
-    if util.contains(DANGEROUS_BRANDS, it.name()) then
-      risky_artefact = true
-    end
-  end
-
-  if risky_artefact then return end
-
-  local st = it.subtype()
+  if not (is_weapon(it) or is_armour(it)) then return end
+  if has_dangerous_brand(it) then return end
 
   for inv in iter.invent_iterator:new(items.inventory()) do
-    local item_match = false
-    if inv.subtype() == st then
-      if is_body_armour(it) then
-        if inv.encumbrance >= it.encumbrance then item_match = true end
-      else
-        if inv.subtype() == st then item_match = true end
-      end
-    end
-
-    if not inv.artefact and item_match and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
-      if is_weapon(it) then
-        if inv.plus <= it.plus then inscribe_drop(inv) end
-      else
-        if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
-      end
+    if not inv.artefact and inv.subtype() == it.subtype() and
+      (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
+        if is_weapon(it) then
+          if inv.plus <= it.plus then inscribe_drop(inv) end
+        else
+          if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
+        end
     end
   end
 end

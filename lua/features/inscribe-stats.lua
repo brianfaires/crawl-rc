@@ -33,12 +33,13 @@ local function inscribe_weapon_stats(it)
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:")
-  if not idx then suffix = "; " .. orig_inscr
-  else
+  if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then
       suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
     end
+  elseif #orig_inscr > 0 then
+    suffix = "; " .. orig_inscr
   end
 
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
