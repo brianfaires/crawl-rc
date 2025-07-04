@@ -45,20 +45,18 @@ end
 -- Some god-specific force_mores also in fm-message.rc
 local function set_god_options()
   local new_god = CACHE.god
-  if new_god then
-    crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
-    crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
-    crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
-  end
   if new_god ~= dynopt_cur_god then
-    if new_god == "Beogh" then
+    if dynopt_cur_god == "No God" then
+      crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
+      crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
+      crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
+    elseif new_god == "Beogh" then
       crawl.setopt("runrest_ignore_message += no longer looks.*")
       crawl.setopt("force_more_message += Your orc.*dies")
     elseif new_god == "Jiyva" then
       crawl.setopt("force_more_message += god:splits in two")
       crawl.setopt("force_more_message += god:Your prayer is over.")
       crawl.setopt("message_colour ^= mute:You hear a.*(slurping|squelching) noise")
-      crawl.setopt("message_colour ^= mute:You feel a little less hungry")
     elseif new_god == "Qazlal" then
       crawl.setopt("force_more_message -= god:You feel.*protected")
     elseif new_god == "Xom" then
@@ -139,7 +137,7 @@ end
 function init_dynamic_options()
   if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
 
-  dynopt_cur_god = "No God"
+  dynopt_cur_god = CACHE.god
   ignoring_spellcasting = false
   ignoring_spellbooks = false
   early_xl_alerts_on = false
