@@ -6424,7 +6424,7 @@ ARMOUR_ALERT = {
   stronger = { msg = "32 Stronger armour", emoji = EMOJI.STRONGER },
   lighter = { msg = "33 Lighter armour", emoji = EMOJI.LIGHTER },
   gain_ego = { msg = "34 Gain ego", emoji = EMOJI.EGO },
-  diff_ego = { msg = "35 Diff ego", emoji = EMOJI.EGO },
+  diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
 
   lighter = {
     gain_ego = { msg = "36 Gain ego (Lighter armour)", emoji = EMOJI.EGO },
@@ -6434,9 +6434,9 @@ ARMOUR_ALERT = {
   },
   heavier = {
     gain_ego = { msg = "40 Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "41 Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
     same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-    lost_ego = { msg = "43 Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
   }
 } -- ARMOUR_ALERT (do not remove this comment)
 
