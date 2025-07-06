@@ -73,7 +73,7 @@ local function should_pickup_weapon(it, cur)
     if cur.artefact then return false end
     if cur.branded and not it.branded then return false end
     if it.branded and it.is_identified and not cur.branded then
-      return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
+      return get_weap_score(it) / cur.score > TUNING.weap.pickup.add_ego
     end
     return get_ego(it) == cur.ego and get_weap_score(it) > cur.score
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
@@ -87,7 +87,7 @@ local function should_pickup_weapon(it, cur)
     if it.branded and not it.is_identified then return false end
     
     local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
-    return get_weap_score(it) / cur.score >= min_ratio
+    return get_weap_score(it) / cur.score > min_ratio
   end
 
   return false
@@ -152,7 +152,7 @@ local function alert_early_weapons(it)
     -- Skip items if we're clearly going another route
     local skill_diff = get_skill(CACHE.top_weap_skill) - get_skill(it.weap_skill)
     local max_skill_diff = CACHE.xl * TUNING.weap.alert.early.skill.factor + TUNING.weap.alert.early.skill.offset
-    if skill_diff >= max_skill_diff then return false end
+    if skill_diff > max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
       return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
@@ -192,13 +192,13 @@ local function alert_interesting_weapon(it, cur)
   local score_ratio = penalty * get_weap_score(it) / best_score
 
   if get_hands(it) > cur.hands then
-    if offhand_is_free() or (CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
-      if has_ego(it) and not util.contains(INV_WEAP.egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
+    if offhand_is_free() or (CACHE.s_shields < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+      if has_ego(it) and not util.contains(INV_WEAP.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO)
-      elseif score_ratio >= TUNING.weap.alert.add_hand.not_using then
+      elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
         return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
       end
-    elseif has_ego(it) and not cur.branded and score_ratio >= TUNING.weap.alert.add_hand.add_ego_lose_sh then
+    elseif has_ego(it) and not cur.branded and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
       return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED)
     end
   else -- No extra hand required
@@ -206,10 +206,10 @@ local function alert_interesting_weapon(it, cur)
     if has_ego(it, true) then
       local it_ego = get_ego(it)
       if not cur.branded then
-        if score_ratio >= TUNING.weap.alert.gain_ego then
+        if score_ratio > TUNING.weap.alert.gain_ego then
           return pa_alert_item(it, "Gain ego", EMOJI.EGO)
         end
-      elseif not util.contains(INV_WEAP.egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
+      elseif not util.contains(INV_WEAP.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego", EMOJI.EGO)
       end
     end

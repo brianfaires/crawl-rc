@@ -66,8 +66,8 @@ function init_config()
   -- Startup
   CONFIG.show_skills_on_startup = true
   CONFIG.auto_set_skill_targets = {
-    {"Stealth", 2},
-    {"Fighting", 2}
+    { "Stealth", 2.0 },
+    { "Fighting", 2.0 }
   } -- auto_set_skill_targets (do not remove this comment)
 
   -- Debugging
@@ -80,12 +80,12 @@ function init_config()
   -- Heuristics for tuning the pickup/alert system
   TUNING = {}
 
-  -- Alerts for armour of diff encumbrance, when ratio of gain/loss (AC|EV) is >= value
+  -- Alerts for armour of diff encumbrance, when ratio of gain/loss (AC|EV) is > value
   -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
   -- min_gain/max_loss check against the AC or EV delta when ego changes
   TUNING.armour = {
-    lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2, min_gain = 3, max_loss = 4 },
-    heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2, min_gain = 3, max_loss = 8 },
+    lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0, min_gain = 3.0, max_loss = 4.0 },
+    heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0, min_gain = 3.0, max_loss = 8.0 },
     encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
   }
 
@@ -94,30 +94,30 @@ function init_config()
     -- 2. Cutoffs for when alerts are active (XL, skill_level)
   TUNING.weap = {}
   TUNING.weap.pickup = {
-    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio >= `add_ego`
-    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio >= `same_type_melee`
-    same_type_ranged = 1.001, -- Pickup ranged weap of same type if DPS ratio >= `same_type_ranged`
+    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
+    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio > `same_type_melee`
+    same_type_ranged = 1.0, -- Pickup ranged weap of same type if DPS ratio > `same_type_ranged`
     accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
   }
   
   TUNING.weap.alert = {
     -- Alerts for weapons not requiring an extra hand
-    pure_dps = 1.001, -- Alert if DPS ratio >= `pure_dps`
-    gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio >= `gain_ego`
-    new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio >= `new_ego`
+    pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
+    gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
+    new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio > `new_ego`
     low_skill_penalty_damping = 8, -- Small values penalize low-trained schools more. Penalty is (skill+damp) / (top_skill+damp)
 
     -- Alerts for 2-handed weapons, when carrying 1-handed
     add_hand = {
-      ignore_sh_lvl = 3.9, -- Treat offhand as empty if shield_skill <= `ignore_sh_lvl`
-      add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio >= `add_ego_lose_sh`
-      not_using = 1.001, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio >= `not_using`
+      ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < `ignore_sh_lvl`
+      add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > `add_ego_lose_sh`
+      not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > `not_using`
     },
 
     -- Alerts for good early weapons of all types
     early = {
       xl = 8, -- Alert early weapons if XL <= `xl`
-      skill = { factor = 1.5, offset = 2 }, -- Skip weapons with skill diff > XL * factor + offset
+      skill = { factor = 1.5, offset = 2.0 }, -- Skip weapons with skill diff > XL * factor + offset
       branded_min_plus = 4 -- Alert branded weapons with plus >= `branded_min_plus`
     },
 
@@ -126,7 +126,7 @@ function init_config()
       xl = 14, -- Alert strong ranged weapons if XL <= `xl`
       min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
       branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
-      max_shields = 8 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
+      max_shields = 8.0 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
     }
   }
 
@@ -137,16 +137,16 @@ function init_config()
   DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }
 
   WEAPON_BRAND_BONUSES = {
-    spectralizing = { factor = 2, offset = 0 },
+    spectralizing = { factor = 2.0, offset = 0 },
     heavy = { factor = 1.8, offset = 0 },
     flaming = { factor = 1.25, offset = 0 },
     freezing = { factor = 1.25, offset = 0 },
-    draining = { factor = 1.25, offset = 2 },
-    electrocution = { factor = 1, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
-    venom = { factor = 1, offset = 5 }, -- 5 dmg per poisoning
-    pain = { factor = 1, offset = you.skill("Necromancy")/2 },
-    distortion = { factor = 1, offset = 6 },
-    chaos = { factor = 1.15, offset = 2 }, -- Approximate weighted average
+    draining = { factor = 1.25, offset = 2.0 },
+    electrocution = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
+    venom = { factor = 1.0, offset = 5.0 }, -- 5 dmg per poisoning
+    pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
+    distortion = { factor = 1.0, offset = 6.0 },
+    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
 
     subtle = { -- Completely made up in attempt to balance vs the damaging brands
       protection = { factor = 1.15, offset = 0 },
