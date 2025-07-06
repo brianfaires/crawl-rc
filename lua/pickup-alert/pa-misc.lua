@@ -1,6 +1,5 @@
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  crawl.mpr("ALERT 10")
   return pa_alert_item(it, "New orb", EMOJI.ORB)
 end
 
@@ -20,8 +19,7 @@ function pa_alert_OTA(it)
 
   remove_from_OTA(it)
   if not do_alert then return false end
-  crawl.mpr("ALERT 11")
-  return pa_alert_item(it, "Found first", EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Rare item:", EMOJI.RARE_ITEM)
 end
 
 ---- Alert for needed resists ----
@@ -38,7 +36,6 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  crawl.mpr("ALERT 12")
   return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE)
 end
 
@@ -50,7 +47,6 @@ function pa_alert_talisman(it)
     end
     return false
   end
-  crawl.mpr("ALERT 14")
   return pa_alert_item(it, "New talisman", EMOJI.TALISMAN)
 end
 

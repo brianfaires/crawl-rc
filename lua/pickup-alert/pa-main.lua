@@ -32,7 +32,7 @@ function init_pa_main()
       if pa_pickup_armour(it) then return true end
     elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
       if pa_pickup_weapon(it) then return true end
-    elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
+    elseif loaded_pa_misc and CONFIG.pickup_staves and is_magic_staff(it) then
       if pa_pickup_staff(it) then return true end
     elseif loaded_pa_misc and is_unneeded_ring(it) then
       return false
@@ -46,7 +46,7 @@ function init_pa_main()
       if pa_alert_OTA(it) then return end
     end
 
-    if loaded_pa_misc and CONFIG.alert_staff_resists and is_staff(it) then
+    if loaded_pa_misc and CONFIG.alert_staff_resists and is_magic_staff(it) then
       if pa_alert_staff(it) then return end
     elseif loaded_pa_misc and CONFIG.alert_orbs and is_orb(it) then
       if pa_alert_orb(it) then return end
@@ -62,7 +62,7 @@ end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_desc = get_plussed_name(it, "plain")
-  if is_weapon(it) or is_staff(it) then
+  if is_weapon(it) then
     item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
   elseif is_body_armour(it) then
     local ac, ev = get_armour_info_strings(it)

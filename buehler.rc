@@ -6457,7 +6457,7 @@ end
 -- Special cases where you have temporary or innate mutations that interfere with armour
 -- Alert when an ego item is usable but interferes with mutation, or is unusable due to temp mutations
 local function alert_armour_consider_mutations(it)
-  local type = it.subtype()
+  local type, _ = it.subtype()
   local it_plus = it.plus or 0
 
   if type == "gloves" then
@@ -6594,17 +6594,15 @@ function pa_pickup_armour(it)
   if has_ego(it) and not it.is_identified then return false end
 
   if is_body_armour(it) then
+    -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
     local cur = items.equipped_at("armour")
-
-    -- Exclusions
     if not cur then return false end
     if it.encumbrance > cur.encumbrance then return false end
 
-    -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
 
     if cur.artefact then return false end
-    if it.artefact and ac_delta > -5 then return true end
+    if it.artefact then return ac_delta > -5 end
 
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
@@ -6612,13 +6610,11 @@ function pa_pickup_armour(it)
       return ac_delta >= 0
     end
   elseif is_shield(it) then
-    -- Exclusions
-    if not it.is_identified then return false end
+    -- Pick up SH upgrades, artefacts, and added egos
     local cur = items.equipped_at("offhand")
     if not is_shield(cur) then return false end
     if cur.encumbrance ~= it.encumbrance then return false end
 
-    -- Pick up SH upgrades, artefacts, and added egos
     if it.artefact then return true end
     if cur.artefact then return false end
     if cur.branded then
@@ -6627,8 +6623,8 @@ function pa_pickup_armour(it)
     if it.branded then return true end
     return it.plus > cur.plus
   else
-    if is_orb(it) then return false end
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
+    if is_orb(it) then return false end
     local st, _ = it.subtype()
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
@@ -6637,30 +6633,27 @@ function pa_pickup_armour(it)
 
     -- No autopickup if mutation interference
     if st == "gloves" then
-      -- Ignore demonic touch if you're wearing a shield
-      if not have_shield() and get_mut("demonic touch", true) >= 3 then return false end
+      -- Ignore demonic touch if you're using offhand
+      if get_mut("demonic touch", true) >= 3 and not offhand_is_free() then return false end
       -- Ignore claws if you're wielding a weapon
-      if not have_weapon() and get_mut("claws", true) > 0 then return false end
+      if get_mut("claws", true) > 0 and not have_weapon() then return false end
     elseif st == "boots" then
       if get_mut("hooves", true) + get_mut("talons", true) > 0 then return false end
     elseif it.name("base"):find("helmet") then
       if get_mut("horns", true) + get_mut("beak", true) + get_mut("antennae", true) > 0 then return false end
     end
 
-    if it.artefact then return true end
-
     local cur = items.equipped_at(st)
     if not cur then return true end
     if not it.is_identified then return false end
 
-    if it.branded then
-      if has_dangerous_brand(it) then return false end
-      if get_ego(it) ~= get_ego(cur) then return false end
-      return get_armour_ac(it) > get_armour_ac(cur)
-    else
-      if has_ego(cur) then return false end
-      return get_armour_ac(it) > get_armour_ac(cur)
+    if it.artefact then return true end
+    if cur.artefact then return false end
+    if cur.branded then
+      return get_ego(cur) == get_ego(it) and it.plus > cur.plus
     end
+    if it.branded and not has_dangerous_brand(it) then return true end
+    return it.plus > cur.plus
   end
 
   return false

@@ -16,9 +16,7 @@ function dump_cache()
   end
 
   tokens[#tokens+1] = "\n"
-  local msg = table.concat(tokens, "\n")
-  crawl.mpr(msg)
-  return msg
+  return table.concat(tokens, "\n")
 end
 
 function init_cache()

@@ -14,9 +14,9 @@ local function abort_full_recovery()
 end
 
 local function finish_full_recovery()
-  local turns = CACHE.turn - recovery_start_turn
+  local turns = you.turns() - recovery_start_turn
   local msg = with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns)
-  enqueue_mpr(msg)
+  crawl.mpr(msg)
   
   recovery_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")

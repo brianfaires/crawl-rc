@@ -125,7 +125,7 @@ function get_mut(mutation, include_temp)
 end
 
 function have_shield()
-  return items.equipped_at("shield") ~= nil
+  return is_shield(items.equipped_at("offhand"))
 end
 
 function have_weapon()
@@ -169,7 +169,7 @@ function is_shield(it)
   return it and it.class(true) == "armour" and it.subtype() == "offhand" and not is_orb(it)
 end
 
-function is_staff(it)
+function is_magic_staff(it)
   return it and it.class(true) == "magical staff"
 end
 
@@ -201,26 +201,15 @@ end
 
 
 --- Debugging ---
-function describe_inv_slot(inv_num, full_dump)
-  local inv = items.inslot(inv_num)
-  tokens = {}
-  tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s | Base: %s", inv.slot, inv.quantity, inv.name("qual"), inv.name("base"))
-  if full_dump then
-    tokens[#tokens+1] = string.format("    Class: %s, Subtype: %s", inv.class(true), inv.subtype())
-  end
-  local msg = table.concat(tokens, "\n")  
-  crawl.mpr(msg)
-  return msg
-end
-
 function dump_inventory(verbose)
   local tokens = { "\n---INVENTORY---"}
   for inv in iter.invent_iterator:new(items.inventory()) do
-    tokens[#tokens+1] = describe_inv_slot(inv.slot, verbose)
+    tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
+    if verbose then
+      tokens[#tokens+1] = string.format("    Base: %s Class: %s, Subtype: %s", inv.name("base"), inv.class(true), inv.subtype())
+    end
   end
-  local msg = table.concat(tokens, "\n")
-  crawl.mpr(msg)
-  return msg
+  return table.concat(tokens, "\n")
 end
 
 function debug_dump(verbose, skip_char_dump)

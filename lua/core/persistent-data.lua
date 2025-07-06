@@ -90,9 +90,7 @@ function dump_persistent_data()
     tokens[#tokens+1] = "\n"
   end
 
-  local msg = table.concat(tokens)
-  crawl.mpr(msg)
-  return msg
+  return table.concat(tokens)
 end
 
 function get_var_type(value)
@@ -104,12 +102,25 @@ function get_var_type(value)
       else return "dict"
       end
   end
-  crawl.mpr("Unsupported type: " .. type(value))
+  crawl.mpr("Unsupported type for value: " .. tostring(value) .. " (" .. type(value) .. ")")
 end
 
 
 function init_persistent_data()
   if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
+
+  -- If already initialized, clear all tables and variables
+  if persistent_var_names then
+    for _,name in ipairs(persistent_var_names) do
+      _G[name] = nil
+    end
+  end
+
+  if persistent_table_names then
+    for _,name in ipairs(persistent_table_names) do
+      _G[name] = nil
+    end
+  end
 
   persistent_var_names = {}
   persistent_table_names = {}

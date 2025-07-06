@@ -1,9 +1,6 @@
--- THIS FEATURE DOES NOT WORK;
--- Can't mute messages already in the message buffer
--- Can't mute early enough to stop the next items from being buffered
 -- When an item is moved to its assigned slot, mute the messages for the item that was previously in that slot
 -- If we cared what slot the item was in, it'd already be assigned somewhere
--- This mostly matters when reading scroll of ID, where 5-6 lines of inventory items can be confusing
+-- This matters most when reading scroll of ID, where several items are moved around and output
 
 local muted_items
 local last_pickup_turn
@@ -48,7 +45,6 @@ function c_message_mute_swaps(text, channel)
       muted_items[#muted_items+1] = mute_str
       local cmd = "message_colour += mute: - " .. mute_str
       crawl.setopt(cmd)
-      ready()
       return
     end
   end

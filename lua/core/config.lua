@@ -6,7 +6,7 @@ WEAPON_BRAND_BONUSES = {}
 function init_config()
   CONFIG = {}
 
-  CONFIG.emojis = true -- Use emojis in alerts and damage announcements
+  CONFIG.emojis = false -- Use emojis in alerts and damage announcements
 
   -- Announce HP/MP when change is greater than this value
   CONFIG.announce_hp_threshold = 1
@@ -39,6 +39,8 @@ function init_config()
   -- exclude-dropped
   CONFIG.exclude_stashed_enchant_scrolls = false -- Don't exclude enchant/brand scrolls if holding enchantable weapon
 
+  CONFIG.do_auto_weapon_slots_abw = true
+
   ---- Pickup/Alert system
   CONFIG.pickup_armour = true
   CONFIG.pickup_weapons = true
@@ -69,9 +71,9 @@ function init_config()
   } -- auto_set_skill_targets (do not remove this comment)
 
   -- Debugging
-  CONFIG.debug_init = true
-  CONFIG.debug_dump_data_freq = 1000 -- 0 to disable
-  CONFIG.debug_fm_monsters = false -- Set to true to get a message when fm changes
+  CONFIG.debug_init = false -- track progress through init()
+  CONFIG.debug_dump_data_freq = 0 -- how often to dump all data; 0 to disable
+  CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
 
 
@@ -92,7 +94,7 @@ function init_config()
     -- 2. Cutoffs for when alerts are active (XL, skill_level)
   TUNING.weap = {}
   TUNING.weap.pickup = {
-    add_ego = 0.85, -- Pickup weapon; gaining a brand if DPS ratio >= `add_ego`
+    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio >= `add_ego`
     same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio >= `same_type_melee`
     same_type_ranged = 1.001, -- Pickup ranged weap of same type if DPS ratio >= `same_type_ranged`
     accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS

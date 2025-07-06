@@ -43,7 +43,7 @@ function get_armour_info_strings(it)
 end
 
 function get_weapon_info_string(it)
-  if not it.delay then return end
+  if not is_weapon(it) then return end
   local dmg = get_weap_dmg(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
@@ -93,7 +93,7 @@ function get_pa_keys(it, name_type)
 end
 
 function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) or is_staff(it) then return it.name() end
+  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then return it.name() end
   local name, value = get_pa_keys(it, name_type)
   if value >= 0 then value = "+" .. value end
   return value .. " " .. name
@@ -323,7 +323,7 @@ function get_weap_dmg(it, dmg_type)
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
-  if is_staff(it) then
+  if is_magic_staff(it) then
     return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type == DMG_TYPE.unbranded))
   end
 

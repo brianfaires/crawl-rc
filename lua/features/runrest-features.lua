@@ -9,15 +9,17 @@ local autosearched_gauntlet
 ---- Gauntlet actions ----
 local function ready_gauntlet_macro()
   if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
-    crawl.sendkeys({ 6, ".\r" })
+    crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
     autosearched_gauntlet = true
   end
 end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  return CACHE.god ~= "No God" or CACHE.race == "Demigod" or
-    (you.good_god() and CACHE.xl > 9)
+  if CACHE.race == "Demigod" then return true end
+  if CACHE.god == "No God" then return false end
+  if you.good_god() then return CACHE.xl > 9 end
+  return true
 end
 
 local function ready_ignore_altars()
