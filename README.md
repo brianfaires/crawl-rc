@@ -134,10 +134,8 @@ To avoid spam, alerts aren't generated for items previously alerted/picked up.
 Picks up armour that is a pure upgrade to what you currently have, or has a new ego.
 
 Alerts are generated for:
+- Items with new egos, or added AC
 - The highest AC body armour seen so far (only if training armour and through xl 12)
-- Aux armour that is good but conflicts with non-innate mutations
-- Items that gain AC but lose a brand
-- New body armour egos
 - Heavier/lighter body armour that passes some additional checks. In general, 1 AC is valued ~1.2EV,
   and alerts are generated when it seems like an armour might be an overall improvement.
 
@@ -206,7 +204,6 @@ multiple times per turn.
 1. cleanup/reduce # of display.rc messages
 
 ### TODO - requiring crawl PR
-1. Cache temporary mutations (needs crawl PR to do gracefully)
 1. Wait for allies to heal (needs crawl PR?)
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
 1. Fix mute_swaps.lua (needs crawl PR? - to intercept msgs)

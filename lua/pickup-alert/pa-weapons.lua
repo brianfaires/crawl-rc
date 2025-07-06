@@ -65,7 +65,7 @@ function INV_WEAP.is_empty()
 end
 
 ---- Weapon pickup ----
-local function should_pickup_weapon(it, cur)
+local function is_weapon_upgrade(it, cur)
   -- `cur` comes from INV_WEAP
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
@@ -103,8 +103,10 @@ function pa_pickup_weapon(it)
     return true
   end
 
+  if has_dangerous_brand(it) then return false end
+
   for _,inv in ipairs(INV_WEAP.weapons) do
-    if should_pickup_weapon(it, inv) then return true end
+    if is_weapon_upgrade(it, inv) then return true end
   end
 end
 

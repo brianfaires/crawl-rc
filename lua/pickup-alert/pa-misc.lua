@@ -66,7 +66,7 @@ end
 ---- Exclude superfluous rings ----
 function is_unneeded_ring(it)
   if not is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = get_mut(MUTS.missing_hand)
+  local missing_hand = get_mut(MUTS.missing_hand, true)
   local st = it.subtype()
   local found_first = false
   for inv in iter.invent_iterator:new(items.inventory()) do
