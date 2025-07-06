@@ -6165,8 +6165,8 @@ function get_shield_sh(it)
     if art_dex then dex = dex + art_dex end
   end
 
-  local cur = items.equipped_at("shield")
-  if cur and cur.artefact and cur.slot ~= it.slot then
+  local cur = items.equipped_at("offhand")
+  if is_shield(cur) and cur.artefact and cur.slot ~= it.slot then
     local art_dex = cur.artprops["Dex"]
     if art_dex then dex = dex - art_dex end
   end
@@ -6195,8 +6195,8 @@ function get_weap_delay(it, ignore_brands)
 
   if delay < 3 then delay = 3 end
 
-  local sh = items.equipped_at("shield")
-  if sh then delay = delay + get_shield_penalty(sh) end
+  local sh = items.equipped_at("offhand")
+  if is_shield(sh) then delay = delay + get_shield_penalty(sh) end
 
   if it.is_ranged then
     local worn = items.equipped_at("armour")
@@ -6569,8 +6569,8 @@ function pa_alert_armour(it)
       end
     end
   elseif is_shield(it) then
-    local sh = items.equipped_at("shield")
-    if not sh then return false end
+    local sh = items.equipped_at("offhand")
+    if not is_shield(sh) then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(sh) then
       crawl.mpr("ALERT 8")
       return pa_alert_item(it, "Diff ego", EMOJI.EGO)
@@ -6678,10 +6678,9 @@ function pa_alert_OTA(it)
   local do_alert = true
   -- Don't alert if already wearing a larger shield
   if pa_OTA_items[index] == "buckler" then
-    local sh = items.equipped_at("shield")
-    if sh and sh.name("qual") ~= "orb" then do_alert = false end
+    if have_shield() then do_alert = false end
   elseif pa_OTA_items[index] == "kite shield" then
-    local sh = items.equipped_at("shield")
+    local sh = items.equipped_at("offhand")
     if sh and sh.name("qual") == "tower shield" then do_alert = false end
   end
 

@@ -10,10 +10,9 @@ function pa_alert_OTA(it)
   local do_alert = true
   -- Don't alert if already wearing a larger shield
   if pa_OTA_items[index] == "buckler" then
-    local sh = items.equipped_at("shield")
-    if sh and sh.name("qual") ~= "orb" then do_alert = false end
+    if have_shield() then do_alert = false end
   elseif pa_OTA_items[index] == "kite shield" then
-    local sh = items.equipped_at("shield")
+    local sh = items.equipped_at("offhand")
     if sh and sh.name("qual") == "tower shield" then do_alert = false end
   end
 

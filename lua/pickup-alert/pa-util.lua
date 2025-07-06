@@ -210,8 +210,8 @@ function get_shield_sh(it)
     if art_dex then dex = dex + art_dex end
   end
 
-  local cur = items.equipped_at("shield")
-  if cur and cur.artefact and cur.slot ~= it.slot then
+  local cur = items.equipped_at("offhand")
+  if is_shield(cur) and cur.artefact and cur.slot ~= it.slot then
     local art_dex = cur.artprops["Dex"]
     if art_dex then dex = dex - art_dex end
   end
@@ -240,8 +240,8 @@ function get_weap_delay(it, ignore_brands)
 
   if delay < 3 then delay = 3 end
 
-  local sh = items.equipped_at("shield")
-  if sh then delay = delay + get_shield_penalty(sh) end
+  local sh = items.equipped_at("offhand")
+  if is_shield(sh) then delay = delay + get_shield_penalty(sh) end
 
   if it.is_ranged then
     local worn = items.equipped_at("armour")
