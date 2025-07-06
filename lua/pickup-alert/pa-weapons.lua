@@ -69,42 +69,25 @@ local function should_pickup_weapon(it, cur)
   -- `cur` comes from INV_WEAP
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
-    if it.artefact then 
-      crawl.mpr("PICKUP 6")
-      return true
-    end
+    if it.artefact then return true end
     if cur.artefact then return false end
     if cur.branded and not it.branded then return false end
     if it.branded and it.is_identified and not cur.branded then
-      crawl.mpr("PICKUP 1")
-      if get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego then
-        crawl.mpr("PICKUP 5")
-        return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
-      end
+      return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
     end
-    if get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001 then
-      crawl.mpr("PICKUP 4")
-      return get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001
-    end
+    return get_ego(it) == cur.ego and get_weap_score(it) > cur.score
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
     if it.is_ranged ~= cur.is_ranged then return false end
     if is_polearm(cur) and not is_polearm(it) then return false end
 
-
-    if it.artefact then
-      crawl.mpr("PICKUP 2")
-      return true end
+    if it.artefact then return true end
     if cur.artefact then return false end
     if it.branded and not it.is_identified then return false end
     
     local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
-    
-    if get_weap_score(it) / cur.score >= min_ratio then
-      crawl.mpr("PICKUP 3")
-      return get_weap_score(it) / cur.score >= min_ratio
-    end
+    return get_weap_score(it) / cur.score >= min_ratio
   end
 
   return false
@@ -131,15 +114,13 @@ local function alert_first_ranged(it)
   if not it.is_ranged then return false end
 
   if get_hands(it) == 2 then
-    if alerted_first_range_2h == 0 then return false end
+    if alerted_first_ranged_2h == 0 then return false end
     if have_shield() then return false end
-    alerted_first_range_2h = 1
-    crawl.mpr("ALERT 15")
+    alerted_first_ranged_2h = 1
     return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
   else
-    if alerted_first_range_1h ~= 0 then return false end
-    alerted_first_range_1h = 1
-    crawl.mpr("ALERT 16")
+    if alerted_first_ranged_1h ~= 0 then return false end
+    alerted_first_ranged_1h = 1
     return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
   end
 end
@@ -161,7 +142,6 @@ local function alert_early_weapons(it)
          it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
           if get_hands(it) == 1 or not have_shield() or
             CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
-              crawl.mpr("ALERT 18")
               return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
           end
       end
@@ -175,7 +155,6 @@ local function alert_early_weapons(it)
     if skill_diff >= max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
-      crawl.mpr("ALERT 19")
       return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
     end
   end
@@ -260,7 +239,6 @@ end
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
   if not category then return false end
-  crawl.mpr("ALERT 29")
   return pa_alert_item(it, category)
 end
 
@@ -298,7 +276,7 @@ end
 function ready_pa_weapons()
   init_pa_weapons()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and not is_staff(inv) then
+    if is_weapon(inv) and not is_magic_staff(inv) then
       INV_WEAP.add_weapon(inv)
       update_high_scores(inv)
     end

@@ -6838,13 +6838,11 @@ local function should_pickup_weapon(it, cur)
     if it.is_ranged ~= cur.is_ranged then return false end
     if is_polearm(cur) and not is_polearm(it) then return false end
 
-
     if it.artefact then return true end
     if cur.artefact then return false end
     if it.branded and not it.is_identified then return false end
     
     local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
-    
     return get_weap_score(it) / cur.score >= min_ratio
   end
 
