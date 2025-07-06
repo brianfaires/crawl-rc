@@ -101,6 +101,7 @@ end
 
 -- Custom def of ego/branded
 function has_ego(it, exclude_stat_only_egos)
+  if not it then return false end
   if is_weapon(it) then
     if exclude_stat_only_egos then
       local ego = get_ego(it)

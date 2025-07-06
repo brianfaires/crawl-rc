@@ -96,20 +96,18 @@ function pa_alert_armour(it, unworn_inv_item)
     local sh = items.equipped_at("offhand")
     if not is_shield(sh) then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(sh) then
-      crawl.mpr("ALERT 8")
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO)
+      local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
+      return pa_alert_item(it, alert_msg, EMOJI.EGO)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      crawl.mpr("ALERT NEW1")
       return pa_alert_item(it, "Increased SH", EMOJI.STRONGER)
     end
   else
     -- Aux armour
     local cur = items.equipped_at(it.subtype()) or unworn_inv_item
     if has_ego(it) and get_ego(it) ~= get_ego(cur) then
-      crawl.mpr("ALERT NEW2")
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO)
+      local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
+      return pa_alert_item(it, alert_msg, EMOJI.EGO)
     elseif get_armour_ac(it) > get_armour_ac(cur) then
-      crawl.mpr("ALERT NEW3")
       return pa_alert_item(it, "Increased AC", EMOJI.STRONGER)
     end
   end

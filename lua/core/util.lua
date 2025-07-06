@@ -171,7 +171,7 @@ function is_magic_staff(it)
 end
 
 function is_talisman(it)
-  return it and it.name("qual"):find("talisman$")
+  return it and it.name("qual"):find("talisman")
 end
 
 function is_orb(it)

@@ -3874,7 +3874,7 @@ function is_magic_staff(it)
 end
 
 function is_talisman(it)
-  return it and it.name("qual"):find("talisman$")
+  return it and it.name("qual"):find("talisman")
 end
 
 function is_orb(it)
@@ -6067,6 +6067,7 @@ end
 
 -- Custom def of ego/branded
 function has_ego(it, exclude_stat_only_egos)
+  if not it then return false end
   if is_weapon(it) then
     if exclude_stat_only_egos then
       local ego = get_ego(it)
@@ -6515,20 +6516,18 @@ function pa_alert_armour(it, unworn_inv_item)
     local sh = items.equipped_at("offhand")
     if not is_shield(sh) then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(sh) then
-      crawl.mpr("ALERT 8")
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO)
+      local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
+      return pa_alert_item(it, alert_msg, EMOJI.EGO)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      crawl.mpr("ALERT NEW1")
       return pa_alert_item(it, "Increased SH", EMOJI.STRONGER)
     end
   else
     -- Aux armour
     local cur = items.equipped_at(it.subtype()) or unworn_inv_item
     if has_ego(it) and get_ego(it) ~= get_ego(cur) then
-      crawl.mpr("ALERT NEW2")
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO)
+      local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
+      return pa_alert_item(it, alert_msg, EMOJI.EGO)
     elseif get_armour_ac(it) > get_armour_ac(cur) then
-      crawl.mpr("ALERT NEW3")
       return pa_alert_item(it, "Increased AC", EMOJI.STRONGER)
     end
   end
@@ -6630,7 +6629,7 @@ function pa_alert_OTA(it)
 
   remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item:", EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM)
 end
 
 ---- Alert for needed resists ----
@@ -6653,7 +6652,6 @@ end
 function pa_alert_talisman(it)
   if it.artefact then
     if it.is_identified then
-      crawl.mpr("ALERT 13")
       return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN)
     end
     return false
@@ -7127,19 +7125,13 @@ function init_buehler()
   if init_startup then init_startup() end
   if init_weapon_slots then init_weapon_slots() end
 
-
-  -- Startup hygiene
-  ready()
-  crawl.redraw_screen()
-
-
   -- Success message
   local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
   local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
   crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
 end
 
--- This is the only line of top-level code, aside from var declarations with no default values
--- Gives confidence in initialization order and clean re-inits
+-- This is the only line of top-level code, aside from declaring variables (without values)
+-- Done to give confidence in simple re-inits
 init_buehler()
 }

@@ -18,7 +18,7 @@ function pa_alert_OTA(it)
 
   remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item:", EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM)
 end
 
 ---- Alert for needed resists ----
@@ -41,7 +41,6 @@ end
 function pa_alert_talisman(it)
   if it.artefact then
     if it.is_identified then
-      crawl.mpr("ALERT 13")
       return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN)
     end
     return false

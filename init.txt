@@ -223,19 +223,13 @@ function init_buehler()
   if init_startup then init_startup() end
   if init_weapon_slots then init_weapon_slots() end
 
-
-  -- Startup hygiene
-  ready()
-  crawl.redraw_screen()
-
-
   -- Success message
   local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
   local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
   crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
 end
 
--- This is the only line of top-level code, aside from var declarations with no default values
--- Gives confidence in initialization order and clean re-inits
+-- This is the only line of top-level code, aside from declaring variables (without values)
+-- Done to give confidence in simple re-inits
 init_buehler()
 }
