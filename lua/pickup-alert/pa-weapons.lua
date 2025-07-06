@@ -166,7 +166,6 @@ end
 -- `cur` comes from INV_WEAP
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
-    crawl.mpr("ALERT 20")
     return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
@@ -177,12 +176,11 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
-      crawl.mpr("ALERT 21")
       return pa_alert_item(it, "Diff ego", EMOJI.EGO)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      crawl.mpr("ALERT 22")
       return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
     end
+    return false
   end
   
   if it.is_ranged ~= cur.is_ranged then return false end
@@ -194,16 +192,13 @@ local function alert_interesting_weapon(it, cur)
   local score_ratio = penalty * get_weap_score(it) / best_score
 
   if get_hands(it) > cur.hands then
-    if offhand_is_free() or (have_shield() and CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
-      if has_ego(it, true) and not util.contains(INV_WEAP.weap_egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
-        crawl.mpr("ALERT 23")
+    if offhand_is_free() or (CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+      if has_ego(it) and not util.contains(INV_WEAP.egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO)
       elseif score_ratio >= TUNING.weap.alert.add_hand.not_using then
-        crawl.mpr("ALERT 24")
         return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
       end
     elseif has_ego(it) and not cur.branded and score_ratio >= TUNING.weap.alert.add_hand.add_ego_lose_sh then
-      crawl.mpr("ALERT 25")
       return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED)
     end
   else -- No extra hand required
@@ -212,20 +207,17 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not cur.branded then
         if score_ratio >= TUNING.weap.alert.gain_ego then
-          crawl.mpr("ALERT 26")
           return pa_alert_item(it, "Gain ego", EMOJI.EGO)
         end
-      elseif not util.contains(INV_WEAP.weap_egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
-        crawl.mpr("ALERT 27")
+      elseif not util.contains(INV_WEAP.egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego", EMOJI.EGO)
       end
     end
+    if score_ratio > TUNING.weap.alert.pure_dps then
+      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
+    end
   end
-
-  -- Catch-all for increased weap_score
-  if score_ratio > TUNING.weap.alert.pure_dps then
-    return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
-  end
+  
   return false
 end
 
@@ -245,10 +237,10 @@ end
 function pa_alert_weapon(it)
   if has_ego(it) and not it.is_identified then return false end
 
+  if alert_interesting_weapons(it) then return true end
   if alert_first_ranged(it) then return true end
   if alert_first_polearm(it) then return true end
   if alert_early_weapons(it) then return true end
-  if alert_interesting_weapons(it) then return true end
 
   -- Skip high score alerts if not using weapons
   if INV_WEAP.is_empty() then return false end

@@ -5424,7 +5424,7 @@ function ready_safe_consumables()
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_class = inv.class(true)
     if inv_class == "scroll" then
-      local st, _ = inv.subtype()
+      local st = inv.subtype()
       if (st == "poison" and you.res_poison() > 0)
         or (st == "torment" and you.torment_immune())
         or util.contains(NO_INSCRIPTION_NEEDED, st) then
@@ -5912,33 +5912,33 @@ function update_high_scores(it)
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
       ac_high_score = ac
-      if not ret_val then ret_val = "Strongest armour" end
+      if not ret_val then ret_val = "Highest AC" end
     end
   elseif is_weapon(it) then
     local it_plus = it.plus or 0
     local score = it.score or get_weap_score(it)
     if score > weapon_high_score then
       weapon_high_score = score
-      if not ret_val then ret_val = "Good weapon" end
+      if not ret_val then ret_val = "Highest damage" end
     end
 
     if score > unbranded_high_score then
       local unbranded_score = it.unbranded_score or get_weap_score(it, true)
       if unbranded_score > unbranded_high_score then
         unbranded_high_score = score
-        if not ret_val then ret_val = "High pure damage" end
+        if not ret_val then ret_val = "Highest no-brand damage" end
       end
     end
 
     if is_polearm(it) and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Good polearm" end
+        if not have_shield() and not ret_val then ret_val = "Strongest 2h polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_1h_high_score then
         polearm_1h_high_score = score
-        if not ret_val then ret_val = "Good polearm" end
+        if not ret_val then ret_val = "Strongest 1h polearm" end
       end
     end
   end
@@ -6306,7 +6306,7 @@ end
 --------- Weap stat helpers ---------
 function get_hands(it)
   if CACHE.race ~= "Formicid" then return it.hands end
-  local st, _ = it.subtype()
+  local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
 end
@@ -6457,7 +6457,7 @@ end
 -- Special cases where you have temporary or innate mutations that interfere with armour
 -- Alert when an ego item is usable but interferes with mutation, or is unusable due to temp mutations
 local function alert_armour_consider_mutations(it)
-  local type, _ = it.subtype()
+  local type = it.subtype()
   local it_plus = it.plus or 0
 
   if type == "gloves" then
@@ -6625,7 +6625,7 @@ function pa_pickup_armour(it)
   else
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
     if is_orb(it) then return false end
-    local st, _ = it.subtype()
+    local st = it.subtype()
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
     local worn = items.equipped_at("armour")
@@ -6921,7 +6921,6 @@ end
 -- `cur` comes from INV_WEAP
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
-    crawl.mpr("ALERT 20")
     return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
@@ -6932,12 +6931,11 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
-      crawl.mpr("ALERT 21")
       return pa_alert_item(it, "Diff ego", EMOJI.EGO)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      crawl.mpr("ALERT 22")
       return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
     end
+    return false
   end
   
   if it.is_ranged ~= cur.is_ranged then return false end
@@ -6949,16 +6947,13 @@ local function alert_interesting_weapon(it, cur)
   local score_ratio = penalty * get_weap_score(it) / best_score
 
   if get_hands(it) > cur.hands then
-    if offhand_is_free() or (have_shield() and CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
-      if has_ego(it, true) and not util.contains(INV_WEAP.weap_egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
-        crawl.mpr("ALERT 23")
+    if offhand_is_free() or (CACHE.s_shields <= TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+      if has_ego(it) and not util.contains(INV_WEAP.egos, get_ego(it)) and score_ratio >= TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO)
       elseif score_ratio >= TUNING.weap.alert.add_hand.not_using then
-        crawl.mpr("ALERT 24")
         return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED)
       end
     elseif has_ego(it) and not cur.branded and score_ratio >= TUNING.weap.alert.add_hand.add_ego_lose_sh then
-      crawl.mpr("ALERT 25")
       return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED)
     end
   else -- No extra hand required
@@ -6967,20 +6962,17 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not cur.branded then
         if score_ratio >= TUNING.weap.alert.gain_ego then
-          crawl.mpr("ALERT 26")
           return pa_alert_item(it, "Gain ego", EMOJI.EGO)
         end
-      elseif not util.contains(INV_WEAP.weap_egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
-        crawl.mpr("ALERT 27")
+      elseif not util.contains(INV_WEAP.egos, it_ego) and score_ratio >= TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego", EMOJI.EGO)
       end
     end
+    if score_ratio > TUNING.weap.alert.pure_dps then
+      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
+    end
   end
-
-  -- Catch-all for increased weap_score
-  if score_ratio > TUNING.weap.alert.pure_dps then
-    return pa_alert_item(it, "Better weapon", EMOJI.WEAPON)
-  end
+  
   return false
 end
 
@@ -7000,10 +6992,10 @@ end
 function pa_alert_weapon(it)
   if has_ego(it) and not it.is_identified then return false end
 
+  if alert_interesting_weapons(it) then return true end
   if alert_first_ranged(it) then return true end
   if alert_first_polearm(it) then return true end
   if alert_early_weapons(it) then return true end
-  if alert_interesting_weapons(it) then return true end
 
   -- Skip high score alerts if not using weapons
   if INV_WEAP.is_empty() then return false end

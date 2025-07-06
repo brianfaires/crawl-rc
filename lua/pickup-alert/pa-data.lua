@@ -79,33 +79,33 @@ function update_high_scores(it)
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
       ac_high_score = ac
-      if not ret_val then ret_val = "Strongest armour" end
+      if not ret_val then ret_val = "Highest AC" end
     end
   elseif is_weapon(it) then
     local it_plus = it.plus or 0
     local score = it.score or get_weap_score(it)
     if score > weapon_high_score then
       weapon_high_score = score
-      if not ret_val then ret_val = "Good weapon" end
+      if not ret_val then ret_val = "Highest damage" end
     end
 
     if score > unbranded_high_score then
       local unbranded_score = it.unbranded_score or get_weap_score(it, true)
       if unbranded_score > unbranded_high_score then
         unbranded_high_score = score
-        if not ret_val then ret_val = "High pure damage" end
+        if not ret_val then ret_val = "Highest no-brand damage" end
       end
     end
 
     if is_polearm(it) and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Good polearm" end
+        if not have_shield() and not ret_val then ret_val = "Strongest 2h polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_1h_high_score then
         polearm_1h_high_score = score
-        if not ret_val then ret_val = "Good polearm" end
+        if not ret_val then ret_val = "Strongest 1h polearm" end
       end
     end
   end

@@ -351,7 +351,7 @@ end
 --------- Weap stat helpers ---------
 function get_hands(it)
   if CACHE.race ~= "Formicid" then return it.hands end
-  local st, _ = it.subtype()
+  local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
 end

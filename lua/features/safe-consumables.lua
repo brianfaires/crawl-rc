@@ -13,7 +13,7 @@ function ready_safe_consumables()
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_class = inv.class(true)
     if inv_class == "scroll" then
-      local st, _ = inv.subtype()
+      local st = inv.subtype()
       if (st == "poison" and you.res_poison() > 0)
         or (st == "torment" and you.torment_immune())
         or util.contains(NO_INSCRIPTION_NEEDED, st) then
