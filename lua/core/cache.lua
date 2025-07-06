@@ -77,14 +77,4 @@ function ready_cache()
       CACHE.top_weap_skill = v
     end
   end
-
-  -- Mutations
-  CACHE.mutations = {}
-  for _,v in ipairs(crawl.split(you.mutation_overview(), ",")) do
-    local key = v:sub(1, -3)
-    local value = tonumber(v:sub(-2))
-    CACHE.mutations[key] = value
-  end
-
-  CACHE.temp_mutations = {} -- Placeholder for now
 end

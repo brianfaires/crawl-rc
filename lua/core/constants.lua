@@ -94,6 +94,13 @@ KEYS = {
   LF = string.char(10), CR = string.char(13)
 } -- KEYS (do not remove this comment)
 
+MUTS = {
+  antennae = "antennae", augmentation = "augmentation", beak = "beak", claws = "claws",
+  deformed = "deformed body", demonic_touch = "demonic touch", hooves = "hooves",
+  horns = "horns", missing_hand = "missing a hand", pseudopods = "pseudopods",
+  sharp_scales = "sharp scales", sturdy_frame = "sturdy frame", talons = "talons"
+} -- MUTS (do not remove this comment)
+
 SIZE_PENALTY = {
   LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2
 } -- SIZE_PENALTY (do not remove this comment)

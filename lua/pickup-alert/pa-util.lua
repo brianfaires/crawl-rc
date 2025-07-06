@@ -119,7 +119,7 @@ end
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
   -- dcss v0.33.1
-  local pen = encumb - 2 * get_mut("sturdy frame", true)
+  local pen = encumb - 2 * get_mut(MUTS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
@@ -155,8 +155,8 @@ function get_armour_ac(it)
   local ac = it.ac * (1 + CACHE.s_armour / 22) + it_plus
   if not is_body_armour(it) then return ac end
 
-  local deformed = get_mut("deformed body", true) > 0
-  local pseudopods = get_mut("pseudopods", true) > 0
+  local deformed = get_mut(MUTS.deformed, true) > 0
+  local pseudopods = get_mut(MUTS.pseudopods, true) > 0
   if pseudopods or deformed then
     return ac * 6/10
   end
@@ -405,8 +405,8 @@ function get_slay_bonuses()
   end
 
   if CACHE.race == "Demonspawn" then
-    sum = sum + 3 * get_mut("augmentation", true)
-    sum = sum + get_mut("sharp scales", true)
+    sum = sum + 3 * get_mut(MUTS.augmentation, true)
+    sum = sum + get_mut(MUTS.sharp_scales, true)
   end
 
   return sum

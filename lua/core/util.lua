@@ -117,11 +117,8 @@ end
 
 
 --- Utility ---
-function get_mut(mutation, include_temp)
-  local perm = CACHE.mutations[mutation] or 0
-  if not include_temp then return perm end
-  local temp = CACHE.temp_mutations[mutation] or 0
-  return perm + temp
+function get_mut(mutation, include_all)
+  return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
 
 function have_shield()
@@ -190,7 +187,7 @@ function is_weapon(it)
 end
 
 function offhand_is_free()
-  if get_mut("missing a hand") > 0 then return true end
+  if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
 end
 

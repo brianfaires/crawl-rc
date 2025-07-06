@@ -3377,16 +3377,6 @@ function ready_cache()
       CACHE.top_weap_skill = v
     end
   end
-
-  -- Mutations
-  CACHE.mutations = {}
-  for _,v in ipairs(crawl.split(you.mutation_overview(), ",")) do
-    local key = v:sub(1, -3)
-    local value = tonumber(v:sub(-2))
-    CACHE.mutations[key] = value
-  end
-
-  CACHE.temp_mutations = {} -- Placeholder for now
 end
 
 }
@@ -3491,6 +3481,13 @@ GODS_WITH_ALLIES = {
 KEYS = {
   LF = string.char(10), CR = string.char(13)
 } -- KEYS (do not remove this comment)
+
+MUTS = {
+  antennae = "antennae", augmentation = "augmentation", beak = "beak", claws = "claws",
+  deformed = "deformed body", demonic_touch = "demonic touch", hooves = "hooves",
+  horns = "horns", missing_hand = "missing a hand", pseudopods = "pseudopods",
+  sharp_scales = "sharp scales", sturdy_frame = "sturdy frame", talons = "talons"
+} -- MUTS (do not remove this comment)
 
 SIZE_PENALTY = {
   LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2
@@ -3823,11 +3820,8 @@ end
 
 
 --- Utility ---
-function get_mut(mutation, include_temp)
-  local perm = CACHE.mutations[mutation] or 0
-  if not include_temp then return perm end
-  local temp = CACHE.temp_mutations[mutation] or 0
-  return perm + temp
+function get_mut(mutation, include_all)
+  return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
 
 function have_shield()
@@ -3896,7 +3890,7 @@ function is_weapon(it)
 end
 
 function offhand_is_free()
-  if get_mut("missing a hand") > 0 then return true end
+  if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
 end
 
@@ -5732,7 +5726,9 @@ function init_pa_main()
   ---- Autopickup main ----
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
-    if it.is_useless then return end
+    if it.is_useless then 
+      crawl.mpr("useless: " .. it.name())
+      return end
     if CACHE.have_orb then return end
     if already_contains(pa_items_picked, it) then return end
 
@@ -6074,7 +6070,7 @@ end
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
   -- dcss v0.33.1
-  local pen = encumb - 2 * get_mut("sturdy frame", true)
+  local pen = encumb - 2 * get_mut(MUTS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
@@ -6110,8 +6106,8 @@ function get_armour_ac(it)
   local ac = it.ac * (1 + CACHE.s_armour / 22) + it_plus
   if not is_body_armour(it) then return ac end
 
-  local deformed = get_mut("deformed body", true) > 0
-  local pseudopods = get_mut("pseudopods", true) > 0
+  local deformed = get_mut(MUTS.deformed, true) > 0
+  local pseudopods = get_mut(MUTS.pseudopods, true) > 0
   if pseudopods or deformed then
     return ac * 6/10
   end
@@ -6360,8 +6356,8 @@ function get_slay_bonuses()
   end
 
   if CACHE.race == "Demonspawn" then
-    sum = sum + 3 * get_mut("augmentation", true)
-    sum = sum + get_mut("sharp scales", true)
+    sum = sum + 3 * get_mut(MUTS.augmentation, true)
+    sum = sum + get_mut(MUTS.sharp_scales, true)
   end
 
   return sum
@@ -6461,11 +6457,11 @@ local function alert_armour_consider_mutations(it)
   local it_plus = it.plus or 0
 
   if type == "gloves" then
-    if get_mut("claws", false) >= 3 then return false end
-    if get_mut("demonic touch", false) >= 3 then return false end
+    if get_mut(MUTS.claws) >= 3 then return false end
+    if get_mut(MUTS.demonic_touch) >= 3 then return false end
 
-    local claws_lvl = get_mut("claws", true)
-    local touch_lvl = get_mut("demonic touch", true)
+    local claws_lvl = get_mut(MUTS.claws, true)
+    local touch_lvl = get_mut(MUTS.demonic_touch, true)
 
     if claws_lvl > 0 or touch_lvl >= 3 then
       if has_ego(it) then
@@ -6479,10 +6475,10 @@ local function alert_armour_consider_mutations(it)
       end
     end
   elseif type == "boots" then
-    if get_mut("hooves", false) >= 3 then return false end
-    if get_mut("talons", false) >= 3 then return false end
+    if get_mut(MUTS.hooves) >= 3 then return false end
+    if get_mut(MUTS.talons) >= 3 then return false end
 
-    if get_mut("hooves", true) + get_mut("talons", true) > 0 then
+    if get_mut(MUTS.hooves, true) + get_mut(MUTS.talons, true) > 0 then
       if has_ego(it) then
         crawl.mpr("ALERT 4")
         return pa_alert_item(it, "Branded boots", EMOJI.BOOTS)
@@ -6494,22 +6490,19 @@ local function alert_armour_consider_mutations(it)
       end
     end
   elseif type == "helmet" then
-    local horns_lvl_innate = get_mut("horns", false)
-    local antennae_lvl_innate = get_mut("antennae", false)
-
     if it.name("qual"):find("helmet") then
-      if horns_lvl_innate > 0 then return false end
-      if antennae_lvl_innate > 0 then return false end
-      if get_mut("beak", false) > 0 then return false end
+      if get_mut(MUTS.horns) > 0 then return false end
+      if get_mut(MUTS.antennae) > 0 then return false end
+      if get_mut(MUTS.beak) > 0 then return false end
     else
       -- hat/crown/etc
-      if horns_lvl_innate >= 3 then return false end
-      if antennae_lvl_innate >= 3 then return false end
+      if get_mut(MUTS.horns) >= 3 then return false end
+      if get_mut(MUTS.antennae) >= 3 then return false end
     end
 
-    local horns_lvl = get_mut("horns", true)
-    local antennae_lvl = get_mut("antennae", true)
-    local beak_lvl = get_mut("beak", true)
+    local horns_lvl = get_mut(MUTS.horns, true)
+    local antennae_lvl = get_mut(MUTS.antennae, true)
+    local beak_lvl = get_mut(MUTS.beak, true)
     if horns_lvl + antennae_lvl + beak_lvl > 0 then
       if has_ego(it) then
         crawl.mpr("ALERT 6")
@@ -6634,13 +6627,13 @@ function pa_pickup_armour(it)
     -- No autopickup if mutation interference
     if st == "gloves" then
       -- Ignore demonic touch if you're using offhand
-      if get_mut("demonic touch", true) >= 3 and not offhand_is_free() then return false end
+      if get_mut(MUTS.demonic_touch, true) >= 3 and not offhand_is_free() then return false end
       -- Ignore claws if you're wielding a weapon
-      if get_mut("claws", true) > 0 and not have_weapon() then return false end
+      if get_mut(MUTS.claws, true) > 0 and not have_weapon() then return false end
     elseif st == "boots" then
-      if get_mut("hooves", true) + get_mut("talons", true) > 0 then return false end
+      if get_mut(MUTS.hooves, true) + get_mut(MUTS.talons, true) > 0 then return false end
     elseif it.name("base"):find("helmet") then
-      if get_mut("horns", true) + get_mut("beak", true) + get_mut("antennae", true) > 0 then return false end
+      if get_mut(MUTS.horns, true) + get_mut(MUTS.beak, true) + get_mut(MUTS.antennae, true) > 0 then return false end
     end
 
     local cur = items.equipped_at(st)
@@ -6734,7 +6727,7 @@ end
 ---- Exclude superfluous rings ----
 function is_unneeded_ring(it)
   if not is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = get_mut("missing a hand")
+  local missing_hand = get_mut(MUTS.missing_hand)
   local st = it.subtype()
   local found_first = false
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -6850,7 +6843,7 @@ end
 
 function pa_pickup_weapon(it)
   -- Check if we need the first weapon of the game
-  if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut("claws", true) == 0 then
+  if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
     -- Staves don't go into INV_WEAP; double-check that we're not carrying just a staff
     for _,inv in ipairs(items.inventory()) do
       if is_weapon(inv) then return false end -- faster to check weapon than staff
