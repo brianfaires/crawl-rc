@@ -11,7 +11,7 @@ WEAPON_BRAND_BONUSES = {}
 function init_config()
   CONFIG = {}
 
-  CONFIG.emojis = true -- Use emojis in alerts and damage announcements
+  CONFIG.emojis = false -- Use emojis in alerts and damage announcements
 
   -- Announce HP/MP when change is greater than this value
   CONFIG.announce_hp_threshold = 1
@@ -44,6 +44,8 @@ function init_config()
   -- exclude-dropped
   CONFIG.exclude_stashed_enchant_scrolls = false -- Don't exclude enchant/brand scrolls if holding enchantable weapon
 
+  CONFIG.do_auto_weapon_slots_abw = true
+
   ---- Pickup/Alert system
   CONFIG.pickup_armour = true
   CONFIG.pickup_weapons = true
@@ -74,9 +76,9 @@ function init_config()
   } -- auto_set_skill_targets (do not remove this comment)
 
   -- Debugging
-  CONFIG.debug_init = true
-  CONFIG.debug_dump_data_freq = 1000 -- 0 to disable
-  CONFIG.debug_fm_monsters = false -- Set to true to get a message when fm changes
+  CONFIG.debug_init = false -- track progress through init()
+  CONFIG.debug_dump_data_freq = 0 -- how often to dump all data; 0 to disable
+  CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
 
 
@@ -97,7 +99,7 @@ function init_config()
     -- 2. Cutoffs for when alerts are active (XL, skill_level)
   TUNING.weap = {}
   TUNING.weap.pickup = {
-    add_ego = 0.85, -- Pickup weapon; gaining a brand if DPS ratio >= `add_ego`
+    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio >= `add_ego`
     same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio >= `same_type_melee`
     same_type_ranged = 1.001, -- Pickup ranged weap of same type if DPS ratio >= `same_type_ranged`
     accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
@@ -374,6 +376,7 @@ msc := message_colour
 msc =
 
 msc += $mp:You feel your power returning
+msc += $mp:Done waiting
 
 msc += $danger:roused to righteous anger
 msc += $danger:is roused by the hymn
@@ -745,7 +748,6 @@ msc += $item_dmg:It has a very clean taste
 msc += $item_dmg:You feel your flesh rotting away
 msc += $item_dmg:You are engulfed in dark miasma
 msc += $item_dmg:You feel very guilty
-msc += $item_dmg:Done waiting
 msc += $item_dmg:That really hurt
 msc += $item_dmg:You fall into the water
 msc += $item_dmg:PTOANNNG
@@ -2924,11 +2926,11 @@ flash += power of Zot
 
 # Found something important
 more += Found.*the Ecumenical Temple
-more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
 more += byssal rune
+more += Press the corresponding letter to learn more about a god
 flash += timed_portal:.*
 
 # Translocations
@@ -3314,9 +3316,7 @@ function dump_cache()
   end
 
   tokens[#tokens+1] = "\n"
-  local msg = table.concat(tokens, "\n")
-  crawl.mpr(msg)
-  return msg
+  return table.concat(tokens, "\n")
 end
 
 function init_cache()
@@ -3467,7 +3467,7 @@ ALL_WEAP_SCHOOLS = {
 
 ---- Other ----
 ALL_PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave",
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Ziggurat",
 } -- ALL_PORTAL_NAMES (do not remove this comment)
 
@@ -3547,8 +3547,8 @@ function init_emojis()
     EMOJI.SUCCESS = "✅"
 
   else
-    EMOJI.REMIND_IDENTIFY = with_color(COLORS.cyan, "??")
-    EMOJI.EXCLAMATION_2 = with_color(COLORS.lightred, "!!")
+    EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "??")
+    EMOJI.EXCLAMATION_2 = with_color(COLORS.lightmagenta, "!!")
 
     EMOJI.HP_BORDER = with_color(COLORS.white, "|")
     EMOJI.HP_FULL_PIP = with_color(COLORS.green, "+")
@@ -3661,9 +3661,7 @@ function dump_persistent_data()
     tokens[#tokens+1] = "\n"
   end
 
-  local msg = table.concat(tokens)
-  crawl.mpr(msg)
-  return msg
+  return table.concat(tokens)
 end
 
 function get_var_type(value)
@@ -3675,12 +3673,25 @@ function get_var_type(value)
       else return "dict"
       end
   end
-  crawl.mpr("Unsupported type: " .. type(value))
+  crawl.mpr("Unsupported type for value: " .. tostring(value) .. " (" .. type(value) .. ")")
 end
 
 
 function init_persistent_data()
   if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
+
+  -- If already initialized, clear all tables and variables
+  if persistent_var_names then
+    for _,name in ipairs(persistent_var_names) do
+      _G[name] = nil
+    end
+  end
+
+  if persistent_table_names then
+    for _,name in ipairs(persistent_table_names) do
+      _G[name] = nil
+    end
+  end
 
   persistent_var_names = {}
   persistent_table_names = {}
@@ -3820,7 +3831,7 @@ function get_mut(mutation, include_temp)
 end
 
 function have_shield()
-  return items.equipped_at("shield") ~= nil
+  return is_shield(items.equipped_at("offhand"))
 end
 
 function have_weapon()
@@ -3864,7 +3875,7 @@ function is_shield(it)
   return it and it.class(true) == "armour" and it.subtype() == "offhand" and not is_orb(it)
 end
 
-function is_staff(it)
+function is_magic_staff(it)
   return it and it.class(true) == "magical staff"
 end
 
@@ -3896,26 +3907,15 @@ end
 
 
 --- Debugging ---
-function describe_inv_slot(inv_num, full_dump)
-  local inv = items.inslot(inv_num)
-  tokens = {}
-  tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s | Base: %s", inv.slot, inv.quantity, inv.name("qual"), inv.name("base"))
-  if full_dump then
-    tokens[#tokens+1] = string.format("    Class: %s, Subtype: %s", inv.class(true), inv.subtype())
-  end
-  local msg = table.concat(tokens, "\n")  
-  crawl.mpr(msg)
-  return msg
-end
-
 function dump_inventory(verbose)
   local tokens = { "\n---INVENTORY---"}
   for inv in iter.invent_iterator:new(items.inventory()) do
-    tokens[#tokens+1] = describe_inv_slot(inv.slot, verbose)
+    tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
+    if verbose then
+      tokens[#tokens+1] = string.format("    Base: %s Class: %s, Subtype: %s", inv.name("base"), inv.class(true), inv.subtype())
+    end
   end
-  local msg = table.concat(tokens, "\n")
-  crawl.mpr(msg)
-  return msg
+  return table.concat(tokens, "\n")
 end
 
 function debug_dump(verbose, skip_char_dump)
@@ -4064,8 +4064,7 @@ function ready_announce_damage()
 
     -- HP message
     if math.abs(hp_delta) > CONFIG.announce_hp_threshold then
-      -- If no MP msg, include empty line (w 1-space offset to align)
-      msg_tokens[#msg_tokens + 1] = "\n "
+      msg_tokens[#msg_tokens + 1] = "\n"
 
       msg_tokens[#msg_tokens + 1] = create_meter(
         CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
@@ -4087,12 +4086,10 @@ function ready_announce_damage()
       local summary_tokens = {}
       local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
       if is_force_more_msg then
-        summary_tokens[#summary_tokens + 1] = "\n"
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
         summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
       else
-        summary_tokens[#summary_tokens + 1] = "\n"
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
         summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
@@ -4551,9 +4548,9 @@ local function abort_full_recovery()
 end
 
 local function finish_full_recovery()
-  local turns = CACHE.turn - recovery_start_turn
+  local turns = you.turns() - recovery_start_turn
   local msg = with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns)
-  enqueue_mpr(msg)
+  crawl.mpr(msg)
   
   recovery_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
@@ -4649,6 +4646,7 @@ end
 {
 -- Disable built-in force_mores that can't just be -='d
 local FM_DISABLES = {
+  "You kneel at the altar",
   "need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
   "Okawaru offers you a choice",
@@ -5124,10 +5122,10 @@ end
 ------------------ Hooks ------------------
 function ready_inscribe_stats()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) or is_staff(inv) then
-      if CONFIG.inscribe_weapons then inscribe_weapon_stats(inv) end
-    elseif is_armour(inv) then
-      if CONFIG.inscribe_armour and not is_scarf(inv) then inscribe_armour_stats(inv) end
+    if CONFIG.inscribe_weapons and is_weapon(inv) then
+      inscribe_weapon_stats(inv)
+    elseif CONFIG.inscribe_armour and is_armour(inv) and not is_scarf(inv) then
+      inscribe_armour_stats(inv)
     end
   end
 end
@@ -5266,7 +5264,7 @@ function c_message_remind_identify(text, channel)
 
   if text:find("scrolls? of identify") then
     found_scroll_of_id = 1
-    if not (text:find("You drop") or text:find("You read")) then
+    if not (text:find("You drop") or text:find("You read") or text:find("It is a")) then
       remind_unidentified_items(true, false)
     end
   elseif found_scroll_of_id == 0 then
@@ -5313,15 +5311,17 @@ local autosearched_gauntlet
 ---- Gauntlet actions ----
 local function ready_gauntlet_macro()
   if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
-    crawl.sendkeys({ 6, ".\r" })
+    crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
     autosearched_gauntlet = true
   end
 end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  return CACHE.god ~= "No God" or CACHE.race == "Demigod" or
-    (you.good_god() and CACHE.xl > 9)
+  if CACHE.race == "Demigod" then return true end
+  if CACHE.god == "No God" then return false end
+  if you.good_god() then return CACHE.xl > 9 end
+  return true
 end
 
 local function ready_ignore_altars()
@@ -5454,16 +5454,17 @@ local last_stair_turn
 local v5_unwarned
 
 local function check_new_location(key)
-  local new_location = CACHE.branch .. CACHE.depth
+  local feature = view.feature_at (0, 0)
+  local one_way_stair = feature:find("escape_hatch") or feature:find("shaft")
+
   local turn_diff = CACHE.turn - last_stair_turn
-  if prev_location ~= new_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
+  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
     if not crawl.yesno("Really go right back? (y/n)", true) then
       crawl.mpr("Okay, then.")
       return
     end
-  elseif CONFIG.warn_v5 and v5_unwarned and new_location == "Vaults4" and key == ">" then
+  elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
     -- V5 warning idea by rypofalem --
-    local feature = view.feature_at (0, 0)
     if feature:find("down") or feature:find("shaft") then
       if not crawl.yesno("Really go to Vaults:5? (y/n)", true) then
         crawl.mpr("Okay, then.")
@@ -5474,14 +5475,14 @@ local function check_new_location(key)
   end
 
   crawl.sendkeys(key)
-  last_stair_turn = CACHE.turn
+  if not one_way_stair then last_stair_turn = CACHE.turn end
 end
 
 
 function init_safe_stairs()
   if CONFIG.debug_init then crawl.mpr("Initializing safe-stairs") end
   prev_location = CACHE.branch .. CACHE.depth
-  cur_location = prev_location
+  cur_location = CACHE.branch .. CACHE.depth
   last_stair_turn = 0
   v5_unwarned = true
 
@@ -5548,23 +5549,25 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ---- Cleanup weapon slots ----
---Whenever you drop an item:
+-- Picked up weapons always go to a,b,w
+-- Whenever you drop an item:
   -- Assign weapons to slots a and b
-      -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless skill
+      -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless training it
       -- 3:magical staff, 4:polearm, 5:ranged
-  -- Assign weap to w: ranged/polearm/any
+  -- Assign weapon to w: ranged/polearm/magical staff/any
 
 local do_cleanup_weapon_slots
 local priorities_ab
 local priorities_w
+local slots_changed
 
 local function cleanup_ab(slot)
-  local inv = items.inslot(slot)
-  if inv and inv.class(true) == "weapon" then return end
+  if is_weapon(items.inslot(slot)) then return end
 
-  for p=1,5 do
+  for p=1,#priorities_ab do
     if priorities_ab[p] > slot then
       items.swap_slots(priorities_ab[p], slot)
+      slots_changed = true
       priorities_ab[p] = -1
       return
     end
@@ -5574,21 +5577,22 @@ end
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
   local inv = items.inslot(slot_w)
-  if inv and inv.class(true) == "weapon" then return end
+  if is_weapon(inv) then return end
 
-  for p=1,3 do
+  for p=1,#priorities_w do
     if priorities_w[p] > 1 then
       items.swap_slots(priorities_w[p], slot_w)
+      slots_changed = true
       return
     end
   end
 end
 
 local function get_priority_ab(it)
-  if not it or not it.weap_skill then return -1 end
+  if not is_weapon(it) then return -1 end
   if it.equipped then return 1 end
 
-  if is_staff(it) then return 3 end
+  if is_magic_staff(it) then return 3 end
   if is_weapon(it) then
     if it.is_ranged then
       if CACHE.s_ranged >= 4 then return 2 end
@@ -5607,15 +5611,16 @@ local function get_priority_ab(it)
 end
 
 local function get_priority_w(it)
-  if not it or not it.weap_skill then return -1 end
+  if not is_weapon(it) then return -1 end
   if it.is_ranged then return 1 end
   if is_polearm(it) then return 2 end
-  return 3
+  if is_magic_staff(it) then return 3 end
+  return 4
 end
 
 local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
-  priorities_w = { -1, -1, -1 }
+  priorities_w = { -1, -1, -1, -1 }
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     local p = get_priority_w(inv)
@@ -5652,6 +5657,7 @@ function init_weapon_slots()
   if CONFIG.debug_init then crawl.mpr("Initializing weapon-slots") end
 
   do_cleanup_weapon_slots = false
+  slots_changed = false
   priorities_ab = nil
   priorities_w = nil
 end
@@ -5659,21 +5665,24 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_weapon_slots(it)
-  if not is_weapon(it) and not is_staff(it) then return end
+  if not CONFIG.do_auto_weapon_slots_abw then return end
+  if not is_weapon(it) then return end
 
   for i=0,2 do
     local slot = i==2 and items.letter_to_index("w") or i
 
     local inv = items.inslot(slot)
     if not inv then return slot end
-    if not is_weapon(inv) and not is_staff(inv) then
+    if not is_weapon(inv) then
       items.swap_slots(slot, get_first_empty_slot())
+      slots_changed = true
       return slot
     end
   end
 end
 
 function c_message_weapon_slots(text, channel)
+  if not CONFIG.do_auto_weapon_slots_abw then return end
   do_cleanup_weapon_slots = channel == "plain" and text:find("You drop ")
 end
 
@@ -5681,6 +5690,10 @@ function ready_weapon_slots()
   if do_cleanup_weapon_slots then
     cleanup_weapon_slots()
     do_cleanup_weapon_slots = false
+    if slots_changed then
+      crawl.mpr(with_color(COLORS.darkgrey, "Weapon slots updated (ab+w)."))
+      slots_changed = false
+    end
   end
 end
 
@@ -5729,7 +5742,7 @@ function init_pa_main()
       if pa_pickup_armour(it) then return true end
     elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
       if pa_pickup_weapon(it) then return true end
-    elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
+    elseif loaded_pa_misc and CONFIG.pickup_staves and is_magic_staff(it) then
       if pa_pickup_staff(it) then return true end
     elseif loaded_pa_misc and is_unneeded_ring(it) then
       return false
@@ -5743,7 +5756,7 @@ function init_pa_main()
       if pa_alert_OTA(it) then return end
     end
 
-    if loaded_pa_misc and CONFIG.alert_staff_resists and is_staff(it) then
+    if loaded_pa_misc and CONFIG.alert_staff_resists and is_magic_staff(it) then
       if pa_alert_staff(it) then return end
     elseif loaded_pa_misc and CONFIG.alert_orbs and is_orb(it) then
       if pa_alert_orb(it) then return end
@@ -5759,7 +5772,7 @@ end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_desc = get_plussed_name(it, "plain")
-  if is_weapon(it) or is_staff(it) then
+  if is_weapon(it) then
     item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
   elseif is_body_armour(it) then
     local ac, ev = get_armour_info_strings(it)
@@ -5985,7 +5998,7 @@ function get_armour_info_strings(it)
 end
 
 function get_weapon_info_string(it)
-  if not it.delay then return end
+  if not is_weapon(it) then return end
   local dmg = get_weap_dmg(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
@@ -6035,7 +6048,7 @@ function get_pa_keys(it, name_type)
 end
 
 function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) or is_staff(it) then return it.name() end
+  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then return it.name() end
   local name, value = get_pa_keys(it, name_type)
   if value >= 0 then value = "+" .. value end
   return value .. " " .. name
@@ -6265,7 +6278,7 @@ function get_weap_dmg(it, dmg_type)
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
-  if is_staff(it) then
+  if is_magic_staff(it) then
     return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type == DMG_TYPE.unbranded))
   end
 
@@ -6395,7 +6408,7 @@ end
 {
 ---- Pickup and Alert features for armour ----
 ARMOUR_ALERT = {
-  artefact = { msg = "31 Artefact armour", emoji = EMOJI.ARTEFACT },
+  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
   stronger = { msg = "32 Stronger armour", emoji = EMOJI.STRONGER },
   lighter = { msg = "33 Lighter armour", emoji = EMOJI.LIGHTER },
   gain_ego = { msg = "34 Gain ego", emoji = EMOJI.EGO },
@@ -6410,7 +6423,7 @@ ARMOUR_ALERT = {
   heavier = {
     gain_ego = { msg = "40 Gain ego (Heavier armour)", emoji = EMOJI.EGO },
     diff_ego = { msg = "41 Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "42 Heavier Armour", emoji = EMOJI.HEAVIER },
+    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
     lost_ego = { msg = "43 Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
   }
 } -- ARMOUR_ALERT (do not remove this comment)
@@ -6434,7 +6447,6 @@ local function alert_ac_high_score(it)
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
-      crawl.mpr("ALERT 1")
       return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST)
     end
   end
@@ -6443,16 +6455,14 @@ local function alert_ac_high_score(it)
 end
 
 -- Special cases where you have temporary or innate mutations that interfere with armour
--- Alert when an ego item is usable but interferes with mutation, or unusable due to temp mutations
-local function alert_armour_consider_mutations(it, type)
+-- Alert when an ego item is usable but interferes with mutation, or is unusable due to temp mutations
+local function alert_armour_consider_mutations(it)
+  local type = it.subtype()
   local it_plus = it.plus or 0
 
   if type == "gloves" then
-    local claws_lvl_innate = get_mut("claws", false)
-    if claws_lvl_innate >= 3 then return false end
-
-    local touch_lvl_innate = get_mut("demonic touch", false)
-    if touch_lvl_innate >= 3 then return false end
+    if get_mut("claws", false) >= 3 then return false end
+    if get_mut("demonic touch", false) >= 3 then return false end
 
     local claws_lvl = get_mut("claws", true)
     local touch_lvl = get_mut("demonic touch", true)
@@ -6563,19 +6573,19 @@ function pa_alert_armour(it)
     if not sh then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(sh) then
       crawl.mpr("ALERT 8")
-      return pa_alert_item(it, "New ego", EMOJI.EGO)
+      return pa_alert_item(it, "Diff ego", EMOJI.EGO)
     end
   else
     -- Aux armour
-    local st, _ = it.subtype()
-    local cur = items.equipped_at(st)
-    if not cur then return false end
-    if get_armour_ac(it) > get_armour_ac(cur) + 0.001 then
-      crawl.mpr("ALERT 9")
-      return pa_alert_item(it, "Stronger armour", EMOJI.STRONGER)
-    else
-      return alert_armour_consider_mutations(it, st)
+    local cur = items.equipped_at(it.subtype())
+    if cur then
+      if get_ego(it) ~= get_ego(cur) then
+        return pa_alert_item(it, "Diff ego", EMOJI.EGO)
+      elseif get_armour_ac(it) > get_armour_ac(cur) then
+        return pa_alert_item(it, "Stronger armour", EMOJI.STRONGER)
+      end
     end
+    return alert_armour_consider_mutations(it)
   end
 end
 
@@ -6594,44 +6604,28 @@ function pa_pickup_armour(it)
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
 
     if cur.artefact then return false end
-    if it.artefact and ac_delta > -5 then 
-      crawl.mpr("PICKUP A1")
-      return true end
+    if it.artefact and ac_delta > -5 then return true end
 
     if get_ego(it) == get_ego(cur) then
-      if ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance then  
-        crawl.mpr("PICKUP A6")
-        return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
-      end
+      return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
     elseif has_ego(it) and not has_ego(cur) then
       return ac_delta >= 0
     end
   elseif is_shield(it) then
     -- Exclusions
     if not it.is_identified then return false end
-    local cur = items.equipped_at("shield")
-    if not cur then return false end
-    if cur.name("base") ~= it.name("base") then return false end
+    local cur = items.equipped_at("offhand")
+    if not is_shield(cur) then return false end
+    if cur.encumbrance ~= it.encumbrance then return false end
 
     -- Pick up SH upgrades, artefacts, and added egos
-    if it.artefact then 
-      crawl.mpr("PICKUP A2")
-      return true end
+    if it.artefact then return true end
     if cur.artefact then return false end
     if cur.branded then
-      if get_ego(cur) == get_ego(it) and it.plus > cur.plus then
-        crawl.mpr("PICKUP A3")
-        return get_ego(cur) == get_ego(it) and it.plus > cur.plus
-      end
+      return get_ego(cur) == get_ego(it) and it.plus > cur.plus
     end
-    if it.branded then 
-      crawl.mpr("PICKUP A4")
-      return true end
-    if it.plus > cur.plus then
-      crawl.mpr("PICKUP A5")
-      return it.plus > cur.plus
-    end
-    return false
+    if it.branded then return true end
+    return it.plus > cur.plus
   else
     if is_orb(it) then return false end
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
@@ -6656,28 +6650,16 @@ function pa_pickup_armour(it)
     if it.artefact then return true end
 
     local cur = items.equipped_at(st)
-    if not cur then 
-      crawl.mpr("PICKUP A8")
-      return true 
-    end
+    if not cur then return true end
     if not it.is_identified then return false end
 
     if it.branded then
       if has_dangerous_brand(it) then return false end
-      if get_ego(it) ~= get_ego(cur) then 
-        crawl.mpr("PICKUP A9")
-        return true 
-      end
-      if get_armour_ac(it) > get_armour_ac(cur) then 
-        crawl.mpr("PICKUP A10")
-        return true 
-      end
+      if get_ego(it) ~= get_ego(cur) then return false end
+      return get_armour_ac(it) > get_armour_ac(cur)
     else
       if has_ego(cur) then return false end
-      if get_armour_ac(it) > get_armour_ac(cur) then 
-        crawl.mpr("PICKUP A11")
-        return true 
-      end
+      return get_armour_ac(it) > get_armour_ac(cur)
     end
   end
 
@@ -6693,7 +6675,6 @@ end
 {
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  crawl.mpr("ALERT 10")
   return pa_alert_item(it, "New orb", EMOJI.ORB)
 end
 
@@ -6713,8 +6694,7 @@ function pa_alert_OTA(it)
 
   remove_from_OTA(it)
   if not do_alert then return false end
-  crawl.mpr("ALERT 11")
-  return pa_alert_item(it, "Found first", EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Rare item:", EMOJI.RARE_ITEM)
 end
 
 ---- Alert for needed resists ----
@@ -6731,7 +6711,6 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  crawl.mpr("ALERT 12")
   return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE)
 end
 
@@ -6853,18 +6832,13 @@ local function should_pickup_weapon(it, cur)
   -- `cur` comes from INV_WEAP
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
-    if it.artefact then 
-      crawl.mpr("PICKUP 6")
-      return true
-    end
+    if it.artefact then return true end
     if cur.artefact then return false end
     if cur.branded and not it.branded then return false end
     if it.branded and it.is_identified and not cur.branded then
       return get_weap_score(it) / cur.score >= TUNING.weap.pickup.add_ego
-    elseif get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001 then
-      crawl.mpr("PICKUP 4")
-      return get_ego(it) == cur.ego and get_weap_score(it) > cur.score + 0.001
     end
+    return get_ego(it) == cur.ego and get_weap_score(it) > cur.score
   elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
@@ -6872,18 +6846,13 @@ local function should_pickup_weapon(it, cur)
     if is_polearm(cur) and not is_polearm(it) then return false end
 
 
-    if it.artefact then
-      crawl.mpr("PICKUP 2")
-      return true end
+    if it.artefact then return true end
     if cur.artefact then return false end
     if it.branded and not it.is_identified then return false end
     
     local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
     
-    if get_weap_score(it) / cur.score >= min_ratio then
-      crawl.mpr("PICKUP 3")
-      return get_weap_score(it) / cur.score >= min_ratio
-    end
+    return get_weap_score(it) / cur.score >= min_ratio
   end
 
   return false
@@ -6910,15 +6879,13 @@ local function alert_first_ranged(it)
   if not it.is_ranged then return false end
 
   if get_hands(it) == 2 then
-    if alerted_first_range_2h == 0 then return false end
+    if alerted_first_ranged_2h == 0 then return false end
     if have_shield() then return false end
-    alerted_first_range_2h = 1
-    crawl.mpr("ALERT 15")
+    alerted_first_ranged_2h = 1
     return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
   else
-    if alerted_first_range_1h ~= 0 then return false end
-    alerted_first_range_1h = 1
-    crawl.mpr("ALERT 16")
+    if alerted_first_ranged_1h ~= 0 then return false end
+    alerted_first_ranged_1h = 1
     return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
   end
 end
@@ -6940,7 +6907,6 @@ local function alert_early_weapons(it)
          it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
           if get_hands(it) == 1 or not have_shield() or
             CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
-              crawl.mpr("ALERT 18")
               return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
           end
       end
@@ -6954,7 +6920,6 @@ local function alert_early_weapons(it)
     if skill_diff >= max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
-      crawl.mpr("ALERT 19")
       return pa_alert_item(it, "Early weapon", EMOJI.WEAPON)
     end
   end
@@ -7039,7 +7004,6 @@ end
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
   if not category then return false end
-  crawl.mpr("ALERT 29")
   return pa_alert_item(it, category)
 end
 
@@ -7077,7 +7041,7 @@ end
 function ready_pa_weapons()
   init_pa_weapons()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and not is_staff(inv) then
+    if is_weapon(inv) and not is_magic_staff(inv) then
       INV_WEAP.add_weapon(inv)
       update_high_scores(inv)
     end

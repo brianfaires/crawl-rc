@@ -1,5 +1,6 @@
 -- Disable built-in force_mores that can't just be -='d
 local FM_DISABLES = {
+  "You kneel at the altar",
   "need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
   "Okawaru offers you a choice",

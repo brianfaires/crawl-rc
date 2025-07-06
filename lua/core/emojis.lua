@@ -42,8 +42,8 @@ function init_emojis()
     EMOJI.SUCCESS = "✅"
 
   else
-    EMOJI.REMIND_IDENTIFY = with_color(COLORS.cyan, "??")
-    EMOJI.EXCLAMATION_2 = with_color(COLORS.lightred, "!!")
+    EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "??")
+    EMOJI.EXCLAMATION_2 = with_color(COLORS.lightmagenta, "!!")
 
     EMOJI.HP_BORDER = with_color(COLORS.white, "|")
     EMOJI.HP_FULL_PIP = with_color(COLORS.green, "+")

@@ -83,8 +83,7 @@ function ready_announce_damage()
 
     -- HP message
     if math.abs(hp_delta) > CONFIG.announce_hp_threshold then
-      -- If no MP msg, include empty line (w 1-space offset to align)
-      msg_tokens[#msg_tokens + 1] = "\n "
+      msg_tokens[#msg_tokens + 1] = "\n"
 
       msg_tokens[#msg_tokens + 1] = create_meter(
         CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
@@ -106,12 +105,10 @@ function ready_announce_damage()
       local summary_tokens = {}
       local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
       if is_force_more_msg then
-        summary_tokens[#summary_tokens + 1] = "\n"
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
         summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
       else
-        summary_tokens[#summary_tokens + 1] = "\n"
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
         summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
         summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION

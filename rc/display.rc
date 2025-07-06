@@ -114,6 +114,7 @@ msc := message_colour
 msc =
 
 msc += $mp:You feel your power returning
+msc += $mp:Done waiting
 
 msc += $danger:roused to righteous anger
 msc += $danger:is roused by the hymn
@@ -485,7 +486,6 @@ msc += $item_dmg:It has a very clean taste
 msc += $item_dmg:You feel your flesh rotting away
 msc += $item_dmg:You are engulfed in dark miasma
 msc += $item_dmg:You feel very guilty
-msc += $item_dmg:Done waiting
 msc += $item_dmg:That really hurt
 msc += $item_dmg:You fall into the water
 msc += $item_dmg:PTOANNNG

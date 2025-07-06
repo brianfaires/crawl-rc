@@ -66,11 +66,11 @@ flash += power of Zot
 
 # Found something important
 more += Found.*the Ecumenical Temple
-more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
 more += byssal rune
+more += Press the corresponding letter to learn more about a god
 flash += timed_portal:.*
 
 # Translocations

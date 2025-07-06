@@ -95,10 +95,8 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - A msg when you hit 6* piety while wearing an amulet of faith
 
 ### [lua/mute-swaps.rc](lua/mute-swaps.lua)
-*(This feature isn't working in 0.33; currently excluded)*
-- Minimizes spam. When multiple messages with " - " show up in a single turn,
-  it mutes all except those for the first item.
-  This mostly applies during identification and item_slot assignment.
+- Minimizes spam. When multiple messages with " - " show up in a single turn, mutes all msgs 
+  except those for the first item. This mostly applies during ID'ing and item_slot assignment.
 
 ### [lua/remind-id.lua](lua/remind-id.lua)
 - When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.

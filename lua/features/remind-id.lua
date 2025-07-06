@@ -51,7 +51,7 @@ function c_message_remind_identify(text, channel)
 
   if text:find("scrolls? of identify") then
     found_scroll_of_id = 1
-    if not (text:find("You drop") or text:find("You read")) then
+    if not (text:find("You drop") or text:find("You read") or text:find("It is a")) then
       remind_unidentified_items(true, false)
     end
   elseif found_scroll_of_id == 0 then
