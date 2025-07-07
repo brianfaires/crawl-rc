@@ -1,122 +1,132 @@
-if loaded_pa_main then return end
-loaded_pa_main = true
-loadfile("crawl-rc/lua/config.lua")
-loadfile("crawl-rc/lua/util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
+local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 
-local pause_pickup_alert_sys = false
-local last_ready_item_alerts_turn = 0
+function init_pa_main()
+  init_pa_data()
 
-function pa_alert_item(it, alert_type)
-  local name = it.name("plain")
-  local qualname = it.name("qual")
-  if not (is_talisman(it) or it.is_identified) then
-    name = "+0 " .. name
-    qualname = "+0 " .. qualname
+  if CONFIG.debug_init then crawl.mpr("Initializing pa-main") end
+
+  loaded_pa_armour = pa_alert_armour and true or false
+  loaded_pa_misc = pa_alert_orb and true or false
+  if pa_alert_weapon then
+    loaded_pa_weapons = true
+    init_pa_weapons()
+  end
+  if CONFIG.debug_init then
+    if loaded_pa_armour then crawl.mpr("pa-armour loaded") end
+    if loaded_pa_misc then crawl.mpr("pa-misc loaded") end
+    if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
   end
 
-  if not pa_previously_alerted(it) and not pa_previously_picked(it) then
-    if is_weapon(it) or is_staff(it) then
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name.." "..get_weapon_info(it))
-	  elseif is_body_armour(it) then
-      local ac, ev = get_armour_info_strings(it)
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name.." "..ac..", "..ev)
-    elseif is_armour(it) then
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name)
-    else
-      pa_show_alert_msg("Item alert, "..alert_type..": ", name)
-    end
 
-    insert_item_and_less_enchanted(pa_items_alerted, it)
-    table.insert(pa_all_level_alerts, qualname)
-  end
+  ---- Autopickup main ----
+  clear_autopickup_funcs()
+  add_autopickup_func(function (it, _)
+    if CACHE.have_orb then return end
+    if not it.is_useless then
+      if already_contains(pa_items_picked, it) then return end
 
-  -- Returns true to make other code more concise; indicates that we tried to alert this item
-  return true
-end
-crawl.setopt("runrest_stop_message += Item alert, ")
-
-------------------- Hooks -------------------
-function c_assign_invletter_item_alerts(it)
-  if is_weapon(it) or is_armour(it) then
-    if not pa_previously_picked(it) then
-      insert_item_and_less_enchanted(pa_items_picked, it)
-      update_high_scores(it)
-      remove_from_pa_single_alert_items(it)
-    end
-  end
-
-  remove_item_and_less_enchanted(pa_items_alerted, it)
-  util.remove(pa_all_level_alerts, it.name("qual"))
-end
-
-function c_message_item_alerts(text, _)
-  if text:find("You start waiting.") or text:find("You start resting.") then
-    pause_pickup_alert_sys = true
-  elseif text:find("Done exploring.") or text:find("Partly explored") then
-    local all_alerts = ""
-    for v in iter.invent_iterator:new(pa_all_level_alerts) do
-      if all_alerts == "" then all_alerts = v
-      else all_alerts = all_alerts..", "..v
+      -- Check for pickup
+      local retVal = false
+      if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
+        if pa_pickup_armour(it) then return true end
+      elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
+        if pa_pickup_weapon(it) then return true end
+      elseif loaded_pa_misc and CONFIG.pickup_staves and is_magic_staff(it) then
+        if pa_pickup_staff(it) then return true end
+      elseif loaded_pa_misc and is_unneeded_ring(it) then
+        return false
       end
     end
 
-    pa_all_level_alerts = {}
-    if all_alerts ~= "" then
-      crawl.mpr("<magenta>Recent alerts: "..all_alerts.."</magenta>")
+    -- Not picking up this item. Now check for alerts.
+    -- If useless and aux armour, check if unless carrying one of the same subtype (ie useless from non-innate mutations)
+    local do_alerts = not it.is_useless
+    local unworn_aux_item = nil
+    if not do_alerts then
+      local st = it.subtype()
+      if not is_armour(it) or is_body_armour(it) or is_shield(it) or is_orb(it) then return end
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        local inv_st = inv.subtype()
+        if inv_st and inv_st == st then
+          do_alerts = true
+          unworn_aux_item = inv
+          break
+        end
+      end
     end
+
+    if do_alerts then
+      if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
+      if already_contains(pa_items_alerted, it) then return end
+
+      if loaded_pa_misc and CONFIG.alert_one_time_items then
+        if pa_alert_OTA(it) then return end
+      end
+
+      if loaded_pa_misc and CONFIG.alert_staff_resists and is_magic_staff(it) then
+        if pa_alert_staff(it) then return end
+      elseif loaded_pa_misc and CONFIG.alert_orbs and is_orb(it) then
+        if pa_alert_orb(it) then return end
+      elseif loaded_pa_misc and CONFIG.alert_talismans and is_talisman(it) then
+        if pa_alert_talisman(it) then return end
+      elseif loaded_pa_armour and CONFIG.alert_armour and is_armour(it) then
+        if pa_alert_armour(it, unworn_aux_item) then return end
+      elseif loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
+        if pa_alert_weapon(it) then return end
+      end
+    end
+  end)
+end
+
+function pa_alert_item(it, alert_type, emoji)
+  local item_desc = get_plussed_name(it, "plain")
+  if is_weapon(it) then
+    item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
+  elseif is_body_armour(it) then
+    local ac, ev = get_armour_info_strings(it)
+    item_desc = table.concat({item_desc, " {", ac, ", ", ev, "}"})
+  end
+  local tokens = {}
+  tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
+  tokens[#tokens+1] = with_color(COLORS.yellow, item_desc .. " ")
+  tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
+
+  pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
+  add_to_pa_table(pa_items_alerted, it)
+  you.stop_activity()
+  return true
+end
+
+------------------- Hooks -------------------
+function c_assign_invletter_item_alerts(it)
+  add_to_pa_table(pa_items_picked, it)
+  local name, _ = get_pa_keys(it)
+  pa_items_alerted[name] = nil
+  util.remove(pa_recent_alerts, get_plussed_name(it))
+  remove_from_OTA(it)
+
+  if is_weapon(it) or is_armour(it) then
+    update_high_scores(it)
+  end
+end
+
+function c_message_item_alerts(text, channel)
+  if channel ~= "plain" then return end
+  if text:find("Done exploring") or text:find("Partly explored") then
+    local tokens = {}
+    for _,v in ipairs(pa_recent_alerts) do
+      tokens[#tokens+1] = "\n  " .. v
+    end
+    if #tokens > 0 then
+      enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
+    end
+    pa_recent_alerts = {}
   end
 end
 
 function ready_item_alerts()
-  if you.turns() == last_ready_item_alerts_turn then return end
-  last_ready_item_alerts_turn = you.turns()
-
-  if not pause_pickup_alert_sys then
-    generate_inv_weap_arrays()
-    update_high_scores(items.equipped_at("armour"))
-  else
-    pause_pickup_alert_sys = false
-  end
+  ready_pa_weapons()
+  update_high_scores(items.equipped_at("armour"))
 end
-
-
----- Autopickup main ----
-add_autopickup_func(function (it, _)
-  if pause_pickup_alert_sys then return end
-
-  -- Check for pickup
-  local retVal = false
-  if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
-    retVal = pa_pickup_armour(it)
-  elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
-    retVal = do_pa_weapon_pickup(it)
-  elseif loaded_pa_misc and CONFIG.pickup_staves and is_staff(it) then
-    retVal = pa_pickup_staff(it)
-  end
-
-  if retVal == true then
-    remove_from_pa_single_alert_items(it)
-    return true
-  end
-
-  if CONFIG.alert_system_enabled then
-    -- Update inventory high scores before alerting; in case XP gained same turn item is dropped
-    ready_item_alerts()
-
-    -- Not picking up this item. Check for alerts
-    if loaded_pa_misc then
-      if CONFIG.alert_one_time_items then pa_alert_rare_item(it) end
-
-      if is_staff(it) and CONFIG.alert_staff_resists then pa_alert_staff(it)
-      elseif is_orb(it) and CONFIG.alert_orbs then pa_alert_orb(it)
-      elseif is_talisman(it) and CONFIG.alert_talismans then pa_alert_talisman(it)
-      end
-    end
-
-    if is_armour(it) and loaded_pa_armour and CONFIG.alert_armour then pa_alert_armour(it)
-    elseif is_weapon(it) and loaded_pa_weapons and CONFIG.alert_weapons then do_pa_weapon_alerts(it)
-    end
-  end
-end)

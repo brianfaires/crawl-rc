@@ -1,5 +1,5 @@
-## Config at top
-lua_file = crawl-rc/lua/config.lua
+## Config at start of file
+lua_file = crawl-rc/lua/core/config.lua
 
 ####### Main options #######
 easy_confirm = all
@@ -7,88 +7,73 @@ show_more = false
 small_more = true
 mouse_input = false
 default_manual_training = true
-drop_disables_autopickup = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
 
-autofight_stop = 66
+autofight_stop = 60
 hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
 
 sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
 drop_filter += useless_item, forbidden
-fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, stone
+fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, dart, stone
 
 
 ####### Explore options #######
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
-view_delay = 80
+view_delay = 100
 show_travel_trail = true
 
-explore_greedy_visit = artefacts,glowing_items,stacks
 explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
 
 
-####### Autopickup exceptions #######
-ae := autopickup_exceptions
-ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
-ae ^= <scrolls? of immolation, <scrolls? of poison
-ae ^= >useless_item, <misc
-ae ^= >staff of.*
-
-# Exclude the 3rd copy of any ring
-{
-  add_autopickup_func(function (it, name)
-    if it.class(true) ~= "jewellery" or it.artefact or you.race() == "Octopode" then return end
-    local st = it.subtype()
-    local found_first = false
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.class(true) == "jewellery" and inv.subtype() == st then
-        if found_first then return false end
-        found_first = true
-      end
-    end
-  end)
-}
-
-
-####### Includes #######
-### Shared files; do not disable
-lua_file = crawl-rc/lua/constants.lua
-lua_file = crawl-rc/lua/util.lua
-
 ### Mostly normal RC options ###
 include = crawl-rc/rc/autoinscribe.rc
+include = crawl-rc/rc/autopickup.rc
 include = crawl-rc/rc/display.rc
 include = crawl-rc/rc/fm-messages.rc
 include = crawl-rc/rc/macros.rc
 include = crawl-rc/rc/runrest.rc
 include = crawl-rc/rc/slot-defaults.rc
 
-### Features ###
-lua_file = crawl-rc/lua/after-shaft.lua
-lua_file = crawl-rc/lua/announce-damage.lua
-lua_file = crawl-rc/lua/color-inscribe.lua
-lua_file = crawl-rc/lua/drop-inferior.lua
-lua_file = crawl-rc/lua/dynamic-options.lua
-lua_file = crawl-rc/lua/exclude-dropped.lua
-lua_file = crawl-rc/lua/fully-rest.lua
-lua_file = crawl-rc/lua/fm-monsters.lua
-lua_file = crawl-rc/lua/inscribe-stats.lua
-lua_file = crawl-rc/lua/misc-alerts.lua
-#lua_file = crawl-rc/lua/mute-swaps.lua
-lua_file = crawl-rc/lua/remind-id.lua
-lua_file = crawl-rc/lua/runrest-features.lua
-lua_file = crawl-rc/lua/safe-stairs.lua
-lua_file = crawl-rc/lua/startup.lua
-lua_file = crawl-rc/lua/weapon-slots.lua
+### buehler.rc core files ###
+lua_file = crawl-rc/lua/core/cache.lua
+lua_file = crawl-rc/lua/core/constants.lua
+lua_file = crawl-rc/lua/core/emojis.lua
+lua_file = crawl-rc/lua/core/persistent-data.lua
+lua_file = crawl-rc/lua/core/util.lua
 
-### Pickup and alert ###
+### Lua feature files ###
+lua_file = crawl-rc/lua/features/after-shaft.lua
+lua_file = crawl-rc/lua/features/announce-damage.lua
+lua_file = crawl-rc/lua/features/color-inscribe.lua
+lua_file = crawl-rc/lua/features/drop-inferior.lua
+lua_file = crawl-rc/lua/features/dynamic-options.lua
+lua_file = crawl-rc/lua/features/exclude-dropped.lua
+lua_file = crawl-rc/lua/features/fully-rest.lua
+lua_file = crawl-rc/lua/features/fm-disable.lua
+lua_file = crawl-rc/lua/features/fm-monsters.lua
+lua_file = crawl-rc/lua/features/inscribe-stats.lua
+lua_file = crawl-rc/lua/features/misc-alerts.lua
+#lua_file = crawl-rc/lua/features/mute-swaps.lua
+lua_file = crawl-rc/lua/features/remind-id.lua
+lua_file = crawl-rc/lua/features/runrest-features.lua
+lua_file = crawl-rc/lua/features/safe-consumables.lua
+lua_file = crawl-rc/lua/features/safe-stairs.lua
+lua_file = crawl-rc/lua/features/startup.lua
+lua_file = crawl-rc/lua/features/weapon-slots.lua
+
+### Pickup and alert - Core files ###
+lua_file = crawl-rc/lua/pickup-alert/pa-main.lua
+lua_file = crawl-rc/lua/pickup-alert/pa-data.lua
+lua_file = crawl-rc/lua/pickup-alert/pa-util.lua
+
+### Pickup and alert - Feature files ###
 lua_file = crawl-rc/lua/pickup-alert/pa-armour.lua
 lua_file = crawl-rc/lua/pickup-alert/pa-misc.lua
 lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
@@ -96,27 +81,14 @@ lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 
 ############## Lua Hook Functions ##############
 {
----------- c_message() -----------
-function c_message(text, channel)
-  if c_message_remind_identify then c_message_remind_identify(text, channel) end
-  if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
-  if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
-  if c_message_fully_recover then c_message_fully_recover(text, channel) end
-  if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
-  if c_message_after_shaft then c_message_after_shaft(text, channel) end
-  if c_message_item_alerts then c_message_item_alerts(text, channel) end
-  if c_message_runrest_features then c_message_runrest_features(text, channel) end
-  if c_message_fm_delayed then c_message_fm_delayed(text, channel) end
-  if c_message_fm_exclude then c_message_fm_exclude(text, channel) end
-end
+local last_dump_turn
+local buehler_rc_active
 
-
----------- c_assign_inv_letter() ----------
 function c_assign_invletter(it)
+  if not buehler_rc_active then return end
   -- Calls with no return values; just triggering on new item pickup
   if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
   if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
-  if c_assign_invletter_exclude_dropped then c_assign_invletter_exclude_dropped(it) end
   if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
   if c_assign_invletter_mute_swaps then c_assign_invletter_mute_swaps(it) end
   if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
@@ -127,47 +99,137 @@ function c_assign_invletter(it)
   if ret_val then return ret_val end
 end
 
+function c_message(text, channel)
+  if not buehler_rc_active then return end
+  if c_message_remind_identify then c_message_remind_identify(text, channel) end
+  if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
+  if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
+  if c_message_fully_recover then c_message_fully_recover(text, channel) end
+  if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
+  if c_message_after_shaft then c_message_after_shaft(text, channel) end
+  if c_message_item_alerts then c_message_item_alerts(text, channel) end
+  if c_message_runrest_features then c_message_runrest_features(text, channel) end
+  if c_message_fm_pack then c_message_fm_pack(text, channel) end
+  if c_message_fm_disable then c_message_fm_disable(text, channel) end
+end
 
--------- ch_stop_running() --------
 function ch_stop_running(kind)
+  if not buehler_rc_active then return end
   if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
 end
 
-
--------- Prompt auto-answers --------
 function c_answer_prompt(prompt)
-  if prompt:find("cheaper one?") then
-    crawl.mpr("Replacing shopping list items", "plain")
+  if not buehler_rc_active then return end
+  if prompt:find("cheaper one?") and CACHE.branch ~= "Bazaar" then
+    crawl.mpr("Replacing shopping list items")
     return true end
-  if prompt == "Die?" then return false end  
+  if prompt == "Die?" then
+    return false
+  end  
 end
 
-
---------- ready() ---------
-local efficient_ready_last_turn = -1
 function ready()
-  if you.turns() ~= efficient_ready_last_turn then
-    efficient_ready_last_turn = you.turns()
+  if not buehler_rc_active then return end
+  if you.turns() == prev_turn then return end
 
-    if ready_force_mores then ready_force_mores() end
-    if ready_fm_delayed then ready_fm_delayed() end
-    if ready_dynamic_options then ready_dynamic_options() end
-    if ready_inscribe_stats then ready_inscribe_stats() end
-    if ready_weapon_slots then ready_weapon_slots() end
-    if ready_safe_consumables then ready_safe_consumables() end
-    if ready_mute_swaps then ready_mute_swaps() end
-    if ready_runrest_features then ready_runrest_features() end
-    if ready_after_shaft then ready_after_shaft() end
-    if ready_fully_recover then ready_fully_recover() end
-    if ready_safe_stairs then ready_safe_stairs() end
-    if ready_announce_damage then ready_announce_damage() end
-    if ready_item_alerts then ready_item_alerts() end
-    if ready_misc_alerts then ready_misc_alerts() end
+  ready_cache()
+  prev_turn = CACHE.turn
+
+  -- Debugging
+  if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
+    dump_persistent_data()
+    last_dump_turn = CACHE.turn
   end
+
+  -- Features (may not be included)
+  if ready_fm_monsters then ready_fm_monsters() end
+  if ready_dynamic_options then ready_dynamic_options() end
+  if ready_inscribe_stats then ready_inscribe_stats() end
+  if ready_weapon_slots then ready_weapon_slots() end
+  if ready_safe_consumables then ready_safe_consumables() end
+  if ready_mute_swaps then ready_mute_swaps() end
+  if ready_runrest_features then ready_runrest_features() end
+  if ready_after_shaft then ready_after_shaft() end
+  if ready_exclude_dropped then ready_exclude_dropped() end
+  if ready_fully_recover then ready_fully_recover() end
+  if ready_safe_stairs then ready_safe_stairs() end
+  if ready_announce_damage then ready_announce_damage() end
+  if ready_item_alerts then ready_item_alerts() end
+  if ready_misc_alerts then ready_misc_alerts() end
+
+  -- Delayed messages
+  mpr_consume_queue()
 end
 
---Startup hygeine
-ready()
-crawl.redraw_screen()
---crawl.call_dlua("crawl.redraw_stats()")
+function init_buehler()
+  buehler_rc_active = false
+  last_dump_turn = -1
+
+  -- Init core modules
+  init_config()
+  init_emojis()
+  init_persistent_data()
+  init_cache()
+  init_util()
+
+  -- Check for unexpected changes
+  local change_detected = false
+  local GAME_CHANGE_MONITORS = {
+    buehler_rc_version = BUEHLER_RC_VERSION,
+    name = you.name(),
+    race = CACHE.race,
+    class = CACHE.class,
+    turn = CACHE.turn
+  } -- GAME_CHANGE_MONITORS (do not remove this comment)
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    create_persistent_data("prev_" .. k, v)
+  end
+
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    local prev = _G["prev_" .. k]
+    if prev ~= v then
+      change_detected = true
+      local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+      crawl.mpr(with_color(COLORS.lightred, msg))
+      crawl.flush_prev_message()
+    end
+  end
+
+  if change_detected and not crawl.yesno("Continue initializing buehler.rc?") then
+    crawl.mpr(with_color(COLORS.lightred, "Aborting initialization. buehler.rc is inactive."))
+    return
+  else
+    buehler_rc_active = true
+    for k, v in pairs(GAME_CHANGE_MONITORS) do
+      _G["prev_" .. k] = v
+    end
+  end
+
+
+  -- Init optional features
+  if init_after_shaft then init_after_shaft() end
+  if init_announce_damage then init_announce_damage() end
+  if init_drop_inferior then init_drop_inferior() end
+  if init_dynamic_options then init_dynamic_options() end
+  if init_exclude_dropped then init_exclude_dropped() end
+  if init_fm_monsters then init_fm_monsters() end
+  if init_fully_rest then init_fully_rest() end
+  if init_misc_alerts then init_misc_alerts() end
+  if init_mute_swaps then init_mute_swaps() end
+  if init_pa_main then init_pa_main() end
+  if init_remind_id then init_remind_id() end
+  if init_runrest_features then init_runrest_features() end
+  if init_safe_stairs then init_safe_stairs() end
+  if init_startup then init_startup() end
+  if init_weapon_slots then init_weapon_slots() end
+
+  -- Success message
+  local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
+  local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
+  crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
+end
+
+-- This is the only line of top-level code, aside from declaring variables (without values)
+-- Done to give confidence in simple re-inits
+init_buehler()
 }

@@ -23,32 +23,34 @@ more += unholy channel is weakening
 more += monster_warning:wielding.*of (distortion|chaos)
 more += monster_warning:carrying a wand of
 more += monster_warning:curare
-flash += The forest starts to sway and rumble
 more += begins to recite a word of recall
-flash += doors? slams? shut
-flash += blows.*on a signal horn
-more += The.*offers itself to Yredelemnul
-flash += Deactivating autopickup
-more += Your?.*suddenly stops? moving
 more += There is.*feeling in your soul
-flash += Its appearance distorts for a moment
 more += wretched star pulses
 more += Strange energies course through your body
 
+flash += doors? slams? shut
+flash += blows.*on a signal horn
+flash += Deactivating autopickup
+flash += Its appearance distorts for a moment
+flash += The.*offers itself to Yredelemnul
+flash += The forest starts to sway and rumble
+flash += Your?.*suddenly stops? moving
+
 # Crowd control
-more += You.*((?<!( too|less)).*confused|(?<!hands )slow.*down|lose consciousness)
-flash += You.*((?<!( too|less)).*blown|knocked back|mesmerised|trampled|stumble backwards|encased)
+more += You.*(?<!( too|less)) confused
+more += You .*(slow.*down|lose consciousness)
 more += infuriates you
-more += hits you.*distortion
-more += Space.*around you
-flash += The pull of.*song draws you forward
-flash += The.*engulfs you in water
+more += hits you .* distortion
+more += Space .* around you
 more += surroundings become eerily quiet
 more += Your limbs are stiffening
-flash += Your magical effects are unraveling
-flash += Your magical defenses are stripped away
+
+flash += You .* (blown|knocked back|mesmerised|trampled|stumble backwards|encased)
+flash += Your magical (effects|defenses) are (unraveling|stripped away)
 flash += You stop (a|de)scending the stairs
 flash += A sentinel's mark forms upon you
+flash += The pull of.*song draws you forward
+flash += engulfs you in water
 
 # Clouds
 more += danger:(calcify|mutagenic)
@@ -56,31 +58,30 @@ more += You.*re engulfed in.*miasma
 flash += Miasma billows from the
 
 # You Screwed Up
-flash += power of Zot
 more += is no longer ready
 more += You really shouldn't be using
 more += You don't have enough magic to cast this spell
 flash += Your body shudders with the violent release
+flash += power of Zot
 
 # Found something important
 more += Found.*the Ecumenical Temple
-flash += timed_portal:.*
-more += walls and floor vibrate strangely for a moment
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
 more += byssal rune
+more += Press the corresponding letter to learn more about a god
+flash += timed_portal:.*
 
 # Translocations
-flash += You blink
-flash += danger:You feel strangely .*stable
 more += danger:sense of stasis
 more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
+flash += You blink
+flash += danger:You feel strangely .*stable
 flash += delayed
 
 # Big damage
-more += MASSIVE DAMAGE!!
 more += your body is wracked
 more += Ouch! That really hurt!
 more += The poison in your body grows stronger
@@ -92,13 +93,13 @@ more += You are.*terribly
 
 # Hit by something
 more += Terrible wounds open
-flash += danger:corrodes you
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
 more += You shudder from the earth-shattering force
-more += You feel.*(?<!less )(haunted|rot|vulnerable)
+more += You feel.*(?<!less)( haunted| rot| vulnerable)
+flash += danger:corrodes you
 flash += Your damage is reflected back at you
-flash += (?<!You.*)reflects
+flash += ^(?!Your? ).*reflects
 
 # FYI
 more += seems mollified
@@ -119,10 +120,8 @@ more += The walls disappear
 more += god:Ashenzari invites you to partake
 # Dithmenos
 more += god:You are shrouded in an aura of darkness
-more += god:You now sometimes bleed smoke
-more += god:You.*no longer.*bleed smoke
-more += god:Your shadow no longer tangibly mimics your actions
-more += god:Your shadow now sometimes tangibly mimics your actions
+more += god:You.*bleed smoke
+more += god:Your shadow.*tangibly mimics your actions
 # Fedhas
 more += god:Fedhas invokes the elements against you
 # Jivya
@@ -152,24 +151,3 @@ more += god:soul is no.* ripe for the taking
 more += god:dark mirror aura disappears
 # Zin
 more += god:will now cure all your mutations
-
-
-{
--- Exclusions; for built-in force_mores that can't just be -='d
-local fm_exclude_messages = {
-  "Okawaru grants you throwing weapons",
-  "Okawaru offers you a choice",
-  "need to enable at least one skill for training",
-} -- fm_exclude_messages (Do not remove this comment)
-
-function c_message_fm_exclude(text, _)
-  for _,v in ipairs(fm_exclude_messages) do
-    if text:find(v) then
-      crawl.enable_more(false)
-      return
-    end
-  end
-
-  crawl.enable_more(true)
-end
-}

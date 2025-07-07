@@ -26,6 +26,7 @@ def write_resume(cur_file, outfile):
   outfile.write(f"\n{comment_char * 2} (Resuming {cur_file.name}) {comment_char*2}\n")
 
 def is_new_file(line, prev_files):
+  # this is an artefact from when I used loadfile() for dependency tracking
   if line.startswith(LOAD_LUA_PREFIX):
     line = line.split('"')[1]
   file_name = line.replace(RC_PREFIX, "").strip()
@@ -82,4 +83,4 @@ with open(INIT_FILE_NAME, 'r') as readfile:
     with open(OUT_FILE_NAME, 'w') as outfile:
         recurse_write_lines(readfile, outfile, files_opened)
 
-input(f"\nDone writing to {OUT_FILE_NAME}\nPress enter to close.")
+print(f"\nDone writing to {OUT_FILE_NAME}")

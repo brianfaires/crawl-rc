@@ -1,3 +1,5 @@
+# See safe-consumables.lua for consumable inscriptions
+
 ai := autoinscribe
 
 # Armour
@@ -10,6 +12,7 @@ ai += swamp dragon scale:rPois
 ai += quicksilver dragon scale:MR+
 ai += shadow dragon scale:Stlth+
 
+
 # Amulets
 ai += amulet of faith:Faith, !P
 
@@ -17,16 +20,13 @@ ai += amulet of faith:Faith, !P
 ai += ring of fire:rF+, rC-
 ai += ring of flight:+Fly
 ai += ring of ice:rC+, rF-
-ai += ring of resist corrosion:rCorr
-ai += ring of poison resistance:rPois
 ai += ring of magical power:MP+9
-ai += ring of positive energy:rN+
+ai += ring of poison resistance:rPois
 ai += ring of protection from cold:rC+
 ai += ring of protection from fire:rF+
-ai += ring of protection from magic:MR+
+ai += ring of positive energy:rN+
+ai += ring of resist corrosion:rCorr
 ai += ring of see invisible:sInv
-ai += ring of stealth:Stlth+
-ai += ring of teleportation:*tele
 ai += ring of wizardry:wiz+
 
 # Staves
@@ -35,36 +35,3 @@ ai += staff of cold:rC+
 ai += staff of death:rN+
 ai += staff of fire:rF+
 ai += staff of poison:rPois
-
-
-{
-  -- Protective consumable inscriptions on everything w/o a built-in prompt
-  -- Updates every turn to:
-    -- Inscribe starting items
-    -- Update inscriptions after ID
-  
-  local no_inscription_needed = {
-    "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
-    "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation"}
-
-  ------------------- Hook -------------------
-  function ready_safe_consumables()
-    -- Remove the default "!r" and "!q" inscriptions after identify
-    for it in iter.invent_iterator:new(items.inventory()) do
-      local it_class = it.class(true)
-      if it_class == "potion" or it_class == "scroll" then
-        local st, _ = it.subtype()
-        if (st == "poison" and you.res_poison() > 0)
-          or (st == "torment" and you.torment_immune())
-          or util.contains(no_inscription_needed, st) then
-            if it.inscription:find("%!r") then it.inscribe(it.inscription:gsub("%!r", ""), false) end
-            if it.inscription:find("%!q") then it.inscribe(it.inscription:gsub("%!q", ""), false) end
-        elseif it_class == "scroll" and not it.inscription:find("!r") then
-            it.inscribe("!r")
-        elseif it_class == "potion" and not it.inscription:find("!q") then
-            it.inscribe("!q")
-        end
-      end
-    end
-  end
-}

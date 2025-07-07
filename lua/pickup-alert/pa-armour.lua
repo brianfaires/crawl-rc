@@ -1,27 +1,43 @@
-if loaded_pa_armour then return end
-loaded_pa_armour = true
-loadfile("crawl-rc/lua/util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-util.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-data.lua")
-loadfile("crawl-rc/lua/pickup-alert/pa-main.lua")
+---- Pickup and Alert features for armour ----
+ARMOUR_ALERT = {
+  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
+  gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
+  diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
 
+  lighter = {
+    gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+  },
+  heavier = {
+    gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
+    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+  }
+} -- ARMOUR_ALERT (do not remove this comment)
+
+local function send_armour_alert(it, alert_type)
+  return pa_alert_item(it, alert_type.msg, alert_type.emoji)
+end
 
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
-local function alert_armour_upgrades(it)
+local function alert_ac_high_score(it)
   if not is_body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
-  if you.xl() > 12 then return false end
-  if (it.artefact or it.branded) and not it.is_identified then return false end
+  if CACHE.s_armour == 0 then return false end
+  if CACHE.xl > 12 then return false end
+  if has_ego(it) and not it.is_identified then return false end
 
-  if armour_high_score == 0 then
-    local cur = get_body_armour()
-    if not cur then return false end
-    armour_high_score = get_armour_ac(cur)
+  if ac_high_score == 0 then
+    local worn = items.equipped_at("armour")
+    if not worn then return false end
+    ac_high_score = get_armour_ac(worn)
   else
     local itAC = get_armour_ac(it)
-    if itAC > armour_high_score then
-      armour_high_score = itAC
-      return pa_alert_item(it, "Strongest armour yet")
+    if itAC > ac_high_score then
+      ac_high_score = itAC
+      return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST)
     end
   end
 
@@ -29,248 +45,138 @@ local function alert_armour_upgrades(it)
 end
 
 
--- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
-function pa_pickup_armour(it)
-  if it.is_useless then return false end
+-- Alerts armour items that didn't autopickup, but are worth consideration
+-- The function assumes pickup occurred; so it doesn't alert things like pure upgrades
+-- Takes `unworn_inv_item`, which is an unworn aux armour item in inventory
+function pa_alert_armour(it, unworn_inv_item)
+  if it.artefact then
+    return it.is_identified and send_armour_alert(it, ARMOUR_ALERT.artefact)
+  end
 
   if is_body_armour(it) then
-    local cur = get_body_armour()
-
-    -- Exclusions
+    local cur = items.equipped_at("armour")
     if not cur then return false end
-    if it.branded and not it.is_identified then return false end
+
+    local encumb_delta = it.encumbrance - cur.encumbrance
+    local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
+    local ev_delta = get_armour_ev(it) - get_armour_ev(cur)
+
+    local it_ego = get_ego(it)
+    local cur_ego = get_ego(cur)
+    local ego_change_type
+    if it_ego == cur_ego then ego_change_type = "same_ego"
+    elseif not it_ego then ego_change_type = "lost_ego"
+    elseif not cur_ego then ego_change_type = "gain_ego"
+    else ego_change_type = "diff_ego"
+    end
+
+    if encumb_delta == 0 then
+      if ego_change_type == "gain_ego" or ego_change_type == "diff_ego" then
+        return send_armour_alert(it, ARMOUR_ALERT[ego_change_type])
+      end
+    elseif encumb_delta < 0 then
+      if (ac_delta > 0) or (ev_delta / -ac_delta > TUNING.armour.lighter[ego_change_type]) then
+        if ego_change_type == "lost_ego" and ev_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= "same_ego" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
+        return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
+      end
+    else -- Heavier armour
+      local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
+      local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
+      if (total_loss < 0) or (ac_delta / total_loss > TUNING.armour.heavier[ego_change_type]) then
+        if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.heavier.min_gain then return false end
+        if ego_change_type ~= "same_ego" and total_loss > TUNING.armour.heavier.max_loss then return false end
+        return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
+      end
+    end
+
+    if alert_ac_high_score(it) then return true end
+  elseif is_shield(it) then
+    local sh = items.equipped_at("offhand")
+    if not is_shield(sh) then return false end
+    if has_ego(it) and get_ego(it) ~= get_ego(sh) then
+      local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
+      return pa_alert_item(it, alert_msg, EMOJI.EGO)
+    elseif get_shield_sh(it) > get_shield_sh(sh) then
+      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER)
+    end
+  else
+    -- Aux armour
+    local cur = items.equipped_at(it.subtype()) or unworn_inv_item
+    if has_ego(it) and get_ego(it) ~= get_ego(cur) then
+      local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
+      return pa_alert_item(it, alert_msg, EMOJI.EGO)
+    elseif get_armour_ac(it) > get_armour_ac(cur) then
+      return pa_alert_item(it, "Increased AC", EMOJI.STRONGER)
+    end
+  end
+end
+
+-- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
+function pa_pickup_armour(it)
+  if has_ego(it) and not it.is_identified then return false end
+  if has_dangerous_brand(it) then return false end
+
+  if is_body_armour(it) then
+    -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
+    local cur = items.equipped_at("armour")
+    if not cur then return false end
     if it.encumbrance > cur.encumbrance then return false end
 
-    -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
 
-    if it.artefact and ac_delta > -5 then return true end
     if cur.artefact then return false end
+    if it.artefact then return ac_delta > -5 end
 
     if get_ego(it) == get_ego(cur) then
-      return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance
+      return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
     elseif has_ego(it) and not has_ego(cur) then
       return ac_delta >= 0
     end
   elseif is_shield(it) then
-    local cur = items.equipped_at("shield")
-
-    -- Exclusions
-    if not cur then return false end
-    if not it.is_identified then return false end
-    if cur.name("base") ~= it.name("base") then return false end
-
     -- Pick up SH upgrades, artefacts, and added egos
-    if it.artefact then return true end
+    local cur = items.equipped_at("offhand")
+    if not is_shield(cur) then return false end
+    if cur.encumbrance ~= it.encumbrance then return false end
+
     if cur.artefact then return false end
+    if it.artefact then return true end
     if cur.branded then
-      if get_ego(cur) == get_ego(it) then return it.plus > cur.plus end
-      return false
+      return get_ego(cur) == get_ego(it) and it.plus > cur.plus
     end
-    if it.branded then return true end
-    return it.plus > cur.plus
+    return it.branded or it.plus > cur.plus
   else
-    if is_orb(it) then return false end
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
-    local st, _ = it.subtype()
+    if is_orb(it) then return false end
+    local st = it.subtype()
 
     -- Skip boots/gloves/helmet if wearing Lear's hauberk
-    local body_arm = get_body_armour()
-    if body_arm and body_arm.name("qual"):find("Lear's hauberk") and st ~= "cloak" then return false end
+    local worn = items.equipped_at("armour")
+    if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then return false end
 
     -- No autopickup if mutation interference
     if st == "gloves" then
-      -- Ignore demonic touch if you're wearing a shield
-      if not items.equipped_at("shield") then
-        if get_mut("demonic touch", true) >= 3 then return false end
-      end
-
+      -- Ignore demonic touch if you're using offhand
+      if get_mut(MUTS.demonic_touch, true) >= 3 and not offhand_is_free() then return false end
       -- Ignore claws if you're wielding a weapon
-      if not items.equipped_at("weapon") then
-        if get_mut("claws", true) > 0 then return false end
-      end
+      if get_mut(MUTS.claws, true) > 0 and not have_weapon() then return false end
     elseif st == "boots" then
-      if get_mut("hooves", true) > 0 then return false end
-      if get_mut("talons", true) > 0 then return false end
+      if get_mut(MUTS.hooves, true) + get_mut(MUTS.talons, true) > 0 then return false end
     elseif it.name("base"):find("helmet") then
-      if get_mut("horns", true) > 0 then return false end
-      if get_mut("beak", true) > 0 then return false end
-      if get_mut("antennae", true) > 0 then return false end
+      if get_mut(MUTS.horns, true) + get_mut(MUTS.beak, true) + get_mut(MUTS.antennae, true) > 0 then return false end
     end
-
-    if it.artefact then return true end
 
     local cur = items.equipped_at(st)
     if not cur then return true end
     if not it.is_identified then return false end
 
-    if it.branded then
-      if get_ego(it) ~= get_ego(cur) then return true end
-      if get_armour_ac(it) > get_armour_ac(cur) then return true end
-    else
-      if cur.branded or cur.artefact then return false end
-      if get_armour_ac(it) > get_armour_ac(cur) then return true end
+    if cur.artefact then return false end
+    if it.artefact then return true end
+    if cur.branded then
+      return get_ego(cur) == get_ego(it) and it.plus > cur.plus
     end
+    return it.branded or it.plus > cur.plus
   end
 
   return false
-end
-
-
----- alert_armour_while_mutated() ----
--- Special cases where you have temporary or innate mutations that interfere with armour
--- Alert when an ego item is usable but interferes with mutation, or unusable due to temp mutations
-local function alert_armour_while_mutated(it, type)
-  local it_plus = if_el(it.plus, it.plus, 0)
-
-  if type == "gloves" then
-    local claws_lvl_innate = get_mut("claws", false)
-    if claws_lvl_innate >= 3 then return end
-
-    local touch_lvl_innate = get_mut("demonic touch", false)
-    if touch_lvl_innate >= 3 then return end
-
-    local claws_lvl = get_mut("claws", true)
-    local touch_lvl = get_mut("demonic touch", true)
-
-    if claws_lvl > 0 or touch_lvl >= 3 then
-      if it.artefact or it.branded then pa_alert_item(it, "Branded gloves") end
-      local cur_gloves = items.equipped_at("gloves")
-      if not cur_gloves or it_plus > cur_gloves.plus then pa_alert_item(it, "Enchanted gloves") end
-    end
-  elseif type == "boots" then
-    local hooves_lvl_innate = get_mut("hooves", false)
-    if hooves_lvl_innate >= 3 then return end
-
-    local talons_lvl_innate = get_mut("talons", false)
-    if talons_lvl_innate >= 3 then return end
-
-    local hooves_lvl = get_mut("hooves", true)
-    local talons_lvl = get_mut("talons", true)
-
-    if hooves_lvl + talons_lvl > 0 then
-      if it.artefact or it.branded then pa_alert_item(it, "Branded boots") end
-      local cur_boots = items.equipped_at("boots")
-      if not cur_boots or it_plus > cur_boots.plus then pa_alert_item(it, "Enchanted boots") end
-    end
-  elseif type == "helmet" then
-    local horns_lvl_innate = get_mut("horns", false)
-    local antennae_lvl_innate = get_mut("antennae", false)
-
-    if it.name("base"):find("helmet") then
-      if horns_lvl_innate > 0 then return end
-      if antennae_lvl_innate > 0 then return end
-      if get_mut("beak", false) > 0 then return end
-    else
-      -- hat/crown/etc
-      if horns_lvl_innate >= 3 then return end
-      if antennae_lvl_innate >= 3 then return end
-    end
-
-    local horns_lvl = get_mut("horns", true)
-    local antennae_lvl = get_mut("antennae", true)
-    local beak_lvl = get_mut("beak", true)
-    if horns_lvl + antennae_lvl + beak_lvl > 0 then
-      if it.artefact or it.branded then pa_alert_item(it, "Branded headgear") end
-      local cur_helmet = items.equipped_at("helmet")
-      if not cur_helmet or it_plus > cur_helmet.plus then pa_alert_item(it, "Enchanted headgear") end
-    end
-  end
-end
-
----- alert_interesting_armour() ----
--- Alerts armour items that did trigger autopickup, but are worth consideration
--- Includes: Artefacts, added or changed egos, and
-  -- body armour AC/EV/Encumbrance changes, defined by following heuristics:
-    -- Lighter: EV/AC >= { 0.6, 0.8, 1.2, 2 } for ego: {gain, diff, same, lose}
-      -- Or: Gain/Diff ego while losing <=4AC
-    -- Heavier: AC/EV >= { 0.4, 0.7, 0.8, 2 } for ego: {gain, diff, same, lose}
-      -- Penalty == 0.75*encumb_change (or 0 if irrelevant)
--- Adjusting the heuristic values up will mean fewer alerts, and down will alert more often.
--- If you want a specific alert to occur more or less often, look for the line of code below with the alert text,
--- Then modify the values in the same line of code.
-local function alert_interesting_armour(it)
-  if it.artefact then return pa_alert_item(it, "Artefact armour") end
-
-  if is_body_armour(it) then
-    local cur = get_body_armour()
-    if not cur then return false end
-
-    if it.encumbrance == cur.encumbrance then
-      if has_ego(it) then
-        if not has_ego(cur) then return pa_alert_item(it, "Gain ego") end
-        if get_ego(it) ~= get_ego(cur) then return pa_alert_item(it, "Diff ego") end
-      end
-      --if get_armour_ac(it) > get_armour_ac(cur) then return pa_alert_item(it, "Stronger armour") end
-
-    elseif it.encumbrance < cur.encumbrance then
-      -- Lighter armour
-      local ev_gain = get_armour_ev(it) - get_armour_ev(cur)
-      local ac_lost = get_armour_ac(cur) - get_armour_ac(it)
-
-      if has_ego(it) then
-        if not cur.artefact and not has_ego(cur) then
-          if ev_gain/ac_lost >= 0.6 or ac_lost <= 4 then return pa_alert_item(it, "Gain ego (Lighter armour)") end
-        elseif get_ego(it) ~= get_ego(cur) then
-          if ev_gain/ac_lost >= 0.8 or ac_lost <= 4 then return pa_alert_item(it, "Diff ego (Lighter armour)") end
-        else
-          if ev_gain/ac_lost >= 1.2 then return pa_alert_item(it, "Lighter armour (Same ego)") end
-        end
-      else
-        if cur.artefact or has_ego(cur) then
-          if ev_gain/ac_lost >= 2 and ev_gain >= 3 then return pa_alert_item(it, "Lighter armour (Lost ego)") end
-        else
-          -- Neither has ego
-          if ev_gain/ac_lost >= 1.2 then return pa_alert_item(it, "Lighter armour") end
-        end
-      end
-    else
-      -- Heavier armour
-      local ac_gain = get_armour_ac(it) - get_armour_ac(cur)
-      local ev_lost = get_armour_ev(cur) - get_armour_ev(it)
-      local encumb_penalty = 0
-      if you.skill("Spellcasting") + you.skill("Ranged Weapons") > 1 then
-        encumb_penalty = (it.encumbrance - cur.encumbrance)*0.75
-      end
-      local total_loss = ev_lost + encumb_penalty
-
-      if has_ego(it) then
-        if not cur.artefact and not has_ego(cur) then
-          if ac_gain/total_loss >= 0.4 or total_loss <= 6 then return pa_alert_item(it, "Gain ego (Heavier armour)") end
-        elseif get_ego(it) ~= get_ego(cur) then
-          if ac_gain/total_loss >= 0.7 or total_loss <= 6 then return pa_alert_item(it, "Diff ego (Heavier armour)") end
-        else
-          if ac_gain/total_loss >= 0.8 then return pa_alert_item(it, "Heavier armour (Same ego)") end
-        end
-      else
-        if cur.artefact or has_ego(cur) then
-          if ac_gain/total_loss >= 2 and ac_gain >= 3 then return pa_alert_item(it, "Heavier armour (Lost ego)") end
-        else
-          -- Neither has ego
-          if ac_gain/total_loss >= 0.8 then return pa_alert_item(it, "Heavier armour") end
-        end
-      end
-    end
-  elseif is_shield(it) then
-    --if it.is_useless then return end
-    local cur = items.equipped_at("shield")
-    if not cur then return false end
-    if it.branded and it.ego() ~= cur.ego() then
-      return pa_alert_item(it, "New ego")
-    end
-  else
-    -- Aux armour
-    local st, _ = it.subtype()
-    local cur = items.equipped_at(st)
-    if not cur then return
-    elseif get_armour_ac(it) > get_armour_ac(cur) then pa_alert_item(it, "Stronger armour")
-    else alert_armour_while_mutated(it, st)
-    end
-  end
-end
-
-function pa_alert_armour(it)
-  if it.is_useless then return end
-  alert_armour_upgrades(it)
-  if it.is_identified or not has_ego(it) then alert_interesting_armour(it) end
 end
