@@ -5199,9 +5199,6 @@ end
 ############################### End lua/features/misc-alerts.lua ###############################
 ##########################################################################################
 
-## (Resuming init.txt) ##
-#lua_file = crawl-rc/lua/features/mute-swaps.lua
-
 ################################### Begin lua/features/remind-id.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
@@ -6991,7 +6988,6 @@ function c_assign_invletter(it)
   if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
   if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
   if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
-  if c_assign_invletter_mute_swaps then c_assign_invletter_mute_swaps(it) end
   if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
 
   -- Calls with possible return values
@@ -7006,7 +7002,6 @@ function c_message(text, channel)
   if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
   if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
   if c_message_fully_recover then c_message_fully_recover(text, channel) end
-  if c_message_mute_swaps then c_message_mute_swaps(text, channel) end
   if c_message_after_shaft then c_message_after_shaft(text, channel) end
   if c_message_item_alerts then c_message_item_alerts(text, channel) end
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
@@ -7048,7 +7043,6 @@ function ready()
   if ready_inscribe_stats then ready_inscribe_stats() end
   if ready_weapon_slots then ready_weapon_slots() end
   if ready_safe_consumables then ready_safe_consumables() end
-  if ready_mute_swaps then ready_mute_swaps() end
   if ready_runrest_features then ready_runrest_features() end
   if ready_after_shaft then ready_after_shaft() end
   if ready_exclude_dropped then ready_exclude_dropped() end
@@ -7116,7 +7110,6 @@ function init_buehler()
   if init_fm_monsters then init_fm_monsters() end
   if init_fully_rest then init_fully_rest() end
   if init_misc_alerts then init_misc_alerts() end
-  if init_mute_swaps then init_mute_swaps() end
   if init_pa_main then init_pa_main() end
   if init_remind_id then init_remind_id() end
   if init_runrest_features then init_runrest_features() end

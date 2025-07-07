@@ -94,10 +94,6 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - A one-time force-more when dropping below 50% HP (configurable).
 - A msg when you hit 6* piety while wearing an amulet of faith
 
-### [lua/mute-swaps.rc](lua/mute-swaps.lua)
-- Minimizes spam. When multiple messages with " - " show up in a single turn, mutes all msgs 
-  except those for the first item. This mostly applies during ID'ing and item_slot assignment.
-
 ### [lua/remind-id.lua](lua/remind-id.lua)
 - When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
 - Before finding scroll of ID, stops travel when you get a larger stack of un-ID'd scrolls/pots.
@@ -206,7 +202,7 @@ multiple times per turn.
 ### TODO - requiring crawl PR
 1. Wait for allies to heal (needs crawl PR?)
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
-1. Fix mute_swaps.lua (needs crawl PR? - to intercept msgs)
+1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
 
 ## TODO - won't do
 1. remove "~~DROP_ME" when dropping
