@@ -6421,19 +6421,17 @@ end
 ---- Pickup and Alert features for armour ----
 ARMOUR_ALERT = {
   artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-  stronger = { msg = "32 Stronger armour", emoji = EMOJI.STRONGER },
-  lighter = { msg = "33 Lighter armour", emoji = EMOJI.LIGHTER },
-  gain_ego = { msg = "34 Gain ego", emoji = EMOJI.EGO },
+  gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
   diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
 
   lighter = {
-    gain_ego = { msg = "36 Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "37 Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "38 Lighter armour", emoji = EMOJI.LIGHTER },
-    lost_ego = { msg = "39 Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+    gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+    diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
   },
   heavier = {
-    gain_ego = { msg = "40 Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+    gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
     diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
     same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
     lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
@@ -6471,7 +6469,6 @@ end
 -- The function assumes pickup occurred; so it doesn't alert things like pure upgrades
 -- Takes `unworn_inv_item`, which is an unworn aux armour item in inventory
 function pa_alert_armour(it, unworn_inv_item)
-  if alert_ac_high_score(it) then return true end
   if it.artefact then
     return it.is_identified and send_armour_alert(it, ARMOUR_ALERT.artefact)
   end
@@ -6498,7 +6495,7 @@ function pa_alert_armour(it, unworn_inv_item)
         return send_armour_alert(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
-      if ev_delta / -ac_delta > TUNING.armour.lighter[ego_change_type] then
+      if (ac_delta > 0) or (ev_delta / -ac_delta > TUNING.armour.lighter[ego_change_type]) then
         if ego_change_type == "lost_ego" and ev_delta < TUNING.armour.lighter.min_gain then return false end
         if ego_change_type ~= "same_ego" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
@@ -6506,12 +6503,14 @@ function pa_alert_armour(it, unworn_inv_item)
     else -- Heavier armour
       local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
-      if ac_delta / total_loss > TUNING.armour.heavier[ego_change_type] then
-        if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.lighter.min_gain then return false end
-        if ego_change_type ~= "same_ego" and total_loss > TUNING.armour.lighter.max_loss then return false end
+      if (total_loss < 0) or (ac_delta / total_loss > TUNING.armour.heavier[ego_change_type]) then
+        if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.heavier.min_gain then return false end
+        if ego_change_type ~= "same_ego" and total_loss > TUNING.armour.heavier.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
       end
     end
+
+    if alert_ac_high_score(it) then return true end
   elseif is_shield(it) then
     local sh = items.equipped_at("offhand")
     if not is_shield(sh) then return false end
