@@ -17,7 +17,7 @@ local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
+      if CACHE.god == "Uskayaw" then return end
       mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
       alerted_max_piety = 1
     end
