@@ -4,6 +4,11 @@ function init_after_shaft()
   create_persistent_data("as_shaft_depth", 0)
   create_persistent_data("as_shaft_branch", "NA")
 
+  if CACHE.turn == 0 and CACHE.class == "Delver" then
+    as_shaft_depth = 1
+    as_shaft_branch = CACHE.branch
+  end
+
   if as_shaft_depth ~= 0 then
     crawl.setopt("explore_stop += stairs")
   else
