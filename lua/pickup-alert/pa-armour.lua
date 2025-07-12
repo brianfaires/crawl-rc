@@ -103,6 +103,7 @@ function pa_alert_armour(it, unworn_inv_item)
   else
     -- Aux armour
     local cur = items.equipped_at(it.subtype()) or unworn_inv_item
+    if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION) end
     if has_ego(it) and get_ego(it) ~= get_ego(cur) then
       local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
       return pa_alert_item(it, alert_msg, EMOJI.EGO)
