@@ -3768,6 +3768,17 @@ end
 
 
 --- crawl.mpr enhancements ---
+function mpr_yesno(text, capital_only)
+  local suffix = capital_only and " (Y/n)" or " (y/n)"
+  crawl.formatted_mpr(text .. suffix, "prompt")
+  local res = crawl.getch()
+  if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then
+    return true
+  end
+  crawl.mpr("Okay, then.")
+  return false
+end
+
 -- Sends a message that is displayed at end of turn
 function enqueue_mpr(text, channel)
   delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = false }
@@ -5465,14 +5476,14 @@ local function check_new_location(key)
 
   local turn_diff = CACHE.turn - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
-    if not crawl.yesno("Really go right back? (y/n)", true) then
+    if not mpr_yesno("Really go right back?") then
       crawl.mpr("Okay, then.")
       return
     end
   elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
     -- V5 warning idea by rypofalem --
     if feature:find("down") or feature:find("shaft") then
-      if not crawl.yesno("Really go to Vaults:5? (y/n)", true) then
+      if not mpr_yesno("Really go to Vaults:5?") then
         crawl.mpr("Okay, then.")
         return
       end
@@ -7120,7 +7131,7 @@ function init_buehler(full_reset)
     end
   end
 
-  if change_detected and not crawl.yesno("Continue initializing buehler.rc?") then
+  if change_detected and not mpr_yesno("Initialize buehler.rc anyway?", true) then
     crawl.mpr(with_color(COLORS.lightred, "Aborting initialization. buehler.rc is inactive."))
     return
   else
@@ -7156,8 +7167,11 @@ function init_buehler(full_reset)
     local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
     crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
   else
-    local fail_message = string.format("Initialization of buehler.rc v%s failed! (See CONFIG.debug_init)", prev_buehler_rc_version)
-    crawl.mpr("\n" .. with_color(COLORS.lightred, fail_message))
+    local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
+    crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
+    if mpr_yesno("Dump chk_lua_save[]?") then
+      crawl.mpr(dump_chk_lua_save())
+    end
   end
 
   successful_data_reload = true

@@ -192,7 +192,7 @@ function init_buehler(full_reset)
     end
   end
 
-  if change_detected and not crawl.yesno("Continue initializing buehler.rc?") then
+  if change_detected and not mpr_yesno("Initialize buehler.rc anyway?", true) then
     crawl.mpr(with_color(COLORS.lightred, "Aborting initialization. buehler.rc is inactive."))
     return
   else
@@ -228,8 +228,11 @@ function init_buehler(full_reset)
     local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
     crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
   else
-    local fail_message = string.format("Initialization of buehler.rc v%s failed! (See CONFIG.debug_init)", prev_buehler_rc_version)
-    crawl.mpr("\n" .. with_color(COLORS.lightred, fail_message))
+    local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
+    crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
+    if mpr_yesno("Dump chk_lua_save[]?") then
+      crawl.mpr(dump_chk_lua_save())
+    end
   end
 
   successful_data_reload = true

@@ -10,14 +10,14 @@ local function check_new_location(key)
 
   local turn_diff = CACHE.turn - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
-    if not crawl.yesno("Really go right back? (y/n)", true) then
+    if not mpr_yesno("Really go right back?") then
       crawl.mpr("Okay, then.")
       return
     end
   elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
     -- V5 warning idea by rypofalem --
     if feature:find("down") or feature:find("shaft") then
-      if not crawl.yesno("Really go to Vaults:5? (y/n)", true) then
+      if not mpr_yesno("Really go to Vaults:5?") then
         crawl.mpr("Okay, then.")
         return
       end

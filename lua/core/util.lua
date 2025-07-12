@@ -70,6 +70,17 @@ end
 
 
 --- crawl.mpr enhancements ---
+function mpr_yesno(text, capital_only)
+  local suffix = capital_only and " (Y/n)" or " (y/n)"
+  crawl.formatted_mpr(text .. suffix, "prompt")
+  local res = crawl.getch()
+  if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then
+    return true
+  end
+  crawl.mpr("Okay, then.")
+  return false
+end
+
 -- Sends a message that is displayed at end of turn
 function enqueue_mpr(text, channel)
   delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = false }
