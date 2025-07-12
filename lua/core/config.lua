@@ -116,7 +116,7 @@ function init_config()
 
     -- Alerts for good early weapons of all types
     early = {
-      xl = 8, -- Alert early weapons if XL <= `xl`
+      xl = 7, -- Alert early weapons if XL <= `xl`
       skill = { factor = 1.5, offset = 2.0 }, -- Skip weapons with skill diff > XL * factor + offset
       branded_min_plus = 4 -- Alert branded weapons with plus >= `branded_min_plus`
     },

@@ -100,7 +100,7 @@ function update_high_scores(it)
     if is_polearm(it) and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Strongest 2h polearm" end
+        if not have_shield() and not ret_val then ret_val = "Strongest polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_1h_high_score then
