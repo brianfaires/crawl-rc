@@ -157,13 +157,14 @@ function ready()
   mpr_consume_queue()
 end
 
-function init_buehler()
+function init_buehler(full_reset)
   buehler_rc_active = false
   last_dump_turn = -1
 
   -- Init core modules
   init_config()
   init_emojis()
+  if full_reset then clear_persistent_data() end
   init_persistent_data()
   init_cache()
   init_util()
@@ -218,10 +219,20 @@ function init_buehler()
   if init_startup then init_startup() end
   if init_weapon_slots then init_weapon_slots() end
 
+  -- Set a final persistent var to detect full data reload
+  create_persistent_data("successful_data_reload", false)
+
   -- Success message
-  local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-  local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
-  crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
+  if successful_data_reload or change_detected or CACHE.turn == 0 then
+    local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
+    local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
+    crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
+  else
+    local fail_message = string.format("Initialization of buehler.rc v%s failed! (See CONFIG.debug_init)", prev_buehler_rc_version)
+    crawl.mpr("\n" .. with_color(COLORS.lightred, fail_message))
+  end
+
+  successful_data_reload = true
 end
 
 -- This is the only line of top-level code, aside from declaring variables (without values)

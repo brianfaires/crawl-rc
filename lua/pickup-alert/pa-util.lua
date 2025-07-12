@@ -85,15 +85,19 @@ end
 
 -- Used for data tables
 function get_pa_keys(it, name_type)
-  if is_talisman(it) or is_orb(it) then return it.name(), 0 end
-  local name = it.name(name_type or "base")
+  if is_talisman(it) or is_orb(it) then
+    return it.name():gsub("\"", ""), 0
+  end
+  local name = it.name(name_type or "base"):gsub("\"", "")
   local value = tonumber(name:sub(1, 3))
   if not value then return name, 0 end
   return util.trim(name:sub(4)), value
 end
 
 function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then return it.name() end
+  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then
+    return it.name():gsub("\"", ""), 0
+  end
   local name, value = get_pa_keys(it, name_type)
   if value >= 0 then value = "+" .. value end
   return value .. " " .. name

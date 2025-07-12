@@ -198,13 +198,21 @@ end
 
 
 --- Debugging ---
-function dump_inventory(verbose)
-  local tokens = { "\n---INVENTORY---"}
+function dump_inventory(item_info)
+  local tokens = { "\n\n---INVENTORY---"}
   for inv in iter.invent_iterator:new(items.inventory()) do
     tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
-    if verbose then
+    if item_info then
       tokens[#tokens+1] = string.format("    Base: %s Class: %s, Subtype: %s", inv.name("base"), inv.class(true), inv.subtype())
     end
+  end
+  return table.concat(tokens, "\n")
+end
+
+function dump_chk_lua_save()
+  local tokens = { "\n\n---CHK_LUA_SAVE---" }
+  for _, func in ipairs(chk_lua_save) do
+    tokens[#tokens+1] = util.trim(func())
   end
   return table.concat(tokens, "\n")
 end
@@ -213,8 +221,13 @@ function debug_dump(verbose, skip_char_dump)
   local msg = ""
   if dump_persistent_data then msg = msg .. dump_persistent_data() end
   if dump_cache then msg = msg .. dump_cache() end
-  msg = msg .. dump_inventory(verbose)
+  if verbose then
+    msg = msg .. dump_inventory()
+    msg = msg .. dump_chk_lua_save()
+  end
+
   crawl.mpr(with_color("white", msg))
+
   if not skip_char_dump then
     crawl.take_note(msg)
     crawl.dump_char()
