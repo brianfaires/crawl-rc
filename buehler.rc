@@ -121,7 +121,7 @@ function init_config()
 
     -- Alerts for good early weapons of all types
     early = {
-      xl = 8, -- Alert early weapons if XL <= `xl`
+      xl = 7, -- Alert early weapons if XL <= `xl`
       skill = { factor = 1.5, offset = 2.0 }, -- Skip weapons with skill diff > XL * factor + offset
       branded_min_plus = 4 -- Alert branded weapons with plus >= `branded_min_plus`
     },
@@ -3103,11 +3103,6 @@ ignore -= You feel yourself come back to life
 ignore ^= unholy channel is weakening
 ignore ^= magical contamination.*faded
 ignore ^= our foxfire dissipates
-stop ^= transformation is almost over
-stop ^= transformation has ended
-stop ^= revert to a slightly less stony form\.
-stop ^= revert to your normal fleshy form
-stop ^= feel yourself come back to life
 stop ^= unholy channel expires
 stop ^= are starting to lose your buoyancy
 stop ^= feel.*sluggish
@@ -3139,6 +3134,9 @@ stop += god:Ru believes you are ready to make a new sacrifice
 ignore ^= emerges from the mists of memory
 # Wu Jian Council
 ignore += heavenly storm settles
+# Yredelemnul
+ignore += offer up the Black Torch's flame
+ignore += mindless puppets stay behind to rot
 
 ############################### End rc/runrest.rc ###############################
 ##########################################################################################
@@ -3514,11 +3512,8 @@ function init_emojis()
     EMOJI.RANGED = "🏹"
     EMOJI.POLEARM = "🔱"
     EMOJI.TWO_HANDED = "✋🤚"
+    EMOJI.CAUTION = "⚠️"
 
-    --EMOJI.ARMOUR = "🛡️"
-    EMOJI.HAT = "🧢"
-    EMOJI.GLOVES = "🧤"
-    EMOJI.BOOTS = "🥾"
     EMOJI.STAFF_RESISTANCE = "🔥"
 
     EMOJI.ACCURACY = "🎯"
@@ -3544,7 +3539,8 @@ function init_emojis()
     EMOJI.SUCCESS = "✅"
 
   else
-    EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "??")
+    EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "?")
+    EMOJI.EXCLAMATION = with_color(COLORS.lightmagenta, "!")
     EMOJI.EXCLAMATION_2 = with_color(COLORS.lightmagenta, "!!")
 
     EMOJI.HP_BORDER = with_color(COLORS.white, "|")
@@ -3940,6 +3936,11 @@ function init_after_shaft()
 
   create_persistent_data("as_shaft_depth", 0)
   create_persistent_data("as_shaft_branch", "NA")
+
+  if CACHE.turn == 0 and CACHE.class == "Delver" then
+    as_shaft_depth = 1
+    as_shaft_branch = CACHE.branch
+  end
 
   if as_shaft_depth ~= 0 then
     crawl.setopt("explore_stop += stairs")
@@ -4382,7 +4383,7 @@ end
 function init_dynamic_options()
   if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
 
-  dynopt_cur_god = CACHE.god
+  dynopt_cur_god = "No God"
   ignoring_spellcasting = false
   ignoring_spellbooks = false
   early_xl_alerts_on = false
@@ -4391,6 +4392,7 @@ function init_dynamic_options()
 
   set_race_options()
   set_class_options()
+  set_god_options()
 end
 
 
@@ -5150,7 +5152,7 @@ local function alert_remove_faith()
   if alerted_max_piety == 0 and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
+      if CACHE.god == "Uskayaw" then return end
       mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
       alerted_max_piety = 1
     end
@@ -5224,11 +5226,12 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
   end
 
   if have_scroll and have_unidentified then
-    mpr_with_stop(
+    enqueue_mpr_opt_more(false,
       EMOJI.REMIND_IDENTIFY ..
       with_color(COLORS.magenta, " You have something to identify. ") ..
       EMOJI.REMIND_IDENTIFY
     )
+    you.stop_activity()
   end
 end
 
@@ -5723,6 +5726,7 @@ function init_pa_main()
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
     if CACHE.have_orb then return end
+    if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
       if already_contains(pa_items_picked, it) then return end
 
@@ -5772,8 +5776,10 @@ function init_pa_main()
         if pa_alert_talisman(it) then return end
       elseif loaded_pa_armour and CONFIG.alert_armour and is_armour(it) then
         if pa_alert_armour(it, unworn_aux_item) then return end
-      elseif loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
-        if pa_alert_weapon(it) then return end
+      else
+        if loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
+          if pa_alert_weapon(it) then return end
+        end
       end
     end
   end)
@@ -5782,8 +5788,10 @@ end
 function pa_alert_item(it, alert_type, emoji)
   local item_desc = get_plussed_name(it, "plain")
   if is_weapon(it) then
+    update_high_scores(it)
     item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
   elseif is_body_armour(it) then
+    update_high_scores(it)
     local ac, ev = get_armour_info_strings(it)
     item_desc = table.concat({item_desc, " {", ac, ", ", ev, "}"})
   end
@@ -5941,7 +5949,7 @@ function update_high_scores(it)
     if is_polearm(it) and you_have_allies() then
       if score > polearm_high_score then
         polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Strongest 2h polearm" end
+        if not have_shield() and not ret_val then ret_val = "Strongest polearm" end
       end
 
       if get_hands(it) == 1 and score > polearm_1h_high_score then
@@ -6306,6 +6314,10 @@ function get_weap_dmg(it, dmg_type)
 end
 
 function get_weap_score(it, no_brand_bonus)
+  if it.dps and it.acc then
+    -- Handle cached /  high-score tuples
+    return it.dps + it.acc * TUNING.weap.pickup.accuracy_weight
+  end
   local it_plus = it.plus or 0
   local dmg_type = no_brand_bonus and DMG_TYPE.unbranded or DMG_TYPE.scoring
   return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * TUNING.weap.pickup.accuracy_weight
@@ -6520,6 +6532,7 @@ function pa_alert_armour(it, unworn_inv_item)
   else
     -- Aux armour
     local cur = items.equipped_at(it.subtype()) or unworn_inv_item
+    if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION) end
     if has_ego(it) and get_ego(it) ~= get_ego(cur) then
       local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
       return pa_alert_item(it, alert_msg, EMOJI.EGO)
@@ -6866,7 +6879,7 @@ local function alert_interesting_weapon(it, cur)
 
   local inv_best = INV_WEAP.max_dps[INV_WEAP.get_key(it)]
   local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
-  local best_score = math.max(cur.score, inv_best and inv_best.score or 0)
+  local best_score = math.max(cur.score, inv_best and get_weap_score(inv_best) or 0)
 
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
