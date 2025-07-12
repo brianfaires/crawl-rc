@@ -173,7 +173,7 @@ local function alert_interesting_weapon(it, cur)
 
   local inv_best = INV_WEAP.max_dps[INV_WEAP.get_key(it)]
   local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
-  local best_score = math.max(cur.score, inv_best and inv_best.score or 0)
+  local best_score = math.max(cur.score, inv_best and get_weap_score(inv_best) or 0)
 
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score

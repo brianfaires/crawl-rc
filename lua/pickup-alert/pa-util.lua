@@ -343,6 +343,10 @@ function get_weap_dmg(it, dmg_type)
 end
 
 function get_weap_score(it, no_brand_bonus)
+  if it.dps and it.acc then
+    -- Handle cached /  high-score tuples
+    return it.dps + it.acc * TUNING.weap.pickup.accuracy_weight
+  end
   local it_plus = it.plus or 0
   local dmg_type = no_brand_bonus and DMG_TYPE.unbranded or DMG_TYPE.scoring
   return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * TUNING.weap.pickup.accuracy_weight
