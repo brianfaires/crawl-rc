@@ -137,7 +137,7 @@ end
 function init_dynamic_options()
   if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
 
-  dynopt_cur_god = CACHE.god
+  dynopt_cur_god = "No God"
   ignoring_spellcasting = false
   ignoring_spellbooks = false
   early_xl_alerts_on = false
@@ -146,6 +146,7 @@ function init_dynamic_options()
 
   set_race_options()
   set_class_options()
+  set_god_options()
 end
 
 
