@@ -20,11 +20,12 @@ local function remind_unidentified_items(have_scroll, have_unidentified)
   end
 
   if have_scroll and have_unidentified then
-    mpr_with_stop(
+    enqueue_mpr_opt_more(false,
       EMOJI.REMIND_IDENTIFY ..
       with_color(COLORS.magenta, " You have something to identify. ") ..
       EMOJI.REMIND_IDENTIFY
     )
+    you.stop_activity()
   end
 end
 

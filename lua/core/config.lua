@@ -156,5 +156,15 @@ function init_config()
     }
   }
 
+
+  ALERT_COLORS = {
+    weapon = { desc = COLORS.magenta, item = COLORS.yellow, stats = COLORS.lightgrey },
+    body_arm = { desc = COLORS.blue, item = COLORS.lightcyan, stats = COLORS.lightgrey },
+    aux_arm = { desc = COLORS.lightblue, item = COLORS.yellow },
+    orb = { desc = COLORS.green, item = COLORS.lightgreen },
+    talisman = { desc = COLORS.green, item = COLORS.lightgreen },
+    staff = { desc = COLORS.brown, item = COLORS.white },
+  }
+
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end

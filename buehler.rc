@@ -161,6 +161,16 @@ function init_config()
     }
   }
 
+
+  ALERT_COLORS = {
+    weapon = { desc = COLORS.magenta, item = COLORS.yellow, stats = COLORS.lightgrey },
+    body_arm = { desc = COLORS.blue, item = COLORS.lightcyan, stats = COLORS.lightgrey },
+    aux_arm = { desc = COLORS.lightblue, item = COLORS.yellow },
+    orb = { desc = COLORS.green, item = COLORS.lightgreen },
+    talisman = { desc = COLORS.green, item = COLORS.lightgreen },
+    staff = { desc = COLORS.brown, item = COLORS.white },
+  }
+
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end
 
@@ -5810,19 +5820,30 @@ end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_desc = get_plussed_name(it, "plain")
+  local alert_colors
   if is_weapon(it) then
+    alert_colors = ALERT_COLORS.weapon
     update_high_scores(it)
-    item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
+    item_desc = item_desc .. with_color(ALERT_COLORS.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
   elseif is_body_armour(it) then
+    alert_colors = ALERT_COLORS.body_arm
     update_high_scores(it)
     local ac, ev = get_armour_info_strings(it)
-    item_desc = table.concat({item_desc, " {", ac, ", ", ev, "}"})
+    item_desc = item_desc .. with_color(ALERT_COLORS.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
+  elseif is_armour(it) then
+    alert_colors = ALERT_COLORS.aux_arm
+  elseif is_orb(it) then
+    alert_colors = ALERT_COLORS.orb
+  elseif is_talisman(it) then
+    alert_colors = ALERT_COLORS.talisman
+  elseif is_magic_staff(it) then
+    alert_colors = ALERT_COLORS.staff
   end
   local tokens = {}
   tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
-  tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
-  tokens[#tokens+1] = with_color(COLORS.yellow, item_desc .. " ")
-  tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  tokens[#tokens+1] = with_color(alert_colors.desc, " " .. alert_type .. ": ")
+  tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
+  tokens[#tokens+1] = tokens[1]
   enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
   pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
@@ -7169,6 +7190,7 @@ function init_buehler(full_reset)
   else
     local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
     crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
+    crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or enable CONFIG.debug_init for more info."))
     if mpr_yesno("Dump chk_lua_save[]?") then
       crawl.mpr(dump_chk_lua_save())
     end

@@ -83,19 +83,30 @@ end
 
 function pa_alert_item(it, alert_type, emoji)
   local item_desc = get_plussed_name(it, "plain")
+  local alert_colors
   if is_weapon(it) then
+    alert_colors = ALERT_COLORS.weapon
     update_high_scores(it)
-    item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
+    item_desc = item_desc .. with_color(ALERT_COLORS.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
   elseif is_body_armour(it) then
+    alert_colors = ALERT_COLORS.body_arm
     update_high_scores(it)
     local ac, ev = get_armour_info_strings(it)
-    item_desc = table.concat({item_desc, " {", ac, ", ", ev, "}"})
+    item_desc = item_desc .. with_color(ALERT_COLORS.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
+  elseif is_armour(it) then
+    alert_colors = ALERT_COLORS.aux_arm
+  elseif is_orb(it) then
+    alert_colors = ALERT_COLORS.orb
+  elseif is_talisman(it) then
+    alert_colors = ALERT_COLORS.talisman
+  elseif is_magic_staff(it) then
+    alert_colors = ALERT_COLORS.staff
   end
   local tokens = {}
   tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
-  tokens[#tokens+1] = with_color(COLORS.magenta, " " .. alert_type .. ": ")
-  tokens[#tokens+1] = with_color(COLORS.yellow, item_desc .. " ")
-  tokens[#tokens+1] = emoji and emoji or with_color(COLORS.cyan, "----")
+  tokens[#tokens+1] = with_color(alert_colors.desc, " " .. alert_type .. ": ")
+  tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
+  tokens[#tokens+1] = tokens[1]
   enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
 
   pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
