@@ -22,6 +22,7 @@ function init_pa_main()
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
     if CACHE.have_orb then return end
+    if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
       if already_contains(pa_items_picked, it) then return end
 
@@ -71,8 +72,10 @@ function init_pa_main()
         if pa_alert_talisman(it) then return end
       elseif loaded_pa_armour and CONFIG.alert_armour and is_armour(it) then
         if pa_alert_armour(it, unworn_aux_item) then return end
-      elseif loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
-        if pa_alert_weapon(it) then return end
+      else
+        if loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
+          if pa_alert_weapon(it) then return end
+        end
       end
     end
   end)
@@ -81,8 +84,10 @@ end
 function pa_alert_item(it, alert_type, emoji)
   local item_desc = get_plussed_name(it, "plain")
   if is_weapon(it) then
+    update_high_scores(it)
     item_desc = table.concat({item_desc, " (", get_weapon_info_string(it), ")"})
   elseif is_body_armour(it) then
+    update_high_scores(it)
     local ac, ev = get_armour_info_strings(it)
     item_desc = table.concat({item_desc, " {", ac, ", ", ev, "}"})
   end
