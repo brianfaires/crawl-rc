@@ -3477,13 +3477,9 @@ COLORS = {
   black = 0,
 } -- COLORS (do not remove this comment)
 
-DANGEROUS_BRANDS = {
+RISKY_EGOS = {
   "chaos", "distortion", "harm", "infusion"
-} -- DANGEROUS_BRANDS (do not remove this comment)
-
-GODS_WITH_ALLIES = {
-  "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul",
-} -- GODS_WITH_ALLIES (do not remove this comment)
+} -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
   LF = string.char(10), CR = string.char(13)
@@ -3912,10 +3908,10 @@ function is_body_armour(it)
   return it and it.subtype() == "body"
 end
 
-function has_dangerous_brand(it)
+function has_risky_ego(it)
   local text = it.artefact and it.name() or it.ego()
   if not text then return false end
-  for _, v in ipairs(DANGEROUS_BRANDS) do
+  for _, v in ipairs(RISKY_EGOS) do
     if text:find(v) then return true end
   end
   return false
@@ -3960,11 +3956,6 @@ end
 function offhand_is_free()
   if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
-end
-
-function you_have_allies()
-  return you.skill("Summonings") + you.skill("Necromancy") > 0 or
-      util.contains(GODS_WITH_ALLIES, CACHE.god)
 end
 
 
@@ -4308,7 +4299,7 @@ function c_assign_invletter_drop_inferior(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if not (is_weapon(it) or is_armour(it)) then return end
-  if has_dangerous_brand(it) then return end
+  if has_risky_ego(it) then return end
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     if not inv.artefact and inv.subtype() == it.subtype() and
@@ -5973,8 +5964,6 @@ function init_pa_data()
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("unbranded_high_score", 0)
-  create_persistent_data("polearm_high_score", 0)
-  create_persistent_data("polearm_1h_high_score", 0)
 
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -6042,18 +6031,6 @@ function update_high_scores(it)
       if unbranded_score > unbranded_high_score then
         unbranded_high_score = score
         if not ret_val then ret_val = "Highest no-brand damage" end
-      end
-    end
-
-    if is_polearm(it) and you_have_allies() then
-      if score > polearm_high_score then
-        polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Strongest polearm" end
-      end
-
-      if get_hands(it) == 1 and score > polearm_1h_high_score then
-        polearm_1h_high_score = score
-        if not ret_val then ret_val = "Strongest 1h polearm" end
       end
     end
   end
@@ -6648,7 +6625,7 @@ end
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
   if has_ego(it) and not it.is_identified then return false end
-  if has_dangerous_brand(it) then return false end
+  if has_risky_ego(it) then return false end
 
   if is_body_armour(it) then
     -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
@@ -6912,7 +6889,7 @@ function pa_pickup_weapon(it)
     return true
   end
 
-  if has_dangerous_brand(it) then return false end
+  if has_risky_ego(it) then return false end
 
   for _,inv in ipairs(INV_WEAP.weapons) do
     if is_weapon_upgrade(it, inv) then return true end

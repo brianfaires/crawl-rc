@@ -28,8 +28,6 @@ function init_pa_data()
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("unbranded_high_score", 0)
-  create_persistent_data("polearm_high_score", 0)
-  create_persistent_data("polearm_1h_high_score", 0)
 
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -97,18 +95,6 @@ function update_high_scores(it)
       if unbranded_score > unbranded_high_score then
         unbranded_high_score = score
         if not ret_val then ret_val = "Highest no-brand damage" end
-      end
-    end
-
-    if is_polearm(it) and you_have_allies() then
-      if score > polearm_high_score then
-        polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Strongest polearm" end
-      end
-
-      if get_hands(it) == 1 and score > polearm_1h_high_score then
-        polearm_1h_high_score = score
-        if not ret_val then ret_val = "Strongest 1h polearm" end
       end
     end
   end
