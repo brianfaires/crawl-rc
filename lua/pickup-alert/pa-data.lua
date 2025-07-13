@@ -21,9 +21,10 @@ function init_pa_data()
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
-  create_persistent_data("alerted_first_ranged_2h", 0)
+  create_persistent_data("alerted_first_ranged", 0)
   create_persistent_data("alerted_first_ranged_1h", 0)
   create_persistent_data("alerted_first_polearm", 0)
+  create_persistent_data("alerted_first_polearm_1h", 0)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("unbranded_high_score", 0)
@@ -38,10 +39,12 @@ function init_pa_data()
     if is_weapon(inv) then
       if is_polearm(inv) then
         alerted_first_polearm = 1
+        if get_hands(inv) == 1 then
+          alerted_first_polearm_1h = 1
+        end
       elseif inv.is_ranged then
-        if get_hands(inv) == 2 then
-          alerted_first_ranged_2h = 1
-        else
+        alerted_first_ranged = 1
+        if get_hands(inv) == 1 then
           alerted_first_ranged_1h = 1
         end
       end

@@ -113,27 +113,36 @@ end
 
 ---- Alert types ----
 local function alert_first_ranged(it)
+  if alerted_first_ranged_1h ~= 0 then return false end
   if not it.is_ranged then return false end
 
-  if get_hands(it) == 2 then
-    if alerted_first_ranged_2h == 0 then return false end
-    if have_shield() then return false end
-    alerted_first_ranged_2h = 1
-    return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
-  else
-    if alerted_first_ranged_1h ~= 0 then return false end
+  if get_hands(it) == 1 then
+    alerted_first_ranged = 1
     alerted_first_ranged_1h = 1
-    return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
+    return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED)
+  else
+    if alerted_first_ranged ~= 0 then return false end
+    if have_shield() then return false end
+    alerted_first_ranged = 1
+    return pa_alert_item(it, "First ranged weapon (2-handed)", EMOJI.RANGED)
   end
 end
 
 local function alert_first_polearm(it)
-  if alerted_first_polearm ~= 0 then return false end
+  if alerted_first_polearm_1h ~= 0 then return false end
   if not is_polearm(it) then return false end
-  if get_hands(it) == 2 and have_shield() then return false end
-  alerted_first_polearm = 1
   if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
-  return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
+
+  if get_hands(it) == 1 then
+    alerted_first_polearm = 1
+    alerted_first_polearm_1h = 1
+    return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
+  else
+    if alerted_first_polearm ~= 0 then return false end
+    if have_shield() then return false end
+    alerted_first_polearm = 1
+    return pa_alert_item(it, "First polearm (2-handed)", EMOJI.POLEARM)
+  end
 end
 
 local function alert_early_weapons(it)
