@@ -112,7 +112,7 @@ end
 
 function ch_stop_running(kind)
   if not buehler_rc_active then return end
-  if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
+  if ch_stop_running_fully_recover then ch_stop_running_fully_recover(kind) end
 end
 
 function c_answer_prompt(prompt)
