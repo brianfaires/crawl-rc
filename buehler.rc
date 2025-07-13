@@ -3675,28 +3675,71 @@ function get_var_type(value)
   crawl.mpr("Unsupported type for value: " .. tostring(value) .. " (" .. t .. ")")
 end
 
-function init_persistent_data()
+function init_persistent_data(full_reset)
   if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
+
+  -- Clear persistent data (data is created via create_persistent_data)
+  if full_reset then
+    if persistent_var_names then
+      for _,name in ipairs(persistent_var_names) do
+        _G[name] = nil
+      end
+    end
+  
+    if persistent_table_names then
+      for _,name in ipairs(persistent_table_names) do
+        _G[name] = nil
+      end
+    end
+  end
 
   persistent_var_names = {}
   persistent_table_names = {}
 end
 
-function clear_persistent_data()
-  if persistent_var_names then
-    for _,name in ipairs(persistent_var_names) do
-      _G[name] = nil
+-- Verify 1. data is from same game, 2. all persistent data was reloaded
+-- This should be called after all features have run init(), to declare their data
+function verify_data_reinit()
+  local failed_reinit = false
+  local GAME_CHANGE_MONITORS = {
+    buehler_rc_version = BUEHLER_RC_VERSION,
+    name = you.name(),
+    race = CACHE.race,
+    class = CACHE.class,
+    turn = CACHE.turn
+  } -- GAME_CHANGE_MONITORS (do not remove this comment)
+
+  if CACHE.turn > 0 then
+    for k, v in pairs(GAME_CHANGE_MONITORS) do
+      local prev_var_name = "prev_" .. k
+      create_persistent_data(prev_var_name, v)
+      local prev = _G[prev_var_name]
+      if prev ~= v then
+        failed_reinit = true
+        local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+        crawl.mpr(with_color(COLORS.lightred, msg))
+      end
     end
+
+    -- Errors reloading some persistent data prevent further data from being reloaded
+    -- Set the final persistent var to detect full data reload
+    -- If var was successfully reloaded via chk_lua_save, this will stay as true
+    create_persistent_data("successful_data_reload", false)
+    if not successful_data_reload then
+      failed_reinit = true
+      local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
+      crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
+      crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or enable CONFIG.debug_init for more info."))
+    end
+
+    if failed_reinit and mpr_yesno(with_color(COLORS.yellow, "Deactivate buehler.rc?")) then return false end
   end
 
-  if persistent_table_names then
-    for _,name in ipairs(persistent_table_names) do
-      _G[name] = nil
-    end
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    _G["prev_" .. k] = v
   end
-
-  persistent_var_names = {}
-  persistent_table_names = {}
+  successful_data_reload = true
+  return true
 end
 
 }
@@ -5924,9 +5967,10 @@ function init_pa_data()
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
-  create_persistent_data("alerted_first_ranged_2h", 0)
+  create_persistent_data("alerted_first_ranged", 0)
   create_persistent_data("alerted_first_ranged_1h", 0)
   create_persistent_data("alerted_first_polearm", 0)
+  create_persistent_data("alerted_first_polearm_1h", 0)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("unbranded_high_score", 0)
@@ -5941,10 +5985,12 @@ function init_pa_data()
     if is_weapon(inv) then
       if is_polearm(inv) then
         alerted_first_polearm = 1
+        if get_hands(inv) == 1 then
+          alerted_first_polearm_1h = 1
+        end
       elseif inv.is_ranged then
-        if get_hands(inv) == 2 then
-          alerted_first_ranged_2h = 1
-        else
+        alerted_first_ranged = 1
+        if get_hands(inv) == 1 then
           alerted_first_ranged_1h = 1
         end
       end
@@ -6877,27 +6923,36 @@ end
 
 ---- Alert types ----
 local function alert_first_ranged(it)
+  if alerted_first_ranged_1h ~= 0 then return false end
   if not it.is_ranged then return false end
 
-  if get_hands(it) == 2 then
-    if alerted_first_ranged_2h == 0 then return false end
-    if have_shield() then return false end
-    alerted_first_ranged_2h = 1
-    return pa_alert_item(it, "Ranged weapon (2-handed)", EMOJI.RANGED)
-  else
-    if alerted_first_ranged_1h ~= 0 then return false end
+  if get_hands(it) == 1 then
+    alerted_first_ranged = 1
     alerted_first_ranged_1h = 1
-    return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED)
+    return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED)
+  else
+    if alerted_first_ranged ~= 0 then return false end
+    if have_shield() then return false end
+    alerted_first_ranged = 1
+    return pa_alert_item(it, "First ranged weapon (2-handed)", EMOJI.RANGED)
   end
 end
 
 local function alert_first_polearm(it)
-  if alerted_first_polearm ~= 0 then return false end
+  if alerted_first_polearm_1h ~= 0 then return false end
   if not is_polearm(it) then return false end
-  if get_hands(it) == 2 and have_shield() then return false end
-  alerted_first_polearm = 1
   if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
-  return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
+
+  if get_hands(it) == 1 then
+    alerted_first_polearm = 1
+    alerted_first_polearm_1h = 1
+    return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
+  else
+    if alerted_first_polearm ~= 0 then return false end
+    if have_shield() then return false end
+    alerted_first_polearm = 1
+    return pa_alert_item(it, "First polearm (2-handed)", EMOJI.POLEARM)
+  end
 end
 
 local function alert_early_weapons(it)
@@ -7130,51 +7185,16 @@ function ready()
   mpr_consume_queue()
 end
 
-function init_buehler(full_reset)
+function init_buehler(reset_persistent_data)
   buehler_rc_active = false
   last_dump_turn = -1
 
   -- Init core modules
   init_config()
   init_emojis()
-  if full_reset then clear_persistent_data() end
-  init_persistent_data()
   init_cache()
   init_util()
-
-  -- Check for unexpected changes
-  local change_detected = false
-  local GAME_CHANGE_MONITORS = {
-    buehler_rc_version = BUEHLER_RC_VERSION,
-    name = you.name(),
-    race = CACHE.race,
-    class = CACHE.class,
-    turn = CACHE.turn
-  } -- GAME_CHANGE_MONITORS (do not remove this comment)
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
-    create_persistent_data("prev_" .. k, v)
-  end
-
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
-    local prev = _G["prev_" .. k]
-    if prev ~= v then
-      change_detected = true
-      local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-      crawl.mpr(with_color(COLORS.lightred, msg))
-      crawl.flush_prev_message()
-    end
-  end
-
-  if change_detected and not mpr_yesno("Initialize buehler.rc anyway?", true) then
-    crawl.mpr(with_color(COLORS.lightred, "Aborting initialization. buehler.rc is inactive."))
-    return
-  else
-    buehler_rc_active = true
-    for k, v in pairs(GAME_CHANGE_MONITORS) do
-      _G["prev_" .. k] = v
-    end
-  end
-
+  init_persistent_data(reset_persistent_data)
 
   -- Init optional features
   if init_after_shaft then init_after_shaft() end
@@ -7192,27 +7212,22 @@ function init_buehler(full_reset)
   if init_startup then init_startup() end
   if init_weapon_slots then init_weapon_slots() end
 
-  -- Set a final persistent var to detect full data reload
-  create_persistent_data("successful_data_reload", false)
-
-  -- Success message
-  if successful_data_reload or change_detected or CACHE.turn == 0 then
+  if not verify_data_reinit() then
+    crawl.mpr(with_color(COLORS.lightred, "Failed initialization. buehler.rc is inactive."))
+    return
+  else
+    buehler_rc_active = true
     local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
     local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
     crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
-  else
-    local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
-    crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
-    crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or enable CONFIG.debug_init for more info."))
-    if mpr_yesno("Dump chk_lua_save[]?") then
-      crawl.mpr(dump_chk_lua_save())
-    end
   end
 
-  successful_data_reload = true
+   -- Force a full ready() cycle
+  prev_turn = CACHE.turn - 1
+  ready()
 end
 
 -- This is the only line of top-level code, aside from declaring variables (without values)
 -- Done to give confidence in simple re-inits
-init_buehler()
+init_buehler(you.turns() == 0)
 }

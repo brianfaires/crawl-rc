@@ -101,26 +101,69 @@ function get_var_type(value)
   crawl.mpr("Unsupported type for value: " .. tostring(value) .. " (" .. t .. ")")
 end
 
-function init_persistent_data()
+function init_persistent_data(full_reset)
   if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
+
+  -- Clear persistent data (data is created via create_persistent_data)
+  if full_reset then
+    if persistent_var_names then
+      for _,name in ipairs(persistent_var_names) do
+        _G[name] = nil
+      end
+    end
+  
+    if persistent_table_names then
+      for _,name in ipairs(persistent_table_names) do
+        _G[name] = nil
+      end
+    end
+  end
 
   persistent_var_names = {}
   persistent_table_names = {}
 end
 
-function clear_persistent_data()
-  if persistent_var_names then
-    for _,name in ipairs(persistent_var_names) do
-      _G[name] = nil
+-- Verify 1. data is from same game, 2. all persistent data was reloaded
+-- This should be called after all features have run init(), to declare their data
+function verify_data_reinit()
+  local failed_reinit = false
+  local GAME_CHANGE_MONITORS = {
+    buehler_rc_version = BUEHLER_RC_VERSION,
+    name = you.name(),
+    race = CACHE.race,
+    class = CACHE.class,
+    turn = CACHE.turn
+  } -- GAME_CHANGE_MONITORS (do not remove this comment)
+
+  if CACHE.turn > 0 then
+    for k, v in pairs(GAME_CHANGE_MONITORS) do
+      local prev_var_name = "prev_" .. k
+      create_persistent_data(prev_var_name, v)
+      local prev = _G[prev_var_name]
+      if prev ~= v then
+        failed_reinit = true
+        local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+        crawl.mpr(with_color(COLORS.lightred, msg))
+      end
     end
+
+    -- Errors reloading some persistent data prevent further data from being reloaded
+    -- Set the final persistent var to detect full data reload
+    -- If var was successfully reloaded via chk_lua_save, this will stay as true
+    create_persistent_data("successful_data_reload", false)
+    if not successful_data_reload then
+      failed_reinit = true
+      local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
+      crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
+      crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or enable CONFIG.debug_init for more info."))
+    end
+
+    if failed_reinit and mpr_yesno(with_color(COLORS.yellow, "Deactivate buehler.rc?")) then return false end
   end
 
-  if persistent_table_names then
-    for _,name in ipairs(persistent_table_names) do
-      _G[name] = nil
-    end
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    _G["prev_" .. k] = v
   end
-
-  persistent_var_names = {}
-  persistent_table_names = {}
+  successful_data_reload = true
+  return true
 end
