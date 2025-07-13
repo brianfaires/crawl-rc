@@ -83,10 +83,20 @@ end
 
 -- Sends a message that is displayed at end of turn
 function enqueue_mpr(text, channel)
+  for _, msg in ipairs(delayed_mpr_queue) do
+    if msg.text == text and msg.channel == channel then
+      return
+    end
+  end
   delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = false }
 end
 
 function enqueue_mpr_opt_more(show_more, text, channel)
+  for _, msg in ipairs(delayed_mpr_queue) do
+    if msg.text == text and msg.channel == channel and msg.show_more == show_more then
+      return
+    end
+  end
   delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = show_more }
 end
 
