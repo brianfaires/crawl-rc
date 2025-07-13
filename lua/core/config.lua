@@ -72,7 +72,6 @@ function init_config()
 
   -- Debugging
   CONFIG.debug_init = false -- track progress through init()
-  CONFIG.debug_dump_data_freq = 0 -- how often to dump all data; 0 to disable
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
 

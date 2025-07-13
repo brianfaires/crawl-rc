@@ -77,7 +77,6 @@ function init_config()
 
   -- Debugging
   CONFIG.debug_init = false -- track progress through init()
-  CONFIG.debug_dump_data_freq = 0 -- how often to dump all data; 0 to disable
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
 
@@ -7105,7 +7104,6 @@ end
 
 ############## Lua Hook Functions ##############
 {
-local last_dump_turn
 local buehler_rc_active
 
 function c_assign_invletter(it)
@@ -7157,12 +7155,6 @@ function ready()
   ready_cache()
   prev_turn = CACHE.turn
 
-  -- Debugging
-  if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
-    dump_persistent_data()
-    last_dump_turn = CACHE.turn
-  end
-
   -- Features (may not be included)
   if ready_fm_monsters then ready_fm_monsters() end
   if ready_dynamic_options then ready_dynamic_options() end
@@ -7187,7 +7179,6 @@ end
 
 function init_buehler(reset_persistent_data)
   buehler_rc_active = false
-  last_dump_turn = -1
 
   -- Init core modules
   init_config()
