@@ -81,8 +81,9 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
   *(Roughly configured to fire when a monster can take 50% HP in one hit)*
 - Avoids triggering on zombies, skeleton, etc
 
-### [lua/fully-rest.lua](lua/fully-rest.lua)
-- Updates resting to fully rest off temporary, negative statuses.
+### [lua/fully-recover.lua](lua/fully-recover.lua)
+- Updates resting to fully recover from temporary negative statuses.
+- Can change these statuses in STATUSES_TO_WAIT_OFF
 
 ### [lua/inscribe-stats.lua](lua/inscribe-stats.lua)
 - Weapons in inventory are inscribed with their stats and a their ideal DPS (ie max damage per 10 aut, including brand).

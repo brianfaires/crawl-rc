@@ -55,7 +55,7 @@ lua_file = crawl-rc/lua/features/color-inscribe.lua
 lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
-lua_file = crawl-rc/lua/features/fully-rest.lua
+lua_file = crawl-rc/lua/features/fully-recover.lua
 lua_file = crawl-rc/lua/features/fm-disable.lua
 lua_file = crawl-rc/lua/features/fm-monsters.lua
 lua_file = crawl-rc/lua/features/inscribe-stats.lua
@@ -142,13 +142,16 @@ function ready()
   if ready_fm_monsters then ready_fm_monsters() end
   if ready_dynamic_options then ready_dynamic_options() end
   if ready_inscribe_stats then ready_inscribe_stats() end
-  if ready_weapon_slots then ready_weapon_slots() end
   if ready_safe_consumables then ready_safe_consumables() end
   if ready_runrest_features then ready_runrest_features() end
   if ready_after_shaft then ready_after_shaft() end
   if ready_exclude_dropped then ready_exclude_dropped() end
-  if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
+
+  -- Features with text
+  if ready_weapon_slots then ready_weapon_slots() end
+  if ready_fully_recover then ready_fully_recover() end
+  if ready_remind_identify then ready_remind_identify() end
   if ready_announce_damage then ready_announce_damage() end
   if ready_item_alerts then ready_item_alerts() end
   if ready_misc_alerts then ready_misc_alerts() end
@@ -210,7 +213,7 @@ function init_buehler(full_reset)
   if init_dynamic_options then init_dynamic_options() end
   if init_exclude_dropped then init_exclude_dropped() end
   if init_fm_monsters then init_fm_monsters() end
-  if init_fully_rest then init_fully_rest() end
+  if init_fully_recover then init_fully_recover() end
   if init_misc_alerts then init_misc_alerts() end
   if init_pa_main then init_pa_main() end
   if init_remind_id then init_remind_id() end

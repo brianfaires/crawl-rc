@@ -3791,10 +3791,20 @@ end
 
 -- Sends a message that is displayed at end of turn
 function enqueue_mpr(text, channel)
+  for _, msg in ipairs(delayed_mpr_queue) do
+    if msg.text == text and msg.channel == channel then
+      return
+    end
+  end
   delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = false }
 end
 
 function enqueue_mpr_opt_more(show_more, text, channel)
+  for _, msg in ipairs(delayed_mpr_queue) do
+    if msg.text == text and msg.channel == channel and msg.show_more == show_more then
+      return
+    end
+  end
   delayed_mpr_queue[#delayed_mpr_queue+1] = { text = text, channel = channel, show_more = show_more }
 end
 
@@ -4558,7 +4568,7 @@ end
 ############################### End lua/features/exclude-dropped.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/features/fully-rest.lua ###################################
+################################### Begin lua/features/fully-recover.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Fully rest off negative statuses -----
@@ -4616,8 +4626,8 @@ local function start_full_recovery()
 end
 
 
-function init_fully_rest()
-  if CONFIG.debug_init then crawl.mpr("Initializing fully-rest") end
+function init_fully_recover()
+  if CONFIG.debug_init then crawl.mpr("Initializing fully-recover") end
 
   recovery_start_turn = 0
   explore_after_recovery = false
@@ -4667,7 +4677,7 @@ function ready_fully_recover()
 end
 
 }
-############################### End lua/features/fully-rest.lua ###############################
+############################### End lua/features/fully-recover.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/features/fm-disable.lua ###################################
@@ -5239,38 +5249,12 @@ end
 {
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
 ---- Before finding scroll of ID, stops for potions/scrolls stack size increases ----
-local function remind_unidentified_items(have_scroll, have_unidentified)
-  if not have_unidentified then
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if not inv.is_identified then
-        have_unidentified = true
-        break
-      end
-    end
-  end
-
-  if not have_scroll then
-    for inv_id in iter.invent_iterator:new(items.inventory()) do
-      if inv_id.name("qual") == "scroll of identify" then
-        have_scroll = true
-        break
-      end
-    end
-  end
-
-  if have_scroll and have_unidentified then
-    enqueue_mpr_opt_more(false,
-      EMOJI.REMIND_IDENTIFY ..
-      with_color(COLORS.magenta, " You have something to identify. ") ..
-      EMOJI.REMIND_IDENTIFY
-    )
-    you.stop_activity()
-  end
-end
+local do_remind_id_check
 
 function init_remind_id()
   if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
 
+  do_remind_id_check = true
   create_persistent_data("found_scroll_of_id", 0)
   create_persistent_data("next_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
   create_persistent_data("next_stack_size_pots", CONFIG.stop_on_pots_count)
@@ -5279,10 +5263,8 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_remind_identify(it)
-  if not it.is_identified then
-    remind_unidentified_items(false, true)
-  elseif it.name("qual") == "scroll of identify" then
-    remind_unidentified_items(true, false)
+  if not it.is_identified or it.name("qual") == "scroll of identify" then
+    do_remind_id_check = true
   end
 end
 
@@ -5291,8 +5273,8 @@ function c_message_remind_identify(text, channel)
 
   if text:find("scrolls? of identify") then
     found_scroll_of_id = 1
-    if not (text:find("You drop") or text:find("You read") or text:find("It is a")) then
-      remind_unidentified_items(true, false)
+    if not text:find("ou drop ") then
+      do_remind_id_check = true
     end
   elseif found_scroll_of_id == 0 then
     local idx = text:find(" %- ")
@@ -5316,6 +5298,33 @@ function c_message_remind_identify(text, channel)
         next_stack_size_pots = it.quantity + 1
         you.stop_activity()
       end
+    end
+  end
+end
+
+function ready_remind_identify()
+  if do_remind_id_check then
+    do_remind_id_check = false
+
+    local have_unid = false
+    local have_scroll = false
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if not inv.is_identified then
+        have_unid = true
+        if have_scroll then break end
+      elseif inv.name("qual") == "scroll of identify" then
+        have_scroll = true
+        if have_unid then break end
+      end
+    end
+
+    if have_scroll and have_unid then
+      crawl.mpr(
+        EMOJI.REMIND_IDENTIFY ..
+        with_color(COLORS.magenta, " You have something to identify. ") ..
+        EMOJI.REMIND_IDENTIFY
+      )
+      you.stop_activity()
     end
   end
 end
@@ -7103,13 +7112,16 @@ function ready()
   if ready_fm_monsters then ready_fm_monsters() end
   if ready_dynamic_options then ready_dynamic_options() end
   if ready_inscribe_stats then ready_inscribe_stats() end
-  if ready_weapon_slots then ready_weapon_slots() end
   if ready_safe_consumables then ready_safe_consumables() end
   if ready_runrest_features then ready_runrest_features() end
   if ready_after_shaft then ready_after_shaft() end
   if ready_exclude_dropped then ready_exclude_dropped() end
-  if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
+
+  -- Features with text
+  if ready_weapon_slots then ready_weapon_slots() end
+  if ready_fully_recover then ready_fully_recover() end
+  if ready_remind_identify then ready_remind_identify() end
   if ready_announce_damage then ready_announce_damage() end
   if ready_item_alerts then ready_item_alerts() end
   if ready_misc_alerts then ready_misc_alerts() end
@@ -7171,7 +7183,7 @@ function init_buehler(full_reset)
   if init_dynamic_options then init_dynamic_options() end
   if init_exclude_dropped then init_exclude_dropped() end
   if init_fm_monsters then init_fm_monsters() end
-  if init_fully_rest then init_fully_rest() end
+  if init_fully_recover then init_fully_recover() end
   if init_misc_alerts then init_misc_alerts() end
   if init_pa_main then init_pa_main() end
   if init_remind_id then init_remind_id() end

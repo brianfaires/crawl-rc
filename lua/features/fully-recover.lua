@@ -53,8 +53,8 @@ local function start_full_recovery()
 end
 
 
-function init_fully_rest()
-  if CONFIG.debug_init then crawl.mpr("Initializing fully-rest") end
+function init_fully_recover()
+  if CONFIG.debug_init then crawl.mpr("Initializing fully-recover") end
 
   recovery_start_turn = 0
   explore_after_recovery = false
