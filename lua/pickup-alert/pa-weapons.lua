@@ -103,7 +103,7 @@ function pa_pickup_weapon(it)
     return true
   end
 
-  if has_dangerous_brand(it) then return false end
+  if has_risky_ego(it) then return false end
 
   for _,inv in ipairs(INV_WEAP.weapons) do
     if is_weapon_upgrade(it, inv) then return true end

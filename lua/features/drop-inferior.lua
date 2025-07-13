@@ -20,7 +20,7 @@ function c_assign_invletter_drop_inferior(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if not (is_weapon(it) or is_armour(it)) then return end
-  if has_dangerous_brand(it) then return end
+  if has_risky_ego(it) then return end
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     if not inv.artefact and inv.subtype() == it.subtype() and

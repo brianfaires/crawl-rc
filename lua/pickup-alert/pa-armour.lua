@@ -116,7 +116,7 @@ end
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
   if has_ego(it) and not it.is_identified then return false end
-  if has_dangerous_brand(it) then return false end
+  if has_risky_ego(it) then return false end
 
   if is_body_armour(it) then
     -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC

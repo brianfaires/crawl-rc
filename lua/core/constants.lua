@@ -82,13 +82,9 @@ COLORS = {
   black = 0,
 } -- COLORS (do not remove this comment)
 
-DANGEROUS_BRANDS = {
+RISKY_EGOS = {
   "chaos", "distortion", "harm", "infusion"
-} -- DANGEROUS_BRANDS (do not remove this comment)
-
-GODS_WITH_ALLIES = {
-  "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul",
-} -- GODS_WITH_ALLIES (do not remove this comment)
+} -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
   LF = string.char(10), CR = string.char(13)

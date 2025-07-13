@@ -162,10 +162,10 @@ function is_body_armour(it)
   return it and it.subtype() == "body"
 end
 
-function has_dangerous_brand(it)
+function has_risky_ego(it)
   local text = it.artefact and it.name() or it.ego()
   if not text then return false end
-  for _, v in ipairs(DANGEROUS_BRANDS) do
+  for _, v in ipairs(RISKY_EGOS) do
     if text:find(v) then return true end
   end
   return false
@@ -210,11 +210,6 @@ end
 function offhand_is_free()
   if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
-end
-
-function you_have_allies()
-  return you.skill("Summonings") + you.skill("Necromancy") > 0 or
-      util.contains(GODS_WITH_ALLIES, CACHE.god)
 end
 
 
