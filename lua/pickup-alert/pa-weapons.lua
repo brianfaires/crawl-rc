@@ -242,7 +242,8 @@ end
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
   if not category then return false end
-  return pa_alert_item(it, category)
+  local emoji = is_armour(it) and EMOJI.ARMOUR or is_weapon(it) and EMOJI.WEAPON or nil
+  return pa_alert_item(it, "Highest " .. category, emoji)
 end
 
 function pa_alert_weapon(it)
