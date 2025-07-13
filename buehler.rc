@@ -5234,12 +5234,12 @@ local function alert_low_hp()
 end
 
 local function alert_remove_faith()
-  if alerted_max_piety == 0 and you.piety_rank() == 6 then
+  if not alerted_max_piety and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if CACHE.god == "Uskayaw" then return end
       mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
-      alerted_max_piety = 1
+      alerted_max_piety = true
     end
   end
 end
@@ -5249,7 +5249,7 @@ function init_misc_alerts()
   if CONFIG.debug_init then crawl.mpr("Initializing misc-alerts") end
 
   below_hp_threshold = false
-  create_persistent_data("alerted_max_piety", 0)
+  create_persistent_data("alerted_max_piety", false)
 
   if CONFIG.save_with_msg then
     crawl.setopt("macros += M S ===macro_save_with_message")
@@ -5297,7 +5297,7 @@ function init_remind_id()
   if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
 
   do_remind_id_check = true
-  create_persistent_data("found_scroll_of_id", 0)
+  create_persistent_data("found_scroll_of_id", false)
   create_persistent_data("next_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
   create_persistent_data("next_stack_size_pots", CONFIG.stop_on_pots_count)
 end
@@ -5314,11 +5314,11 @@ function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
   if text:find("scrolls? of identify") then
-    found_scroll_of_id = 1
+    found_scroll_of_id = true
     if not text:find("ou drop ") then
       do_remind_id_check = true
     end
-  elseif found_scroll_of_id == 0 then
+  elseif not found_scroll_of_id then
     local idx = text:find(" %- ")
     if not idx then return end
 
@@ -5966,10 +5966,10 @@ function init_pa_data()
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
-  create_persistent_data("alerted_first_ranged", 0)
-  create_persistent_data("alerted_first_ranged_1h", 0)
-  create_persistent_data("alerted_first_polearm", 0)
-  create_persistent_data("alerted_first_polearm_1h", 0)
+  create_persistent_data("alerted_first_ranged", false)
+  create_persistent_data("alerted_first_ranged_1h", false)
+  create_persistent_data("alerted_first_polearm", false)
+  create_persistent_data("alerted_first_polearm_1h", false)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("unbranded_high_score", 0)
@@ -5983,14 +5983,14 @@ function init_pa_data()
 
     if is_weapon(inv) then
       if is_polearm(inv) then
-        alerted_first_polearm = 1
+        alerted_first_polearm = true
         if get_hands(inv) == 1 then
-          alerted_first_polearm_1h = 1
+          alerted_first_polearm_1h = true
         end
       elseif inv.is_ranged then
-        alerted_first_ranged = 1
+        alerted_first_ranged = true
         if get_hands(inv) == 1 then
-          alerted_first_ranged_1h = 1
+          alerted_first_ranged_1h = true
         end
       end
     end
@@ -6922,34 +6922,34 @@ end
 
 ---- Alert types ----
 local function alert_first_ranged(it)
-  if alerted_first_ranged_1h ~= 0 then return false end
+  if alerted_first_ranged_1h then return false end
   if not it.is_ranged then return false end
 
   if get_hands(it) == 1 then
-    alerted_first_ranged = 1
-    alerted_first_ranged_1h = 1
+    alerted_first_ranged = true
+    alerted_first_ranged_1h = true
     return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED)
   else
-    if alerted_first_ranged ~= 0 then return false end
+    if alerted_first_ranged then return false end
     if have_shield() then return false end
-    alerted_first_ranged = 1
+    alerted_first_ranged = true
     return pa_alert_item(it, "First ranged weapon (2-handed)", EMOJI.RANGED)
   end
 end
 
 local function alert_first_polearm(it)
-  if alerted_first_polearm_1h ~= 0 then return false end
+  if alerted_first_polearm_1h then return false end
   if not is_polearm(it) then return false end
   if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
 
   if get_hands(it) == 1 then
-    alerted_first_polearm = 1
-    alerted_first_polearm_1h = 1
+    alerted_first_polearm = true
+    alerted_first_polearm_1h = true
     return pa_alert_item(it, "First polearm", EMOJI.POLEARM)
   else
-    if alerted_first_polearm ~= 0 then return false end
+    if alerted_first_polearm then return false end
     if have_shield() then return false end
-    alerted_first_polearm = 1
+    alerted_first_polearm = true
     return pa_alert_item(it, "First polearm (2-handed)", EMOJI.POLEARM)
   end
 end

@@ -6,7 +6,7 @@ function init_remind_id()
   if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
 
   do_remind_id_check = true
-  create_persistent_data("found_scroll_of_id", 0)
+  create_persistent_data("found_scroll_of_id", false)
   create_persistent_data("next_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
   create_persistent_data("next_stack_size_pots", CONFIG.stop_on_pots_count)
 end
@@ -23,11 +23,11 @@ function c_message_remind_identify(text, channel)
   if channel ~= "plain" then return end
 
   if text:find("scrolls? of identify") then
-    found_scroll_of_id = 1
+    found_scroll_of_id = true
     if not text:find("ou drop ") then
       do_remind_id_check = true
     end
-  elseif found_scroll_of_id == 0 then
+  elseif not found_scroll_of_id then
     local idx = text:find(" %- ")
     if not idx then return end
 
