@@ -42,39 +42,48 @@ function init_config()
   CONFIG.do_auto_weapon_slots_abw = true
 
   ---- Pickup/Alert system
-  CONFIG.pickup_armour = true
-  CONFIG.pickup_weapons = true
-  CONFIG.pickup_staves = true
+  -- Choose which items are auto-picked up
+  CONFIG.pickup = {
+    armour = true,
+    weapons = true,
+    staves = true
+  } -- CONFIG.pickup (do not remove this comment)
 
-  CONFIG.alert_system_enabled = true
-  CONFIG.alert_armour = true
-  CONFIG.alert_weapons = true
-  CONFIG.alert_orbs = true
-  CONFIG.alert_talismans = true
-  CONFIG.alert_staff_resists = true
-  CONFIG.one_time_alerts = {
-    "broad axe", "executioner's axe", "eveningstar", "demon whip",
-    "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
-    "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
-    "crystal plate armour", "gold dragon scales", "pearl dragon scales",
-    "storm dragon scales", "shadow dragon scales", "wand of digging",
-    "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
-  } -- one_time_alerts (do not remove this comment)
+  -- Which alerts are enabled
+  CONFIG.alert = {
+    system_enabled = true, -- If false, all alerts are skipped
+    armour = true,
+    weapons = true,
+    orbs = true,
+    talismans = true,
+    staff_resists = true,
 
-  -- Choose when force_more is used with an alert
-  CONFIG.alert_force_mores = true -- False to disable all
-  CONFIG.fm_alert_early_weap = false
-  CONFIG.fm_alert_new_weap = true
-  CONFIG.fm_alert_body_armour = true
-  CONFIG.fm_alert_aux_armour = true
-  CONFIG.fm_alert_shields = true
-  CONFIG.fm_alert_high_score_weap = true
-  CONFIG.fm_alert_high_score_armour = true
-  CONFIG.fm_alert_one_time_alerts = true
-  CONFIG.fm_alert_artefact = true
-  CONFIG.fm_alert_orbs = false
-  CONFIG.fm_alert_talismans = false
-  CONFIG.fm_alert_staff_resists = true
+    -- Each item is alerted once. Set to empty to disable.
+    one_time = {
+      "broad axe", "executioner's axe", "eveningstar", "demon whip",
+      "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
+      "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
+      "crystal plate armour", "gold dragon scales", "pearl dragon scales",
+      "storm dragon scales", "shadow dragon scales", "wand of digging",
+      "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
+    } -- one_time_alerts (do not remove this comment)
+  } -- CONFIG.alert (do not remove this comment)
+
+  -- Which alerts generate a force_more
+  CONFIG.fm_alert = {
+    early_weap = false,
+    new_weap = true,
+    body_armour = true,
+    aux_armour = true,
+    shields = true,
+    high_score_weap = true,
+    high_score_armour = true,
+    one_time_alerts = true,
+    artefact = true,
+    orbs = false,
+    talismans = false,
+    staff_resists = true
+  } -- CONFIG.fm_alert (do not remove this comment)
 
   -- Startup
   CONFIG.show_skills_on_startup = true

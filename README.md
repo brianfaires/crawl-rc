@@ -149,7 +149,7 @@ Picking up upgrades is straightforward enough. Alerts are generated for:
 
 ### [pa-misc.rc](lua/pickup-alert/pa-misc.lua) (Misc)
 Picks up staves when you are training the relevant spell school. Alerts are generated for:
-- The first instance of anything in the `CONFIG.one_time_alerts` list.
+- The first instance of anything in the `CONFIG.alert.one_time` list.
 - First orb of each type
 - First talisman of each type
 - Staves that provide you a needed resistance

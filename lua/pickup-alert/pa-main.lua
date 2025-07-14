@@ -28,11 +28,11 @@ function init_pa_main()
 
       -- Check for pickup
       local retVal = false
-      if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
+      if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
+      elseif loaded_pa_weapons and CONFIG.pickup.weapons and is_weapon(it) then
         if pa_pickup_weapon(it) then return true end
-      elseif loaded_pa_misc and CONFIG.pickup_staves and is_magic_staff(it) then
+      elseif loaded_pa_misc and CONFIG.pickup.staves and is_magic_staff(it) then
         if pa_pickup_staff(it) then return true end
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
@@ -57,23 +57,23 @@ function init_pa_main()
     end
 
     if do_alerts then
-      if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
+      if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
       if already_contains(pa_items_alerted, it) then return end
 
-      if loaded_pa_misc and CONFIG.one_time_alerts and #CONFIG.one_time_alerts > 0 then
+      if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
         if pa_alert_OTA(it) then return end
       end
 
-      if loaded_pa_misc and CONFIG.alert_staff_resists and is_magic_staff(it) then
+      if loaded_pa_misc and CONFIG.alert.staff_resists and is_magic_staff(it) then
         if pa_alert_staff(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert_orbs and is_orb(it) then
+      elseif loaded_pa_misc and CONFIG.alert.orbs and is_orb(it) then
         if pa_alert_orb(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert_talismans and is_talisman(it) then
+      elseif loaded_pa_misc and CONFIG.alert.talismans and is_talisman(it) then
         if pa_alert_talisman(it) then return end
-      elseif loaded_pa_armour and CONFIG.alert_armour and is_armour(it) then
+      elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
         if pa_alert_armour(it, unworn_aux_item) then return end
       else
-        if loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
+        if loaded_pa_weapons and CONFIG.alert.weapons and is_weapon(it) then
           if pa_alert_weapon(it) then return end
         end
       end
@@ -108,7 +108,7 @@ function pa_alert_item(it, alert_type, emoji, force_more)
   tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
   tokens[#tokens+1] = tokens[1]
 
-  local do_fm = CONFIG.alert_force_mores and (force_more or (CONFIG.fm_alert_artefact and it.artefact))
+  local do_fm = force_more or (CONFIG.fm_alert.artefact and it.artefact)
   enqueue_mpr_opt_more(do_fm, table.concat(tokens))
 
   pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)

@@ -47,39 +47,48 @@ function init_config()
   CONFIG.do_auto_weapon_slots_abw = true
 
   ---- Pickup/Alert system
-  CONFIG.pickup_armour = true
-  CONFIG.pickup_weapons = true
-  CONFIG.pickup_staves = true
+  -- Choose which items are auto-picked up
+  CONFIG.pickup = {
+    armour = true,
+    weapons = true,
+    staves = true
+  } -- CONFIG.pickup (do not remove this comment)
 
-  CONFIG.alert_system_enabled = true
-  CONFIG.alert_armour = true
-  CONFIG.alert_weapons = true
-  CONFIG.alert_orbs = true
-  CONFIG.alert_talismans = true
-  CONFIG.alert_staff_resists = true
-  CONFIG.one_time_alerts = {
-    "broad axe", "executioner's axe", "eveningstar", "demon whip",
-    "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
-    "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
-    "crystal plate armour", "gold dragon scales", "pearl dragon scales",
-    "storm dragon scales", "shadow dragon scales", "wand of digging",
-    "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
-  } -- one_time_alerts (do not remove this comment)
+  -- Which alerts are enabled
+  CONFIG.alert = {
+    system_enabled = true, -- If false, all alerts are skipped
+    armour = true,
+    weapons = true,
+    orbs = true,
+    talismans = true,
+    staff_resists = true,
 
-  -- Choose when force_more is used with an alert
-  CONFIG.alert_force_mores = true -- False to disable all
-  CONFIG.fm_alert_early_weap = false
-  CONFIG.fm_alert_new_weap = true
-  CONFIG.fm_alert_body_armour = true
-  CONFIG.fm_alert_aux_armour = true
-  CONFIG.fm_alert_shields = true
-  CONFIG.fm_alert_high_score_weap = true
-  CONFIG.fm_alert_high_score_armour = true
-  CONFIG.fm_alert_one_time_alerts = true
-  CONFIG.fm_alert_artefact = true
-  CONFIG.fm_alert_orbs = false
-  CONFIG.fm_alert_talismans = false
-  CONFIG.fm_alert_staff_resists = true
+    -- Each item is alerted once. Set to empty to disable.
+    one_time = {
+      "broad axe", "executioner's axe", "eveningstar", "demon whip",
+      "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
+      "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
+      "crystal plate armour", "gold dragon scales", "pearl dragon scales",
+      "storm dragon scales", "shadow dragon scales", "wand of digging",
+      "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
+    } -- one_time_alerts (do not remove this comment)
+  } -- CONFIG.alert (do not remove this comment)
+
+  -- Which alerts generate a force_more
+  CONFIG.fm_alert = {
+    early_weap = false,
+    new_weap = true,
+    body_armour = true,
+    aux_armour = true,
+    shields = true,
+    high_score_weap = true,
+    high_score_armour = true,
+    one_time_alerts = true,
+    artefact = true,
+    orbs = false,
+    talismans = false,
+    staff_resists = true
+  } -- CONFIG.fm_alert (do not remove this comment)
 
   -- Startup
   CONFIG.show_skills_on_startup = true
@@ -5826,11 +5835,11 @@ function init_pa_main()
 
       -- Check for pickup
       local retVal = false
-      if loaded_pa_armour and CONFIG.pickup_armour and is_armour(it) then
+      if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup_weapons and is_weapon(it) then
+      elseif loaded_pa_weapons and CONFIG.pickup.weapons and is_weapon(it) then
         if pa_pickup_weapon(it) then return true end
-      elseif loaded_pa_misc and CONFIG.pickup_staves and is_magic_staff(it) then
+      elseif loaded_pa_misc and CONFIG.pickup.staves and is_magic_staff(it) then
         if pa_pickup_staff(it) then return true end
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
@@ -5855,23 +5864,23 @@ function init_pa_main()
     end
 
     if do_alerts then
-      if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
+      if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
       if already_contains(pa_items_alerted, it) then return end
 
-      if loaded_pa_misc and CONFIG.one_time_alerts and #CONFIG.one_time_alerts > 0 then
+      if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
         if pa_alert_OTA(it) then return end
       end
 
-      if loaded_pa_misc and CONFIG.alert_staff_resists and is_magic_staff(it) then
+      if loaded_pa_misc and CONFIG.alert.staff_resists and is_magic_staff(it) then
         if pa_alert_staff(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert_orbs and is_orb(it) then
+      elseif loaded_pa_misc and CONFIG.alert.orbs and is_orb(it) then
         if pa_alert_orb(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert_talismans and is_talisman(it) then
+      elseif loaded_pa_misc and CONFIG.alert.talismans and is_talisman(it) then
         if pa_alert_talisman(it) then return end
-      elseif loaded_pa_armour and CONFIG.alert_armour and is_armour(it) then
+      elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
         if pa_alert_armour(it, unworn_aux_item) then return end
       else
-        if loaded_pa_weapons and CONFIG.alert_weapons and is_weapon(it) then
+        if loaded_pa_weapons and CONFIG.alert.weapons and is_weapon(it) then
           if pa_alert_weapon(it) then return end
         end
       end
@@ -5906,7 +5915,7 @@ function pa_alert_item(it, alert_type, emoji, force_more)
   tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
   tokens[#tokens+1] = tokens[1]
 
-  local do_fm = CONFIG.alert_force_mores and (force_more or (CONFIG.fm_alert_artefact and it.artefact))
+  local do_fm = force_more or (CONFIG.fm_alert.artefact and it.artefact)
   enqueue_mpr_opt_more(do_fm, table.concat(tokens))
 
   pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
@@ -5973,7 +5982,7 @@ end
 function init_pa_data()
   if CONFIG.debug_init then crawl.mpr("Initializing pa-data") end
 
-  create_persistent_data("pa_OTA_items", CONFIG.one_time_alerts)
+  create_persistent_data("pa_OTA_items", CONFIG.alert.one_time)
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
@@ -6548,7 +6557,7 @@ ARMOUR_ALERT = {
 } -- ARMOUR_ALERT (do not remove this comment)
 
 local function send_armour_alert(it, alert_type)
-  return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert_body_armour)
+  return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
 end
 
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
@@ -6566,7 +6575,7 @@ local function alert_ac_high_score(it)
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
-      return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST, CONFIG.fm_alert_high_score_armour)
+      return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
     end
   end
 
@@ -6622,30 +6631,30 @@ function pa_alert_armour(it, unworn_inv_item)
     if alert_ac_high_score(it) then return true end
   elseif is_shield(it) then
     if it.artefact then
-      return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert_shields)
+      return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
     end
   
     local sh = items.equipped_at("offhand")
     if not is_shield(sh) then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(sh) then
       local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert_shields)
+      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert_shields)
+      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
     end
   else
     -- Aux armour
     if it.artefact then
-      return it.is_identified and pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert_aux_armour)
+      return it.is_identified and pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
     end
   
     local cur = items.equipped_at(it.subtype()) or unworn_inv_item
-    if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION, CONFIG.fm_alert_aux_armour) end
+    if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION, CONFIG.fm_alert.aux_armour) end
     if has_ego(it) and get_ego(it) ~= get_ego(cur) then
       local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert_aux_armour)
+      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
     elseif get_armour_ac(it) > get_armour_ac(cur) then
-      return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert_aux_armour)
+      return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
     end
   end
 end
@@ -6728,7 +6737,7 @@ end
 {
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  return pa_alert_item(it, "New orb", EMOJI.ORB, CONFIG.fm_alert_orbs)
+  return pa_alert_item(it, "New orb", EMOJI.ORB, CONFIG.fm_alert.orbs)
 end
 
 function pa_alert_OTA(it)
@@ -6746,7 +6755,7 @@ function pa_alert_OTA(it)
 
   remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert_one_time_alerts)
+  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert.one_time_alerts)
 end
 
 ---- Alert for needed resists ----
@@ -6763,17 +6772,17 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert_staff_resists)
+  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert.staff_resists)
 end
 
 function pa_alert_talisman(it)
   if it.artefact then
     if it.is_identified then
-      return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert_talismans)
+      return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
     end
     return false
   end
-  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert_talismans)
+  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
 end
 
 ---- Smart staff pickup ----
@@ -6933,12 +6942,12 @@ local function alert_first_ranged(it)
   if get_hands(it) == 1 then
     alerted_first_ranged = true
     alerted_first_ranged_1h = true
-    return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED, CONFIG.fm_alert_early_weap)
+    return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
   else
     if alerted_first_ranged then return false end
     if have_shield() then return false end
     alerted_first_ranged = true
-    return pa_alert_item(it, "First ranged weapon (2-handed)", EMOJI.RANGED, CONFIG.fm_alert_early_weap)
+    return pa_alert_item(it, "First ranged weapon (2-handed)", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
   end
 end
 
@@ -6950,12 +6959,12 @@ local function alert_first_polearm(it)
   if get_hands(it) == 1 then
     alerted_first_polearm = true
     alerted_first_polearm_1h = true
-    return pa_alert_item(it, "First polearm", EMOJI.POLEARM, CONFIG.fm_alert_early_weap)
+    return pa_alert_item(it, "First polearm", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
   else
     if alerted_first_polearm then return false end
     if have_shield() then return false end
     alerted_first_polearm = true
-    return pa_alert_item(it, "First polearm (2-handed)", EMOJI.POLEARM, CONFIG.fm_alert_early_weap)
+    return pa_alert_item(it, "First polearm (2-handed)", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
   end
 end
 
@@ -6967,7 +6976,7 @@ local function alert_early_weapons(it)
          it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
           if get_hands(it) == 1 or not have_shield() or
             CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
-              return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert_early_weap)
+              return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
           end
       end
     end
@@ -6980,7 +6989,7 @@ local function alert_early_weapons(it)
     if skill_diff > max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
-      return pa_alert_item(it, "Early weapon", EMOJI.WEAPON, CONFIG.fm_alert_early_weap)
+      return pa_alert_item(it, "Early weapon", EMOJI.WEAPON, CONFIG.fm_alert.early_weap)
     end
   end
 
@@ -6991,7 +7000,7 @@ end
 -- `cur` comes from INV_WEAP
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
-    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT, CONFIG.fm_alert_new_weap)
+    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT, CONFIG.fm_alert.new_weap)
   end
 
   local inv_best = INV_WEAP.max_dps[INV_WEAP.get_key(it)]
@@ -7001,9 +7010,9 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert_new_weap)
+      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert_new_weap)
+      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
     return false
   end
@@ -7019,12 +7028,12 @@ local function alert_interesting_weapon(it, cur)
   if get_hands(it) > cur.hands then
     if offhand_is_free() or (CACHE.s_shields < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
       if has_ego(it) and not util.contains(INV_WEAP.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert_new_weap)
+        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.new_weap)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
-        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert_new_weap)
+        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
       end
     elseif has_ego(it) and not cur.branded and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
-      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert_new_weap)
+      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
     end
   else -- No extra hand required
     if cur.artefact then return false end
@@ -7032,14 +7041,14 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not cur.branded then
         if score_ratio > TUNING.weap.alert.gain_ego then
-          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert_new_weap)
+          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
         end
       elseif not util.contains(INV_WEAP.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert_new_weap)
+        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert_new_weap)
+      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
   end
   
@@ -7056,7 +7065,7 @@ end
 local function alert_weap_high_scores(it)
   local category = update_high_scores(it)
   if not category then return false end
-  return pa_alert_item(it, category, EMOJI.WEAPON, CONFIG.fm_alert_high_score_weap)
+  return pa_alert_item(it, category, EMOJI.WEAPON, CONFIG.fm_alert.high_score_weap)
 end
 
 function pa_alert_weapon(it)

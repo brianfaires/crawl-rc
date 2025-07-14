@@ -1,6 +1,6 @@
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  return pa_alert_item(it, "New orb", EMOJI.ORB, CONFIG.fm_alert_orbs)
+  return pa_alert_item(it, "New orb", EMOJI.ORB, CONFIG.fm_alert.orbs)
 end
 
 function pa_alert_OTA(it)
@@ -18,7 +18,7 @@ function pa_alert_OTA(it)
 
   remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert_one_time_alerts)
+  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert.one_time_alerts)
 end
 
 ---- Alert for needed resists ----
@@ -35,17 +35,17 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert_staff_resists)
+  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert.staff_resists)
 end
 
 function pa_alert_talisman(it)
   if it.artefact then
     if it.is_identified then
-      return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert_talismans)
+      return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
     end
     return false
   end
-  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert_talismans)
+  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
 end
 
 ---- Smart staff pickup ----

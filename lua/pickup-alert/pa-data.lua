@@ -17,7 +17,7 @@ end
 function init_pa_data()
   if CONFIG.debug_init then crawl.mpr("Initializing pa-data") end
 
-  create_persistent_data("pa_OTA_items", CONFIG.one_time_alerts)
+  create_persistent_data("pa_OTA_items", CONFIG.alert.one_time)
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
