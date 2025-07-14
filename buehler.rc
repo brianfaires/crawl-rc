@@ -338,8 +338,11 @@ menu += $good:^unidentified .*armour.*(runed|glowing|embroidered|shiny|dyed)
 menu += $positive:[^r]staff of
 
 # Wands
-menu += $decent:wand of (flame|paralysis|polymorph|disintegration|enslavement|iceblast)
-menu += $good:wand of (acid|digging|clouds|scattershot)
+menu += brown:wand of digging
+menu += lightgrey:wand of (flame|paralysis|charming|mindburst)
+menu += lightmagenta:wand of (acid|quicksilver|light)
+menu += lightcyan:wand of (iceblast|roots|warping)
+menu += blue:wand of polymorph
 
 # Scrolls
 menu += $danger:scrolls? of torment
