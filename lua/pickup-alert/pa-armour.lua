@@ -27,7 +27,6 @@ local function alert_ac_high_score(it)
   if not is_body_armour(it) then return false end
   if CACHE.s_armour == 0 then return false end
   if CACHE.xl > 12 then return false end
-  if has_ego(it) and not it.is_identified then return false end
 
   if ac_high_score == 0 then
     local worn = items.equipped_at("armour")
@@ -123,7 +122,6 @@ end
 
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
-  if has_ego(it) and not it.is_identified then return false end
   if has_risky_ego(it) then return false end
 
   if is_body_armour(it) then

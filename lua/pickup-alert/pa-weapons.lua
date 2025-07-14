@@ -84,7 +84,6 @@ local function is_weapon_upgrade(it, cur)
 
     if it.artefact then return true end
     if cur.artefact then return false end
-    if it.branded and not it.is_identified then return false end
     
     local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
     return get_weap_score(it) / cur.score > min_ratio
@@ -246,8 +245,6 @@ local function alert_weap_high_scores(it)
 end
 
 function pa_alert_weapon(it)
-  if has_ego(it) and not it.is_identified then return false end
-
   if alert_interesting_weapons(it) then return true end
   if alert_first_ranged(it) then return true end
   if alert_first_polearm(it) then return true end
