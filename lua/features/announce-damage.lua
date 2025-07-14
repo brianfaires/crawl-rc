@@ -51,6 +51,10 @@ function init_announce_damage()
   prev.mhp = 0
   prev.mp = 0
   prev.mmp = 0
+
+  if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
+    crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
+  end
 end
 
 

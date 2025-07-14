@@ -8,7 +8,7 @@ local function alert_low_hp()
     below_hp_threshold = true
     local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
     enqueue_mpr_opt_more(true, table.concat({
-      EMOJI.EXCLAMATION_2, " ", with_color(COLORS.red, low_hp_msg), " ", EMOJI.EXCLAMATION_2
+      EMOJI.EXCLAMATION, " ", with_color(COLORS.magenta, low_hp_msg), " ", EMOJI.EXCLAMATION
     }))
   end
 end

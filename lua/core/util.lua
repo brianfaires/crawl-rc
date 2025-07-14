@@ -109,6 +109,7 @@ function mpr_consume_queue()
 
   if do_more then
     you.stop_activity()
+    crawl.redraw_screen()
     crawl.more()
     crawl.redraw_screen()
   end

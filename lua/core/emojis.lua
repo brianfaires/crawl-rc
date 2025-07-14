@@ -40,7 +40,7 @@ function init_emojis()
 
   else
     EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "?")
-    EMOJI.EXCLAMATION = with_color(COLORS.lightmagenta, "!")
+    EMOJI.EXCLAMATION = with_color(COLORS.magenta, "!")
     EMOJI.EXCLAMATION_2 = with_color(COLORS.lightmagenta, "!!")
 
     EMOJI.HP_BORDER = with_color(COLORS.white, "|")

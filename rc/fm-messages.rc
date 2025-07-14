@@ -83,7 +83,6 @@ flash += delayed
 
 # Big damage
 more += your body is wracked
-more += Ouch! That really hurt!
 more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse

@@ -1521,7 +1521,6 @@ msc += $boring:There's nothing there!
 msc += $boring:You briefly turn translucent
 msc += $boring:unborn seems to be listening
 msc += $boring:You can only put on jewellery
-msc += $boring:Ouch!
 msc += $boring:There isn't anything here
 msc += $boring:The air around you briefly surges with heat
 msc += $boring:Your skin glows momentarily
@@ -2977,7 +2976,6 @@ flash += delayed
 
 # Big damage
 more += your body is wracked
-more += Ouch! That really hurt!
 more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse
@@ -3570,7 +3568,7 @@ function init_emojis()
 
   else
     EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "?")
-    EMOJI.EXCLAMATION = with_color(COLORS.lightmagenta, "!")
+    EMOJI.EXCLAMATION = with_color(COLORS.magenta, "!")
     EMOJI.EXCLAMATION_2 = with_color(COLORS.lightmagenta, "!!")
 
     EMOJI.HP_BORDER = with_color(COLORS.white, "|")
@@ -3880,6 +3878,7 @@ function mpr_consume_queue()
 
   if do_more then
     you.stop_activity()
+    crawl.redraw_screen()
     crawl.more()
     crawl.redraw_screen()
   end
@@ -4128,6 +4127,10 @@ function init_announce_damage()
   prev.mhp = 0
   prev.mp = 0
   prev.mmp = 0
+
+  if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
+    crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
+  end
 end
 
 
@@ -5244,7 +5247,7 @@ local function alert_low_hp()
     below_hp_threshold = true
     local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
     enqueue_mpr_opt_more(true, table.concat({
-      EMOJI.EXCLAMATION_2, " ", with_color(COLORS.red, low_hp_msg), " ", EMOJI.EXCLAMATION_2
+      EMOJI.EXCLAMATION, " ", with_color(COLORS.magenta, low_hp_msg), " ", EMOJI.EXCLAMATION
     }))
   end
 end
@@ -7173,6 +7176,7 @@ end
 
 function ready()
   if not buehler_rc_active then return end
+  crawl.redraw_screen()
   if you.turns() == prev_turn then return end
 
   ready_cache()

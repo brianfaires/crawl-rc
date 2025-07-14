@@ -126,6 +126,7 @@ end
 
 function ready()
   if not buehler_rc_active then return end
+  crawl.redraw_screen()
   if you.turns() == prev_turn then return end
 
   ready_cache()
