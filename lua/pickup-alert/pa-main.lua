@@ -60,7 +60,7 @@ function init_pa_main()
       if not (CONFIG.alert_system_enabled and you.turn_is_over()) then return end
       if already_contains(pa_items_alerted, it) then return end
 
-      if loaded_pa_misc and CONFIG.alert_one_time_items then
+      if loaded_pa_misc and CONFIG.one_time_alerts and #CONFIG.one_time_alerts > 0 then
         if pa_alert_OTA(it) then return end
       end
 
@@ -81,7 +81,7 @@ function init_pa_main()
   end)
 end
 
-function pa_alert_item(it, alert_type, emoji)
+function pa_alert_item(it, alert_type, emoji, force_more)
   local item_desc = get_plussed_name(it, "plain")
   local alert_colors
   if is_weapon(it) then
@@ -107,7 +107,9 @@ function pa_alert_item(it, alert_type, emoji)
   tokens[#tokens+1] = with_color(alert_colors.desc, " " .. alert_type .. ": ")
   tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
   tokens[#tokens+1] = tokens[1]
-  enqueue_mpr_opt_more(CONFIG.alert_force_more, table.concat(tokens))
+
+  local do_fm = CONFIG.alert_force_mores and (force_more or (CONFIG.fm_alert_artefact and it.artefact))
+  enqueue_mpr_opt_more(do_fm, table.concat(tokens))
 
   pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
   add_to_pa_table(pa_items_alerted, it)

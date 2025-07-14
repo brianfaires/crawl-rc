@@ -47,13 +47,11 @@ function init_config()
   CONFIG.pickup_staves = true
 
   CONFIG.alert_system_enabled = true
-  CONFIG.alert_force_more = true
   CONFIG.alert_armour = true
   CONFIG.alert_weapons = true
   CONFIG.alert_orbs = true
   CONFIG.alert_talismans = true
   CONFIG.alert_staff_resists = true
-  CONFIG.alert_one_time_items = true
   CONFIG.one_time_alerts = {
     "broad axe", "executioner's axe", "eveningstar", "demon whip",
     "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
@@ -62,6 +60,21 @@ function init_config()
     "storm dragon scales", "shadow dragon scales", "wand of digging",
     "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
   } -- one_time_alerts (do not remove this comment)
+
+  -- Choose when force_more is used with an alert
+  CONFIG.alert_force_mores = true -- False to disable all
+  CONFIG.fm_alert_early_weap = false
+  CONFIG.fm_alert_new_weap = true
+  CONFIG.fm_alert_body_armour = true
+  CONFIG.fm_alert_aux_armour = true
+  CONFIG.fm_alert_shields = true
+  CONFIG.fm_alert_high_score_weap = true
+  CONFIG.fm_alert_high_score_armour = true
+  CONFIG.fm_alert_one_time_alerts = true
+  CONFIG.fm_alert_artefact = true
+  CONFIG.fm_alert_orbs = false
+  CONFIG.fm_alert_talismans = false
+  CONFIG.fm_alert_staff_resists = true
 
   -- Startup
   CONFIG.show_skills_on_startup = true
