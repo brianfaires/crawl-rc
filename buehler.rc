@@ -5823,8 +5823,10 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
+pause_pa_system = nil
 
 function init_pa_main()
+  pause_pa_system = false
   init_pa_data()
 
   if CONFIG.debug_init then crawl.mpr("Initializing pa-main") end
@@ -5845,6 +5847,7 @@ function init_pa_main()
   ---- Autopickup main ----
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
+    if pause_pa_system then return end
     if CACHE.have_orb then return end
     if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
@@ -5955,20 +5958,31 @@ function c_assign_invletter_item_alerts(it)
 end
 
 function c_message_item_alerts(text, channel)
-  if channel ~= "plain" then return end
-  if text:find("Done exploring") or text:find("Partly explored") then
-    local tokens = {}
-    for _,v in ipairs(pa_recent_alerts) do
-      tokens[#tokens+1] = "\n  " .. v
+  if channel == "multiturn" then
+    if not pause_pa_system and text:find("You start ") then
+      print("pause_pa_system = true")
+      pause_pa_system = true
     end
-    if #tokens > 0 then
-      enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
+    return
+  elseif channel == "plain" then
+    if pause_pa_system and (text:find("You stop ") or text:find("You finish ")) then
+      print("pause_pa_system = false")
+      pause_pa_system = false
+    elseif text:find("Done exploring") or text:find("Partly explored") then
+      local tokens = {}
+      for _,v in ipairs(pa_recent_alerts) do
+        tokens[#tokens+1] = "\n  " .. v
+      end
+      if #tokens > 0 then
+        enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
+      end
+      pa_recent_alerts = {}
     end
-    pa_recent_alerts = {}
   end
 end
 
 function ready_item_alerts()
+  if pause_pa_system then return end
   ready_pa_weapons()
   update_high_scores(items.equipped_at("armour"))
 end
