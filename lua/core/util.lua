@@ -143,6 +143,21 @@ function get_mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
 
+function get_talisman_min_level(it)
+  local tokens = crawl.split(it.description, "\n")
+  for _,v in ipairs(tokens) do
+    if v:sub(1, 4) == "Min " then
+      local start_pos = v:find("%d", 4)
+      if start_pos then
+        local end_pos = v:find("[^%d]", start_pos)
+        return tonumber(v:sub(start_pos, end_pos - 1))
+      end
+    end
+  end
+
+  return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
+end
+
 function have_shield()
   return is_shield(items.equipped_at("offhand"))
 end
@@ -185,7 +200,7 @@ function is_scarf(it)
 end
 
 function is_shield(it)
-  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not is_orb(it)
+  return it and it.is_shield()
 end
 
 function is_magic_staff(it)
@@ -205,7 +220,7 @@ function is_polearm(it)
 end
 
 function is_weapon(it)
-  return it and (it.delay ~= nil)
+  return it and it.is_weapon
 end
 
 function offhand_is_free()

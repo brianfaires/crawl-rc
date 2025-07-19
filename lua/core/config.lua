@@ -56,6 +56,7 @@ function init_config()
     weapons = true,
     orbs = true,
     talismans = true,
+    talisman_lvl_diff = 6, -- Only alert a plain talisman if its min_skill <= Shapeshifting + this
     staff_resists = true,
 
     -- Each item is alerted once. Set to empty to disable.

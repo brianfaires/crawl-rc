@@ -40,11 +40,10 @@ end
 
 function pa_alert_talisman(it)
   if it.artefact then
-    if it.is_identified then
-      return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
-    end
-    return false
+    if not it.is_identified then return false end
+    return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
   end
+  if get_talisman_min_level(it) > you.skill("Shapeshifting") + CONFIG.alert.talisman_lvl_diff then return false end
   return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
 end
 
