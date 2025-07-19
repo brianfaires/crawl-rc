@@ -23,6 +23,7 @@ function init_pa_main()
   ---- Autopickup main ----
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
+    if it.is_weapon then crawl.mpr(it.name()) end
     if pause_pa_system then return end
     if CACHE.have_orb then return end
     if has_ego(it) and not it.is_identified then return false end
@@ -33,7 +34,7 @@ function init_pa_main()
       local retVal = false
       if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup.weapons and is_weapon(it) then
+      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
         if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and CONFIG.pickup.staves and is_magic_staff(it) then
         if pa_pickup_staff(it) then return true end
@@ -76,7 +77,7 @@ function init_pa_main()
       elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
         if pa_alert_armour(it, unworn_aux_item) then return end
       else
-        if loaded_pa_weapons and CONFIG.alert.weapons and is_weapon(it) then
+        if loaded_pa_weapons and CONFIG.alert.weapons and it.is_weapon then
           if pa_alert_weapon(it) then return end
         end
       end
@@ -87,7 +88,7 @@ end
 function pa_alert_item(it, alert_type, emoji, force_more)
   local item_desc = get_plussed_name(it, "plain")
   local alert_colors
-  if is_weapon(it) then
+  if it.is_weapon then
     alert_colors = ALERT_COLORS.weapon
     update_high_scores(it)
     item_desc = item_desc .. with_color(ALERT_COLORS.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
@@ -128,7 +129,7 @@ function c_assign_invletter_item_alerts(it)
   util.remove(pa_recent_alerts, get_plussed_name(it))
   remove_from_OTA(it)
 
-  if is_weapon(it) or is_armour(it) then
+  if it.is_weapon or is_armour(it) then
     update_high_scores(it)
   end
 end

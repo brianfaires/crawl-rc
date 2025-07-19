@@ -3989,10 +3989,6 @@ function is_polearm(it)
   return it and it.weap_skill == "Polearms"
 end
 
-function is_weapon(it)
-  return it and it.is_weapon
-end
-
 function offhand_is_free()
   if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
@@ -4342,13 +4338,13 @@ function c_assign_invletter_drop_inferior(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if not (is_weapon(it) or is_armour(it)) then return end
+  if not (it.is_weapon or is_armour(it)) then return end
   if has_risky_ego(it) then return end
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     if not inv.artefact and inv.subtype() == it.subtype() and
       (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
-        if is_weapon(it) then
+        if it.is_weapon then
           if inv.plus <= it.plus then inscribe_drop(inv) end
         else
           if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
@@ -4549,7 +4545,7 @@ end
 
 local function has_enchantable_weap_in_inv()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+    if inv.is_weapon and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
       return true
     end
   end
@@ -5238,7 +5234,7 @@ end
 ------------------ Hooks ------------------
 function ready_inscribe_stats()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if CONFIG.inscribe_weapons and is_weapon(inv) then
+    if CONFIG.inscribe_weapons and inv.is_weapon then
       inscribe_weapon_stats(inv)
     elseif CONFIG.inscribe_armour and is_armour(inv) and not is_scarf(inv) then
       inscribe_armour_stats(inv)
@@ -5691,7 +5687,7 @@ local priorities_w
 local slots_changed
 
 local function cleanup_ab(slot)
-  if is_weapon(items.inslot(slot)) then return end
+  if items.inslot(slot).is_weapon then return end
 
   for p=1,#priorities_ab do
     if priorities_ab[p] > slot then
@@ -5706,7 +5702,7 @@ end
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
   local inv = items.inslot(slot_w)
-  if is_weapon(inv) then return end
+  if inv.is_weapon then return end
 
   for p=1,#priorities_w do
     if priorities_w[p] > 1 then
@@ -5718,11 +5714,11 @@ local function cleanup_w()
 end
 
 local function get_priority_ab(it)
-  if not is_weapon(it) then return -1 end
+  if not it.is_weapon then return -1 end
   if it.equipped then return 1 end
 
   if is_magic_staff(it) then return 3 end
-  if is_weapon(it) then
+  if it.is_weapon then
     if it.is_ranged then
       if CACHE.s_ranged >= 4 then return 2 end
       return 5
@@ -5740,7 +5736,7 @@ local function get_priority_ab(it)
 end
 
 local function get_priority_w(it)
-  if not is_weapon(it) then return -1 end
+  if not it.is_weapon then return -1 end
   if it.is_ranged then return 1 end
   if is_polearm(it) then return 2 end
   if is_magic_staff(it) then return 3 end
@@ -5795,14 +5791,14 @@ end
 ------------------- Hooks -------------------
 function c_assign_invletter_weapon_slots(it)
   if not CONFIG.do_auto_weapon_slots_abw then return end
-  if not is_weapon(it) then return end
+  if not it.is_weapon then return end
 
   for i=0,2 do
     local slot = i==2 and items.letter_to_index("w") or i
 
     local inv = items.inslot(slot)
     if not inv then return slot end
-    if not is_weapon(inv) then
+    if not inv.is_weapon then
       items.swap_slots(slot, get_first_empty_slot())
       slots_changed = true
       return slot
@@ -5863,6 +5859,7 @@ function init_pa_main()
   ---- Autopickup main ----
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
+    if it.is_weapon then crawl.mpr(it.name()) end
     if pause_pa_system then return end
     if CACHE.have_orb then return end
     if has_ego(it) and not it.is_identified then return false end
@@ -5873,7 +5870,7 @@ function init_pa_main()
       local retVal = false
       if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup.weapons and is_weapon(it) then
+      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
         if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and CONFIG.pickup.staves and is_magic_staff(it) then
         if pa_pickup_staff(it) then return true end
@@ -5916,7 +5913,7 @@ function init_pa_main()
       elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
         if pa_alert_armour(it, unworn_aux_item) then return end
       else
-        if loaded_pa_weapons and CONFIG.alert.weapons and is_weapon(it) then
+        if loaded_pa_weapons and CONFIG.alert.weapons and it.is_weapon then
           if pa_alert_weapon(it) then return end
         end
       end
@@ -5927,7 +5924,7 @@ end
 function pa_alert_item(it, alert_type, emoji, force_more)
   local item_desc = get_plussed_name(it, "plain")
   local alert_colors
-  if is_weapon(it) then
+  if it.is_weapon then
     alert_colors = ALERT_COLORS.weapon
     update_high_scores(it)
     item_desc = item_desc .. with_color(ALERT_COLORS.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
@@ -5968,7 +5965,7 @@ function c_assign_invletter_item_alerts(it)
   util.remove(pa_recent_alerts, get_plussed_name(it))
   remove_from_OTA(it)
 
-  if is_weapon(it) or is_armour(it) then
+  if it.is_weapon or is_armour(it) then
     update_high_scores(it)
   end
 end
@@ -6012,7 +6009,7 @@ end
 {
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if is_weapon(it) or is_armour(it) or is_talisman(it) or is_orb(it) then
+  if it.is_weapon or is_armour(it) or is_talisman(it) or is_orb(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
@@ -6046,7 +6043,7 @@ function init_pa_data()
     remove_from_OTA(inv)
     add_to_pa_table(pa_items_picked, inv)
 
-    if is_weapon(inv) then
+    if inv.is_weapon then
       if is_polearm(inv) then
         alerted_first_polearm = true
         if get_hands(inv) == 1 then
@@ -6094,7 +6091,7 @@ function update_high_scores(it)
       ac_high_score = ac
       if not ret_val then ret_val = "Highest AC" end
     end
-  elseif is_weapon(it) then
+  elseif it.is_weapon then
     local it_plus = it.plus or 0
     local score = it.score or get_weap_score(it)
     if score > weapon_high_score then
@@ -6166,7 +6163,7 @@ function get_armour_info_strings(it)
 end
 
 function get_weapon_info_string(it)
-  if not is_weapon(it) then return end
+  if not it.is_weapon then return end
   local dmg = get_weap_dmg(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
@@ -6229,7 +6226,7 @@ end
 -- Custom def of ego/branded
 function has_ego(it, exclude_stat_only_egos)
   if not it then return false end
-  if is_weapon(it) then
+  if it.is_weapon then
     if exclude_stat_only_egos then
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end
@@ -6964,7 +6961,7 @@ function pa_pickup_weapon(it)
   if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
     -- Staves don't go into INV_WEAP; double-check that we're not carrying just a staff
     for _,inv in ipairs(items.inventory()) do
-      if is_weapon(inv) then return false end -- faster to check weapon than staff
+      if inv.is_weapon then return false end -- faster to check weapon than staff
     end
     return true
   end
@@ -7143,7 +7140,7 @@ end
 function ready_pa_weapons()
   init_pa_weapons()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and not is_magic_staff(inv) then
+    if inv.is_weapon and not is_magic_staff(inv) then
       INV_WEAP.add_weapon(inv)
       update_high_scores(inv)
     end

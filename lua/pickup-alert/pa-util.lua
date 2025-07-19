@@ -43,7 +43,7 @@ function get_armour_info_strings(it)
 end
 
 function get_weapon_info_string(it)
-  if not is_weapon(it) then return end
+  if not it.is_weapon then return end
   local dmg = get_weap_dmg(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
@@ -106,7 +106,7 @@ end
 -- Custom def of ego/branded
 function has_ego(it, exclude_stat_only_egos)
   if not it then return false end
-  if is_weapon(it) then
+  if it.is_weapon then
     if exclude_stat_only_egos then
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end

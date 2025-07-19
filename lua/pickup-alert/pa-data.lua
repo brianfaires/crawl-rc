@@ -1,6 +1,6 @@
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if is_weapon(it) or is_armour(it) or is_talisman(it) or is_orb(it) then
+  if it.is_weapon or is_armour(it) or is_talisman(it) or is_orb(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
@@ -34,7 +34,7 @@ function init_pa_data()
     remove_from_OTA(inv)
     add_to_pa_table(pa_items_picked, inv)
 
-    if is_weapon(inv) then
+    if inv.is_weapon then
       if is_polearm(inv) then
         alerted_first_polearm = true
         if get_hands(inv) == 1 then
@@ -82,7 +82,7 @@ function update_high_scores(it)
       ac_high_score = ac
       if not ret_val then ret_val = "Highest AC" end
     end
-  elseif is_weapon(it) then
+  elseif it.is_weapon then
     local it_plus = it.plus or 0
     local score = it.score or get_weap_score(it)
     if score > weapon_high_score then

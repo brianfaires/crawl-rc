@@ -97,7 +97,7 @@ function pa_pickup_weapon(it)
   if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
     -- Staves don't go into INV_WEAP; double-check that we're not carrying just a staff
     for _,inv in ipairs(items.inventory()) do
-      if is_weapon(inv) then return false end -- faster to check weapon than staff
+      if inv.is_weapon then return false end -- faster to check weapon than staff
     end
     return true
   end
@@ -276,7 +276,7 @@ end
 function ready_pa_weapons()
   init_pa_weapons()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and not is_magic_staff(inv) then
+    if inv.is_weapon and not is_magic_staff(inv) then
       INV_WEAP.add_weapon(inv)
       update_high_scores(inv)
     end

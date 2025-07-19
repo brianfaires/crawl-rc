@@ -219,10 +219,6 @@ function is_polearm(it)
   return it and it.weap_skill == "Polearms"
 end
 
-function is_weapon(it)
-  return it and it.is_weapon
-end
-
 function offhand_is_free()
   if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
