@@ -75,6 +75,7 @@ end
 --- Set all single high scores ---
 -- Returns a string if item is a new high score, else nil
 function update_high_scores(it)
+  if not it then return end
   local ret_val = nil
   if is_armour(it) then
     local ac = get_armour_ac(it)

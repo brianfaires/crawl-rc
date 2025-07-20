@@ -135,11 +135,16 @@ function verify_data_reinit()
     turn = CACHE.turn
   } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
+  -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
+  -- Default successful_data_reload to false, to confirm the data reload set it to true
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    create_persistent_data("prev_" .. k, v)
+  end
+  create_persistent_data("successful_data_reload", false)
+
   if CACHE.turn > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do
-      local prev_var_name = "prev_" .. k
-      create_persistent_data(prev_var_name, v)
-      local prev = _G[prev_var_name]
+      local prev = _G["prev_" .. k]
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
@@ -147,10 +152,6 @@ function verify_data_reinit()
       end
     end
 
-    -- Errors reloading some persistent data prevent further data from being reloaded
-    -- Set the final persistent var to detect full data reload
-    -- If var was successfully reloaded via chk_lua_save, this will stay as true
-    create_persistent_data("successful_data_reload", false)
     if not successful_data_reload then
       failed_reinit = true
       local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
@@ -165,5 +166,6 @@ function verify_data_reinit()
     _G["prev_" .. k] = v
   end
   successful_data_reload = true
+
   return true
 end
