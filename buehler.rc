@@ -3781,14 +3781,13 @@ end
 
 ---- Text Formatting ----
 -- Removes tags from text, and optionally escapes special characters --
+local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
 function cleanup_text(text, escape_chars)
-  local SPECIAL_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
   -- Fast path: if no tags, just handle newlines and escaping
-  if not text:find("<") then
-      if not escape_chars then
-          return text:gsub("\n", "")
-      end
-      return text:gsub("\n", ""):gsub(SPECIAL_CHARS, "%%%1")
+  if not text:find("<", 1, true) then
+    local one_line = text:gsub("\n", "")
+    if escape_chars then return one_line:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
+    return one_line
   end
 
   local tokens = {}
@@ -3796,7 +3795,7 @@ function cleanup_text(text, escape_chars)
   local len = #text
 
   while pos <= len do
-      local tag_start = text:find("<", pos)
+      local tag_start = text:find("<", pos, true)
       if not tag_start then
           -- No more tags, append remaining text
           tokens[#tokens+1] = text:sub(pos)
@@ -3809,7 +3808,7 @@ function cleanup_text(text, escape_chars)
       end
 
       -- Find end of tag
-      local tag_end = text:find(">", tag_start)
+      local tag_end = text:find(">", tag_start, true)
       if not tag_end then
           -- Malformed tag, append remaining text
           tokens[#tokens+1] = text:sub(pos)
@@ -3824,7 +3823,7 @@ function cleanup_text(text, escape_chars)
 
   -- Handle escaping if needed
   if escape_chars then
-      return cleaned:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+      return cleaned:gsub(CLEANUP_TEXT_CHARS, "%%%1")
   end
 
   return cleaned
@@ -3980,7 +3979,7 @@ function is_magic_staff(it)
 end
 
 function is_talisman(it)
-  return it and it.name("qual"):find("talisman")
+  return it and it.name("qual"):find("talisman", 1, true)
 end
 
 function is_orb(it)
@@ -3988,7 +3987,7 @@ function is_orb(it)
 end
 
 function is_polearm(it)
-  return it and it.weap_skill:find("Polearms")
+  return it and it.weap_skill:find("Polearms", 1, true)
 end
 
 function offhand_is_free()
@@ -4066,7 +4065,9 @@ end
 ------------------- Hooks -------------------
 function c_message_after_shaft(text, channel)
   if as_shaft_depth ~= 0 or channel ~= "plain" then return end
-  if text:find("You fall into a shaft") or text:find("You are sucked into a shaft") then
+  local text_fall = "ou fall into a shaft"
+  local text_sucked = "ou are sucked into a shaft"
+  if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
     as_shaft_depth = CACHE.depth
     as_shaft_branch = CACHE.branch
     crawl.setopt("explore_stop += stairs")
@@ -4563,7 +4564,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("ring of") or text:find("amulet of") or text:find("wand of")
+  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then
     return text:sub(idx, #text)
   end
@@ -4591,7 +4592,7 @@ local function get_excludable_name(text, for_exclusion)
   if idx then
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
     if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls
-    and (text:find("enchant weapon") or text:find("brand weapon"))
+    and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
     and has_enchantable_weap_in_inv() then
       return
     end
@@ -4615,7 +4616,7 @@ end
 function c_message_exclude_dropped(text, channel)
   if channel ~= "plain" then return end
   local exclude
-  if text:find("You drop ") then exclude = true
+  if text:find("ou drop ", 1, true) then exclude = true
   elseif text:find(" %- ") then exclude = false
   else return end
 
@@ -4625,10 +4626,10 @@ function c_message_exclude_dropped(text, channel)
   if exclude then
     -- Don't exclude if we dropped partial stack (except for jewellery)
     for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.name("qual"):find(item_name) then
+      if inv.name("qual"):find(item_name, 1, true) then
         if is_jewellery(inv) then break end
-        local qty_str = "You drop " .. inv.quantity .. " " .. item_name
-        if inv.quantity == 1 or text:find(qty_str) then break end
+        local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
+        if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
         return
       end
     end
@@ -4688,7 +4689,7 @@ local function fully_recovered()
   end
 
   -- If stat drain, don't wait for slow
-  if status:find("slowed") then
+  if status:find("slowed", 1, true) then
     return CACHE.str <= 0 or CACHE.dex <= 0 or CACHE.int <= 0
   end
 
@@ -4726,7 +4727,7 @@ end
 ------------------- Hooks -------------------
 function c_message_fully_recover(text, channel)
   if channel == "plain" then
-    if text:find("You start waiting") or text:find("You start resting") then
+    if text:find("ou start waiting", 1, true) or text:find("ou start resting", 1, true) then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif recovery_start_turn > 0 then
@@ -4760,7 +4761,7 @@ end
 {
 -- Disable built-in force_mores that can't just be -='d
 local FM_DISABLES = {
-  "You kneel at the altar",
+  "ou kneel at the altar",
   "need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
   "Okawaru offers you a choice",
@@ -5219,7 +5220,7 @@ local function inscribe_weapon_stats(it)
   local dps_inscr = get_weapon_info_string(it)
   local prefix, suffix = "", ""
 
-  local idx = orig_inscr:find("DPS:")
+  local idx = orig_inscr:find("DPS:", 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then
@@ -5348,7 +5349,7 @@ function c_message_remind_identify(text, channel)
 
   if text:find("scrolls? of identify") then
     found_scroll_of_id = true
-    if not text:find("ou drop ") then
+    if not text:find("ou drop ", 1, true) then
       do_remind_id_check = true
     end
   elseif not found_scroll_of_id then
@@ -5479,9 +5480,9 @@ end
 local function c_message_temple_actions(text, _)
   if CACHE.branch == "Temple" then
     -- Hit explore to search all altars
-    if text:find("explor") then
+    if text:find("explor", 1, true) then
       crawl.sendkeys({ 6, "altar\r" })
-    elseif text:find("welcomes you!") then
+    elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
       crawl.sendkeys("X<\r")
     end
@@ -5571,17 +5572,17 @@ local v5_unwarned
 
 local function check_new_location(key)
   local feature = view.feature_at (0, 0)
-  local one_way_stair = feature:find("escape_hatch") or feature:find("shaft")
+  local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
   local turn_diff = CACHE.turn - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
     if key == ">" then
-      if not (feature:find("down") or feature:find("shaft")) then
+      if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
         crawl.sendkeys(key)
         return
       end
     else
-      if not feature:find("up") then
+      if not feature:find("up", 1, true) then
         crawl.sendkeys(key)
         return
       end
@@ -5592,7 +5593,7 @@ local function check_new_location(key)
     end
   elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
     -- V5 warning idea by rypofalem --
-    if feature:find("down") or feature:find("shaft") then
+    if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not mpr_yesno("Really go to Vaults:5?") then
         crawl.mpr("Okay, then.")
         return
@@ -5811,7 +5812,7 @@ end
 
 function c_message_weapon_slots(text, channel)
   if not CONFIG.do_auto_weapon_slots_abw then return end
-  do_cleanup_weapon_slots = channel == "plain" and text:find("You drop ")
+  do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
 end
 
 function ready_weapon_slots()
@@ -5974,13 +5975,13 @@ end
 
 function c_message_item_alerts(text, channel)
   if channel == "multiturn" then
-    if not pause_pa_system and text:find("You start ") then
+    if not pause_pa_system and text:find("ou start ", 1, true) then
       pause_pa_system = true
     end
   elseif channel == "plain" then
-    if pause_pa_system and (text:find("You stop ") or text:find("You finish ")) then
+    if pause_pa_system and (text:find("ou stop ", 1, true) or text:find("ou finish ", 1, true)) then
       pause_pa_system = false
-    elseif text:find("Done exploring") or text:find("Partly explored") then
+    elseif text:find("one exploring", 1, true) or text:find("artly explored", 1, true) then
       local tokens = {}
       for _,v in ipairs(pa_recent_alerts) do
         tokens[#tokens+1] = "\n  " .. v
@@ -6199,7 +6200,8 @@ function get_ego(it, terse)
   if ego then return ego end
 
   if is_body_armour(it) then
-    if it.name("qual"):find("(dragon scales|troll leather)") then return qualname end
+    local qualname = it.name("qual")
+    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
   end
 end
 
@@ -6236,8 +6238,8 @@ function has_ego(it, exclude_stat_only_egos)
 
   if it.artefact or it.branded then return true end
   local basename = it.name("base")
-  if basename:find("troll leather") then return true end
-  if basename:find("dragon scales") and not basename:find("steam") then return true end
+  if basename:find("troll leather", 1, true) then return true end
+  if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
   return false
 end
 
@@ -6396,13 +6398,15 @@ function get_weap_min_delay(it)
   if get_ego(it) == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
   local min_delay = math.floor(adj_base_delay)
 
-  if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
-  if min_delay > 7 then min_delay = 7 end
-
-  if basename:find("longbow") then min_delay = 6
-  elseif basename:find("(crossbow|arbalest)") and min_delay < 10 then min_delay = 10 end
-
-  return min_delay
+  if it.weap_skill == "Short Blades" and min_delay > 5 then return 5 end
+  if it.is_ranged then
+    if basename:find("longbow", 1, true) then return 6
+    else
+      local is_2h_ranged = basename:find("crossbow", 1, true) or basename:find("arbalest", 1, true)
+      if is_2h_ranged and min_delay < 10 then return 10 end
+    end
+  end
+  return math.min(min_delay, 7)
 end
 
 function get_weap_dps(it, dmg_type)
@@ -6437,7 +6441,7 @@ function get_weap_dmg(it, dmg_type)
   end
 
   local stat
-  if it.is_ranged or it.weap_skill:find("Blades") then stat = dex
+  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
@@ -6487,7 +6491,7 @@ end
 
 -- Get skill level, or average for artefacts w/ multiple skills
 function get_skill(skill)
-  if not skill:find(",") then
+  if not skill:find(",", 1, true) then
     return you.skill(skill)
   end
 
@@ -6512,7 +6516,7 @@ function get_slay_bonuses()
       if is_ring(it) then
         if it.artefact then
           local name = it.name()
-          local idx = name:find("Slay")
+          local idx = name:find("Slay", 1, true)
           if idx then
             local slay = tonumber(name:sub(idx+5, idx+5))
             if slay == 1 then
@@ -6751,7 +6755,7 @@ function pa_pickup_armour(it)
       if get_mut(MUTS.claws, true) > 0 and not have_weapon() then return false end
     elseif st == "boots" then
       if get_mut(MUTS.hooves, true) + get_mut(MUTS.talons, true) > 0 then return false end
-    elseif it.name("base"):find("helmet") then
+    elseif it.name("base"):find("helmet", 1, true) then
       if get_mut(MUTS.horns, true) + get_mut(MUTS.beak, true) + get_mut(MUTS.antennae, true) > 0 then return false end
     end
 
@@ -6834,7 +6838,7 @@ function pa_pickup_staff(it)
 
   -- Check for previously picked staves
   for _,v in ipairs(pa_items_picked) do
-    if v:find(it.name("base")) then return false end
+    if v:find(it.name("base"), 1, true) then return false end
   end
 
   return true
@@ -7192,7 +7196,7 @@ end
 
 function c_answer_prompt(prompt)
   if not buehler_rc_active then return end
-  if prompt:find("cheaper one?") and CACHE.branch ~= "Bazaar" then
+  if prompt:find("cheaper one?", 1, true) and CACHE.branch ~= "Bazaar" then
     crawl.mpr("Replacing shopping list items")
     return true end
   if prompt == "Die?" then

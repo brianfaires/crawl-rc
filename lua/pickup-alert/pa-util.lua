@@ -79,7 +79,8 @@ function get_ego(it, terse)
   if ego then return ego end
 
   if is_body_armour(it) then
-    if it.name("qual"):find("(dragon scales|troll leather)") then return qualname end
+    local qualname = it.name("qual")
+    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
   end
 end
 
@@ -116,8 +117,8 @@ function has_ego(it, exclude_stat_only_egos)
 
   if it.artefact or it.branded then return true end
   local basename = it.name("base")
-  if basename:find("troll leather") then return true end
-  if basename:find("dragon scales") and not basename:find("steam") then return true end
+  if basename:find("troll leather", 1, true) then return true end
+  if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
   return false
 end
 
@@ -276,13 +277,15 @@ function get_weap_min_delay(it)
   if get_ego(it) == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
   local min_delay = math.floor(adj_base_delay)
 
-  if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
-  if min_delay > 7 then min_delay = 7 end
-
-  if basename:find("longbow") then min_delay = 6
-  elseif basename:find("(crossbow|arbalest)") and min_delay < 10 then min_delay = 10 end
-
-  return min_delay
+  if it.weap_skill == "Short Blades" and min_delay > 5 then return 5 end
+  if it.is_ranged then
+    if basename:find("longbow", 1, true) then return 6
+    else
+      local is_2h_ranged = basename:find("crossbow", 1, true) or basename:find("arbalest", 1, true)
+      if is_2h_ranged and min_delay < 10 then return 10 end
+    end
+  end
+  return math.min(min_delay, 7)
 end
 
 function get_weap_dps(it, dmg_type)
@@ -317,7 +320,7 @@ function get_weap_dmg(it, dmg_type)
   end
 
   local stat
-  if it.is_ranged or it.weap_skill:find("Blades") then stat = dex
+  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
@@ -367,7 +370,7 @@ end
 
 -- Get skill level, or average for artefacts w/ multiple skills
 function get_skill(skill)
-  if not skill:find(",") then
+  if not skill:find(",", 1, true) then
     return you.skill(skill)
   end
 
@@ -392,7 +395,7 @@ function get_slay_bonuses()
       if is_ring(it) then
         if it.artefact then
           local name = it.name()
-          local idx = name:find("Slay")
+          local idx = name:find("Slay", 1, true)
           if idx then
             local slay = tonumber(name:sub(idx+5, idx+5))
             if slay == 1 then

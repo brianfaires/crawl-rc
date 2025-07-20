@@ -135,13 +135,13 @@ end
 
 function c_message_item_alerts(text, channel)
   if channel == "multiturn" then
-    if not pause_pa_system and text:find("You start ") then
+    if not pause_pa_system and text:find("ou start ", 1, true) then
       pause_pa_system = true
     end
   elseif channel == "plain" then
-    if pause_pa_system and (text:find("You stop ") or text:find("You finish ")) then
+    if pause_pa_system and (text:find("ou stop ", 1, true) or text:find("ou finish ", 1, true)) then
       pause_pa_system = false
-    elseif text:find("Done exploring") or text:find("Partly explored") then
+    elseif text:find("one exploring", 1, true) or text:find("artly explored", 1, true) then
       local tokens = {}
       for _,v in ipairs(pa_recent_alerts) do
         tokens[#tokens+1] = "\n  " .. v

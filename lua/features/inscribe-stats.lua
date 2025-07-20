@@ -32,7 +32,7 @@ local function inscribe_weapon_stats(it)
   local dps_inscr = get_weapon_info_string(it)
   local prefix, suffix = "", ""
 
-  local idx = orig_inscr:find("DPS:")
+  local idx = orig_inscr:find("DPS:", 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then

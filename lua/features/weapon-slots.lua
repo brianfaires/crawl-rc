@@ -134,7 +134,7 @@ end
 
 function c_message_weapon_slots(text, channel)
   if not CONFIG.do_auto_weapon_slots_abw then return end
-  do_cleanup_weapon_slots = channel == "plain" and text:find("You drop ")
+  do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
 end
 
 function ready_weapon_slots()

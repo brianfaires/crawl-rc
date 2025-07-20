@@ -169,7 +169,7 @@ function pa_pickup_armour(it)
       if get_mut(MUTS.claws, true) > 0 and not have_weapon() then return false end
     elseif st == "boots" then
       if get_mut(MUTS.hooves, true) + get_mut(MUTS.talons, true) > 0 then return false end
-    elseif it.name("base"):find("helmet") then
+    elseif it.name("base"):find("helmet", 1, true) then
       if get_mut(MUTS.horns, true) + get_mut(MUTS.beak, true) + get_mut(MUTS.antennae, true) > 0 then return false end
     end
 

@@ -9,14 +9,13 @@ end
 
 ---- Text Formatting ----
 -- Removes tags from text, and optionally escapes special characters --
+local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
 function cleanup_text(text, escape_chars)
-  local SPECIAL_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
   -- Fast path: if no tags, just handle newlines and escaping
-  if not text:find("<") then
-      if not escape_chars then
-          return text:gsub("\n", "")
-      end
-      return text:gsub("\n", ""):gsub(SPECIAL_CHARS, "%%%1")
+  if not text:find("<", 1, true) then
+    local one_line = text:gsub("\n", "")
+    if escape_chars then return one_line:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
+    return one_line
   end
 
   local tokens = {}
@@ -24,7 +23,7 @@ function cleanup_text(text, escape_chars)
   local len = #text
 
   while pos <= len do
-      local tag_start = text:find("<", pos)
+      local tag_start = text:find("<", pos, true)
       if not tag_start then
           -- No more tags, append remaining text
           tokens[#tokens+1] = text:sub(pos)
@@ -37,7 +36,7 @@ function cleanup_text(text, escape_chars)
       end
 
       -- Find end of tag
-      local tag_end = text:find(">", tag_start)
+      local tag_end = text:find(">", tag_start, true)
       if not tag_end then
           -- Malformed tag, append remaining text
           tokens[#tokens+1] = text:sub(pos)
@@ -52,7 +51,7 @@ function cleanup_text(text, escape_chars)
 
   -- Handle escaping if needed
   if escape_chars then
-      return cleaned:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+      return cleaned:gsub(CLEANUP_TEXT_CHARS, "%%%1")
   end
 
   return cleaned
@@ -208,7 +207,7 @@ function is_magic_staff(it)
 end
 
 function is_talisman(it)
-  return it and it.name("qual"):find("talisman")
+  return it and it.name("qual"):find("talisman", 1, true)
 end
 
 function is_orb(it)
@@ -216,7 +215,7 @@ function is_orb(it)
 end
 
 function is_polearm(it)
-  return it and it.weap_skill:find("Polearms")
+  return it and it.weap_skill:find("Polearms", 1, true)
 end
 
 function offhand_is_free()

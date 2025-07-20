@@ -40,7 +40,7 @@ local function fully_recovered()
   end
 
   -- If stat drain, don't wait for slow
-  if status:find("slowed") then
+  if status:find("slowed", 1, true) then
     return CACHE.str <= 0 or CACHE.dex <= 0 or CACHE.int <= 0
   end
 
@@ -78,7 +78,7 @@ end
 ------------------- Hooks -------------------
 function c_message_fully_recover(text, channel)
   if channel == "plain" then
-    if text:find("You start waiting") or text:find("You start resting") then
+    if text:find("ou start waiting", 1, true) or text:find("ou start resting", 1, true) then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif recovery_start_turn > 0 then

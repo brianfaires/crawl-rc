@@ -55,7 +55,7 @@ function pa_pickup_staff(it)
 
   -- Check for previously picked staves
   for _,v in ipairs(pa_items_picked) do
-    if v:find(it.name("base")) then return false end
+    if v:find(it.name("base"), 1, true) then return false end
   end
 
   return true

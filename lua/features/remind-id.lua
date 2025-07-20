@@ -24,7 +24,7 @@ function c_message_remind_identify(text, channel)
 
   if text:find("scrolls? of identify") then
     found_scroll_of_id = true
-    if not text:find("ou drop ") then
+    if not text:find("ou drop ", 1, true) then
       do_remind_id_check = true
     end
   elseif not found_scroll_of_id then

@@ -116,7 +116,7 @@ end
 
 function c_answer_prompt(prompt)
   if not buehler_rc_active then return end
-  if prompt:find("cheaper one?") and CACHE.branch ~= "Bazaar" then
+  if prompt:find("cheaper one?", 1, true) and CACHE.branch ~= "Bazaar" then
     crawl.mpr("Replacing shopping list items")
     return true end
   if prompt == "Die?" then
