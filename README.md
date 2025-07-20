@@ -14,7 +14,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
   - Alternatively, just remove everything between the `Begin <filename>` and `<End filename>` markers in [buehler.rc](buehler.rc).
 - If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
-  1. Any/all files from the `core/` folder.
+  1. Any/all files from the `lua/core/` folder.
 - This RC makes heavy use of the character-specific persistent data. These essentially save values when exiting,
   and then reload it when the game starts again. Currently, if the game crashes and the data is not saved, many
   features will 'reset'. To see the values of all persistent data, press '~' to open the lua interpreter, then
@@ -28,6 +28,9 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 
 ### [rc/autoinscribe.rc](rc/autoinscribe.rc)
 - Automatically inscribe items, mostly to add warnings to consumables.
+
+### [rc/autopickup.rc](rc/autopickup.rc)
+- Basic autopickup settings.
 
 ### [rc/display.rc](rc/display.rc)
 - Various display related settings, including customized colors for 1000's of messages.
@@ -51,29 +54,32 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 
 
 ## Lua files - mostly one per feature
-### [lua/after-shaft.lua](lua/after-shaft.lua)
+### [lua/features/after-shaft.lua](lua/features/after-shaft.lua)
 - Stops travel on stairs until you get back to the level you were shafted from.
 
-### [lua/announce-damage.lua](lua/announce-damage.lua)
+### [lua/features/announce-damage.lua](lua/features/announce-damage.lua)
 - Writes messages for HP and MP changes.
 
-### [lua/color-inscribe.lua](lua/color-inscribe.lua)
+### [lua/features/color-inscribe.lua](lua/features/color-inscribe.lua)
 - Colors item inscriptions for resistances, stat modifiers, etc.
 
-### [lua/drop-inferior.lua](lua/drop-inferior.lua)
+### [lua/features/drop-inferior.lua](lua/features/drop-inferior.lua)
 - Marks items with `~~DROP_ME` when you pick up a strictly better one.
   These items are added to the `drop_list`, so press `,` in the drop menu to select them all.
 
-### [lua/dynamic-options.lua](lua/dynamic-options.lua)
+### [lua/features/dynamic-options.lua](lua/features/dynamic-options.lua)
 - Any options that change based on XL, God, Class, etc.
 
-### [lua/exclude-dropped.lua](lua/exclude-dropped.lua)
+### [lua/features/exclude-dropped.lua](lua/features/exclude-dropped.lua)
 - Excludes autopickup for items that you drop your entire stack of.
   Resumes when you pick it up again.
 - Some special behavior for enchant scrolls.
 - (I don't like the behavior of the built-in `drop_disables_autopickup` feature)
 
-### [lua/fm-monsters.lua](lua/fm-monsters.lua)
+### [lua/features/fm-disable.lua](lua/features/fm-disable.lua)
+- Disables force_more messages for crawl messages that include them.
+
+### [lua/features/fm-monsters.lua](lua/features/fm-monsters.lua)
 *(Needs a v0.33 update)*
 - Generates force_more prompts when monsters come into view.
   Includes all uniques and a list of 'always alert' monsters
@@ -81,39 +87,42 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
   *(Roughly configured to fire when a monster can take 50% HP in one hit)*
 - Avoids triggering on zombies, skeleton, etc
 
-### [lua/fully-recover.lua](lua/fully-recover.lua)
+### [lua/features/fully-recover.lua](lua/features/fully-recover.lua)
 - Updates resting to fully recover from temporary negative statuses.
 - Can change these statuses in STATUSES_TO_WAIT_OFF
 
-### [lua/inscribe-stats.lua](lua/inscribe-stats.lua)
+### [lua/features/inscribe-stats.lua](lua/features/inscribe-stats.lua)
 - Weapons in inventory are inscribed with their stats and a their ideal DPS (ie max damage per 10 aut, including brand).
 - Armour is inscribed with stats relative to what you're wearing.
 - Updates in real time with skill/stats/etc.
 
-### [lua/misc-alerts.lua](lua/misc-alerts.lua)
+### [lua/features/misc-alerts.lua](lua/features/misc-alerts.lua)
 - Add a warning before entering Vaults:5
 - A one-time force-more when dropping below 50% HP (configurable).
 - A msg when you hit 6* piety while wearing an amulet of faith
 
-### [lua/remind-id.lua](lua/remind-id.lua)
+### [lua/features/remind-id.lua](lua/features/remind-id.lua)
 - When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
 - Before finding scroll of ID, stops travel when you get a larger stack of un-ID'd scrolls/pots.
 
-### [lua/runrest-features.lua](lua/runrest-features.lua)
+### [lua/features/runrest-features.lua](lua/features/runrest-features.lua)
 - No altar stops if you have a god
 - Don't stop exploration on portals leading out of baileys/sewers/etc
 - Stop travel on gates in Pan
 - Auto-search items when entering a gauntlet or temple. Run to temple exit after worship.
 
-### [lua/safe-stairs.rc](lua/safe-stairs.lua)
+### [lua/features/safe-consumables.lua](lua/features/safe-consumables.lua)
+- Adds and maintains `!r` and `!q` inscriptions on consumables.
+
+### [lua/features/safe-stairs.lua](lua/features/safe-stairs.lua)
 - Protects against fat-fingering `<>` or `><`, by prompting before immediately returning to the previous floor.
 
-### [lua/startup.lua](lua/startup.lua)
+### [lua/features/startup.lua](lua/features/startup.lua)
 - One-time actions on new games:
   - Open the skills menu
   - Exclusively train the first skill in CONFIG.auto_set_skill_targets below its target
 
-### [lua/weapon-slots.lua](lua/weapon-slots.lua)
+### [lua/features/weapon-slots.lua](lua/features/weapon-slots.lua)
 - Keeps weapons in slots a/b/w. Reassignments happen whenever you pickup or drop an item.
   It'll only kick non-weapons out of these slots. Favors putting ranged and polearms in w.
 
@@ -127,7 +136,7 @@ To avoid spam, alerts aren't generated for items previously alerted/picked up.
 > e.g. If you're alerted to a +1 broad axe as a potential upgrade, no more alerts are generated
 > for +1 or +0 broad axes, unless they're branded.
 
-### [pa-armour.rc](lua/pickup-alert/pa-armour.lua) (Armour)
+### [lua/pickup-alert/pa-armour.lua](lua/pickup-alert/pa-armour.lua) (Armour)
 Picks up armour that is a pure upgrade to what you currently have, or has a new ego.
 
 Alerts are generated for:
@@ -136,7 +145,7 @@ Alerts are generated for:
 - Heavier/lighter body armour that passes some additional checks. In general, 1 AC is valued ~1.2EV,
   and alerts are generated when it seems like an armour might be an overall improvement.
 
-###  [pa-weapons.rc](lua/pickup-alert/pa-weapons.lua) (Weapons)
+###  [lua/pickup-alert/pa-weapons.lua](lua/pickup-alert/pa-weapons.lua) (Weapons)
 Picking up upgrades is straightforward enough. Alerts are generated for:
 - Strong weapons early on, with little regard for what skills are trained
 - The first one-handed ranged weapon (and two-handed if not wearing a shield)
@@ -147,7 +156,7 @@ Picking up upgrades is straightforward enough. Alerts are generated for:
   - If using allies, Strongest polearm/1-handed polearm
 
 
-### [pa-misc.rc](lua/pickup-alert/pa-misc.lua) (Misc)
+### [lua/pickup-alert/pa-misc.lua](lua/pickup-alert/pa-misc.lua) (Misc)
 Picks up staves when you are training the relevant spell school. Alerts are generated for:
 - The first instance of anything in the `CONFIG.alert.one_time` list.
 - First orb of each type
@@ -157,32 +166,35 @@ Picks up staves when you are training the relevant spell school. Alerts are gene
 ### Other files for pickup-alert system
 These are auto-included as necessary. Just listing for reference.
 - [lua/pickup-alert/pa-util.lua](lua/pickup-alert/pa-util.lua):
-  Like [lua/util.lua](lua/util.lua) but specific to the pickup-alert system.
+  Like [lua/core/util.lua](lua/core/util.lua) but specific to the pickup-alert system.
 - [lua/pickup-alert/pa-data.lua](lua/pickup-alert/pa-data.lua):
   Handles persistent data, saved with your character.
 - [lua/pickup-alert/pa-main.lua](lua/pickup-alert/pa-main.lua):
   Controls all the features, and defines/hooks an autopickup function.
 
 ## Core files
-### [lua/config.lua](lua/config.lua)
+### [lua/core/config.lua](lua/core/config.lua)
 This comes first in [buehler.rc](buehler.rc), so you can toggle features on/off
   without digging into the code or rebuilding [buehler.rc](buehler.rc).
   The toggles should be obvious based on the descriptions above.
 
-### [lua/constants.lua](lua/constants.lua)
+### [lua/core/constants.lua](lua/core/constants.lua)
 In an attempt to future-proof, contains definitions for things like
   `ALL_WEAP_SCHOOLS` and `ALL_PORTAL_NAMES`. Update as needed.
 
-### [lua/util.lua](lua/util.lua)
+### [lua/core/util.lua](lua/core/util.lua)
 Required a lot of places. Nothing in here is necessarily specific to this repo.
 
-### [lua/cache.lua](lua/cache.lua)
+### [lua/core/cache.lua](lua/core/cache.lua)
 - Once per turn, the cache pulls several values from the crawl API, that would otherwise be pulled
 multiple times per turn.
 - This is just for speed and a little code brevity. e.g. You `CACHE.xl` and `you.xl()` are interchangeable.
 - It *is* important that CACHE be updated via `ready_cache()` as the first step of ready().
 
-### [lua/emojis.lua](lua/emojis.lua)
+### [lua/core/persistent-data.lua](lua/core/persistent-data.lua)
+- Handles saving and loading of persistent data between game sessions. Data is specific to one game/character.
+
+### [lua/core/emojis.lua](lua/core/emojis.lua)
 - Define the emojis you want for announce-damage and any alerts
 - Can also define text to replace the emojis.
 
