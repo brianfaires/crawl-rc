@@ -4089,7 +4089,7 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Announce changes in HP/MP; modified from https://github.com/magus/dcss -----
-local prev
+local prev -- contains all previous hp/mp values
 
 local function create_meter(perc, full, part, empty, border)
   local decade = math.floor(perc / 10)
@@ -5186,12 +5186,12 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Inscribe stats on items -----
+local NUM_PATTERN = "[%+%-:]%d+%.%d*"
 
 local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
   -- This gsub's stats individually to avoid overwriting <color> tags
   -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
-  local NUM_PATTERN = "[%+%-:]%d+%.%d*"
   local abbr = is_shield(it) and "SH" or "AC"
   local primary, ev = get_armour_info_strings(it)
 

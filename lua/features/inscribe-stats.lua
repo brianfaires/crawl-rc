@@ -1,10 +1,10 @@
 ----- Inscribe stats on items -----
+local NUM_PATTERN = "[%+%-:]%d+%.%d*"
 
 local function inscribe_armour_stats(it)
   -- Will add to the beginning of inscriptions, or replace it's own values
   -- This gsub's stats individually to avoid overwriting <color> tags
   -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
-  local NUM_PATTERN = "[%+%-:]%d+%.%d*"
   local abbr = is_shield(it) and "SH" or "AC"
   local primary, ev = get_armour_info_strings(it)
 

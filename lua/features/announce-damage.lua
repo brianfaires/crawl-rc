@@ -1,5 +1,5 @@
 ----- Announce changes in HP/MP; modified from https://github.com/magus/dcss -----
-local prev
+local prev -- contains all previous hp/mp values
 
 local function create_meter(perc, full, part, empty, border)
   local decade = math.floor(perc / 10)
