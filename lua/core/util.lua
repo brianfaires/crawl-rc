@@ -216,7 +216,7 @@ function is_orb(it)
 end
 
 function is_polearm(it)
-  return it and it.weap_skill == "Polearms"
+  return it and it.weap_skill:find("Polearms")
 end
 
 function offhand_is_free()

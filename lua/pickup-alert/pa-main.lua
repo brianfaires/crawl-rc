@@ -23,7 +23,6 @@ function init_pa_main()
   ---- Autopickup main ----
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
-    if it.is_weapon then crawl.mpr(it.name()) end
     if pause_pa_system then return end
     if CACHE.have_orb then return end
     if has_ego(it) and not it.is_identified then return false end

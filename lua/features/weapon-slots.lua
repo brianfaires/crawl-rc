@@ -12,7 +12,8 @@ local priorities_w
 local slots_changed
 
 local function cleanup_ab(slot)
-  if items.inslot(slot).is_weapon then return end
+  local inv = items.inslot(slot)
+  if not inv or inv.is_weapon then return end
 
   for p=1,#priorities_ab do
     if priorities_ab[p] > slot then
@@ -27,7 +28,7 @@ end
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
   local inv = items.inslot(slot_w)
-  if inv.is_weapon then return end
+  if not inv or inv.is_weapon then return end
 
   for p=1,#priorities_w do
     if priorities_w[p] > 1 then

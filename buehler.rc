@@ -3728,11 +3728,16 @@ function verify_data_reinit()
     turn = CACHE.turn
   } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
+  -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
+  -- Default successful_data_reload to false, to confirm the data reload set it to true
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    create_persistent_data("prev_" .. k, v)
+  end
+  create_persistent_data("successful_data_reload", false)
+
   if CACHE.turn > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do
-      local prev_var_name = "prev_" .. k
-      create_persistent_data(prev_var_name, v)
-      local prev = _G[prev_var_name]
+      local prev = _G["prev_" .. k]
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
@@ -3740,10 +3745,6 @@ function verify_data_reinit()
       end
     end
 
-    -- Errors reloading some persistent data prevent further data from being reloaded
-    -- Set the final persistent var to detect full data reload
-    -- If var was successfully reloaded via chk_lua_save, this will stay as true
-    create_persistent_data("successful_data_reload", false)
     if not successful_data_reload then
       failed_reinit = true
       local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
@@ -3758,6 +3759,7 @@ function verify_data_reinit()
     _G["prev_" .. k] = v
   end
   successful_data_reload = true
+
   return true
 end
 
@@ -3986,7 +3988,7 @@ function is_orb(it)
 end
 
 function is_polearm(it)
-  return it and it.weap_skill == "Polearms"
+  return it and it.weap_skill:find("Polearms")
 end
 
 function offhand_is_free()
@@ -5687,7 +5689,8 @@ local priorities_w
 local slots_changed
 
 local function cleanup_ab(slot)
-  if items.inslot(slot).is_weapon then return end
+  local inv = items.inslot(slot)
+  if not inv or inv.is_weapon then return end
 
   for p=1,#priorities_ab do
     if priorities_ab[p] > slot then
@@ -5702,7 +5705,7 @@ end
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
   local inv = items.inslot(slot_w)
-  if inv.is_weapon then return end
+  if not inv or inv.is_weapon then return end
 
   for p=1,#priorities_w do
     if priorities_w[p] > 1 then
@@ -5859,7 +5862,6 @@ function init_pa_main()
   ---- Autopickup main ----
   clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
-    if it.is_weapon then crawl.mpr(it.name()) end
     if pause_pa_system then return end
     if CACHE.have_orb then return end
     if has_ego(it) and not it.is_identified then return false end
@@ -6084,6 +6086,7 @@ end
 --- Set all single high scores ---
 -- Returns a string if item is a new high score, else nil
 function update_high_scores(it)
+  if not it then return end
   local ret_val = nil
   if is_armour(it) then
     local ac = get_armour_ac(it)
