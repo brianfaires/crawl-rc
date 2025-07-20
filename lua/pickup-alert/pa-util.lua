@@ -96,7 +96,7 @@ end
 
 function get_plussed_name(it, name_type)
   if is_talisman(it) or is_orb(it) or is_magic_staff(it) then
-    return it.name():gsub("\"", ""), 0
+    return it.name():gsub("\"", "")
   end
   local name, value = get_pa_keys(it, name_type)
   if value >= 0 then value = "+" .. value end

@@ -136,13 +136,10 @@ end
 function c_message_item_alerts(text, channel)
   if channel == "multiturn" then
     if not pause_pa_system and text:find("You start ") then
-      print("pause_pa_system = true")
       pause_pa_system = true
     end
-    return
   elseif channel == "plain" then
     if pause_pa_system and (text:find("You stop ") or text:find("You finish ")) then
-      print("pause_pa_system = false")
       pause_pa_system = false
     elseif text:find("Done exploring") or text:find("Partly explored") then
       local tokens = {}

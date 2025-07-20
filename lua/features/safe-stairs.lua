@@ -11,7 +11,7 @@ local function check_new_location(key)
   local turn_diff = CACHE.turn - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
     if key == ">" then
-      if not feature:find("down") or feature:find("shaft") then
+      if not (feature:find("down") or feature:find("shaft")) then
         crawl.sendkeys(key)
         return
       end
