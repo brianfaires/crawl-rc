@@ -6194,6 +6194,7 @@ end
 
 
 --------- Functions for armour and weapons ---------
+-- get_ego() returns artefact status first, then the ego
 function get_ego(it, terse)
   if it.artefact then return "arte" end
   local ego = it.ego(terse)
@@ -6354,18 +6355,20 @@ end
 
 
 --------- Weapon stats (Shadowing crawl calcs) ---------
-function get_weap_delay(it, ignore_brands)
-  local delay = it.delay - get_skill(it.weap_skill)/2
-  local min_delay = get_weap_min_delay(it)
-  if delay < min_delay then delay = min_delay end
-
-  if not ignore_brands then
-    if get_ego(it) == "speed" then delay = delay * 2 / 3
-    elseif get_ego(it) == "heavy" then delay = delay * 1.5
-    end
+function adjust_delay_for_ego(delay, ego)
+  if not ego then return delay end
+  if ego == "speed" then return delay * 2 / 3
+  elseif ego == "heavy" then return delay * 1.5
   end
+  return delay
+end
 
-  if delay < 3 then delay = 3 end
+function get_weap_delay(it)
+  -- dcss v0.33.1
+  local delay = it.delay - get_skill(it.weap_skill)/2
+  delay = math.max(delay, get_weap_min_delay(it))
+  delay = adjust_delay_for_ego(delay, it.ego())
+  delay = math.max(delay, 3)
 
   local sh = items.equipped_at("offhand")
   if is_shield(sh) then delay = delay + get_shield_penalty(sh) end
@@ -6374,12 +6377,15 @@ function get_weap_delay(it, ignore_brands)
     local worn = items.equipped_at("armour")
     if worn then
       local str = CACHE.str
-      if it.artefact then
-        if it.artprops["Str"] then str = str + it.artprops["Str"] end
-      end
+
       local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
-        if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
+        if it.artefact and it.artprops["Str"] then
+          str = str + it.artprops["Str"]
+        end
+        if cur.artefact and cur.artprops["Str"] then
+          str = str - cur.artprops["Str"]
+        end
       end
 
       delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
@@ -6390,22 +6396,19 @@ function get_weap_delay(it, ignore_brands)
 end
 
 function get_weap_min_delay(it)
+  -- dcss v0.33.1
   -- This is an abbreviated version of the actual calculation.
-  -- Intended only to be used to prevent skill from reducing too far in get_weap_delay()
-  local basename = it.name("base")
+  -- Skips brand and >=3 checks, which are covered in get_weap_delay()
+  if it.artefact and it.name("qual"):find("woodcutter's axe", 1, true) then return it.delay end
 
-  local adj_base_delay = it.delay / 2
-  if get_ego(it) == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
-  local min_delay = math.floor(adj_base_delay)
-
-  if it.weap_skill == "Short Blades" and min_delay > 5 then return 5 end
+  local min_delay = math.floor(it.delay / 2)
+  if it.weap_skill == "Short Blades" then return 5 end
   if it.is_ranged then
-    if basename:find("longbow", 1, true) then return 6
-    else
-      local is_2h_ranged = basename:find("crossbow", 1, true) or basename:find("arbalest", 1, true)
-      if is_2h_ranged and min_delay < 10 then return 10 end
-    end
+    local basename = it.name("base")
+    local is_2h_ranged = basename:find("crossbow", 1, true) or basename:find("arbalest", 1, true)
+    if is_2h_ranged then return math.max(min_delay, 10) end
   end
+
   return math.min(min_delay, 7)
 end
 
