@@ -1,8 +1,4 @@
 ----- Fully rest off negative statuses -----
-
-local STATUSES_TO_WAIT_OFF = { "berserk", "short of breath", "corroded", "vulnerable",
-    "confused", "marked", "tree%-form", "sluggish" } -- "slowed" is a special case below
-
 local recovery_start_turn
 local explore_after_recovery
 
@@ -35,7 +31,7 @@ local function fully_recovered()
   -- Statuses that will always rest off
   local status = you.status()
 
-  for _,s in ipairs(STATUSES_TO_WAIT_OFF) do
+  for _,s in ipairs(CONFIG.rest_off_statuses) do
     if status:find(s) then return false end
   end
 
@@ -58,6 +54,7 @@ function init_fully_recover()
 
   recovery_start_turn = 0
   explore_after_recovery = false
+  util.remove(CONFIG.rest_off_statuses, "slowed") -- special case handled elsewhere
   
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")

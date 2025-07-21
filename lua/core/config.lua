@@ -40,6 +40,10 @@ function init_config()
   CONFIG.exclude_stashed_enchant_scrolls = false -- Don't exclude enchant/brand scrolls if holding enchantable weapon
 
   CONFIG.do_auto_weapon_slots_abw = true
+  CONFIG.rest_off_statuses = {
+    "berserk", "short of breath", "corroded", "vulnerable", 
+    "confused", "marked", "tree%-form", "slowed", "sluggish"
+  } -- rest_off_statuses (do not remove this comment)
 
   ---- Pickup/Alert system
   -- Choose which items are auto-picked up
