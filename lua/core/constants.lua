@@ -10,7 +10,7 @@ ALL_MISC_ITEMS = {
 
 -- This is checked against the full text of the pickup message, so use patterns to match
 ALL_MISSILES = {
-  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart", "darts? of dispersal",
+  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart", "darts? of disjunction", "darts? of dispersal",
   " stone", "boomerang", "silver javelin", "javelin", "large rock", "throwing net",
 } -- ALL_MISSILES (do not remove this comment)
 

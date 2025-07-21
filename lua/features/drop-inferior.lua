@@ -28,7 +28,9 @@ function c_assign_invletter_drop_inferior(it)
         if it.is_weapon then
           if inv.plus <= it.plus then inscribe_drop(inv) end
         else
-          if get_armour_ac(inv) <= get_armour_ac(it) then inscribe_drop(inv) end
+          if get_armour_ac(inv) <= get_armour_ac(it) and inv.encumbrance >= it.encumbrance then
+            inscribe_drop(inv)
+          end
         end
     end
   end

@@ -2,6 +2,32 @@
 ---- Before finding scroll of ID, stops for potions/scrolls stack size increases ----
 local do_remind_id_check
 
+local function alert_remind_identify()
+  crawl.mpr(
+    EMOJI.REMIND_IDENTIFY ..
+    with_color(COLORS.magenta, " You have something to identify. ") ..
+    EMOJI.REMIND_IDENTIFY
+  )
+end
+
+local function have_scroll_of_id()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.name("qual") == "scroll of identify" then
+      return true
+    end
+  end
+  return false
+end
+
+local function have_unid_item()
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if not inv.is_identified then
+      return true
+    end
+  end
+  return false
+end
+
 function init_remind_id()
   if CONFIG.debug_init then crawl.mpr("Initializing remind-id") end
 
@@ -11,11 +37,20 @@ function init_remind_id()
   create_persistent_data("next_stack_size_pots", CONFIG.stop_on_pots_count)
 end
 
-
 ------------------- Hooks -------------------
 function c_assign_invletter_remind_identify(it)
-  if not it.is_identified or it.name("qual") == "scroll of identify" then
-    do_remind_id_check = true
+  if not it.is_identified then
+    if have_scroll_of_id() then
+      you.stop_activity()
+      do_remind_id_check = true
+      return
+    end
+  elseif it.name("qual") == "scroll of identify" then
+    if have_unid_item() then
+      you.stop_activity()
+      do_remind_id_check = true
+      return
+    end
   end
 end
 
@@ -24,7 +59,8 @@ function c_message_remind_identify(text, channel)
 
   if text:find("scrolls? of identify") then
     found_scroll_of_id = true
-    if not text:find("ou drop ", 1, true) then
+    if not text:find("ou drop ", 1, true) and have_unid_item() then
+      you.stop_activity()
       do_remind_id_check = true
     end
   elseif not found_scroll_of_id then
@@ -56,25 +92,8 @@ end
 function ready_remind_identify()
   if do_remind_id_check then
     do_remind_id_check = false
-
-    local have_unid = false
-    local have_scroll = false
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if not inv.is_identified then
-        have_unid = true
-        if have_scroll then break end
-      elseif inv.name("qual") == "scroll of identify" then
-        have_scroll = true
-        if have_unid then break end
-      end
-    end
-
-    if have_scroll and have_unid then
-      crawl.mpr(
-        EMOJI.REMIND_IDENTIFY ..
-        with_color(COLORS.magenta, " You have something to identify. ") ..
-        EMOJI.REMIND_IDENTIFY
-      )
+    if have_unid_item() and have_scroll_of_id() then
+      alert_remind_identify()
       you.stop_activity()
     end
   end
