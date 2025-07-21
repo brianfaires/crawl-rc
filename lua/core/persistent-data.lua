@@ -157,7 +157,7 @@ function verify_data_reinit()
 
     if not successful_data_reload then
       failed_reinit = true
-      local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", prev_buehler_rc_version)
+      local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", BUEHLER_RC_VERSION)
       crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
       crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or enable CONFIG.debug_init for more info."))
     end
