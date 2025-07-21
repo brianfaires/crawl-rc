@@ -3993,7 +3993,9 @@ function is_magic_staff(it)
 end
 
 function is_talisman(it)
-  return it and it.name("qual"):find("talisman", 1, true)
+  if not it then return false end
+  local c = it.class(true)
+  return c and (c == "talisman" or c == "bauble")
 end
 
 function is_orb(it)
