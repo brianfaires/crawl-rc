@@ -224,39 +224,53 @@ function offhand_is_free()
 end
 
 
---- Debugging ---
-function dump_inventory(item_info)
-  local tokens = { "\n\n---INVENTORY---"}
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    tokens[#tokens+1] = string.format("  %s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
-    if item_info then
-      tokens[#tokens+1] = string.format("    Base: %s Class: %s, Subtype: %s", inv.name("base"), inv.class(true), inv.subtype())
-    end
+--- Debugging utils for in-game lua interpreter ---
+function debug_dump(verbose, skip_char_dump)
+  local char_dump = not skip_char_dump
+  if dump_persistent_data then dump_persistent_data(char_dump) end
+  if dump_cache then dump_cache(char_dump) end
+  if verbose then
+    dump_inventory(char_dump)
+    dump_chk_lua_save(char_dump)
   end
-  return table.concat(tokens, "\n")
 end
 
-function dump_chk_lua_save()
-  local tokens = { "\n\n---CHK_LUA_SAVE---" }
+function dump_chk_lua_save(char_dump)
+  dump_text(serialize_chk_lua_save(), char_dump)
+end
+
+function dump_inventory(char_dump, include_item_info)
+  dump_text(serialize_inventory(include_item_info), char_dump)
+end
+
+function dump_text(msg, char_dump)
+  crawl.mpr(with_color("white", msg))
+
+  if char_dump then
+    crawl.take_note(msg)
+    crawl.dump_char()
+  end
+end
+
+function serialize_chk_lua_save()
+  local tokens = { "\n---CHK_LUA_SAVE---" }
   for _, func in ipairs(chk_lua_save) do
     tokens[#tokens+1] = util.trim(func())
   end
   return table.concat(tokens, "\n")
 end
 
-function debug_dump(verbose, skip_char_dump)
-  local msg = ""
-  if dump_persistent_data then msg = msg .. dump_persistent_data() end
-  if dump_cache then msg = msg .. dump_cache() end
-  if verbose then
-    msg = msg .. dump_inventory()
-    msg = msg .. dump_chk_lua_save()
+function serialize_inventory(include_item_info)
+  local tokens = { "\n---INVENTORY---\n" }
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    tokens[#tokens+1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
+    if include_item_info then
+      local base = inv.name("base") or "N/A"
+      local cls = inv.class(true) or "N/A"
+      local st = inv.subtype() or "N/A"
+      tokens[#tokens+1] = string.format("    Base: %s Class: %s, Subtype: %s", base, cls, st)
+    end
+    tokens[#tokens+1] = "\n"
   end
-
-  crawl.mpr(with_color("white", msg))
-
-  if not skip_char_dump then
-    crawl.take_note(msg)
-    crawl.dump_char()
-  end
+  return table.concat(tokens, "")
 end

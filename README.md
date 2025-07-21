@@ -16,9 +16,9 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
   1. The hook functions from [init.txt](init.txt).
   1. Any/all files from the `lua/core/` folder.
 - This RC makes heavy use of the character-specific persistent data. These essentially save values when exiting,
-  and then reload it when the game starts again. Currently, if the game crashes and the data is not saved, many
+  then reload it when the game starts again. Currently, if the game crashes and the data is not saved, many
   features will 'reset'. To see the values of all persistent data, press '~' to open the lua interpreter, then
-  enter: `dump_persistent_data()`
+  enter: `dump_persistent_data()` or `debug_dump()`
 
 ## Standard(-ish) Settings
 ### [init.txt](init.txt)

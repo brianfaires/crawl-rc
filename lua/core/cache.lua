@@ -1,22 +1,8 @@
 -- Cache of commonly pulled values, for better performance
 CACHE = {}
 
-function dump_cache()
-  local tokens = { "\n---CACHE---" }
-  for k,v in pairs(CACHE) do
-    if type(v) == "table" then
-      tokens[#tokens+1] = string.format("  %s:", k)
-      for k2,v2 in pairs(v) do
-        tokens[#tokens+1] = string.format("    %s: %s", k2, v2)
-      end
-    else
-      if v == true then v = "true" elseif v == false then v = "false" end
-      tokens[#tokens+1] = string.format("  %s: %s", k, v)
-    end
-  end
-
-  tokens[#tokens+1] = "\n"
-  return table.concat(tokens, "\n")
+function dump_cache(char_dump)
+  dump_text(serialize_cache(), char_dump)
 end
 
 function init_cache()
@@ -37,6 +23,23 @@ function init_cache()
   ready_cache()
 end
 
+function serialize_cache()
+  local tokens = { "\n---CACHE---" }
+  for k,v in pairs(CACHE) do
+    if type(v) == "table" then
+      tokens[#tokens+1] = string.format("%s:", k)
+      for k2,v2 in pairs(v) do
+        tokens[#tokens+1] = string.format("  %s: %s", k2, v2)
+      end
+    else
+      if v == true then v = "true" elseif v == false then v = "false" end
+      tokens[#tokens+1] = string.format("%s: %s", k, v)
+    end
+  end
+
+  tokens[#tokens+1] = ""
+  return table.concat(tokens, "\n")
+end
 
 ------------------- Hooks -------------------
 function ready_cache()

@@ -54,8 +54,11 @@ function create_persistent_data(name, default_value)
   end
 end
 
--- For debugging: dump all persistent data
-function dump_persistent_data()
+function dump_persistent_data(char_dump)
+  dump_text(serialize_persistent_data(), char_dump)
+end
+
+function serialize_persistent_data()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _,name in ipairs(persistent_table_names) do
     tokens[#tokens+1] = name
