@@ -26,24 +26,28 @@ function init_config()
   CONFIG.temple_macros = true
   CONFIG.gauntlet_macros = true
 
-  -- Misc alerts
-  CONFIG.warn_v5 = true
-  CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
-  CONFIG.fm_pack_duration = 15 -- Turns before alerting again for a pack monster; 0 to disable
-  CONFIG.alert_remove_faith = true
-  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
-  CONFIG.save_with_msg = true
-  CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
-  CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions
-
   -- exclude-dropped
   CONFIG.exclude_stashed_enchant_scrolls = false -- Don't exclude enchant/brand scrolls if holding enchantable weapon
 
+  -- Always use a/b/w slots for weapons
   CONFIG.do_auto_weapon_slots_abw = true
+
+  -- Keep resting until these statuses are gone
   CONFIG.rest_off_statuses = {
     "berserk", "short of breath", "corroded", "vulnerable", 
     "confused", "marked", "tree%-form", "slowed", "sluggish"
   } -- rest_off_statuses (do not remove this comment)
+
+  -- Misc alerts
+  CONFIG.warn_v5 = true -- Prompt before entering Vaults:5
+  CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
+  CONFIG.fm_pack_duration = 15 -- Turns before alerting again for a pack monster; 0 to disable
+  CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
+  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
+  CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
+  CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
+  CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions
+
 
   ---- Pickup/Alert system
   -- Choose which items are auto-picked up
@@ -106,7 +110,7 @@ function init_config()
   -- Heuristics for tuning the pickup/alert system
   TUNING = {}
 
-  -- Alerts for armour of diff encumbrance, when ratio of gain/loss (AC|EV) is > value
+  -- For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
   -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
   -- min_gain/max_loss check against the AC or EV delta when ego changes
   TUNING.armour = {
@@ -182,7 +186,7 @@ function init_config()
     }
   }
 
-
+  -- Cosemtic only
   ALERT_COLORS = {
     weapon = { desc = COLORS.magenta, item = COLORS.yellow, stats = COLORS.lightgrey },
     body_arm = { desc = COLORS.blue, item = COLORS.lightcyan, stats = COLORS.lightgrey },
