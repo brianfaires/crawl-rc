@@ -60,7 +60,7 @@ local function get_excludable_name(text, for_exclusion)
   idx = text:find("scrolls? of")
   if idx then
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-    if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls
+    if for_exclusion and CONFIG.ignore_stashed_weapon_scrolls
     and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
     and has_enchantable_weap_in_inv() then
       return

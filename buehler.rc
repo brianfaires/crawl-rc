@@ -7272,7 +7272,6 @@ function c_message(text, channel)
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_pack then c_message_fm_pack(text, channel) end
   if c_message_fm_disable then c_message_fm_disable(text, channel) end
-  if c_message_announce_damage then c_message_announce_damage(text, channel) end
 end
 
 function ch_stop_running(kind)

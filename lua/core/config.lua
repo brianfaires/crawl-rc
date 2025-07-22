@@ -6,11 +6,17 @@ WEAPON_BRAND_BONUSES = {}
 function init_config()
   CONFIG = {}
 
-  CONFIG.emojis = false -- Use emojis in alerts and damage announcements
+  CONFIG.emojis = false -- Use emojis in alerts and announcements
 
-  -- Announce HP/MP when change is greater than this value
-  CONFIG.announce_hp_threshold = 1
-  CONFIG.announce_mp_threshold = 0
+  -- Announce HP/MP changes
+  CONFIG.announce = {
+    -- { -1, -1, true, true } is cool too
+    hp_threshold = 1, -- Announce when HP loss > this; -1 to show every turn
+    mp_threshold = 0, -- Announce when MP loss > this; -1 to show every turn
+    hp_first = false, -- Show HP first in the message
+    same_line = false -- Show HP/MP on the same line
+  } -- CONFIG.announce (do not remove this comment)
+
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
   CONFIG.dmg_fm_threshold = 0.30
@@ -26,8 +32,12 @@ function init_config()
   CONFIG.temple_macros = true
   CONFIG.gauntlet_macros = true
 
-  -- exclude-dropped
-  CONFIG.exclude_stashed_enchant_scrolls = false -- Don't exclude enchant/brand scrolls if holding enchantable weapon
+  -- Before findind scroll of ID
+  CONFIG.stop_on_scrolls_count = 2 -- Stop when you have this many un-ID'd scrolls
+  CONFIG.stop_on_pots_count = 3 -- Stop when you have this many un-ID'd potions
+
+  -- exclude-dropped (disables auto-pickup for whatever you drop)
+  CONFIG.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding enchantable weapon
 
   -- Always use a/b/w slots for weapons
   CONFIG.do_auto_weapon_slots_abw = true
@@ -36,17 +46,15 @@ function init_config()
   CONFIG.rest_off_statuses = {
     "berserk", "short of breath", "corroded", "vulnerable", 
     "confused", "marked", "tree%-form", "slowed", "sluggish"
-  } -- rest_off_statuses (do not remove this comment)
+  } -- CONFIG.rest_off_statuses (do not remove this comment)
 
   -- Misc alerts
+  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.warn_v5 = true -- Prompt before entering Vaults:5
   CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for a pack monster; 0 to disable
   CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
-  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
-  CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
-  CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions
 
 
   ---- Pickup/Alert system
@@ -75,7 +83,7 @@ function init_config()
       "crystal plate armour", "gold dragon scales", "pearl dragon scales",
       "storm dragon scales", "shadow dragon scales", "wand of digging",
       "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
-    } -- one_time_alerts (do not remove this comment)
+    } -- CONFIG.alert.one_time (do not remove this comment)
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more
@@ -117,7 +125,7 @@ function init_config()
     lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0, min_gain = 3.0, max_loss = 4.0 },
     heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0, min_gain = 3.0, max_loss = 8.0 },
     encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
-  }
+  } -- TUNING.armour (do not remove this comment)
 
   -- All 'magic numbers' used in the weapon pickup/alert system.
     -- 1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
@@ -128,7 +136,7 @@ function init_config()
     same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio > `same_type_melee`
     same_type_ranged = 1.0, -- Pickup ranged weap of same type if DPS ratio > `same_type_ranged`
     accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
-  }
+  } -- TUNING.weap.pickup (do not remove this comment)
   
   TUNING.weap.alert = {
     -- Alerts for weapons not requiring an extra hand
@@ -158,16 +166,15 @@ function init_config()
       branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
       max_shields = 8.0 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
     }
-  }
+  } -- TUNING.weap.alert (do not remove this comment)
 
 
 
   -- Defining impact of brands on DPS; used in PA system and weapon inscriptions
-  -- `scoring` includes subtle brands
-  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }
+  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
 
   WEAPON_BRAND_BONUSES = {
-    spectralizing = { factor = 2.0, offset = 0 },
+    spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased damage
     heavy = { factor = 1.8, offset = 0 },
     flaming = { factor = 1.25, offset = 0 },
     freezing = { factor = 1.25, offset = 0 },
@@ -178,13 +185,13 @@ function init_config()
     distortion = { factor = 1.0, offset = 6.0 },
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
 
-    subtle = { -- Completely made up in attempt to balance vs the damaging brands
+    subtle = { -- Completely made up values in attempt to balance pickup & alerts
       protection = { factor = 1.15, offset = 0 },
       vampirism = { factor = 1.2, offset = 0 },
       holy_wrath = { factor = 1.15, offset = 0 },
       antimagic = { factor = 1.1, offset = 0 }  
     }
-  }
+  } -- WEAPON_BRAND_BONUSES (do not remove this comment)
 
   -- Cosemtic only
   ALERT_COLORS = {
@@ -194,7 +201,7 @@ function init_config()
     orb = { desc = COLORS.green, item = COLORS.lightgreen },
     talisman = { desc = COLORS.green, item = COLORS.lightgreen },
     staff = { desc = COLORS.brown, item = COLORS.white },
-  }
+  } -- ALERT_COLORS (do not remove this comment)
 
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end
