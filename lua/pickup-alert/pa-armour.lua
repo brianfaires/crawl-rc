@@ -181,8 +181,11 @@ function pa_pickup_armour(it)
     if it.artefact then return true end
     if cur.branded then
       return get_ego(cur) == get_ego(it) and it.plus > cur.plus
+    elseif it.branded then
+      return get_armour_ac(it) >= get_armour_ac(cur)
+    else
+      return get_armour_ac(it) > get_armour_ac(cur)
     end
-    return it.branded or it.plus > cur.plus
   end
 
   return false

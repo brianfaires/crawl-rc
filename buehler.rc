@@ -11,11 +11,17 @@ WEAPON_BRAND_BONUSES = {}
 function init_config()
   CONFIG = {}
 
-  CONFIG.emojis = false -- Use emojis in alerts and damage announcements
+  CONFIG.emojis = false -- Use emojis in alerts and announcements
 
-  -- Announce HP/MP when change is greater than this value
-  CONFIG.announce_hp_threshold = 1
-  CONFIG.announce_mp_threshold = 0
+  -- Announce HP/MP changes
+  CONFIG.announce = {
+    -- { -1, -1, true, true } is cool too
+    hp_threshold = 1, -- Announce when HP loss > this; -1 to show every turn
+    mp_threshold = 0, -- Announce when MP loss > this; -1 to show every turn
+    hp_first = false, -- Show HP first in the message
+    same_line = false -- Show HP/MP on the same line
+  } -- CONFIG.announce (do not remove this comment)
+
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
   CONFIG.dmg_fm_threshold = 0.30
@@ -31,8 +37,12 @@ function init_config()
   CONFIG.temple_macros = true
   CONFIG.gauntlet_macros = true
 
-  -- exclude-dropped
-  CONFIG.exclude_stashed_enchant_scrolls = false -- Don't exclude enchant/brand scrolls if holding enchantable weapon
+  -- Before findind scroll of ID
+  CONFIG.stop_on_scrolls_count = 2 -- Stop when you have this many un-ID'd scrolls
+  CONFIG.stop_on_pots_count = 3 -- Stop when you have this many un-ID'd potions
+
+  -- exclude-dropped (disables auto-pickup for whatever you drop)
+  CONFIG.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding enchantable weapon
 
   -- Always use a/b/w slots for weapons
   CONFIG.do_auto_weapon_slots_abw = true
@@ -41,17 +51,15 @@ function init_config()
   CONFIG.rest_off_statuses = {
     "berserk", "short of breath", "corroded", "vulnerable", 
     "confused", "marked", "tree%-form", "slowed", "sluggish"
-  } -- rest_off_statuses (do not remove this comment)
+  } -- CONFIG.rest_off_statuses (do not remove this comment)
 
   -- Misc alerts
+  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.warn_v5 = true -- Prompt before entering Vaults:5
   CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for a pack monster; 0 to disable
   CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
-  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
-  CONFIG.stop_on_scrolls_count = 2 -- Before finding ID, stop when you have this many un-ID'd scrolls
-  CONFIG.stop_on_pots_count = 3 -- Before finding ID, stop when you have this many un-ID'd potions
 
 
   ---- Pickup/Alert system
@@ -80,7 +88,7 @@ function init_config()
       "crystal plate armour", "gold dragon scales", "pearl dragon scales",
       "storm dragon scales", "shadow dragon scales", "wand of digging",
       "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
-    } -- one_time_alerts (do not remove this comment)
+    } -- CONFIG.alert.one_time (do not remove this comment)
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more
@@ -122,7 +130,7 @@ function init_config()
     lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0, min_gain = 3.0, max_loss = 4.0 },
     heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0, min_gain = 3.0, max_loss = 8.0 },
     encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
-  }
+  } -- TUNING.armour (do not remove this comment)
 
   -- All 'magic numbers' used in the weapon pickup/alert system.
     -- 1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
@@ -133,7 +141,7 @@ function init_config()
     same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio > `same_type_melee`
     same_type_ranged = 1.0, -- Pickup ranged weap of same type if DPS ratio > `same_type_ranged`
     accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
-  }
+  } -- TUNING.weap.pickup (do not remove this comment)
   
   TUNING.weap.alert = {
     -- Alerts for weapons not requiring an extra hand
@@ -163,16 +171,15 @@ function init_config()
       branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
       max_shields = 8.0 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
     }
-  }
+  } -- TUNING.weap.alert (do not remove this comment)
 
 
 
   -- Defining impact of brands on DPS; used in PA system and weapon inscriptions
-  -- `scoring` includes subtle brands
-  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }
+  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
 
   WEAPON_BRAND_BONUSES = {
-    spectralizing = { factor = 2.0, offset = 0 },
+    spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased damage
     heavy = { factor = 1.8, offset = 0 },
     flaming = { factor = 1.25, offset = 0 },
     freezing = { factor = 1.25, offset = 0 },
@@ -183,13 +190,13 @@ function init_config()
     distortion = { factor = 1.0, offset = 6.0 },
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
 
-    subtle = { -- Completely made up in attempt to balance vs the damaging brands
+    subtle = { -- Completely made up values in attempt to balance pickup & alerts
       protection = { factor = 1.15, offset = 0 },
       vampirism = { factor = 1.2, offset = 0 },
       holy_wrath = { factor = 1.15, offset = 0 },
       antimagic = { factor = 1.1, offset = 0 }  
     }
-  }
+  } -- WEAPON_BRAND_BONUSES (do not remove this comment)
 
   -- Cosemtic only
   ALERT_COLORS = {
@@ -199,7 +206,7 @@ function init_config()
     orb = { desc = COLORS.green, item = COLORS.lightgreen },
     talisman = { desc = COLORS.green, item = COLORS.lightgreen },
     staff = { desc = COLORS.brown, item = COLORS.white },
-  }
+  } -- ALERT_COLORS (do not remove this comment)
 
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end
@@ -2894,6 +2901,7 @@ msc ^= mute:You pick up a book of
 msc ^= mute:accepts your kill
 msc ^= mute:Okawaru is honoured by your kill
 msc ^= mute:you see here a.*corpse
+msc ^= mute:you now have .* gold pieces
 
 ############################### End rc/display.rc ###############################
 ##########################################################################################
@@ -4143,7 +4151,7 @@ local function format_delta(delta)
   elseif delta < 0 then
     return with_color(COLORS.red, delta)
   else
-    return with_color(COLORS.darkgrey, delta)
+    return with_color(COLORS.darkgrey, "+0")
   end
 end
 
@@ -4172,57 +4180,80 @@ function init_announce_damage()
   prev.mhp = 0
   prev.mp = 0
   prev.mmp = 0
+  prev.turn = CACHE.turn
 
   if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
     crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
   end
 end
 
+local function get_hp_message(hp_delta, mhp_delta)
+  if math.abs(hp_delta) <= CONFIG.announce.hp_threshold then return end
+  local msg_tokens = {}
+  msg_tokens[#msg_tokens + 1] = create_meter(
+    CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+  )
+  msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
+  msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.hp, CACHE.mhp)
+  if mhp_delta ~= 0 then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
+  end
+
+  if not CONFIG.announce.same_line and CACHE.hp == CACHE.mhp then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
+  end
+  return table.concat(msg_tokens)
+end
+
+local function get_mp_message(mp_delta, mmp_delta)
+  if math.abs(mp_delta) <= CONFIG.announce.mp_threshold then return end
+  local msg_tokens = {}
+  msg_tokens[#msg_tokens + 1] = create_meter(
+    CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+  )
+  msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
+  msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.mp, CACHE.mmp)
+  if mmp_delta ~= 0 then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
+  end
+  if not CONFIG.announce.same_line and CACHE.mp == CACHE.mmp then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
+  end
+  return table.concat(msg_tokens)
+end
 
 ------------------- Hooks -------------------
+local METER_LENGTH = 7 + 2 * (HP_BORDER and #EMOJI.HP_BORDER or 0)
 function ready_announce_damage()
+  if CONFIG.announce.hp_threshold < 0 or CONFIG.announce.mp_threshold < 0 then
+    local last_msg = crawl.messages(1)
+    local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
+    if check and (check == " HP[" or check == " MP[") then
+      return
+    end
+  end
+
   -- Skip message on initializing game
   if prev.hp > 0 then
     local hp_delta = CACHE.hp - prev.hp
     local mhp_delta = CACHE.mhp - prev.mhp
-    local damage_taken = mhp_delta -hp_delta
-    local mp_delta = CACHE.mp - prev.mp
-    local mmp_delta = CACHE.mmp - prev.mmp
+    local damage_taken = mhp_delta - hp_delta
 
     local msg_tokens = {}
-
-    -- MP message
-    if math.abs(mp_delta) > CONFIG.announce_mp_threshold then
-      msg_tokens[#msg_tokens + 1] = create_meter(
-        CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
-      )
-      msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
-      msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.mp, CACHE.mmp)
-      if mmp_delta ~= 0 then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
-      end
-      if CACHE.mp == CACHE.mmp then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
-      end
+    if CONFIG.announce.hp_first then
+      msg_tokens[#msg_tokens + 1] = get_hp_message(hp_delta, mhp_delta)
+    else
+      msg_tokens[#msg_tokens + 1] = get_mp_message(CACHE.mp - prev.mp, CACHE.mmp - prev.mmp)
     end
-
-    -- HP message
-    if math.abs(hp_delta) > CONFIG.announce_hp_threshold then
-      msg_tokens[#msg_tokens + 1] = "\n"
-
-      msg_tokens[#msg_tokens + 1] = create_meter(
-        CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
-      )
-      msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
-      msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.hp, CACHE.mhp)
-      if mhp_delta ~= 0 then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
-      end
-      if CACHE.hp == CACHE.mhp then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
-      end
+    
+    if msg_tokens[1] then msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n" end
+    
+    if CONFIG.announce.hp_first then
+      msg_tokens[#msg_tokens + 1] = get_mp_message(CACHE.mp - prev.mp, CACHE.mmp - prev.mmp)
+    else
+      msg_tokens[#msg_tokens + 1] = get_hp_message(hp_delta, mhp_delta)
     end
-
+    
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
     -- Damage-related warnings
@@ -4623,7 +4654,7 @@ local function get_excludable_name(text, for_exclusion)
   idx = text:find("scrolls? of")
   if idx then
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-    if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls
+    if for_exclusion and CONFIG.ignore_stashed_weapon_scrolls
     and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
     and has_enchantable_weap_in_inv() then
       return
@@ -6818,8 +6849,11 @@ function pa_pickup_armour(it)
     if it.artefact then return true end
     if cur.branded then
       return get_ego(cur) == get_ego(it) and it.plus > cur.plus
+    elseif it.branded then
+      return get_armour_ac(it) >= get_armour_ac(cur)
+    else
+      return get_armour_ac(it) > get_armour_ac(cur)
     end
-    return it.branded or it.plus > cur.plus
   end
 
   return false
@@ -7238,6 +7272,7 @@ function c_message(text, channel)
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_pack then c_message_fm_pack(text, channel) end
   if c_message_fm_disable then c_message_fm_disable(text, channel) end
+  if c_message_announce_damage then c_message_announce_damage(text, channel) end
 end
 
 function ch_stop_running(kind)
