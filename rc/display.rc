@@ -2592,3 +2592,4 @@ msc ^= mute:You pick up a book of
 msc ^= mute:accepts your kill
 msc ^= mute:Okawaru is honoured by your kill
 msc ^= mute:you see here a.*corpse
+msc ^= mute:you now have .* gold pieces
