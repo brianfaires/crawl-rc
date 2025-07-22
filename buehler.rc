@@ -103,7 +103,7 @@ function init_config()
     one_time_alerts = true,
     artefact = true,
     orbs = false,
-    talismans = false,
+    talismans = you.class() == "Shapeshifter",
     staff_resists = true
   } -- CONFIG.fm_alert (do not remove this comment)
 
