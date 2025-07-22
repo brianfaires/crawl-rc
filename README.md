@@ -203,6 +203,7 @@ multiple times per turn.
 - Can also define text to replace the emojis.
 
 ## Notes
+- Avoid `}` on a line by itself, as this can break the Lua intepreter. Don't remove the comments that follow a `}`.
 - Execute lua commands by opening the lua interpreter with `~`, then entering the command. Some
   useful ones below.
 - LMK if you find any bugs! It'd be helpful if you include your CONFIG and a character dump after
