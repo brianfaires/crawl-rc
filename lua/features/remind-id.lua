@@ -1,5 +1,5 @@
 ---- Remind to identify items when you have scroll of ID + unidentified item ----
----- Before finding scroll of ID, stops for potions/scrolls stack size increases ----
+---- Before finding scroll of ID, stops on increases to largest stack size ----
 local do_remind_id_check
 
 local function alert_remind_identify()
@@ -8,6 +8,16 @@ local function alert_remind_identify()
     with_color(COLORS.magenta, " You have something to identify. ") ..
     EMOJI.REMIND_IDENTIFY
   )
+end
+
+local function get_max_stack_size(class, skip_slot)
+  local max_stack_size = 0
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.quantity > max_stack_size and inv.class(true) == class and inv.slot ~= skip_slot then
+      max_stack_size = inv.quantity
+    end
+  end
+  return max_stack_size
 end
 
 local function have_scroll_of_id()
@@ -33,8 +43,6 @@ function init_remind_id()
 
   do_remind_id_check = true
   create_persistent_data("found_scroll_of_id", false)
-  create_persistent_data("next_stack_size_scrolls", CONFIG.stop_on_scrolls_count)
-  create_persistent_data("next_stack_size_pots", CONFIG.stop_on_pots_count)
 end
 
 ------------------- Hooks -------------------
@@ -76,13 +84,11 @@ function c_message_remind_identify(text, channel)
 
     local it_class = it.class(true)
     if it_class == "scroll" then
-      if it.quantity >= next_stack_size_scrolls then
-        next_stack_size_scrolls = it.quantity + 1
+      if it.quantity >= math.max(CONFIG.stop_on_scrolls_count, get_max_stack_size("scroll", slot)) then
         you.stop_activity()
       end
     elseif it_class == "potion" then
-      if it.quantity >= next_stack_size_pots then
-        next_stack_size_pots = it.quantity + 1
+      if it.quantity >= math.max(CONFIG.stop_on_pots_count, get_max_stack_size("potion", slot)) then
         you.stop_activity()
       end
     end

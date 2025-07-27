@@ -32,9 +32,9 @@ function init_config()
   CONFIG.temple_macros = true
   CONFIG.gauntlet_macros = true
 
-  -- Before findind scroll of ID
-  CONFIG.stop_on_scrolls_count = 2 -- Stop when you have this many un-ID'd scrolls
-  CONFIG.stop_on_pots_count = 3 -- Stop when you have this many un-ID'd potions
+  -- Before finding scroll of ID, stop travel on new largest stack size, starting with:
+  CONFIG.stop_on_scrolls_count = 3 -- Stop on a stack of this many un-ID'd scrolls
+  CONFIG.stop_on_pots_count = 4 -- Stop on a stack of this many un-ID'd potions
 
   -- exclude-dropped (disables auto-pickup for whatever you drop)
   CONFIG.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding enchantable weapon
@@ -71,17 +71,19 @@ function init_config()
     armour = true,
     weapons = true,
     orbs = true,
-    talismans = true,
-    talisman_lvl_diff = 6, -- Only alert a plain talisman if its min_skill <= Shapeshifting + this
     staff_resists = true,
+    talismans = true,
 
+    -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff (27 for Shapeshifter)
+    talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
+    
     -- Each item is alerted once. Set to empty to disable.
     one_time = {
       "broad axe", "executioner's axe", "eveningstar", "demon whip",
       "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
       "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
       "crystal plate armour", "gold dragon scales", "pearl dragon scales",
-      "storm dragon scales", "shadow dragon scales", "wand of digging",
+      "storm dragon scales", "shadow dragon scales",
       "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
     } -- CONFIG.alert.one_time (do not remove this comment)
   } -- CONFIG.alert (do not remove this comment)
@@ -99,7 +101,7 @@ function init_config()
     artefact = true,
     orbs = false,
     talismans = you.class() == "Shapeshifter",
-    staff_resists = true
+    staff_resists = false
   } -- CONFIG.fm_alert (do not remove this comment)
 
   -- Startup
@@ -200,7 +202,7 @@ function init_config()
     aux_arm = { desc = COLORS.lightblue, item = COLORS.yellow },
     orb = { desc = COLORS.green, item = COLORS.lightgreen },
     talisman = { desc = COLORS.green, item = COLORS.lightgreen },
-    staff = { desc = COLORS.brown, item = COLORS.white },
+    misc = { desc = COLORS.brown, item = COLORS.white },
   } -- ALERT_COLORS (do not remove this comment)
 
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
