@@ -10,12 +10,15 @@ function init_config()
 
   -- Announce HP/MP changes
   CONFIG.announce = {
-    -- { -1, -1, true, true } is cool too
-    hp_threshold = 1, -- Announce when HP loss > this; -1 to show every turn
-    mp_threshold = 0, -- Announce when MP loss > this; -1 to show every turn
+    hp_loss_limit = 1, -- Announce when HP loss >= this
+    hp_gain_limit = 4, -- Announce when HP gain >= this
+    mp_loss_limit = 1, -- Announce when MP loss >= this
+    mp_gain_limit = 2, -- Announce when MP gain >= this
     hp_first = false, -- Show HP first in the message
     same_line = false -- Show HP/MP on the same line
   } -- CONFIG.announce (do not remove this comment)
+  -- Alternative; Displays every turn:
+  CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
 
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
@@ -92,9 +95,10 @@ function init_config()
   CONFIG.fm_alert = {
     early_weap = false,
     new_weap = true,
-    body_armour = true,
-    aux_armour = true,
+    body_armour = false,
     shields = true,
+    aux_armour = false,
+    armour_ego = true,
     high_score_weap = true,
     high_score_armour = true,
     one_time_alerts = true,

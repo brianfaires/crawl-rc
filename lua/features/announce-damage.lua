@@ -59,7 +59,8 @@ function init_announce_damage()
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
-  if math.abs(hp_delta) <= CONFIG.announce.hp_threshold then return end
+  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then return end
+  if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
@@ -77,7 +78,8 @@ local function get_hp_message(hp_delta, mhp_delta)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
-  if math.abs(mp_delta) <= CONFIG.announce.mp_threshold then return end
+  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then return end
+  if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
@@ -93,38 +95,31 @@ local function get_mp_message(mp_delta, mmp_delta)
   return table.concat(msg_tokens)
 end
 
-------------------- Hooks -------------------
-local METER_LENGTH = 7 + 2 * (HP_BORDER and #EMOJI.HP_BORDER or 0)
-function ready_announce_damage()
-  if CONFIG.announce.hp_threshold < 0 or CONFIG.announce.mp_threshold < 0 then
-    local last_msg = crawl.messages(1)
-    local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
-    if check and (check == " HP[" or check == " MP[") then
-      return
-    end
-  end
+local METER_LENGTH = 7 + 2 * (EMOJI.HP_BORDER and #EMOJI.HP_BORDER or 0)
+local function last_msg_is_meter()
+  local last_msg = crawl.messages(1)
+  local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
+  return check and (check == " HP[" or check == " MP[")
+end
 
-  -- Skip message on initializing game
+------------------- Hooks -------------------
+function ready_announce_damage()
   if prev.hp > 0 then
     local hp_delta = CACHE.hp - prev.hp
+    local mp_delta = CACHE.mp - prev.mp
     local mhp_delta = CACHE.mhp - prev.mhp
+    local mmp_delta = CACHE.mmp - prev.mmp
     local damage_taken = mhp_delta - hp_delta
 
+    if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
+
+    local hp_msg = get_hp_message(hp_delta, mhp_delta)
+    local mp_msg = get_mp_message(mp_delta, mmp_delta)
+
     local msg_tokens = {}
-    if CONFIG.announce.hp_first then
-      msg_tokens[#msg_tokens + 1] = get_hp_message(hp_delta, mhp_delta)
-    else
-      msg_tokens[#msg_tokens + 1] = get_mp_message(CACHE.mp - prev.mp, CACHE.mmp - prev.mmp)
-    end
-    
+    msg_tokens[1] = CONFIG.announce.hp_first and hp_msg or mp_msg
     if msg_tokens[1] then msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n" end
-    
-    if CONFIG.announce.hp_first then
-      msg_tokens[#msg_tokens + 1] = get_mp_message(CACHE.mp - prev.mp, CACHE.mmp - prev.mmp)
-    else
-      msg_tokens[#msg_tokens + 1] = get_hp_message(hp_delta, mhp_delta)
-    end
-    
+    msg_tokens[#msg_tokens + 1] = CONFIG.announce.hp_first and mp_msg or hp_msg
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
     -- Damage-related warnings
