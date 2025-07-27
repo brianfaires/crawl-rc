@@ -102,8 +102,8 @@ function pa_alert_item(it, alert_type, emoji, force_more)
     alert_colors = ALERT_COLORS.orb
   elseif is_talisman(it) then
     alert_colors = ALERT_COLORS.talisman
-  elseif is_magic_staff(it) then
-    alert_colors = ALERT_COLORS.staff
+  else 
+    alert_colors = ALERT_COLORS.misc
   end
   local tokens = {}
   tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")

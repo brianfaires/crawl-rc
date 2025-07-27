@@ -203,7 +203,7 @@ function is_shield(it)
 end
 
 function is_magic_staff(it)
-  return it and it.class(true) == "magical staff"
+  return it and it.class and it.class(true) == "magical staff"
 end
 
 function is_talisman(it)
@@ -233,6 +233,7 @@ function debug_dump(verbose, skip_char_dump)
   if dump_cache then dump_cache(char_dump) end
   if verbose then
     dump_inventory(char_dump)
+    dump_text(INV_WEAP.serialize(), char_dump)
     dump_chk_lua_save(char_dump)
   end
 end

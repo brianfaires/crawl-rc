@@ -10,10 +10,11 @@ end
 
 function INV_WEAP.add_weapon(it)
   local weap_data = {}
+  weap_data.is_weapon = it.is_weapon
   weap_data.ego = get_ego(it)
   weap_data.branded = weap_data.ego ~= nil
-  weap_data.plus = it.plus
-  weap_data.acc = it.accuracy + it.plus
+  weap_data.plus = it.plus or 0
+  weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
   weap_data.dps = get_weap_dps(it)
   weap_data.score = get_weap_score(it)
@@ -64,6 +65,19 @@ function INV_WEAP.is_empty()
   return INV_WEAP.max_dps["melee_2"].dps == 0
 end
 
+function INV_WEAP.serialize()
+  local tokens = { "\n---INVENTORY WEAPONS---" }
+  for _, weap in ipairs(INV_WEAP.weapons) do
+    tokens[#tokens+1] = string.format("\n%s\n", weap.basename)
+    for k,v in pairs(weap) do
+      if k ~= "basename" then
+        tokens[#tokens+1] = string.format("  %s: %s\n", k, tostring(v))
+      end
+    end
+  end
+  return table.concat(tokens, "")
+end
+
 ---- Weapon pickup ----
 local function is_weapon_upgrade(it, cur)
   -- `cur` comes from INV_WEAP
@@ -71,8 +85,8 @@ local function is_weapon_upgrade(it, cur)
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
-    if cur.branded and not it.branded then return false end
-    if it.branded and it.is_identified and not cur.branded then
+    if has_ego(cur) and not has_ego(it) then return false end
+    if has_ego(it) and it.is_identified and not has_ego(cur) then
       return get_weap_score(it) / cur.score > TUNING.weap.pickup.add_ego
     end
     return get_ego(it) == cur.ego and get_weap_score(it) > cur.score
@@ -95,9 +109,9 @@ end
 function pa_pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
-    -- Staves don't go into INV_WEAP; double-check that we're not carrying just a staff
-    for _,inv in ipairs(items.inventory()) do
-      if inv.is_weapon then return false end -- faster to check weapon than staff
+    -- Staves don't go into INV_WEAP; check if we're carrying just a staff
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if inv.is_weapon then return false end -- fastest way to check if it's a staff
     end
     return true
   end
@@ -118,12 +132,12 @@ local function alert_first_ranged(it)
   if get_hands(it) == 1 then
     alerted_first_ranged = true
     alerted_first_ranged_1h = true
-    return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
+    return pa_alert_item(it, "First ranged weapon (1-handed)", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
   else
     if alerted_first_ranged then return false end
     if have_shield() then return false end
     alerted_first_ranged = true
-    return pa_alert_item(it, "First ranged weapon (2-handed)", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
+    return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
   end
 end
 
@@ -135,12 +149,12 @@ local function alert_first_polearm(it)
   if get_hands(it) == 1 then
     alerted_first_polearm = true
     alerted_first_polearm_1h = true
-    return pa_alert_item(it, "First polearm", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
+    return pa_alert_item(it, "First 1-handed polearm", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
   else
     if alerted_first_polearm then return false end
     if have_shield() then return false end
     alerted_first_polearm = true
-    return pa_alert_item(it, "First polearm (2-handed)", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
+    return pa_alert_item(it, "First polearm", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
   end
 end
 
@@ -208,14 +222,14 @@ local function alert_interesting_weapon(it, cur)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
         return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
       end
-    elseif has_ego(it) and not cur.branded and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
+    elseif has_ego(it) and not has_ego(cur) and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
       return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
     end
   else -- No extra hand required
     if cur.artefact then return false end
     if has_ego(it, true) then
       local it_ego = get_ego(it)
-      if not cur.branded then
+      if not has_ego(cur) then
         if score_ratio > TUNING.weap.alert.gain_ego then
           return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
         end

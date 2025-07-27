@@ -113,7 +113,7 @@ function has_ego(it, exclude_stat_only_egos)
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end
     end
-    return it.artefact or it.branded
+    return it.artefact or it.branded or is_magic_staff(it)
   end
 
   if it.artefact or it.branded then return true end

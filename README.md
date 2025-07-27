@@ -203,12 +203,12 @@ multiple times per turn.
 - Can also define text to replace the emojis.
 
 ## Notes
-- Avoid `}` on a line by itself, as this can break the Lua intepreter. Don't remove the comments that follow a `}`.
-- Execute lua commands by opening the lua interpreter with `~`, then entering the command. Some
-  useful ones below.
 - LMK if you find any bugs! It'd be helpful if you include your CONFIG and a character dump after
   executing `debug_dump()`.
-  This outputs the RC & character state, writes it as a note, and creates a character dump. 
+  This outputs the RC & character state, writes it as a note, and creates a character dump.
+- Avoid putting  `}` on a line by itself. This can break the RC Lua intepreter. Don't remove the comments that follow a `}`.
+- Execute lua commands by opening the lua interpreter with `~`, then entering the command.
+  Some useful ones below.
 - The RC is intended for webtiles first. I think it works locally now, but here are some issues
   I've seen previously:
   - Switching between characters causes RC files to not reload, leading to stale persistent data.

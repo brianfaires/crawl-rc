@@ -88,14 +88,14 @@ function update_high_scores(it)
     local score = it.score or get_weap_score(it)
     if score > weapon_high_score then
       weapon_high_score = score
-      if not ret_val then ret_val = "Highest damage" end
+      if not ret_val then ret_val = "Highest DPS" end
     end
 
     if score > unbranded_high_score then
       local unbranded_score = it.unbranded_score or get_weap_score(it, true)
       if unbranded_score > unbranded_high_score then
         unbranded_high_score = score
-        if not ret_val then ret_val = "Highest no-brand damage" end
+        if not ret_val then ret_val = "Highest no-brand DPS" end
       end
     end
   end

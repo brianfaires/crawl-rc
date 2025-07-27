@@ -148,10 +148,10 @@ function pa_pickup_armour(it)
 
     if cur.artefact then return false end
     if it.artefact then return true end
-    if cur.branded then
+    if has_ego(cur) then
       return get_ego(cur) == get_ego(it) and it.plus > cur.plus
     end
-    return it.branded or it.plus > cur.plus
+    return has_ego(it) or it.plus > cur.plus
   else
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
     if is_orb(it) then return false end
@@ -179,9 +179,9 @@ function pa_pickup_armour(it)
 
     if cur.artefact then return false end
     if it.artefact then return true end
-    if cur.branded then
+    if has_ego(cur) then
       return get_ego(cur) == get_ego(it) and it.plus > cur.plus
-    elseif it.branded then
+    elseif has_ego(it) then
       return get_armour_ac(it) >= get_armour_ac(cur)
     else
       return get_armour_ac(it) > get_armour_ac(cur)
