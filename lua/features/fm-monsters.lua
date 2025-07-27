@@ -32,12 +32,12 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
 
 -- Only alert once per pack
 local FM_PACK = {
-  "dream sheep", "shrike", "boggart", "floating eye"
+  "boggart", "dream sheep",  "floating eye", "shrike"
 } -- fm_pack (do not remove this comment)
 
 -- Once per pack, but alerts created through dynamic adds
 local FM_PACK_NO_CREATE = {
-  "electric eel", "golden eye", "great orb of eyes"
+  "electric eel", "golden eye", "great orb of eyes", "meliai"
 } -- FM_PACK_NO_CREATE (do not remove this comment)
 
 
@@ -57,7 +57,7 @@ local FM_PATTERNS = {
       pattern = "orc priest" },
   {name = "50hp", cond = "hp", cutoff = 50,
       pattern = "orc high priest|manticore" },
-  {name = "70hp", cond = "hp", cutoff = 70,
+  {name = "60hp", cond = "hp", cutoff = 60,
       pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
   {name = "70hp_melai", cond = "hp", cutoff = 70,
       pattern = "meliai"},

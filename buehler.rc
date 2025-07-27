@@ -15,12 +15,15 @@ function init_config()
 
   -- Announce HP/MP changes
   CONFIG.announce = {
-    -- { -1, -1, true, true } is cool too
-    hp_threshold = 1, -- Announce when HP loss > this; -1 to show every turn
-    mp_threshold = 0, -- Announce when MP loss > this; -1 to show every turn
+    hp_loss_limit = 1, -- Announce when HP loss >= this
+    hp_gain_limit = 4, -- Announce when HP gain >= this
+    mp_loss_limit = 1, -- Announce when MP loss >= this
+    mp_gain_limit = 2, -- Announce when MP gain >= this
     hp_first = false, -- Show HP first in the message
     same_line = false -- Show HP/MP on the same line
   } -- CONFIG.announce (do not remove this comment)
+  -- Alternative; Displays every turn:
+  CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
 
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
@@ -97,9 +100,10 @@ function init_config()
   CONFIG.fm_alert = {
     early_weap = false,
     new_weap = true,
-    body_armour = true,
-    aux_armour = true,
+    body_armour = false,
     shields = true,
+    aux_armour = false,
+    armour_ego = true,
     high_score_weap = true,
     high_score_armour = true,
     one_time_alerts = true,
@@ -4191,7 +4195,8 @@ function init_announce_damage()
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
-  if math.abs(hp_delta) <= CONFIG.announce.hp_threshold then return end
+  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then return end
+  if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
@@ -4209,7 +4214,8 @@ local function get_hp_message(hp_delta, mhp_delta)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
-  if math.abs(mp_delta) <= CONFIG.announce.mp_threshold then return end
+  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then return end
+  if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
@@ -4225,38 +4231,31 @@ local function get_mp_message(mp_delta, mmp_delta)
   return table.concat(msg_tokens)
 end
 
-------------------- Hooks -------------------
-local METER_LENGTH = 7 + 2 * (HP_BORDER and #EMOJI.HP_BORDER or 0)
-function ready_announce_damage()
-  if CONFIG.announce.hp_threshold < 0 or CONFIG.announce.mp_threshold < 0 then
-    local last_msg = crawl.messages(1)
-    local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
-    if check and (check == " HP[" or check == " MP[") then
-      return
-    end
-  end
+local METER_LENGTH = 7 + 2 * (EMOJI.HP_BORDER and #EMOJI.HP_BORDER or 0)
+local function last_msg_is_meter()
+  local last_msg = crawl.messages(1)
+  local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
+  return check and (check == " HP[" or check == " MP[")
+end
 
-  -- Skip message on initializing game
+------------------- Hooks -------------------
+function ready_announce_damage()
   if prev.hp > 0 then
     local hp_delta = CACHE.hp - prev.hp
+    local mp_delta = CACHE.mp - prev.mp
     local mhp_delta = CACHE.mhp - prev.mhp
+    local mmp_delta = CACHE.mmp - prev.mmp
     local damage_taken = mhp_delta - hp_delta
 
+    if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
+
+    local hp_msg = get_hp_message(hp_delta, mhp_delta)
+    local mp_msg = get_mp_message(mp_delta, mmp_delta)
+
     local msg_tokens = {}
-    if CONFIG.announce.hp_first then
-      msg_tokens[#msg_tokens + 1] = get_hp_message(hp_delta, mhp_delta)
-    else
-      msg_tokens[#msg_tokens + 1] = get_mp_message(CACHE.mp - prev.mp, CACHE.mmp - prev.mmp)
-    end
-    
+    msg_tokens[1] = CONFIG.announce.hp_first and hp_msg or mp_msg
     if msg_tokens[1] then msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n" end
-    
-    if CONFIG.announce.hp_first then
-      msg_tokens[#msg_tokens + 1] = get_mp_message(CACHE.mp - prev.mp, CACHE.mmp - prev.mmp)
-    else
-      msg_tokens[#msg_tokens + 1] = get_hp_message(hp_delta, mhp_delta)
-    end
-    
+    msg_tokens[#msg_tokens + 1] = CONFIG.announce.hp_first and mp_msg or hp_msg
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
     -- Damage-related warnings
@@ -4882,12 +4881,12 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
 
 -- Only alert once per pack
 local FM_PACK = {
-  "dream sheep", "shrike", "boggart", "floating eye"
+  "boggart", "dream sheep",  "floating eye", "shrike"
 } -- fm_pack (do not remove this comment)
 
 -- Once per pack, but alerts created through dynamic adds
 local FM_PACK_NO_CREATE = {
-  "electric eel", "golden eye", "great orb of eyes"
+  "electric eel", "golden eye", "great orb of eyes", "meliai"
 } -- FM_PACK_NO_CREATE (do not remove this comment)
 
 
@@ -4907,7 +4906,7 @@ local FM_PATTERNS = {
       pattern = "orc priest" },
   {name = "50hp", cond = "hp", cutoff = 50,
       pattern = "orc high priest|manticore" },
-  {name = "70hp", cond = "hp", cutoff = 70,
+  {name = "60hp", cond = "hp", cutoff = 60,
       pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
   {name = "70hp_melai", cond = "hp", cutoff = 70,
       pattern = "meliai"},
@@ -5947,6 +5946,12 @@ function init_pa_main()
     if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
   end
 
+function has_configured_force_more(it)
+  if CONFIG.fm_alert.artefact and it.artefact then return true end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
+  
+  return false
+end
 
   ---- Autopickup main ----
   clear_autopickup_funcs()
@@ -6039,8 +6044,7 @@ function pa_alert_item(it, alert_type, emoji, force_more)
   tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
   tokens[#tokens+1] = tokens[1]
 
-  local do_fm = force_more or (CONFIG.fm_alert.artefact and it.artefact)
-  enqueue_mpr_opt_more(do_fm, table.concat(tokens))
+  enqueue_mpr_opt_more(force_more or has_configured_force_more(it), table.concat(tokens))
 
   pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
   add_to_pa_table(pa_items_alerted, it)
@@ -6776,7 +6780,7 @@ function pa_alert_armour(it, unworn_inv_item)
     if not is_shield(sh) then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(sh) then
       local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
+      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields or CONFIG.fm_alert.armour_ego)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
       return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
     end
@@ -6790,7 +6794,7 @@ function pa_alert_armour(it, unworn_inv_item)
     if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION, CONFIG.fm_alert.aux_armour) end
     if has_ego(it) and get_ego(it) ~= get_ego(cur) then
       local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour or CONFIG.fm_alert.armour_ego)
     elseif get_armour_ac(it) > get_armour_ac(cur) then
       return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
     end
@@ -6851,7 +6855,13 @@ function pa_pickup_armour(it)
     end
 
     local cur = items.equipped_at(st)
-    if not cur then return true end
+    if not cur then
+      -- Check if we're carrying one already; implying we have a temporary form
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.subtype() == st then return false end
+      end
+      return true
+    end
     if not it.is_identified then return false end
 
     if cur.artefact then return false end
