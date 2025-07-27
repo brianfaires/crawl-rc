@@ -174,7 +174,13 @@ function pa_pickup_armour(it)
     end
 
     local cur = items.equipped_at(st)
-    if not cur then return true end
+    if not cur then
+      -- Check if we're carrying one already; implying we have a temporary form
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.subtype() == st then return false end
+      end
+      return true
+    end
     if not it.is_identified then return false end
 
     if cur.artefact then return false end

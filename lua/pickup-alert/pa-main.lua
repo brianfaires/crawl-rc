@@ -19,6 +19,12 @@ function init_pa_main()
     if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
   end
 
+function has_configured_force_more(it)
+  if CONFIG.fm_alert.artefact and it.artefact then return true end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
+  
+  return false
+end
 
   ---- Autopickup main ----
   clear_autopickup_funcs()
@@ -111,8 +117,7 @@ function pa_alert_item(it, alert_type, emoji, force_more)
   tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
   tokens[#tokens+1] = tokens[1]
 
-  local do_fm = force_more or (CONFIG.fm_alert.artefact and it.artefact)
-  enqueue_mpr_opt_more(do_fm, table.concat(tokens))
+  enqueue_mpr_opt_more(force_more or has_configured_force_more(it), table.concat(tokens))
 
   pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
   add_to_pa_table(pa_items_alerted, it)
