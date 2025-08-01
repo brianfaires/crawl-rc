@@ -1,6 +1,12 @@
 local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 pause_pa_system = nil
 
+function has_configured_force_more(it)
+  if CONFIG.fm_alert.artefact and it.artefact then return true end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
+  return false
+end
+
 function init_pa_main()
   pause_pa_system = false
   init_pa_data()
@@ -18,13 +24,6 @@ function init_pa_main()
     if loaded_pa_misc then crawl.mpr("pa-misc loaded") end
     if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
   end
-
-function has_configured_force_more(it)
-  if CONFIG.fm_alert.artefact and it.artefact then return true end
-  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
-  
-  return false
-end
 
   ---- Autopickup main ----
   clear_autopickup_funcs()
@@ -127,11 +126,11 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
+  pa_alert_OTA(it)
   add_to_pa_table(pa_items_picked, it)
   local name, _ = get_pa_keys(it)
   pa_items_alerted[name] = nil
   util.remove(pa_recent_alerts, get_plussed_name(it))
-  remove_from_OTA(it)
 
   if it.is_weapon or is_armour(it) then
     update_high_scores(it)

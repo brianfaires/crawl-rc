@@ -17,8 +17,8 @@ function init_config()
     hp_first = false, -- Show HP first in the message
     same_line = false -- Show HP/MP on the same line
   } -- CONFIG.announce (do not remove this comment)
-  -- Alternative; Displays every turn:
-  CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
+  -- Alternative; Always display at bottom of msg window:
+  --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
 
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
@@ -40,7 +40,7 @@ function init_config()
   CONFIG.stop_on_pots_count = 4 -- Stop on a stack of this many un-ID'd potions
 
   -- exclude-dropped (disables auto-pickup for whatever you drop)
-  CONFIG.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding enchantable weapon
+  CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
 
   -- Always use a/b/w slots for weapons
   CONFIG.do_auto_weapon_slots_abw = true

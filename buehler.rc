@@ -22,8 +22,8 @@ function init_config()
     hp_first = false, -- Show HP first in the message
     same_line = false -- Show HP/MP on the same line
   } -- CONFIG.announce (do not remove this comment)
-  -- Alternative; Displays every turn:
-  CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
+  -- Alternative; Always display at bottom of msg window:
+  --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
 
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
@@ -45,7 +45,7 @@ function init_config()
   CONFIG.stop_on_pots_count = 4 -- Stop on a stack of this many un-ID'd potions
 
   -- exclude-dropped (disables auto-pickup for whatever you drop)
-  CONFIG.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding enchantable weapon
+  CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
 
   -- Always use a/b/w slots for weapons
   CONFIG.do_auto_weapon_slots_abw = true
@@ -5928,6 +5928,12 @@ end
 local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 pause_pa_system = nil
 
+function has_configured_force_more(it)
+  if CONFIG.fm_alert.artefact and it.artefact then return true end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
+  return false
+end
+
 function init_pa_main()
   pause_pa_system = false
   init_pa_data()
@@ -5945,13 +5951,6 @@ function init_pa_main()
     if loaded_pa_misc then crawl.mpr("pa-misc loaded") end
     if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
   end
-
-function has_configured_force_more(it)
-  if CONFIG.fm_alert.artefact and it.artefact then return true end
-  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
-  
-  return false
-end
 
   ---- Autopickup main ----
   clear_autopickup_funcs()
@@ -6054,11 +6053,11 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
+  pa_alert_OTA(it)
   add_to_pa_table(pa_items_picked, it)
   local name, _ = get_pa_keys(it)
   pa_items_alerted[name] = nil
   util.remove(pa_recent_alerts, get_plussed_name(it))
-  remove_from_OTA(it)
 
   if it.is_weapon or is_armour(it) then
     update_high_scores(it)
