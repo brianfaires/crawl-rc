@@ -86,7 +86,7 @@ function init_config()
       "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
       "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
       "crystal plate armour", "gold dragon scales", "pearl dragon scales",
-      "storm dragon scales", "shadow dragon scales",
+      "storm dragon scales", "shadow dragon scales", "wand of digging",
       "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
     } -- CONFIG.alert.one_time (do not remove this comment)
   } -- CONFIG.alert (do not remove this comment)

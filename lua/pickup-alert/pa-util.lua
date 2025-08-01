@@ -87,6 +87,7 @@ end
 
 -- Used for data tables
 function get_pa_keys(it, name_type)
+  if it.class(true) == "bauble" then return it.name("qual"), 0 end
   if is_talisman(it) or is_orb(it) then
     return it.name():gsub("\"", ""), 0
   end
@@ -97,10 +98,8 @@ function get_pa_keys(it, name_type)
 end
 
 function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then
-    return it.name():gsub("\"", "")
-  end
   local name, value = get_pa_keys(it, name_type)
+  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then return name end
   if value >= 0 then value = "+" .. value end
   return value .. " " .. name
 end

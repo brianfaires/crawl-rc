@@ -39,6 +39,8 @@ end
 local function set_class_options()
   if CACHE.class == "Hunter" then
     crawl.setopt("view_delay = 30")
+  elseif CACHE.class == "Shapeshifter" then
+    crawl.setopt("autopickup_exceptions ^= <flux bauble")
   end
 end
 
