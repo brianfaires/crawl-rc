@@ -44,7 +44,7 @@ end
 
 function get_weapon_info_string(it)
   if not it.is_weapon then return end
-  local dmg = get_weap_dmg(it, DMG_TYPE.branded)
+  local dmg = get_weap_damage(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -293,10 +293,10 @@ end
 
 function get_weap_dps(it, dmg_type)
   if not dmg_type then dmg_type = DMG_TYPE.scoring end
-  return get_weap_dmg(it, dmg_type) / get_weap_delay(it)
+  return get_weap_damage(it, dmg_type) / get_weap_delay(it)
 end
 
-function get_weap_dmg(it, dmg_type)
+function get_weap_damage(it, dmg_type)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included

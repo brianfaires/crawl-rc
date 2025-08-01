@@ -6177,6 +6177,7 @@ end
 function update_high_scores(it)
   if not it then return end
   local ret_val = nil
+
   if is_armour(it) then
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
@@ -6184,19 +6185,16 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Highest AC" end
     end
   elseif it.is_weapon then
-    local it_plus = it.plus or 0
-    local score = it.score or get_weap_score(it)
-    if score > weapon_high_score then
-      weapon_high_score = score
-      if not ret_val then ret_val = "Highest DPS" end
+    local dmg = get_weap_damage(it, DMG_TYPE.branded)
+    if dmg > weapon_high_score then
+      weapon_high_score = dmg
+      if not ret_val then ret_val = "Highest damage" end
     end
 
-    if score > unbranded_high_score then
-      local unbranded_score = it.unbranded_score or get_weap_score(it, true)
-      if unbranded_score > unbranded_high_score then
-        unbranded_high_score = score
-        if not ret_val then ret_val = "Highest no-brand DPS" end
-      end
+    dmg = get_weap_damage(it, DMG_TYPE.unbranded)
+    if dmg > unbranded_high_score then
+      unbranded_high_score = dmg
+      if not ret_val then ret_val = "Highest no-brand damage" end
     end
   end
 
@@ -6256,7 +6254,7 @@ end
 
 function get_weapon_info_string(it)
   if not it.is_weapon then return end
-  local dmg = get_weap_dmg(it, DMG_TYPE.branded)
+  local dmg = get_weap_damage(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -6505,10 +6503,10 @@ end
 
 function get_weap_dps(it, dmg_type)
   if not dmg_type then dmg_type = DMG_TYPE.scoring end
-  return get_weap_dmg(it, dmg_type) / get_weap_delay(it)
+  return get_weap_damage(it, dmg_type) / get_weap_delay(it)
 end
 
-function get_weap_dmg(it, dmg_type)
+function get_weap_damage(it, dmg_type)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
@@ -6716,7 +6714,7 @@ local function alert_ac_high_score(it)
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
-      return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
+      return pa_alert_item(it, "Highest AC", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
     end
   end
 

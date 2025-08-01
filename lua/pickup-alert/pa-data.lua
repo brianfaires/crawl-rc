@@ -77,6 +77,7 @@ end
 function update_high_scores(it)
   if not it then return end
   local ret_val = nil
+
   if is_armour(it) then
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
@@ -84,19 +85,16 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Highest AC" end
     end
   elseif it.is_weapon then
-    local it_plus = it.plus or 0
-    local score = it.score or get_weap_score(it)
-    if score > weapon_high_score then
-      weapon_high_score = score
-      if not ret_val then ret_val = "Highest DPS" end
+    local dmg = get_weap_damage(it, DMG_TYPE.branded)
+    if dmg > weapon_high_score then
+      weapon_high_score = dmg
+      if not ret_val then ret_val = "Highest damage" end
     end
 
-    if score > unbranded_high_score then
-      local unbranded_score = it.unbranded_score or get_weap_score(it, true)
-      if unbranded_score > unbranded_high_score then
-        unbranded_high_score = score
-        if not ret_val then ret_val = "Highest no-brand DPS" end
-      end
+    dmg = get_weap_damage(it, DMG_TYPE.unbranded)
+    if dmg > unbranded_high_score then
+      unbranded_high_score = dmg
+      if not ret_val then ret_val = "Highest no-brand damage" end
     end
   end
 
