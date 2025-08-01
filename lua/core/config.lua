@@ -88,7 +88,10 @@ function init_config()
       "crystal plate armour", "gold dragon scales", "pearl dragon scales",
       "storm dragon scales", "shadow dragon scales", "wand of digging",
       "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
-    } -- CONFIG.alert.one_time (do not remove this comment)
+    }, -- CONFIG.alert.one_time (do not remove this comment)
+    
+    -- For one-time alerts, require skill > 0 in the relevant skill
+    OTA_require_skill = { weapon = true, armour = true, shield = false }
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more

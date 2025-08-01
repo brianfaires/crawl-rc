@@ -8,12 +8,21 @@ function pa_alert_OTA(it)
   if index == -1 then return end
 
   local do_alert = true
-  -- Don't alert if already wearing a larger shield
-  if pa_OTA_items[index] == "buckler" then
-    if have_shield() then do_alert = false end
-  elseif pa_OTA_items[index] == "kite shield" then
-    local sh = items.equipped_at("offhand")
-    if sh and sh.name("qual") == "tower shield" then do_alert = false end
+
+  if is_shield(it) then
+    if CONFIG.alert.OTA_require_skill.shield and CACHE.s_shields == 0 then return end
+
+    -- Don't alert if already wearing a larger shield
+    if pa_OTA_items[index] == "buckler" then
+      if have_shield() then do_alert = false end
+    elseif pa_OTA_items[index] == "kite shield" then
+      local sh = items.equipped_at("offhand")
+      if sh and sh.name("qual") == "tower shield" then do_alert = false end
+    end
+  elseif is_armour(it) then
+    if CONFIG.alert.OTA_require_skill.armour and CACHE.s_armour == 0 then return end
+  elseif it.is_weapon then
+    if CONFIG.alert.OTA_require_skill.weapon and you.skill(it.weap_skill) == 0 then return end
   end
 
   remove_from_OTA(it)
