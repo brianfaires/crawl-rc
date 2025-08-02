@@ -184,7 +184,7 @@ function init_config()
       min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
       branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
       max_shields = 8.0 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
-    }
+    } -- TUNING.weap.alert.early_ranged (do not remove this comment)
   } -- TUNING.weap.alert (do not remove this comment)
 
 
@@ -209,7 +209,7 @@ function init_config()
       vampirism = { factor = 1.2, offset = 0 },
       holy_wrath = { factor = 1.15, offset = 0 },
       antimagic = { factor = 1.1, offset = 0 }  
-    }
+    } -- WEAPON_BRAND_BONUSES.subtle (do not remove this comment)
   } -- WEAPON_BRAND_BONUSES (do not remove this comment)
 
   -- Cosemtic only
@@ -6716,7 +6716,7 @@ ARMOUR_ALERT = {
     diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
     same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
     lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
-  }
+  } -- ARMOUR_ALERT.heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
 local function send_armour_alert(it, alert_type)
@@ -7280,7 +7280,7 @@ function init_pa_weapons()
   local keys = {
     "melee_1", "melee_1b", "melee_2", "melee_2b",
     "range_1", "range_1b", "range_2", "range_2b"
-  }
+  } -- INV_WEAP.max_dps (do not remove this comment)
   for _, key in ipairs(keys) do
     INV_WEAP.max_dps[key] = { dps = 0, acc = 0 }
   end

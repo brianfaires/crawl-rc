@@ -279,7 +279,7 @@ function init_pa_weapons()
   local keys = {
     "melee_1", "melee_1b", "melee_2", "melee_2b",
     "range_1", "range_1b", "range_2", "range_2b"
-  }
+  } -- INV_WEAP.max_dps (do not remove this comment)
   for _, key in ipairs(keys) do
     INV_WEAP.max_dps[key] = { dps = 0, acc = 0 }
   end

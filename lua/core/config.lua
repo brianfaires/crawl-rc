@@ -179,7 +179,7 @@ function init_config()
       min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
       branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
       max_shields = 8.0 -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
-    }
+    } -- TUNING.weap.alert.early_ranged (do not remove this comment)
   } -- TUNING.weap.alert (do not remove this comment)
 
 
@@ -204,7 +204,7 @@ function init_config()
       vampirism = { factor = 1.2, offset = 0 },
       holy_wrath = { factor = 1.15, offset = 0 },
       antimagic = { factor = 1.1, offset = 0 }  
-    }
+    } -- WEAPON_BRAND_BONUSES.subtle (do not remove this comment)
   } -- WEAPON_BRAND_BONUSES (do not remove this comment)
 
   -- Cosemtic only

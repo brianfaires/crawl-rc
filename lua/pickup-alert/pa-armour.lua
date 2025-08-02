@@ -15,7 +15,7 @@ ARMOUR_ALERT = {
     diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
     same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
     lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
-  }
+  } -- ARMOUR_ALERT.heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
 local function send_armour_alert(it, alert_type)
