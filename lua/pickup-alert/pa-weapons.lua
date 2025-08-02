@@ -202,7 +202,7 @@ local function alert_interesting_weapon(it, cur)
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
       return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
     return false
   end
@@ -238,7 +238,7 @@ local function alert_interesting_weapon(it, cur)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
   end
   

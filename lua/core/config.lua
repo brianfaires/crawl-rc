@@ -6,7 +6,7 @@ WEAPON_BRAND_BONUSES = {}
 function init_config()
   CONFIG = {}
 
-  CONFIG.emojis = false -- Use emojis in alerts and announcements
+  CONFIG.emojis = true -- Use emojis in alerts and announcements
 
   -- Announce HP/MP changes
   CONFIG.announce = {
@@ -14,12 +14,13 @@ function init_config()
     hp_gain_limit = 4, -- Announce when HP gain >= this
     mp_loss_limit = 1, -- Announce when MP loss >= this
     mp_gain_limit = 2, -- Announce when MP gain >= this
-    hp_first = false, -- Show HP first in the message
-    same_line = true -- Show HP/MP on the same line
+    hp_first = true, -- Show HP first in the message
+    same_line = true, -- Show HP/MP on the same line
+    always_both = true -- If showing one, show both
   } -- CONFIG.announce (do not remove this comment)
-  if CONFIG.announce.same_line then CONFIG.announce.hp_first = true end
-  -- Alternative; Always display at bottom of msg window:
-  --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
+
+    -- Alternative: To display every turn at bottom of msg window:
+    --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true, always_both = true}
 
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
@@ -30,11 +31,11 @@ function init_config()
   CONFIG.inscribe_armour = true
 
   -- Runrest features
-  CONFIG.ignore_altars = true
-  CONFIG.ignore_portal_exits = true
-  CONFIG.stop_on_pan_gates = true
-  CONFIG.temple_macros = true
-  CONFIG.gauntlet_macros = true
+  CONFIG.ignore_altars = true -- when you have a god already
+  CONFIG.ignore_portal_exits = true -- don't stop explore on portal exits
+  CONFIG.stop_on_pan_gates = true -- stop explore on pan gates
+  CONFIG.temple_macros = true -- auto-search altars; run to exit after worship
+  CONFIG.gauntlet_macros = true -- auto-search with filters
 
   -- Before finding scroll of ID, stop travel on new largest stack size, starting with:
   CONFIG.stop_on_scrolls_count = 3 -- Stop on a stack of this many un-ID'd scrolls
@@ -56,12 +57,13 @@ function init_config()
   CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.warn_v5 = true -- Prompt before entering Vaults:5
   CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
-  CONFIG.fm_pack_duration = 15 -- Turns before alerting again for a pack monster; 0 to disable
   CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
-
+  CONFIG.fm_pack_duration = 15 -- Turns before alerting again for a specific monster type; 0 to disable
+  
 
   ---- Pickup/Alert system
+  ---- This does not affect other autopickup settings; just buehler Pickup/Alert system
   -- Choose which items are auto-picked up
   CONFIG.pickup = {
     armour = true,
@@ -71,7 +73,7 @@ function init_config()
 
   -- Which alerts are enabled
   CONFIG.alert = {
-    system_enabled = true, -- If false, all alerts are skipped
+    system_enabled = true, -- If false, no alerts are generated
     armour = true,
     weapons = true,
     orbs = true,
@@ -79,11 +81,12 @@ function init_config()
     talismans = true,
 
     -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff (27 for Shapeshifter)
-    talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
+    talisman_lvl_diff = 6,
+    if you.class() == "Shapeshifter" then talisman_lvl_diff = 27 end -- seems reasonable
     
-    -- Each item is alerted once. Set to empty to disable.
+    -- Each non-useless item is alerted once.
     one_time = {
-      "broad axe", "executioner's axe", "eveningstar", "demon whip",
+      "broad axe", "executioner's axe", "eveningstar", "demon whip", "giant spiked club",
       "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
       "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
       "crystal plate armour", "gold dragon scales", "pearl dragon scales",
@@ -91,8 +94,8 @@ function init_config()
       "triple crossbow", "hand cannon", "buckler", "kite shield", "tower shield"
     }, -- CONFIG.alert.one_time (do not remove this comment)
     
-    -- For one-time alerts, require skill > 0 in the relevant skill
-    OTA_require_skill = { weapon = true, armour = true, shield = false }
+    -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
+    OTA_require_skill = { weapon = 0.1, armour = 0.1, shield = 0 }
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more
@@ -103,20 +106,20 @@ function init_config()
     shields = true,
     aux_armour = false,
     armour_ego = true,
-    high_score_weap = true,
+    high_score_weap = false,
     high_score_armour = true,
     one_time_alerts = true,
     artefact = true,
     orbs = false,
-    talismans = you.class() == "Shapeshifter",
+    talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false
   } -- CONFIG.fm_alert (do not remove this comment)
 
   -- Startup
   CONFIG.show_skills_on_startup = true
   CONFIG.auto_set_skill_targets = {
-    { "Stealth", 2.0 },
-    { "Fighting", 2.0 }
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 } -- If already have stealth, focus fighting to 2.0
   } -- auto_set_skill_targets (do not remove this comment)
 
   -- Debugging
@@ -137,9 +140,11 @@ function init_config()
     encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
   } -- TUNING.armour (do not remove this comment)
 
-  -- All 'magic numbers' used in the weapon pickup/alert system.
+  -- All 'magic numbers' used in the weapon pickup/alert system. 2 common types of values:
     -- 1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
     -- 2. Cutoffs for when alerts are active (XL, skill_level)
+    -- Pickup/alert system will try to upgrade ANY weapon in your inventory.
+    -- "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score includes DPS/brand/accuracy.
   TUNING.weap = {}
   TUNING.weap.pickup = {
     add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
@@ -180,22 +185,22 @@ function init_config()
 
 
 
-  -- Defining impact of brands on DPS; used in PA system and weapon inscriptions
+  -- Define the impact of brands on DPS; used in PA system and weapon inscriptions
   DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
 
   WEAPON_BRAND_BONUSES = {
-    spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased damage
-    heavy = { factor = 1.8, offset = 0 },
+    spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased incoming damage
+    heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
     flaming = { factor = 1.25, offset = 0 },
     freezing = { factor = 1.25, offset = 0 },
     draining = { factor = 1.25, offset = 2.0 },
     electrocution = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
-    venom = { factor = 1.0, offset = 5.0 }, -- 5 dmg per poisoning
+    venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
     pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
     distortion = { factor = 1.0, offset = 6.0 },
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
 
-    subtle = { -- Completely made up values in attempt to balance pickup & alerts
+    subtle = { -- Completely made up values in attempt to compare weapons fairly
       protection = { factor = 1.15, offset = 0 },
       vampirism = { factor = 1.2, offset = 0 },
       holy_wrath = { factor = 1.15, offset = 0 },

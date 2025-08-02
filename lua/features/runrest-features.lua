@@ -70,6 +70,7 @@ local function c_message_temple_actions(text, _)
       crawl.sendkeys({ 6, "altar\r" })
     elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
+      enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
       crawl.sendkeys("X<\r")
     end
   end

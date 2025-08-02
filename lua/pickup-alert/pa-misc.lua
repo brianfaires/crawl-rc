@@ -10,7 +10,7 @@ function pa_alert_OTA(it)
   local do_alert = true
 
   if is_shield(it) then
-    if CONFIG.alert.OTA_require_skill.shield and CACHE.s_shields == 0 then return end
+    if CACHE.s_shields < CONFIG.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if pa_OTA_items[index] == "buckler" then
@@ -20,9 +20,9 @@ function pa_alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif is_armour(it) then
-    if CONFIG.alert.OTA_require_skill.armour and CACHE.s_armour == 0 then return end
+    if CACHE.s_armour < CONFIG.alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
-    if CONFIG.alert.OTA_require_skill.weapon and you.skill(it.weap_skill) == 0 then return end
+    if you.skill(it.weap_skill) < CONFIG.alert.OTA_require_skill.weapon then return end
   end
 
   remove_from_OTA(it)
