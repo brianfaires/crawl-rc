@@ -13,10 +13,10 @@ local slots_changed
 
 local function cleanup_ab(slot)
   local inv = items.inslot(slot)
-  if not inv or inv.is_weapon then return end
+  if inv and inv.is_weapon then return end
 
   for p=1,#priorities_ab do
-    if priorities_ab[p] > slot then
+    if priorities_ab[p] > slot then -- Not from earlier slot
       items.swap_slots(priorities_ab[p], slot)
       slots_changed = true
       priorities_ab[p] = -1
@@ -28,10 +28,10 @@ end
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
   local inv = items.inslot(slot_w)
-  if not inv or inv.is_weapon then return end
+  if inv and inv.is_weapon then return end
 
   for p=1,#priorities_w do
-    if priorities_w[p] > 1 then
+    if priorities_w[p] > 1 then -- Not from slots a or b
       items.swap_slots(priorities_w[p], slot_w)
       slots_changed = true
       return
@@ -44,21 +44,9 @@ local function get_priority_ab(it)
   if it.equipped then return 1 end
 
   if is_magic_staff(it) then return 3 end
-  if it.is_weapon then
-    if it.is_ranged then
-      if CACHE.s_ranged >= 4 then return 2 end
-      return 5
-    end
-
-    if is_polearm(it) then
-      if CACHE.s_polearms >= 4 then return 2 end
-      return 4
-    end
-
-    return 2
-  end
-
-  return -1
+  if it.is_ranged then return (CACHE.s_ranged >= 4) and 2 or 5 end
+  if is_polearm(it) then return (CACHE.s_polearms >= 4) and 2 or 4 end
+  return 2
 end
 
 local function get_priority_w(it)
