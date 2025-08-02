@@ -115,11 +115,20 @@ function ready_announce_damage()
 
     local hp_msg = get_hp_message(hp_delta, mhp_delta)
     local mp_msg = get_mp_message(mp_delta, mmp_delta)
-
     local msg_tokens = {}
-    msg_tokens[1] = CONFIG.announce.hp_first and hp_msg or mp_msg
-    if msg_tokens[1] then msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n" end
-    msg_tokens[#msg_tokens + 1] = CONFIG.announce.hp_first and mp_msg or hp_msg
+    if CONFIG.announce.hp_first then
+      msg_tokens[1] = hp_msg
+      if mp_msg then
+        if #msg_tokens > 0 then msg_tokens[#msg_tokens + 1] = CONFIG.announce.same_line and "       " or "\n" end
+        msg_tokens[#msg_tokens + 1] = mp_msg
+      end
+    else
+      msg_tokens[1] = mp_msg
+      if hp_msg then
+        if #msg_tokens > 0 then msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n" end
+        msg_tokens[#msg_tokens + 1] = hp_msg
+      end
+    end
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
     -- Damage-related warnings

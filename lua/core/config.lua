@@ -15,8 +15,9 @@ function init_config()
     mp_loss_limit = 1, -- Announce when MP loss >= this
     mp_gain_limit = 2, -- Announce when MP gain >= this
     hp_first = false, -- Show HP first in the message
-    same_line = false -- Show HP/MP on the same line
+    same_line = true -- Show HP/MP on the same line
   } -- CONFIG.announce (do not remove this comment)
+  if CONFIG.announce.same_line then CONFIG.announce.hp_first = true end
   -- Alternative; Always display at bottom of msg window:
   --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
 
