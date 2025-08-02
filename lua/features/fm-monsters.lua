@@ -295,6 +295,11 @@ function ready_fm_monsters()
 
   local hp = CACHE.hp
   local maxhp = CACHE.mhp
+  local amulet = items.equipped_at("amulet")
+  if amulet and amulet.name() == "amulet of guardian spirit" or CACHE.race == "Vine Stalker" then
+    hp = hp + CACHE.mp
+    maxhp = maxhp + CACHE.mmp
+  end
   local willpower = CACHE.will
   local res_mut = CACHE.rMut
   local res_pois = CACHE.rPois
