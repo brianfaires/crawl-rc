@@ -130,7 +130,7 @@ function ready()
   if you.turns() == prev_turn then return end
 
   ready_cache()
-  prev_turn = CACHE.turn
+  prev_turn = CACHE.turn -- prev_turn is also used by persistent-data.lua
 
   -- Features (may not be included)
   if ready_fm_monsters then ready_fm_monsters() end

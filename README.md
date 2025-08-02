@@ -7,7 +7,8 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - To merge with an existing RC file, make sure any Lua hook functions (such as `ready()`) are only defined
   once. If duplicate functions exist, combine them.
 - Features can be toggled on/off or configured to your tastes. See [config.lua section](#luaconfiglua) below.
-- Features can also be excluded by just removing the corresponding lua file.
+- Features can also be excluded by just excluding/removing the corresponding lua file.
+  (For some features this is the only option, e.g. `color-inscribe.lua`)
 - If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
   1. Necessary files from the `lua/core/` folder. They don't do anything by themselves, so it's safe to just include them all.
