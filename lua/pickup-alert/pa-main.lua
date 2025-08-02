@@ -25,8 +25,16 @@ function init_pa_main()
     if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
   end
 
+  -- Check for duplicate autopickup creation (affects local only)
+  create_persistent_data("num_autopickup_funcs", #chk_force_autopickup + 1)
+  if num_autopickup_funcs < #chk_force_autopickup then
+    crawl.mpr("Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)")
+    crawl.mpr("Expected: " .. num_autopickup_funcs .. " but got: " .. #chk_force_autopickup)
+    crawl.mpr("Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage.")
+    return
+  end
+
   ---- Autopickup main ----
-  clear_autopickup_funcs()
   add_autopickup_func(function (it, _)
     if pause_pa_system then return end
     if CACHE.have_orb then return end
