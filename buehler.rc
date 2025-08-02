@@ -3653,7 +3653,7 @@ GET_VAL_STRING = {
       end
       return "{" .. table.concat(tokens, ", ") .. "}"
   end
-}
+} -- GET_VAL_STRING (do not remove this comment)
 
 -- Creates a persistent global variable or table, initialized to the default value
 -- Once initialized, the variable is persisted across saves without re-init
