@@ -3531,7 +3531,7 @@ COLORS = {
   brown = "brown", lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue",
   lightgreen = "lightgreen", lightcyan = "lightcyan", lightred = "lightred",
   lightmagenta = "lightmagenta", yellow = "yellow", white = "w",
-  black = 0,
+  black = "black",
 } -- COLORS (do not remove this comment)
 
 RISKY_EGOS = {
@@ -3761,7 +3761,7 @@ function verify_data_reinit()
     buehler_name = you.name(),
     buehler_race = CACHE.race, -- this breaks RC parser without 'buehler_' prefix
     buehler_class = CACHE.class, -- this breaks RC parser without 'buehler_' prefix
-    buehler_turn = CACHE.turn
+    turn = CACHE.turn -- this doesn't break it, and relies on ready's `prev_turn` variable
   } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
   -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded

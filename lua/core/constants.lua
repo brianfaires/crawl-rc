@@ -79,7 +79,7 @@ COLORS = {
   brown = "brown", lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue",
   lightgreen = "lightgreen", lightcyan = "lightcyan", lightred = "lightred",
   lightmagenta = "lightmagenta", yellow = "yellow", white = "w",
-  black = 0,
+  black = "black",
 } -- COLORS (do not remove this comment)
 
 RISKY_EGOS = {

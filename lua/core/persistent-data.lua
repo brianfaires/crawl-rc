@@ -135,7 +135,7 @@ function verify_data_reinit()
     buehler_name = you.name(),
     buehler_race = CACHE.race, -- this breaks RC parser without 'buehler_' prefix
     buehler_class = CACHE.class, -- this breaks RC parser without 'buehler_' prefix
-    buehler_turn = CACHE.turn
+    turn = CACHE.turn -- this doesn't break it, and relies on ready's `prev_turn` variable
   } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
   -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
