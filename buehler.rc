@@ -3758,10 +3758,10 @@ function verify_data_reinit()
   local failed_reinit = false
   local GAME_CHANGE_MONITORS = {
     buehler_rc_version = BUEHLER_RC_VERSION,
-    name = you.name(),
-    race = CACHE.race,
-    class = CACHE.class,
-    turn = CACHE.turn
+    buehler_name = you.name(),
+    buehler_race = CACHE.race, -- this breaks RC parser without 'buehler_' prefix
+    buehler_class = CACHE.class, -- this breaks RC parser without 'buehler_' prefix
+    buehler_turn = CACHE.turn
   } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
   -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded

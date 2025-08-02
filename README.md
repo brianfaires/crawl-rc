@@ -206,7 +206,7 @@ multiple times per turn.
 - LMK if you find any bugs! It'd be helpful if you include your CONFIG and a character dump after
   executing `debug_dump()`.
   This outputs the RC & character state, writes it as a note, and creates a character dump.
-- Avoid putting  `}` on a line by itself. This can break the RC Lua intepreter. Don't remove the comments that follow a `}`.
+- Avoid putting  `}` on a line by itself. This breaks crawl's RC parser. Don't remove the comments that follow a `}`.
 - Execute lua commands by opening the lua interpreter with `~`, then entering the command.
   Some useful ones below.
 - The RC is intended for webtiles first. I think it works locally now, but here are some issues
