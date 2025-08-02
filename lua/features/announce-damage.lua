@@ -59,8 +59,6 @@ function init_announce_damage()
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
-  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then return end
-  if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
@@ -78,8 +76,6 @@ local function get_hp_message(hp_delta, mhp_delta)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
-  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then return end
-  if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
@@ -111,27 +107,34 @@ function ready_announce_damage()
     local mmp_delta = CACHE.mmp - prev.mmp
     local damage_taken = mhp_delta - hp_delta
 
+    -- Determine which messages to show
+    local do_hp = true
+    local do_mp = true
+    if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
+    if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then do_hp = false end
+    if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
+    if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then do_mp = false end
+
+    if not do_hp and not do_mp then return end
+    if CONFIG.announce.always_both then
+      do_hp = true
+      do_mp = true
+    end
     if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
 
+    -- Put messages together
     local hp_msg = get_hp_message(hp_delta, mhp_delta)
     local mp_msg = get_mp_message(mp_delta, mmp_delta)
     local msg_tokens = {}
-    if CONFIG.announce.hp_first then
-      msg_tokens[1] = hp_msg
-      if mp_msg then
-        if #msg_tokens > 0 then msg_tokens[#msg_tokens + 1] = CONFIG.announce.same_line and "       " or "\n" end
-        msg_tokens[#msg_tokens + 1] = mp_msg
-      end
-    else
-      msg_tokens[1] = mp_msg
-      if hp_msg then
-        if #msg_tokens > 0 then msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n" end
-        msg_tokens[#msg_tokens + 1] = hp_msg
-      end
+    msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
+    if do_mp and do_hp then
+      msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
+      msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
     end
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
-    -- Damage-related warnings
+
+    -- Add Damage-related warnings
     if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
       local summary_tokens = {}
       local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)

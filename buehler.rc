@@ -19,12 +19,13 @@ function init_config()
     hp_gain_limit = 4, -- Announce when HP gain >= this
     mp_loss_limit = 1, -- Announce when MP loss >= this
     mp_gain_limit = 2, -- Announce when MP gain >= this
-    hp_first = false, -- Show HP first in the message
-    same_line = true -- Show HP/MP on the same line
+    hp_first = true, -- Show HP first in the message
+    same_line = true, -- Show HP/MP on the same line
+    always_both = true -- If showing one, show both
   } -- CONFIG.announce (do not remove this comment)
-  if CONFIG.announce.same_line then CONFIG.announce.hp_first = true end
-  -- Alternative; Always display at bottom of msg window:
-  --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true}
+
+    -- Alternative: To display every turn at bottom of msg window:
+    --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true, always_both = true}
 
   -- Flash/Force more for losing this percentage of max HP
   CONFIG.dmg_flash_threshold = 0.20
@@ -86,9 +87,9 @@ function init_config()
     -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff (27 for Shapeshifter)
     talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
     
-    -- Each item is alerted once. Set to empty to disable.
+    -- Each non-useless item is alerted once.
     one_time = {
-      "broad axe", "executioner's axe", "eveningstar", "demon whip",
+      "broad axe", "executioner's axe", "eveningstar", "demon whip", "giant spiked club",
       "sacred scourge", "lajatang", "bardiche", "demon trident", "trishula",
       "quick blade", "eudemon blade", "demon blade", "double sword", "triple sword",
       "crystal plate armour", "gold dragon scales", "pearl dragon scales",
@@ -108,7 +109,7 @@ function init_config()
     shields = true,
     aux_armour = false,
     armour_ego = true,
-    high_score_weap = true,
+    high_score_weap = false,
     high_score_armour = true,
     one_time_alerts = true,
     artefact = true,
@@ -3531,7 +3532,7 @@ COLORS = {
 } -- COLORS (do not remove this comment)
 
 RISKY_EGOS = {
-  "chaos", "distortion", "harm", "infusion"
+  "chaos", "distortion", "harm", "heavy", "infusion"
 } -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
@@ -4199,8 +4200,6 @@ function init_announce_damage()
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
-  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then return end
-  if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
@@ -4218,8 +4217,6 @@ local function get_hp_message(hp_delta, mhp_delta)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
-  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then return end
-  if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then return end
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
     CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
@@ -4251,27 +4248,34 @@ function ready_announce_damage()
     local mmp_delta = CACHE.mmp - prev.mmp
     local damage_taken = mhp_delta - hp_delta
 
+    -- Determine which messages to show
+    local do_hp = true
+    local do_mp = true
+    if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
+    if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then do_hp = false end
+    if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
+    if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then do_mp = false end
+
+    if not do_hp and not do_mp then return end
+    if CONFIG.announce.always_both then
+      do_hp = true
+      do_mp = true
+    end
     if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
 
+    -- Put messages together
     local hp_msg = get_hp_message(hp_delta, mhp_delta)
     local mp_msg = get_mp_message(mp_delta, mmp_delta)
     local msg_tokens = {}
-    if CONFIG.announce.hp_first then
-      msg_tokens[1] = hp_msg
-      if mp_msg then
-        if #msg_tokens > 0 then msg_tokens[#msg_tokens + 1] = CONFIG.announce.same_line and "       " or "\n" end
-        msg_tokens[#msg_tokens + 1] = mp_msg
-      end
-    else
-      msg_tokens[1] = mp_msg
-      if hp_msg then
-        if #msg_tokens > 0 then msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n" end
-        msg_tokens[#msg_tokens + 1] = hp_msg
-      end
+    msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
+    if do_mp and do_hp then
+      msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
+      msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
     end
     if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
     
-    -- Damage-related warnings
+
+    -- Add Damage-related warnings
     if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
       local summary_tokens = {}
       local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
@@ -5159,6 +5163,11 @@ function ready_fm_monsters()
 
   local hp = CACHE.hp
   local maxhp = CACHE.mhp
+  local amulet = items.equipped_at("amulet")
+  if amulet and amulet.name() == "amulet of guardian spirit" or CACHE.race == "Vine Stalker" then
+    hp = hp + CACHE.mp
+    maxhp = maxhp + CACHE.mmp
+  end
   local willpower = CACHE.will
   local res_mut = CACHE.rMut
   local res_pois = CACHE.rPois
@@ -5586,6 +5595,7 @@ local function c_message_temple_actions(text, _)
       crawl.sendkeys({ 6, "altar\r" })
     elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
+      enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
       crawl.sendkeys("X<\r")
     end
   end
@@ -7190,7 +7200,7 @@ local function alert_interesting_weapon(it, cur)
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
       return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
     return false
   end
@@ -7226,7 +7236,7 @@ local function alert_interesting_weapon(it, cur)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return pa_alert_item(it, "Better weapon", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
   end
   
