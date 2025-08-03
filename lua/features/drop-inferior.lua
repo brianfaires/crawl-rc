@@ -8,14 +8,15 @@ end
 
 
 function init_drop_inferior()
+  if not CONFIG.drop_inferior then return end
   if CONFIG.debug_init then crawl.mpr("Initializing drop-inferior") end
-
   crawl.setopt("drop_filter += " .. DROP_KEY)
 end
 
 
 ------------------ Hooks ------------------
 function c_assign_invletter_drop_inferior(it)
+  if not CONFIG.drop_inferior then return end
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 

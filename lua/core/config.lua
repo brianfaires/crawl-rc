@@ -8,7 +8,12 @@ function init_config()
 
   CONFIG.emojis = true -- Use emojis in alerts and announcements
 
-  -- Announce HP/MP changes
+  -- after-shaft.lua
+  CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft
+
+  -- announce-damage.lua: Announce HP/MP changes
+  CONFIG.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
+  CONFIG.dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
   CONFIG.announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
     hp_gain_limit = 4, -- Announce when HP gain >= this
@@ -19,52 +24,73 @@ function init_config()
     always_both = true, -- If showing one, show both
     very_low_hp = 10 -- At this HP, show all HP changes and mute % HP alerts
   } -- CONFIG.announce (do not remove this comment)
+  -- Alternative: Displays meters every turn at bottom of msg window
+  --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true, always_both = true}
 
-    -- Alternative: To display every turn at bottom of msg window:
-    --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true, always_both = true}
+  -- color-inscribe.lua
+  CONFIG.colorize_inscriptions = true -- Colorize inscriptions on pickup
 
-  -- Flash/Force more for losing this % of max HP
-  CONFIG.dmg_flash_threshold = 0.20
-  CONFIG.dmg_fm_threshold = 0.30
+  -- drop-inferior.lua
+  CONFIG.drop_inferior = true -- Mark items for drop when better item picked up
 
-  -- Inscribe stats
+  -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
+  CONFIG.exclude_dropped = true -- Exclude items from auto-pickup when dropped
+  CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
+
+  -- fm-disable.lua: Disable built-in force_mores that can't just be -='d
+  CONFIG.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
+
+  -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
+  CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
+  CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
+
+  -- fully-recover.lua: Keep resting until these statuses are gone
+  CONFIG.rest_off_statuses = {
+    "berserk", "short of breath", "corroded", "vulnerable", 
+    "confused", "marked", "tree%-form", "slowed", "sluggish"
+  } -- CONFIG.rest_off_statuses (do not remove this comment)
+
+  -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
   CONFIG.inscribe_weapons = true
   CONFIG.inscribe_armour = true
 
-  -- Runrest features
+  -- misc-alerts.lua
+  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
+  CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
+  CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
+
+  -- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:
+  CONFIG.stop_on_scrolls_count = 3 -- Stop on a stack of this many un-ID'd scrolls
+  CONFIG.stop_on_pots_count = 4 -- Stop on a stack of this many un-ID'd potions
+
+  -- runrest-features.lua: Runrest features
   CONFIG.ignore_altars = true -- when you have a god already
   CONFIG.ignore_portal_exits = true -- don't stop explore on portal exits
   CONFIG.stop_on_pan_gates = true -- stop explore on pan gates
   CONFIG.temple_macros = true -- auto-search altars; run to exit after worship
   CONFIG.gauntlet_macros = true -- auto-search with filters
 
-  -- Before finding scroll of ID, stop travel on new largest stack size, starting with:
-  CONFIG.stop_on_scrolls_count = 3 -- Stop on a stack of this many un-ID'd scrolls
-  CONFIG.stop_on_pots_count = 4 -- Stop on a stack of this many un-ID'd potions
+  -- safe-consumables.lua
+  CONFIG.safe_consumables = true -- Maintain !r and !q on all consumables that need one
 
-  -- exclude-dropped (disables auto-pickup for whatever you drop)
-  CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
-
-  -- Always use a/b/w slots for weapons
-  CONFIG.do_auto_weapon_slots_abw = true
-
-  -- Keep resting until these statuses are gone
-  CONFIG.rest_off_statuses = {
-    "berserk", "short of breath", "corroded", "vulnerable", 
-    "confused", "marked", "tree%-form", "slowed", "sluggish"
-  } -- CONFIG.rest_off_statuses (do not remove this comment)
-
-  -- Misc alerts
-  CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
+  -- safe-stairs.lua: Detect/warn for accidental stair usage
   CONFIG.warn_v5 = true -- Prompt before entering Vaults:5
   CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
-  CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
-  CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
-  CONFIG.fm_pack_duration = 15 -- Turns before alerting again for a specific monster type; 0 to disable
-  
+
+  -- startup.lua: Startup features
+  CONFIG.show_skills_on_startup = true
+  CONFIG.auto_set_skill_targets = {
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 } -- If already have stealth, focus fighting to 2.0
+  } -- auto_set_skill_targets (do not remove this comment)
+
+  -- weapon-slots.lua: Always use a/b/w slots for weapons
+  CONFIG.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
+
+
 
   ---- Pickup/Alert system
-  ---- This does not affect other autopickup settings; just buehler Pickup/Alert system
+  ---- This does not affect other autopickup settings; just the buehler Pickup/Alert system
   -- Choose which items are auto-picked up
   CONFIG.pickup = {
     armour = true,
@@ -114,18 +140,6 @@ function init_config()
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false
   } -- CONFIG.fm_alert (do not remove this comment)
-
-  -- Startup
-  CONFIG.show_skills_on_startup = true
-  CONFIG.auto_set_skill_targets = {
-    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
-    { "Fighting", 2.0 } -- If already have stealth, focus fighting to 2.0
-  } -- auto_set_skill_targets (do not remove this comment)
-
-  -- Debugging
-  CONFIG.debug_init = false -- track progress through init()
-  CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
-
 
 
   -- Heuristics for tuning the pickup/alert system
@@ -185,7 +199,7 @@ function init_config()
 
 
 
-  -- Define the impact of brands on DPS; used in PA system and weapon inscriptions
+  -- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
   DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
 
   WEAPON_BRAND_BONUSES = {
@@ -217,6 +231,8 @@ function init_config()
     talisman = { desc = COLORS.green, item = COLORS.lightgreen },
     misc = { desc = COLORS.brown, item = COLORS.white },
   } -- ALERT_COLORS (do not remove this comment)
+
+  CONFIG.debug_init = false -- track progress through init()
 
   if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end

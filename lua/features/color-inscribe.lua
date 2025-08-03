@@ -54,6 +54,7 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
+  if not CONFIG.colorize_inscriptions then return end
   -- If enabled, call out to inscribe stats before coloring
   if ready_inscribe_stats then ready_inscribe_stats() end
 

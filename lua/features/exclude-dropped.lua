@@ -71,6 +71,7 @@ end
 
 
 function init_exclude_dropped()
+  if not CONFIG.exclude_dropped then return end
   if CONFIG.debug_init then crawl.mpr("Initializing exclude-dropped") end
 
   create_persistent_data("dropped_item_exclusions", {})
@@ -83,6 +84,7 @@ end
 
 ------------------ Hooks ------------------
 function c_message_exclude_dropped(text, channel)
+  if not CONFIG.exclude_dropped then return end
   if channel ~= "plain" then return end
   local exclude
   if text:find("ou drop ", 1, true) then exclude = true

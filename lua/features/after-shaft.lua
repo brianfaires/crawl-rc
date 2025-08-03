@@ -1,4 +1,5 @@
 function init_after_shaft()
+  if not CONFIG.stop_on_stairs_after_shaft then return end
   if CONFIG.debug_init then crawl.mpr("Initializing after-shaft") end
 
   create_persistent_data("as_shaft_depth", 0)
@@ -18,6 +19,7 @@ end
 
 ------------------- Hooks -------------------
 function c_message_after_shaft(text, channel)
+  if not CONFIG.stop_on_stairs_after_shaft then return end
   if as_shaft_depth ~= 0 or channel ~= "plain" then return end
   local text_fall = "ou fall into a shaft"
   local text_sucked = "ou are sucked into a shaft"
@@ -29,6 +31,7 @@ function c_message_after_shaft(text, channel)
 end
 
 function ready_after_shaft()
+  if not CONFIG.stop_on_stairs_after_shaft then return end
   if CACHE.depth == as_shaft_depth and CACHE.branch == as_shaft_branch then
     crawl.setopt("explore_stop -= stairs")
     as_shaft_depth = 0

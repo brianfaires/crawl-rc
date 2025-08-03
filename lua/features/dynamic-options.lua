@@ -1,4 +1,6 @@
 ----- Set any options based on game state -----
+-- Configure this feature here
+
 local EARLY_XL = 5
 local MID_XL = 10
 local LATE_XL = 15
