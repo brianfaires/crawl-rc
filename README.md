@@ -2,16 +2,16 @@
 Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/crawl) v0.33.1
 
 ## Usage
-- All features are enabled and included via [init.txt](init.txt). If you want a single file,
+- All features are enabled and included via [init.txt](init.txt).
   [buehler.rc](buehler.rc) contains [init.txt](init.txt) and all the files it references.
 - To merge with an existing RC file, make sure any Lua hook functions (such as `ready()`) are only defined
   once. If duplicate functions exist, combine them.
-- Features can be toggled on/off or configured to your tastes. See [config.lua section](#luaconfiglua) below.
-- Features can also be excluded by just excluding/removing the corresponding lua file.
-  (For some features this is the only option, e.g. `color-inscribe.lua`)
+- Most features can be toggled on/off or configured to your tastes in [core/config.lua](core/config.lua).
+  See [config.lua section](#luaconfiglua) for details.
+- Features can also be excluded by just removing or commenting out the one line in [init.txt](init.txt) where it is included.
 - If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
-  1. Necessary files from the `lua/core/` folder. They don't do anything by themselves, so it's safe to just include them all.
+  1. Necessary files from the `lua/core/` folder. The files in `core` won't do anything by themselves, so it's safe to just include them all.
 - You can rebuild [buehler.rc](buehler.rc) by running the python script [concat_rc.py](concat_rc.py):
     1. In [init.txt](init.txt), exclude files by commenting out `include =` and `lua_file =` statements by adding a `#` at the start of the line.
     1. Run `python concat_rc.py` to regenerate [buehler.rc](buehler.rc) without the features included.
@@ -178,7 +178,9 @@ These are auto-included as necessary. Just listing for reference.
 ## Core files
 ### [lua/core/config.lua](lua/core/config.lua)
 This comes first in [buehler.rc](buehler.rc), so you can adjust behavior
-  without digging into the code or rebuilding [buehler.rc](buehler.rc).
+  without digging into the code or rebuilding [buehler.rc](buehler.rc).  
+Most features are entirely configured here. The ones that aren't here typically are configured with 
+  a bunch of messages. So those are set in the feature file instead.
 
 ### [lua/core/constants.lua](lua/core/constants.lua)
 In an attempt to future-proof, contains definitions for things like
@@ -189,54 +191,58 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 
 ### [lua/core/cache.lua](lua/core/cache.lua)
 - Once per turn, the cache pulls several values from the crawl API, that would otherwise be pulled
-multiple times per turn.
-- It's important that CACHE be updated via `ready_cache()` as the first step of ready().
-- This is just for speed and code brevity. e.g. You `CACHE.xl` and `you.xl()` are interchangeable.
+  multiple times per turn.
+- It's important that CACHE be updated via `ready_cache()` before any other ready calls that use the cache.
+- This is all just for speed and code brevity. e.g. `CACHE.xl` and `you.xl()` are interchangeable.
   It's fine to replace any CACHE value you see with the crawl API call, 
   like `CACHE.xl` -> `you.xl()`.
 
 ### [lua/core/persistent-data.lua](lua/core/persistent-data.lua)
-- Handles saving and loading of persistent data between game sessions. Data is specific to one
-  game/character.
+- Handles saving and loading of persistent data between game sessions. Data is specific to one game/character.
+- If any data from the previous save fails to load, you'll get a warning on startup.
+  This can happen after a crash, or if changes to the RC cause errors.
+  The impact is low - it just forgets things like which items it's already alerted.
 
 ### [lua/core/emojis.lua](lua/core/emojis.lua)
 - Define the emojis you want used in announce-damage and any alerts.
 - Can also define text to replace the emojis.
 
 ## Notes
-- LMK if you find any bugs! It'd be helpful if you include your CONFIG and a character dump after
+- LMK if you find any bugs! It'd be helpful if you include your RC or Config, and a character dump after
   executing `debug_dump()`.
   This outputs the RC & character state, writes it as a note, and creates a character dump.
 - Avoid putting  `}` on a line by itself. This breaks crawl's RC parser. Don't remove the comments that follow a `}`.
 - Execute lua commands by opening the lua interpreter with `~`, then entering the command.
-  Some useful ones below.
-- The RC is intended for webtiles first. I think it works locally now, but here are some issues
-  I've seen previously:
-  - Switching between characters causes RC files to not reload, leading to stale persistent data.
-  The startup checks should flag this if it happens, and executing `init_buehler()` will
-  reinitialize everything as if crawl was closed and reopened.
+  Some useful ones are:
+    - `init_buehler()` will reinitialize everything as if crawl was closed and reopened.
+    - `init_buehler(1)` will also reset all persistent data.
+    - `debug_dump()` whenever something seems weird, I do this. `debug_dump(1)` for verbose export.
+    - `buehler_rc_active = false` will disable everything
+    - `CONFIG.<setting_name> = <value>` will work mid game if you really want to.
+- The RC prioritizes webtiles. It works locally, but here are some issues I've seen previously:
+  - Running locally, switching between characters does some weird things with RC/lua files and autopickup functions.
+    I think all the issues are mitigated. If you get warnings when switching characters, just close+reopen crawl.
+  - Sometimes player stats don't draw on game open (open/close inventory to refresh)
   - Some of the regex's use negative lookahead/lookbehind, which require crawl to be built with
   POSIX regexes. If you built crawl locally and used PCRE (defaul on MacOS), some patterns won't match.
   I used: `make -j4 TILES=y BUILD_PCRE=YesPlease`. I couldn't get emojis to work.
-  - Sometimes player stats don't draw on game open (open/close inventory to refresh) 
-
+  
 ## TODO dev list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Write persistent data to c_persist after each level (to recover from crashes)
 1. cleanup/reduce # of display.rc messages
 
 ### TODO - requiring crawl PR
-1. Wait for allies to heal (needs crawl PR?)
+1. Wait for allies to fully heal (needs crawl PR?)
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
 
-#### TODO - won't do
+#### Dev notes - won't do
 1. remove "~~DROP_ME" when dropping
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
 
-# Known issues
-1. Equip/Wear menu doesn't use menu_colour (needs crawl PR?)
+# Dev notes - known issues
 1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
 
 ## Resources
