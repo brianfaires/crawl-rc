@@ -16,13 +16,14 @@ function init_config()
     mp_gain_limit = 2, -- Announce when MP gain >= this
     hp_first = true, -- Show HP first in the message
     same_line = true, -- Show HP/MP on the same line
-    always_both = true -- If showing one, show both
+    always_both = true, -- If showing one, show both
+    very_low_hp = 10 -- At this HP, show all HP changes and mute % HP alerts
   } -- CONFIG.announce (do not remove this comment)
 
     -- Alternative: To display every turn at bottom of msg window:
     --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true, always_both = true}
 
-  -- Flash/Force more for losing this percentage of max HP
+  -- Flash/Force more for losing this % of max HP
   CONFIG.dmg_flash_threshold = 0.20
   CONFIG.dmg_fm_threshold = 0.30
 
@@ -94,7 +95,7 @@ function init_config()
     }, -- CONFIG.alert.one_time (do not remove this comment)
     
     -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-    OTA_require_skill = { weapon = 0.1, armour = 0.1, shield = 0 }
+    OTA_require_skill = { weapon = 4, armour = 3, shield = 0 }
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more

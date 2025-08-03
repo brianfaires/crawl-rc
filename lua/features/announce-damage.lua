@@ -100,59 +100,62 @@ end
 
 ------------------- Hooks -------------------
 function ready_announce_damage()
-  if prev.hp > 0 then
-    local hp_delta = CACHE.hp - prev.hp
-    local mp_delta = CACHE.mp - prev.mp
-    local mhp_delta = CACHE.mhp - prev.mhp
-    local mmp_delta = CACHE.mmp - prev.mmp
-    local damage_taken = mhp_delta - hp_delta
-
-    -- Determine which messages to show
-    local do_hp = true
-    local do_mp = true
-    if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
-    if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then do_hp = false end
-    if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
-    if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then do_mp = false end
-
-    if not do_hp and not do_mp then return end
-    if CONFIG.announce.always_both then
-      do_hp = true
-      do_mp = true
-    end
-    if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-
-    -- Put messages together
-    local hp_msg = get_hp_message(hp_delta, mhp_delta)
-    local mp_msg = get_mp_message(mp_delta, mmp_delta)
-    local msg_tokens = {}
-    msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
-    if do_mp and do_hp then
-      msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
-      msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
-    end
-    if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
-    
-
-    -- Add Damage-related warnings
-    if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
-      local summary_tokens = {}
-      local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
-      if is_force_more_msg then
-        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
-        summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
-        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
-      else
-        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
-        summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
-        summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
-      end
-      enqueue_mpr_opt_more(is_force_more_msg, table.concat(summary_tokens))
-    end
-  end
-
+  -- Process `prev` early, so we can use returns over nested ifs
+  local is_startup = prev.hp == 0
+  local hp_delta = CACHE.hp - prev.hp
+  local mp_delta = CACHE.mp - prev.mp
+  local mhp_delta = CACHE.mhp - prev.mhp
+  local mmp_delta = CACHE.mmp - prev.mmp
+  local damage_taken = mhp_delta - hp_delta
   prev.hp = CACHE.hp
   prev.mhp = CACHE.mhp
   prev.mp = CACHE.mp
   prev.mmp = CACHE.mmp
+
+  if is_startup then return end
+  if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
+
+
+  -- Determine which messages to show
+  local do_hp = true
+  local do_mp = true
+  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta <  CONFIG.announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta <  CONFIG.announce.mp_gain_limit then do_mp = false end
+  if not do_hp and (CACHE.hp <= CONFIG.announce.very_low_hp) and hp_delta ~= 0 then do_hp = true end
+  if not do_hp and not do_mp then return end
+  if CONFIG.announce.always_both then
+    do_hp = true
+    do_mp = true
+  end
+  
+  -- Put messages together
+  local hp_msg = get_hp_message(hp_delta, mhp_delta)
+  local mp_msg = get_mp_message(mp_delta, mmp_delta)
+  local msg_tokens = {}
+  msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
+  if do_mp and do_hp then
+    msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
+    msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
+  end
+  if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
+  
+
+  -- Add Damage-related warnings, when damage >= threshold
+  if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
+    if CACHE.hp <= CONFIG.announce.very_low_hp then return end -- mute % HP alerts
+    local summary_tokens = {}
+    local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
+    if is_force_more_msg then
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+      summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+    else
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+      summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+    end
+    enqueue_mpr_opt_more(is_force_more_msg, table.concat(summary_tokens))
+  end
 end
