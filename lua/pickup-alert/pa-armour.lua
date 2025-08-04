@@ -1,22 +1,26 @@
 ---- Pickup and Alert features for armour ----
-ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-  gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
-  diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+ARMOUR_ALERT = {}
 
-  lighter = {
-    gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
-  },
-  heavier = {
-    gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
-  } -- ARMOUR_ALERT.heavier (do not remove this comment)
-} -- ARMOUR_ALERT (do not remove this comment)
+function init_pa_armour()
+  ARMOUR_ALERT = {
+    artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
+    gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
+    diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+
+    lighter = {
+      gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+      diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+      same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+      lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+    },
+    heavier = {
+      gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+      diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+      same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
+      lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+    } -- ARMOUR_ALERT.heavier (do not remove this comment)
+  } -- ARMOUR_ALERT (do not remove this comment)
+end
 
 local function send_armour_alert(it, alert_type)
   return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)

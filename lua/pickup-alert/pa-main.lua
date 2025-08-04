@@ -13,12 +13,16 @@ function init_pa_main()
 
   if CONFIG.debug_init then crawl.mpr("Initializing pa-main") end
 
-  loaded_pa_armour = pa_alert_armour and true or false
   loaded_pa_misc = pa_alert_orb and true or false
+  if pa_alert_armour then
+    loaded_pa_armour = true
+    init_pa_armour()
+  end
   if pa_alert_weapon then
     loaded_pa_weapons = true
     init_pa_weapons()
   end
+  
   if CONFIG.debug_init then
     if loaded_pa_armour then crawl.mpr("pa-armour loaded") end
     if loaded_pa_misc then crawl.mpr("pa-misc loaded") end

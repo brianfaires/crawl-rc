@@ -149,7 +149,7 @@ local function alert_first_polearm(it)
   if get_hands(it) == 1 then
     alerted_first_polearm = true
     alerted_first_polearm_1h = true
-    return pa_alert_item(it, "First 1-handed polearm", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
+    return pa_alert_item(it, "First polearm (1-handed)", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
   else
     if alerted_first_polearm then return false end
     if have_shield() then return false end

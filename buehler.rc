@@ -258,7 +258,7 @@ autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
 
-autofight_stop = 60
+autofight_stop = 40
 hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
@@ -5982,12 +5982,16 @@ function init_pa_main()
 
   if CONFIG.debug_init then crawl.mpr("Initializing pa-main") end
 
-  loaded_pa_armour = pa_alert_armour and true or false
   loaded_pa_misc = pa_alert_orb and true or false
+  if pa_alert_armour then
+    loaded_pa_armour = true
+    init_pa_armour()
+  end
   if pa_alert_weapon then
     loaded_pa_weapons = true
     init_pa_weapons()
   end
+  
   if CONFIG.debug_init then
     if loaded_pa_armour then crawl.mpr("pa-armour loaded") end
     if loaded_pa_misc then crawl.mpr("pa-misc loaded") end
@@ -6726,24 +6730,28 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ---- Pickup and Alert features for armour ----
-ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-  gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
-  diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+ARMOUR_ALERT = {}
 
-  lighter = {
-    gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
-  },
-  heavier = {
-    gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
-  } -- ARMOUR_ALERT.heavier (do not remove this comment)
-} -- ARMOUR_ALERT (do not remove this comment)
+function init_pa_armour()
+  ARMOUR_ALERT = {
+    artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
+    gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
+    diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+
+    lighter = {
+      gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+      diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+      same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+      lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+    },
+    heavier = {
+      gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+      diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+      same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
+      lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+    } -- ARMOUR_ALERT.heavier (do not remove this comment)
+  } -- ARMOUR_ALERT (do not remove this comment)
+end
 
 local function send_armour_alert(it, alert_type)
   return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
@@ -7176,7 +7184,7 @@ local function alert_first_polearm(it)
   if get_hands(it) == 1 then
     alerted_first_polearm = true
     alerted_first_polearm_1h = true
-    return pa_alert_item(it, "First 1-handed polearm", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
+    return pa_alert_item(it, "First polearm (1-handed)", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
   else
     if alerted_first_polearm then return false end
     if have_shield() then return false end
