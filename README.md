@@ -228,6 +228,8 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   I used: `make -j4 TILES=y BUILD_PCRE=YesPlease`. I couldn't get emojis to work.
   
 ## TODO dev list
+1. 0.34 changes
+  - Inventory slots changed: Can no longer use l-item.inslot() to get an item?
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Write persistent data to c_persist after each level (to recover from crashes)
 1. cleanup/reduce # of display.rc messages

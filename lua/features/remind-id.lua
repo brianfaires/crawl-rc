@@ -13,7 +13,7 @@ end
 local function get_max_stack_size(class, skip_slot)
   local max_stack_size = 0
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.quantity > max_stack_size and inv.class(true) == class and inv.slot ~= skip_slot then
+    if inv.quantity > max_stack_size and inv.class(true) == class and inv.slot ~= skip_slot and not inv.is_identified then
       max_stack_size = inv.quantity
     end
   end
@@ -84,11 +84,11 @@ function c_message_remind_identify(text, channel)
 
     local it_class = it.class(true)
     if it_class == "scroll" then
-      if it.quantity >= math.max(CONFIG.stop_on_scrolls_count, get_max_stack_size("scroll", slot)) then
+      if it.quantity > math.max(CONFIG.stop_on_scrolls_count-1, get_max_stack_size("scroll", slot)) then
         you.stop_activity()
       end
     elseif it_class == "potion" then
-      if it.quantity >= math.max(CONFIG.stop_on_pots_count, get_max_stack_size("potion", slot)) then
+      if it.quantity > math.max(CONFIG.stop_on_pots_count-1, get_max_stack_size("potion", slot)) then
         you.stop_activity()
       end
     end
