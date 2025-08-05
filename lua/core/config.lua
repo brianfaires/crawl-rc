@@ -22,7 +22,7 @@ function init_config()
     hp_first = true, -- Show HP first in the message
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
-    very_low_hp = 10 -- At this HP, show all HP changes and mute % HP alerts
+    very_low_hp = 0.10 -- At this % of max HP, show all HP changes and mute % HP alerts
   } -- CONFIG.announce (do not remove this comment)
   -- Alternative: Displays meters every turn at bottom of msg window
   --CONFIG.announce = {hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0, hp_first = true, same_line = true, always_both = true}

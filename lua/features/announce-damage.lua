@@ -114,6 +114,7 @@ function ready_announce_damage()
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
+  local is_very_low_hp = CACHE.hp <= CONFIG.announce.very_low_hp * CACHE.mhp
 
 
   -- Determine which messages to show
@@ -123,7 +124,8 @@ function ready_announce_damage()
   if hp_delta >= 0 and hp_delta <  CONFIG.announce.hp_gain_limit then do_hp = false end
   if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
   if mp_delta >= 0 and mp_delta <  CONFIG.announce.mp_gain_limit then do_mp = false end
-  if not do_hp and (CACHE.hp <= CONFIG.announce.very_low_hp) and hp_delta ~= 0 then do_hp = true end
+
+  if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
   if not do_hp and not do_mp then return end
   if CONFIG.announce.always_both then
     do_hp = true
@@ -144,7 +146,7 @@ function ready_announce_damage()
 
   -- Add Damage-related warnings, when damage >= threshold
   if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
-    if CACHE.hp <= CONFIG.announce.very_low_hp then return end -- mute % HP alerts
+    if is_very_low_hp then return end -- mute % HP alerts
     local summary_tokens = {}
     local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
     if is_force_more_msg then
