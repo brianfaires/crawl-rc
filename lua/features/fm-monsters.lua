@@ -242,8 +242,8 @@ function init_fm_monsters()
   last_fm_turn = {}
 
 
-  -- Stop on all Uniques & Pan lords
-  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z]).*comes? into view")
+  -- Stop on all Uniques & Pan lords (except Orb Guardian)
+  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
 
 
   set_all(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")

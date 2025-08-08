@@ -3,7 +3,7 @@ pause_pa_system = nil
 
 function has_configured_force_more(it)
   if CONFIG.fm_alert.artefact and it.artefact then return true end
-  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and not is_orb(it) and has_ego(it) then return true end
   return false
 end
 

@@ -141,8 +141,9 @@ function pa_pickup_armour(it)
 
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
-    elseif has_ego(it) and not has_ego(cur) then
-      return ac_delta >= 0
+    elseif not has_ego(cur) then
+      if has_ego(it) then return ac_delta >= 0 end
+      return ac_delta > 0
     end
   elseif is_shield(it) then
     -- Pick up SH upgrades, artefacts, and added egos

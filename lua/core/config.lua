@@ -60,8 +60,8 @@ function init_config()
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
 
   -- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:
-  CONFIG.stop_on_scrolls_count = 3 -- Stop on a stack of this many un-ID'd scrolls
-  CONFIG.stop_on_pots_count = 4 -- Stop on a stack of this many un-ID'd potions
+  CONFIG.stop_on_scrolls_count = 2 -- Stop on a stack of this many un-ID'd scrolls
+  CONFIG.stop_on_pots_count = 3 -- Stop on a stack of this many un-ID'd potions
 
   -- runrest-features.lua: Runrest features
   CONFIG.ignore_altars = true -- when you have a god already
@@ -225,7 +225,7 @@ function init_config()
   -- Cosemtic only
   ALERT_COLORS = {
     weapon = { desc = COLORS.magenta, item = COLORS.yellow, stats = COLORS.lightgrey },
-    body_arm = { desc = COLORS.blue, item = COLORS.lightcyan, stats = COLORS.lightgrey },
+    body_arm = { desc = COLORS.lightblue, item = COLORS.lightcyan, stats = COLORS.lightgrey },
     aux_arm = { desc = COLORS.lightblue, item = COLORS.yellow },
     orb = { desc = COLORS.green, item = COLORS.lightgreen },
     talisman = { desc = COLORS.green, item = COLORS.lightgreen },

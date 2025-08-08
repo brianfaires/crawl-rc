@@ -194,8 +194,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   multiple times per turn.
 - It's important that CACHE be updated via `ready_cache()` before any other ready calls that use the cache.
 - This is all just for speed and code brevity. e.g. `CACHE.xl` and `you.xl()` are interchangeable.
-  It's fine to replace any CACHE value you see with the crawl API call, 
-  like `CACHE.xl` -> `you.xl()`.
+  It's fine to replace any CACHE value you see with the crawl API call, like `CACHE.xl` -> `you.xl()`.
 
 ### [lua/core/persistent-data.lua](lua/core/persistent-data.lua)
 - Handles saving and loading of persistent data between game sessions. Data is specific to one game/character.
@@ -228,11 +227,12 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   I used: `make -j4 TILES=y BUILD_PCRE=YesPlease`. I couldn't get emojis to work.
   
 ## TODO dev list
-1. 0.34 changes
-  - Inventory slots changed: Can no longer use l-item.inslot() to get an item?
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Write persistent data to c_persist after each level (to recover from crashes)
 1. cleanup/reduce # of display.rc messages
+1. On alert, prompt/offer to pickup item
+1. On pickup, if safe(), offer to wear/wield item
+1. On drop_inferior tag, offer to drop item
 
 ### TODO - requiring crawl PR
 1. Wait for allies to fully heal (needs crawl PR?)
@@ -246,6 +246,10 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 
 # Dev notes - known issues
 1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
+
+# 0.34 changes needed
+1. Inventory slots changed: Can no longer use l-item.inslot() to get an item?
+
 
 ## Resources
 ### How to learn RC file options

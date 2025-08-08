@@ -2560,7 +2560,6 @@ msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears
-msc ^= mute:There is an open.*door here
 
 
 msc ^= mute:Moving in this stuff is going to be slow

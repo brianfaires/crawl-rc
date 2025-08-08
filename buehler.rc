@@ -65,8 +65,8 @@ function init_config()
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
 
   -- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:
-  CONFIG.stop_on_scrolls_count = 3 -- Stop on a stack of this many un-ID'd scrolls
-  CONFIG.stop_on_pots_count = 4 -- Stop on a stack of this many un-ID'd potions
+  CONFIG.stop_on_scrolls_count = 2 -- Stop on a stack of this many un-ID'd scrolls
+  CONFIG.stop_on_pots_count = 3 -- Stop on a stack of this many un-ID'd potions
 
   -- runrest-features.lua: Runrest features
   CONFIG.ignore_altars = true -- when you have a god already
@@ -230,7 +230,7 @@ function init_config()
   -- Cosemtic only
   ALERT_COLORS = {
     weapon = { desc = COLORS.magenta, item = COLORS.yellow, stats = COLORS.lightgrey },
-    body_arm = { desc = COLORS.blue, item = COLORS.lightcyan, stats = COLORS.lightgrey },
+    body_arm = { desc = COLORS.lightblue, item = COLORS.lightcyan, stats = COLORS.lightgrey },
     aux_arm = { desc = COLORS.lightblue, item = COLORS.yellow },
     orb = { desc = COLORS.green, item = COLORS.lightgreen },
     talisman = { desc = COLORS.green, item = COLORS.lightgreen },
@@ -2900,7 +2900,6 @@ msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears
-msc ^= mute:There is an open.*door here
 
 
 msc ^= mute:Moving in this stuff is going to be slow
@@ -3127,6 +3126,7 @@ macros += K2 \{-1015} \{13}
 macros += K2 \{-1012} \{13}
 macros += K2 1 \{13}
 macros += K2 2 \{13}
+macros += K2 3 \{13}
 macros += K2 4 \{13}
 macros += K2 6 \{13}
 macros += K2 7 \{13}
@@ -3177,15 +3177,14 @@ stop += our.*is destroyed
 # Expiring effects; Turn on transmutation|flight|swiftness ending and ignore the rest
 ignore -= transformation is almost over\.
 ignore -= transformation has ended\.
-ignore -= revert to a slightly less stony form\.
-ignore -= revert to your normal fleshy form\.
+ignore -= revert to.*form\.
 ignore -= You feel yourself come back to life
 ignore ^= unholy channel is weakening
 ignore ^= magical contamination.*faded
 ignore ^= our foxfire dissipates
 stop ^= unholy channel expires
 stop ^= are starting to lose your buoyancy
-stop ^= feel.*sluggish
+stop ^= You feel.*sluggish
 # Expiring effects for friends too
 stop ^= no longer petrified
 ignore ^= no longer.*(covered in acid|unusually strong)
@@ -3208,6 +3207,8 @@ ignore ^= our.*looks more healthy
 ignore ^= our.*is no longer (corroded|moving slowly)
 ignore ^= our.*dissolves into a puddle of slime
 
+# Ashenzari
+stop += god:Ashenzari invites you to partake
 # Ru
 stop += god:Ru believes you are ready to make a new sacrifice
 # Hepliaklqana
@@ -5140,8 +5141,8 @@ function init_fm_monsters()
   last_fm_turn = {}
 
 
-  -- Stop on all Uniques & Pan lords
-  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z]).*comes? into view")
+  -- Stop on all Uniques & Pan lords (except Orb Guardian)
+  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
 
 
   set_all(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
@@ -5974,7 +5975,7 @@ pause_pa_system = nil
 
 function has_configured_force_more(it)
   if CONFIG.fm_alert.artefact and it.artefact then return true end
-  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and not is_orb(it) and has_ego(it) then return true end
   return false
 end
 
@@ -6874,8 +6875,9 @@ function pa_pickup_armour(it)
 
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
-    elseif has_ego(it) and not has_ego(cur) then
-      return ac_delta >= 0
+    elseif not has_ego(cur) then
+      if has_ego(it) then return ac_delta >= 0 end
+      return ac_delta > 0
     end
   elseif is_shield(it) then
     -- Pick up SH upgrades, artefacts, and added egos
