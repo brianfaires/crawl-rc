@@ -32,12 +32,12 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
 
 -- Only alert once per pack
 local FM_PACK = {
-  "dream sheep", "shrike", "boggart", "floating eye"
+  "boggart", "dream sheep",  "floating eye", "shrike"
 } -- fm_pack (do not remove this comment)
 
 -- Once per pack, but alerts created through dynamic adds
 local FM_PACK_NO_CREATE = {
-  "electric eel", "golden eye", "great orb of eyes"
+  "electric eel", "golden eye", "great orb of eyes", "meliai"
 } -- FM_PACK_NO_CREATE (do not remove this comment)
 
 
@@ -57,7 +57,7 @@ local FM_PATTERNS = {
       pattern = "orc priest" },
   {name = "50hp", cond = "hp", cutoff = 50,
       pattern = "orc high priest|manticore" },
-  {name = "70hp", cond = "hp", cutoff = 70,
+  {name = "60hp", cond = "hp", cutoff = 60,
       pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
   {name = "70hp_melai", cond = "hp", cutoff = 70,
       pattern = "meliai"},
@@ -242,8 +242,8 @@ function init_fm_monsters()
   last_fm_turn = {}
 
 
-  -- Stop on all Uniques & Pan lords
-  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z]).*comes? into view")
+  -- Stop on all Uniques & Pan lords (except Orb Guardian)
+  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
 
 
   set_all(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
@@ -295,6 +295,11 @@ function ready_fm_monsters()
 
   local hp = CACHE.hp
   local maxhp = CACHE.mhp
+  local amulet = items.equipped_at("amulet")
+  if amulet and amulet.name() == "amulet of guardian spirit" or CACHE.race == "Vine Stalker" then
+    hp = hp + CACHE.mp
+    maxhp = maxhp + CACHE.mmp
+  end
   local willpower = CACHE.will
   local res_mut = CACHE.rMut
   local res_pois = CACHE.rPois

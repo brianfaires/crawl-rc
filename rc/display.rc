@@ -45,8 +45,11 @@ menu += $good:^unidentified .*armour.*(runed|glowing|embroidered|shiny|dyed)
 menu += $positive:[^r]staff of
 
 # Wands
-menu += $decent:wand of (flame|paralysis|polymorph|disintegration|enslavement|iceblast)
-menu += $good:wand of (acid|digging|clouds|scattershot)
+menu += brown:wand of digging
+menu += lightgrey:wand of (flame|paralysis|charming|mindburst)
+menu += lightmagenta:wand of (acid|quicksilver|light)
+menu += lightcyan:wand of (iceblast|roots|warping)
+menu += blue:wand of polymorph
 
 # Scrolls
 menu += $danger:scrolls? of torment
@@ -1225,7 +1228,6 @@ msc += $boring:There's nothing there!
 msc += $boring:You briefly turn translucent
 msc += $boring:unborn seems to be listening
 msc += $boring:You can only put on jewellery
-msc += $boring:Ouch!
 msc += $boring:There isn't anything here
 msc += $boring:The air around you briefly surges with heat
 msc += $boring:Your skin glows momentarily
@@ -2558,7 +2560,6 @@ msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears
-msc ^= mute:There is an open.*door here
 
 
 msc ^= mute:Moving in this stuff is going to be slow
@@ -2590,3 +2591,4 @@ msc ^= mute:You pick up a book of
 msc ^= mute:accepts your kill
 msc ^= mute:Okawaru is honoured by your kill
 msc ^= mute:you see here a.*corpse
+msc ^= mute:you now have .* gold pieces

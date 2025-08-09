@@ -1,25 +1,29 @@
 ---- Pickup and Alert features for armour ----
-ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-  gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
-  diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+ARMOUR_ALERT = {}
 
-  lighter = {
-    gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-    lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
-  },
-  heavier = {
-    gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-    diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-    same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-    lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
-  }
-} -- ARMOUR_ALERT (do not remove this comment)
+function init_pa_armour()
+  ARMOUR_ALERT = {
+    artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
+    gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
+    diff_ego = { msg = "Diff ego", emoji = EMOJI.EGO },
+
+    lighter = {
+      gain_ego = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+      diff_ego = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+      same_ego = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+      lost_ego = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+    },
+    heavier = {
+      gain_ego = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+      diff_ego = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+      same_ego = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
+      lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+    } -- ARMOUR_ALERT.heavier (do not remove this comment)
+  } -- ARMOUR_ALERT (do not remove this comment)
+end
 
 local function send_armour_alert(it, alert_type)
-  return pa_alert_item(it, alert_type.msg, alert_type.emoji)
+  return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
 end
 
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
@@ -27,7 +31,6 @@ local function alert_ac_high_score(it)
   if not is_body_armour(it) then return false end
   if CACHE.s_armour == 0 then return false end
   if CACHE.xl > 12 then return false end
-  if has_ego(it) and not it.is_identified then return false end
 
   if ac_high_score == 0 then
     local worn = items.equipped_at("armour")
@@ -37,7 +40,7 @@ local function alert_ac_high_score(it)
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
-      return pa_alert_item(it, "Strongest armour yet", EMOJI.STRONGEST)
+      return pa_alert_item(it, "Highest AC", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
     end
   end
 
@@ -49,11 +52,11 @@ end
 -- The function assumes pickup occurred; so it doesn't alert things like pure upgrades
 -- Takes `unworn_inv_item`, which is an unworn aux armour item in inventory
 function pa_alert_armour(it, unworn_inv_item)
-  if it.artefact then
-    return it.is_identified and send_armour_alert(it, ARMOUR_ALERT.artefact)
-  end
-
   if is_body_armour(it) then
+    if it.artefact then
+      return it.is_identified and send_armour_alert(it, ARMOUR_ALERT.artefact)
+    end
+  
     local cur = items.equipped_at("armour")
     if not cur then return false end
 
@@ -92,30 +95,38 @@ function pa_alert_armour(it, unworn_inv_item)
 
     if alert_ac_high_score(it) then return true end
   elseif is_shield(it) then
+    if it.artefact then
+      return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
+    end
+  
     local sh = items.equipped_at("offhand")
     if not is_shield(sh) then return false end
     if has_ego(it) and get_ego(it) ~= get_ego(sh) then
       local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO)
+      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER)
+      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
     end
   else
     -- Aux armour
+    if it.artefact then
+      return it.is_identified and pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+    end
+  
     local cur = items.equipped_at(it.subtype()) or unworn_inv_item
+    if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION, CONFIG.fm_alert.aux_armour) end
     if has_ego(it) and get_ego(it) ~= get_ego(cur) then
       local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO)
+      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
     elseif get_armour_ac(it) > get_armour_ac(cur) then
-      return pa_alert_item(it, "Increased AC", EMOJI.STRONGER)
+      return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
     end
   end
 end
 
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
-  if has_ego(it) and not it.is_identified then return false end
-  if has_dangerous_brand(it) then return false end
+  if has_risky_ego(it) then return false end
 
   if is_body_armour(it) then
     -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
@@ -130,8 +141,9 @@ function pa_pickup_armour(it)
 
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
-    elseif has_ego(it) and not has_ego(cur) then
-      return ac_delta >= 0
+    elseif not has_ego(cur) then
+      if has_ego(it) then return ac_delta >= 0 end
+      return ac_delta > 0
     end
   elseif is_shield(it) then
     -- Pick up SH upgrades, artefacts, and added egos
@@ -141,10 +153,10 @@ function pa_pickup_armour(it)
 
     if cur.artefact then return false end
     if it.artefact then return true end
-    if cur.branded then
+    if has_ego(cur) then
       return get_ego(cur) == get_ego(it) and it.plus > cur.plus
     end
-    return it.branded or it.plus > cur.plus
+    return has_ego(it) or it.plus > cur.plus
   else
     -- Aux armour: Pickup artefacts, AC upgrades, and new egos
     if is_orb(it) then return false end
@@ -162,20 +174,29 @@ function pa_pickup_armour(it)
       if get_mut(MUTS.claws, true) > 0 and not have_weapon() then return false end
     elseif st == "boots" then
       if get_mut(MUTS.hooves, true) + get_mut(MUTS.talons, true) > 0 then return false end
-    elseif it.name("base"):find("helmet") then
+    elseif it.name("base"):find("helmet", 1, true) then
       if get_mut(MUTS.horns, true) + get_mut(MUTS.beak, true) + get_mut(MUTS.antennae, true) > 0 then return false end
     end
 
     local cur = items.equipped_at(st)
-    if not cur then return true end
+    if not cur then
+      -- Check if we're carrying one already; implying we have a temporary form
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.subtype() == st then return false end
+      end
+      return true
+    end
     if not it.is_identified then return false end
 
     if cur.artefact then return false end
     if it.artefact then return true end
-    if cur.branded then
+    if has_ego(cur) then
       return get_ego(cur) == get_ego(it) and it.plus > cur.plus
+    elseif has_ego(it) then
+      return get_armour_ac(it) >= get_armour_ac(cur)
+    else
+      return get_armour_ac(it) > get_armour_ac(cur)
     end
-    return it.branded or it.plus > cur.plus
   end
 
   return false

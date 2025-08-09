@@ -66,10 +66,11 @@ end
 local function c_message_temple_actions(text, _)
   if CACHE.branch == "Temple" then
     -- Hit explore to search all altars
-    if text:find("explor") then
+    if text:find("explor", 1, true) then
       crawl.sendkeys({ 6, "altar\r" })
-    elseif text:find("welcomes you!") then
+    elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
+      enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
       crawl.sendkeys("X<\r")
     end
   end

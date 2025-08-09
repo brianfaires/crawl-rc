@@ -12,11 +12,8 @@ function init_emojis()
     EMOJI.RANGED = "🏹"
     EMOJI.POLEARM = "🔱"
     EMOJI.TWO_HANDED = "✋🤚"
+    EMOJI.CAUTION = "⚠️"
 
-    --EMOJI.ARMOUR = "🛡️"
-    EMOJI.HAT = "🧢"
-    EMOJI.GLOVES = "🧤"
-    EMOJI.BOOTS = "🥾"
     EMOJI.STAFF_RESISTANCE = "🔥"
 
     EMOJI.ACCURACY = "🎯"
@@ -42,7 +39,8 @@ function init_emojis()
     EMOJI.SUCCESS = "✅"
 
   else
-    EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "??")
+    EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "?")
+    EMOJI.EXCLAMATION = with_color(COLORS.magenta, "!")
     EMOJI.EXCLAMATION_2 = with_color(COLORS.lightmagenta, "!!")
 
     EMOJI.HP_BORDER = with_color(COLORS.white, "|")

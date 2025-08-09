@@ -7,6 +7,7 @@ more -= The lock glows eerily
 more -= Heavy smoke blows from the lock
 more -= The gate opens wide
 more -= With a soft hiss the gate opens wide
+more -= You pick up the .* gem and feel its .* weight
 more -= You pick up the .* rune and feel its power
 more -= welcomes you( back)?!
 
@@ -69,7 +70,6 @@ more += Found.*the Ecumenical Temple
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
 more += You have a vision of.*gates?
-more += byssal rune
 more += Press the corresponding letter to learn more about a god
 flash += timed_portal:.*
 
@@ -83,7 +83,6 @@ flash += delayed
 
 # Big damage
 more += your body is wracked
-more += Ouch! That really hurt!
 more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse

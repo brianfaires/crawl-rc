@@ -1,4 +1,6 @@
 ----- Set any options based on game state -----
+-- Configure this feature here
+
 local EARLY_XL = 5
 local MID_XL = 10
 local LATE_XL = 15
@@ -39,6 +41,8 @@ end
 local function set_class_options()
   if CACHE.class == "Hunter" then
     crawl.setopt("view_delay = 30")
+  elseif CACHE.class == "Shapeshifter" then
+    crawl.setopt("autopickup_exceptions ^= <flux bauble")
   end
 end
 
@@ -137,7 +141,7 @@ end
 function init_dynamic_options()
   if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
 
-  dynopt_cur_god = CACHE.god
+  dynopt_cur_god = "No God"
   ignoring_spellcasting = false
   ignoring_spellbooks = false
   early_xl_alerts_on = false
@@ -146,6 +150,7 @@ function init_dynamic_options()
 
   set_race_options()
   set_class_options()
+  set_god_options()
 end
 
 

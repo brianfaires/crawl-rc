@@ -1,6 +1,6 @@
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  return pa_alert_item(it, "New orb", EMOJI.ORB)
+  return pa_alert_item(it, "New orb", EMOJI.ORB, CONFIG.fm_alert.orbs)
 end
 
 function pa_alert_OTA(it)
@@ -8,17 +8,26 @@ function pa_alert_OTA(it)
   if index == -1 then return end
 
   local do_alert = true
-  -- Don't alert if already wearing a larger shield
-  if pa_OTA_items[index] == "buckler" then
-    if have_shield() then do_alert = false end
-  elseif pa_OTA_items[index] == "kite shield" then
-    local sh = items.equipped_at("offhand")
-    if sh and sh.name("qual") == "tower shield" then do_alert = false end
+
+  if is_shield(it) then
+    if CACHE.s_shields < CONFIG.alert.OTA_require_skill.shield then return end
+
+    -- Don't alert if already wearing a larger shield
+    if pa_OTA_items[index] == "buckler" then
+      if have_shield() then do_alert = false end
+    elseif pa_OTA_items[index] == "kite shield" then
+      local sh = items.equipped_at("offhand")
+      if sh and sh.name("qual") == "tower shield" then do_alert = false end
+    end
+  elseif is_armour(it) then
+    if CACHE.s_armour < CONFIG.alert.OTA_require_skill.armour then return end
+  elseif it.is_weapon then
+    if you.skill(it.weap_skill) < CONFIG.alert.OTA_require_skill.weapon then return end
   end
 
   remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM)
+  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert.one_time_alerts)
 end
 
 ---- Alert for needed resists ----
@@ -35,17 +44,16 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE)
+  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert.staff_resists)
 end
 
 function pa_alert_talisman(it)
   if it.artefact then
-    if it.is_identified then
-      return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN)
-    end
-    return false
+    if not it.is_identified then return false end
+    return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
   end
-  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN)
+  if get_talisman_min_level(it) > you.skill("Shapeshifting") + CONFIG.alert.talisman_lvl_diff then return false end
+  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
 end
 
 ---- Smart staff pickup ----
@@ -56,7 +64,7 @@ function pa_pickup_staff(it)
 
   -- Check for previously picked staves
   for _,v in ipairs(pa_items_picked) do
-    if v:find(it.name("base")) then return false end
+    if v:find(it.name("base"), 1, true) then return false end
   end
 
   return true

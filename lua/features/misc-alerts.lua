@@ -8,18 +8,18 @@ local function alert_low_hp()
     below_hp_threshold = true
     local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
     enqueue_mpr_opt_more(true, table.concat({
-      EMOJI.EXCLAMATION_2, " ", with_color(COLORS.red, low_hp_msg), " ", EMOJI.EXCLAMATION_2
+      EMOJI.EXCLAMATION, " ", with_color(COLORS.magenta, low_hp_msg), " ", EMOJI.EXCLAMATION
     }))
   end
 end
 
 local function alert_remove_faith()
-  if alerted_max_piety == 0 and you.piety_rank() == 6 then
+  if not alerted_max_piety and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if CACHE.god == "Uskayaw" or CACHE.god == "Kikubaaqudgha" then return end
+      if CACHE.god == "Uskayaw" then return end
       mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
-      alerted_max_piety = 1
+      alerted_max_piety = true
     end
   end
 end
@@ -29,7 +29,7 @@ function init_misc_alerts()
   if CONFIG.debug_init then crawl.mpr("Initializing misc-alerts") end
 
   below_hp_threshold = false
-  create_persistent_data("alerted_max_piety", 0)
+  create_persistent_data("alerted_max_piety", false)
 
   if CONFIG.save_with_msg then
     crawl.setopt("macros += M S ===macro_save_with_message")

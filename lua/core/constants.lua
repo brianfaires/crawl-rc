@@ -10,13 +10,13 @@ ALL_MISC_ITEMS = {
 
 -- This is checked against the full text of the pickup message, so use patterns to match
 ALL_MISSILES = {
-  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart", "darts? of dispersal",
+  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart", "darts? of disjunction", "darts? of dispersal",
   " stone", "boomerang", "silver javelin", "javelin", "large rock", "throwing net",
 } -- ALL_MISSILES (do not remove this comment)
 
 -- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed
 ALL_SPELLBOOKS = {
-  "book of", "Necronomicon", "Grand Grimoire", "tome of obsoleteness", "Everburning Encyclopedia",
+  "parchment of", "book of", "Necronomicon", "Grand Grimoire", "tome of obsoleteness", "Everburning Encyclopedia",
   "Ozocubu's Autobiography", "Maxwell's Memoranda", "Young Poisoner's Handbook", "Fen Folio",
   "Inescapable Atlas", "There-And-Back Book", "Great Wizards, Vol. II", "Great Wizards, Vol. VII",
   "Trismegistus Codex", "the Unrestrained Analects", "Compendium of Siegecraft", "Codex of Conductivity",
@@ -79,16 +79,12 @@ COLORS = {
   brown = "brown", lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue",
   lightgreen = "lightgreen", lightcyan = "lightcyan", lightred = "lightred",
   lightmagenta = "lightmagenta", yellow = "yellow", white = "w",
-  black = 0,
+  black = "black",
 } -- COLORS (do not remove this comment)
 
-DANGEROUS_BRANDS = {
-  "chaos", "distortion", "harm", "infusion"
-} -- DANGEROUS_BRANDS (do not remove this comment)
-
-GODS_WITH_ALLIES = {
-  "Beogh", "Hepliaklqana", "Jiyva", "Yredelemnul",
-} -- GODS_WITH_ALLIES (do not remove this comment)
+RISKY_EGOS = {
+  "chaos", "distortion", "harm", "heavy", "infusion"
+} -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
   LF = string.char(10), CR = string.char(13)

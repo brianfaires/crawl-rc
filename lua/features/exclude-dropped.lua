@@ -17,7 +17,7 @@ end
 
 local function has_enchantable_weap_in_inv()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_weapon(inv) and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+    if inv.is_weapon and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
       return true
     end
   end
@@ -33,7 +33,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("ring of") or text:find("amulet of") or text:find("wand of")
+  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then
     return text:sub(idx, #text)
   end
@@ -60,8 +60,8 @@ local function get_excludable_name(text, for_exclusion)
   idx = text:find("scrolls? of")
   if idx then
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-    if for_exclusion and not CONFIG.exclude_stashed_enchant_scrolls
-    and (text:find("enchant weapon") or text:find("brand weapon"))
+    if for_exclusion and CONFIG.ignore_stashed_weapon_scrolls
+    and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
     and has_enchantable_weap_in_inv() then
       return
     end
@@ -71,6 +71,7 @@ end
 
 
 function init_exclude_dropped()
+  if not CONFIG.exclude_dropped then return end
   if CONFIG.debug_init then crawl.mpr("Initializing exclude-dropped") end
 
   create_persistent_data("dropped_item_exclusions", {})
@@ -83,9 +84,10 @@ end
 
 ------------------ Hooks ------------------
 function c_message_exclude_dropped(text, channel)
+  if not CONFIG.exclude_dropped then return end
   if channel ~= "plain" then return end
   local exclude
-  if text:find("You drop ") then exclude = true
+  if text:find("ou drop ", 1, true) then exclude = true
   elseif text:find(" %- ") then exclude = false
   else return end
 
@@ -95,10 +97,10 @@ function c_message_exclude_dropped(text, channel)
   if exclude then
     -- Don't exclude if we dropped partial stack (except for jewellery)
     for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.name("qual"):find(item_name) then
+      if inv.name("qual"):find(item_name, 1, true) then
         if is_jewellery(inv) then break end
-        local qty_str = "You drop " .. inv.quantity .. " " .. item_name
-        if inv.quantity == 1 or text:find(qty_str) then break end
+        local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
+        if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
         return
       end
     end

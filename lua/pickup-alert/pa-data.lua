@@ -1,6 +1,6 @@
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if is_weapon(it) or is_armour(it) or is_talisman(it) or is_orb(it) then
+  if it.is_weapon or is_armour(it) or is_talisman(it) or is_orb(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
@@ -17,32 +17,33 @@ end
 function init_pa_data()
   if CONFIG.debug_init then crawl.mpr("Initializing pa-data") end
 
-  create_persistent_data("pa_OTA_items", CONFIG.one_time_alerts)
+  create_persistent_data("pa_OTA_items", CONFIG.alert.one_time)
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
-  create_persistent_data("alerted_first_ranged_2h", 0)
-  create_persistent_data("alerted_first_ranged_1h", 0)
-  create_persistent_data("alerted_first_polearm", 0)
+  create_persistent_data("alerted_first_ranged", false)
+  create_persistent_data("alerted_first_ranged_1h", false)
+  create_persistent_data("alerted_first_polearm", false)
+  create_persistent_data("alerted_first_polearm_1h", false)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("unbranded_high_score", 0)
-  create_persistent_data("polearm_high_score", 0)
-  create_persistent_data("polearm_1h_high_score", 0)
 
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     remove_from_OTA(inv)
     add_to_pa_table(pa_items_picked, inv)
 
-    if is_weapon(inv) then
+    if inv.is_weapon then
       if is_polearm(inv) then
-        alerted_first_polearm = 1
+        alerted_first_polearm = true
+        if get_hands(inv) == 1 then
+          alerted_first_polearm_1h = true
+        end
       elseif inv.is_ranged then
-        if get_hands(inv) == 2 then
-          alerted_first_ranged_2h = 1
-        else
-          alerted_first_ranged_1h = 1
+        alerted_first_ranged = true
+        if get_hands(inv) == 1 then
+          alerted_first_ranged_1h = true
         end
       end
     end
@@ -74,39 +75,26 @@ end
 --- Set all single high scores ---
 -- Returns a string if item is a new high score, else nil
 function update_high_scores(it)
+  if not it then return end
   local ret_val = nil
+
   if is_armour(it) then
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
       ac_high_score = ac
       if not ret_val then ret_val = "Highest AC" end
     end
-  elseif is_weapon(it) then
-    local it_plus = it.plus or 0
-    local score = it.score or get_weap_score(it)
-    if score > weapon_high_score then
-      weapon_high_score = score
+  elseif it.is_weapon then
+    local dmg = get_weap_damage(it, DMG_TYPE.branded)
+    if dmg > weapon_high_score then
+      weapon_high_score = dmg
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    if score > unbranded_high_score then
-      local unbranded_score = it.unbranded_score or get_weap_score(it, true)
-      if unbranded_score > unbranded_high_score then
-        unbranded_high_score = score
-        if not ret_val then ret_val = "Highest no-brand damage" end
-      end
-    end
-
-    if is_polearm(it) and you_have_allies() then
-      if score > polearm_high_score then
-        polearm_high_score = score
-        if not have_shield() and not ret_val then ret_val = "Strongest 2h polearm" end
-      end
-
-      if get_hands(it) == 1 and score > polearm_1h_high_score then
-        polearm_1h_high_score = score
-        if not ret_val then ret_val = "Strongest 1h polearm" end
-      end
+    dmg = get_weap_damage(it, DMG_TYPE.unbranded)
+    if dmg > unbranded_high_score then
+      unbranded_high_score = dmg
+      if not ret_val then ret_val = "Highest no-brand damage" end
     end
   end
 

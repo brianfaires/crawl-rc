@@ -11,7 +11,7 @@ autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
 
-autofight_stop = 60
+autofight_stop = 40
 hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
@@ -29,7 +29,7 @@ view_delay = 100
 show_travel_trail = true
 
 explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
-explore_stop_pickup_ignore += scroll, potion, wand, stone, dart, boomerang, javelin
+explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang, javelin
 
 
 ### Mostly normal RC options ###
@@ -55,7 +55,7 @@ lua_file = crawl-rc/lua/features/color-inscribe.lua
 lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
-lua_file = crawl-rc/lua/features/fully-rest.lua
+lua_file = crawl-rc/lua/features/fully-recover.lua
 lua_file = crawl-rc/lua/features/fm-disable.lua
 lua_file = crawl-rc/lua/features/fm-monsters.lua
 lua_file = crawl-rc/lua/features/inscribe-stats.lua
@@ -80,7 +80,6 @@ lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 
 ############## Lua Hook Functions ##############
 {
-local last_dump_turn
 local buehler_rc_active
 
 function c_assign_invletter(it)
@@ -112,12 +111,12 @@ end
 
 function ch_stop_running(kind)
   if not buehler_rc_active then return end
-  if ch_stop_running_full_recovery then ch_stop_running_full_recovery(kind) end
+  if ch_stop_running_fully_recover then ch_stop_running_fully_recover(kind) end
 end
 
 function c_answer_prompt(prompt)
   if not buehler_rc_active then return end
-  if prompt:find("cheaper one?") and CACHE.branch ~= "Bazaar" then
+  if prompt:find("cheaper one?", 1, true) and CACHE.branch ~= "Bazaar" then
     crawl.mpr("Replacing shopping list items")
     return true end
   if prompt == "Die?" then
@@ -127,28 +126,26 @@ end
 
 function ready()
   if not buehler_rc_active then return end
+  crawl.redraw_screen()
   if you.turns() == prev_turn then return end
 
   ready_cache()
-  prev_turn = CACHE.turn
-
-  -- Debugging
-  if CONFIG.debug_dump_data_freq > 0 and CACHE.turn - last_dump_turn > CONFIG.debug_dump_data_freq then
-    dump_persistent_data()
-    last_dump_turn = CACHE.turn
-  end
+  prev_turn = CACHE.turn -- prev_turn is also used by persistent-data.lua
 
   -- Features (may not be included)
   if ready_fm_monsters then ready_fm_monsters() end
   if ready_dynamic_options then ready_dynamic_options() end
   if ready_inscribe_stats then ready_inscribe_stats() end
-  if ready_weapon_slots then ready_weapon_slots() end
   if ready_safe_consumables then ready_safe_consumables() end
   if ready_runrest_features then ready_runrest_features() end
   if ready_after_shaft then ready_after_shaft() end
   if ready_exclude_dropped then ready_exclude_dropped() end
-  if ready_fully_recover then ready_fully_recover() end
   if ready_safe_stairs then ready_safe_stairs() end
+
+  -- Features with text
+  if ready_weapon_slots then ready_weapon_slots() end
+  if ready_fully_recover then ready_fully_recover() end
+  if ready_remind_identify then ready_remind_identify() end
   if ready_announce_damage then ready_announce_damage() end
   if ready_item_alerts then ready_item_alerts() end
   if ready_misc_alerts then ready_misc_alerts() end
@@ -157,50 +154,15 @@ function ready()
   mpr_consume_queue()
 end
 
-function init_buehler()
+function init_buehler(reset_persistent_data)
   buehler_rc_active = false
-  last_dump_turn = -1
 
   -- Init core modules
   init_config()
   init_emojis()
-  init_persistent_data()
   init_cache()
   init_util()
-
-  -- Check for unexpected changes
-  local change_detected = false
-  local GAME_CHANGE_MONITORS = {
-    buehler_rc_version = BUEHLER_RC_VERSION,
-    name = you.name(),
-    race = CACHE.race,
-    class = CACHE.class,
-    turn = CACHE.turn
-  } -- GAME_CHANGE_MONITORS (do not remove this comment)
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
-    create_persistent_data("prev_" .. k, v)
-  end
-
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
-    local prev = _G["prev_" .. k]
-    if prev ~= v then
-      change_detected = true
-      local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-      crawl.mpr(with_color(COLORS.lightred, msg))
-      crawl.flush_prev_message()
-    end
-  end
-
-  if change_detected and not crawl.yesno("Continue initializing buehler.rc?") then
-    crawl.mpr(with_color(COLORS.lightred, "Aborting initialization. buehler.rc is inactive."))
-    return
-  else
-    buehler_rc_active = true
-    for k, v in pairs(GAME_CHANGE_MONITORS) do
-      _G["prev_" .. k] = v
-    end
-  end
-
+  init_persistent_data(reset_persistent_data)
 
   -- Init optional features
   if init_after_shaft then init_after_shaft() end
@@ -209,7 +171,7 @@ function init_buehler()
   if init_dynamic_options then init_dynamic_options() end
   if init_exclude_dropped then init_exclude_dropped() end
   if init_fm_monsters then init_fm_monsters() end
-  if init_fully_rest then init_fully_rest() end
+  if init_fully_recover then init_fully_recover() end
   if init_misc_alerts then init_misc_alerts() end
   if init_pa_main then init_pa_main() end
   if init_remind_id then init_remind_id() end
@@ -218,13 +180,22 @@ function init_buehler()
   if init_startup then init_startup() end
   if init_weapon_slots then init_weapon_slots() end
 
-  -- Success message
-  local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-  local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
-  crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
+  if not verify_data_reinit() then
+    crawl.mpr(with_color(COLORS.lightred, "Failed initialization. buehler.rc is inactive."))
+    return
+  else
+    buehler_rc_active = true
+    local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
+    local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
+    crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
+  end
+
+   -- Force a full ready() cycle
+  prev_turn = CACHE.turn - 1
+  ready()
 end
 
 -- This is the only line of top-level code, aside from declaring variables (without values)
 -- Done to give confidence in simple re-inits
-init_buehler()
+init_buehler(you.turns() == 0)
 }

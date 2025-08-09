@@ -36,20 +36,14 @@ stop += our.*is destroyed
 # Expiring effects; Turn on transmutation|flight|swiftness ending and ignore the rest
 ignore -= transformation is almost over\.
 ignore -= transformation has ended\.
-ignore -= revert to a slightly less stony form\.
-ignore -= revert to your normal fleshy form\.
+ignore -= revert to.*form\.
 ignore -= You feel yourself come back to life
 ignore ^= unholy channel is weakening
 ignore ^= magical contamination.*faded
 ignore ^= our foxfire dissipates
-stop ^= transformation is almost over
-stop ^= transformation has ended
-stop ^= revert to a slightly less stony form\.
-stop ^= revert to your normal fleshy form
-stop ^= feel yourself come back to life
 stop ^= unholy channel expires
 stop ^= are starting to lose your buoyancy
-stop ^= feel.*sluggish
+stop ^= You feel.*sluggish
 # Expiring effects for friends too
 stop ^= no longer petrified
 ignore ^= no longer.*(covered in acid|unusually strong)
@@ -72,9 +66,14 @@ ignore ^= our.*looks more healthy
 ignore ^= our.*is no longer (corroded|moving slowly)
 ignore ^= our.*dissolves into a puddle of slime
 
+# Ashenzari
+stop += god:Ashenzari invites you to partake
 # Ru
 stop += god:Ru believes you are ready to make a new sacrifice
 # Hepliaklqana
 ignore ^= emerges from the mists of memory
 # Wu Jian Council
 ignore += heavenly storm settles
+# Yredelemnul
+ignore += offer up the Black Torch's flame
+ignore += mindless puppets stay behind to rot

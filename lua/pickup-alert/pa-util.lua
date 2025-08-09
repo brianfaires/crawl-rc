@@ -43,8 +43,8 @@ function get_armour_info_strings(it)
 end
 
 function get_weapon_info_string(it)
-  if not is_weapon(it) then return end
-  local dmg = get_weap_dmg(it, DMG_TYPE.branded)
+  if not it.is_weapon then return end
+  local dmg = get_weap_damage(it, DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -73,28 +73,33 @@ end
 
 
 --------- Functions for armour and weapons ---------
+-- get_ego() returns artefact status first, then the ego
 function get_ego(it, terse)
   if it.artefact then return "arte" end
   local ego = it.ego(terse)
   if ego then return ego end
 
   if is_body_armour(it) then
-    if it.name("qual"):find("(dragon scales|troll leather)") then return qualname end
+    local qualname = it.name("qual")
+    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
   end
 end
 
 -- Used for data tables
 function get_pa_keys(it, name_type)
-  if is_talisman(it) or is_orb(it) then return it.name(), 0 end
-  local name = it.name(name_type or "base")
+  if it.class(true) == "bauble" then return it.name("qual"), 0 end
+  if is_talisman(it) or is_orb(it) then
+    return it.name():gsub("\"", ""), 0
+  end
+  local name = it.name(name_type or "base"):gsub("\"", "")
   local value = tonumber(name:sub(1, 3))
   if not value then return name, 0 end
   return util.trim(name:sub(4)), value
 end
 
 function get_plussed_name(it, name_type)
-  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then return it.name() end
   local name, value = get_pa_keys(it, name_type)
+  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then return name end
   if value >= 0 then value = "+" .. value end
   return value .. " " .. name
 end
@@ -102,18 +107,18 @@ end
 -- Custom def of ego/branded
 function has_ego(it, exclude_stat_only_egos)
   if not it then return false end
-  if is_weapon(it) then
+  if it.is_weapon then
     if exclude_stat_only_egos then
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end
     end
-    return it.artefact or it.branded
+    return it.artefact or it.branded or is_magic_staff(it)
   end
 
   if it.artefact or it.branded then return true end
   local basename = it.name("base")
-  if basename:find("troll leather") then return true end
-  if basename:find("dragon scales") and not basename:find("steam") then return true end
+  if basename:find("troll leather", 1, true) then return true end
+  if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
   return false
 end
 
@@ -228,18 +233,20 @@ end
 
 
 --------- Weapon stats (Shadowing crawl calcs) ---------
-function get_weap_delay(it, ignore_brands)
-  local delay = it.delay - get_skill(it.weap_skill)/2
-  local min_delay = get_weap_min_delay(it)
-  if delay < min_delay then delay = min_delay end
-
-  if not ignore_brands then
-    if get_ego(it) == "speed" then delay = delay * 2 / 3
-    elseif get_ego(it) == "heavy" then delay = delay * 1.5
-    end
+function adjust_delay_for_ego(delay, ego)
+  if not ego then return delay end
+  if ego == "speed" then return delay * 2 / 3
+  elseif ego == "heavy" then return delay * 1.5
   end
+  return delay
+end
 
-  if delay < 3 then delay = 3 end
+function get_weap_delay(it)
+  -- dcss v0.33.1
+  local delay = it.delay - get_skill(it.weap_skill)/2
+  delay = math.max(delay, get_weap_min_delay(it))
+  delay = adjust_delay_for_ego(delay, it.ego())
+  delay = math.max(delay, 3)
 
   local sh = items.equipped_at("offhand")
   if is_shield(sh) then delay = delay + get_shield_penalty(sh) end
@@ -248,12 +255,15 @@ function get_weap_delay(it, ignore_brands)
     local worn = items.equipped_at("armour")
     if worn then
       local str = CACHE.str
-      if it.artefact then
-        if it.artprops["Str"] then str = str + it.artprops["Str"] end
-      end
+
       local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
-        if cur.artprops["Str"] then str = str - cur.artprops["Str"] end
+        if it.artefact and it.artprops["Str"] then
+          str = str + it.artprops["Str"]
+        end
+        if cur.artefact and cur.artprops["Str"] then
+          str = str - cur.artprops["Str"]
+        end
       end
 
       delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
@@ -264,29 +274,28 @@ function get_weap_delay(it, ignore_brands)
 end
 
 function get_weap_min_delay(it)
+  -- dcss v0.33.1
   -- This is an abbreviated version of the actual calculation.
-  -- Intended only to be used to prevent skill from reducing too far in get_weap_delay()
-  local basename = it.name("base")
+  -- Skips brand and >=3 checks, which are covered in get_weap_delay()
+  if it.artefact and it.name("qual"):find("woodcutter's axe", 1, true) then return it.delay end
 
-  local adj_base_delay = it.delay / 2
-  if get_ego(it) == "heavy" then adj_base_delay = 1.5 * adj_base_delay end
-  local min_delay = math.floor(adj_base_delay)
+  local min_delay = math.floor(it.delay / 2)
+  if it.weap_skill == "Short Blades" then return 5 end
+  if it.is_ranged then
+    local basename = it.name("base")
+    local is_2h_ranged = basename:find("crossbow", 1, true) or basename:find("arbalest", 1, true)
+    if is_2h_ranged then return math.max(min_delay, 10) end
+  end
 
-  if it.weap_skill == "Short Blades" and min_delay > 5 then min_delay = 5 end
-  if min_delay > 7 then min_delay = 7 end
-
-  if basename:find("longbow") then min_delay = 6
-  elseif basename:find("(crossbow|arbalest)") and min_delay < 10 then min_delay = 10 end
-
-  return min_delay
+  return math.min(min_delay, 7)
 end
 
 function get_weap_dps(it, dmg_type)
   if not dmg_type then dmg_type = DMG_TYPE.scoring end
-  return get_weap_dmg(it, dmg_type) / get_weap_delay(it)
+  return get_weap_damage(it, dmg_type) / get_weap_delay(it)
 end
 
-function get_weap_dmg(it, dmg_type)
+function get_weap_damage(it, dmg_type)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
@@ -313,7 +322,7 @@ function get_weap_dmg(it, dmg_type)
   end
 
   local stat
-  if it.is_ranged or it.weap_skill:find("Blades") then stat = dex
+  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
@@ -343,6 +352,10 @@ function get_weap_dmg(it, dmg_type)
 end
 
 function get_weap_score(it, no_brand_bonus)
+  if it.dps and it.acc then
+    -- Handle cached /  high-score tuples
+    return it.dps + it.acc * TUNING.weap.pickup.accuracy_weight
+  end
   local it_plus = it.plus or 0
   local dmg_type = no_brand_bonus and DMG_TYPE.unbranded or DMG_TYPE.scoring
   return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * TUNING.weap.pickup.accuracy_weight
@@ -359,7 +372,7 @@ end
 
 -- Get skill level, or average for artefacts w/ multiple skills
 function get_skill(skill)
-  if not skill:find(",") then
+  if not skill:find(",", 1, true) then
     return you.skill(skill)
   end
 
@@ -384,7 +397,7 @@ function get_slay_bonuses()
       if is_ring(it) then
         if it.artefact then
           local name = it.name()
-          local idx = name:find("Slay")
+          local idx = name:find("Slay", 1, true)
           if idx then
             local slay = tonumber(name:sub(idx+5, idx+5))
             if slay == 1 then

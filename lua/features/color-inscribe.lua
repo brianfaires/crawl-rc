@@ -2,7 +2,6 @@
 -- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
 -- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
 
-local INSCRIPTION_MAX_LENGTH = 70
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
@@ -55,6 +54,7 @@ end
 
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
+  if not CONFIG.colorize_inscriptions then return end
   -- If enabled, call out to inscribe stats before coloring
   if ready_inscribe_stats then ready_inscribe_stats() end
 
@@ -63,9 +63,6 @@ function c_assign_invletter_color_inscribe(it)
     text = colorize_subtext(text, tag[1], tag[2])
   end
 
-  if text:len() > INSCRIPTION_MAX_LENGTH then
-    text = text:gsub("<.*>", "") .. "<7>"
-  end
   it.inscribe(text, false)
 end
 
