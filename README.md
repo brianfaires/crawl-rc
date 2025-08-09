@@ -7,7 +7,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - To merge with an existing RC file, make sure any Lua hook functions (such as `ready()`) are only defined
   once. If duplicate functions exist, combine them.
 - Most features can be toggled on/off or configured to your tastes in [core/config.lua](core/config.lua).
-  See [config.lua section](#luaconfiglua) for details.
+  See [config.lua section](#luacoreconfiglua) for details.
 - Features can also be excluded by just removing or commenting out the one line in [init.txt](init.txt) where it is included.
 - If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
@@ -57,7 +57,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 ### [lua/features/announce-damage.lua](lua/features/announce-damage.lua)
 - Writes messages for HP and MP changes.
 - Includes HP and MP meters broken into 10% increments.  
-  *(5 chars/emojis, indicating empty/partial/full)*
+  *(Meters have length 5, with each character being empty/partial/full)*
 
 ### [lua/features/color-inscribe.lua](lua/features/color-inscribe.lua)
 - Adds color to item inscriptions for resistances, stat modifiers, etc.
@@ -204,6 +204,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   executing `debug_dump()`.
   This outputs the RC & character state, writes it as a note, and creates a character dump.
 - Avoid putting  `}` on a line by itself. This breaks crawl's RC parser. Don't remove the comments that follow a `}`.
+  They protect the line from confusing the parser.
 - Execute lua commands by opening the lua interpreter with `~`, then entering the command.
   Some useful ones are:
     - `init_buehler()` will reinitialize everything as if crawl was closed and reopened.
@@ -219,7 +220,8 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   POSIX regexes. If you built crawl locally and used PCRE (defaul on MacOS), some patterns won't match.
   I used: `make -j4 TILES=y BUILD_PCRE=YesPlease`. I couldn't get emojis to work.
   
-## TODO dev list
+## Dev Notes
+### To do list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Write persistent data to c_persist after each level (to recover from crashes)
 1. cleanup/reduce # of display.rc messages
@@ -232,15 +234,15 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
 
-#### Dev notes - won't do
+### Won't do
 1. remove "~~DROP_ME" when dropping
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
 
-# Dev notes - known issues
+### Known issues
 1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
 
-# 0.34 changes needed
+### 0.34 changes needed
 1. Inventory slots changed: Can no longer use l-item.inslot() to get an item?
 
 
