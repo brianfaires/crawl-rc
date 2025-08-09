@@ -138,7 +138,7 @@ end
 
 function get_adjusted_dodge_bonus(encumb, str, dex)
   -- dcss v0.33.1
-  local size_factor = -2 * CACHE.size_penalty
+  local size_factor = -2 * get_size_penalty()
   local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
   if armour_dodge_penalty <= 0 then return dodge_bonus end
@@ -231,6 +231,13 @@ function get_shield_sh(it)
   return shield / 200
 end
 
+function get_size_penalty()
+  if util.contains(ALL_LITTLE_RACES, you.race()) then return SIZE_PENALTY.LITTLE
+  elseif util.contains(ALL_SMALL_RACES, you.race()) then return SIZE_PENALTY.SMALL
+  elseif util.contains(ALL_LARGE_RACES, you.race()) then return SIZE_PENALTY.LARGE
+  end
+  return SIZE_PENALTY.NORMAL
+end
 
 --------- Weapon stats (Shadowing crawl calcs) ---------
 function adjust_delay_for_ego(delay, ego)
@@ -353,7 +360,7 @@ end
 
 function get_weap_score(it, no_brand_bonus)
   if it.dps and it.acc then
-    -- Handle cached /  high-score tuples
+    -- Handle cached /  high-score tuples in WEAP_CACHE
     return it.dps + it.acc * TUNING.weap.pickup.accuracy_weight
   end
   local it_plus = it.plus or 0

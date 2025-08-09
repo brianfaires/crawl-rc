@@ -230,10 +230,9 @@ end
 function debug_dump(verbose, skip_char_dump)
   local char_dump = not skip_char_dump
   if dump_persistent_data then dump_persistent_data(char_dump) end
-  if dump_cache then dump_cache(char_dump) end
   if verbose then
     dump_inventory(char_dump)
-    dump_text(INV_WEAP.serialize(), char_dump)
+    dump_text(WEAP_CACHE.serialize(), char_dump)
     dump_chk_lua_save(char_dump)
   end
 end
