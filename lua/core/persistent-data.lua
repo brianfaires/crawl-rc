@@ -133,9 +133,9 @@ function verify_data_reinit()
   local GAME_CHANGE_MONITORS = {
     buehler_rc_version = BUEHLER_RC_VERSION,
     buehler_name = you.name(),
-    buehler_race = CACHE.race, -- this breaks RC parser without 'buehler_' prefix
-    buehler_class = CACHE.class, -- this breaks RC parser without 'buehler_' prefix
-    turn = CACHE.turn -- this doesn't break it, and relies on ready's `prev_turn` variable
+    buehler_race = you.race(), -- this breaks RC parser without 'buehler_' prefix
+    buehler_class = you.class(), -- this breaks RC parser without 'buehler_' prefix
+    turn = you.turns() -- this doesn't break it, and relies on ready's `prev_turn` variable
   } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
   -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
@@ -145,7 +145,7 @@ function verify_data_reinit()
   end
   create_persistent_data("successful_data_reload", false)
 
-  if CACHE.turn > 0 then
+  if you.turns() > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do
       local prev = _G["prev_" .. k]
       if prev ~= v then

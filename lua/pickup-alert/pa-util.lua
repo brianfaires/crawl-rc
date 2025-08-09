@@ -133,13 +133,13 @@ end
 function get_adjusted_armour_pen(encumb, str)
   -- dcss v0.33.1
   local base_pen = get_unadjusted_armour_pen(encumb)
-  return 2 * base_pen * base_pen * (45 - CACHE.s_armour) / 45 / (5 * (str + 3))
+  return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
 function get_adjusted_dodge_bonus(encumb, str, dex)
   -- dcss v0.33.1
   local size_factor = -2 * CACHE.size_penalty
-  local dodge_bonus = 8*(10 + CACHE.s_dodging * dex) / (20 - size_factor) / 10
+  local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
   if armour_dodge_penalty <= 0 then return dodge_bonus end
 
@@ -158,7 +158,7 @@ function get_armour_ac(it)
     if art_ac then it_plus = it_plus + art_ac end
   end
 
-  local ac = it.ac * (1 + CACHE.s_armour / 22) + it_plus
+  local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
   if not is_body_armour(it) then return ac end
 
   local deformed = get_mut(MUTS.deformed, true) > 0
@@ -174,8 +174,8 @@ function get_armour_ev(it)
   -- dcss v0.33.1
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
   -- Factors in stat changes from this armour and removing current one
-  local str = CACHE.str
-  local dex = CACHE.dex
+  local str = you.strength()
+  local dex = you.dexterity()
   local no_art_str = str
   local no_art_dex = dex
   local art_ev = 0
@@ -204,13 +204,13 @@ end
 function get_shield_penalty(sh)
   -- dcss v0.33.1
   return 2 * sh.encumbrance * sh.encumbrance
-        * (27 - CACHE.s_shields) / 27
-        / (25 + 5 * CACHE.str)
+        * (27 - you.skill("Shields")) / 27
+        / (25 + 5 * you.strength())
 end
 
 function get_shield_sh(it)
   -- dcss v0.33.1
-  local dex = CACHE.dex
+  local dex = you.dexterity()
   if it.artefact and it.is_identified then
     local art_dex = it.artprops["Dex"]
     if art_dex then dex = dex + art_dex end
@@ -225,9 +225,9 @@ function get_shield_sh(it)
   local it_plus = it.plus or 0
 
   local base_sh = it.ac * 2
-  local shield = base_sh * (50 + CACHE.s_shields*5/2)
+  local shield = base_sh * (50 + you.skill("Shields")*5/2)
   shield = shield + 200 * it_plus
-  shield = shield + 38 * (CACHE.s_shields + 3 + dex * (base_sh + 13) / 26)
+  shield = shield + 38 * (you.skill("Shields") + 3 + dex * (base_sh + 13) / 26)
   return shield / 200
 end
 
@@ -254,7 +254,7 @@ function get_weap_delay(it)
   if it.is_ranged then
     local worn = items.equipped_at("armour")
     if worn then
-      local str = CACHE.str
+      local str = you.strength()
 
       local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
@@ -302,8 +302,8 @@ function get_weap_damage(it, dmg_type)
   if not dmg_type then dmg_type = DMG_TYPE.scoring end
   local it_plus = it.plus or 0
   -- Adjust str/dex/slay from artefacts
-  local str = CACHE.str
-  local dex = CACHE.dex
+  local str = you.strength()
+  local dex = you.dexterity()
 
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
@@ -326,7 +326,7 @@ function get_weap_damage(it, dmg_type)
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + CACHE.s_fighting/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
 
@@ -364,7 +364,7 @@ end
 
 --------- Weap stat helpers ---------
 function get_hands(it)
-  if CACHE.race ~= "Formicid" then return it.hands end
+  if you.race() ~= "Formicid" then return it.hands end
   local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
@@ -418,7 +418,7 @@ function get_slay_bonuses()
     end
   end
 
-  if CACHE.race == "Demonspawn" then
+  if you.race() == "Demonspawn" then
     sum = sum + 3 * get_mut(MUTS.augmentation, true)
     sum = sum + get_mut(MUTS.sharp_scales, true)
   end

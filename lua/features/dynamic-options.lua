@@ -39,16 +39,16 @@ local function set_dyn_fm(warnings, create)
 end
 
 local function set_class_options()
-  if CACHE.class == "Hunter" then
+  if you.class() == "Hunter" then
     crawl.setopt("view_delay = 30")
-  elseif CACHE.class == "Shapeshifter" then
+  elseif you.class() == "Shapeshifter" then
     crawl.setopt("autopickup_exceptions ^= <flux bauble")
   end
 end
 
 -- Some god-specific force_mores also in fm-message.rc
 local function set_god_options()
-  local new_god = CACHE.god
+  local new_god = you.god()
   if new_god ~= dynopt_cur_god then
     if dynopt_cur_god == "No God" then
       crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
@@ -72,40 +72,40 @@ local function set_god_options()
 end
 
 local function set_race_options()
-  if CACHE.undead then
+  if util.contains(ALL_UNDEAD_RACES, you.race()) then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if CACHE.poison_immune then
+  if you.res_poison() >= 3 then
     crawl.setopt("force_more_message -= monster_warning:curare")
   end
 
-  if CACHE.race == "Gnoll" then
+  if you.race() == "Gnoll" then
     crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
   end
 end
 
 local function set_xl_options()
-  if not early_xl_alerts_on and CACHE.xl <= EARLY_XL then
+  if not early_xl_alerts_on and you.xl() <= EARLY_XL then
     early_xl_alerts_on = true
     set_dyn_fm(EARLY_XL_FMs, true)
-  elseif early_xl_alerts_on and CACHE.xl > EARLY_XL then
+  elseif early_xl_alerts_on and you.xl() > EARLY_XL then
     early_xl_alerts_on = false
     set_dyn_fm(EARLY_XL_FMs, false)
   end
 
-  if not mid_xl_alerts_on and CACHE.xl <= MID_XL then
+  if not mid_xl_alerts_on and you.xl() <= MID_XL then
     mid_xl_alerts_on = true
     set_dyn_fm(MID_XL_FMs, true)
-  elseif mid_xl_alerts_on and CACHE.xl > MID_XL then
+  elseif mid_xl_alerts_on and you.xl() > MID_XL then
     mid_xl_alerts_on = false
     set_dyn_fm(MID_XL_FMs, false)
   end
 
-  if not late_xl_alerts_on and CACHE.xl <= LATE_XL then
+  if not late_xl_alerts_on and you.xl() <= LATE_XL then
     late_xl_alerts_on = true
     set_dyn_fm(LATE_XL_FMs, true)
-  elseif not late_xl_alerts_on and CACHE.xl > LATE_XL then
+  elseif not late_xl_alerts_on and you.xl() > LATE_XL then
     late_xl_alerts_on = false
     set_dyn_fm(LATE_XL_FMs, false)
   end
@@ -113,7 +113,7 @@ end
 
 local function set_skill_options()
   -- If zero spellcasting, don't stop on spellbook pickup
-  local zero_spellcasting = CACHE.s_spellcasting == 0
+  local zero_spellcasting = you.skill("Spellcasting") == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
     crawl.setopt("explore_stop_pickup_ignore += " .. IGNORE_SPELLBOOKS_STRING)
@@ -123,9 +123,9 @@ local function set_skill_options()
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
-  if CACHE.race ~= "Mountain Dwarf" then
+  if you.race() ~= "Mountain Dwarf" then
     local worn = items.equipped_at("armour")
-    local heavy_arm = worn ~= nil and worn.encumbrance > 4 + CACHE.s_armour/2
+    local heavy_arm = worn ~= nil and worn.encumbrance > 4 + you.skill("Armour")/2
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true

@@ -2,9 +2,10 @@ local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 local below_hp_threshold
 
 local function alert_low_hp()
+  local hp, mhp = you.hp()
   if below_hp_threshold then
-    below_hp_threshold = CACHE.hp ~= CACHE.mhp
-  elseif CACHE.hp <= CONFIG.alert_low_hp_threshold * CACHE.mhp then
+    below_hp_threshold = hp ~= mhp
+  elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
     enqueue_mpr_opt_more(true, table.concat({
@@ -17,7 +18,7 @@ local function alert_remove_faith()
   if not alerted_max_piety and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if CACHE.god == "Uskayaw" then return end
+      if you.god() == "Uskayaw" then return end
       mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
       alerted_max_piety = true
     end

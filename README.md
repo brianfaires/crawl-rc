@@ -193,8 +193,8 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 - Once per turn, the cache pulls several values from the crawl API, that would otherwise be pulled
   multiple times per turn.
 - It's important that CACHE be updated via `ready_cache()` before any other ready calls that use the cache.
-- This is all just for speed and code brevity. e.g. `CACHE.xl` and `you.xl()` are interchangeable.
-  It's fine to replace any CACHE value you see with the crawl API call, like `CACHE.xl` -> `you.xl()`.
+- This is all just for speed and code brevity. e.g. `you.xl()` and `you.xl()` are interchangeable.
+  It's fine to replace any CACHE value you see with the crawl API call, like `you.xl()` -> `you.xl()`.
 
 ### [lua/core/persistent-data.lua](lua/core/persistent-data.lua)
 - Handles saving and loading of persistent data between game sessions. Data is specific to one game/character.

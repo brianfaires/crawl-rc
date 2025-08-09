@@ -8,7 +8,7 @@ local autosearched_gauntlet
 
 ---- Gauntlet actions ----
 local function ready_gauntlet_macro()
-  if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
+  if you.branch() == "Gauntlet" and not autosearched_gauntlet then
     crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
     autosearched_gauntlet = true
   end
@@ -16,9 +16,9 @@ end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  if CACHE.race == "Demigod" then return true end
-  if CACHE.god == "No God" then return false end
-  if you.good_god() then return CACHE.xl > 9 end
+  if you.race() == "Demigod" then return true end
+  if you.god() == "No God" then return false end
+  if you.good_god() then return you.xl() > 9 end
   return true
 end
 
@@ -34,10 +34,10 @@ end
 
 ---- Ignore exit portals ----
 local function ready_ignore_exits()
-  if stop_on_portals and util.contains(ALL_PORTAL_NAMES, CACHE.branch) then
+  if stop_on_portals and util.contains(ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
     crawl.setopt("explore_stop -= portals")
-  elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, CACHE.branch) then
+  elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = true
     crawl.setopt("explore_stop += portals")
   end
@@ -45,7 +45,7 @@ end
 
 ---- Stop on Pan Gates ----
 local function ready_stop_on_pan_gates()
-  local branch = CACHE.branch
+  local branch = you.branch()
   if stop_on_pan_gates and branch ~= "Pan" then
     stop_on_pan_gates = false
     crawl.setopt("explore_stop -= stairs")
@@ -57,14 +57,14 @@ end
 
 ---- Temple actions ----
 local function ready_temple_macro()
-  if CACHE.branch == "Temple" and not autosearched_temple and CACHE.god == "No God" then
+  if you.branch() == "Temple" and not autosearched_temple and you.god() == "No God" then
     crawl.sendkeys({ 6, "altar\r" })
     autosearched_temple = true
   end
 end
 
 local function c_message_temple_actions(text, _)
-  if CACHE.branch == "Temple" then
+  if you.branch() == "Temple" then
     -- Hit explore to search all altars
     if text:find("explor", 1, true) then
       crawl.sendkeys({ 6, "altar\r" })

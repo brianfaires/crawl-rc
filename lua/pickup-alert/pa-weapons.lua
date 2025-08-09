@@ -90,7 +90,7 @@ local function is_weapon_upgrade(it, cur)
       return get_weap_score(it) / cur.score > TUNING.weap.pickup.add_ego
     end
     return get_ego(it) == cur.ego and get_weap_score(it) > cur.score
-  elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
+  elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
     if it.is_ranged ~= cur.is_ranged then return false end
@@ -108,7 +108,7 @@ end
 
 function pa_pickup_weapon(it)
   -- Check if we need the first weapon of the game
-  if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
+  if you.xl() < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
     -- Staves don't go into INV_WEAP; check if we're carrying just a staff
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.is_weapon then return false end -- fastest way to check if it's a staff
@@ -144,7 +144,7 @@ end
 local function alert_first_polearm(it)
   if alerted_first_polearm_1h then return false end
   if not is_polearm(it) then return false end
-  if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
+  if you.skill("Ranged Weapons") > 2 then return false end -- Don't bother if learning ranged
 
   if get_hands(it) == 1 then
     alerted_first_polearm = true
@@ -160,22 +160,22 @@ end
 
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
-  if CACHE.xl <= TUNING.weap.alert.early_ranged.xl then
+  if you.xl() <= TUNING.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
       if it.plus >= TUNING.weap.alert.early_ranged.min_plus and has_ego(it) or
          it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
           if get_hands(it) == 1 or not have_shield() or
-            CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
+            you.skill("Shields") <= TUNING.weap.alert.early_ranged.max_shields then
               return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
           end
       end
     end
   end
 
-  if CACHE.xl <= TUNING.weap.alert.early.xl then
+  if you.xl() <= TUNING.weap.alert.early.xl then
     -- Skip items if we're clearly going another route
     local skill_diff = get_skill(CACHE.top_weap_skill) - get_skill(it.weap_skill)
-    local max_skill_diff = CACHE.xl * TUNING.weap.alert.early.skill.factor + TUNING.weap.alert.early.skill.offset
+    local max_skill_diff = you.xl() * TUNING.weap.alert.early.skill.factor + TUNING.weap.alert.early.skill.offset
     if skill_diff > max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
@@ -216,7 +216,7 @@ local function alert_interesting_weapon(it, cur)
   local score_ratio = penalty * get_weap_score(it) / best_score
 
   if get_hands(it) > cur.hands then
-    if offhand_is_free() or (CACHE.s_shields < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+    if offhand_is_free() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
       if has_ego(it) and not util.contains(INV_WEAP.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.new_weap)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
