@@ -6201,7 +6201,7 @@ function get_armour_info_strings(it)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  local is_worn = it.ininventory and cur and cur.slot == it.slot
+  local is_worn = it.equipped or (it.ininventory and cur and cur.slot == it.slot)
   if cur and not is_worn then
     -- Only show deltas if not same item
     if is_shield(cur) then
