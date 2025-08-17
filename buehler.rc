@@ -313,7 +313,7 @@ ai += ring of protection from fire:rF+
 ai += ring of positive energy:rN+
 ai += ring of resist corrosion:rCorr
 ai += ring of see invisible:sInv
-ai += ring of wizardry:wiz+
+ai += ring of wizardry:Wiz+
 
 # Staves
 ai += staff of air:rElec
@@ -4278,6 +4278,7 @@ local COLORIZE_TAGS = {
   { "rCorr", COLORS.yellow },
   { "rMut", COLORS.brown },
   { "sInv", COLORS.white },
+  { "Wiz" .. MULTI_PLUS, COLORS.white },
   { "Slay" .. POS_NUM, COLORS.white},
   {  "Str" .. POS_NUM, COLORS.white },
   {  "Dex" .. POS_NUM, COLORS.white },
@@ -7190,7 +7191,7 @@ local function alert_interesting_weapon(it, cur)
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
       return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
     return false
   end
@@ -7226,7 +7227,7 @@ local function alert_interesting_weapon(it, cur)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
     end
   end
   
