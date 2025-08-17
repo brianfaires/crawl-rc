@@ -44,8 +44,8 @@ local function get_priority_ab(it)
   if it.equipped then return 1 end
 
   if is_magic_staff(it) then return 3 end
-  if it.is_ranged then return (CACHE.s_ranged >= 4) and 2 or 5 end
-  if is_polearm(it) then return (CACHE.s_polearms >= 4) and 2 or 4 end
+  if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
+  if is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
   return 2
 end
 

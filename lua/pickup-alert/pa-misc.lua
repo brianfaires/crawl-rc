@@ -10,7 +10,7 @@ function pa_alert_OTA(it)
   local do_alert = true
 
   if is_shield(it) then
-    if CACHE.s_shields < CONFIG.alert.OTA_require_skill.shield then return end
+    if you.skill("Shields") < CONFIG.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if pa_OTA_items[index] == "buckler" then
@@ -20,7 +20,7 @@ function pa_alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif is_armour(it) then
-    if CACHE.s_armour < CONFIG.alert.OTA_require_skill.armour then return end
+    if you.skill("Armour") < CONFIG.alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
     if you.skill(it.weap_skill) < CONFIG.alert.OTA_require_skill.weapon then return end
   end
@@ -36,11 +36,11 @@ function pa_alert_staff(it)
   local needRes = false
   local basename = it.name("base")
 
-  if basename == "staff of fire" then needRes = CACHE.rF == 0
-  elseif basename == "staff of cold" then needRes = CACHE.rC == 0
-  elseif basename == "staff of air" then needRes = CACHE.rElec == 0
-  elseif basename == "staff of poison" then needRes = CACHE.rPois == 0
-  elseif basename == "staff of death" then needRes = CACHE.rN == 0
+  if basename == "staff of fire" then needRes = you.res_fire() == 0
+  elseif basename == "staff of cold" then needRes = you.res_cold() == 0
+  elseif basename == "staff of air" then needRes = you.res_shock() == 0
+  elseif basename == "staff of poison" then needRes = you.res_poison() == 0
+  elseif basename == "staff of death" then needRes = you.res_draining() == 0
   end
 
   if not needRes then return false end

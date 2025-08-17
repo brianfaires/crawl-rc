@@ -25,8 +25,10 @@ local function finish_fully_recover()
 end
 
 local function fully_recovered()
-  if CACHE.hp ~= CACHE.mhp then return false end
-  if CACHE.mp ~= CACHE.mmp then return false end
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
+  if hp ~= mhp then return false end
+  if mp ~= mmp then return false end
 
   -- Statuses that will always rest off
   local status = you.status()
@@ -37,14 +39,14 @@ local function fully_recovered()
 
   -- If stat drain, don't wait for slow
   if status:find("slowed", 1, true) then
-    return CACHE.str <= 0 or CACHE.dex <= 0 or CACHE.int <= 0
+    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
   end
 
   return true
 end
 
 local function start_fully_recover()
-  recovery_start_turn = CACHE.turn
+  recovery_start_turn = you.turns()
   crawl.setopt("message_colour += mute:You start waiting.")
 end
 

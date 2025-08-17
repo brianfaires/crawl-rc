@@ -42,7 +42,6 @@ include = crawl-rc/rc/runrest.rc
 include = crawl-rc/rc/slot-defaults.rc
 
 ### buehler.rc core files ###
-lua_file = crawl-rc/lua/core/cache.lua
 lua_file = crawl-rc/lua/core/constants.lua
 lua_file = crawl-rc/lua/core/emojis.lua
 lua_file = crawl-rc/lua/core/persistent-data.lua
@@ -116,7 +115,7 @@ end
 
 function c_answer_prompt(prompt)
   if not buehler_rc_active then return end
-  if prompt:find("cheaper one?", 1, true) and CACHE.branch ~= "Bazaar" then
+  if prompt:find("cheaper one?", 1, true) and you.branch() ~= "Bazaar" then
     crawl.mpr("Replacing shopping list items")
     return true end
   if prompt == "Die?" then
@@ -129,8 +128,7 @@ function ready()
   crawl.redraw_screen()
   if you.turns() == prev_turn then return end
 
-  ready_cache()
-  prev_turn = CACHE.turn -- prev_turn is also used by persistent-data.lua
+  prev_turn = you.turns() -- prev_turn is also used by persistent-data.lua
 
   -- Features (may not be included)
   if ready_fm_monsters then ready_fm_monsters() end
@@ -160,7 +158,6 @@ function init_buehler(reset_persistent_data)
   -- Init core modules
   init_config()
   init_emojis()
-  init_cache()
   init_util()
   init_persistent_data(reset_persistent_data)
 
@@ -191,7 +188,7 @@ function init_buehler(reset_persistent_data)
   end
 
    -- Force a full ready() cycle
-  prev_turn = CACHE.turn - 1
+  prev_turn = you.turns() - 1
   ready()
 end
 

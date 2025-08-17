@@ -8,7 +8,7 @@ local function check_new_location(key)
   local feature = view.feature_at (0, 0)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
-  local turn_diff = CACHE.turn - last_stair_turn
+  local turn_diff = you.turns() - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
     if key == ">" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
@@ -37,14 +37,14 @@ local function check_new_location(key)
   end
 
   crawl.sendkeys(key)
-  if not one_way_stair then last_stair_turn = CACHE.turn end
+  if not one_way_stair then last_stair_turn = you.turns() end
 end
 
 
 function init_safe_stairs()
   if CONFIG.debug_init then crawl.mpr("Initializing safe-stairs") end
-  prev_location = CACHE.branch .. CACHE.depth
-  cur_location = CACHE.branch .. CACHE.depth
+  prev_location = you.branch() .. you.depth()
+  cur_location = you.branch() .. you.depth()
   last_stair_turn = 0
   v5_unwarned = true
 
@@ -64,5 +64,5 @@ end
 ------------------- Hook -------------------
 function ready_safe_stairs()
   prev_location = cur_location
-  cur_location = CACHE.branch .. CACHE.depth
+  cur_location = you.branch() .. you.depth()
 end

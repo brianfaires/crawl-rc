@@ -29,8 +29,8 @@ end
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 local function alert_ac_high_score(it)
   if not is_body_armour(it) then return false end
-  if CACHE.s_armour == 0 then return false end
-  if CACHE.xl > 12 then return false end
+  if you.skill("Armour") == 0 then return false end
+  if you.xl() > 12 then return false end
 
   if ac_high_score == 0 then
     local worn = items.equipped_at("armour")
@@ -84,7 +84,7 @@ function pa_alert_armour(it, unworn_inv_item)
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
-      local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
+      local encumb_impact = math.min(1, (you.skill("Spellcasting") + you.skill("Ranged Weapons")) / you.xl())
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if (total_loss < 0) or (ac_delta / total_loss > TUNING.armour.heavier[ego_change_type]) then
         if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.heavier.min_gain then return false end

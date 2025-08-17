@@ -3374,97 +3374,6 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 
 ### buehler.rc core files ###
 
-################################### Begin lua/core/cache.lua ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-{
--- Cache of commonly pulled values, for better performance
-CACHE = {}
-
-function dump_cache(char_dump)
-  dump_text(serialize_cache(), char_dump)
-end
-
-function init_cache()
-  if CONFIG.debug_init then crawl.mpr("Initializing cache") end
-
-  CACHE = {}
-
-  CACHE.class = you.class()
-  CACHE.race = you.race()
-  if util.contains(ALL_LITTLE_RACES, CACHE.race) then CACHE.size_penalty = SIZE_PENALTY.LITTLE
-  elseif util.contains(ALL_SMALL_RACES, CACHE.race) then CACHE.size_penalty = SIZE_PENALTY.SMALL
-  elseif util.contains(ALL_LARGE_RACES, CACHE.race) then CACHE.size_penalty = SIZE_PENALTY.LARGE
-  else CACHE.size_penalty = SIZE_PENALTY.NORMAL
-  end
-  CACHE.undead =  util.contains(ALL_UNDEAD_RACES, CACHE.race)
-  CACHE.poison_immune = you.res_poison() >= 3
-
-  ready_cache()
-end
-
-function serialize_cache()
-  local tokens = { "\n---CACHE---" }
-  for k,v in pairs(CACHE) do
-    if type(v) == "table" then
-      tokens[#tokens+1] = string.format("%s:", k)
-      for k2,v2 in pairs(v) do
-        tokens[#tokens+1] = string.format("  %s: %s", k2, v2)
-      end
-    else
-      if v == true then v = "true" elseif v == false then v = "false" end
-      tokens[#tokens+1] = string.format("%s: %s", k, v)
-    end
-  end
-
-  tokens[#tokens+1] = ""
-  return table.concat(tokens, "\n")
-end
-
-------------------- Hooks -------------------
-function ready_cache()
-  CACHE.hp, CACHE.mhp = you.hp()
-  CACHE.mp, CACHE.mmp = you.mp()
-  CACHE.turn = you.turns()
-  CACHE.str = you.strength()
-  CACHE.dex = you.dexterity()
-  CACHE.int = you.intelligence()
-  CACHE.will = you.willpower()
-  CACHE.xl = you.xl()
-  CACHE.god = you.god()
-  CACHE.have_orb = you.have_orb()
-  CACHE.branch = you.branch()
-  CACHE.depth = you.depth()
-
-  CACHE.rMut = you.res_mutation()
-  CACHE.rPois = you.res_poison()
-  CACHE.rElec = you.res_shock()
-  CACHE.rCorr = you.res_corr()
-  CACHE.rF = you.res_fire()
-  CACHE.rC = you.res_cold()
-  CACHE.rN = you.res_draining()
-
-  CACHE.s_armour = you.skill("Armour")
-  CACHE.s_shields = you.skill("Shields")
-  CACHE.s_dodging = you.skill("Dodging")
-  CACHE.s_fighting = you.skill("Fighting")
-  CACHE.s_spellcasting = you.skill("Spellcasting")
-  CACHE.s_ranged = you.skill("Ranged Weapons")
-  CACHE.s_polearms = you.skill("Polearms")
-
-  CACHE.top_weap_skill = "Unarmed Combat"
-  local max_weap_skill = get_skill(CACHE.top_weap_skill)
-  for _,v in ipairs(ALL_WEAP_SCHOOLS) do
-    if get_skill(v) > max_weap_skill then
-      max_weap_skill = get_skill(v)
-      CACHE.top_weap_skill = v
-    end
-  end
-end
-
-}
-############################### End lua/core/cache.lua ###############################
-##########################################################################################
-
 ################################### Begin lua/core/constants.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
@@ -3777,9 +3686,9 @@ function verify_data_reinit()
   local GAME_CHANGE_MONITORS = {
     buehler_rc_version = BUEHLER_RC_VERSION,
     buehler_name = you.name(),
-    buehler_race = CACHE.race, -- this breaks RC parser without 'buehler_' prefix
-    buehler_class = CACHE.class, -- this breaks RC parser without 'buehler_' prefix
-    turn = CACHE.turn -- this doesn't break it, and relies on ready's `prev_turn` variable
+    buehler_race = you.race(), -- this breaks RC parser without 'buehler_' prefix
+    buehler_class = you.class(), -- this breaks RC parser without 'buehler_' prefix
+    turn = you.turns() -- this doesn't break it, and relies on ready's `prev_turn` variable
   } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
   -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
@@ -3789,7 +3698,7 @@ function verify_data_reinit()
   end
   create_persistent_data("successful_data_reload", false)
 
-  if CACHE.turn > 0 then
+  if you.turns() > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do
       local prev = _G["prev_" .. k]
       if prev ~= v then
@@ -4056,10 +3965,9 @@ end
 function debug_dump(verbose, skip_char_dump)
   local char_dump = not skip_char_dump
   if dump_persistent_data then dump_persistent_data(char_dump) end
-  if dump_cache then dump_cache(char_dump) end
   if verbose then
     dump_inventory(char_dump)
-    dump_text(INV_WEAP.serialize(), char_dump)
+    dump_text(WEAP_CACHE.serialize(), char_dump)
     dump_chk_lua_save(char_dump)
   end
 end
@@ -4122,9 +4030,9 @@ function init_after_shaft()
   create_persistent_data("as_shaft_depth", 0)
   create_persistent_data("as_shaft_branch", "NA")
 
-  if CACHE.turn == 0 and CACHE.class == "Delver" then
+  if you.turns() == 0 and you.class() == "Delver" then
     as_shaft_depth = 1
-    as_shaft_branch = CACHE.branch
+    as_shaft_branch = you.branch()
   end
 
   if as_shaft_depth ~= 0 then
@@ -4141,15 +4049,15 @@ function c_message_after_shaft(text, channel)
   local text_fall = "ou fall into a shaft"
   local text_sucked = "ou are sucked into a shaft"
   if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
-    as_shaft_depth = CACHE.depth
-    as_shaft_branch = CACHE.branch
+    as_shaft_depth = you.depth()
+    as_shaft_branch = you.branch()
     crawl.setopt("explore_stop += stairs")
   end
 end
 
 function ready_after_shaft()
   if not CONFIG.stop_on_stairs_after_shaft then return end
-  if CACHE.depth == as_shaft_depth and CACHE.branch == as_shaft_branch then
+  if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
     crawl.setopt("explore_stop -= stairs")
     as_shaft_depth = 0
     as_shaft_branch = "NA"
@@ -4216,7 +4124,7 @@ function init_announce_damage()
   prev.mhp = 0
   prev.mp = 0
   prev.mmp = 0
-  prev.turn = CACHE.turn
+  prev.turn = you.turns()
 
   if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
     crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
@@ -4224,33 +4132,36 @@ function init_announce_damage()
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
+  local hp, mhp = you.hp()
+
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
-    CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+    hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
   )
   msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
-  msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.hp, CACHE.mhp)
+  msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
   if mhp_delta ~= 0 then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
   end
 
-  if not CONFIG.announce.same_line and CACHE.hp == CACHE.mhp then
+  if not CONFIG.announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
   end
   return table.concat(msg_tokens)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
+  local mp, mmp = you.mp()
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
-    CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+    mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
   )
   msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
-  msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.mp, CACHE.mmp)
+  msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
   if mmp_delta ~= 0 then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
   end
-  if not CONFIG.announce.same_line and CACHE.mp == CACHE.mmp then
+  if not CONFIG.announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
   end
   return table.concat(msg_tokens)
@@ -4266,20 +4177,22 @@ end
 ------------------- Hooks -------------------
 function ready_announce_damage()
   -- Process `prev` early, so we can use returns over nested ifs
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
   local is_startup = prev.hp == 0
-  local hp_delta = CACHE.hp - prev.hp
-  local mp_delta = CACHE.mp - prev.mp
-  local mhp_delta = CACHE.mhp - prev.mhp
-  local mmp_delta = CACHE.mmp - prev.mmp
+  local hp_delta = hp - prev.hp
+  local mp_delta = mp - prev.mp
+  local mhp_delta = mhp - prev.mhp
+  local mmp_delta = mmp - prev.mmp
   local damage_taken = mhp_delta - hp_delta
-  prev.hp = CACHE.hp
-  prev.mhp = CACHE.mhp
-  prev.mp = CACHE.mp
-  prev.mmp = CACHE.mmp
+  prev.hp = hp
+  prev.mhp = mhp
+  prev.mp = mp
+  prev.mmp = mmp
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = CACHE.hp <= CONFIG.announce.very_low_hp * CACHE.mhp
+  local is_very_low_hp = hp <= CONFIG.announce.very_low_hp * mhp
 
 
   -- Determine which messages to show
@@ -4310,10 +4223,10 @@ function ready_announce_damage()
   
 
   -- Add Damage-related warnings, when damage >= threshold
-  if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
+  if (damage_taken >= mhp * CONFIG.dmg_flash_threshold) then
     if is_very_low_hp then return end -- mute % HP alerts
     local summary_tokens = {}
-    local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
+    local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)
     if is_force_more_msg then
       summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
       summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
@@ -4513,16 +4426,16 @@ local function set_dyn_fm(warnings, create)
 end
 
 local function set_class_options()
-  if CACHE.class == "Hunter" then
+  if you.class() == "Hunter" then
     crawl.setopt("view_delay = 30")
-  elseif CACHE.class == "Shapeshifter" then
+  elseif you.class() == "Shapeshifter" then
     crawl.setopt("autopickup_exceptions ^= <flux bauble")
   end
 end
 
 -- Some god-specific force_mores also in fm-message.rc
 local function set_god_options()
-  local new_god = CACHE.god
+  local new_god = you.god()
   if new_god ~= dynopt_cur_god then
     if dynopt_cur_god == "No God" then
       crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
@@ -4546,40 +4459,40 @@ local function set_god_options()
 end
 
 local function set_race_options()
-  if CACHE.undead then
+  if util.contains(ALL_UNDEAD_RACES, you.race()) then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if CACHE.poison_immune then
+  if you.res_poison() >= 3 then
     crawl.setopt("force_more_message -= monster_warning:curare")
   end
 
-  if CACHE.race == "Gnoll" then
+  if you.race() == "Gnoll" then
     crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
   end
 end
 
 local function set_xl_options()
-  if not early_xl_alerts_on and CACHE.xl <= EARLY_XL then
+  if not early_xl_alerts_on and you.xl() <= EARLY_XL then
     early_xl_alerts_on = true
     set_dyn_fm(EARLY_XL_FMs, true)
-  elseif early_xl_alerts_on and CACHE.xl > EARLY_XL then
+  elseif early_xl_alerts_on and you.xl() > EARLY_XL then
     early_xl_alerts_on = false
     set_dyn_fm(EARLY_XL_FMs, false)
   end
 
-  if not mid_xl_alerts_on and CACHE.xl <= MID_XL then
+  if not mid_xl_alerts_on and you.xl() <= MID_XL then
     mid_xl_alerts_on = true
     set_dyn_fm(MID_XL_FMs, true)
-  elseif mid_xl_alerts_on and CACHE.xl > MID_XL then
+  elseif mid_xl_alerts_on and you.xl() > MID_XL then
     mid_xl_alerts_on = false
     set_dyn_fm(MID_XL_FMs, false)
   end
 
-  if not late_xl_alerts_on and CACHE.xl <= LATE_XL then
+  if not late_xl_alerts_on and you.xl() <= LATE_XL then
     late_xl_alerts_on = true
     set_dyn_fm(LATE_XL_FMs, true)
-  elseif not late_xl_alerts_on and CACHE.xl > LATE_XL then
+  elseif not late_xl_alerts_on and you.xl() > LATE_XL then
     late_xl_alerts_on = false
     set_dyn_fm(LATE_XL_FMs, false)
   end
@@ -4587,7 +4500,7 @@ end
 
 local function set_skill_options()
   -- If zero spellcasting, don't stop on spellbook pickup
-  local zero_spellcasting = CACHE.s_spellcasting == 0
+  local zero_spellcasting = you.skill("Spellcasting") == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
     crawl.setopt("explore_stop_pickup_ignore += " .. IGNORE_SPELLBOOKS_STRING)
@@ -4597,9 +4510,9 @@ local function set_skill_options()
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
-  if CACHE.race ~= "Mountain Dwarf" then
+  if you.race() ~= "Mountain Dwarf" then
     local worn = items.equipped_at("armour")
-    local heavy_arm = worn ~= nil and worn.encumbrance > 4 + CACHE.s_armour/2
+    local heavy_arm = worn ~= nil and worn.encumbrance > 4 + you.skill("Armour")/2
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true
@@ -4661,7 +4574,7 @@ end
 
 local function has_enchantable_weap_in_inv()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.is_weapon and inv.plus < 9 and (not inv.artefact or CACHE.race == "Mountain Dwarf") then
+    if inv.is_weapon and inv.plus < 9 and (not inv.artefact or you.race() == "Mountain Dwarf") then
       return true
     end
   end
@@ -4789,8 +4702,10 @@ local function finish_fully_recover()
 end
 
 local function fully_recovered()
-  if CACHE.hp ~= CACHE.mhp then return false end
-  if CACHE.mp ~= CACHE.mmp then return false end
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
+  if hp ~= mhp then return false end
+  if mp ~= mmp then return false end
 
   -- Statuses that will always rest off
   local status = you.status()
@@ -4801,14 +4716,14 @@ local function fully_recovered()
 
   -- If stat drain, don't wait for slow
   if status:find("slowed", 1, true) then
-    return CACHE.str <= 0 or CACHE.dex <= 0 or CACHE.int <= 0
+    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
   end
 
   return true
 end
 
 local function start_fully_recover()
-  recovery_start_turn = CACHE.turn
+  recovery_start_turn = you.turns()
   crawl.setopt("message_colour += mute:You start waiting.")
 end
 
@@ -5116,7 +5031,7 @@ local function do_pack_mutes()
 
   -- Remove mutes that have expired
   for _, v in ipairs(FM_PACK) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
       set_monster_fm("+", v)
       last_fm_turn[v] = -1
     end
@@ -5124,7 +5039,7 @@ local function do_pack_mutes()
 
   -- For no-init pack monsters, just deactivate the fm
   for _, v in ipairs(FM_PACK_NO_CREATE) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
       active_fm[active_fm_index[v]] = false
       last_fm_turn[v] = -1
     end
@@ -5182,7 +5097,7 @@ function c_message_fm_pack(text, channel)
   if not text:find("comes? into view") then return end
   for _, v in ipairs(FM_PACK) do
     if text:find(v) and last_fm_turn[v] == -1 then
-      last_fm_turn[v] = CACHE.turn
+      last_fm_turn[v] = you.turns()
       monsters_to_mute[#monsters_to_mute+1] = v
     end
   end
@@ -5192,22 +5107,22 @@ function ready_fm_monsters()
   local activated = {}
   local deactivated = {}
 
-  local hp = CACHE.hp
-  local maxhp = CACHE.mhp
+  local hp, mhp = you.hp()
   local amulet = items.equipped_at("amulet")
-  if amulet and amulet.name() == "amulet of guardian spirit" or CACHE.race == "Vine Stalker" then
-    hp = hp + CACHE.mp
-    maxhp = maxhp + CACHE.mmp
+  if amulet and amulet.name() == "amulet of guardian spirit" or you.race() == "Vine Stalker" then
+    local mp, mmp = you.mp()
+    hp = hp + mp
+    mhp = mhp + mmp
   end
-  local willpower = CACHE.will
-  local res_mut = CACHE.rMut
-  local res_pois = CACHE.rPois
-  local res_elec = CACHE.rElec
-  local res_corr = CACHE.rCorr
-  local res_fire = CACHE.rF
-  local res_cold = CACHE.rC
-  local res_drain = CACHE.rN
-  local int = CACHE.int
+  local willpower = you.willpower()
+  local res_mut = you.res_mutation()
+  local res_pois = you.res_poison()
+  local res_elec = you.res_shock()
+  local res_corr = you.res_corr()
+  local res_fire = you.res_fire()
+  local res_cold = you.res_cold()
+  local res_drain = you.res_draining()
+  local int = you.intelligence()
 
   for i,v in ipairs(FM_PATTERNS) do
     local action = nil
@@ -5215,8 +5130,8 @@ function ready_fm_monsters()
     if not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
-      if active_fm[i] and CACHE.xl >= v.cutoff then action = "-"
-      elseif not active_fm[i] and CACHE.xl < v.cutoff then action = "+"
+      if active_fm[i] and you.xl() >= v.cutoff then action = "-"
+      elseif not active_fm[i] and you.xl() < v.cutoff then action = "+"
       end
     elseif v.cond == "hp" then
       if active_fm[i] and hp >= v.cutoff then action = "-"
@@ -5373,9 +5288,10 @@ local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 local below_hp_threshold
 
 local function alert_low_hp()
+  local hp, mhp = you.hp()
   if below_hp_threshold then
-    below_hp_threshold = CACHE.hp ~= CACHE.mhp
-  elseif CACHE.hp <= CONFIG.alert_low_hp_threshold * CACHE.mhp then
+    below_hp_threshold = hp ~= mhp
+  elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
     enqueue_mpr_opt_more(true, table.concat({
@@ -5388,7 +5304,7 @@ local function alert_remove_faith()
   if not alerted_max_piety and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
-      if CACHE.god == "Uskayaw" then return end
+      if you.god() == "Uskayaw" then return end
       mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
       alerted_max_piety = true
     end
@@ -5564,7 +5480,7 @@ local autosearched_gauntlet
 
 ---- Gauntlet actions ----
 local function ready_gauntlet_macro()
-  if CACHE.branch == "Gauntlet" and not autosearched_gauntlet then
+  if you.branch() == "Gauntlet" and not autosearched_gauntlet then
     crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
     autosearched_gauntlet = true
   end
@@ -5572,9 +5488,9 @@ end
 
 ---- Ignore altars ----
 local function religion_is_handled()
-  if CACHE.race == "Demigod" then return true end
-  if CACHE.god == "No God" then return false end
-  if you.good_god() then return CACHE.xl > 9 end
+  if you.race() == "Demigod" then return true end
+  if you.god() == "No God" then return false end
+  if you.good_god() then return you.xl() > 9 end
   return true
 end
 
@@ -5590,10 +5506,10 @@ end
 
 ---- Ignore exit portals ----
 local function ready_ignore_exits()
-  if stop_on_portals and util.contains(ALL_PORTAL_NAMES, CACHE.branch) then
+  if stop_on_portals and util.contains(ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
     crawl.setopt("explore_stop -= portals")
-  elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, CACHE.branch) then
+  elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = true
     crawl.setopt("explore_stop += portals")
   end
@@ -5601,7 +5517,7 @@ end
 
 ---- Stop on Pan Gates ----
 local function ready_stop_on_pan_gates()
-  local branch = CACHE.branch
+  local branch = you.branch()
   if stop_on_pan_gates and branch ~= "Pan" then
     stop_on_pan_gates = false
     crawl.setopt("explore_stop -= stairs")
@@ -5613,14 +5529,14 @@ end
 
 ---- Temple actions ----
 local function ready_temple_macro()
-  if CACHE.branch == "Temple" and not autosearched_temple and CACHE.god == "No God" then
+  if you.branch() == "Temple" and not autosearched_temple and you.god() == "No God" then
     crawl.sendkeys({ 6, "altar\r" })
     autosearched_temple = true
   end
 end
 
 local function c_message_temple_actions(text, _)
-  if CACHE.branch == "Temple" then
+  if you.branch() == "Temple" then
     -- Hit explore to search all altars
     if text:find("explor", 1, true) then
       crawl.sendkeys({ 6, "altar\r" })
@@ -5718,7 +5634,7 @@ local function check_new_location(key)
   local feature = view.feature_at (0, 0)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
-  local turn_diff = CACHE.turn - last_stair_turn
+  local turn_diff = you.turns() - last_stair_turn
   if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
     if key == ">" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
@@ -5747,14 +5663,14 @@ local function check_new_location(key)
   end
 
   crawl.sendkeys(key)
-  if not one_way_stair then last_stair_turn = CACHE.turn end
+  if not one_way_stair then last_stair_turn = you.turns() end
 end
 
 
 function init_safe_stairs()
   if CONFIG.debug_init then crawl.mpr("Initializing safe-stairs") end
-  prev_location = CACHE.branch .. CACHE.depth
-  cur_location = CACHE.branch .. CACHE.depth
+  prev_location = you.branch() .. you.depth()
+  cur_location = you.branch() .. you.depth()
   last_stair_turn = 0
   v5_unwarned = true
 
@@ -5774,7 +5690,7 @@ end
 ------------------- Hook -------------------
 function ready_safe_stairs()
   prev_location = cur_location
-  cur_location = CACHE.branch .. CACHE.depth
+  cur_location = you.branch() .. you.depth()
 end
 
 }
@@ -5866,8 +5782,8 @@ local function get_priority_ab(it)
   if it.equipped then return 1 end
 
   if is_magic_staff(it) then return 3 end
-  if it.is_ranged then return (CACHE.s_ranged >= 4) and 2 or 5 end
-  if is_polearm(it) then return (CACHE.s_polearms >= 4) and 2 or 4 end
+  if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
+  if is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
   return 2
 end
 
@@ -6013,7 +5929,7 @@ function init_pa_main()
   ---- Autopickup main ----
   add_autopickup_func(function (it, _)
     if pause_pa_system then return end
-    if CACHE.have_orb then return end
+    if you.have_orb() then return end
     if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
       if already_contains(pa_items_picked, it) then return end
@@ -6400,13 +6316,13 @@ end
 function get_adjusted_armour_pen(encumb, str)
   -- dcss v0.33.1
   local base_pen = get_unadjusted_armour_pen(encumb)
-  return 2 * base_pen * base_pen * (45 - CACHE.s_armour) / 45 / (5 * (str + 3))
+  return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
 function get_adjusted_dodge_bonus(encumb, str, dex)
   -- dcss v0.33.1
-  local size_factor = -2 * CACHE.size_penalty
-  local dodge_bonus = 8*(10 + CACHE.s_dodging * dex) / (20 - size_factor) / 10
+  local size_factor = -2 * get_size_penalty()
+  local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
   if armour_dodge_penalty <= 0 then return dodge_bonus end
 
@@ -6425,7 +6341,7 @@ function get_armour_ac(it)
     if art_ac then it_plus = it_plus + art_ac end
   end
 
-  local ac = it.ac * (1 + CACHE.s_armour / 22) + it_plus
+  local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
   if not is_body_armour(it) then return ac end
 
   local deformed = get_mut(MUTS.deformed, true) > 0
@@ -6441,8 +6357,8 @@ function get_armour_ev(it)
   -- dcss v0.33.1
   -- This function computes the armour-based component to standard EV (not paralysed, etc)
   -- Factors in stat changes from this armour and removing current one
-  local str = CACHE.str
-  local dex = CACHE.dex
+  local str = you.strength()
+  local dex = you.dexterity()
   local no_art_str = str
   local no_art_dex = dex
   local art_ev = 0
@@ -6471,13 +6387,13 @@ end
 function get_shield_penalty(sh)
   -- dcss v0.33.1
   return 2 * sh.encumbrance * sh.encumbrance
-        * (27 - CACHE.s_shields) / 27
-        / (25 + 5 * CACHE.str)
+        * (27 - you.skill("Shields")) / 27
+        / (25 + 5 * you.strength())
 end
 
 function get_shield_sh(it)
   -- dcss v0.33.1
-  local dex = CACHE.dex
+  local dex = you.dexterity()
   if it.artefact and it.is_identified then
     local art_dex = it.artprops["Dex"]
     if art_dex then dex = dex + art_dex end
@@ -6492,12 +6408,19 @@ function get_shield_sh(it)
   local it_plus = it.plus or 0
 
   local base_sh = it.ac * 2
-  local shield = base_sh * (50 + CACHE.s_shields*5/2)
+  local shield = base_sh * (50 + you.skill("Shields")*5/2)
   shield = shield + 200 * it_plus
-  shield = shield + 38 * (CACHE.s_shields + 3 + dex * (base_sh + 13) / 26)
+  shield = shield + 38 * (you.skill("Shields") + 3 + dex * (base_sh + 13) / 26)
   return shield / 200
 end
 
+function get_size_penalty()
+  if util.contains(ALL_LITTLE_RACES, you.race()) then return SIZE_PENALTY.LITTLE
+  elseif util.contains(ALL_SMALL_RACES, you.race()) then return SIZE_PENALTY.SMALL
+  elseif util.contains(ALL_LARGE_RACES, you.race()) then return SIZE_PENALTY.LARGE
+  end
+  return SIZE_PENALTY.NORMAL
+end
 
 --------- Weapon stats (Shadowing crawl calcs) ---------
 function adjust_delay_for_ego(delay, ego)
@@ -6521,7 +6444,7 @@ function get_weap_delay(it)
   if it.is_ranged then
     local worn = items.equipped_at("armour")
     if worn then
-      local str = CACHE.str
+      local str = you.strength()
 
       local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
@@ -6569,8 +6492,8 @@ function get_weap_damage(it, dmg_type)
   if not dmg_type then dmg_type = DMG_TYPE.scoring end
   local it_plus = it.plus or 0
   -- Adjust str/dex/slay from artefacts
-  local str = CACHE.str
-  local dex = CACHE.dex
+  local str = you.strength()
+  local dex = you.dexterity()
 
   -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
@@ -6593,7 +6516,7 @@ function get_weap_damage(it, dmg_type)
   else stat = str end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + CACHE.s_fighting/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
 
   it_plus = it_plus + get_slay_bonuses()
 
@@ -6620,7 +6543,7 @@ end
 
 function get_weap_score(it, no_brand_bonus)
   if it.dps and it.acc then
-    -- Handle cached /  high-score tuples
+    -- Handle cached /  high-score tuples in WEAP_CACHE
     return it.dps + it.acc * TUNING.weap.pickup.accuracy_weight
   end
   local it_plus = it.plus or 0
@@ -6631,7 +6554,7 @@ end
 
 --------- Weap stat helpers ---------
 function get_hands(it)
-  if CACHE.race ~= "Formicid" then return it.hands end
+  if you.race() ~= "Formicid" then return it.hands end
   local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
@@ -6685,7 +6608,7 @@ function get_slay_bonuses()
     end
   end
 
-  if CACHE.race == "Demonspawn" then
+  if you.race() == "Demonspawn" then
     sum = sum + 3 * get_mut(MUTS.augmentation, true)
     sum = sum + get_mut(MUTS.sharp_scales, true)
   end
@@ -6763,8 +6686,8 @@ end
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 local function alert_ac_high_score(it)
   if not is_body_armour(it) then return false end
-  if CACHE.s_armour == 0 then return false end
-  if CACHE.xl > 12 then return false end
+  if you.skill("Armour") == 0 then return false end
+  if you.xl() > 12 then return false end
 
   if ac_high_score == 0 then
     local worn = items.equipped_at("armour")
@@ -6818,7 +6741,7 @@ function pa_alert_armour(it, unworn_inv_item)
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
-      local encumb_impact = math.min(1, (CACHE.s_spellcasting + CACHE.s_ranged) / CACHE.xl)
+      local encumb_impact = math.min(1, (you.skill("Spellcasting") + you.skill("Ranged Weapons")) / you.xl())
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if (total_loss < 0) or (ac_delta / total_loss > TUNING.armour.heavier[ego_change_type]) then
         if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.heavier.min_gain then return false end
@@ -6955,7 +6878,7 @@ function pa_alert_OTA(it)
   local do_alert = true
 
   if is_shield(it) then
-    if CACHE.s_shields < CONFIG.alert.OTA_require_skill.shield then return end
+    if you.skill("Shields") < CONFIG.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if pa_OTA_items[index] == "buckler" then
@@ -6965,7 +6888,7 @@ function pa_alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif is_armour(it) then
-    if CACHE.s_armour < CONFIG.alert.OTA_require_skill.armour then return end
+    if you.skill("Armour") < CONFIG.alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
     if you.skill(it.weap_skill) < CONFIG.alert.OTA_require_skill.weapon then return end
   end
@@ -6981,11 +6904,11 @@ function pa_alert_staff(it)
   local needRes = false
   local basename = it.name("base")
 
-  if basename == "staff of fire" then needRes = CACHE.rF == 0
-  elseif basename == "staff of cold" then needRes = CACHE.rC == 0
-  elseif basename == "staff of air" then needRes = CACHE.rElec == 0
-  elseif basename == "staff of poison" then needRes = CACHE.rPois == 0
-  elseif basename == "staff of death" then needRes = CACHE.rN == 0
+  if basename == "staff of fire" then needRes = you.res_fire() == 0
+  elseif basename == "staff of cold" then needRes = you.res_cold() == 0
+  elseif basename == "staff of air" then needRes = you.res_shock() == 0
+  elseif basename == "staff of poison" then needRes = you.res_poison() == 0
+  elseif basename == "staff of death" then needRes = you.res_draining() == 0
   end
 
   if not needRes then return false end
@@ -7038,16 +6961,17 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ---- Cache weapons in inventory ----
-INV_WEAP = {}
+WEAP_CACHE = {}
+local top_attack_skill
 
-function INV_WEAP.get_key(it)
+function WEAP_CACHE.get_key(it)
   local ret_val = it.is_ranged and "range_" or "melee_"
   ret_val = ret_val .. get_hands(it)
   if has_ego(it) then ret_val = ret_val .. "b" end
   return ret_val
 end
 
-function INV_WEAP.add_weapon(it)
+function WEAP_CACHE.add_weapon(it)
   local weap_data = {}
   weap_data.is_weapon = it.is_weapon
   weap_data.ego = get_ego(it)
@@ -7068,12 +6992,12 @@ function INV_WEAP.add_weapon(it)
   weap_data.skill_lvl = get_skill(it.weap_skill)
  
   -- Track unique egos
-  if weap_data.branded and not util.contains(INV_WEAP.egos, weap_data.ego) then
-    INV_WEAP.egos[#INV_WEAP.egos+1] = weap_data.ego
+  if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data.ego) then
+    WEAP_CACHE.egos[#WEAP_CACHE.egos+1] = weap_data.ego
   end
 
   -- Track max damage weapons of each type
-  local keys = { INV_WEAP.get_key(it) }
+  local keys = { WEAP_CACHE.get_key(it) }
   -- Also track less-restrictive versions of the key
   if weap_data.is_ranged then keys[#keys+1] = keys[1]:gsub("range", "melee") end
   if weap_data.branded then
@@ -7090,23 +7014,23 @@ function INV_WEAP.add_weapon(it)
   end
   -- Update the max DPS for each category
   for _, key in ipairs(keys) do
-    if weap_data.dps > INV_WEAP.max_dps[key].dps then
-      INV_WEAP.max_dps[key].dps = weap_data.dps
-      INV_WEAP.max_dps[key].acc = weap_data.acc
+    if weap_data.dps > WEAP_CACHE.max_dps[key].dps then
+      WEAP_CACHE.max_dps[key].dps = weap_data.dps
+      WEAP_CACHE.max_dps[key].acc = weap_data.acc
     end
   end
 
-  INV_WEAP.weapons[#INV_WEAP.weapons+1] = weap_data
+  WEAP_CACHE.weapons[#WEAP_CACHE.weapons+1] = weap_data
   return weap_data
 end
 
-function INV_WEAP.is_empty()
-  return INV_WEAP.max_dps["melee_2"].dps == 0
+function WEAP_CACHE.is_empty()
+  return WEAP_CACHE.max_dps["melee_2"].dps == 0
 end
 
-function INV_WEAP.serialize()
+function WEAP_CACHE.serialize()
   local tokens = { "\n---INVENTORY WEAPONS---" }
-  for _, weap in ipairs(INV_WEAP.weapons) do
+  for _, weap in ipairs(WEAP_CACHE.weapons) do
     tokens[#tokens+1] = string.format("\n%s\n", weap.basename)
     for k,v in pairs(weap) do
       if k ~= "basename" then
@@ -7119,7 +7043,7 @@ end
 
 ---- Weapon pickup ----
 local function is_weapon_upgrade(it, cur)
-  -- `cur` comes from INV_WEAP
+  -- `cur` comes from WEAP_CACHE
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
     if it.artefact then return true end
@@ -7129,7 +7053,7 @@ local function is_weapon_upgrade(it, cur)
       return get_weap_score(it) / cur.score > TUNING.weap.pickup.add_ego
     end
     return get_ego(it) == cur.ego and get_weap_score(it) > cur.score
-  elseif it.weap_skill == cur.weap_skill or CACHE.race == "Gnoll" then
+  elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
     if it.is_ranged ~= cur.is_ranged then return false end
@@ -7147,8 +7071,8 @@ end
 
 function pa_pickup_weapon(it)
   -- Check if we need the first weapon of the game
-  if CACHE.xl < 5 and INV_WEAP.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
-    -- Staves don't go into INV_WEAP; check if we're carrying just a staff
+  if you.xl() < 5 and WEAP_CACHE.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
+    -- Staves don't go into WEAP_CACHE; check if we're carrying just a staff
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.is_weapon then return false end -- fastest way to check if it's a staff
     end
@@ -7157,7 +7081,7 @@ function pa_pickup_weapon(it)
 
   if has_risky_ego(it) then return false end
 
-  for _,inv in ipairs(INV_WEAP.weapons) do
+  for _,inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end
   end
 end
@@ -7183,7 +7107,7 @@ end
 local function alert_first_polearm(it)
   if alerted_first_polearm_1h then return false end
   if not is_polearm(it) then return false end
-  if CACHE.s_ranged > 2 then return false end -- Don't bother if learning ranged
+  if you.skill("Ranged Weapons") > 2 then return false end -- Don't bother if learning ranged
 
   if get_hands(it) == 1 then
     alerted_first_polearm = true
@@ -7199,22 +7123,22 @@ end
 
 local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
-  if CACHE.xl <= TUNING.weap.alert.early_ranged.xl then
+  if you.xl() <= TUNING.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
       if it.plus >= TUNING.weap.alert.early_ranged.min_plus and has_ego(it) or
          it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
           if get_hands(it) == 1 or not have_shield() or
-            CACHE.s_shields <= TUNING.weap.alert.early_ranged.max_shields then
+            you.skill("Shields") <= TUNING.weap.alert.early_ranged.max_shields then
               return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
           end
       end
     end
   end
 
-  if CACHE.xl <= TUNING.weap.alert.early.xl then
+  if you.xl() <= TUNING.weap.alert.early.xl then
     -- Skip items if we're clearly going another route
-    local skill_diff = get_skill(CACHE.top_weap_skill) - get_skill(it.weap_skill)
-    local max_skill_diff = CACHE.xl * TUNING.weap.alert.early.skill.factor + TUNING.weap.alert.early.skill.offset
+    local skill_diff = get_skill(top_attack_skill) - get_skill(it.weap_skill)
+    local max_skill_diff = you.xl() * TUNING.weap.alert.early.skill.factor + TUNING.weap.alert.early.skill.offset
     if skill_diff > max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
@@ -7226,13 +7150,13 @@ local function alert_early_weapons(it)
 end
 
 -- Check if weapon is worth alerting for, informed by a weapon currently in inventory
--- `cur` comes from INV_WEAP
+-- `cur` comes from WEAP_CACHE
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
     return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT, CONFIG.fm_alert.new_weap)
   end
 
-  local inv_best = INV_WEAP.max_dps[INV_WEAP.get_key(it)]
+  local inv_best = WEAP_CACHE.max_dps[WEAP_CACHE.get_key(it)]
   local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
   local best_score = math.max(cur.score, inv_best and get_weap_score(inv_best) or 0)
 
@@ -7251,12 +7175,12 @@ local function alert_interesting_weapon(it, cur)
   
   -- Penalize lower-trained skills
   local damp = TUNING.weap.alert.low_skill_penalty_damping
-  local penalty = (get_skill(it.weap_skill) + damp) / (get_skill(CACHE.top_weap_skill) + damp)
+  local penalty = (get_skill(it.weap_skill) + damp) / (get_skill(top_attack_skill) + damp)
   local score_ratio = penalty * get_weap_score(it) / best_score
 
   if get_hands(it) > cur.hands then
-    if offhand_is_free() or (CACHE.s_shields < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
-      if has_ego(it) and not util.contains(INV_WEAP.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
+    if offhand_is_free() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+      if has_ego(it) and not util.contains(WEAP_CACHE.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.new_weap)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
         return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
@@ -7272,7 +7196,7 @@ local function alert_interesting_weapon(it, cur)
         if score_ratio > TUNING.weap.alert.gain_ego then
           return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
         end
-      elseif not util.contains(INV_WEAP.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
+      elseif not util.contains(WEAP_CACHE.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
       end
     end
@@ -7285,7 +7209,7 @@ local function alert_interesting_weapon(it, cur)
 end
 
 local function alert_interesting_weapons(it)
-  for _,inv in ipairs(INV_WEAP.weapons) do
+  for _,inv in ipairs(WEAP_CACHE.weapons) do
     if alert_interesting_weapon(it, inv) then return true end
   end
   return false
@@ -7304,23 +7228,33 @@ function pa_alert_weapon(it)
   if alert_early_weapons(it) then return true end
 
   -- Skip high score alerts if not using weapons
-  if INV_WEAP.is_empty() then return false end
+  if WEAP_CACHE.is_empty() then return false end
   return alert_weap_high_scores(it)
 end
 
 
 function init_pa_weapons()
-  INV_WEAP.weapons = {}
-  INV_WEAP.egos = {}
+  WEAP_CACHE.weapons = {}
+  WEAP_CACHE.egos = {}
   
   -- Track max DPS by weapon category
-  INV_WEAP.max_dps = {}
+  WEAP_CACHE.max_dps = {}
   local keys = {
     "melee_1", "melee_1b", "melee_2", "melee_2b",
     "range_1", "range_1b", "range_2", "range_2b"
-  } -- INV_WEAP.max_dps (do not remove this comment)
+  } -- WEAP_CACHE.max_dps (do not remove this comment)
   for _, key in ipairs(keys) do
-    INV_WEAP.max_dps[key] = { dps = 0, acc = 0 }
+    WEAP_CACHE.max_dps[key] = { dps = 0, acc = 0 }
+  end
+
+  -- Set top weapon skill
+  top_attack_skill = "Unarmed Combat"
+  local max_weap_skill = get_skill(top_attack_skill)
+  for _,v in ipairs(ALL_WEAP_SCHOOLS) do
+    if get_skill(v) > max_weap_skill then
+      max_weap_skill = get_skill(v)
+      top_attack_skill = v
+    end
   end
 end
 
@@ -7330,7 +7264,7 @@ function ready_pa_weapons()
   init_pa_weapons()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if inv.is_weapon and not is_magic_staff(inv) then
-      INV_WEAP.add_weapon(inv)
+      WEAP_CACHE.add_weapon(inv)
       update_high_scores(inv)
     end
   end
@@ -7381,7 +7315,7 @@ end
 
 function c_answer_prompt(prompt)
   if not buehler_rc_active then return end
-  if prompt:find("cheaper one?", 1, true) and CACHE.branch ~= "Bazaar" then
+  if prompt:find("cheaper one?", 1, true) and you.branch() ~= "Bazaar" then
     crawl.mpr("Replacing shopping list items")
     return true end
   if prompt == "Die?" then
@@ -7394,8 +7328,7 @@ function ready()
   crawl.redraw_screen()
   if you.turns() == prev_turn then return end
 
-  ready_cache()
-  prev_turn = CACHE.turn -- prev_turn is also used by persistent-data.lua
+  prev_turn = you.turns() -- prev_turn is also used by persistent-data.lua
 
   -- Features (may not be included)
   if ready_fm_monsters then ready_fm_monsters() end
@@ -7425,7 +7358,6 @@ function init_buehler(reset_persistent_data)
   -- Init core modules
   init_config()
   init_emojis()
-  init_cache()
   init_util()
   init_persistent_data(reset_persistent_data)
 
@@ -7456,7 +7388,7 @@ function init_buehler(reset_persistent_data)
   end
 
    -- Force a full ready() cycle
-  prev_turn = CACHE.turn - 1
+  prev_turn = you.turns() - 1
   ready()
 end
 

@@ -217,7 +217,7 @@ local function do_pack_mutes()
 
   -- Remove mutes that have expired
   for _, v in ipairs(FM_PACK) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
       set_monster_fm("+", v)
       last_fm_turn[v] = -1
     end
@@ -225,7 +225,7 @@ local function do_pack_mutes()
 
   -- For no-init pack monsters, just deactivate the fm
   for _, v in ipairs(FM_PACK_NO_CREATE) do
-    if CACHE.turn == last_fm_turn[v] + CONFIG.fm_pack_duration then
+    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
       active_fm[active_fm_index[v]] = false
       last_fm_turn[v] = -1
     end
@@ -283,7 +283,7 @@ function c_message_fm_pack(text, channel)
   if not text:find("comes? into view") then return end
   for _, v in ipairs(FM_PACK) do
     if text:find(v) and last_fm_turn[v] == -1 then
-      last_fm_turn[v] = CACHE.turn
+      last_fm_turn[v] = you.turns()
       monsters_to_mute[#monsters_to_mute+1] = v
     end
   end
@@ -293,22 +293,22 @@ function ready_fm_monsters()
   local activated = {}
   local deactivated = {}
 
-  local hp = CACHE.hp
-  local maxhp = CACHE.mhp
+  local hp, mhp = you.hp()
   local amulet = items.equipped_at("amulet")
-  if amulet and amulet.name() == "amulet of guardian spirit" or CACHE.race == "Vine Stalker" then
-    hp = hp + CACHE.mp
-    maxhp = maxhp + CACHE.mmp
+  if amulet and amulet.name() == "amulet of guardian spirit" or you.race() == "Vine Stalker" then
+    local mp, mmp = you.mp()
+    hp = hp + mp
+    mhp = mhp + mmp
   end
-  local willpower = CACHE.will
-  local res_mut = CACHE.rMut
-  local res_pois = CACHE.rPois
-  local res_elec = CACHE.rElec
-  local res_corr = CACHE.rCorr
-  local res_fire = CACHE.rF
-  local res_cold = CACHE.rC
-  local res_drain = CACHE.rN
-  local int = CACHE.int
+  local willpower = you.willpower()
+  local res_mut = you.res_mutation()
+  local res_pois = you.res_poison()
+  local res_elec = you.res_shock()
+  local res_corr = you.res_corr()
+  local res_fire = you.res_fire()
+  local res_cold = you.res_cold()
+  local res_drain = you.res_draining()
+  local int = you.intelligence()
 
   for i,v in ipairs(FM_PATTERNS) do
     local action = nil
@@ -316,8 +316,8 @@ function ready_fm_monsters()
     if not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
-      if active_fm[i] and CACHE.xl >= v.cutoff then action = "-"
-      elseif not active_fm[i] and CACHE.xl < v.cutoff then action = "+"
+      if active_fm[i] and you.xl() >= v.cutoff then action = "-"
+      elseif not active_fm[i] and you.xl() < v.cutoff then action = "+"
       end
     elseif v.cond == "hp" then
       if active_fm[i] and hp >= v.cutoff then action = "-"

@@ -51,7 +51,7 @@ function init_announce_damage()
   prev.mhp = 0
   prev.mp = 0
   prev.mmp = 0
-  prev.turn = CACHE.turn
+  prev.turn = you.turns()
 
   if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
     crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
@@ -59,33 +59,36 @@ function init_announce_damage()
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
+  local hp, mhp = you.hp()
+
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
-    CACHE.hp / CACHE.mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+    hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
   )
   msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
-  msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.hp, CACHE.mhp)
+  msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
   if mhp_delta ~= 0 then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
   end
 
-  if not CONFIG.announce.same_line and CACHE.hp == CACHE.mhp then
+  if not CONFIG.announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
   end
   return table.concat(msg_tokens)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
+  local mp, mmp = you.mp()
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(
-    CACHE.mp / CACHE.mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+    mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
   )
   msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
-  msg_tokens[#msg_tokens + 1] = format_ratio(CACHE.mp, CACHE.mmp)
+  msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
   if mmp_delta ~= 0 then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
   end
-  if not CONFIG.announce.same_line and CACHE.mp == CACHE.mmp then
+  if not CONFIG.announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
   end
   return table.concat(msg_tokens)
@@ -101,20 +104,22 @@ end
 ------------------- Hooks -------------------
 function ready_announce_damage()
   -- Process `prev` early, so we can use returns over nested ifs
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
   local is_startup = prev.hp == 0
-  local hp_delta = CACHE.hp - prev.hp
-  local mp_delta = CACHE.mp - prev.mp
-  local mhp_delta = CACHE.mhp - prev.mhp
-  local mmp_delta = CACHE.mmp - prev.mmp
+  local hp_delta = hp - prev.hp
+  local mp_delta = mp - prev.mp
+  local mhp_delta = mhp - prev.mhp
+  local mmp_delta = mmp - prev.mmp
   local damage_taken = mhp_delta - hp_delta
-  prev.hp = CACHE.hp
-  prev.mhp = CACHE.mhp
-  prev.mp = CACHE.mp
-  prev.mmp = CACHE.mmp
+  prev.hp = hp
+  prev.mhp = mhp
+  prev.mp = mp
+  prev.mmp = mmp
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = CACHE.hp <= CONFIG.announce.very_low_hp * CACHE.mhp
+  local is_very_low_hp = hp <= CONFIG.announce.very_low_hp * mhp
 
 
   -- Determine which messages to show
@@ -145,10 +150,10 @@ function ready_announce_damage()
   
 
   -- Add Damage-related warnings, when damage >= threshold
-  if (damage_taken >= CACHE.mhp * CONFIG.dmg_flash_threshold) then
+  if (damage_taken >= mhp * CONFIG.dmg_flash_threshold) then
     if is_very_low_hp then return end -- mute % HP alerts
     local summary_tokens = {}
-    local is_force_more_msg = damage_taken >= (CACHE.mhp * CONFIG.dmg_fm_threshold)
+    local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)
     if is_force_more_msg then
       summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
       summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")

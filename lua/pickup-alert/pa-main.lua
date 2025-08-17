@@ -41,7 +41,7 @@ function init_pa_main()
   ---- Autopickup main ----
   add_autopickup_func(function (it, _)
     if pause_pa_system then return end
-    if CACHE.have_orb then return end
+    if you.have_orb() then return end
     if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
       if already_contains(pa_items_picked, it) then return end
