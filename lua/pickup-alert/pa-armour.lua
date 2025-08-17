@@ -113,13 +113,23 @@ function pa_alert_armour(it, unworn_inv_item)
       return it.is_identified and pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
     end
   
-    local cur = items.equipped_at(it.subtype()) or unworn_inv_item
-    if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION, CONFIG.fm_alert.aux_armour) end
-    if has_ego(it) and get_ego(it) ~= get_ego(cur) then
-      local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
-    elseif get_armour_ac(it) > get_armour_ac(cur) then
-      return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+    local all_equipped, num_slots = get_equipped_aux(it.subtype())
+    if #all_equipped < num_slots then
+      if unworn_inv_item then
+        all_equipped[#all_equipped+1] = unworn_inv_item
+      else
+        -- Fires on dangerous brands or items blocked by non-innatemutations
+        return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
+      end
+    end
+
+    for _, cur in ipairs(all_equipped) do
+      if has_ego(it) and get_ego(it) ~= get_ego(cur) then
+        local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
+        return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+      elseif get_armour_ac(it) > get_armour_ac(cur) then
+        return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+      end
     end
   end
 end
@@ -178,24 +188,33 @@ function pa_pickup_armour(it)
       if get_mut(MUTS.horns, true) + get_mut(MUTS.beak, true) + get_mut(MUTS.antennae, true) > 0 then return false end
     end
 
-    local cur = items.equipped_at(st)
-    if not cur then
-      -- Check if we're carrying one already; implying we have a temporary form
+    local all_equipped, num_slots = get_equipped_aux(it.subtype())
+    if num_slots == 1 and #all_equipped == 0 then
+      -- For non-poltergeist, check if we're carrying one already; implying we have a temporary form
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.subtype() == st then return false end
       end
-      return true
     end
+    if #all_equipped < num_slots then return true end    
+
+    -- Already have something in slot; it must be glowing to pick up
     if not it.is_identified then return false end
 
-    if cur.artefact then return false end
+    for _, cur in ipairs(all_equipped) do
+      if i == num_slots and cur.artefact then return false end
+      if not cur.artefact then break end
+    end
+
     if it.artefact then return true end
-    if has_ego(cur) then
-      return get_ego(cur) == get_ego(it) and it.plus > cur.plus
-    elseif has_ego(it) then
-      return get_armour_ac(it) >= get_armour_ac(cur)
-    else
-      return get_armour_ac(it) > get_armour_ac(cur)
+
+    for _, cur in ipairs(all_equipped) do
+      if has_ego(cur) then
+        if get_ego(cur) == get_ego(it) and it.plus > cur.plus then return true end
+      elseif has_ego(it) then
+        if get_armour_ac(it) >= get_armour_ac(cur) then return true end
+      else
+        if get_armour_ac(it) > get_armour_ac(cur) then return true end
+      end
     end
   end
 
