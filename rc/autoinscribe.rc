@@ -3,6 +3,7 @@
 ai := autoinscribe
 
 # Armour
+ai += cloak of preservation:rCorr
 ai += fire dragon scale:rF++, rC-
 ai += gold dragon scale:rC+, rF+, rPois
 ai += ice dragon scale:rC++, rF-
