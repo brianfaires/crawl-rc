@@ -14,7 +14,9 @@ end
 function get_armour_info_strings(it)
   if not is_armour(it) or is_orb(it) then return "", "" end
 
-  local cur = items.equipped_at(it.equip_type)
+  -- Compare against last slot if poltergeist
+  local slot_num = you.race() == "Poltergeist" and 6 or 1
+  local cur = items.equipped_at(it.equip_type, slot_num)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0

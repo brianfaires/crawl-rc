@@ -241,6 +241,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 
 ### Known issues
 1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
+1. AC/EV delta inscriptions on Poltergeist: compare against the last (6th) worn item
 
 ### 0.34 changes needed
 1. Inventory slots changed: Can no longer use l-item.inslot() to get an item?
