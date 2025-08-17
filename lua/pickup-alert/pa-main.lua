@@ -53,45 +53,41 @@ function init_pa_main()
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
       end
-    end
-
-    -- Not picking up this item. Now check for alerts.
-    -- If useless and aux armour, check if unless carrying one of the same subtype (ie useless from non-innate mutations)
-    local do_alerts = not it.is_useless
-    local unworn_aux_item = nil
-    if not do_alerts then
-      local st = it.subtype()
+    else
+      -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
       if not is_armour(it) or is_body_armour(it) or is_shield(it) or is_orb(it) then return end
+      
+      local unworn_aux_item = nil
+      local st = it.subtype()
       for inv in iter.invent_iterator:new(items.inventory()) do
         local inv_st = inv.subtype()
         if inv_st and inv_st == st then
-          do_alerts = true
           unworn_aux_item = inv
           break
         end
       end
+      if not unworn_aux_item then return end
     end
 
-    if do_alerts then
-      if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
-      if already_contains(pa_items_alerted, it) then return end
+    -- Not picking up this item. Now check for alerts.
+    if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
+    if already_contains(pa_items_alerted, it) then return end
 
-      if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
-        if pa_alert_OTA(it) then return end
-      end
+    if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
+      if pa_alert_OTA(it) then return end
+    end
 
-      if loaded_pa_misc and CONFIG.alert.staff_resists and is_magic_staff(it) then
-        if pa_alert_staff(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert.orbs and is_orb(it) then
-        if pa_alert_orb(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert.talismans and is_talisman(it) then
-        if pa_alert_talisman(it) then return end
-      elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
-        if pa_alert_armour(it, unworn_aux_item) then return end
-      else
-        if loaded_pa_weapons and CONFIG.alert.weapons and it.is_weapon then
-          if pa_alert_weapon(it) then return end
-        end
+    if loaded_pa_misc and CONFIG.alert.staff_resists and is_magic_staff(it) then
+      if pa_alert_staff(it) then return end
+    elseif loaded_pa_misc and CONFIG.alert.orbs and is_orb(it) then
+      if pa_alert_orb(it) then return end
+    elseif loaded_pa_misc and CONFIG.alert.talismans and is_talisman(it) then
+      if pa_alert_talisman(it) then return end
+    elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
+      if pa_alert_armour(it, unworn_aux_item) then return end
+    else
+      if loaded_pa_weapons and CONFIG.alert.weapons and it.is_weapon then
+        if pa_alert_weapon(it) then return end
       end
     end
   end)
