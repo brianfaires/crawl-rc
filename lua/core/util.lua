@@ -138,6 +138,16 @@ end
 
 
 --- Utility ---
+function get_equipped_aux(aux_type)
+  local all_aux = {}
+  local num_slots = you.race() == "Poltergeist" and 6 or 1
+  for i = 1, num_slots do
+    local it = items.equipped_at(aux_type, i)
+    all_aux[#all_aux+1] = it
+  end
+  return all_aux, num_slots
+end
+
 function get_mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end

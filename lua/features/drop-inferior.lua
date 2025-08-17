@@ -27,9 +27,11 @@ function c_assign_invletter_drop_inferior(it)
     if not inv.artefact and inv.subtype() == it.subtype() and
       (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
         if it.is_weapon then
+          if you.race() == "Coglin" then return end -- More trouble than it's worth
           if inv.plus <= it.plus then inscribe_drop(inv) end
         else
           if get_armour_ac(inv) <= get_armour_ac(it) and inv.encumbrance >= it.encumbrance then
+            if you.race() == "Poltergeist" then return end -- More trouble than it's worth 
             inscribe_drop(inv)
           end
         end

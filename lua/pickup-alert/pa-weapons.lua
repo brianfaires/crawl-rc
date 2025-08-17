@@ -118,7 +118,7 @@ function pa_pickup_weapon(it)
   end
 
   if has_risky_ego(it) then return false end
-
+  if already_contains(pa_items_picked, it) then return false end
   for _,inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end
   end

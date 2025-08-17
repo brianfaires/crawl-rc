@@ -18,7 +18,7 @@ function get_armour_info_strings(it)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  local is_worn = it.ininventory and cur and cur.slot == it.slot
+  local is_worn = it.equipped or (it.ininventory and cur and cur.slot == it.slot)
   if cur and not is_worn then
     -- Only show deltas if not same item
     if is_shield(cur) then
@@ -87,14 +87,18 @@ end
 
 -- Used for data tables
 function get_pa_keys(it, name_type)
-  if it.class(true) == "bauble" then return it.name("qual"), 0 end
-  if is_talisman(it) or is_orb(it) then
+  if it.class(true) == "bauble" then
+    return it.name("qual"), 0
+  elseif is_talisman(it) or is_orb(it) then
     return it.name():gsub("\"", ""), 0
+  elseif is_magic_staff(it) then
+    return it.name("base"), 0
+  else
+    local name = it.name(name_type or "base"):gsub("\"", "")
+    local value = tonumber(name:sub(1, 3))
+    if not value then return name, 0 end
+    return util.trim(name:sub(4)), value
   end
-  local name = it.name(name_type or "base"):gsub("\"", "")
-  local value = tonumber(name:sub(1, 3))
-  if not value then return name, 0 end
-  return util.trim(name:sub(4)), value
 end
 
 function get_plussed_name(it, name_type)
