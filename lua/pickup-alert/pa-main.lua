@@ -44,10 +44,6 @@ function init_pa_main()
     if you.have_orb() then return end
     if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
-      if already_contains(pa_items_picked, it) then return end
-
-      -- Check for pickup
-      local retVal = false
       if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
       elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
