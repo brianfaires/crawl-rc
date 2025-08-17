@@ -131,10 +131,16 @@ end
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
   pa_alert_OTA(it)
+
+  util.remove(pa_recent_alerts, get_plussed_name(it))  
+  if it.is_weapon and you.race() == "Coglin" then
+    -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
+    -- ie, Reset the alert the first time you pick up.
+    local name, _ = get_pa_keys(it)
+    if pa_items_picked[name] == nil then pa_items_alerted[name] = nil end
+  end
+
   add_to_pa_table(pa_items_picked, it)
-  local name, _ = get_pa_keys(it)
-  pa_items_alerted[name] = nil
-  util.remove(pa_recent_alerts, get_plussed_name(it))
 
   if it.is_weapon or is_armour(it) then
     update_high_scores(it)
