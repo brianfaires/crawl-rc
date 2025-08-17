@@ -94,8 +94,8 @@ local function is_weapon_upgrade(it, cur)
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
-    if it.is_ranged ~= cur.is_ranged then return false end
-    if is_polearm(cur) and not is_polearm(it) then return false end
+    if cur.is_ranged ~= it.is_ranged then return false end
+    if is_polearm(cur) ~= is_polearm(it) then return false end
 
     if it.artefact then return true end
     if cur.artefact then return false end
@@ -208,7 +208,8 @@ local function alert_interesting_weapon(it, cur)
     return false
   end
   
-  if it.is_ranged ~= cur.is_ranged then return false end
+  if cur.is_ranged ~= it.is_ranged then return false end
+  if is_polearm(cur) ~= is_polearm(it) then return false end
   if 2 * get_skill(it.weap_skill) < get_skill(cur.weap_skill) then return false end
   
   -- Penalize lower-trained skills
