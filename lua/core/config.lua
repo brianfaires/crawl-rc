@@ -151,7 +151,8 @@ function init_config()
   TUNING.armour = {
     lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0, min_gain = 3.0, max_loss = 4.0 },
     heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0, min_gain = 3.0, max_loss = 8.0 },
-    encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+    encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+    early_xl = 6 -- Alert all usable runed body armour if XL <= `early_xl`
   } -- TUNING.armour (do not remove this comment)
 
   -- All 'magic numbers' used in the weapon pickup/alert system. 2 common types of values:

@@ -94,6 +94,9 @@ function pa_alert_armour(it, unworn_inv_item)
     end
 
     if alert_ac_high_score(it) then return true end
+    if has_ego(it) and you.xl() <= TUNING.armour.early_xl then
+      return pa_alert_item(it, "Early armour", EMOJI.EGO)
+    end
   elseif is_shield(it) then
     if it.artefact then
       return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)

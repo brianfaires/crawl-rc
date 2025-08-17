@@ -141,7 +141,8 @@ Diff alert types can be configured to cause a more() prompt.
 Picks up armour that is a pure upgrade to what you currently have.
 
 Alerts generated for:
-- Items with new egos, or increased AC.
+- Items with new egos or increased AC.
+- Early ego armour, even if not training armour
 - The highest AC body armour seen so far (if training armour).
 - Other armour, depending on a number of factors and the thresholds in `TUNING.armour`  .
   In general, 1 AC is valued ~1.2EV,
@@ -150,7 +151,7 @@ Alerts generated for:
 
 ###  [lua/pickup-alert/pa-weapons.lua](lua/pickup-alert/pa-weapons.lua) (Weapons)
 Picks up upgrades. Alerts generated for:
-- Strong weapons early on, with little regard for what skills are trained.
+- Early strong weapons, with little regard for what skills are already trained.
 - First ranged and 1-handed ranged weapons.
 - First polearm and 1-handed polearm.
 - Other weapons, using a score that is primarily the weapon's DPS. Tune the thresholds in `TUNING.weap`.
