@@ -18,6 +18,7 @@ local COLORIZE_TAGS = {
   { "rCorr", COLORS.yellow },
   { "rMut", COLORS.brown },
   { "sInv", COLORS.white },
+  { "Wiz" .. MULTI_PLUS, COLORS.white },
   { "Slay" .. POS_NUM, COLORS.white},
   {  "Str" .. POS_NUM, COLORS.white },
   {  "Dex" .. POS_NUM, COLORS.white },
