@@ -227,24 +227,24 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. cleanup/reduce # of display.rc messages
 1. On alert, prompt/offer to pickup item
 1. On pickup, if safe(), offer to wear/wield item
-1. On drop_inferior tag, offer to drop item
+1. On drop_inferior inscribe, offer to drop item
 
-### TODO - requiring crawl PR
-1. Wait for allies to fully heal (needs crawl PR?)
-1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
+### 0.34 changes needed
+1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
+
+### TODO - requiring crawl PR?
+1. Wait for allies to fully heal
+1. Better colorizing of rF+, rC+, etc (needs to intercept msgs)
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
+1. remove "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 
 ### Won't do
-1. remove "~~DROP_ME" when dropping
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
 
-### Known issues
+### Known issues/quirks
 1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
 1. AC/EV delta inscriptions on Poltergeist: compare against the last (6th) worn item
-
-### 0.34 changes needed
-1. Inventory slots changed: Can no longer use l-item.inslot() to get an item?
 
 
 ## Resources
