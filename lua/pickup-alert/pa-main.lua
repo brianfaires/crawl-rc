@@ -138,6 +138,7 @@ function c_assign_invletter_item_alerts(it)
 
   if it.is_weapon or is_armour(it) then
     update_high_scores(it)
+    you.stop_activity() -- crawl misses this sometimes
   end
 end
 
