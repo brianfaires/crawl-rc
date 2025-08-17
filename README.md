@@ -229,6 +229,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. On alert, prompt/offer to pickup item
 1. On pickup, if safe(), offer to wear/wield item
 1. On drop_inferior inscribe, offer to drop item
+1. If no god or good god, auto-visit Temple instead of force-more
 
 ### 0.34 changes needed
 1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
