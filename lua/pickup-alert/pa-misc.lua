@@ -59,15 +59,8 @@ end
 ---- Smart staff pickup ----
 function pa_pickup_staff(it)
   if not it.is_identified then return false end
-  local school = get_staff_school(it)
-  if get_skill(school) == 0 then return false end
-
-  -- Check for previously picked staves
-  for _,v in ipairs(pa_items_picked) do
-    if v:find(it.name("base"), 1, true) then return false end
-  end
-
-  return true
+  if get_skill(get_staff_school(it)) == 0 then return false end
+  return not already_contains(pa_items_picked, it)
 end
 
 ---- Exclude superfluous rings ----

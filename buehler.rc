@@ -3873,6 +3873,16 @@ end
 
 
 --- Utility ---
+function get_equipped_aux(aux_type)
+  local all_aux = {}
+  local num_slots = you.race() == "Poltergeist" and 6 or 1
+  for i = 1, num_slots do
+    local it = items.equipped_at(aux_type, i)
+    all_aux[#all_aux+1] = it
+  end
+  return all_aux, num_slots
+end
+
 function get_mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
@@ -5932,10 +5942,6 @@ function init_pa_main()
     if you.have_orb() then return end
     if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
-      if already_contains(pa_items_picked, it) then return end
-
-      -- Check for pickup
-      local retVal = false
       if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
       elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
@@ -5945,45 +5951,41 @@ function init_pa_main()
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
       end
-    end
-
-    -- Not picking up this item. Now check for alerts.
-    -- If useless and aux armour, check if unless carrying one of the same subtype (ie useless from non-innate mutations)
-    local do_alerts = not it.is_useless
-    local unworn_aux_item = nil
-    if not do_alerts then
-      local st = it.subtype()
+    else
+      -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
       if not is_armour(it) or is_body_armour(it) or is_shield(it) or is_orb(it) then return end
+      
+      local unworn_aux_item = nil
+      local st = it.subtype()
       for inv in iter.invent_iterator:new(items.inventory()) do
         local inv_st = inv.subtype()
         if inv_st and inv_st == st then
-          do_alerts = true
           unworn_aux_item = inv
           break
         end
       end
+      if not unworn_aux_item then return end
     end
 
-    if do_alerts then
-      if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
-      if already_contains(pa_items_alerted, it) then return end
+    -- Not picking up this item. Now check for alerts.
+    if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
+    if already_contains(pa_items_alerted, it) then return end
 
-      if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
-        if pa_alert_OTA(it) then return end
-      end
+    if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
+      if pa_alert_OTA(it) then return end
+    end
 
-      if loaded_pa_misc and CONFIG.alert.staff_resists and is_magic_staff(it) then
-        if pa_alert_staff(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert.orbs and is_orb(it) then
-        if pa_alert_orb(it) then return end
-      elseif loaded_pa_misc and CONFIG.alert.talismans and is_talisman(it) then
-        if pa_alert_talisman(it) then return end
-      elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
-        if pa_alert_armour(it, unworn_aux_item) then return end
-      else
-        if loaded_pa_weapons and CONFIG.alert.weapons and it.is_weapon then
-          if pa_alert_weapon(it) then return end
-        end
+    if loaded_pa_misc and CONFIG.alert.staff_resists and is_magic_staff(it) then
+      if pa_alert_staff(it) then return end
+    elseif loaded_pa_misc and CONFIG.alert.orbs and is_orb(it) then
+      if pa_alert_orb(it) then return end
+    elseif loaded_pa_misc and CONFIG.alert.talismans and is_talisman(it) then
+      if pa_alert_talisman(it) then return end
+    elseif loaded_pa_armour and CONFIG.alert.armour and is_armour(it) then
+      if pa_alert_armour(it, unworn_aux_item) then return end
+    else
+      if loaded_pa_weapons and CONFIG.alert.weapons and it.is_weapon then
+        if pa_alert_weapon(it) then return end
       end
     end
   end)
@@ -6270,14 +6272,18 @@ end
 
 -- Used for data tables
 function get_pa_keys(it, name_type)
-  if it.class(true) == "bauble" then return it.name("qual"), 0 end
-  if is_talisman(it) or is_orb(it) then
+  if it.class(true) == "bauble" then
+    return it.name("qual"), 0
+  elseif is_talisman(it) or is_orb(it) then
     return it.name():gsub("\"", ""), 0
+  elseif is_magic_staff(it) then
+    return it.name("base"), 0
+  else
+    local name = it.name(name_type or "base"):gsub("\"", "")
+    local value = tonumber(name:sub(1, 3))
+    if not value then return name, 0 end
+    return util.trim(name:sub(4)), value
   end
-  local name = it.name(name_type or "base"):gsub("\"", "")
-  local value = tonumber(name:sub(1, 3))
-  if not value then return name, 0 end
-  return util.trim(name:sub(4)), value
 end
 
 function get_plussed_name(it, name_type)
@@ -6770,13 +6776,23 @@ function pa_alert_armour(it, unworn_inv_item)
       return it.is_identified and pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
     end
   
-    local cur = items.equipped_at(it.subtype()) or unworn_inv_item
-    if not cur then return pa_alert_item(it, "Open slot", EMOJI.CAUTION, CONFIG.fm_alert.aux_armour) end
-    if has_ego(it) and get_ego(it) ~= get_ego(cur) then
-      local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
-      return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
-    elseif get_armour_ac(it) > get_armour_ac(cur) then
-      return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+    local all_equipped, num_slots = get_equipped_aux(it.subtype())
+    if #all_equipped < num_slots then
+      if unworn_inv_item then
+        all_equipped[#all_equipped+1] = unworn_inv_item
+      else
+        -- Fires on dangerous brands or items blocked by non-innatemutations
+        return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
+      end
+    end
+
+    for _, cur in ipairs(all_equipped) do
+      if has_ego(it) and get_ego(it) ~= get_ego(cur) then
+        local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
+        return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+      elseif get_armour_ac(it) > get_armour_ac(cur) then
+        return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+      end
     end
   end
 end
@@ -6835,24 +6851,32 @@ function pa_pickup_armour(it)
       if get_mut(MUTS.horns, true) + get_mut(MUTS.beak, true) + get_mut(MUTS.antennae, true) > 0 then return false end
     end
 
-    local cur = items.equipped_at(st)
-    if not cur then
-      -- Check if we're carrying one already; implying we have a temporary form
+    local all_equipped, num_slots = get_equipped_aux(it.subtype())
+    if num_slots == 1 and #all_equipped == 0 then
+      -- For non-poltergeist, check if we're carrying one already; implying we have a temporary form
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.subtype() == st then return false end
       end
-      return true
     end
+    if #all_equipped < num_slots then return true end    
+
     if not it.is_identified then return false end
 
-    if cur.artefact then return false end
+    for _, cur in ipairs(all_equipped) do
+      if i == num_slots and cur.artefact then return false end
+      if not cur.artefact then break end
+    end
+
     if it.artefact then return true end
-    if has_ego(cur) then
-      return get_ego(cur) == get_ego(it) and it.plus > cur.plus
-    elseif has_ego(it) then
-      return get_armour_ac(it) >= get_armour_ac(cur)
-    else
-      return get_armour_ac(it) > get_armour_ac(cur)
+
+    for _, cur in ipairs(all_equipped) do
+      if has_ego(cur) then
+        if get_ego(cur) == get_ego(it) and it.plus > cur.plus then return true end
+      elseif has_ego(it) then
+        if get_armour_ac(it) >= get_armour_ac(cur) then return true end
+      else
+        if get_armour_ac(it) > get_armour_ac(cur) then return true end
+      end
     end
   end
 
@@ -6927,15 +6951,8 @@ end
 ---- Smart staff pickup ----
 function pa_pickup_staff(it)
   if not it.is_identified then return false end
-  local school = get_staff_school(it)
-  if get_skill(school) == 0 then return false end
-
-  -- Check for previously picked staves
-  for _,v in ipairs(pa_items_picked) do
-    if v:find(it.name("base"), 1, true) then return false end
-  end
-
-  return true
+  if get_skill(get_staff_school(it)) == 0 then return false end
+  return not already_contains(pa_items_picked, it)
 end
 
 ---- Exclude superfluous rings ----
@@ -7080,7 +7097,7 @@ function pa_pickup_weapon(it)
   end
 
   if has_risky_ego(it) then return false end
-
+  if already_contains(pa_items_picked, it) then return false end
   for _,inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end
   end
