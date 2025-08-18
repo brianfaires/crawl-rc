@@ -6763,7 +6763,9 @@ function pa_alert_armour(it, unworn_inv_item)
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
-      local encumb_impact = math.min(1, (you.skill("Spellcasting") + you.skill("Ranged Weapons")) / you.xl())
+      local encumb_skills = you.skill("Spellcasting") + you.skill("Ranged Weapons") - you.skill("Armour") / 2
+      if encumb_skills < 0 then encumb_skills = 0 end
+      local encumb_impact = math.min(1, encumb_skills / you.xl())
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if (total_loss < 0) or (ac_delta / total_loss > TUNING.armour.heavier[ego_change_type]) then
         if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.heavier.min_gain then return false end
