@@ -5235,6 +5235,7 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Inscribe stats on items -----
+-- Weapon inscriptions rely on get_weapon_info_string() from pa-util.lua
 local NUM_PATTERN = "[%+%-:]%d+%.%d*"
 
 local function inscribe_armour_stats(it)
@@ -6274,9 +6275,7 @@ end
 
 
 --------- Functions for armour and weapons ---------
--- get_ego() returns artefact status first, then the ego
 function get_ego(it, terse)
-  if it.artefact then return "arte" end
   local ego = it.ego(terse)
   if ego then return ego end
 

@@ -1,4 +1,5 @@
 ----- Inscribe stats on items -----
+-- Weapon inscriptions rely on get_weapon_info_string() from pa-util.lua
 local NUM_PATTERN = "[%+%-:]%d+%.%d*"
 
 local function inscribe_armour_stats(it)

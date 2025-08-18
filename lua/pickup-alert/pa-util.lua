@@ -75,9 +75,7 @@ end
 
 
 --------- Functions for armour and weapons ---------
--- get_ego() returns artefact status first, then the ego
 function get_ego(it, terse)
-  if it.artefact then return "arte" end
   local ego = it.ego(terse)
   if ego then return ego end
 
