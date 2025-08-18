@@ -355,7 +355,7 @@ function get_weap_damage(it, dmg_type)
       if not brand_bonus and dmg_type == DMG_TYPE.scoring then
         brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego]
       end
-      if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + brand_bonus.offset + it_plus end
+      if brand_bonus then return brand_bonus.factor * (pre_brand_dmg_no_plus + it_plus) + brand_bonus.offset end
     end
   end
 
