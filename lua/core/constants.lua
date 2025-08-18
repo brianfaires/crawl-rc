@@ -83,7 +83,7 @@ COLORS = {
 } -- COLORS (do not remove this comment)
 
 RISKY_EGOS = {
-  "chaos", "distortion", "harm", "heavy", "infusion"
+  "chaos", "distortion", "harm", "heavy", "infusion", "ponderous"
 } -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
