@@ -205,9 +205,9 @@ function pa_pickup_armour(it)
     -- Already have something in slot; it must be glowing to pick up
     if not it.is_identified then return false end
 
-    for _, cur in ipairs(all_equipped) do
-      if i == num_slots and cur.artefact then return false end
+    for i, cur in ipairs(all_equipped) do
       if not cur.artefact then break end
+      if i == num_slots then return false end
     end
 
     if it.artefact then return true end
