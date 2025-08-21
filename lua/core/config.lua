@@ -53,6 +53,7 @@ function init_config()
   -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
   CONFIG.inscribe_weapons = true
   CONFIG.inscribe_armour = true
+  CONFIG.inscribe_dps_type = DMG_TYPE.branded -- 1=unbranded, 2=branded
 
   -- misc-alerts.lua
   CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
@@ -201,8 +202,6 @@ function init_config()
 
 
   -- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
-  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
-
   WEAPON_BRAND_BONUSES = {
     spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased incoming damage
     heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere

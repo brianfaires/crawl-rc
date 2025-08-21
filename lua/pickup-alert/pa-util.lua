@@ -44,9 +44,9 @@ function get_armour_info_strings(it)
   end
 end
 
-function get_weapon_info_string(it)
+function get_weapon_info_string(it, dmg_type)
   if not it.is_weapon then return end
-  local dmg = get_weap_damage(it, DMG_TYPE.branded)
+  local dmg = get_weap_damage(it, dmg_type or DMG_TYPE.branded)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end

@@ -100,3 +100,5 @@ MUTS = {
 SIZE_PENALTY = {
   LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2
 } -- SIZE_PENALTY (do not remove this comment)
+
+DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
