@@ -33,7 +33,7 @@ function init_misc_alerts()
   create_persistent_data("alerted_max_piety", false)
 
   if CONFIG.save_with_msg then
-    crawl.setopt("macros += M S ===macro_save_with_message")
+    crawl.setopt("macros += M " .. KEYS.save_game .. " ===macro_save_with_message")
     if saved_game_msg and saved_game_msg ~= "" then
       crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
       saved_game_msg = nil

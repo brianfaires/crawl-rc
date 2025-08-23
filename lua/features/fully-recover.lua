@@ -60,7 +60,7 @@ function init_fully_recover()
   
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt("macros += M o ===macro_explore_fully_recover")
+  crawl.setopt("macros += M " .. KEYS.explore .. " ===macro_explore_fully_recover")
 end
 
 -- Attach full recovery to auto-explore

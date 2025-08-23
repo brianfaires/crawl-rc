@@ -49,7 +49,7 @@ function init_config()
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
-  -- fully-recover.lua: Keep resting until these statuses are gone
+  -- fully-recover.lua: Rest off bad statuses during rest
   CONFIG.rest_off_statuses = {
     "berserk", "short of breath", "corroded", "vulnerable", 
     "confused", "marked", "tree%-form", "slowed", "sluggish"
@@ -3485,7 +3485,12 @@ RISKY_EGOS = {
 } -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
-  LF = string.char(10), CR = string.char(13)
+  LF = string.char(10),
+  CR = string.char(13),
+  explore = crawl.get_command("CMD_EXPLORE") or "o",
+  save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
+  go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
+  go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">"
 } -- KEYS (do not remove this comment)
 
 MUTS = {
@@ -4779,7 +4784,7 @@ function init_fully_recover()
   
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt("macros += M o ===macro_explore_fully_recover")
+  crawl.setopt("macros += M " .. KEYS.explore .. " ===macro_explore_fully_recover")
 end
 
 -- Attach full recovery to auto-explore
@@ -4804,10 +4809,6 @@ function c_message_fully_recover(text, channel)
     elseif fully_recovered() then finish_fully_recover()
     end
   end
-end
-
-function ch_stop_running_fully_recover(kind)
-  if kind == "run" and not fully_recovered() then start_fully_recover() end
 end
 
 function ready_fully_recover()
@@ -5365,7 +5366,7 @@ function init_misc_alerts()
   create_persistent_data("alerted_max_piety", false)
 
   if CONFIG.save_with_msg then
-    crawl.setopt("macros += M S ===macro_save_with_message")
+    crawl.setopt("macros += M " .. KEYS.save_game .. " ===macro_save_with_message")
     if saved_game_msg and saved_game_msg ~= "" then
       crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
       saved_game_msg = nil
@@ -5740,8 +5741,8 @@ function init_safe_stairs()
   last_stair_turn = 0
   v5_unwarned = true
 
-  crawl.setopt("macros += M > ===macro_do_safe_downstairs")
-  crawl.setopt("macros += M < ===macro_do_safe_upstairs")
+  crawl.setopt("macros += M " .. KEYS.go_downstairs .. " ===macro_do_safe_downstairs")
+  crawl.setopt("macros += M " .. KEYS.go_upstairs .. " ===macro_do_safe_upstairs")
 end
 
 function macro_do_safe_downstairs()
@@ -7416,11 +7417,6 @@ function c_message(text, channel)
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_pack then c_message_fm_pack(text, channel) end
   if c_message_fm_disable then c_message_fm_disable(text, channel) end
-end
-
-function ch_stop_running(kind)
-  if not buehler_rc_active then return end
-  if ch_stop_running_fully_recover then ch_stop_running_fully_recover(kind) end
 end
 
 function c_answer_prompt(prompt)

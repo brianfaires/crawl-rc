@@ -87,7 +87,12 @@ RISKY_EGOS = {
 } -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
-  LF = string.char(10), CR = string.char(13)
+  LF = string.char(10),
+  CR = string.char(13),
+  explore = crawl.get_command("CMD_EXPLORE") or "o",
+  save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
+  go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
+  go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">"
 } -- KEYS (do not remove this comment)
 
 MUTS = {
