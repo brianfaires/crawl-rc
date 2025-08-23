@@ -46,10 +46,10 @@ function init_pa_main()
     if not it.is_useless then
       if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
-        if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and CONFIG.pickup.staves and is_magic_staff(it) then
         if pa_pickup_staff(it) then return true end
+      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
+        if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
       end
