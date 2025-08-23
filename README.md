@@ -238,11 +238,12 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. Wait for allies to fully heal
 1. Better colorizing of rF+, rC+, etc (needs to intercept msgs)
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
-1. remove "~~DROP_ME" when dropping item (needs to inscribe items on floor)
+1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 
 ### Won't do
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
+1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription` afaict)
 
 ### Known issues/quirks
 1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)

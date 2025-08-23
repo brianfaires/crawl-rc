@@ -295,16 +295,28 @@ explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang
 
 ai := autoinscribe
 
+# General
+ai += of fire resistance:rF+
+ai += of cold resistance:rC+
+ai += of poison resistance:rPois
+ai += of preservation:rCorr
+ai += of invulnerability:rInv
+ai += of magic regeneration:MRegen+
+ai += of positive energy:rN+
+ai += of regeneration:Regen+
+ai += of resistance:rRes
+ai += of willpower:Will+
+
 # Armour
-ai += cloak of preservation:rCorr
 ai += fire dragon scale:rF++, rC-
 ai += gold dragon scale:rC+, rF+, rPois
 ai += ice dragon scale:rC++, rF-
 ai += pearl dragon scale:rN+
 ai += storm dragon scale:rElec
 ai += swamp dragon scale:rPois
-ai += quicksilver dragon scale:MR+
+ai += quicksilver dragon scale:Will+
 ai += shadow dragon scale:Stlth+
+ai += troll leather:Regen+
 
 
 # Amulets
@@ -315,10 +327,8 @@ ai += ring of fire:rF+, rC-
 ai += ring of flight:+Fly
 ai += ring of ice:rC+, rF-
 ai += ring of magical power:MP+9
-ai += ring of poison resistance:rPois
 ai += ring of protection from cold:rC+
 ai += ring of protection from fire:rF+
-ai += ring of positive energy:rN+
 ai += ring of resist corrosion:rCorr
 ai += ring of see invisible:sInv
 ai += ring of wizardry:Wiz+
@@ -4278,34 +4288,40 @@ local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local COLORIZE_TAGS = {
   { "rF" .. MULTI_PLUS, COLORS.lightred },
-  { "rC" .. MULTI_PLUS, COLORS.lightblue },
-  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
   { "rF" .. MULTI_MINUS, COLORS.red },
+  { "rC" .. MULTI_PLUS, COLORS.lightblue },
   { "rC" .. MULTI_MINUS, COLORS.blue },
+  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
   { "rN" .. MULTI_MINUS, COLORS.magenta },
-  { "rPois", COLORS.green },
+  { "rPois", COLORS.lightgreen },
   { "rElec", COLORS.lightcyan },
   { "rCorr", COLORS.yellow },
   { "rMut", COLORS.brown },
   { "sInv", COLORS.white },
+  { "MRegen" .. MULTI_PLUS, COLORS.cyan },
+  { "Regen" .. MULTI_PLUS, COLORS.green },
+  { "Stlth" .. MULTI_PLUS, COLORS.white },
+  { "Will" .. MULTI_PLUS, COLORS.brown },
+  { "Will" .. MULTI_MINUS, COLORS.darkgrey },
   { "Wiz" .. MULTI_PLUS, COLORS.white },
+  { "Wiz" .. MULTI_MINUS, COLORS.darkgrey },
   { "Slay" .. POS_NUM, COLORS.white},
-  {  "Str" .. POS_NUM, COLORS.white },
-  {  "Dex" .. POS_NUM, COLORS.white },
-  {  "Int" .. POS_NUM, COLORS.white },
-  {   "AC" .. POS_NUM, COLORS.white },
-  {   "EV" .. POS_NUM, COLORS.white },
-  {   "SH" .. POS_NUM, COLORS.white },
-  {   "HP" .. POS_NUM, COLORS.white },
-  {   "MP" .. POS_NUM, COLORS.white },
   { "Slay" .. NEG_NUM, COLORS.darkgrey },
+  {  "Str" .. POS_NUM, COLORS.white },
   {  "Str" .. NEG_NUM, COLORS.darkgrey },
+  {  "Dex" .. POS_NUM, COLORS.white },
   {  "Dex" .. NEG_NUM, COLORS.darkgrey },
+  {  "Int" .. POS_NUM, COLORS.white },
   {  "Int" .. NEG_NUM, COLORS.darkgrey },
+  {   "AC" .. POS_NUM, COLORS.white },
   {   "AC" .. NEG_NUM, COLORS.darkgrey },
+  {   "EV" .. POS_NUM, COLORS.white },
   {   "EV" .. NEG_NUM, COLORS.darkgrey },
+  {   "SH" .. POS_NUM, COLORS.white },
   {   "SH" .. NEG_NUM, COLORS.darkgrey },
+  {   "HP" .. POS_NUM, COLORS.white },
   {   "HP" .. NEG_NUM, COLORS.darkgrey },
+  {   "MP" .. POS_NUM, COLORS.white },
   {   "MP" .. NEG_NUM, COLORS.darkgrey },
 } --COLORIZE_TAGS (do not remove this comment)
 
@@ -4327,8 +4343,9 @@ end
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
   if not CONFIG.colorize_inscriptions then return end
+  if it.artefact then return end
   -- If enabled, call out to inscribe stats before coloring
-  if ready_inscribe_stats then ready_inscribe_stats() end
+  if do_stat_inscription then do_stat_inscription(it) end
 
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do
@@ -5291,15 +5308,18 @@ local function inscribe_weapon_stats(it)
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
+function do_stat_inscription(it)
+  if CONFIG.inscribe_weapons and it.is_weapon then
+    inscribe_weapon_stats(it)
+  elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
+    inscribe_armour_stats(it)
+  end
+end
 
 ------------------ Hooks ------------------
 function ready_inscribe_stats()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if CONFIG.inscribe_weapons and inv.is_weapon then
-      inscribe_weapon_stats(inv)
-    elseif CONFIG.inscribe_armour and is_armour(inv) and not is_scarf(inv) then
-      inscribe_armour_stats(inv)
-    end
+    do_stat_inscription(inv)
   end
 end
 
