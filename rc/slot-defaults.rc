@@ -2,8 +2,8 @@
 # Rings to P/p for easy swapping
 item_slot += ring of:Pp
 
-# ignored: degeneration, noise, torment
-# unassigned slots: d, e, k, F
+# ignored: moonshine, noise
+# unassigned slots: d, e, F
 item_slot ^= scroll of acquirement:q
 item_slot ^= scroll of amnesia:E
 item_slot ^= scroll of blinking:B
@@ -20,6 +20,7 @@ item_slot ^= scroll of poison:y
 item_slot ^= scroll of silence:S
 item_slot ^= scroll of summoning:s
 item_slot ^= scroll of teleportation:t
+item_slot ^= scroll of torment:k
 item_slot ^= scroll of vulnerability:v
 
 item_slot ^= potion of ambrosia:A
