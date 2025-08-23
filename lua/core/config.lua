@@ -53,7 +53,7 @@ function init_config()
   -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
   CONFIG.inscribe_weapons = true
   CONFIG.inscribe_armour = true
-  CONFIG.inscribe_dps_type = DMG_TYPE.branded -- 1=unbranded, 2=branded
+  CONFIG.inscribe_dps_type = DMG_TYPE.branded -- How to calc dmg for weapon inscriptions
 
   -- misc-alerts.lua
   CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable

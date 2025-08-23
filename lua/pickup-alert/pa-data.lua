@@ -27,7 +27,7 @@ function init_pa_data()
   create_persistent_data("alerted_first_polearm_1h", false)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
-  create_persistent_data("unbranded_high_score", 0)
+  create_persistent_data("plain_dmg_high_score", 0)
 
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -91,10 +91,10 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    dmg = get_weap_damage(it, DMG_TYPE.unbranded)
-    if dmg > unbranded_high_score then
-      unbranded_high_score = dmg
-      if not ret_val then ret_val = "Highest no-brand damage" end
+    dmg = get_weap_damage(it, DMG_TYPE.plain)
+    if dmg > plain_dmg_high_score then
+      plain_dmg_high_score = dmg
+      if not ret_val then ret_val = "Highest plain damage" end
     end
   end
 

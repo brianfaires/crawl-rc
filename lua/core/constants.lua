@@ -106,4 +106,13 @@ SIZE_PENALTY = {
   LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2
 } -- SIZE_PENALTY (do not remove this comment)
 
-DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
+DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg with no associated damage type
+  branded = 3, -- Include full brand dmg
+  scoring = 4 -- Include boosts for non-damaging brands
+} -- DMG_TYPE (do not remove this comment)
+
+PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
+  "distortion", "heavy", "spectralizing"
+} -- PLAIN_DMG_EGOS (do not remove this comment)

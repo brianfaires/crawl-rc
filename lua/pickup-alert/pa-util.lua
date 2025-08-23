@@ -332,9 +332,8 @@ function get_weap_damage(it, dmg_type)
     end
   end
 
-  local stat
-  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex
-  else stat = str end
+  local stat = str
+  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex end
 
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
@@ -345,17 +344,25 @@ function get_weap_damage(it, dmg_type)
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
   if is_magic_staff(it) then
-    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type == DMG_TYPE.unbranded))
+    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type))
   end
 
-  if dmg_type >= DMG_TYPE.branded then
+  if dmg_type == DMG_TYPE.plain then
+    local ego = get_ego(it)
+    if ego and table.contains(PLAIN_DMG_EGOS, ego) then
+      local brand_bonus = WEAPON_BRAND_BONUSES[ego] or WEAPON_BRAND_BONUSES.subtle[ego]
+      return brand_bonus.factor * pre_brand_dmg + brand_bonus.offset
+    end
+  elseif dmg_type >= DMG_TYPE.branded then
     local ego = get_ego(it)
     if ego then
       local brand_bonus = WEAPON_BRAND_BONUSES[ego]
       if not brand_bonus and dmg_type == DMG_TYPE.scoring then
         brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego]
       end
-      if brand_bonus then return brand_bonus.factor * (pre_brand_dmg_no_plus + it_plus) + brand_bonus.offset end
+      if brand_bonus then
+        return brand_bonus.factor * pre_brand_dmg + brand_bonus.offset
+      end
     end
   end
 
@@ -437,9 +444,10 @@ function get_slay_bonuses()
   return sum
 end
 
-function get_staff_bonus_dmg(it, ignore_brand_dmg)
+function get_staff_bonus_dmg(it, dmg_type)
   -- dcss v0.33.1
-  if ignore_brand_dmg then
+  if dmg_type == DMG_TYPE.unbranded then return 0 end
+  if dmg_type == DMG_TYPE.plain then
     local basename = it.name("base")
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
       return 0
