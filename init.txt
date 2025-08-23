@@ -108,11 +108,6 @@ function c_message(text, channel)
   if c_message_fm_disable then c_message_fm_disable(text, channel) end
 end
 
-function ch_stop_running(kind)
-  if not buehler_rc_active then return end
-  if ch_stop_running_fully_recover then ch_stop_running_fully_recover(kind) end
-end
-
 function c_answer_prompt(prompt)
   if not buehler_rc_active then return end
   if prompt:find("cheaper one?", 1, true) and you.branch() ~= "Bazaar" then

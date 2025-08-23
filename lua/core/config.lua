@@ -44,7 +44,7 @@ function init_config()
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
-  -- fully-recover.lua: Keep resting until these statuses are gone
+  -- fully-recover.lua: Rest off bad statuses during rest
   CONFIG.rest_off_statuses = {
     "berserk", "short of breath", "corroded", "vulnerable", 
     "confused", "marked", "tree%-form", "slowed", "sluggish"

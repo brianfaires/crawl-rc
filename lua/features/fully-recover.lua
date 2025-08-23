@@ -87,10 +87,6 @@ function c_message_fully_recover(text, channel)
   end
 end
 
-function ch_stop_running_fully_recover(kind)
-  if kind == "run" and not fully_recovered() then start_fully_recover() end
-end
-
 function ready_fully_recover()
   if recovery_start_turn > 0 then
     if fully_recovered() then finish_fully_recover()
