@@ -85,6 +85,9 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Highest AC" end
     end
   elseif it.is_weapon then
+    -- Don't alert for unusable weapons
+    if get_hands(it) == 2 and not offhand_is_free() then return end
+
     local dmg = get_weap_damage(it, DMG_TYPE.branded)
     if dmg > weapon_high_score then
       weapon_high_score = dmg
