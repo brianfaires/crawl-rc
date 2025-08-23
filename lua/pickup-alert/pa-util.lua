@@ -349,7 +349,7 @@ function get_weap_damage(it, dmg_type)
 
   if dmg_type == DMG_TYPE.plain then
     local ego = get_ego(it)
-    if ego and table.contains(PLAIN_DMG_EGOS, ego) then
+    if ego and util.contains(PLAIN_DMG_EGOS, ego) then
       local brand_bonus = WEAPON_BRAND_BONUSES[ego] or WEAPON_BRAND_BONUSES.subtle[ego]
       return brand_bonus.factor * pre_brand_dmg + brand_bonus.offset
     end

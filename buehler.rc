@@ -3397,7 +3397,7 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 -- Lists of things that may need to be updated with future changes
-BUEHLER_RC_VERSION = "1.0.1"
+BUEHLER_RC_VERSION = "1.1.0"
 
 ---- Items ----
 ALL_MISC_ITEMS = {
@@ -6610,7 +6610,7 @@ function get_weap_damage(it, dmg_type)
 
   if dmg_type == DMG_TYPE.plain then
     local ego = get_ego(it)
-    if ego and table.contains(PLAIN_DMG_EGOS, ego) then
+    if ego and util.contains(PLAIN_DMG_EGOS, ego) then
       local brand_bonus = WEAPON_BRAND_BONUSES[ego] or WEAPON_BRAND_BONUSES.subtle[ego]
       return brand_bonus.factor * pre_brand_dmg + brand_bonus.offset
     end

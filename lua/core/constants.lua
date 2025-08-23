@@ -1,5 +1,5 @@
 -- Lists of things that may need to be updated with future changes
-BUEHLER_RC_VERSION = "1.0.1"
+BUEHLER_RC_VERSION = "1.1.0"
 
 ---- Items ----
 ALL_MISC_ITEMS = {

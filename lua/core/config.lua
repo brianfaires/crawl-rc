@@ -122,7 +122,7 @@ function init_config()
     }, -- CONFIG.alert.one_time (do not remove this comment)
     
     -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-    OTA_require_skill = { weapon = 4, armour = 3, shield = 0 }
+    OTA_require_skill = { weapon = 3, armour = 2.5, shield = 0 }
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more
