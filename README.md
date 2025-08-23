@@ -108,7 +108,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - No altar stops if you have a god
 - Don't stop exploration on portals leading out of baileys/sewers/etc
 - Stop travel on gates in Pan
-- Auto-search items when entering a gauntlet or temple. Runs to temple exit after worship.
+- Auto-search items/altars after enter/explore gauntlet/temple. Run to temple exit after worship.
 
 ### [lua/features/safe-consumables.lua](lua/features/safe-consumables.lua)
 - Adds and maintains `!r` and `!q` inscriptions on consumables.
