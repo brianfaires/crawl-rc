@@ -148,10 +148,18 @@ function init_config()
 
   -- For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
   -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
-  -- min_gain/max_loss check against the AC or EV delta when ego changes
+  -- min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
+  -- ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
+  
   TUNING.armour = {
-    lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0, min_gain = 3.0, max_loss = 4.0 },
-    heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0, min_gain = 3.0, max_loss = 8.0 },
+    lighter = {
+      gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0,
+      min_gain = 3.0, max_loss = 4.0, ignore_small = 3.5
+    },
+    heavier = {
+      gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0,
+      min_gain = 3.0, max_loss = 8.0, ignore_small = 5
+    },
     encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
     early_xl = 6 -- Alert all usable runed body armour if XL <= `early_xl`
   } -- TUNING.armour (do not remove this comment)
