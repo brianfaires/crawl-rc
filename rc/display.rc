@@ -26,32 +26,57 @@ $useful := lightblue
 $warning := red
 
 
-# General (order matters)
+# First, highlight uselessness
 menu += $boring:(melded|useless_item)
-menu += red:evil_item
-menu += lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += $warning:forbidden
 
-menu += lightmagenta:artefact.*amulet
-menu += magenta:amulet
+# Overrides: pickup menu
+#   (why doesn't this work when it comes after inventory overrides?)
+menu += pickup:yellow:artefact
+menu += pickup:white:ego
+menu += pickup:magenta:wand
+menu += pickup:lightmagenta:jewellery
+menu += pickup:$emergency:(curare|disjunction|throwing net)
+menu += pickup:$boring:(missile|weapon|armour|jewellery)
 
+# Overrides: inventory menu
+menu += inventory:lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += inventory:$boring:inert
+menu += inventory:lightmagenta:artefact.*amulet
+menu += inventory:magenta:amulet
 menu += inventory:white:artefact
 menu += inventory:lightgrey:ego
-menu += brown:staff of
-menu += $boring:(weapon|armour)
+menu += inventory:$boring:(weapon|armour)
+menu += inventory:$normal:jewellery
 
-menu += $boring:inert
+# Overrides: use_item menu
+menu += use_item:lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += use_item:lightmagenta:artefact.*amulet
+menu += use_item:magenta:amulet
+menu += use_item:white:artefact
+menu += use_item:lightgrey:ego
+menu += use_item:$boring:(weapon|armour)
+menu += use_item:$normal:jewellery
+
+## General settings; used where not explicitly set above
+
+# Artefact / Ego / Vanilla (For equipment)
+menu += $emergency:artefact
+menu += $useful:ego
+menu += $normal:(weapon|armour|jewellery)
+
+# Decks
+menu += $emergency:deck of escape
+menu += $useful:deck of summoning
+menu += $warning:deck of destruction
+
+# Misc
 menu += blue:(talisman|bauble)
-menu += magenta:misc
+menu += lightmagenta:evoker
 
+# Missiles
 menu += $emergency:(curare|disjunction|throwing net)
 menu += $normal:missile
-
-# Scrolls
-menu += $boring:scrolls? of (amnesia|enchant|identify)
-menu += $emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
-menu += $rare:scrolls? of (acquirement|brand)
-menu += $useful:scrolls? of (revelation)
-menu += $warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerability)
 
 # Potions
 menu += $emergency:potions? of (cancellation|haste|resistance)
@@ -60,16 +85,23 @@ menu += $rare:potions? of experience
 menu += $useful:potions? of (brilliance|enlightenment|invisibility|might)
 menu += $warning:potions? of (attraction|berserk|lignification|mutation)
 
+# Scrolls
+menu += $boring:scrolls? of (amnesia|enchant|identify)
+menu += $emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
+menu += $rare:scrolls? of (acquirement|brand)
+menu += $useful:scrolls? of (revelation)
+menu += $warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerability)
+
 # Wands
 menu += $emergency:wand of digging
 menu += $normal:wand of (flame|paralysis|charming|mindburst|polymorph)
 menu += $useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
 
-# Deck colouring
-menu += $emergency:deck of escape
-menu += $useful:deck of summoning
-menu += $warning:deck of destruction
+# Weapons
+menu += brown:staff of
 
+
+menu += pickup:yellow:artefact
 
 ######## Message coloring ########
 # black, blue, green, cyan, red, magenta, brown, lightgrey,
