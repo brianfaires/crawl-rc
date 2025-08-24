@@ -58,6 +58,7 @@ function init_config()
   -- misc-alerts.lua
   CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
+  CONFIG.alert_spell_level_changes = true -- Alert when you gain additional spell levels
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
 
   -- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:

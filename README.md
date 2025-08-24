@@ -99,6 +99,8 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 ### [lua/features/misc-alerts.lua](lua/features/misc-alerts.lua)
 - A force-more when dropping below 35% HP (configurable).
 - A msg when you hit 6* piety while wearing an amulet of faith
+- A msg when your number of available spell levels changes
+- A prompt to leave yourself a message when saving with Shift-S 
 
 ### [lua/features/remind-id.lua](lua/features/remind-id.lua)
 - When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
