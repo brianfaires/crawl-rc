@@ -376,78 +376,57 @@ menu := menu_colour
 menu =
 
 # Variables
-$decent := white
-$mp := lightcyan
-$interface := cyan
-$danger := lightred
-$item_dmg := red
-$warning := yellow
+$artefact := white
 $boring := darkgrey
-$negative := brown
-$positive := green
-$good := lightblue
-$verypositive := lightgreen
-$awesome := lightmagenta
+$danger := red
+$emergency := lightcyan
+$equipped := cyan
+$heal := green
+$misc := white
+$normal := lightgrey
+$inactive := brown
+$rare := yellow
+$useful := lightblue
+$warning := magenta
 
-# General
+# General(order matters)
+menu += inventory:$equipped:.*equipped.*(weapon|armour|jewellery)
+menu += $emergency:(curare|throwing net)
 menu += $boring:(melded)
 menu += $boring:.*useless_item.*
-menu += $item_dmg:.*evil_item.*
-menu += inventory:$interface:.*equipped.*
-#menu += $decent:.*artefact.*
-
-menu += $warning:^unidentified .*(jewellery|potion|scroll|wand).*
-menu += $good:^unidentified .*weapon.*(runed|glowing)
-menu += $good:^unidentified .*armour.*(runed|glowing|embroidered|shiny|dyed)
-
-# Staves
-menu += $positive:[^r]staff of
-
-# Wands
-menu += brown:wand of digging
-menu += lightgrey:wand of (flame|paralysis|charming|mindburst)
-menu += lightmagenta:wand of (acid|quicksilver|light)
-menu += lightcyan:wand of (iceblast|roots|warping)
-menu += blue:wand of polymorph
+menu += $danger:.*evil_item.*
+menu += $artefact:artefact
+menu += $inactive:inert
+menu += $inactive:staff of
+menu += $warning:flux bauble
+menu += $misc:misc
 
 # Scrolls
-menu += $danger:scrolls? of torment
-menu += $boring:scrolls? of noise
-menu += $decent:scrolls? of (amnesia|identify|immolation)
-menu += $good:scrolls? of (fear|fog|silence|summoning|vulnerability)
-menu += $positive:scrolls? of (brand|enchant|revelation)
-menu += $verypositive:scrolls? of (blinking|teleportation|butterflies)
-menu += $awesome:scrolls? of (acquirement)
+menu += $boring:scrolls? of (amnesia|brand|enchant|identify)
+menu += $emergency:scrolls? of (blinking|butterflies|fear|summoning)
+menu += $rare:scrolls? of acquirement
+menu += $useful:scrolls? of (fog|teleportation|revelation)
+menu += $warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerability)
 
 # Potions
-menu += $danger:potions? of berserk
-menu += magenta:potions? of mutation
-menu += $decent:potions? of (enlightenment|lignification|ambrosia)
-menu += $good:potions? of (stabbing|brilliance|cancellation|invisibility|might|resistance)
-menu += $positive:potions? of curing
-menu += $mp:potions? of magic
-menu += $verypositive:potions? of (haste|heal wounds)
-menu += $awesome:potions? of experience
+menu += $emergency:potions? of (cancellation|haste|resistance)
+menu += $heal:potions? of (ambrosia|curing|heal wounds|magic)
+menu += $rare:potions? of experience
+menu += $useful:potions? of (brilliance|enlightenment|invisibility|might)
+menu += $warning:potions? of (attraction|berserk|lignification|mutation)
 
-# Amulets
-menu += $good:amulet of (guardian spirit|the acrobat)
-menu += $positive:amulet of (faith|reflection|magic regeneration|regeneration)
-
-# Rings
+# Jewellery
 menu += $warning:ring of (fire|ice)
-menu += $decent:ring of flight
-menu += $verypositive:ring of (.*slaying)
-menu += $positive:ring of (poison resistance|protection from |positive energy|see invisible|resist corrosion)
-menu += $good:ring of (.*evasion|.*protection|magical power|wizardry)
 
-# Misc items
-menu += blue:inert
-menu += $good:throwing net
-menu += $good:artefact
+# Wands
+menu += $emergency:wand of (iceblast|roots|warping)
+menu += $emergency:wand of (acid|quicksilver|light)
+menu += $normal:wand of (flame|paralysis|charming|mindburst|polymorph)
+menu += $rare:wand of digging
 
 # Deck colouring
-menu += $verypositive:deck of escape
-menu += $positive:deck of summoning
+menu += $emergency:deck of escape
+menu += $useful:deck of summoning
 menu += $danger:deck of destruction
 
 
