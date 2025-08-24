@@ -17,36 +17,40 @@ menu := menu_colour
 menu =
 
 # Variables
-$artefact := white
 $boring := darkgrey
-$danger := red
 $emergency := lightcyan
-$equipped := cyan
 $heal := green
-$misc := white
 $normal := lightgrey
-$inactive := brown
 $rare := yellow
 $useful := lightblue
-$warning := magenta
+$warning := red
 
-# General(order matters)
-menu += inventory:$equipped:.*equipped.*(weapon|armour|jewellery)
-menu += $emergency:(curare|throwing net)
-menu += $boring:(melded)
-menu += $boring:.*useless_item.*
-menu += $danger:.*evil_item.*
-menu += $artefact:artefact
-menu += $inactive:inert
-menu += $inactive:staff of
-menu += $warning:flux bauble
-menu += $misc:misc
+
+# General (order matters)
+menu += $boring:(melded|useless_item)
+menu += red:evil_item
+menu += lightgreen:.*equipped.*(weapon|armour|jewellery)
+
+menu += lightmagenta:artefact.*amulet
+menu += magenta:amulet
+
+menu += inventory:white:artefact
+menu += inventory:lightgrey:ego
+menu += brown:staff of
+menu += $boring:(weapon|armour)
+
+menu += $boring:inert
+menu += blue:(talisman|bauble)
+menu += magenta:misc
+
+menu += $emergency:(curare|disjunction|throwing net)
+menu += $normal:missile
 
 # Scrolls
-menu += $boring:scrolls? of (amnesia|brand|enchant|identify)
-menu += $emergency:scrolls? of (blinking|butterflies|fear|summoning)
-menu += $rare:scrolls? of acquirement
-menu += $useful:scrolls? of (fog|teleportation|revelation)
+menu += $boring:scrolls? of (amnesia|enchant|identify)
+menu += $emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
+menu += $rare:scrolls? of (acquirement|brand)
+menu += $useful:scrolls? of (revelation)
 menu += $warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerability)
 
 # Potions
@@ -56,19 +60,15 @@ menu += $rare:potions? of experience
 menu += $useful:potions? of (brilliance|enlightenment|invisibility|might)
 menu += $warning:potions? of (attraction|berserk|lignification|mutation)
 
-# Jewellery
-menu += $warning:ring of (fire|ice)
-
 # Wands
-menu += $emergency:wand of (iceblast|roots|warping)
-menu += $emergency:wand of (acid|quicksilver|light)
+menu += $emergency:wand of digging
 menu += $normal:wand of (flame|paralysis|charming|mindburst|polymorph)
-menu += $rare:wand of digging
+menu += $useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
 
 # Deck colouring
 menu += $emergency:deck of escape
 menu += $useful:deck of summoning
-menu += $danger:deck of destruction
+menu += $warning:deck of destruction
 
 
 ######## Message coloring ########
@@ -2522,7 +2522,7 @@ channel.orb = $awesome
 
 
 #### MUTES Be careful with these! Last, so they override the rest
-msc ^= mute:plain:No target in view!
+#msc ^= mute:plain:No target in view!
 msc ^= mute:There is a.*door here
 
 # Unnecessary
@@ -2535,7 +2535,7 @@ msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
 msc ^= mute:Use which ability
 msc ^= mute:Evoke which item
 #msc ^= mute:Confirm with
-msc ^= mute:You can\'t see any susceptible monsters within range
+#msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears

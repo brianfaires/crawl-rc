@@ -16,7 +16,7 @@ hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
 
-sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
+sort_menus = true:equipped,art,ego,basename,identified,qualname,>qty
 drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, dart, stone
 
