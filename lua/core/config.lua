@@ -127,16 +127,18 @@ function init_config()
 
   -- Which alerts generate a force_more
   CONFIG.fm_alert = {
-    early_weap = false,
-    new_weap = true,
+    early_weap = false,       -- Good weapons found early
+    upgrade_weap = false,     -- Better DPS / weapon_score
+    weap_ego = false,         -- New or diff egos
     body_armour = false,
     shields = true,
     aux_armour = false,
-    armour_ego = true,
-    high_score_weap = false,
-    high_score_armour = true,
+    armour_ego = true,        -- New or diff egos
+    high_score_weap = false,  -- Highest damage found
+    high_score_armour = true, -- Highest AC found
     one_time_alerts = true,
-    artefact = true,
+    artefact = false,         -- Any artefact
+    trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
     orbs = false,
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false
@@ -171,10 +173,10 @@ function init_config()
     -- "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score includes DPS/brand/accuracy.
   TUNING.weap = {}
   TUNING.weap.pickup = {
-    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio > `same_type_melee`
-    same_type_ranged = 1.0, -- Pickup ranged weap of same type if DPS ratio > `same_type_ranged`
-    accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
+    add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
+    same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
+    same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
+    accuracy_weight = 0.25 -- Treat +1 Accuracy as +`accuracy_weight` DPS
   } -- TUNING.weap.pickup (do not remove this comment)
   
   TUNING.weap.alert = {
@@ -182,7 +184,7 @@ function init_config()
     pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
     gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
     new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio > `new_ego`
-    low_skill_penalty_damping = 8, -- Small values penalize low-trained schools more. Penalty is (skill+damp) / (top_skill+damp)
+    low_skill_penalty_damping = 8, -- Increase to soften the penalty to low-trained schools. Penalty is (skill+damp) / (top_skill+damp)
 
     -- Alerts for 2-handed weapons, when carrying 1-handed
     add_hand = {

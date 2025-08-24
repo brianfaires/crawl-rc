@@ -2,7 +2,10 @@ local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 pause_pa_system = nil
 
 function has_configured_force_more(it)
-  if CONFIG.fm_alert.artefact and it.artefact then return true end
+  if it.artefact then
+    if CONFIG.fm_alert.artefact then return true end
+    if CONFIG.fm_alert.trained_artefacts and get_skill_with_item(it) > 0 then return true end
+  end
   if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
   return false
 end

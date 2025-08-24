@@ -466,9 +466,3 @@ function get_staff_bonus_dmg(it, dmg_type)
   local avg_dmg = 3/4 * (evo_skill/2 + spell_skill)
   return avg_dmg*chance
 end
-
-function get_staff_school(it)
-  for k,v in pairs(ALL_STAFF_SCHOOLS) do
-    if it.name("base") == "staff of " .. k then return v end
-	end
-end

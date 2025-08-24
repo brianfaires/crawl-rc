@@ -152,6 +152,24 @@ function get_mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
 
+function get_skill_with_item(it)
+  if is_magic_staff(it) then
+    return math.max(get_skill(get_staff_school(it)), get_skill("Staves"))
+  end
+  if it.is_weapon then return get_skill(it.weap_skill) end
+  if is_body_armour(it) then return get_skill("Armour") end
+  if is_shield(it) then return get_skill("Shields") end
+  if is_talisman(it) then return get_skill("Shapeshifting") end
+
+  return 1 -- Fallback to 1
+end
+
+function get_staff_school(it)
+  for k,v in pairs(ALL_STAFF_SCHOOLS) do
+    if it.name("base") == "staff of " .. k then return v end
+	end
+end
+
 function get_talisman_min_level(it)
   local tokens = crawl.split(it.description, "\n")
   for _,v in ipairs(tokens) do

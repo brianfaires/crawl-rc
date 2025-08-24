@@ -132,16 +132,18 @@ function init_config()
 
   -- Which alerts generate a force_more
   CONFIG.fm_alert = {
-    early_weap = false,
-    new_weap = true,
+    early_weap = false,       -- Good weapons found early
+    upgrade_weap = false,     -- Better DPS / weapon_score
+    weap_ego = false,         -- New or diff egos
     body_armour = false,
     shields = true,
     aux_armour = false,
-    armour_ego = true,
-    high_score_weap = false,
-    high_score_armour = true,
+    armour_ego = true,        -- New or diff egos
+    high_score_weap = false,  -- Highest damage found
+    high_score_armour = true, -- Highest AC found
     one_time_alerts = true,
-    artefact = true,
+    artefact = false,         -- Any artefact
+    trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
     orbs = false,
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false
@@ -176,10 +178,10 @@ function init_config()
     -- "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score includes DPS/brand/accuracy.
   TUNING.weap = {}
   TUNING.weap.pickup = {
-    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio > `same_type_melee`
-    same_type_ranged = 1.0, -- Pickup ranged weap of same type if DPS ratio > `same_type_ranged`
-    accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
+    add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
+    same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
+    same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
+    accuracy_weight = 0.25 -- Treat +1 Accuracy as +`accuracy_weight` DPS
   } -- TUNING.weap.pickup (do not remove this comment)
   
   TUNING.weap.alert = {
@@ -187,7 +189,7 @@ function init_config()
     pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
     gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
     new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio > `new_ego`
-    low_skill_penalty_damping = 8, -- Small values penalize low-trained schools more. Penalty is (skill+damp) / (top_skill+damp)
+    low_skill_penalty_damping = 8, -- Increase to soften the penalty to low-trained schools. Penalty is (skill+damp) / (top_skill+damp)
 
     -- Alerts for 2-handed weapons, when carrying 1-handed
     add_hand = {
@@ -3939,6 +3941,24 @@ function get_mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
 
+function get_skill_with_item(it)
+  if is_magic_staff(it) then
+    return math.max(get_skill(get_staff_school(it)), get_skill("Staves"))
+  end
+  if it.is_weapon then return get_skill(it.weap_skill) end
+  if is_body_armour(it) then return get_skill("Armour") end
+  if is_shield(it) then return get_skill("Shields") end
+  if is_talisman(it) then return get_skill("Shapeshifting") end
+
+  return 1 -- Fallback to 1
+end
+
+function get_staff_school(it)
+  for k,v in pairs(ALL_STAFF_SCHOOLS) do
+    if it.name("base") == "staff of " .. k then return v end
+	end
+end
+
 function get_talisman_min_level(it)
   local tokens = crawl.split(it.description, "\n")
   for _,v in ipairs(tokens) do
@@ -6006,7 +6026,10 @@ local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 pause_pa_system = nil
 
 function has_configured_force_more(it)
-  if CONFIG.fm_alert.artefact and it.artefact then return true end
+  if it.artefact then
+    if CONFIG.fm_alert.artefact then return true end
+    if CONFIG.fm_alert.trained_artefacts and get_skill_with_item(it) > 0 then return true end
+  end
   if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
   return false
 end
@@ -6768,12 +6791,6 @@ function get_staff_bonus_dmg(it, dmg_type)
   return avg_dmg*chance
 end
 
-function get_staff_school(it)
-  for k,v in pairs(ALL_STAFF_SCHOOLS) do
-    if it.name("base") == "staff of " .. k then return v end
-	end
-end
-
 }
 ############################### End lua/pickup-alert/pa-util.lua ###############################
 ##########################################################################################
@@ -7323,7 +7340,7 @@ end
 -- `cur` comes from WEAP_CACHE
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
-    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT, CONFIG.fm_alert.new_weap)
+    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
   local inv_best = WEAP_CACHE.max_dps[WEAP_CACHE.get_key(it)]
@@ -7333,9 +7350,9 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
     end
     return false
   end
@@ -7352,12 +7369,12 @@ local function alert_interesting_weapon(it, cur)
   if get_hands(it) > cur.hands then
     if offhand_is_free() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
       if has_ego(it) and not util.contains(WEAP_CACHE.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
-        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.upgrade_weap)
       end
     elseif has_ego(it) and not has_ego(cur) and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
-      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.weap_ego)
     end
   else -- No extra hand required
     if cur.artefact then return false end
@@ -7365,14 +7382,14 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not has_ego(cur) then
         if score_ratio > TUNING.weap.alert.gain_ego then
-          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
         end
       elseif not util.contains(WEAP_CACHE.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
     end
   end
   

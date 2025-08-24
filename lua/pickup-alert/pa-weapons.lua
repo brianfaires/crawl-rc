@@ -191,7 +191,7 @@ end
 -- `cur` comes from WEAP_CACHE
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
-    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT, CONFIG.fm_alert.new_weap)
+    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
   local inv_best = WEAP_CACHE.max_dps[WEAP_CACHE.get_key(it)]
@@ -201,9 +201,9 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
     end
     return false
   end
@@ -220,12 +220,12 @@ local function alert_interesting_weapon(it, cur)
   if get_hands(it) > cur.hands then
     if offhand_is_free() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
       if has_ego(it) and not util.contains(WEAP_CACHE.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
-        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.upgrade_weap)
       end
     elseif has_ego(it) and not has_ego(cur) and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
-      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.weap_ego)
     end
   else -- No extra hand required
     if cur.artefact then return false end
@@ -233,14 +233,14 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not has_ego(cur) then
         if score_ratio > TUNING.weap.alert.gain_ego then
-          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
         end
       elseif not util.contains(WEAP_CACHE.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
     end
   end
   
