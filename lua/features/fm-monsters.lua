@@ -7,28 +7,38 @@
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "vault warden", "vault guardian", "ghost crab"
+  "air elemental", "deep elf knight", "ghost crab", "swamp worm",
+  "vault warden", "vault guardian"
 } -- always_flash_screen_monsters (do not remove this comment)
 
 -- Always more prompt
 local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
-  -- Torment
-    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
-    "mummy priest", "(dread|ancient) lich", "lurking horror",
   --Summoning
     "shadow demon", "guardian serpent", "ironbound convoker",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
     "halazid warlock", "deep elf elementalist", "demonspawn corrupter",
     "elemental wellspring",
   --Dangerous abilities
-    "swamp worm", "air elemental", "wendingo", "wyrmhole",
+    "wendingo", "wyrmhole",
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-    "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
+    "starflower", "merfolk aquamancer", "wretched star",
   --Dangerous clouds
-    "catoblepas", "death drake", "apocalypse crab", "putrid mouth",
+    "catoblepas", "apocalypse crab",
 } -- always_force_more_monsters (do not remove this comment)
+
+-- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
+if not is_miasma_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, { "death drake", "putrid mouth" })
+end
+
+if not you.torment_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, {
+    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi",
+    "royal mummy", "mummy priest", "(dread|ancient) lich", "lurking horror"
+  })
+end
 
 -- Only alert once per pack
 local FM_PACK = {

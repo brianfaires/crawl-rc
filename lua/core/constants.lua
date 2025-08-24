@@ -34,6 +34,11 @@ ALL_UNDEAD_RACES = {
   "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- ALL_UNDEAD_RACES (do not remove this comment)
 
+ALL_NONLIVING_RACES = {
+  "Djinni", "Gargoyle"
+} -- ALL_UNDEAD_RACES (do not remove this comment)
+
+
 ALL_LITTLE_RACES = {
   "Spriggan",
 } -- ALL_LITTLE_RACES (do not remove this comment)

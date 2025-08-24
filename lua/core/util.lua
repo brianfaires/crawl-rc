@@ -167,6 +167,15 @@ function get_talisman_min_level(it)
   return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
 end
 
+function has_risky_ego(it)
+  local text = it.artefact and it.name() or it.ego()
+  if not text then return false end
+  for _, v in ipairs(RISKY_EGOS) do
+    if text:find(v) then return true end
+  end
+  return false
+end
+
 function have_shield()
   return is_shield(items.equipped_at("offhand"))
 end
@@ -187,17 +196,18 @@ function is_body_armour(it)
   return it and it.subtype() == "body"
 end
 
-function has_risky_ego(it)
-  local text = it.artefact and it.name() or it.ego()
-  if not text then return false end
-  for _, v in ipairs(RISKY_EGOS) do
-    if text:find(v) then return true end
-  end
-  return false
-end
-
 function is_jewellery(it)
   return it and it.class(true) == "jewellery"
+end
+
+function is_magic_staff(it)
+  return it and it.class and it.class(true) == "magical staff"
+end
+
+function is_miasma_immune()
+  if util.contains(ALL_UNDEAD_RACES, you.race()) then return true end
+  if util.contains(ALL_NONLIVING_RACES, you.race()) then return true end
+  return false
 end
 
 function is_ring(it)
@@ -210,10 +220,6 @@ end
 
 function is_shield(it)
   return it and it.is_shield()
-end
-
-function is_magic_staff(it)
-  return it and it.class and it.class(true) == "magical staff"
 end
 
 function is_talisman(it)

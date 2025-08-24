@@ -376,33 +376,35 @@ menu := menu_colour
 menu =
 
 # Variables
-$artefact := white
+$artefact := blue
+$branded := white
 $boring := darkgrey
 $danger := red
 $emergency := lightcyan
 $equipped := cyan
 $heal := green
-$misc := white
+$misc := lightcyan
 $normal := lightgrey
 $inactive := brown
 $rare := yellow
 $useful := lightblue
 $warning := magenta
 
-# General(order matters)
-menu += inventory:$equipped:.*equipped.*(weapon|armour|jewellery)
+# General (order matters)
+menu += $equipped:.*equipped.*(weapon|armour|jewellery)
 menu += $emergency:(curare|throwing net)
 menu += $boring:(melded)
 menu += $boring:.*useless_item.*
 menu += $danger:.*evil_item.*
 menu += $artefact:artefact
+menu += $branded:branded
 menu += $inactive:inert
 menu += $inactive:staff of
 menu += $warning:flux bauble
 menu += $misc:misc
 
 # Scrolls
-menu += $boring:scrolls? of (amnesia|brand|enchant|identify)
+menu += $normal:scrolls? of (amnesia|brand|enchant|identify)
 menu += $emergency:scrolls? of (blinking|butterflies|fear|summoning)
 menu += $rare:scrolls? of acquirement
 menu += $useful:scrolls? of (fog|teleportation|revelation)
@@ -2881,7 +2883,7 @@ channel.orb = $awesome
 
 
 #### MUTES Be careful with these! Last, so they override the rest
-msc ^= mute:plain:No target in view!
+#msc ^= mute:plain:No target in view!
 msc ^= mute:There is a.*door here
 
 # Unnecessary
@@ -2894,7 +2896,7 @@ msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
 msc ^= mute:Use which ability
 msc ^= mute:Evoke which item
 #msc ^= mute:Confirm with
-msc ^= mute:You can\'t see any susceptible monsters within range
+#msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears
@@ -3412,6 +3414,11 @@ ALL_UNDEAD_RACES = {
   "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- ALL_UNDEAD_RACES (do not remove this comment)
 
+ALL_NONLIVING_RACES = {
+  "Djinni", "Gargoyle"
+} -- ALL_UNDEAD_RACES (do not remove this comment)
+
+
 ALL_LITTLE_RACES = {
   "Spriggan",
 } -- ALL_LITTLE_RACES (do not remove this comment)
@@ -3917,6 +3924,15 @@ function get_talisman_min_level(it)
   return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
 end
 
+function has_risky_ego(it)
+  local text = it.artefact and it.name() or it.ego()
+  if not text then return false end
+  for _, v in ipairs(RISKY_EGOS) do
+    if text:find(v) then return true end
+  end
+  return false
+end
+
 function have_shield()
   return is_shield(items.equipped_at("offhand"))
 end
@@ -3937,17 +3953,18 @@ function is_body_armour(it)
   return it and it.subtype() == "body"
 end
 
-function has_risky_ego(it)
-  local text = it.artefact and it.name() or it.ego()
-  if not text then return false end
-  for _, v in ipairs(RISKY_EGOS) do
-    if text:find(v) then return true end
-  end
-  return false
-end
-
 function is_jewellery(it)
   return it and it.class(true) == "jewellery"
+end
+
+function is_magic_staff(it)
+  return it and it.class and it.class(true) == "magical staff"
+end
+
+function is_miasma_immune()
+  if util.contains(ALL_UNDEAD_RACES, you.race()) then return true end
+  if util.contains(ALL_NONLIVING_RACES, you.race()) then return true end
+  return false
 end
 
 function is_ring(it)
@@ -3960,10 +3977,6 @@ end
 
 function is_shield(it)
   return it and it.is_shield()
-end
-
-function is_magic_staff(it)
-  return it and it.class and it.class(true) == "magical staff"
 end
 
 function is_talisman(it)
@@ -4853,28 +4866,38 @@ end
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "vault warden", "vault guardian", "ghost crab"
+  "air elemental", "deep elf knight", "ghost crab", "swamp worm",
+  "vault warden", "vault guardian"
 } -- always_flash_screen_monsters (do not remove this comment)
 
 -- Always more prompt
 local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
-  -- Torment
-    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
-    "mummy priest", "(dread|ancient) lich", "lurking horror",
   --Summoning
     "shadow demon", "guardian serpent", "ironbound convoker",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
     "halazid warlock", "deep elf elementalist", "demonspawn corrupter",
     "elemental wellspring",
   --Dangerous abilities
-    "swamp worm", "air elemental", "wendingo", "wyrmhole",
+    "wendingo", "wyrmhole",
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-    "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
+    "starflower", "merfolk aquamancer", "wretched star",
   --Dangerous clouds
-    "catoblepas", "death drake", "apocalypse crab", "putrid mouth",
+    "catoblepas", "apocalypse crab",
 } -- always_force_more_monsters (do not remove this comment)
+
+-- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
+if not is_miasma_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, { "death drake", "putrid mouth" })
+end
+
+if not you.torment_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, {
+    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi",
+    "royal mummy", "mummy priest", "(dread|ancient) lich", "lurking horror"
+  })
+end
 
 -- Only alert once per pack
 local FM_PACK = {
