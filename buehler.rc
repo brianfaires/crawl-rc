@@ -3975,8 +3975,15 @@ function is_amulet(it)
   return it and it.name("base") == "amulet"
 end
 
-function is_armour(it)
-  return it and it.class(true) == "armour"
+function is_armour(it, include_orbs)
+  -- exclude orbs by default
+  if not it or it.class(true) ~= "armour" then return false end
+  if not include_orbs and is_orb(it) then return false end
+  return true
+end
+
+function is_aux_armour(it)
+  return is_armour(it) and not (is_body_armour(it) or is_shield(it))
 end
 
 function is_body_armour(it)
@@ -4016,7 +4023,7 @@ function is_talisman(it)
 end
 
 function is_orb(it)
-  return it and it.name("qual") == "orb"
+  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not it.is_shield()
 end
 
 function is_polearm(it)
@@ -6000,7 +6007,7 @@ pause_pa_system = nil
 
 function has_configured_force_more(it)
   if CONFIG.fm_alert.artefact and it.artefact then return true end
-  if CONFIG.fm_alert.armour_ego and is_armour(it) and not is_orb(it) and has_ego(it) then return true end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
   return false
 end
 
@@ -6052,7 +6059,7 @@ function init_pa_main()
       end
     else
       -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-      if not is_armour(it) or is_body_armour(it) or is_shield(it) or is_orb(it) then return end
+      if is_aux_armour(it) then return end
       
       local unworn_aux_item = nil
       local st = it.subtype()
@@ -6181,7 +6188,7 @@ end
 {
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if it.is_weapon or is_armour(it) or is_talisman(it) or is_orb(it) then
+  if it.is_weapon or is_armour(it, true) or is_talisman(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
@@ -6306,7 +6313,7 @@ local function format_stat(abbr, val, is_worn)
 end
 
 function get_armour_info_strings(it)
-  if not is_armour(it) or is_orb(it) then return "", "" end
+  if not is_armour(it) then return "", "" end
 
   -- Compare against last slot if poltergeist
   local slot_num = you.race() == "Poltergeist" and 6 or 1
@@ -6723,7 +6730,7 @@ function get_slay_bonuses()
         elseif get_ego(it, true) == "Slay" then
           sum = sum + it.plus
         end
-      elseif it.artefact and (is_armour(it) or is_amulet(it)) then
+      elseif it.artefact and (is_armour(it, true) or is_amulet(it)) then
           local slay = it.artprops["Slay"]
           if slay then sum = sum + slay end
       end

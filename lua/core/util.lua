@@ -188,8 +188,15 @@ function is_amulet(it)
   return it and it.name("base") == "amulet"
 end
 
-function is_armour(it)
-  return it and it.class(true) == "armour"
+function is_armour(it, include_orbs)
+  -- exclude orbs by default
+  if not it or it.class(true) ~= "armour" then return false end
+  if not include_orbs and is_orb(it) then return false end
+  return true
+end
+
+function is_aux_armour(it)
+  return is_armour(it) and not (is_body_armour(it) or is_shield(it))
 end
 
 function is_body_armour(it)
@@ -229,7 +236,7 @@ function is_talisman(it)
 end
 
 function is_orb(it)
-  return it and it.name("qual") == "orb"
+  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not it.is_shield()
 end
 
 function is_polearm(it)

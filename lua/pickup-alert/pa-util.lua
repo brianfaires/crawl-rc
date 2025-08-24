@@ -12,7 +12,7 @@ local function format_stat(abbr, val, is_worn)
 end
 
 function get_armour_info_strings(it)
-  if not is_armour(it) or is_orb(it) then return "", "" end
+  if not is_armour(it) then return "", "" end
 
   -- Compare against last slot if poltergeist
   local slot_num = you.race() == "Poltergeist" and 6 or 1
@@ -429,7 +429,7 @@ function get_slay_bonuses()
         elseif get_ego(it, true) == "Slay" then
           sum = sum + it.plus
         end
-      elseif it.artefact and (is_armour(it) or is_amulet(it)) then
+      elseif it.artefact and (is_armour(it, true) or is_amulet(it)) then
           local slay = it.artprops["Slay"]
           if slay then sum = sum + slay end
       end

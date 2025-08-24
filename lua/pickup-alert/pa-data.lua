@@ -1,6 +1,6 @@
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if it.is_weapon or is_armour(it) or is_talisman(it) or is_orb(it) then
+  if it.is_weapon or is_armour(it, true) or is_talisman(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
