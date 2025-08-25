@@ -7,8 +7,11 @@
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "air elemental", "deep elf knight", "ghost crab", "swamp worm",
-  "vault warden", "vault guardian"
+  "air elemental", "ghost crab", "vault warden", "vault guardian",
+  -- Displacement
+  "deep elf knight", "swamp worm",
+  -- Summoning
+  "deep elf elementalist", 
 } -- always_flash_screen_monsters (do not remove this comment)
 
 -- Always more prompt
@@ -18,8 +21,7 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
   --Summoning
     "shadow demon", "guardian serpent", "ironbound convoker",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
-    "halazid warlock", "deep elf elementalist", "demonspawn corrupter",
-    "elemental wellspring",
+    "halazid warlock", "demonspawn corrupter", "elemental wellspring",
   --Dangerous abilities
     "wendingo", "wyrmhole",
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
