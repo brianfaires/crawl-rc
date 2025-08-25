@@ -32,9 +32,10 @@ menu += $warning:forbidden
 
 # Overrides: pickup menu (Affects Cntl-F)
 #   (why don't these work when they come after inventory overrides?)
+menu += pickup:lightmagenta:artefact.*jewellery
+menu += pickup:magenta:jewellery
 menu += pickup:lightcyan:artefact
 menu += pickup:lightblue:ego
-menu += pickup:lightmagenta:jewellery
 menu += pickup:magenta:wand
 menu += pickup:$emergency:(curare|disjunction|throwing net)
 menu += pickup:$normal:(missile|weapon|armour)
