@@ -6999,16 +6999,13 @@ function pa_pickup_armour(it)
   if has_risky_ego(it) then return false end
 
   if is_body_armour(it) then
-    -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
+    -- Pick up AC upgrades, and new egos that don't lose AC
     local cur = items.equipped_at("armour")
     if not cur then return false end
     if it.encumbrance > cur.encumbrance then return false end
+    if cur.artefact or it.artefact then return false end
 
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-
-    if cur.artefact then return false end
-    if it.artefact then return ac_delta > -5 end
-
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
     elseif not has_ego(cur) then

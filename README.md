@@ -141,6 +141,7 @@ Diff alert types can be configured to cause a more() prompt.
 
 ### [lua/pickup-alert/pa-armour.lua](lua/pickup-alert/pa-armour.lua) (Armour)
 Picks up armour that is a pure upgrade to what you currently have.
+  This can be ambiguous for artefacts, so body armour artefacts are NOT auto picked-up, and will only send alerts.
 
 Alerts generated for:
 - Items with new egos or increased AC.
