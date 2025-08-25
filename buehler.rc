@@ -394,12 +394,12 @@ menu += $warning:forbidden
 
 # Overrides: pickup menu
 #   (why doesn't this work when it comes after inventory overrides?)
-menu += pickup:yellow:artefact
-menu += pickup:white:ego
-menu += pickup:magenta:wand
+menu += pickup:lightcyan:artefact
+menu += pickup:lightblue:ego
 menu += pickup:lightmagenta:jewellery
+menu += pickup:magenta:wand
 menu += pickup:$emergency:(curare|disjunction|throwing net)
-#menu += pickup:$boring:(missile|weapon|armour|jewellery)
+menu += pickup:$normal:(missile|weapon|armour)
 
 # Overrides: inventory menu
 menu += inventory:lightgreen:.*equipped.*(weapon|armour|jewellery)
@@ -462,8 +462,6 @@ menu += $useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
 # Weapons
 menu += brown:staff of
 
-
-menu += pickup:yellow:artefact
 
 ######## Message coloring ########
 # black, blue, green, cyan, red, magenta, brown, lightgrey,
