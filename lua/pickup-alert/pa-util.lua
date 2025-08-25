@@ -452,9 +452,7 @@ function get_staff_bonus_dmg(it, dmg_type)
     end
   end
 
-  local school = get_staff_school(it)
-  if not school then return 0 end
-  local spell_skill = get_skill(school)
+  local spell_skill = get_skill(get_staff_school(it))
   local evo_skill = you.skill("Evocations")
 
   local chance = (2*evo_skill + spell_skill) / 30

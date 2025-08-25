@@ -57,8 +57,8 @@ ALL_LARGE_RACES = {
 
 ---- Skills ----
 ALL_STAFF_SCHOOLS = {
-  fire = "Fire Magic", cold = "Ice Magic", earth = "Earth Magic", air = "Air Magic",
-  poison = "Poison Magic", death = "Necromancy", conjuration = "Conjurations",
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", death = "Necromancy",
+  earth = "Earth Magic", fire = "Fire Magic",  conjuration = "Conjurations",
 } -- ALL_STAFF_SCHOOLS (do not remove this comment)
 
 ALL_TRAINING_SKILLS = {
