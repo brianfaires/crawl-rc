@@ -4,6 +4,10 @@ local DROP_KEY = "~~DROP_ME"
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
+  if CONFIG.msg_on_inscribe then
+    msg = "(You can drop " .. it.slot .. " - " ..it.name() .. ")"
+    crawl.mpr(with_color(COLORS.cyan, msg))
+  end
 end
 
 

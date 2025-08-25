@@ -32,6 +32,7 @@ function init_config()
 
   -- drop-inferior.lua
   CONFIG.drop_inferior = true -- Mark items for drop when better item picked up
+  CONFIG.msg_on_inscribe = true -- Show a message when an item is marked for drop
 
   -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
   CONFIG.exclude_dropped = true -- Exclude items from auto-pickup when dropped
