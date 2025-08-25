@@ -30,8 +30,8 @@ $warning := red
 menu += $boring:(melded|useless_item)
 menu += $warning:forbidden
 
-# Overrides: pickup menu
-#   (why doesn't this work when it comes after inventory overrides?)
+# Overrides: pickup menu (Affects Cntl-F)
+#   (why don't these work when they come after inventory overrides?)
 menu += pickup:lightcyan:artefact
 menu += pickup:lightblue:ego
 menu += pickup:lightmagenta:jewellery
