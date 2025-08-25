@@ -75,10 +75,8 @@ end
 
 
 --------- Functions for armour and weapons ---------
-function get_ego(it, terse)
-  local ego = it.ego(terse)
-  if ego then return ego end
-
+function get_ego(it)
+  if has_usable_ego(it) then return it.ego(true) end
   if is_body_armour(it) then
     local qualname = it.name("qual")
     if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
@@ -116,10 +114,10 @@ function has_ego(it, exclude_stat_only_egos)
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end
     end
-    return it.artefact or it.branded or is_magic_staff(it)
+    return it.artefact or has_usable_ego(it) or is_magic_staff(it)
   end
 
-  if it.artefact or it.branded then return true end
+  if it.artefact or has_usable_ego(it) then return true end
   local basename = it.name("base")
   if basename:find("troll leather", 1, true) then return true end
   if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
@@ -256,7 +254,7 @@ function get_weap_delay(it)
   -- dcss v0.33.1
   local delay = it.delay - get_skill(it.weap_skill)/2
   delay = math.max(delay, get_weap_min_delay(it))
-  delay = adjust_delay_for_ego(delay, it.ego())
+  delay = adjust_delay_for_ego(delay, get_ego(it))
   delay = math.max(delay, 3)
 
   local sh = items.equipped_at("offhand")
@@ -426,7 +424,7 @@ function get_slay_bonuses()
             if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
             else sum = sum - slay end
           end
-        elseif get_ego(it, true) == "Slay" then
+        elseif get_ego(it) == "Slay" then
           sum = sum + it.plus
         end
       elseif it.artefact and (is_armour(it, true) or is_amulet(it)) then

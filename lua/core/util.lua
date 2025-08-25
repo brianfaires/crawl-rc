@@ -186,12 +186,20 @@ function get_talisman_min_level(it)
 end
 
 function has_risky_ego(it)
-  local text = it.artefact and it.name() or it.ego()
+  local text = it.artefact and it.name() or get_ego(it)
   if not text then return false end
   for _, v in ipairs(RISKY_EGOS) do
     if text:find(v) then return true end
   end
   return false
+end
+
+function has_usable_ego(it)
+  if not it.branded then return false end
+  local ego = it.ego(true)
+  if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
+  if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
+  return true
 end
 
 function have_shield()

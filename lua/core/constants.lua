@@ -38,6 +38,9 @@ ALL_NONLIVING_RACES = {
   "Djinni", "Gargoyle"
 } -- ALL_UNDEAD_RACES (do not remove this comment)
 
+ALL_POIS_RES_RACES = {
+  "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant",
+} -- ALL_POIS_RES_RACES (do not remove this comment)
 
 ALL_LITTLE_RACES = {
   "Spriggan",
