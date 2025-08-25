@@ -196,7 +196,7 @@ end
 
 function has_usable_ego(it)
   if not it.branded then return false end
-  local ego = it.ego(true)
+  local ego = get_var_type(it.ego) == "str" and it.ego or it.ego(true)
   if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   return true

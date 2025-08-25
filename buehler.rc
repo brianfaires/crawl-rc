@@ -399,7 +399,7 @@ menu += pickup:white:ego
 menu += pickup:magenta:wand
 menu += pickup:lightmagenta:jewellery
 menu += pickup:$emergency:(curare|disjunction|throwing net)
-menu += pickup:$boring:(missile|weapon|armour|jewellery)
+#menu += pickup:$boring:(missile|weapon|armour|jewellery)
 
 # Overrides: inventory menu
 menu += inventory:lightgreen:.*equipped.*(weapon|armour|jewellery)
@@ -3711,8 +3711,9 @@ function get_var_type(value)
       if #value > 0 then return "list"
       else return "dict"
       end
+  else
+    return "unknown"
   end
-  crawl.mpr("Unsupported type for value: " .. tostring(value) .. " (" .. t .. ")")
 end
 
 function init_persistent_data(full_reset)
@@ -3989,7 +3990,7 @@ end
 
 function has_usable_ego(it)
   if not it.branded then return false end
-  local ego = it.ego(true)
+  local ego = get_var_type(it.ego) == "str" and it.ego or it.ego(true)
   if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   return true
