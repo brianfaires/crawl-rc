@@ -3959,7 +3959,7 @@ end
 
 function get_staff_school(it)
   for k,v in pairs(ALL_STAFF_SCHOOLS) do
-    if it.name("base") == "staff of " .. k then return v end
+    if it.subtype() == k then return v end
 	end
 end
 
