@@ -86,11 +86,11 @@ end
 -- Used for data tables
 function get_pa_keys(it, name_type)
   if it.class(true) == "bauble" then
-    return it.name("qual"), 0
+    return it.name("qual"):gsub("\"", ""), 0
   elseif is_talisman(it) or is_orb(it) then
     return it.name():gsub("\"", ""), 0
   elseif is_magic_staff(it) then
-    return it.name("base"), 0
+    return it.name("base"):gsub("\"", ""), 0
   else
     local name = it.name(name_type or "base"):gsub("\"", "")
     local value = tonumber(name:sub(1, 3))
