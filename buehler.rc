@@ -6133,8 +6133,7 @@ function init_pa_main()
     end
 
     -- Not picking up this item. Now check for alerts.
-    if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
-    if already_contains(pa_items_alerted, it) then return end
+    if not CONFIG.alert.system_enabled or already_contains(pa_items_alerted, it) then return end
 
     if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
       if pa_alert_OTA(it) then return end
