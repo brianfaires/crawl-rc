@@ -153,7 +153,7 @@ Alerts generated for:
   This is to avoid skipping items due to temporary mutations.
 
 ###  [lua/pickup-alert/pa-weapons.lua](lua/pickup-alert/pa-weapons.lua) (Weapons)
-Picks up upgrades. Alerts generated for:
+Picks up upgrades and artefacts of the same weapon type you have. Alerts generated for:
 - Early strong weapons, with little regard for what skills are already trained.
 - First ranged and 1-handed ranged weapons.
 - First polearm and 1-handed polearm.
