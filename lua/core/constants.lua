@@ -81,6 +81,10 @@ ALL_PORTAL_NAMES = {
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Ziggurat",
 } -- ALL_PORTAL_NAMES (do not remove this comment)
 
+ALL_HELL_BRANCHES = {
+  "Coc", "Dis", "Geh", "Hell", "Tar"
+} -- ALL_HELL_BRANCHES (do not remove this comment)
+
 -- Would prefer to use integer values, but they don't work in all menus
 COLORS = {
   blue = "blue", green = "green", cyan = "cyan", red = "red", magenta = "magenta",

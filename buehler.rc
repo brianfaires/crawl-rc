@@ -74,6 +74,7 @@ function init_config()
   -- runrest-features.lua: Runrest features
   CONFIG.ignore_altars = true -- when you have a god already
   CONFIG.ignore_portal_exits = true -- don't stop explore on portal exits
+  CONFIG.stop_on_hell_stairs = true -- stop explore on hell stairs
   CONFIG.stop_on_pan_gates = true -- stop explore on pan gates
   CONFIG.temple_macros = true -- auto-search altars; run to exit after worship
   CONFIG.gauntlet_macros = true -- auto-search with filters
@@ -400,7 +401,7 @@ menu += pickup:lightgreen:artefact.*weapon
 menu += pickup:lightcyan:artefact.*armour
 menu += pickup:yellow:artefact
 menu += pickup:magenta:jewellery
-menu += pickup:lightblue:(ego|(unidentified.*(glowing|runed)))
+menu += pickup:lightblue:(ego|(unidentified.*(glowing|runed|shiny|embroidered)))
 menu += pickup:magenta:(wand|curare|disjunction|throwing net)
 menu += pickup:$normal:(missile|weapon|armour)
 menu += brown:spellbook
@@ -2987,6 +2988,7 @@ more -= You pick up the .* rune and feel its power
 more -= welcomes you( back)?!
 
 # Significant spells/effects ending
+flash += You feel stable
 more += is no longer charmed
 more += You.*re starting to lose your buoyancy
 # Death's Door
@@ -3493,6 +3495,10 @@ ALL_PORTAL_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Ziggurat",
 } -- ALL_PORTAL_NAMES (do not remove this comment)
+
+ALL_HELL_BRANCHES = {
+  "Coc", "Dis", "Geh", "Hell", "Tar"
+} -- ALL_HELL_BRANCHES (do not remove this comment)
 
 -- Would prefer to use integer values, but they don't work in all menus
 COLORS = {
@@ -4002,6 +4008,10 @@ end
 
 function have_weapon()
   return items.equipped_at("weapon") ~= nil
+end
+
+function in_hell()
+  return util.contains(ALL_HELL_BRANCHES, you.branch())
 end
 
 function is_amulet(it)
@@ -4941,7 +4951,7 @@ end
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "air elemental", "ghost crab", "vault warden", "vault guardian",
+  "air elemental", "ghost crab", "vault warden", "vault guardian", "ironbound convoker",
   -- Displacement
   "deep elf knight", "swamp worm",
   -- Summoning
@@ -4953,7 +4963,7 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
   --Summoning
-    "shadow demon", "guardian serpent", "ironbound convoker",
+    "shadow demon", "guardian serpent",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
     "halazid warlock", "demonspawn corrupter", "elemental wellspring",
   --Dangerous abilities
@@ -5629,6 +5639,7 @@ end
 local stop_on_altars
 local stop_on_portals
 local stop_on_pan_gates
+local stop_on_hell_stairs
 local autosearched_temple
 local autosearched_gauntlet
 
@@ -5696,6 +5707,19 @@ local function ready_stop_on_pan_gates()
   end
 end
 
+---- Stop on Hell Stairs ----
+local function ready_stop_on_hell_stairs()
+  local branch = you.branch()
+  if stop_on_hell_stairs and not in_hell() then
+    stop_on_hell_stairs = false
+    crawl.setopt("explore_stop -= stairs")
+  elseif not stop_on_hell_stairs and in_hell() then
+    stop_on_hell_stairs = true
+    crawl.setopt("explore_stop += stairs")
+  end
+end
+
+
 ---- Temple actions ----
 local function search_altars()
   crawl.sendkeys({ 6, "altar\r" })
@@ -5728,6 +5752,7 @@ function init_runrest_features()
   stop_on_altars = true
   stop_on_portals = true
   stop_on_pan_gates = false
+  stop_on_hell_stairs = false
   autosearched_temple = false
   autosearched_gauntlet = false
 end
@@ -5743,6 +5768,7 @@ function ready_runrest_features()
   if CONFIG.ignore_altars then ready_ignore_altars() end
   if CONFIG.ignore_portal_exits then ready_ignore_exits() end
   if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
+  if CONFIG.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
   if CONFIG.temple_macros then ready_temple_macro() end
   if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
 end

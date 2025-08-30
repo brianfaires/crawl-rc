@@ -210,6 +210,10 @@ function have_weapon()
   return items.equipped_at("weapon") ~= nil
 end
 
+function in_hell()
+  return util.contains(ALL_HELL_BRANCHES, you.branch())
+end
+
 function is_amulet(it)
   return it and it.name("base") == "amulet"
 end

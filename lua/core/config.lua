@@ -69,6 +69,7 @@ function init_config()
   -- runrest-features.lua: Runrest features
   CONFIG.ignore_altars = true -- when you have a god already
   CONFIG.ignore_portal_exits = true -- don't stop explore on portal exits
+  CONFIG.stop_on_hell_stairs = true -- stop explore on hell stairs
   CONFIG.stop_on_pan_gates = true -- stop explore on pan gates
   CONFIG.temple_macros = true -- auto-search altars; run to exit after worship
   CONFIG.gauntlet_macros = true -- auto-search with filters
