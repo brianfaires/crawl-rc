@@ -12,6 +12,7 @@ more -= You pick up the .* rune and feel its power
 more -= welcomes you( back)?!
 
 # Significant spells/effects ending
+flash += You feel stable
 more += is no longer charmed
 more += You.*re starting to lose your buoyancy
 # Death's Door

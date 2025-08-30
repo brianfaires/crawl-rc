@@ -7,7 +7,7 @@
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "air elemental", "ghost crab", "vault warden", "vault guardian",
+  "air elemental", "ghost crab", "vault warden", "vault guardian", "ironbound convoker",
   -- Displacement
   "deep elf knight", "swamp worm",
   -- Summoning
@@ -19,7 +19,7 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
   --Summoning
-    "shadow demon", "guardian serpent", "ironbound convoker",
+    "shadow demon", "guardian serpent",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
     "halazid warlock", "demonspawn corrupter", "elemental wellspring",
   --Dangerous abilities
