@@ -78,7 +78,7 @@ ALL_WEAP_SCHOOLS = {
 ---- Other ----
 ALL_PORTAL_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
-  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Ziggurat",
+  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- ALL_PORTAL_NAMES (do not remove this comment)
 
 ALL_HELL_BRANCHES = {
