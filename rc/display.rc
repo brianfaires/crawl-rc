@@ -89,7 +89,7 @@ menu += $useful:potions? of (brilliance|enlightenment|invisibility|might)
 menu += $warning:potions? of (attraction|berserk|lignification|mutation)
 
 # Scrolls
-menu += $boring:scrolls? of (amnesia|enchant|identify)
+menu += $normal:scrolls? of (amnesia|enchant|identify)
 menu += $emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
 menu += $rare:scrolls? of (acquirement|brand)
 menu += $useful:scrolls? of (revelation)

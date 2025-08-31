@@ -133,7 +133,7 @@ function pa_alert_armour(it, unworn_inv_item)
       local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
       return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+      return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
     end
   else
     -- Aux armour
@@ -156,7 +156,7 @@ function pa_alert_armour(it, unworn_inv_item)
         local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
         return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
       elseif get_armour_ac(it) > get_armour_ac(cur) then
-        return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
       end
     end
   end
