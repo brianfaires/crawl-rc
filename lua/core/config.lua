@@ -9,7 +9,7 @@ function init_config()
   CONFIG.emojis = true -- Use emojis in alerts and announcements
 
   -- after-shaft.lua
-  CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft
+  CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft, until back to original level
 
   -- announce-damage.lua: Announce HP/MP changes
   CONFIG.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
@@ -38,7 +38,7 @@ function init_config()
   CONFIG.exclude_dropped = true -- Exclude items from auto-pickup when dropped
   CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
 
-  -- fm-disable.lua: Disable built-in force_mores that can't just be -='d
+  -- fm-disable.lua: Disable built-in force_mores that can't be easily removed
   CONFIG.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
 
   -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
@@ -49,8 +49,8 @@ function init_config()
   -- fully-recover.lua: Rest off bad statuses during rest
   -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
   CONFIG.rest_off_statuses = {
-    "berserk", "short of breath", "corroded", "vulnerable", 
-    "confused", "marked", "tree%-form", "slowed", "sluggish"
+    "berserk", "confused", "corroded", "marked", "short of breath", 
+    "slowed", "sluggish", "tree%-form", "vulnerable"
   } -- CONFIG.rest_off_statuses (do not remove this comment)
 
   -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
@@ -217,23 +217,26 @@ function init_config()
 
 
   -- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
+  -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
   WEAPON_BRAND_BONUSES = {
-    spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased incoming damage
+    spect = { factor = 1.8, offset = 0 }, -- Fudged down for increased incoming damage
     heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
-    flaming = { factor = 1.25, offset = 0 },
-    freezing = { factor = 1.25, offset = 0 },
-    draining = { factor = 1.25, offset = 2.0 },
-    electrocution = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
+    flame = { factor = 1.25, offset = 0 },
+    freeze = { factor = 1.25, offset = 0 },
+    drain = { factor = 1.25, offset = 2.0 },
+    elec = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
     venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
     pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
-    distortion = { factor = 1.0, offset = 6.0 },
+    distort = { factor = 1.0, offset = 6.0 },
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
 
-    subtle = { -- Completely made up values in attempt to compare weapons fairly
-      protection = { factor = 1.15, offset = 0 },
-      vampirism = { factor = 1.2, offset = 0 },
-      holy_wrath = { factor = 1.15, offset = 0 },
-      antimagic = { factor = 1.1, offset = 0 }  
+    subtle = { -- Completely made up values in attempt to compare weapons fairly  
+      antimagic = { factor = 1.1, offset = 0 },
+      holy = { factor = 1.15, offset = 0 },
+      penet = { factor = 1.3, offset = 0 },
+      protect = { factor = 1.15, offset = 0 },
+      reap = { factor = 1.3, offset = 0 },
+      vamp = { factor = 1.2, offset = 0 }
     } -- WEAPON_BRAND_BONUSES.subtle (do not remove this comment)
   } -- WEAPON_BRAND_BONUSES (do not remove this comment)
 
