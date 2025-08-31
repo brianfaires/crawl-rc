@@ -322,7 +322,7 @@ ai += storm dragon scale:rElec
 ai += swamp dragon scale:rPois
 ai += quicksilver dragon scale:Will+
 ai += shadow dragon scale:Stlth+
-ai += troll leather:Regen+
+ai += (?<!moon) troll leather:Regen+
 
 
 # Amulets
