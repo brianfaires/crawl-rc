@@ -323,10 +323,14 @@ function ready_fm_monsters()
   local res_drain = you.res_draining()
   local int = you.intelligence()
 
+  local is_zig_condition = CONFIG.disable_fm_monsters_in_zigs and you.branch() == "Zig"
+  
   for i,v in ipairs(FM_PATTERNS) do
     local action = nil
 
-    if not v.cond and not active_fm[i] then
+    if is_zig_condition then
+      action = "-"
+    elseif not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
       if active_fm[i] and you.xl() >= v.cutoff then action = "-"

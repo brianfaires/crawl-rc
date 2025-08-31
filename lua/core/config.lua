@@ -43,6 +43,7 @@ function init_config()
 
   -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
+  CONFIG.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
   -- fully-recover.lua: Rest off bad statuses during rest
