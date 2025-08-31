@@ -210,6 +210,10 @@ function have_weapon()
   return items.equipped_at("weapon") ~= nil
 end
 
+function have_zero_stat()
+  return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
 function in_hell()
   return util.contains(ALL_HELL_BRANCHES, you.branch())
 end
@@ -276,6 +280,15 @@ end
 function offhand_is_free()
   if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
+end
+
+function next_to_slimy_wall()
+  for x = -1, 1 do
+    for y = -1, 1 do
+      if view.feature_at(x, y) == "slimy_wall" then return true end
+    end
+  end
+  return false
 end
 
 

@@ -1,7 +1,7 @@
 ----- Fully rest off negative statuses -----
 local recovery_start_turn
 local explore_after_recovery
-local MAX_TURNS_TO_WAIT = 1000
+local MAX_TURNS_TO_WAIT = 500
 
 local function abort_fully_recover()
   recovery_start_turn = 0
@@ -12,8 +12,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - recovery_start_turn
-  local msg = with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns)
-  crawl.mpr(msg)
+  crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns))
   
   recovery_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
@@ -31,23 +30,37 @@ local function fully_recovered()
   if hp ~= mhp then return false end
   if mp ~= mmp then return false end
 
-  -- Statuses that will always rest off
   local status = you.status()
-
   for _,s in ipairs(CONFIG.rest_off_statuses) do
     if status:find(s) then
-      if not (you.branch() == "Dis" and s == "corroded") then
-        return false
-      end
+      if not should_ignore_status(s) then return false end
     end
   end
 
-  -- If stat drain, don't wait for slow
-  if status:find("slowed", 1, true) then
-    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
-  end
-
   return true
+end
+
+local function remove_statuses_from_config()
+  local status = you.status()
+  local to_remove = {}
+  for _,s in ipairs(CONFIG.rest_off_statuses) do
+    if status:find(s) then
+      table.insert(to_remove, s)
+    end
+  end
+  for _,s in ipairs(to_remove) do
+    util.remove(CONFIG.rest_off_statuses, s)
+    crawl.mpr("  Removed: " ..s)
+  end
+end
+
+function should_ignore_status(s)
+  if s == "corroded" then
+    return next_to_slimy_wall() or you.branch() == "Dis"
+  elseif s == "slowed" then
+    return have_zero_stat()
+  end
+  return false
 end
 
 local function start_fully_recover()
@@ -98,6 +111,8 @@ function ready_fully_recover()
     elseif not you.feel_safe() then abort_fully_recover()
     elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
       crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
+      crawl.mpr(with_color(COLORS.lightred, "Adjusting CONFIG.rest_off_statuses:"))
+      remove_statuses_from_config()
       abort_fully_recover()
     else crawl.do_commands({"CMD_SAFE_WAIT"})
     end

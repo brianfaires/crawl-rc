@@ -47,6 +47,7 @@ function init_config()
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
   -- fully-recover.lua: Rest off bad statuses during rest
+  -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
   CONFIG.rest_off_statuses = {
     "berserk", "short of breath", "corroded", "vulnerable", 
     "confused", "marked", "tree%-form", "slowed", "sluggish"
