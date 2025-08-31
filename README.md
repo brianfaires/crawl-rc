@@ -92,7 +92,8 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - Configure which statuses in `CONFIG.rest_off_statuses`.
 
 ### [lua/features/inscribe-stats.lua](lua/features/inscribe-stats.lua)
-- Weapons in inventory are inscribed with their stats and an 'idealized' DPS (max damage per 10 aut, including brand).
+- Weapons in inventory are inscribed with their stats and an ideal DPS (max damage per 10 aut).
+- Configured by default to ignore brand damage. Can be changed in CONFIG.
 - Unworn armour is inscribed with stats relative to what you're wearing.
 - Updates in real time with skill/stats/etc.
 

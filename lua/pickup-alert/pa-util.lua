@@ -1,4 +1,7 @@
 ---- Utility functions specific to pickup-alert system ----
+-- Functions often duplicate dcss calculations and need to be updated when those change
+-- Many functions are specific to buehler.rc, and not necessarily applicable to all RCs
+
 --------- Stat string formatting ---------
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
@@ -46,7 +49,7 @@ end
 
 function get_weapon_info_string(it, dmg_type)
   if not it.is_weapon then return end
-  local dmg = get_weap_damage(it, dmg_type or DMG_TYPE.branded)
+  local dmg = get_weap_damage(it, dmg_type or CONFIG.inscribe_dps_type or DMG_TYPE.plain)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end

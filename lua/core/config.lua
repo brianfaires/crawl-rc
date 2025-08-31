@@ -56,7 +56,7 @@ function init_config()
   -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
   CONFIG.inscribe_weapons = true
   CONFIG.inscribe_armour = true
-  CONFIG.inscribe_dps_type = DMG_TYPE.branded -- How to calc dmg for weapon inscriptions
+  CONFIG.inscribe_dps_type = DMG_TYPE.plain -- How to calc dmg for weapon inscriptions
 
   -- misc-alerts.lua
   CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
@@ -219,16 +219,16 @@ function init_config()
   -- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
   -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
   WEAPON_BRAND_BONUSES = {
-    spect = { factor = 1.8, offset = 0 }, -- Fudged down for increased incoming damage
-    heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
-    flame = { factor = 1.25, offset = 0 },
-    freeze = { factor = 1.25, offset = 0 },
+    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
+    distort = { factor = 1.0, offset = 6.0 },
     drain = { factor = 1.25, offset = 2.0 },
     elec = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
-    venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
+    flame = { factor = 1.25, offset = 0 },
+    freeze = { factor = 1.25, offset = 0 },
+    heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
     pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
-    distort = { factor = 1.0, offset = 6.0 },
-    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
+    spect = { factor = 1.7, offset = 0 }, -- Fudged down for increased incoming damage
+    venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
 
     subtle = { -- Completely made up values in attempt to compare weapons fairly  
       antimagic = { factor = 1.1, offset = 0 },
