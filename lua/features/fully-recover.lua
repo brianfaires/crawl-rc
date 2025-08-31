@@ -1,6 +1,7 @@
 ----- Fully rest off negative statuses -----
 local recovery_start_turn
 local explore_after_recovery
+local MAX_TURNS_TO_WAIT = 1000
 
 local function abort_fully_recover()
   recovery_start_turn = 0
@@ -34,7 +35,11 @@ local function fully_recovered()
   local status = you.status()
 
   for _,s in ipairs(CONFIG.rest_off_statuses) do
-    if status:find(s) then return false end
+    if status:find(s) then
+      if not (you.branch() == "Dis" and s == "corroded") then
+        return false
+      end
+    end
   end
 
   -- If stat drain, don't wait for slow
@@ -91,6 +96,9 @@ function ready_fully_recover()
   if recovery_start_turn > 0 then
     if fully_recovered() then finish_fully_recover()
     elseif not you.feel_safe() then abort_fully_recover()
+    elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
+      crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
+      abort_fully_recover()
     else crawl.do_commands({"CMD_SAFE_WAIT"})
     end
   else

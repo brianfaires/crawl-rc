@@ -453,7 +453,7 @@ menu += $useful:potions? of (brilliance|enlightenment|invisibility|might)
 menu += $warning:potions? of (attraction|berserk|lignification|mutation)
 
 # Scrolls
-menu += $boring:scrolls? of (amnesia|enchant|identify)
+menu += $normal:scrolls? of (amnesia|enchant|identify)
 menu += $emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
 menu += $rare:scrolls? of (acquirement|brand)
 menu += $useful:scrolls? of (revelation)
@@ -4812,6 +4812,7 @@ end
 ----- Fully rest off negative statuses -----
 local recovery_start_turn
 local explore_after_recovery
+local MAX_TURNS_TO_WAIT = 1000
 
 local function abort_fully_recover()
   recovery_start_turn = 0
@@ -4845,7 +4846,11 @@ local function fully_recovered()
   local status = you.status()
 
   for _,s in ipairs(CONFIG.rest_off_statuses) do
-    if status:find(s) then return false end
+    if status:find(s) then
+      if not (you.branch() == "Dis" and s == "corroded") then
+        return false
+      end
+    end
   end
 
   -- If stat drain, don't wait for slow
@@ -4902,6 +4907,9 @@ function ready_fully_recover()
   if recovery_start_turn > 0 then
     if fully_recovered() then finish_fully_recover()
     elseif not you.feel_safe() then abort_fully_recover()
+    elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
+      crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
+      abort_fully_recover()
     else crawl.do_commands({"CMD_SAFE_WAIT"})
     end
   else
@@ -6996,7 +7004,7 @@ function pa_alert_armour(it, unworn_inv_item)
       local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
       return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+      return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
     end
   else
     -- Aux armour
@@ -7019,7 +7027,7 @@ function pa_alert_armour(it, unworn_inv_item)
         local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
         return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
       elseif get_armour_ac(it) > get_armour_ac(cur) then
-        return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
       end
     end
   end
