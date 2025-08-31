@@ -251,6 +251,10 @@ function is_miasma_immune()
   return false
 end
 
+function is_mutation_immune()
+  return util.contains(ALL_UNDEAD_RACES, you.race())
+end
+
 function is_ring(it)
   return it and it.name("base") == "ring"
 end

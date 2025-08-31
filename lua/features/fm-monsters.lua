@@ -107,9 +107,6 @@ local FM_PATTERNS = {
   {name = "willpower4", cond = "will", cutoff = 4,
       pattern = "merfolk avatar|tainted leviathan|nargun" },
 
-  -- Malmutate without rMut
-  {name = "malmutate", cond = "mut", cutoff = 1,
-      pattern = "cacodemon|neqoxec|shining eye" },
   -- Brain feed with low int
   {name = "brainfeed", cond = "int", cutoff = 6,
       pattern = "glowing orange brain|neqoxec" },
@@ -176,6 +173,17 @@ local FM_PATTERNS = {
   {name = "drain_190", cond = "drain", cutoff = 190,
       pattern = "shadow dragon" },
 } -- end fm_patterns (do not remove this comment)
+
+-- Set mutators to either flash (if undead) or a conditional fm
+if is_mutation_immune() then
+  crawl.setopt("flash_screen_message += monster_warning:cacodemon|neqoxec|shining eye")
+else
+  table.insert(FM_PATTERNS,
+    -- Malmutate without rMut
+    {name = "malmutate", cond = "mut", cutoff = 1,
+        pattern = "cacodemon|neqoxec|shining eye" }
+  )
+end
 ------------------- End config section -------------------
 
 local active_fm -- which ones are on
@@ -324,7 +332,7 @@ function ready_fm_monsters()
   local int = you.intelligence()
 
   local is_zig_condition = CONFIG.disable_fm_monsters_in_zigs and you.branch() == "Zig"
-  
+
   for i,v in ipairs(FM_PATTERNS) do
     local action = nil
 
