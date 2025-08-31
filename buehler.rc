@@ -5226,23 +5226,19 @@ end
 local function do_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v)
+    set_monster_fm("-", v) -- Mute the fm-alert by removing the fm
   end
   monsters_to_mute = {}
 
-  -- Remove mutes that have expired
+  -- Remove mutes that have expired (FM_PACK includes FM_PACK_NO_CREATE)
   for _, v in ipairs(FM_PACK) do
-    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      set_monster_fm("+", v)
+    if last_fm_turn[v] ~= -1 and you.turns() >= last_fm_turn[v] + CONFIG.fm_pack_duration then
       last_fm_turn[v] = -1
-    end
-  end
-
-  -- For no-init pack monsters, just deactivate the fm
-  for _, v in ipairs(FM_PACK_NO_CREATE) do
-    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      active_fm[active_fm_index[v]] = false
-      last_fm_turn[v] = -1
+      if util.contains(FM_PACK_NO_CREATE, v) then
+        active_fm[active_fm_index[v]] = false -- Set to false so the main logic can conditionally re-enable it
+      else 
+        set_monster_fm("+", v) -- Reenable the fm, which is always active
+      end
     end
   end
 end
