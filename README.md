@@ -234,6 +234,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. On pickup, if safe(), offer to wear/wield item
 1. On drop_inferior inscribe, offer to drop item
 1. If no god or good god, auto-visit Temple instead of force-more
+1. Armour ego alerts: identify new egos or missing resistances (not just compared to cur inventory)
 
 ### 0.34 changes needed
 1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
@@ -244,12 +245,14 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 
-### Won't do
+### Won't do - random ideas
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
 1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription` afaict)
+1. disable jewellery pickup after configurable xl
+1. disable pickup/alert of basic items after artefact of same type
 
-### Known issues/quirks
+### Design choices / simplifications
 1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
 1. AC/EV delta inscriptions on Poltergeist: compare against the last (6th) worn item
 
