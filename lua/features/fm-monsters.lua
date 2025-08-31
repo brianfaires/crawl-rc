@@ -7,7 +7,8 @@
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "air elemental", "ghost crab", "vault warden", "vault guardian", "ironbound convoker",
+  "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
+  "vault guardian", "vault warden", "wendingo", 
   -- Displacement
   "deep elf knight", "swamp worm",
   -- Summoning
@@ -21,9 +22,9 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
   --Summoning
     "shadow demon", "guardian serpent",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
-    "halazid warlock", "demonspawn corrupter", "elemental wellspring",
+    "halazid warlock", "demonspawn corrupter",
   --Dangerous abilities
-    "wendingo", "wyrmhole",
+    "wyrmhole",
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
     "starflower", "merfolk aquamancer", "wretched star",
   --Dangerous clouds
