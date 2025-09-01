@@ -55,7 +55,7 @@ function init_config()
   -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
   CONFIG.rest_off_statuses = {
     "berserk", "confused", "corroded", "marked", "short of breath", 
-    "slowed", "sluggish", "tree%-form", "vulnerable"
+    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened"
   } -- CONFIG.rest_off_statuses (do not remove this comment)
 
   -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
