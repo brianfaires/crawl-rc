@@ -2,16 +2,28 @@
 
 ai := autoinscribe
 
+# General
+ai += of fire resistance:rF+
+ai += of cold resistance:rC+
+ai += of poison resistance:rPois
+ai += of preservation:rCorr
+ai += of invulnerability:rInv
+ai += of magic regeneration:MRegen+
+ai += of positive energy:rN+
+ai += of regeneration:Regen+
+ai += of resistance:rRes
+ai += of willpower:Will+
+
 # Armour
-ai += cloak of preservation:rCorr
 ai += fire dragon scale:rF++, rC-
 ai += gold dragon scale:rC+, rF+, rPois
 ai += ice dragon scale:rC++, rF-
 ai += pearl dragon scale:rN+
 ai += storm dragon scale:rElec
 ai += swamp dragon scale:rPois
-ai += quicksilver dragon scale:MR+
+ai += quicksilver dragon scale:Will+
 ai += shadow dragon scale:Stlth+
+ai += (?<!moon) troll leather:Regen+
 
 
 # Amulets
@@ -22,13 +34,11 @@ ai += ring of fire:rF+, rC-
 ai += ring of flight:+Fly
 ai += ring of ice:rC+, rF-
 ai += ring of magical power:MP+9
-ai += ring of poison resistance:rPois
 ai += ring of protection from cold:rC+
 ai += ring of protection from fire:rF+
-ai += ring of positive energy:rN+
 ai += ring of resist corrosion:rCorr
 ai += ring of see invisible:sInv
-ai += ring of wizardry:wiz+
+ai += ring of wizardry:Wiz+
 
 # Staves
 ai += staff of air:rElec

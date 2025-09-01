@@ -20,7 +20,9 @@ end
 ------------------- Hooks -------------------
 function c_message_after_shaft(text, channel)
   if not CONFIG.stop_on_stairs_after_shaft then return end
-  if as_shaft_depth ~= 0 or channel ~= "plain" then return end
+  if channel ~= "plain" or in_hell() then return end
+  if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
+
   local text_fall = "ou fall into a shaft"
   local text_sucked = "ou are sucked into a shaft"
   if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then

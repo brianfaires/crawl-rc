@@ -152,6 +152,24 @@ function get_mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
 
+function get_skill_with_item(it)
+  if is_magic_staff(it) then
+    return math.max(get_skill(get_staff_school(it)), get_skill("Staves"))
+  end
+  if it.is_weapon then return get_skill(it.weap_skill) end
+  if is_body_armour(it) then return get_skill("Armour") end
+  if is_shield(it) then return get_skill("Shields") end
+  if is_talisman(it) then return get_skill("Shapeshifting") end
+
+  return 1 -- Fallback to 1
+end
+
+function get_staff_school(it)
+  for k,v in pairs(ALL_STAFF_SCHOOLS) do
+    if it.subtype() == k then return v end
+	end
+end
+
 function get_talisman_min_level(it)
   local tokens = crawl.split(it.description, "\n")
   for _,v in ipairs(tokens) do
@@ -167,6 +185,23 @@ function get_talisman_min_level(it)
   return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
 end
 
+function has_risky_ego(it)
+  local text = it.artefact and it.name() or get_ego(it)
+  if not text then return false end
+  for _, v in ipairs(RISKY_EGOS) do
+    if text:find(v) then return true end
+  end
+  return false
+end
+
+function has_usable_ego(it)
+  if not it.branded then return false end
+  local ego = get_var_type(it.ego) == "str" and it.ego or it.ego(true)
+  if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
+  if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
+  return true
+end
+
 function have_shield()
   return is_shield(items.equipped_at("offhand"))
 end
@@ -175,29 +210,49 @@ function have_weapon()
   return items.equipped_at("weapon") ~= nil
 end
 
+function have_zero_stat()
+  return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
+function in_hell()
+  return util.contains(ALL_HELL_BRANCHES, you.branch())
+end
+
 function is_amulet(it)
   return it and it.name("base") == "amulet"
 end
 
-function is_armour(it)
-  return it and it.class(true) == "armour"
+function is_armour(it, include_orbs)
+  -- exclude orbs by default
+  if not it or it.class(true) ~= "armour" then return false end
+  if not include_orbs and is_orb(it) then return false end
+  return true
+end
+
+function is_aux_armour(it)
+  return is_armour(it) and not (is_body_armour(it) or is_shield(it))
 end
 
 function is_body_armour(it)
   return it and it.subtype() == "body"
 end
 
-function has_risky_ego(it)
-  local text = it.artefact and it.name() or it.ego()
-  if not text then return false end
-  for _, v in ipairs(RISKY_EGOS) do
-    if text:find(v) then return true end
-  end
+function is_jewellery(it)
+  return it and it.class(true) == "jewellery"
+end
+
+function is_magic_staff(it)
+  return it and it.class and it.class(true) == "magical staff"
+end
+
+function is_miasma_immune()
+  if util.contains(ALL_UNDEAD_RACES, you.race()) then return true end
+  if util.contains(ALL_NONLIVING_RACES, you.race()) then return true end
   return false
 end
 
-function is_jewellery(it)
-  return it and it.class(true) == "jewellery"
+function is_mutation_immune()
+  return util.contains(ALL_UNDEAD_RACES, you.race())
 end
 
 function is_ring(it)
@@ -212,10 +267,6 @@ function is_shield(it)
   return it and it.is_shield()
 end
 
-function is_magic_staff(it)
-  return it and it.class and it.class(true) == "magical staff"
-end
-
 function is_talisman(it)
   if not it then return false end
   local c = it.class(true)
@@ -223,7 +274,7 @@ function is_talisman(it)
 end
 
 function is_orb(it)
-  return it and it.name("qual") == "orb"
+  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not it.is_shield()
 end
 
 function is_polearm(it)
@@ -233,6 +284,15 @@ end
 function offhand_is_free()
   if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
+end
+
+function next_to_slimy_wall()
+  for x = -1, 1 do
+    for y = -1, 1 do
+      if view.feature_at(x, y) == "slimy_wall" then return true end
+    end
+  end
+  return false
 end
 
 

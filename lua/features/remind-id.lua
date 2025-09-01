@@ -72,11 +72,12 @@ function c_message_remind_identify(text, channel)
       do_remind_id_check = true
     end
   elseif not found_scroll_of_id then
+    -- Pre-ID: Stop when largest stack of pots/scrolls increases
     local idx = text:find(" %- ")
     if not idx then return end
 
-    local slot = text:sub(idx - 1, idx - 1)
-    local it = items.inslot(items.letter_to_index(slot))
+    local slot = items.letter_to_index(text:sub(idx - 1, idx - 1))
+    local it = items.inslot(slot)
 
     if it.is_identified then return end
     -- Picking up known items still returns identified == false

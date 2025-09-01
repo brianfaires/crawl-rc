@@ -1,5 +1,5 @@
 -- Lists of things that may need to be updated with future changes
-BUEHLER_RC_VERSION = "1.0"
+BUEHLER_RC_VERSION = "1.1.0"
 
 ---- Items ----
 ALL_MISC_ITEMS = {
@@ -34,6 +34,14 @@ ALL_UNDEAD_RACES = {
   "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- ALL_UNDEAD_RACES (do not remove this comment)
 
+ALL_NONLIVING_RACES = {
+  "Djinni", "Gargoyle"
+} -- ALL_UNDEAD_RACES (do not remove this comment)
+
+ALL_POIS_RES_RACES = {
+  "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant",
+} -- ALL_POIS_RES_RACES (do not remove this comment)
+
 ALL_LITTLE_RACES = {
   "Spriggan",
 } -- ALL_LITTLE_RACES (do not remove this comment)
@@ -49,8 +57,8 @@ ALL_LARGE_RACES = {
 
 ---- Skills ----
 ALL_STAFF_SCHOOLS = {
-  fire = "Fire Magic", cold = "Ice Magic", earth = "Earth Magic", air = "Air Magic",
-  poison = "Poison Magic", death = "Necromancy", conjuration = "Conjurations",
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", death = "Necromancy",
+  earth = "Earth Magic", fire = "Fire Magic",  conjuration = "Conjurations",
 } -- ALL_STAFF_SCHOOLS (do not remove this comment)
 
 ALL_TRAINING_SKILLS = {
@@ -70,8 +78,12 @@ ALL_WEAP_SCHOOLS = {
 ---- Other ----
 ALL_PORTAL_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
-  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Ziggurat",
+  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- ALL_PORTAL_NAMES (do not remove this comment)
+
+ALL_HELL_BRANCHES = {
+  "Coc", "Dis", "Geh", "Hell", "Tar"
+} -- ALL_HELL_BRANCHES (do not remove this comment)
 
 -- Would prefer to use integer values, but they don't work in all menus
 COLORS = {
@@ -83,11 +95,16 @@ COLORS = {
 } -- COLORS (do not remove this comment)
 
 RISKY_EGOS = {
-  "chaos", "distortion", "harm", "heavy", "infusion"
+  "chaos", "distortion", "harm", "heavy", "infusion", "ponderous"
 } -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
-  LF = string.char(10), CR = string.char(13)
+  LF = string.char(10),
+  CR = string.char(13),
+  explore = crawl.get_command("CMD_EXPLORE") or "o",
+  save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
+  go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
+  go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">"
 } -- KEYS (do not remove this comment)
 
 MUTS = {
@@ -100,3 +117,14 @@ MUTS = {
 SIZE_PENALTY = {
   LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2
 } -- SIZE_PENALTY (do not remove this comment)
+
+DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg with no associated damage type
+  branded = 3, -- Include full brand dmg
+  scoring = 4 -- Include boosts for non-damaging brands
+} -- DMG_TYPE (do not remove this comment)
+
+PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
+  "distortion", "heavy", "spectralizing"
+} -- PLAIN_DMG_EGOS (do not remove this comment)

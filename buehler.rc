@@ -14,7 +14,7 @@ function init_config()
   CONFIG.emojis = true -- Use emojis in alerts and announcements
 
   -- after-shaft.lua
-  CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft
+  CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft, until back to original level
 
   -- announce-damage.lua: Announce HP/MP changes
   CONFIG.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
@@ -37,31 +37,36 @@ function init_config()
 
   -- drop-inferior.lua
   CONFIG.drop_inferior = true -- Mark items for drop when better item picked up
+  CONFIG.msg_on_inscribe = true -- Show a message when an item is marked for drop
 
   -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
   CONFIG.exclude_dropped = true -- Exclude items from auto-pickup when dropped
   CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
 
-  -- fm-disable.lua: Disable built-in force_mores that can't just be -='d
+  -- fm-disable.lua: Disable built-in force_mores that can't be easily removed
   CONFIG.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
 
   -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
+  CONFIG.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
-  -- fully-recover.lua: Keep resting until these statuses are gone
+  -- fully-recover.lua: Rest off bad statuses during rest
+  -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
   CONFIG.rest_off_statuses = {
-    "berserk", "short of breath", "corroded", "vulnerable", 
-    "confused", "marked", "tree%-form", "slowed", "sluggish"
+    "berserk", "confused", "corroded", "marked", "short of breath", 
+    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened"
   } -- CONFIG.rest_off_statuses (do not remove this comment)
 
   -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
   CONFIG.inscribe_weapons = true
   CONFIG.inscribe_armour = true
+  CONFIG.inscribe_dps_type = DMG_TYPE.plain -- How to calc dmg for weapon inscriptions
 
   -- misc-alerts.lua
   CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
+  CONFIG.alert_spell_level_changes = true -- Alert when you gain additional spell levels
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
 
   -- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:
@@ -71,6 +76,7 @@ function init_config()
   -- runrest-features.lua: Runrest features
   CONFIG.ignore_altars = true -- when you have a god already
   CONFIG.ignore_portal_exits = true -- don't stop explore on portal exits
+  CONFIG.stop_on_hell_stairs = true -- stop explore on hell stairs
   CONFIG.stop_on_pan_gates = true -- stop explore on pan gates
   CONFIG.temple_macros = true -- auto-search altars; run to exit after worship
   CONFIG.gauntlet_macros = true -- auto-search with filters
@@ -126,21 +132,23 @@ function init_config()
     }, -- CONFIG.alert.one_time (do not remove this comment)
     
     -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-    OTA_require_skill = { weapon = 4, armour = 3, shield = 0 }
+    OTA_require_skill = { weapon = 3, armour = 2.5, shield = 0 }
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more
   CONFIG.fm_alert = {
-    early_weap = false,
-    new_weap = true,
+    early_weap = false,       -- Good weapons found early
+    upgrade_weap = false,     -- Better DPS / weapon_score
+    weap_ego = false,         -- New or diff egos
     body_armour = false,
     shields = true,
     aux_armour = false,
-    armour_ego = true,
-    high_score_weap = false,
-    high_score_armour = true,
+    armour_ego = true,        -- New or diff egos
+    high_score_weap = false,  -- Highest damage found
+    high_score_armour = true, -- Highest AC found
     one_time_alerts = true,
-    artefact = true,
+    artefact = false,         -- Any artefact
+    trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
     orbs = false,
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false
@@ -152,11 +160,20 @@ function init_config()
 
   -- For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
   -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
-  -- min_gain/max_loss check against the AC or EV delta when ego changes
+  -- min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
+  -- ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
+  
   TUNING.armour = {
-    lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0, min_gain = 3.0, max_loss = 4.0 },
-    heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0, min_gain = 3.0, max_loss = 8.0 },
-    encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+    lighter = {
+      gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0,
+      min_gain = 3.0, max_loss = 4.0, ignore_small = 3.5
+    },
+    heavier = {
+      gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0,
+      min_gain = 3.0, max_loss = 8.0, ignore_small = 5
+    },
+    encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+    early_xl = 6 -- Alert all usable runed body armour if XL <= `early_xl`
   } -- TUNING.armour (do not remove this comment)
 
   -- All 'magic numbers' used in the weapon pickup/alert system. 2 common types of values:
@@ -166,10 +183,10 @@ function init_config()
     -- "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score includes DPS/brand/accuracy.
   TUNING.weap = {}
   TUNING.weap.pickup = {
-    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio > `same_type_melee`
-    same_type_ranged = 1.0, -- Pickup ranged weap of same type if DPS ratio > `same_type_ranged`
-    accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
+    add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
+    same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
+    same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
+    accuracy_weight = 0.25 -- Treat +1 Accuracy as +`accuracy_weight` DPS
   } -- TUNING.weap.pickup (do not remove this comment)
   
   TUNING.weap.alert = {
@@ -177,7 +194,7 @@ function init_config()
     pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
     gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
     new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio > `new_ego`
-    low_skill_penalty_damping = 8, -- Small values penalize low-trained schools more. Penalty is (skill+damp) / (top_skill+damp)
+    low_skill_penalty_damping = 8, -- Increase to soften the penalty to low-trained schools. Penalty is (skill+damp) / (top_skill+damp)
 
     -- Alerts for 2-handed weapons, when carrying 1-handed
     add_hand = {
@@ -205,25 +222,26 @@ function init_config()
 
 
   -- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
-  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
-
+  -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
   WEAPON_BRAND_BONUSES = {
-    spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased incoming damage
-    heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
-    flaming = { factor = 1.25, offset = 0 },
-    freezing = { factor = 1.25, offset = 0 },
-    draining = { factor = 1.25, offset = 2.0 },
-    electrocution = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
-    venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
-    pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
-    distortion = { factor = 1.0, offset = 6.0 },
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
+    distort = { factor = 1.0, offset = 6.0 },
+    drain = { factor = 1.25, offset = 2.0 },
+    elec = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
+    flame = { factor = 1.25, offset = 0 },
+    freeze = { factor = 1.25, offset = 0 },
+    heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
+    pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
+    spect = { factor = 1.7, offset = 0 }, -- Fudged down for increased incoming damage
+    venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
 
-    subtle = { -- Completely made up values in attempt to compare weapons fairly
-      protection = { factor = 1.15, offset = 0 },
-      vampirism = { factor = 1.2, offset = 0 },
-      holy_wrath = { factor = 1.15, offset = 0 },
-      antimagic = { factor = 1.1, offset = 0 }  
+    subtle = { -- Completely made up values in attempt to compare weapons fairly  
+      antimagic = { factor = 1.1, offset = 0 },
+      holy = { factor = 1.15, offset = 0 },
+      penet = { factor = 1.3, offset = 0 },
+      protect = { factor = 1.15, offset = 0 },
+      reap = { factor = 1.3, offset = 0 },
+      vamp = { factor = 1.2, offset = 0 }
     } -- WEAPON_BRAND_BONUSES.subtle (do not remove this comment)
   } -- WEAPON_BRAND_BONUSES (do not remove this comment)
 
@@ -263,7 +281,7 @@ hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
 
-sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
+sort_menus = true:equipped,art,ego,basename,identified,qualname,>qty
 drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, dart, stone
 
@@ -275,7 +293,7 @@ rest_delay = -1
 view_delay = 100
 show_travel_trail = true
 
-explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
+explore_stop = altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang, javelin
 
 
@@ -287,16 +305,28 @@ explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang
 
 ai := autoinscribe
 
+# General
+ai += of fire resistance:rF+
+ai += of cold resistance:rC+
+ai += of poison resistance:rPois
+ai += of preservation:rCorr
+ai += of invulnerability:rInv
+ai += of magic regeneration:MRegen+
+ai += of positive energy:rN+
+ai += of regeneration:Regen+
+ai += of resistance:rRes
+ai += of willpower:Will+
+
 # Armour
-ai += cloak of preservation:rCorr
 ai += fire dragon scale:rF++, rC-
 ai += gold dragon scale:rC+, rF+, rPois
 ai += ice dragon scale:rC++, rF-
 ai += pearl dragon scale:rN+
 ai += storm dragon scale:rElec
 ai += swamp dragon scale:rPois
-ai += quicksilver dragon scale:MR+
+ai += quicksilver dragon scale:Will+
 ai += shadow dragon scale:Stlth+
+ai += (?<!moon) troll leather:Regen+
 
 
 # Amulets
@@ -307,13 +337,11 @@ ai += ring of fire:rF+, rC-
 ai += ring of flight:+Fly
 ai += ring of ice:rC+, rF-
 ai += ring of magical power:MP+9
-ai += ring of poison resistance:rPois
 ai += ring of protection from cold:rC+
 ai += ring of protection from fire:rF+
-ai += ring of positive energy:rN+
 ai += ring of resist corrosion:rCorr
 ai += ring of see invisible:sInv
-ai += ring of wizardry:wiz+
+ai += ring of wizardry:Wiz+
 
 # Staves
 ai += staff of air:rElec
@@ -358,79 +386,91 @@ menu := menu_colour
 menu =
 
 # Variables
-$decent := white
-$mp := lightcyan
-$interface := cyan
-$danger := lightred
-$item_dmg := red
-$warning := yellow
 $boring := darkgrey
-$negative := brown
-$positive := green
-$good := lightblue
-$verypositive := lightgreen
-$awesome := lightmagenta
+$emergency := lightcyan
+$heal := green
+$normal := lightgrey
+$rare := yellow
+$useful := lightblue
+$warning := red
 
-# General
-menu += $boring:(melded)
-menu += $boring:.*useless_item.*
-menu += $item_dmg:.*evil_item.*
-menu += inventory:$interface:.*equipped.*
-#menu += $decent:.*artefact.*
 
-menu += $warning:^unidentified .*(jewellery|potion|scroll|wand).*
-menu += $good:^unidentified .*weapon.*(runed|glowing)
-menu += $good:^unidentified .*armour.*(runed|glowing|embroidered|shiny|dyed)
+# First, highlight uselessness
+menu += $boring:(melded|useless_item)
+menu += $warning:forbidden
 
-# Staves
-menu += $positive:[^r]staff of
+# Overrides: pickup menu (Affects Cntl-F)
+#   (why don't these work when they come after inventory overrides?)
+menu += pickup:lightmagenta:artefact.*jewellery
+menu += pickup:lightgreen:artefact.*weapon
+menu += pickup:lightcyan:artefact.*armour
+menu += pickup:yellow:artefact
+menu += pickup:magenta:jewellery
+menu += pickup:lightblue:(ego|(unidentified.*(glowing|runed|shiny|embroidered)))
+menu += pickup:magenta:(wand|curare|disjunction|throwing net)
+menu += pickup:$normal:(missile|weapon|armour)
+menu += brown:spellbook
 
-# Wands
-menu += brown:wand of digging
-menu += lightgrey:wand of (flame|paralysis|charming|mindburst)
-menu += lightmagenta:wand of (acid|quicksilver|light)
-menu += lightcyan:wand of (iceblast|roots|warping)
-menu += blue:wand of polymorph
+# Overrides: inventory menu
+menu += inventory:lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += inventory:$boring:inert
+menu += inventory:lightmagenta:artefact.*amulet
+menu += inventory:magenta:amulet
+menu += inventory:white:artefact
+menu += inventory:lightgrey:ego
+menu += inventory:$boring:(weapon|armour)
+menu += inventory:$normal:jewellery
 
-# Scrolls
-menu += $danger:scrolls? of torment
-menu += $boring:scrolls? of noise
-menu += $decent:scrolls? of (amnesia|identify|immolation)
-menu += $good:scrolls? of (fear|fog|silence|summoning|vulnerability)
-menu += $positive:scrolls? of (brand|enchant|revelation)
-menu += $verypositive:scrolls? of (blinking|teleportation|butterflies)
-menu += $awesome:scrolls? of (acquirement)
+# Overrides: use_item menu
+menu += use_item:lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += use_item:lightmagenta:artefact.*amulet
+menu += use_item:magenta:amulet
+menu += use_item:white:artefact
+menu += use_item:lightgrey:ego
+menu += use_item:$boring:(weapon|armour)
+menu += use_item:$normal:jewellery
+
+## General settings; used where not explicitly set above
+
+# Artefact / Ego / Vanilla (For equipment)
+menu += $emergency:artefact
+menu += $useful:ego
+menu += $normal:(weapon|armour|jewellery)
+
+# Decks
+menu += $emergency:deck of escape
+menu += $useful:deck of summoning
+menu += $warning:deck of destruction
+
+# Misc
+menu += blue:(talisman|bauble)
+menu += lightmagenta:evoker
+
+# Missiles
+menu += $emergency:(curare|disjunction|throwing net)
+menu += $normal:missile
 
 # Potions
-menu += $danger:potions? of berserk
-menu += magenta:potions? of mutation
-menu += $decent:potions? of (enlightenment|lignification|ambrosia)
-menu += $good:potions? of (stabbing|brilliance|cancellation|invisibility|might|resistance)
-menu += $positive:potions? of curing
-menu += $mp:potions? of magic
-menu += $verypositive:potions? of (haste|heal wounds)
-menu += $awesome:potions? of experience
+menu += $emergency:potions? of (cancellation|haste|resistance)
+menu += $heal:potions? of (ambrosia|curing|heal wounds|magic)
+menu += $rare:potions? of experience
+menu += $useful:potions? of (brilliance|enlightenment|invisibility|might)
+menu += $warning:potions? of (attraction|berserk|lignification|mutation)
 
-# Amulets
-menu += $good:amulet of (guardian spirit|the acrobat)
-menu += $positive:amulet of (faith|reflection|magic regeneration|regeneration)
+# Scrolls
+menu += $normal:scrolls? of (amnesia|enchant|identify)
+menu += $emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
+menu += $rare:scrolls? of (acquirement|brand)
+menu += $useful:scrolls? of (revelation)
+menu += $warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerability)
 
-# Rings
-menu += $warning:ring of (fire|ice)
-menu += $decent:ring of flight
-menu += $verypositive:ring of (.*slaying)
-menu += $positive:ring of (poison resistance|protection from |positive energy|see invisible|resist corrosion)
-menu += $good:ring of (.*evasion|.*protection|magical power|wizardry)
+# Wands
+menu += $emergency:wand of digging
+menu += $normal:wand of (flame|paralysis|charming|mindburst|polymorph)
+menu += $useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
 
-# Misc items
-menu += blue:inert
-menu += $good:throwing net
-menu += $good:artefact
-
-# Deck colouring
-menu += $verypositive:deck of escape
-menu += $positive:deck of summoning
-menu += $danger:deck of destruction
+# Weapons
+menu += brown:staff of
 
 
 ######## Message coloring ########
@@ -913,7 +953,7 @@ msc += $warning:is no longer paralysed
 msc += $warning:The antennae on your head shrink away
 msc += $warning:You feel less stealthy
 msc += $warning:falls into the lava
-msc ^= $warning:Your spellforged servitor disappears
+msc ^= $warning:Your spellspark servitor disappears
 msc += $warning:The shock serpent's electric aura discharges
 msc += $warning:The air sparks with electricity
 msc += $warning:You sense an evil presence
@@ -2583,7 +2623,7 @@ msc ^= $takesaction:Gastronok chants a spell
 msc ^= $takesaction:(breathes|spits).*at
 msc += $takesaction:You conjure a mighty blast of ice
 msc += $takesaction:conjures a mighty blast of ice
-msc ^= $takesaction:Your spellforged servitor (casts|conjures|launches)
+msc ^= $takesaction:Your spellspark servitor (casts|conjures|launches)
 msc += $takesaction:You reach into the bag
 msc += $takesaction:You gaze into the crystal ball
 msc += $takesaction:Your jumping spider leaps
@@ -2884,7 +2924,7 @@ channel.orb = $awesome
 
 
 #### MUTES Be careful with these! Last, so they override the rest
-msc ^= mute:plain:No target in view!
+#msc ^= mute:plain:No target in view!
 msc ^= mute:There is a.*door here
 
 # Unnecessary
@@ -2897,7 +2937,7 @@ msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
 msc ^= mute:Use which ability
 msc ^= mute:Evoke which item
 #msc ^= mute:Confirm with
-msc ^= mute:You can\'t see any susceptible monsters within range
+#msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears
@@ -2953,6 +2993,7 @@ more -= You pick up the .* rune and feel its power
 more -= welcomes you( back)?!
 
 # Significant spells/effects ending
+flash += You feel stable
 more += is no longer charmed
 more += You.*re starting to lose your buoyancy
 # Death's Door
@@ -2962,9 +3003,7 @@ more += life is in your own
 more += unholy channel is weakening
 
 # Monsters doing things
-more += monster_warning:wielding.*of (distortion|chaos)
-more += monster_warning:carrying a wand of
-more += monster_warning:curare
+more += monster_warning:wielding.*of distortion
 more += begins to recite a word of recall
 more += There is.*feeling in your soul
 more += wretched star pulses
@@ -3229,8 +3268,8 @@ ignore += mindless puppets stay behind to rot
 # Rings to P/p for easy swapping
 item_slot += ring of:Pp
 
-# ignored: degeneration, noise, torment
-# unassigned slots: d, e, k, F
+# ignored: moonshine, noise
+# unassigned slots: d, e, F
 item_slot ^= scroll of acquirement:q
 item_slot ^= scroll of amnesia:E
 item_slot ^= scroll of blinking:B
@@ -3247,6 +3286,7 @@ item_slot ^= scroll of poison:y
 item_slot ^= scroll of silence:S
 item_slot ^= scroll of summoning:s
 item_slot ^= scroll of teleportation:t
+item_slot ^= scroll of torment:k
 item_slot ^= scroll of vulnerability:v
 
 item_slot ^= potion of ambrosia:A
@@ -3347,7 +3387,7 @@ spell_slot ^= Scorch:SCORH
 spell_slot ^= Shatter:SHTR
 spell_slot ^= Sigil of Binding:SBGILDNG
 spell_slot ^= Silence:SICL
-spell_slot ^= Spellforged Servitor:SVFR
+spell_slot ^= Spellspark Servitor:SVFR
 spell_slot ^= Sphinx Sisters:SPHINXR
 spell_slot ^= Starburst:SBUT
 spell_slot ^= Static Discharge:DSCGT
@@ -3379,7 +3419,7 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 -- Lists of things that may need to be updated with future changes
-BUEHLER_RC_VERSION = "1.0"
+BUEHLER_RC_VERSION = "1.1.0"
 
 ---- Items ----
 ALL_MISC_ITEMS = {
@@ -3414,6 +3454,14 @@ ALL_UNDEAD_RACES = {
   "Demonspawn", "Mummy", "Poltergeist", "Revenant",
 } -- ALL_UNDEAD_RACES (do not remove this comment)
 
+ALL_NONLIVING_RACES = {
+  "Djinni", "Gargoyle"
+} -- ALL_UNDEAD_RACES (do not remove this comment)
+
+ALL_POIS_RES_RACES = {
+  "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant",
+} -- ALL_POIS_RES_RACES (do not remove this comment)
+
 ALL_LITTLE_RACES = {
   "Spriggan",
 } -- ALL_LITTLE_RACES (do not remove this comment)
@@ -3429,8 +3477,8 @@ ALL_LARGE_RACES = {
 
 ---- Skills ----
 ALL_STAFF_SCHOOLS = {
-  fire = "Fire Magic", cold = "Ice Magic", earth = "Earth Magic", air = "Air Magic",
-  poison = "Poison Magic", death = "Necromancy", conjuration = "Conjurations",
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", death = "Necromancy",
+  earth = "Earth Magic", fire = "Fire Magic",  conjuration = "Conjurations",
 } -- ALL_STAFF_SCHOOLS (do not remove this comment)
 
 ALL_TRAINING_SKILLS = {
@@ -3450,8 +3498,12 @@ ALL_WEAP_SCHOOLS = {
 ---- Other ----
 ALL_PORTAL_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
-  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Ziggurat",
+  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- ALL_PORTAL_NAMES (do not remove this comment)
+
+ALL_HELL_BRANCHES = {
+  "Coc", "Dis", "Geh", "Hell", "Tar"
+} -- ALL_HELL_BRANCHES (do not remove this comment)
 
 -- Would prefer to use integer values, but they don't work in all menus
 COLORS = {
@@ -3463,11 +3515,16 @@ COLORS = {
 } -- COLORS (do not remove this comment)
 
 RISKY_EGOS = {
-  "chaos", "distortion", "harm", "heavy", "infusion"
+  "chaos", "distortion", "harm", "heavy", "infusion", "ponderous"
 } -- RISKY_EGOS (do not remove this comment)
 
 KEYS = {
-  LF = string.char(10), CR = string.char(13)
+  LF = string.char(10),
+  CR = string.char(13),
+  explore = crawl.get_command("CMD_EXPLORE") or "o",
+  save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
+  go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
+  go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">"
 } -- KEYS (do not remove this comment)
 
 MUTS = {
@@ -3480,6 +3537,17 @@ MUTS = {
 SIZE_PENALTY = {
   LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2
 } -- SIZE_PENALTY (do not remove this comment)
+
+DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg with no associated damage type
+  branded = 3, -- Include full brand dmg
+  scoring = 4 -- Include boosts for non-damaging brands
+} -- DMG_TYPE (do not remove this comment)
+
+PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
+  "distortion", "heavy", "spectralizing"
+} -- PLAIN_DMG_EGOS (do not remove this comment)
 
 }
 ############################### End lua/core/constants.lua ###############################
@@ -3654,8 +3722,9 @@ function get_var_type(value)
       if #value > 0 then return "list"
       else return "dict"
       end
+  else
+    return "unknown"
   end
-  crawl.mpr("Unsupported type for value: " .. tostring(value) .. " (" .. t .. ")")
 end
 
 function init_persistent_data(full_reset)
@@ -3888,6 +3957,24 @@ function get_mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
 end
 
+function get_skill_with_item(it)
+  if is_magic_staff(it) then
+    return math.max(get_skill(get_staff_school(it)), get_skill("Staves"))
+  end
+  if it.is_weapon then return get_skill(it.weap_skill) end
+  if is_body_armour(it) then return get_skill("Armour") end
+  if is_shield(it) then return get_skill("Shields") end
+  if is_talisman(it) then return get_skill("Shapeshifting") end
+
+  return 1 -- Fallback to 1
+end
+
+function get_staff_school(it)
+  for k,v in pairs(ALL_STAFF_SCHOOLS) do
+    if it.subtype() == k then return v end
+	end
+end
+
 function get_talisman_min_level(it)
   local tokens = crawl.split(it.description, "\n")
   for _,v in ipairs(tokens) do
@@ -3903,6 +3990,23 @@ function get_talisman_min_level(it)
   return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
 end
 
+function has_risky_ego(it)
+  local text = it.artefact and it.name() or get_ego(it)
+  if not text then return false end
+  for _, v in ipairs(RISKY_EGOS) do
+    if text:find(v) then return true end
+  end
+  return false
+end
+
+function has_usable_ego(it)
+  if not it.branded then return false end
+  local ego = get_var_type(it.ego) == "str" and it.ego or it.ego(true)
+  if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
+  if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
+  return true
+end
+
 function have_shield()
   return is_shield(items.equipped_at("offhand"))
 end
@@ -3911,29 +4015,49 @@ function have_weapon()
   return items.equipped_at("weapon") ~= nil
 end
 
+function have_zero_stat()
+  return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
+function in_hell()
+  return util.contains(ALL_HELL_BRANCHES, you.branch())
+end
+
 function is_amulet(it)
   return it and it.name("base") == "amulet"
 end
 
-function is_armour(it)
-  return it and it.class(true) == "armour"
+function is_armour(it, include_orbs)
+  -- exclude orbs by default
+  if not it or it.class(true) ~= "armour" then return false end
+  if not include_orbs and is_orb(it) then return false end
+  return true
+end
+
+function is_aux_armour(it)
+  return is_armour(it) and not (is_body_armour(it) or is_shield(it))
 end
 
 function is_body_armour(it)
   return it and it.subtype() == "body"
 end
 
-function has_risky_ego(it)
-  local text = it.artefact and it.name() or it.ego()
-  if not text then return false end
-  for _, v in ipairs(RISKY_EGOS) do
-    if text:find(v) then return true end
-  end
+function is_jewellery(it)
+  return it and it.class(true) == "jewellery"
+end
+
+function is_magic_staff(it)
+  return it and it.class and it.class(true) == "magical staff"
+end
+
+function is_miasma_immune()
+  if util.contains(ALL_UNDEAD_RACES, you.race()) then return true end
+  if util.contains(ALL_NONLIVING_RACES, you.race()) then return true end
   return false
 end
 
-function is_jewellery(it)
-  return it and it.class(true) == "jewellery"
+function is_mutation_immune()
+  return util.contains(ALL_UNDEAD_RACES, you.race())
 end
 
 function is_ring(it)
@@ -3948,10 +4072,6 @@ function is_shield(it)
   return it and it.is_shield()
 end
 
-function is_magic_staff(it)
-  return it and it.class and it.class(true) == "magical staff"
-end
-
 function is_talisman(it)
   if not it then return false end
   local c = it.class(true)
@@ -3959,7 +4079,7 @@ function is_talisman(it)
 end
 
 function is_orb(it)
-  return it and it.name("qual") == "orb"
+  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not it.is_shield()
 end
 
 function is_polearm(it)
@@ -3969,6 +4089,15 @@ end
 function offhand_is_free()
   if get_mut(MUTS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
+end
+
+function next_to_slimy_wall()
+  for x = -1, 1 do
+    for y = -1, 1 do
+      if view.feature_at(x, y) == "slimy_wall" then return true end
+    end
+  end
+  return false
 end
 
 
@@ -4056,7 +4185,9 @@ end
 ------------------- Hooks -------------------
 function c_message_after_shaft(text, channel)
   if not CONFIG.stop_on_stairs_after_shaft then return end
-  if as_shaft_depth ~= 0 or channel ~= "plain" then return end
+  if channel ~= "plain" or in_hell() then return end
+  if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
+
   local text_fall = "ou fall into a shaft"
   local text_sucked = "ou are sucked into a shaft"
   if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
@@ -4268,32 +4399,40 @@ local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local COLORIZE_TAGS = {
   { "rF" .. MULTI_PLUS, COLORS.lightred },
-  { "rC" .. MULTI_PLUS, COLORS.lightblue },
-  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
   { "rF" .. MULTI_MINUS, COLORS.red },
+  { "rC" .. MULTI_PLUS, COLORS.lightblue },
   { "rC" .. MULTI_MINUS, COLORS.blue },
+  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
   { "rN" .. MULTI_MINUS, COLORS.magenta },
-  { "rPois", COLORS.green },
+  { "rPois", COLORS.lightgreen },
   { "rElec", COLORS.lightcyan },
   { "rCorr", COLORS.yellow },
   { "rMut", COLORS.brown },
+  { "sInv", COLORS.white },
+  { "MRegen" .. MULTI_PLUS, COLORS.cyan },
+  { "Regen" .. MULTI_PLUS, COLORS.green },
+  { "Stlth" .. MULTI_PLUS, COLORS.white },
+  { "Will" .. MULTI_PLUS, COLORS.brown },
+  { "Will" .. MULTI_MINUS, COLORS.darkgrey },
+  { "Wiz" .. MULTI_PLUS, COLORS.white },
+  { "Wiz" .. MULTI_MINUS, COLORS.darkgrey },
   { "Slay" .. POS_NUM, COLORS.white},
-  {  "Str" .. POS_NUM, COLORS.white },
-  {  "Dex" .. POS_NUM, COLORS.white },
-  {  "Int" .. POS_NUM, COLORS.white },
-  {   "AC" .. POS_NUM, COLORS.white },
-  {   "EV" .. POS_NUM, COLORS.white },
-  {   "SH" .. POS_NUM, COLORS.white },
-  {   "HP" .. POS_NUM, COLORS.white },
-  {   "MP" .. POS_NUM, COLORS.white },
   { "Slay" .. NEG_NUM, COLORS.darkgrey },
+  {  "Str" .. POS_NUM, COLORS.white },
   {  "Str" .. NEG_NUM, COLORS.darkgrey },
+  {  "Dex" .. POS_NUM, COLORS.white },
   {  "Dex" .. NEG_NUM, COLORS.darkgrey },
+  {  "Int" .. POS_NUM, COLORS.white },
   {  "Int" .. NEG_NUM, COLORS.darkgrey },
+  {   "AC" .. POS_NUM, COLORS.white },
   {   "AC" .. NEG_NUM, COLORS.darkgrey },
+  {   "EV" .. POS_NUM, COLORS.white },
   {   "EV" .. NEG_NUM, COLORS.darkgrey },
+  {   "SH" .. POS_NUM, COLORS.white },
   {   "SH" .. NEG_NUM, COLORS.darkgrey },
+  {   "HP" .. POS_NUM, COLORS.white },
   {   "HP" .. NEG_NUM, COLORS.darkgrey },
+  {   "MP" .. POS_NUM, COLORS.white },
   {   "MP" .. NEG_NUM, COLORS.darkgrey },
 } --COLORIZE_TAGS (do not remove this comment)
 
@@ -4315,8 +4454,9 @@ end
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
   if not CONFIG.colorize_inscriptions then return end
+  if it.artefact then return end
   -- If enabled, call out to inscribe stats before coloring
-  if ready_inscribe_stats then ready_inscribe_stats() end
+  if do_stat_inscription then do_stat_inscription(it) end
 
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do
@@ -4356,6 +4496,10 @@ local DROP_KEY = "~~DROP_ME"
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
+  if CONFIG.msg_on_inscribe then
+    msg = "(You can drop " .. it.slot .. " - " ..it.name() .. ")"
+    crawl.mpr(with_color(COLORS.cyan, msg))
+  end
 end
 
 
@@ -4409,13 +4553,14 @@ local EARLY_XL_FMs = {
 } -- EARLY_XL_FMs (do not remove this comment)
 
 local MID_XL_FMs = {
-  "wielding.*of electrocution",
+  "monster_warning:wielding.*of electrocution",
   "You.*re more poisoned"
 } -- MID_XL_FMs (do not remove this comment)
 
 local LATE_XL_FMs = {
   "^(?!.*Your?).*speeds? up",
-  "danger:goes berserk"
+  "danger:goes berserk",
+  "monster_warning:carrying a wand of"
 } -- LATE_XL_FMs (do not remove this comment)
 
 local IGNORE_SPELLBOOKS_STRING = table.concat(ALL_SPELLBOOKS, ", ")
@@ -4476,8 +4621,8 @@ local function set_race_options()
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if you.res_poison() >= 3 then
-    crawl.setopt("force_more_message -= monster_warning:curare")
+  if not util.contains(ALL_POIS_RES_RACES, you.race()) then
+    crawl.setopt("force_more_message += monster_warning:curare")
   end
 
   if you.race() == "Gnoll" then
@@ -4587,8 +4732,12 @@ end
 
 local function has_enchantable_weap_in_inv()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.is_weapon and inv.plus < 9 and (not inv.artefact or you.race() == "Mountain Dwarf") then
-      return true
+    if inv.is_weapon 
+       and not is_magic_staff(inv) 
+       and inv.plus < 9 
+       and (not inv.artefact or you.race() == "Mountain Dwarf") then
+        crawl.mpr(inv.name("qual"))
+        return true
     end
   end
   return false
@@ -4691,6 +4840,7 @@ end
 ----- Fully rest off negative statuses -----
 local recovery_start_turn
 local explore_after_recovery
+local MAX_TURNS_TO_WAIT = 500
 
 local function abort_fully_recover()
   recovery_start_turn = 0
@@ -4701,8 +4851,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - recovery_start_turn
-  local msg = with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns)
-  crawl.mpr(msg)
+  crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns))
   
   recovery_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
@@ -4720,19 +4869,37 @@ local function fully_recovered()
   if hp ~= mhp then return false end
   if mp ~= mmp then return false end
 
-  -- Statuses that will always rest off
   local status = you.status()
-
   for _,s in ipairs(CONFIG.rest_off_statuses) do
-    if status:find(s) then return false end
-  end
-
-  -- If stat drain, don't wait for slow
-  if status:find("slowed", 1, true) then
-    return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+    if status:find(s) then
+      if not should_ignore_status(s) then return false end
+    end
   end
 
   return true
+end
+
+local function remove_statuses_from_config()
+  local status = you.status()
+  local to_remove = {}
+  for _,s in ipairs(CONFIG.rest_off_statuses) do
+    if status:find(s) then
+      table.insert(to_remove, s)
+    end
+  end
+  for _,s in ipairs(to_remove) do
+    util.remove(CONFIG.rest_off_statuses, s)
+    crawl.mpr("  Removed: " ..s)
+  end
+end
+
+function should_ignore_status(s)
+  if s == "corroded" then
+    return next_to_slimy_wall() or you.branch() == "Dis"
+  elseif s == "slowed" then
+    return have_zero_stat()
+  end
+  return false
 end
 
 local function start_fully_recover()
@@ -4750,7 +4917,7 @@ function init_fully_recover()
   
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt("macros += M o ===macro_explore_fully_recover")
+  crawl.setopt("macros += M " .. KEYS.explore .. " ===macro_explore_fully_recover")
 end
 
 -- Attach full recovery to auto-explore
@@ -4777,14 +4944,15 @@ function c_message_fully_recover(text, channel)
   end
 end
 
-function ch_stop_running_fully_recover(kind)
-  if kind == "run" and not fully_recovered() then start_fully_recover() end
-end
-
 function ready_fully_recover()
   if recovery_start_turn > 0 then
     if fully_recovered() then finish_fully_recover()
     elseif not you.feel_safe() then abort_fully_recover()
+    elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
+      crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
+      crawl.mpr(with_color(COLORS.lightred, "Adjusting CONFIG.rest_off_statuses:"))
+      remove_statuses_from_config()
+      abort_fully_recover()
     else crawl.do_commands({"CMD_SAFE_WAIT"})
     end
   else
@@ -4834,28 +5002,41 @@ end
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "vault warden", "vault guardian", "ghost crab"
+  "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
+  "vault guardian", "vault warden", "wendingo", 
+  -- Displacement
+  "deep elf knight", "swamp worm",
+  -- Summoning
+  "deep elf elementalist", 
 } -- always_flash_screen_monsters (do not remove this comment)
 
 -- Always more prompt
 local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
-  -- Torment
-    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
-    "mummy priest", "(dread|ancient) lich", "lurking horror",
   --Summoning
-    "shadow demon", "guardian serpent", "ironbound convoker",
+    "shadow demon", "guardian serpent",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
-    "halazid warlock", "deep elf elementalist", "demonspawn corrupter",
-    "elemental wellspring",
+    "halazid warlock", "demonspawn corrupter",
   --Dangerous abilities
-    "swamp worm", "air elemental", "wendingo", "wyrmhole",
+    "wyrmhole",
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-    "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
+    "starflower", "merfolk aquamancer", "wretched star",
   --Dangerous clouds
-    "catoblepas", "death drake", "apocalypse crab", "putrid mouth",
+    "catoblepas", "apocalypse crab",
 } -- always_force_more_monsters (do not remove this comment)
+
+-- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
+if not is_miasma_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, { "death drake", "putrid mouth" })
+end
+
+if not you.torment_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, {
+    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi",
+    "royal mummy", "mummy priest", "(dread|ancient) lich", "lurking horror"
+  })
+end
 
 -- Only alert once per pack
 local FM_PACK = {
@@ -4921,9 +5102,6 @@ local FM_PATTERNS = {
   {name = "willpower4", cond = "will", cutoff = 4,
       pattern = "merfolk avatar|tainted leviathan|nargun" },
 
-  -- Malmutate without rMut
-  {name = "malmutate", cond = "mut", cutoff = 1,
-      pattern = "cacodemon|neqoxec|shining eye" },
   -- Brain feed with low int
   {name = "brainfeed", cond = "int", cutoff = 6,
       pattern = "glowing orange brain|neqoxec" },
@@ -4990,6 +5168,17 @@ local FM_PATTERNS = {
   {name = "drain_190", cond = "drain", cutoff = 190,
       pattern = "shadow dragon" },
 } -- end fm_patterns (do not remove this comment)
+
+-- Set mutators to either flash (if undead) or a conditional fm
+if is_mutation_immune() then
+  crawl.setopt("flash_screen_message += monster_warning:cacodemon|neqoxec|shining eye")
+else
+  table.insert(FM_PATTERNS,
+    -- Malmutate without rMut
+    {name = "malmutate", cond = "mut", cutoff = 1,
+        pattern = "cacodemon|neqoxec|shining eye" }
+  )
+end
 ------------------- End config section -------------------
 
 local active_fm -- which ones are on
@@ -5038,23 +5227,19 @@ end
 local function do_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v)
+    set_monster_fm("-", v) -- Mute the fm-alert by removing the fm
   end
   monsters_to_mute = {}
 
-  -- Remove mutes that have expired
+  -- Remove mutes that have expired (FM_PACK includes FM_PACK_NO_CREATE)
   for _, v in ipairs(FM_PACK) do
-    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      set_monster_fm("+", v)
+    if last_fm_turn[v] ~= -1 and you.turns() >= last_fm_turn[v] + CONFIG.fm_pack_duration then
       last_fm_turn[v] = -1
-    end
-  end
-
-  -- For no-init pack monsters, just deactivate the fm
-  for _, v in ipairs(FM_PACK_NO_CREATE) do
-    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      active_fm[active_fm_index[v]] = false
-      last_fm_turn[v] = -1
+      if util.contains(FM_PACK_NO_CREATE, v) then
+        active_fm[active_fm_index[v]] = false -- Set to false so the main logic can conditionally re-enable it
+      else 
+        set_monster_fm("+", v) -- Reenable the fm, which is always active
+      end
     end
   end
 end
@@ -5137,10 +5322,14 @@ function ready_fm_monsters()
   local res_drain = you.res_draining()
   local int = you.intelligence()
 
+  local is_zig_condition = CONFIG.disable_fm_monsters_in_zigs and you.branch() == "Zig"
+
   for i,v in ipairs(FM_PATTERNS) do
     local action = nil
 
-    if not v.cond and not active_fm[i] then
+    if is_zig_condition then
+      action = "-"
+    elseif not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
       if active_fm[i] and you.xl() >= v.cutoff then action = "-"
@@ -5232,6 +5421,7 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ----- Inscribe stats on items -----
+-- Weapon inscriptions rely on get_weapon_info_string() from pa-util.lua
 local NUM_PATTERN = "[%+%-:]%d+%.%d*"
 
 local function inscribe_armour_stats(it)
@@ -5262,7 +5452,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = get_weapon_info_string(it)
+  local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
@@ -5278,15 +5468,18 @@ local function inscribe_weapon_stats(it)
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
+function do_stat_inscription(it)
+  if CONFIG.inscribe_weapons and it.is_weapon then
+    inscribe_weapon_stats(it)
+  elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
+    inscribe_armour_stats(it)
+  end
+end
 
 ------------------ Hooks ------------------
 function ready_inscribe_stats()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if CONFIG.inscribe_weapons and inv.is_weapon then
-      inscribe_weapon_stats(inv)
-    elseif CONFIG.inscribe_armour and is_armour(inv) and not is_scarf(inv) then
-      inscribe_armour_stats(inv)
-    end
+    do_stat_inscription(inv)
   end
 end
 
@@ -5299,6 +5492,8 @@ end
 {
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 local below_hp_threshold
+local prev_available_spell_levels = 0
+
 
 local function alert_low_hp()
   local hp, mhp = you.hp()
@@ -5318,21 +5513,36 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" then return end
-      mpr_with_more(with_color(COLORS.cyan, REMOVE_FAITH_MSG))
+      mpr_with_more(with_color(COLORS.lightcyan, REMOVE_FAITH_MSG))
       alerted_max_piety = true
     end
   end
 end
 
+local function alert_spell_level_changes()
+  local new_spell_levels = you.spell_levels()
+  if new_spell_levels > prev_available_spell_levels then
+    local delta = new_spell_levels - prev_available_spell_levels
+    local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
+    local avail = " (" .. new_spell_levels .. " available)"
+    crawl.mpr(with_color(COLORS.lightcyan, msg) .. with_color(COLORS.cyan, avail))
+  elseif new_spell_levels < prev_available_spell_levels then
+    crawl.mpr(with_color(COLORS.magenta, new_spell_levels .. " spell levels remaining"))
+  end
+
+
+  prev_available_spell_levels = new_spell_levels
+end
 
 function init_misc_alerts()
   if CONFIG.debug_init then crawl.mpr("Initializing misc-alerts") end
 
+  prev_available_spell_levels = you.spell_levels()
   below_hp_threshold = false
   create_persistent_data("alerted_max_piety", false)
 
   if CONFIG.save_with_msg then
-    crawl.setopt("macros += M S ===macro_save_with_message")
+    crawl.setopt("macros += M " .. KEYS.save_game .. " ===macro_save_with_message")
     if saved_game_msg and saved_game_msg ~= "" then
       crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
       saved_game_msg = nil
@@ -5360,6 +5570,7 @@ end
 function ready_misc_alerts()
   if CONFIG.alert_remove_faith then alert_remove_faith() end
   if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
+  if CONFIG.alert_spell_level_changes then alert_spell_level_changes() end
 end
 
 }
@@ -5443,11 +5654,12 @@ function c_message_remind_identify(text, channel)
       do_remind_id_check = true
     end
   elseif not found_scroll_of_id then
+    -- Pre-ID: Stop when largest stack of pots/scrolls increases
     local idx = text:find(" %- ")
     if not idx then return end
 
-    local slot = text:sub(idx - 1, idx - 1)
-    local it = items.inslot(items.letter_to_index(slot))
+    local slot = items.letter_to_index(text:sub(idx - 1, idx - 1))
+    local it = items.inslot(slot)
 
     if it.is_identified then return end
     -- Picking up known items still returns identified == false
@@ -5487,17 +5699,32 @@ end
 local stop_on_altars
 local stop_on_portals
 local stop_on_pan_gates
+local stop_on_hell_stairs
 local autosearched_temple
 local autosearched_gauntlet
 
 
 ---- Gauntlet actions ----
+local function search_gauntlet()
+  crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
+end
+
 local function ready_gauntlet_macro()
   if you.branch() == "Gauntlet" and not autosearched_gauntlet then
-    crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
+    search_gauntlet()
     autosearched_gauntlet = true
   end
 end
+
+local function c_message_gauntlet_actions(text, _)
+  -- Hit explore to search gauntlet again
+  if you.branch() == "Gauntlet" then
+    if text:find("explor", 1, true) then
+      search_gauntlet()
+    end
+  end
+end
+
 
 ---- Ignore altars ----
 local function religion_is_handled()
@@ -5540,19 +5767,36 @@ local function ready_stop_on_pan_gates()
   end
 end
 
+---- Stop on Hell Stairs ----
+local function ready_stop_on_hell_stairs()
+  local branch = you.branch()
+  if stop_on_hell_stairs and not in_hell() then
+    stop_on_hell_stairs = false
+    crawl.setopt("explore_stop -= stairs")
+  elseif not stop_on_hell_stairs and in_hell() then
+    stop_on_hell_stairs = true
+    crawl.setopt("explore_stop += stairs")
+  end
+end
+
+
 ---- Temple actions ----
+local function search_altars()
+  crawl.sendkeys({ 6, "altar\r" })
+end
+
 local function ready_temple_macro()
-  if you.branch() == "Temple" and not autosearched_temple and you.god() == "No God" then
-    crawl.sendkeys({ 6, "altar\r" })
+  if you.branch() == "Temple" and not autosearched_temple then
+    search_altars()
     autosearched_temple = true
   end
 end
 
 local function c_message_temple_actions(text, _)
   if you.branch() == "Temple" then
-    -- Hit explore to search all altars
+    -- Hit explore to search all altars again
     if text:find("explor", 1, true) then
-      crawl.sendkeys({ 6, "altar\r" })
+      search_altars()
     elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
       enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
@@ -5568,6 +5812,7 @@ function init_runrest_features()
   stop_on_altars = true
   stop_on_portals = true
   stop_on_pan_gates = false
+  stop_on_hell_stairs = false
   autosearched_temple = false
   autosearched_gauntlet = false
 end
@@ -5576,12 +5821,14 @@ end
 ---------------- Hooks ----------------
 function c_message_runrest_features(text, _)
   if CONFIG.temple_macros then c_message_temple_actions(text, _) end
+  if CONFIG.gauntlet_macros then c_message_gauntlet_actions(text, _) end
 end
 
 function ready_runrest_features()
   if CONFIG.ignore_altars then ready_ignore_altars() end
   if CONFIG.ignore_portal_exits then ready_ignore_exits() end
   if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
+  if CONFIG.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
   if CONFIG.temple_macros then ready_temple_macro() end
   if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
 end
@@ -5687,8 +5934,8 @@ function init_safe_stairs()
   last_stair_turn = 0
   v5_unwarned = true
 
-  crawl.setopt("macros += M > ===macro_do_safe_downstairs")
-  crawl.setopt("macros += M < ===macro_do_safe_upstairs")
+  crawl.setopt("macros += M " .. KEYS.go_downstairs .. " ===macro_do_safe_downstairs")
+  crawl.setopt("macros += M " .. KEYS.go_upstairs .. " ===macro_do_safe_upstairs")
 end
 
 function macro_do_safe_downstairs()
@@ -5903,8 +6150,11 @@ local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 pause_pa_system = nil
 
 function has_configured_force_more(it)
-  if CONFIG.fm_alert.artefact and it.artefact then return true end
-  if CONFIG.fm_alert.armour_ego and is_armour(it) and not is_orb(it) and has_ego(it) then return true end
+  if it.artefact then
+    if CONFIG.fm_alert.artefact then return true end
+    if CONFIG.fm_alert.trained_artefacts and get_skill_with_item(it) > 0 then return true end
+  end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
   return false
 end
 
@@ -5947,16 +6197,16 @@ function init_pa_main()
     if not it.is_useless then
       if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
-        if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and CONFIG.pickup.staves and is_magic_staff(it) then
         if pa_pickup_staff(it) then return true end
+      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
+        if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
       end
     else
       -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-      if not is_armour(it) or is_body_armour(it) or is_shield(it) or is_orb(it) then return end
+      if is_aux_armour(it) then return end
       
       local unworn_aux_item = nil
       local st = it.subtype()
@@ -5971,8 +6221,7 @@ function init_pa_main()
     end
 
     -- Not picking up this item. Now check for alerts.
-    if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
-    if already_contains(pa_items_alerted, it) then return end
+    if not CONFIG.alert.system_enabled or already_contains(pa_items_alerted, it) then return end
 
     if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
       if pa_alert_OTA(it) then return end
@@ -6032,13 +6281,20 @@ end
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
   pa_alert_OTA(it)
+
+  util.remove(pa_recent_alerts, get_plussed_name(it))  
+  if it.is_weapon and you.race() == "Coglin" then
+    -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
+    -- ie, Reset the alert the first time you pick up.
+    local name, _ = get_pa_keys(it)
+    if pa_items_picked[name] == nil then pa_items_alerted[name] = nil end
+  end
+
   add_to_pa_table(pa_items_picked, it)
-  local name, _ = get_pa_keys(it)
-  pa_items_alerted[name] = nil
-  util.remove(pa_recent_alerts, get_plussed_name(it))
 
   if it.is_weapon or is_armour(it) then
     update_high_scores(it)
+    you.stop_activity() -- crawl misses this sometimes
   end
 end
 
@@ -6078,7 +6334,7 @@ end
 {
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if it.is_weapon or is_armour(it) or is_talisman(it) or is_orb(it) then
+  if it.is_weapon or is_armour(it, true) or is_talisman(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
@@ -6105,7 +6361,7 @@ function init_pa_data()
   create_persistent_data("alerted_first_polearm_1h", false)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
-  create_persistent_data("unbranded_high_score", 0)
+  create_persistent_data("plain_dmg_high_score", 0)
 
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -6163,16 +6419,19 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Highest AC" end
     end
   elseif it.is_weapon then
+    -- Don't alert for unusable weapons
+    if get_hands(it) == 2 and not offhand_is_free() then return end
+
     local dmg = get_weap_damage(it, DMG_TYPE.branded)
     if dmg > weapon_high_score then
       weapon_high_score = dmg
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    dmg = get_weap_damage(it, DMG_TYPE.unbranded)
-    if dmg > unbranded_high_score then
-      unbranded_high_score = dmg
-      if not ret_val then ret_val = "Highest no-brand damage" end
+    dmg = get_weap_damage(it, DMG_TYPE.plain)
+    if dmg > plain_dmg_high_score then
+      plain_dmg_high_score = dmg
+      if not ret_val then ret_val = "Highest plain damage" end
     end
   end
 
@@ -6187,6 +6446,9 @@ end
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 ---- Utility functions specific to pickup-alert system ----
+-- Functions often duplicate dcss calculations and need to be updated when those change
+-- Many functions are specific to buehler.rc, and not necessarily applicable to all RCs
+
 --------- Stat string formatting ---------
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
@@ -6200,9 +6462,11 @@ local function format_stat(abbr, val, is_worn)
 end
 
 function get_armour_info_strings(it)
-  if not is_armour(it) or is_orb(it) then return "", "" end
+  if not is_armour(it) then return "", "" end
 
-  local cur = items.equipped_at(it.equip_type)
+  -- Compare against last slot if poltergeist
+  local slot_num = you.race() == "Poltergeist" and 6 or 1
+  local cur = items.equipped_at(it.equip_type, slot_num)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
@@ -6230,9 +6494,9 @@ function get_armour_info_strings(it)
   end
 end
 
-function get_weapon_info_string(it)
+function get_weapon_info_string(it, dmg_type)
   if not it.is_weapon then return end
-  local dmg = get_weap_damage(it, DMG_TYPE.branded)
+  local dmg = get_weap_damage(it, dmg_type or CONFIG.inscribe_dps_type or DMG_TYPE.plain)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -6261,12 +6525,8 @@ end
 
 
 --------- Functions for armour and weapons ---------
--- get_ego() returns artefact status first, then the ego
-function get_ego(it, terse)
-  if it.artefact then return "arte" end
-  local ego = it.ego(terse)
-  if ego then return ego end
-
+function get_ego(it)
+  if has_usable_ego(it) then return it.ego(true) end
   if is_body_armour(it) then
     local qualname = it.name("qual")
     if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
@@ -6276,11 +6536,11 @@ end
 -- Used for data tables
 function get_pa_keys(it, name_type)
   if it.class(true) == "bauble" then
-    return it.name("qual"), 0
+    return it.name("qual"):gsub("\"", ""), 0
   elseif is_talisman(it) or is_orb(it) then
     return it.name():gsub("\"", ""), 0
   elseif is_magic_staff(it) then
-    return it.name("base"), 0
+    return it.name("base"):gsub("\"", ""), 0
   else
     local name = it.name(name_type or "base"):gsub("\"", "")
     local value = tonumber(name:sub(1, 3))
@@ -6304,10 +6564,10 @@ function has_ego(it, exclude_stat_only_egos)
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end
     end
-    return it.artefact or it.branded or is_magic_staff(it)
+    return it.artefact or has_usable_ego(it) or is_magic_staff(it)
   end
 
-  if it.artefact or it.branded then return true end
+  if it.artefact or has_usable_ego(it) then return true end
   local basename = it.name("base")
   if basename:find("troll leather", 1, true) then return true end
   if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
@@ -6444,7 +6704,7 @@ function get_weap_delay(it)
   -- dcss v0.33.1
   local delay = it.delay - get_skill(it.weap_skill)/2
   delay = math.max(delay, get_weap_min_delay(it))
-  delay = adjust_delay_for_ego(delay, it.ego())
+  delay = adjust_delay_for_ego(delay, get_ego(it))
   delay = math.max(delay, 3)
 
   local sh = items.equipped_at("offhand")
@@ -6520,9 +6780,8 @@ function get_weap_damage(it, dmg_type)
     end
   end
 
-  local stat
-  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex
-  else stat = str end
+  local stat = str
+  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex end
 
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
@@ -6533,17 +6792,25 @@ function get_weap_damage(it, dmg_type)
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
   if is_magic_staff(it) then
-    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type == DMG_TYPE.unbranded))
+    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type))
   end
 
-  if dmg_type >= DMG_TYPE.branded then
+  if dmg_type == DMG_TYPE.plain then
+    local ego = get_ego(it)
+    if ego and util.contains(PLAIN_DMG_EGOS, ego) then
+      local brand_bonus = WEAPON_BRAND_BONUSES[ego] or WEAPON_BRAND_BONUSES.subtle[ego]
+      return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset
+    end
+  elseif dmg_type >= DMG_TYPE.branded then
     local ego = get_ego(it)
     if ego then
       local brand_bonus = WEAPON_BRAND_BONUSES[ego]
       if not brand_bonus and dmg_type == DMG_TYPE.scoring then
         brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego]
       end
-      if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + brand_bonus.offset + it_plus end
+      if brand_bonus then
+        return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset
+      end
     end
   end
 
@@ -6607,10 +6874,10 @@ function get_slay_bonuses()
             if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
             else sum = sum - slay end
           end
-        elseif get_ego(it, true) == "Slay" then
+        elseif get_ego(it) == "Slay" then
           sum = sum + it.plus
         end
-      elseif it.artefact and (is_armour(it) or is_amulet(it)) then
+      elseif it.artefact and (is_armour(it, true) or is_amulet(it)) then
           local slay = it.artprops["Slay"]
           if slay then sum = sum + slay end
       end
@@ -6625,18 +6892,17 @@ function get_slay_bonuses()
   return sum
 end
 
-function get_staff_bonus_dmg(it, ignore_brand_dmg)
+function get_staff_bonus_dmg(it, dmg_type)
   -- dcss v0.33.1
-  if ignore_brand_dmg then
+  if dmg_type == DMG_TYPE.unbranded then return 0 end
+  if dmg_type == DMG_TYPE.plain then
     local basename = it.name("base")
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
       return 0
     end
   end
 
-  local school = get_staff_school(it)
-  if not school then return 0 end
-  local spell_skill = get_skill(school)
+  local spell_skill = get_skill(get_staff_school(it))
   local evo_skill = you.skill("Evocations")
 
   local chance = (2*evo_skill + spell_skill) / 30
@@ -6645,12 +6911,6 @@ function get_staff_bonus_dmg(it, ignore_brand_dmg)
   -- Varies by staff type in sometimes complex ways
   local avg_dmg = 3/4 * (evo_skill/2 + spell_skill)
   return avg_dmg*chance
-end
-
-function get_staff_school(it)
-  for k,v in pairs(ALL_STAFF_SCHOOLS) do
-    if it.name("base") == "staff of " .. k then return v end
-	end
 end
 
 }
@@ -6686,6 +6946,15 @@ function init_pa_armour()
       lost_ego = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
     } -- ARMOUR_ALERT.heavier (do not remove this comment)
   } -- ARMOUR_ALERT (do not remove this comment)
+end
+
+local SAME = "same_ego"
+local LOST = "lost_ego"
+local GAIN = "gain_ego"
+local DIFF = "diff_ego"
+
+local is_new_ego = function(ego_change_type)
+  return ego_change_type == GAIN or ego_change_type == DIFF
 end
 
 local function send_armour_alert(it, alert_type)
@@ -6733,33 +7002,52 @@ function pa_alert_armour(it, unworn_inv_item)
     local it_ego = get_ego(it)
     local cur_ego = get_ego(cur)
     local ego_change_type
-    if it_ego == cur_ego then ego_change_type = "same_ego"
-    elseif not it_ego then ego_change_type = "lost_ego"
-    elseif not cur_ego then ego_change_type = "gain_ego"
-    else ego_change_type = "diff_ego"
+    if it_ego == cur_ego then ego_change_type = SAME
+    elseif not it_ego then ego_change_type = LOST
+    elseif not cur_ego then ego_change_type = GAIN
+    else ego_change_type = DIFF
     end
 
     if encumb_delta == 0 then
-      if ego_change_type == "gain_ego" or ego_change_type == "diff_ego" then
+      if is_new_ego(ego_change_type) then
         return send_armour_alert(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
+      if is_new_ego(ego_change_type) then
+        if math.abs(ac_delta + ev_delta) <= TUNING.armour.lighter.ignore_small then
+          return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
+        end
+      end
+
       if (ac_delta > 0) or (ev_delta / -ac_delta > TUNING.armour.lighter[ego_change_type]) then
-        if ego_change_type == "lost_ego" and ev_delta < TUNING.armour.lighter.min_gain then return false end
-        if ego_change_type ~= "same_ego" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
+        -- Alert for AC/EV changes as configured
+        if ego_change_type == LOST and ev_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= SAME and -ac_delta > TUNING.armour.lighter.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
-      local encumb_impact = math.min(1, (you.skill("Spellcasting") + you.skill("Ranged Weapons")) / you.xl())
+      if is_new_ego(ego_change_type) then
+        if math.abs(ac_delta + ev_delta) <= TUNING.armour.heavier.ignore_small then
+          return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
+        end 
+      end
+
+      local encumb_skills = you.skill("Spellcasting") + you.skill("Ranged Weapons") - you.skill("Armour") / 2
+      if encumb_skills < 0 then encumb_skills = 0 end
+      local encumb_impact = math.min(1, encumb_skills / you.xl())
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if (total_loss < 0) or (ac_delta / total_loss > TUNING.armour.heavier[ego_change_type]) then
-        if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.heavier.min_gain then return false end
-        if ego_change_type ~= "same_ego" and total_loss > TUNING.armour.heavier.max_loss then return false end
+        -- Alert for AC/EV changes as configured
+        if ego_change_type == LOST and ac_delta < TUNING.armour.heavier.min_gain then return false end
+        if ego_change_type ~= SAME and total_loss > TUNING.armour.heavier.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
       end
     end
 
     if alert_ac_high_score(it) then return true end
+    if has_ego(it) and you.xl() <= TUNING.armour.early_xl then
+      return pa_alert_item(it, "Early armour", EMOJI.EGO)
+    end
   elseif is_shield(it) then
     if it.artefact then
       return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
@@ -6767,11 +7055,11 @@ function pa_alert_armour(it, unworn_inv_item)
   
     local sh = items.equipped_at("offhand")
     if not is_shield(sh) then return false end
-    if has_ego(it) and get_ego(it) ~= get_ego(sh) then
-      local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
+    if is_new_ego(ego_change_type) then
+      local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
       return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+      return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
     end
   else
     -- Aux armour
@@ -6784,17 +7072,17 @@ function pa_alert_armour(it, unworn_inv_item)
       if unworn_inv_item then
         all_equipped[#all_equipped+1] = unworn_inv_item
       else
-        -- Fires on dangerous brands or items blocked by non-innatemutations
+        -- Fires on dangerous brands or items blocked by non-innate mutations
         return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
       end
     end
 
     for _, cur in ipairs(all_equipped) do
-      if has_ego(it) and get_ego(it) ~= get_ego(cur) then
-        local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
+      if is_new_ego(ego_change_type) then
+        local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
         return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
       elseif get_armour_ac(it) > get_armour_ac(cur) then
-        return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
       end
     end
   end
@@ -6805,16 +7093,13 @@ function pa_pickup_armour(it)
   if has_risky_ego(it) then return false end
 
   if is_body_armour(it) then
-    -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
+    -- Pick up AC upgrades, and new egos that don't lose AC
     local cur = items.equipped_at("armour")
     if not cur then return false end
     if it.encumbrance > cur.encumbrance then return false end
+    if cur.artefact or it.artefact then return false end
 
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-
-    if cur.artefact then return false end
-    if it.artefact then return ac_delta > -5 end
-
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
     elseif not has_ego(cur) then
@@ -6866,9 +7151,9 @@ function pa_pickup_armour(it)
     -- Already have something in slot; it must be glowing to pick up
     if not it.is_identified then return false end
 
-    for _, cur in ipairs(all_equipped) do
-      if i == num_slots and cur.artefact then return false end
+    for i, cur in ipairs(all_equipped) do
       if not cur.artefact then break end
+      if i == num_slots then return false end
     end
 
     if it.artefact then return true end
@@ -7077,8 +7362,8 @@ local function is_weapon_upgrade(it, cur)
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
-    if it.is_ranged ~= cur.is_ranged then return false end
-    if is_polearm(cur) and not is_polearm(it) then return false end
+    if cur.is_ranged ~= it.is_ranged then return false end
+    if is_polearm(cur) ~= is_polearm(it) then return false end
 
     if it.artefact then return true end
     if cur.artefact then return false end
@@ -7174,7 +7459,7 @@ end
 -- `cur` comes from WEAP_CACHE
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then
-    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT, CONFIG.fm_alert.new_weap)
+    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
   local inv_best = WEAP_CACHE.max_dps[WEAP_CACHE.get_key(it)]
@@ -7184,14 +7469,15 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
-      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
     end
     return false
   end
   
-  if it.is_ranged ~= cur.is_ranged then return false end
+  if cur.is_ranged ~= it.is_ranged then return false end
+  if is_polearm(cur) ~= is_polearm(it) then return false end
   if 2 * get_skill(it.weap_skill) < get_skill(cur.weap_skill) then return false end
   
   -- Penalize lower-trained skills
@@ -7202,12 +7488,12 @@ local function alert_interesting_weapon(it, cur)
   if get_hands(it) > cur.hands then
     if offhand_is_free() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
       if has_ego(it) and not util.contains(WEAP_CACHE.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
-        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.upgrade_weap)
       end
     elseif has_ego(it) and not has_ego(cur) and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
-      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.weap_ego)
     end
   else -- No extra hand required
     if cur.artefact then return false end
@@ -7215,14 +7501,14 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not has_ego(cur) then
         if score_ratio > TUNING.weap.alert.gain_ego then
-          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+          return pa_alert_item(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
         end
       elseif not util.contains(WEAP_CACHE.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
-        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.new_weap)
+        return pa_alert_item(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return pa_alert_item(it, "Higher DPS", EMOJI.WEAPON, CONFIG.fm_alert.new_weap)
+      return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
     end
   end
   
@@ -7327,11 +7613,6 @@ function c_message(text, channel)
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_pack then c_message_fm_pack(text, channel) end
   if c_message_fm_disable then c_message_fm_disable(text, channel) end
-end
-
-function ch_stop_running(kind)
-  if not buehler_rc_active then return end
-  if ch_stop_running_fully_recover then ch_stop_running_fully_recover(kind) end
 end
 
 function c_answer_prompt(prompt)

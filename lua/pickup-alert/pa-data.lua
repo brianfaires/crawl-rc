@@ -1,6 +1,6 @@
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if it.is_weapon or is_armour(it) or is_talisman(it) or is_orb(it) then
+  if it.is_weapon or is_armour(it, true) or is_talisman(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then
@@ -27,7 +27,7 @@ function init_pa_data()
   create_persistent_data("alerted_first_polearm_1h", false)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
-  create_persistent_data("unbranded_high_score", 0)
+  create_persistent_data("plain_dmg_high_score", 0)
 
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -85,16 +85,19 @@ function update_high_scores(it)
       if not ret_val then ret_val = "Highest AC" end
     end
   elseif it.is_weapon then
+    -- Don't alert for unusable weapons
+    if get_hands(it) == 2 and not offhand_is_free() then return end
+
     local dmg = get_weap_damage(it, DMG_TYPE.branded)
     if dmg > weapon_high_score then
       weapon_high_score = dmg
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    dmg = get_weap_damage(it, DMG_TYPE.unbranded)
-    if dmg > unbranded_high_score then
-      unbranded_high_score = dmg
-      if not ret_val then ret_val = "Highest no-brand damage" end
+    dmg = get_weap_damage(it, DMG_TYPE.plain)
+    if dmg > plain_dmg_high_score then
+      plain_dmg_high_score = dmg
+      if not ret_val then ret_val = "Highest plain damage" end
     end
   end
 

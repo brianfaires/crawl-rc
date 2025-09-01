@@ -2,17 +2,32 @@
 local stop_on_altars
 local stop_on_portals
 local stop_on_pan_gates
+local stop_on_hell_stairs
 local autosearched_temple
 local autosearched_gauntlet
 
 
 ---- Gauntlet actions ----
+local function search_gauntlet()
+  crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
+end
+
 local function ready_gauntlet_macro()
   if you.branch() == "Gauntlet" and not autosearched_gauntlet then
-    crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
+    search_gauntlet()
     autosearched_gauntlet = true
   end
 end
+
+local function c_message_gauntlet_actions(text, _)
+  -- Hit explore to search gauntlet again
+  if you.branch() == "Gauntlet" then
+    if text:find("explor", 1, true) then
+      search_gauntlet()
+    end
+  end
+end
+
 
 ---- Ignore altars ----
 local function religion_is_handled()
@@ -55,19 +70,36 @@ local function ready_stop_on_pan_gates()
   end
 end
 
+---- Stop on Hell Stairs ----
+local function ready_stop_on_hell_stairs()
+  local branch = you.branch()
+  if stop_on_hell_stairs and not in_hell() then
+    stop_on_hell_stairs = false
+    crawl.setopt("explore_stop -= stairs")
+  elseif not stop_on_hell_stairs and in_hell() then
+    stop_on_hell_stairs = true
+    crawl.setopt("explore_stop += stairs")
+  end
+end
+
+
 ---- Temple actions ----
+local function search_altars()
+  crawl.sendkeys({ 6, "altar\r" })
+end
+
 local function ready_temple_macro()
-  if you.branch() == "Temple" and not autosearched_temple and you.god() == "No God" then
-    crawl.sendkeys({ 6, "altar\r" })
+  if you.branch() == "Temple" and not autosearched_temple then
+    search_altars()
     autosearched_temple = true
   end
 end
 
 local function c_message_temple_actions(text, _)
   if you.branch() == "Temple" then
-    -- Hit explore to search all altars
+    -- Hit explore to search all altars again
     if text:find("explor", 1, true) then
-      crawl.sendkeys({ 6, "altar\r" })
+      search_altars()
     elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
       enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
@@ -83,6 +115,7 @@ function init_runrest_features()
   stop_on_altars = true
   stop_on_portals = true
   stop_on_pan_gates = false
+  stop_on_hell_stairs = false
   autosearched_temple = false
   autosearched_gauntlet = false
 end
@@ -91,12 +124,14 @@ end
 ---------------- Hooks ----------------
 function c_message_runrest_features(text, _)
   if CONFIG.temple_macros then c_message_temple_actions(text, _) end
+  if CONFIG.gauntlet_macros then c_message_gauntlet_actions(text, _) end
 end
 
 function ready_runrest_features()
   if CONFIG.ignore_altars then ready_ignore_altars() end
   if CONFIG.ignore_portal_exits then ready_ignore_exits() end
   if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
+  if CONFIG.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
   if CONFIG.temple_macros then ready_temple_macro() end
   if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
 end

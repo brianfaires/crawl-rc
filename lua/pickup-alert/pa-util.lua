@@ -1,4 +1,7 @@
 ---- Utility functions specific to pickup-alert system ----
+-- Functions often duplicate dcss calculations and need to be updated when those change
+-- Many functions are specific to buehler.rc, and not necessarily applicable to all RCs
+
 --------- Stat string formatting ---------
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
@@ -12,9 +15,11 @@ local function format_stat(abbr, val, is_worn)
 end
 
 function get_armour_info_strings(it)
-  if not is_armour(it) or is_orb(it) then return "", "" end
+  if not is_armour(it) then return "", "" end
 
-  local cur = items.equipped_at(it.equip_type)
+  -- Compare against last slot if poltergeist
+  local slot_num = you.race() == "Poltergeist" and 6 or 1
+  local cur = items.equipped_at(it.equip_type, slot_num)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
@@ -42,9 +47,9 @@ function get_armour_info_strings(it)
   end
 end
 
-function get_weapon_info_string(it)
+function get_weapon_info_string(it, dmg_type)
   if not it.is_weapon then return end
-  local dmg = get_weap_damage(it, DMG_TYPE.branded)
+  local dmg = get_weap_damage(it, dmg_type or CONFIG.inscribe_dps_type or DMG_TYPE.plain)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -73,12 +78,8 @@ end
 
 
 --------- Functions for armour and weapons ---------
--- get_ego() returns artefact status first, then the ego
-function get_ego(it, terse)
-  if it.artefact then return "arte" end
-  local ego = it.ego(terse)
-  if ego then return ego end
-
+function get_ego(it)
+  if has_usable_ego(it) then return it.ego(true) end
   if is_body_armour(it) then
     local qualname = it.name("qual")
     if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
@@ -88,11 +89,11 @@ end
 -- Used for data tables
 function get_pa_keys(it, name_type)
   if it.class(true) == "bauble" then
-    return it.name("qual"), 0
+    return it.name("qual"):gsub("\"", ""), 0
   elseif is_talisman(it) or is_orb(it) then
     return it.name():gsub("\"", ""), 0
   elseif is_magic_staff(it) then
-    return it.name("base"), 0
+    return it.name("base"):gsub("\"", ""), 0
   else
     local name = it.name(name_type or "base"):gsub("\"", "")
     local value = tonumber(name:sub(1, 3))
@@ -116,10 +117,10 @@ function has_ego(it, exclude_stat_only_egos)
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end
     end
-    return it.artefact or it.branded or is_magic_staff(it)
+    return it.artefact or has_usable_ego(it) or is_magic_staff(it)
   end
 
-  if it.artefact or it.branded then return true end
+  if it.artefact or has_usable_ego(it) then return true end
   local basename = it.name("base")
   if basename:find("troll leather", 1, true) then return true end
   if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
@@ -256,7 +257,7 @@ function get_weap_delay(it)
   -- dcss v0.33.1
   local delay = it.delay - get_skill(it.weap_skill)/2
   delay = math.max(delay, get_weap_min_delay(it))
-  delay = adjust_delay_for_ego(delay, it.ego())
+  delay = adjust_delay_for_ego(delay, get_ego(it))
   delay = math.max(delay, 3)
 
   local sh = items.equipped_at("offhand")
@@ -332,9 +333,8 @@ function get_weap_damage(it, dmg_type)
     end
   end
 
-  local stat
-  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex
-  else stat = str end
+  local stat = str
+  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex end
 
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
@@ -345,17 +345,25 @@ function get_weap_damage(it, dmg_type)
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
   if is_magic_staff(it) then
-    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type == DMG_TYPE.unbranded))
+    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type))
   end
 
-  if dmg_type >= DMG_TYPE.branded then
+  if dmg_type == DMG_TYPE.plain then
+    local ego = get_ego(it)
+    if ego and util.contains(PLAIN_DMG_EGOS, ego) then
+      local brand_bonus = WEAPON_BRAND_BONUSES[ego] or WEAPON_BRAND_BONUSES.subtle[ego]
+      return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset
+    end
+  elseif dmg_type >= DMG_TYPE.branded then
     local ego = get_ego(it)
     if ego then
       local brand_bonus = WEAPON_BRAND_BONUSES[ego]
       if not brand_bonus and dmg_type == DMG_TYPE.scoring then
         brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego]
       end
-      if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + brand_bonus.offset + it_plus end
+      if brand_bonus then
+        return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset
+      end
     end
   end
 
@@ -419,10 +427,10 @@ function get_slay_bonuses()
             if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
             else sum = sum - slay end
           end
-        elseif get_ego(it, true) == "Slay" then
+        elseif get_ego(it) == "Slay" then
           sum = sum + it.plus
         end
-      elseif it.artefact and (is_armour(it) or is_amulet(it)) then
+      elseif it.artefact and (is_armour(it, true) or is_amulet(it)) then
           local slay = it.artprops["Slay"]
           if slay then sum = sum + slay end
       end
@@ -437,18 +445,17 @@ function get_slay_bonuses()
   return sum
 end
 
-function get_staff_bonus_dmg(it, ignore_brand_dmg)
+function get_staff_bonus_dmg(it, dmg_type)
   -- dcss v0.33.1
-  if ignore_brand_dmg then
+  if dmg_type == DMG_TYPE.unbranded then return 0 end
+  if dmg_type == DMG_TYPE.plain then
     local basename = it.name("base")
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
       return 0
     end
   end
 
-  local school = get_staff_school(it)
-  if not school then return 0 end
-  local spell_skill = get_skill(school)
+  local spell_skill = get_skill(get_staff_school(it))
   local evo_skill = you.skill("Evocations")
 
   local chance = (2*evo_skill + spell_skill) / 30
@@ -457,10 +464,4 @@ function get_staff_bonus_dmg(it, ignore_brand_dmg)
   -- Varies by staff type in sometimes complex ways
   local avg_dmg = 3/4 * (evo_skill/2 + spell_skill)
   return avg_dmg*chance
-end
-
-function get_staff_school(it)
-  for k,v in pairs(ALL_STAFF_SCHOOLS) do
-    if it.name("base") == "staff of " .. k then return v end
-	end
 end

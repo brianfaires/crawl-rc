@@ -16,7 +16,7 @@ hp_warning = 20
 item_stack_summary_minimum = 8
 fail_severity_to_confirm = 4
 
-sort_menus = true:equipped,art,ego,glowing,identified,basename,qualname,>qty
+sort_menus = true:equipped,art,ego,basename,identified,qualname,>qty
 drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, dart, stone
 
@@ -28,7 +28,7 @@ rest_delay = -1
 view_delay = 100
 show_travel_trail = true
 
-explore_stop = artefacts,altars,branches,portals,runed_doors,greedy_pickup_smart
+explore_stop = altars,branches,portals,runed_doors,greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang, javelin
 
 
@@ -106,11 +106,6 @@ function c_message(text, channel)
   if c_message_runrest_features then c_message_runrest_features(text, channel) end
   if c_message_fm_pack then c_message_fm_pack(text, channel) end
   if c_message_fm_disable then c_message_fm_disable(text, channel) end
-end
-
-function ch_stop_running(kind)
-  if not buehler_rc_active then return end
-  if ch_stop_running_fully_recover then ch_stop_running_fully_recover(kind) end
 end
 
 function c_answer_prompt(prompt)

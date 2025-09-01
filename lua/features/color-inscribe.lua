@@ -8,32 +8,40 @@ local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local COLORIZE_TAGS = {
   { "rF" .. MULTI_PLUS, COLORS.lightred },
-  { "rC" .. MULTI_PLUS, COLORS.lightblue },
-  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
   { "rF" .. MULTI_MINUS, COLORS.red },
+  { "rC" .. MULTI_PLUS, COLORS.lightblue },
   { "rC" .. MULTI_MINUS, COLORS.blue },
+  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
   { "rN" .. MULTI_MINUS, COLORS.magenta },
-  { "rPois", COLORS.green },
+  { "rPois", COLORS.lightgreen },
   { "rElec", COLORS.lightcyan },
   { "rCorr", COLORS.yellow },
   { "rMut", COLORS.brown },
+  { "sInv", COLORS.white },
+  { "MRegen" .. MULTI_PLUS, COLORS.cyan },
+  { "Regen" .. MULTI_PLUS, COLORS.green },
+  { "Stlth" .. MULTI_PLUS, COLORS.white },
+  { "Will" .. MULTI_PLUS, COLORS.brown },
+  { "Will" .. MULTI_MINUS, COLORS.darkgrey },
+  { "Wiz" .. MULTI_PLUS, COLORS.white },
+  { "Wiz" .. MULTI_MINUS, COLORS.darkgrey },
   { "Slay" .. POS_NUM, COLORS.white},
-  {  "Str" .. POS_NUM, COLORS.white },
-  {  "Dex" .. POS_NUM, COLORS.white },
-  {  "Int" .. POS_NUM, COLORS.white },
-  {   "AC" .. POS_NUM, COLORS.white },
-  {   "EV" .. POS_NUM, COLORS.white },
-  {   "SH" .. POS_NUM, COLORS.white },
-  {   "HP" .. POS_NUM, COLORS.white },
-  {   "MP" .. POS_NUM, COLORS.white },
   { "Slay" .. NEG_NUM, COLORS.darkgrey },
+  {  "Str" .. POS_NUM, COLORS.white },
   {  "Str" .. NEG_NUM, COLORS.darkgrey },
+  {  "Dex" .. POS_NUM, COLORS.white },
   {  "Dex" .. NEG_NUM, COLORS.darkgrey },
+  {  "Int" .. POS_NUM, COLORS.white },
   {  "Int" .. NEG_NUM, COLORS.darkgrey },
+  {   "AC" .. POS_NUM, COLORS.white },
   {   "AC" .. NEG_NUM, COLORS.darkgrey },
+  {   "EV" .. POS_NUM, COLORS.white },
   {   "EV" .. NEG_NUM, COLORS.darkgrey },
+  {   "SH" .. POS_NUM, COLORS.white },
   {   "SH" .. NEG_NUM, COLORS.darkgrey },
+  {   "HP" .. POS_NUM, COLORS.white },
   {   "HP" .. NEG_NUM, COLORS.darkgrey },
+  {   "MP" .. POS_NUM, COLORS.white },
   {   "MP" .. NEG_NUM, COLORS.darkgrey },
 } --COLORIZE_TAGS (do not remove this comment)
 
@@ -55,8 +63,9 @@ end
 ------------------- Hooks -------------------
 function c_assign_invletter_color_inscribe(it)
   if not CONFIG.colorize_inscriptions then return end
+  if it.artefact then return end
   -- If enabled, call out to inscribe stats before coloring
-  if ready_inscribe_stats then ready_inscribe_stats() end
+  if do_stat_inscription then do_stat_inscription(it) end
 
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do

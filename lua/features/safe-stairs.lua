@@ -48,8 +48,8 @@ function init_safe_stairs()
   last_stair_turn = 0
   v5_unwarned = true
 
-  crawl.setopt("macros += M > ===macro_do_safe_downstairs")
-  crawl.setopt("macros += M < ===macro_do_safe_upstairs")
+  crawl.setopt("macros += M " .. KEYS.go_downstairs .. " ===macro_do_safe_downstairs")
+  crawl.setopt("macros += M " .. KEYS.go_upstairs .. " ===macro_do_safe_upstairs")
 end
 
 function macro_do_safe_downstairs()

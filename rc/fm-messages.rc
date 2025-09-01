@@ -12,6 +12,7 @@ more -= You pick up the .* rune and feel its power
 more -= welcomes you( back)?!
 
 # Significant spells/effects ending
+flash += You feel stable
 more += is no longer charmed
 more += You.*re starting to lose your buoyancy
 # Death's Door
@@ -21,9 +22,7 @@ more += life is in your own
 more += unholy channel is weakening
 
 # Monsters doing things
-more += monster_warning:wielding.*of (distortion|chaos)
-more += monster_warning:carrying a wand of
-more += monster_warning:curare
+more += monster_warning:wielding.*of distortion
 more += begins to recite a word of recall
 more += There is.*feeling in your soul
 more += wretched star pulses

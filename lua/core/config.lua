@@ -9,7 +9,7 @@ function init_config()
   CONFIG.emojis = true -- Use emojis in alerts and announcements
 
   -- after-shaft.lua
-  CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft
+  CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft, until back to original level
 
   -- announce-damage.lua: Announce HP/MP changes
   CONFIG.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
@@ -32,31 +32,36 @@ function init_config()
 
   -- drop-inferior.lua
   CONFIG.drop_inferior = true -- Mark items for drop when better item picked up
+  CONFIG.msg_on_inscribe = true -- Show a message when an item is marked for drop
 
   -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
   CONFIG.exclude_dropped = true -- Exclude items from auto-pickup when dropped
   CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
 
-  -- fm-disable.lua: Disable built-in force_mores that can't just be -='d
+  -- fm-disable.lua: Disable built-in force_mores that can't be easily removed
   CONFIG.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
 
   -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
+  CONFIG.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
 
-  -- fully-recover.lua: Keep resting until these statuses are gone
+  -- fully-recover.lua: Rest off bad statuses during rest
+  -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
   CONFIG.rest_off_statuses = {
-    "berserk", "short of breath", "corroded", "vulnerable", 
-    "confused", "marked", "tree%-form", "slowed", "sluggish"
+    "berserk", "confused", "corroded", "marked", "short of breath", 
+    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened"
   } -- CONFIG.rest_off_statuses (do not remove this comment)
 
   -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
   CONFIG.inscribe_weapons = true
   CONFIG.inscribe_armour = true
+  CONFIG.inscribe_dps_type = DMG_TYPE.plain -- How to calc dmg for weapon inscriptions
 
   -- misc-alerts.lua
   CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
   CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
+  CONFIG.alert_spell_level_changes = true -- Alert when you gain additional spell levels
   CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
 
   -- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:
@@ -66,6 +71,7 @@ function init_config()
   -- runrest-features.lua: Runrest features
   CONFIG.ignore_altars = true -- when you have a god already
   CONFIG.ignore_portal_exits = true -- don't stop explore on portal exits
+  CONFIG.stop_on_hell_stairs = true -- stop explore on hell stairs
   CONFIG.stop_on_pan_gates = true -- stop explore on pan gates
   CONFIG.temple_macros = true -- auto-search altars; run to exit after worship
   CONFIG.gauntlet_macros = true -- auto-search with filters
@@ -121,21 +127,23 @@ function init_config()
     }, -- CONFIG.alert.one_time (do not remove this comment)
     
     -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-    OTA_require_skill = { weapon = 4, armour = 3, shield = 0 }
+    OTA_require_skill = { weapon = 3, armour = 2.5, shield = 0 }
   } -- CONFIG.alert (do not remove this comment)
 
   -- Which alerts generate a force_more
   CONFIG.fm_alert = {
-    early_weap = false,
-    new_weap = true,
+    early_weap = false,       -- Good weapons found early
+    upgrade_weap = false,     -- Better DPS / weapon_score
+    weap_ego = false,         -- New or diff egos
     body_armour = false,
     shields = true,
     aux_armour = false,
-    armour_ego = true,
-    high_score_weap = false,
-    high_score_armour = true,
+    armour_ego = true,        -- New or diff egos
+    high_score_weap = false,  -- Highest damage found
+    high_score_armour = true, -- Highest AC found
     one_time_alerts = true,
-    artefact = true,
+    artefact = false,         -- Any artefact
+    trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
     orbs = false,
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false
@@ -147,11 +155,20 @@ function init_config()
 
   -- For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
   -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
-  -- min_gain/max_loss check against the AC or EV delta when ego changes
+  -- min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
+  -- ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
+  
   TUNING.armour = {
-    lighter = {gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0, min_gain = 3.0, max_loss = 4.0 },
-    heavier = {gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0, min_gain = 3.0, max_loss = 8.0 },
-    encumb_penalty_weight = 0.7 -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+    lighter = {
+      gain_ego = 0.6, diff_ego = 0.8, same_ego = 1.2, lost_ego = 2.0,
+      min_gain = 3.0, max_loss = 4.0, ignore_small = 3.5
+    },
+    heavier = {
+      gain_ego = 0.4, diff_ego = 0.5, same_ego = 0.7, lost_ego = 2.0,
+      min_gain = 3.0, max_loss = 8.0, ignore_small = 5
+    },
+    encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+    early_xl = 6 -- Alert all usable runed body armour if XL <= `early_xl`
   } -- TUNING.armour (do not remove this comment)
 
   -- All 'magic numbers' used in the weapon pickup/alert system. 2 common types of values:
@@ -161,10 +178,10 @@ function init_config()
     -- "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score includes DPS/brand/accuracy.
   TUNING.weap = {}
   TUNING.weap.pickup = {
-    add_ego = 0.85, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-    same_type_melee = 1.1, -- Pickup melee weap of same type if DPS ratio > `same_type_melee`
-    same_type_ranged = 1.0, -- Pickup ranged weap of same type if DPS ratio > `same_type_ranged`
-    accuracy_weight = 0.33 -- Treat +1 Accuracy as +`accuracy_weight` DPS
+    add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
+    same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
+    same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
+    accuracy_weight = 0.25 -- Treat +1 Accuracy as +`accuracy_weight` DPS
   } -- TUNING.weap.pickup (do not remove this comment)
   
   TUNING.weap.alert = {
@@ -172,7 +189,7 @@ function init_config()
     pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
     gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
     new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio > `new_ego`
-    low_skill_penalty_damping = 8, -- Small values penalize low-trained schools more. Penalty is (skill+damp) / (top_skill+damp)
+    low_skill_penalty_damping = 8, -- Increase to soften the penalty to low-trained schools. Penalty is (skill+damp) / (top_skill+damp)
 
     -- Alerts for 2-handed weapons, when carrying 1-handed
     add_hand = {
@@ -200,25 +217,26 @@ function init_config()
 
 
   -- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
-  DMG_TYPE = { unbranded = 1, branded = 2, scoring = 3 }   -- `scoring` includes subtle brands
-
+  -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
   WEAPON_BRAND_BONUSES = {
-    spectralizing = { factor = 1.8, offset = 0 }, -- Fudged down for increased incoming damage
-    heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
-    flaming = { factor = 1.25, offset = 0 },
-    freezing = { factor = 1.25, offset = 0 },
-    draining = { factor = 1.25, offset = 2.0 },
-    electrocution = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
-    venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
-    pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
-    distortion = { factor = 1.0, offset = 6.0 },
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
+    distort = { factor = 1.0, offset = 6.0 },
+    drain = { factor = 1.25, offset = 2.0 },
+    elec = { factor = 1.0, offset = 4.5 }, -- technically 3.5 on avg; fudged up for AC pen
+    flame = { factor = 1.25, offset = 0 },
+    freeze = { factor = 1.25, offset = 0 },
+    heavy = { factor = 1.8, offset = 0 }, -- Speed is accounted for elsewhere
+    pain = { factor = 1.0, offset = you.skill("Necromancy")/2 },
+    spect = { factor = 1.7, offset = 0 }, -- Fudged down for increased incoming damage
+    venom = { factor = 1.0, offset = 5.0 }, -- estimated 5 dmg per poisoning
 
-    subtle = { -- Completely made up values in attempt to compare weapons fairly
-      protection = { factor = 1.15, offset = 0 },
-      vampirism = { factor = 1.2, offset = 0 },
-      holy_wrath = { factor = 1.15, offset = 0 },
-      antimagic = { factor = 1.1, offset = 0 }  
+    subtle = { -- Completely made up values in attempt to compare weapons fairly  
+      antimagic = { factor = 1.1, offset = 0 },
+      holy = { factor = 1.15, offset = 0 },
+      penet = { factor = 1.3, offset = 0 },
+      protect = { factor = 1.15, offset = 0 },
+      reap = { factor = 1.3, offset = 0 },
+      vamp = { factor = 1.2, offset = 0 }
     } -- WEAPON_BRAND_BONUSES.subtle (do not remove this comment)
   } -- WEAPON_BRAND_BONUSES (do not remove this comment)
 

@@ -2,8 +2,11 @@ local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
 pause_pa_system = nil
 
 function has_configured_force_more(it)
-  if CONFIG.fm_alert.artefact and it.artefact then return true end
-  if CONFIG.fm_alert.armour_ego and is_armour(it) and not is_orb(it) and has_ego(it) then return true end
+  if it.artefact then
+    if CONFIG.fm_alert.artefact then return true end
+    if CONFIG.fm_alert.trained_artefacts and get_skill_with_item(it) > 0 then return true end
+  end
+  if CONFIG.fm_alert.armour_ego and is_armour(it) and has_ego(it) then return true end
   return false
 end
 
@@ -46,16 +49,16 @@ function init_pa_main()
     if not it.is_useless then
       if loaded_pa_armour and CONFIG.pickup.armour and is_armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
-        if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and CONFIG.pickup.staves and is_magic_staff(it) then
         if pa_pickup_staff(it) then return true end
+      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
+        if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
       end
     else
       -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-      if not is_armour(it) or is_body_armour(it) or is_shield(it) or is_orb(it) then return end
+      if is_aux_armour(it) then return end
       
       local unworn_aux_item = nil
       local st = it.subtype()
@@ -70,8 +73,7 @@ function init_pa_main()
     end
 
     -- Not picking up this item. Now check for alerts.
-    if not (CONFIG.alert.system_enabled and you.turn_is_over()) then return end
-    if already_contains(pa_items_alerted, it) then return end
+    if not CONFIG.alert.system_enabled or already_contains(pa_items_alerted, it) then return end
 
     if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
       if pa_alert_OTA(it) then return end
@@ -131,13 +133,20 @@ end
 ------------------- Hooks -------------------
 function c_assign_invletter_item_alerts(it)
   pa_alert_OTA(it)
+
+  util.remove(pa_recent_alerts, get_plussed_name(it))  
+  if it.is_weapon and you.race() == "Coglin" then
+    -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
+    -- ie, Reset the alert the first time you pick up.
+    local name, _ = get_pa_keys(it)
+    if pa_items_picked[name] == nil then pa_items_alerted[name] = nil end
+  end
+
   add_to_pa_table(pa_items_picked, it)
-  local name, _ = get_pa_keys(it)
-  pa_items_alerted[name] = nil
-  util.remove(pa_recent_alerts, get_plussed_name(it))
 
   if it.is_weapon or is_armour(it) then
     update_high_scores(it)
+    you.stop_activity() -- crawl misses this sometimes
   end
 end
 

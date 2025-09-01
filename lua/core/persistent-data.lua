@@ -100,8 +100,9 @@ function get_var_type(value)
       if #value > 0 then return "list"
       else return "dict"
       end
+  else
+    return "unknown"
   end
-  crawl.mpr("Unsupported type for value: " .. tostring(value) .. " (" .. t .. ")")
 end
 
 function init_persistent_data(full_reset)

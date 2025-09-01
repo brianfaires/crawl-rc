@@ -7,28 +7,41 @@
 -- Always screen flash
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
   -- Noteworthy abilities
-  "vault warden", "vault guardian", "ghost crab"
+  "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
+  "vault guardian", "vault warden", "wendingo", 
+  -- Displacement
+  "deep elf knight", "swamp worm",
+  -- Summoning
+  "deep elf elementalist", 
 } -- always_flash_screen_monsters (do not remove this comment)
 
 -- Always more prompt
 local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
-  -- Torment
-    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
-    "mummy priest", "(dread|ancient) lich", "lurking horror",
   --Summoning
-    "shadow demon", "guardian serpent", "ironbound convoker",
+    "shadow demon", "guardian serpent",
     "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
-    "halazid warlock", "deep elf elementalist", "demonspawn corrupter",
-    "elemental wellspring",
+    "halazid warlock", "demonspawn corrupter",
   --Dangerous abilities
-    "swamp worm", "air elemental", "wendingo", "wyrmhole",
+    "wyrmhole",
     "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-    "starflower", "merfolk aquamancer", "deep elf knight", "wretched star",
+    "starflower", "merfolk aquamancer", "wretched star",
   --Dangerous clouds
-    "catoblepas", "death drake", "apocalypse crab", "putrid mouth",
+    "catoblepas", "apocalypse crab",
 } -- always_force_more_monsters (do not remove this comment)
+
+-- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
+if not is_miasma_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, { "death drake", "putrid mouth" })
+end
+
+if not you.torment_immune() then
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, {
+    "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi",
+    "royal mummy", "mummy priest", "(dread|ancient) lich", "lurking horror"
+  })
+end
 
 -- Only alert once per pack
 local FM_PACK = {
@@ -94,9 +107,6 @@ local FM_PATTERNS = {
   {name = "willpower4", cond = "will", cutoff = 4,
       pattern = "merfolk avatar|tainted leviathan|nargun" },
 
-  -- Malmutate without rMut
-  {name = "malmutate", cond = "mut", cutoff = 1,
-      pattern = "cacodemon|neqoxec|shining eye" },
   -- Brain feed with low int
   {name = "brainfeed", cond = "int", cutoff = 6,
       pattern = "glowing orange brain|neqoxec" },
@@ -163,6 +173,17 @@ local FM_PATTERNS = {
   {name = "drain_190", cond = "drain", cutoff = 190,
       pattern = "shadow dragon" },
 } -- end fm_patterns (do not remove this comment)
+
+-- Set mutators to either flash (if undead) or a conditional fm
+if is_mutation_immune() then
+  crawl.setopt("flash_screen_message += monster_warning:cacodemon|neqoxec|shining eye")
+else
+  table.insert(FM_PATTERNS,
+    -- Malmutate without rMut
+    {name = "malmutate", cond = "mut", cutoff = 1,
+        pattern = "cacodemon|neqoxec|shining eye" }
+  )
+end
 ------------------- End config section -------------------
 
 local active_fm -- which ones are on
@@ -211,23 +232,19 @@ end
 local function do_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v)
+    set_monster_fm("-", v) -- Mute the fm-alert by removing the fm
   end
   monsters_to_mute = {}
 
-  -- Remove mutes that have expired
+  -- Remove mutes that have expired (FM_PACK includes FM_PACK_NO_CREATE)
   for _, v in ipairs(FM_PACK) do
-    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      set_monster_fm("+", v)
+    if last_fm_turn[v] ~= -1 and you.turns() >= last_fm_turn[v] + CONFIG.fm_pack_duration then
       last_fm_turn[v] = -1
-    end
-  end
-
-  -- For no-init pack monsters, just deactivate the fm
-  for _, v in ipairs(FM_PACK_NO_CREATE) do
-    if you.turns() == last_fm_turn[v] + CONFIG.fm_pack_duration then
-      active_fm[active_fm_index[v]] = false
-      last_fm_turn[v] = -1
+      if util.contains(FM_PACK_NO_CREATE, v) then
+        active_fm[active_fm_index[v]] = false -- Set to false so the main logic can conditionally re-enable it
+      else 
+        set_monster_fm("+", v) -- Reenable the fm, which is always active
+      end
     end
   end
 end
@@ -310,10 +327,14 @@ function ready_fm_monsters()
   local res_drain = you.res_draining()
   local int = you.intelligence()
 
+  local is_zig_condition = CONFIG.disable_fm_monsters_in_zigs and you.branch() == "Zig"
+
   for i,v in ipairs(FM_PATTERNS) do
     local action = nil
 
-    if not v.cond and not active_fm[i] then
+    if is_zig_condition then
+      action = "-"
+    elseif not v.cond and not active_fm[i] then
       action = "+"
     elseif v.cond == "xl" then
       if active_fm[i] and you.xl() >= v.cutoff then action = "-"

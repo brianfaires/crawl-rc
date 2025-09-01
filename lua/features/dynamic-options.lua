@@ -9,13 +9,14 @@ local EARLY_XL_FMs = {
 } -- EARLY_XL_FMs (do not remove this comment)
 
 local MID_XL_FMs = {
-  "wielding.*of electrocution",
+  "monster_warning:wielding.*of electrocution",
   "You.*re more poisoned"
 } -- MID_XL_FMs (do not remove this comment)
 
 local LATE_XL_FMs = {
   "^(?!.*Your?).*speeds? up",
-  "danger:goes berserk"
+  "danger:goes berserk",
+  "monster_warning:carrying a wand of"
 } -- LATE_XL_FMs (do not remove this comment)
 
 local IGNORE_SPELLBOOKS_STRING = table.concat(ALL_SPELLBOOKS, ", ")
@@ -76,8 +77,8 @@ local function set_race_options()
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if you.res_poison() >= 3 then
-    crawl.setopt("force_more_message -= monster_warning:curare")
+  if not util.contains(ALL_POIS_RES_RACES, you.race()) then
+    crawl.setopt("force_more_message += monster_warning:curare")
   end
 
   if you.race() == "Gnoll" then

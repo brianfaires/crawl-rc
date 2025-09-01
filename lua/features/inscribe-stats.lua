@@ -1,4 +1,5 @@
 ----- Inscribe stats on items -----
+-- Weapon inscriptions rely on get_weapon_info_string() from pa-util.lua
 local NUM_PATTERN = "[%+%-:]%d+%.%d*"
 
 local function inscribe_armour_stats(it)
@@ -29,7 +30,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = get_weapon_info_string(it)
+  local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
@@ -45,14 +46,17 @@ local function inscribe_weapon_stats(it)
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
+function do_stat_inscription(it)
+  if CONFIG.inscribe_weapons and it.is_weapon then
+    inscribe_weapon_stats(it)
+  elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
+    inscribe_armour_stats(it)
+  end
+end
 
 ------------------ Hooks ------------------
 function ready_inscribe_stats()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if CONFIG.inscribe_weapons and inv.is_weapon then
-      inscribe_weapon_stats(inv)
-    elseif CONFIG.inscribe_armour and is_armour(inv) and not is_scarf(inv) then
-      inscribe_armour_stats(inv)
-    end
+    do_stat_inscription(inv)
   end
 end

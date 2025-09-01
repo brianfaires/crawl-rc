@@ -92,13 +92,16 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - Configure which statuses in `CONFIG.rest_off_statuses`.
 
 ### [lua/features/inscribe-stats.lua](lua/features/inscribe-stats.lua)
-- Weapons in inventory are inscribed with their stats and an 'idealized' DPS (max damage per 10 aut, including brand).
+- Weapons in inventory are inscribed with their stats and an ideal DPS (max damage per 10 aut).
+- Configured by default to ignore brand damage. Can be changed in CONFIG.
 - Unworn armour is inscribed with stats relative to what you're wearing.
 - Updates in real time with skill/stats/etc.
 
 ### [lua/features/misc-alerts.lua](lua/features/misc-alerts.lua)
 - A force-more when dropping below 35% HP (configurable).
 - A msg when you hit 6* piety while wearing an amulet of faith
+- A msg when your number of available spell levels changes
+- A prompt to leave yourself a message when saving with Shift-S 
 
 ### [lua/features/remind-id.lua](lua/features/remind-id.lua)
 - When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
@@ -108,7 +111,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 - No altar stops if you have a god
 - Don't stop exploration on portals leading out of baileys/sewers/etc
 - Stop travel on gates in Pan
-- Auto-search items when entering a gauntlet or temple. Runs to temple exit after worship.
+- Auto-search items/altars after enter/explore gauntlet/temple. Run to temple exit after worship.
 
 ### [lua/features/safe-consumables.lua](lua/features/safe-consumables.lua)
 - Adds and maintains `!r` and `!q` inscriptions on consumables.
@@ -139,9 +142,11 @@ Diff alert types can be configured to cause a more() prompt.
 
 ### [lua/pickup-alert/pa-armour.lua](lua/pickup-alert/pa-armour.lua) (Armour)
 Picks up armour that is a pure upgrade to what you currently have.
+  This can be ambiguous for artefacts, so body armour artefacts are NOT auto picked-up, and will only send alerts.
 
 Alerts generated for:
-- Items with new egos, or increased AC.
+- Items with new egos or increased AC.
+- Early ego armour, even if not training armour
 - The highest AC body armour seen so far (if training armour).
 - Other armour, depending on a number of factors and the thresholds in `TUNING.armour`  .
   In general, 1 AC is valued ~1.2EV,
@@ -149,8 +154,8 @@ Alerts generated for:
   This is to avoid skipping items due to temporary mutations.
 
 ###  [lua/pickup-alert/pa-weapons.lua](lua/pickup-alert/pa-weapons.lua) (Weapons)
-Picks up upgrades. Alerts generated for:
-- Strong weapons early on, with little regard for what skills are trained.
+Picks up upgrades and artefacts of the same weapon type you have. Alerts generated for:
+- Early strong weapons, with little regard for what skills are already trained.
 - First ranged and 1-handed ranged weapons.
 - First polearm and 1-handed polearm.
 - Other weapons, using a score that is primarily the weapon's DPS. Tune the thresholds in `TUNING.weap`.
@@ -227,23 +232,29 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. cleanup/reduce # of display.rc messages
 1. On alert, prompt/offer to pickup item
 1. On pickup, if safe(), offer to wear/wield item
-1. On drop_inferior tag, offer to drop item
-
-### TODO - requiring crawl PR
-1. Wait for allies to fully heal (needs crawl PR?)
-1. Better colorizing of rF+, rC+, etc (needs crawl PR? - to intercept msgs)
-1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
-
-### Won't do
-1. remove "~~DROP_ME" when dropping
-1. autorest starts w/autopickup (if inv not full)
-1. level-specific fm ignores (eg vault warden on v:5)
-
-### Known issues
-1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
+1. On drop_inferior inscribe, offer to drop item
+1. If no god or good god, auto-visit Temple instead of force-more
+1. Armour ego alerts: identify new egos or missing resistances (not just compared to cur inventory)
 
 ### 0.34 changes needed
-1. Inventory slots changed: Can no longer use l-item.inslot() to get an item?
+1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
+
+### TODO - requiring crawl PR?
+1. Wait for allies to fully heal
+1. Better colorizing of rF+, rC+, etc (needs to intercept msgs)
+1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
+1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
+
+### Won't do - random ideas
+1. autorest starts w/autopickup (if inv not full)
+1. level-specific fm ignores (eg vault warden on v:5)
+1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription` afaict)
+1. disable jewellery pickup after configurable xl
+1. disable pickup/alert of basic items after artefact of same type
+
+### Design choices / simplifications
+1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
+1. AC/EV delta inscriptions on Poltergeist: compare against the last (6th) worn item
 
 
 ## Resources

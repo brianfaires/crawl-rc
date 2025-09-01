@@ -17,79 +17,91 @@ menu := menu_colour
 menu =
 
 # Variables
-$decent := white
-$mp := lightcyan
-$interface := cyan
-$danger := lightred
-$item_dmg := red
-$warning := yellow
 $boring := darkgrey
-$negative := brown
-$positive := green
-$good := lightblue
-$verypositive := lightgreen
-$awesome := lightmagenta
+$emergency := lightcyan
+$heal := green
+$normal := lightgrey
+$rare := yellow
+$useful := lightblue
+$warning := red
 
-# General
-menu += $boring:(melded)
-menu += $boring:.*useless_item.*
-menu += $item_dmg:.*evil_item.*
-menu += inventory:$interface:.*equipped.*
-#menu += $decent:.*artefact.*
 
-menu += $warning:^unidentified .*(jewellery|potion|scroll|wand).*
-menu += $good:^unidentified .*weapon.*(runed|glowing)
-menu += $good:^unidentified .*armour.*(runed|glowing|embroidered|shiny|dyed)
+# First, highlight uselessness
+menu += $boring:(melded|useless_item)
+menu += $warning:forbidden
 
-# Staves
-menu += $positive:[^r]staff of
+# Overrides: pickup menu (Affects Cntl-F)
+#   (why don't these work when they come after inventory overrides?)
+menu += pickup:lightmagenta:artefact.*jewellery
+menu += pickup:lightgreen:artefact.*weapon
+menu += pickup:lightcyan:artefact.*armour
+menu += pickup:yellow:artefact
+menu += pickup:magenta:jewellery
+menu += pickup:lightblue:(ego|(unidentified.*(glowing|runed|shiny|embroidered)))
+menu += pickup:magenta:(wand|curare|disjunction|throwing net)
+menu += pickup:$normal:(missile|weapon|armour)
+menu += brown:spellbook
 
-# Wands
-menu += brown:wand of digging
-menu += lightgrey:wand of (flame|paralysis|charming|mindburst)
-menu += lightmagenta:wand of (acid|quicksilver|light)
-menu += lightcyan:wand of (iceblast|roots|warping)
-menu += blue:wand of polymorph
+# Overrides: inventory menu
+menu += inventory:lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += inventory:$boring:inert
+menu += inventory:lightmagenta:artefact.*amulet
+menu += inventory:magenta:amulet
+menu += inventory:white:artefact
+menu += inventory:lightgrey:ego
+menu += inventory:$boring:(weapon|armour)
+menu += inventory:$normal:jewellery
 
-# Scrolls
-menu += $danger:scrolls? of torment
-menu += $boring:scrolls? of noise
-menu += $decent:scrolls? of (amnesia|identify|immolation)
-menu += $good:scrolls? of (fear|fog|silence|summoning|vulnerability)
-menu += $positive:scrolls? of (brand|enchant|revelation)
-menu += $verypositive:scrolls? of (blinking|teleportation|butterflies)
-menu += $awesome:scrolls? of (acquirement)
+# Overrides: use_item menu
+menu += use_item:lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += use_item:lightmagenta:artefact.*amulet
+menu += use_item:magenta:amulet
+menu += use_item:white:artefact
+menu += use_item:lightgrey:ego
+menu += use_item:$boring:(weapon|armour)
+menu += use_item:$normal:jewellery
+
+## General settings; used where not explicitly set above
+
+# Artefact / Ego / Vanilla (For equipment)
+menu += $emergency:artefact
+menu += $useful:ego
+menu += $normal:(weapon|armour|jewellery)
+
+# Decks
+menu += $emergency:deck of escape
+menu += $useful:deck of summoning
+menu += $warning:deck of destruction
+
+# Misc
+menu += blue:(talisman|bauble)
+menu += lightmagenta:evoker
+
+# Missiles
+menu += $emergency:(curare|disjunction|throwing net)
+menu += $normal:missile
 
 # Potions
-menu += $danger:potions? of berserk
-menu += magenta:potions? of mutation
-menu += $decent:potions? of (enlightenment|lignification|ambrosia)
-menu += $good:potions? of (stabbing|brilliance|cancellation|invisibility|might|resistance)
-menu += $positive:potions? of curing
-menu += $mp:potions? of magic
-menu += $verypositive:potions? of (haste|heal wounds)
-menu += $awesome:potions? of experience
+menu += $emergency:potions? of (cancellation|haste|resistance)
+menu += $heal:potions? of (ambrosia|curing|heal wounds|magic)
+menu += $rare:potions? of experience
+menu += $useful:potions? of (brilliance|enlightenment|invisibility|might)
+menu += $warning:potions? of (attraction|berserk|lignification|mutation)
 
-# Amulets
-menu += $good:amulet of (guardian spirit|the acrobat)
-menu += $positive:amulet of (faith|reflection|magic regeneration|regeneration)
+# Scrolls
+menu += $normal:scrolls? of (amnesia|enchant|identify)
+menu += $emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
+menu += $rare:scrolls? of (acquirement|brand)
+menu += $useful:scrolls? of (revelation)
+menu += $warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerability)
 
-# Rings
-menu += $warning:ring of (fire|ice)
-menu += $decent:ring of flight
-menu += $verypositive:ring of (.*slaying)
-menu += $positive:ring of (poison resistance|protection from |positive energy|see invisible|resist corrosion)
-menu += $good:ring of (.*evasion|.*protection|magical power|wizardry)
+# Wands
+menu += $emergency:wand of digging
+menu += $normal:wand of (flame|paralysis|charming|mindburst|polymorph)
+menu += $useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
 
-# Misc items
-menu += blue:inert
-menu += $good:throwing net
-menu += $good:artefact
-
-# Deck colouring
-menu += $verypositive:deck of escape
-menu += $positive:deck of summoning
-menu += $danger:deck of destruction
+# Weapons
+menu += brown:staff of
 
 
 ######## Message coloring ########
@@ -572,7 +584,7 @@ msc += $warning:is no longer paralysed
 msc += $warning:The antennae on your head shrink away
 msc += $warning:You feel less stealthy
 msc += $warning:falls into the lava
-msc ^= $warning:Your spellforged servitor disappears
+msc ^= $warning:Your spellspark servitor disappears
 msc += $warning:The shock serpent's electric aura discharges
 msc += $warning:The air sparks with electricity
 msc += $warning:You sense an evil presence
@@ -2242,7 +2254,7 @@ msc ^= $takesaction:Gastronok chants a spell
 msc ^= $takesaction:(breathes|spits).*at
 msc += $takesaction:You conjure a mighty blast of ice
 msc += $takesaction:conjures a mighty blast of ice
-msc ^= $takesaction:Your spellforged servitor (casts|conjures|launches)
+msc ^= $takesaction:Your spellspark servitor (casts|conjures|launches)
 msc += $takesaction:You reach into the bag
 msc += $takesaction:You gaze into the crystal ball
 msc += $takesaction:Your jumping spider leaps
@@ -2543,7 +2555,7 @@ channel.orb = $awesome
 
 
 #### MUTES Be careful with these! Last, so they override the rest
-msc ^= mute:plain:No target in view!
+#msc ^= mute:plain:No target in view!
 msc ^= mute:There is a.*door here
 
 # Unnecessary
@@ -2556,7 +2568,7 @@ msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
 msc ^= mute:Use which ability
 msc ^= mute:Evoke which item
 #msc ^= mute:Confirm with
-msc ^= mute:You can\'t see any susceptible monsters within range
+#msc ^= mute:You can\'t see any susceptible monsters within range
 msc ^= mute:for a list of commands and other information
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears

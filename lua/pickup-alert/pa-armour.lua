@@ -22,6 +22,15 @@ function init_pa_armour()
   } -- ARMOUR_ALERT (do not remove this comment)
 end
 
+local SAME = "same_ego"
+local LOST = "lost_ego"
+local GAIN = "gain_ego"
+local DIFF = "diff_ego"
+
+local is_new_ego = function(ego_change_type)
+  return ego_change_type == GAIN or ego_change_type == DIFF
+end
+
 local function send_armour_alert(it, alert_type)
   return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
 end
@@ -67,33 +76,52 @@ function pa_alert_armour(it, unworn_inv_item)
     local it_ego = get_ego(it)
     local cur_ego = get_ego(cur)
     local ego_change_type
-    if it_ego == cur_ego then ego_change_type = "same_ego"
-    elseif not it_ego then ego_change_type = "lost_ego"
-    elseif not cur_ego then ego_change_type = "gain_ego"
-    else ego_change_type = "diff_ego"
+    if it_ego == cur_ego then ego_change_type = SAME
+    elseif not it_ego then ego_change_type = LOST
+    elseif not cur_ego then ego_change_type = GAIN
+    else ego_change_type = DIFF
     end
 
     if encumb_delta == 0 then
-      if ego_change_type == "gain_ego" or ego_change_type == "diff_ego" then
+      if is_new_ego(ego_change_type) then
         return send_armour_alert(it, ARMOUR_ALERT[ego_change_type])
       end
     elseif encumb_delta < 0 then
+      if is_new_ego(ego_change_type) then
+        if math.abs(ac_delta + ev_delta) <= TUNING.armour.lighter.ignore_small then
+          return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
+        end
+      end
+
       if (ac_delta > 0) or (ev_delta / -ac_delta > TUNING.armour.lighter[ego_change_type]) then
-        if ego_change_type == "lost_ego" and ev_delta < TUNING.armour.lighter.min_gain then return false end
-        if ego_change_type ~= "same_ego" and -ac_delta > TUNING.armour.lighter.max_loss then return false end
+        -- Alert for AC/EV changes as configured
+        if ego_change_type == LOST and ev_delta < TUNING.armour.lighter.min_gain then return false end
+        if ego_change_type ~= SAME and -ac_delta > TUNING.armour.lighter.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change_type])
       end
     else -- Heavier armour
-      local encumb_impact = math.min(1, (you.skill("Spellcasting") + you.skill("Ranged Weapons")) / you.xl())
+      if is_new_ego(ego_change_type) then
+        if math.abs(ac_delta + ev_delta) <= TUNING.armour.heavier.ignore_small then
+          return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
+        end 
+      end
+
+      local encumb_skills = you.skill("Spellcasting") + you.skill("Ranged Weapons") - you.skill("Armour") / 2
+      if encumb_skills < 0 then encumb_skills = 0 end
+      local encumb_impact = math.min(1, encumb_skills / you.xl())
       local total_loss = TUNING.armour.encumb_penalty_weight * encumb_impact * encumb_delta - ev_delta
       if (total_loss < 0) or (ac_delta / total_loss > TUNING.armour.heavier[ego_change_type]) then
-        if ego_change_type == "lost_ego" and ac_delta < TUNING.armour.heavier.min_gain then return false end
-        if ego_change_type ~= "same_ego" and total_loss > TUNING.armour.heavier.max_loss then return false end
+        -- Alert for AC/EV changes as configured
+        if ego_change_type == LOST and ac_delta < TUNING.armour.heavier.min_gain then return false end
+        if ego_change_type ~= SAME and total_loss > TUNING.armour.heavier.max_loss then return false end
         return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change_type])
       end
     end
 
     if alert_ac_high_score(it) then return true end
+    if has_ego(it) and you.xl() <= TUNING.armour.early_xl then
+      return pa_alert_item(it, "Early armour", EMOJI.EGO)
+    end
   elseif is_shield(it) then
     if it.artefact then
       return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
@@ -101,11 +129,11 @@ function pa_alert_armour(it, unworn_inv_item)
   
     local sh = items.equipped_at("offhand")
     if not is_shield(sh) then return false end
-    if has_ego(it) and get_ego(it) ~= get_ego(sh) then
-      local alert_msg = has_ego(sh) and "Diff ego" or "Gain ego"
+    if is_new_ego(ego_change_type) then
+      local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
       return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
     elseif get_shield_sh(it) > get_shield_sh(sh) then
-      return pa_alert_item(it, "Increased SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+      return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
     end
   else
     -- Aux armour
@@ -118,17 +146,17 @@ function pa_alert_armour(it, unworn_inv_item)
       if unworn_inv_item then
         all_equipped[#all_equipped+1] = unworn_inv_item
       else
-        -- Fires on dangerous brands or items blocked by non-innatemutations
+        -- Fires on dangerous brands or items blocked by non-innate mutations
         return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
       end
     end
 
     for _, cur in ipairs(all_equipped) do
-      if has_ego(it) and get_ego(it) ~= get_ego(cur) then
-        local alert_msg = has_ego(cur) and "Diff ego" or "Gain ego"
+      if is_new_ego(ego_change_type) then
+        local alert_msg = ego_change_type == DIFF and "Diff ego" or "Gain ego"
         return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
       elseif get_armour_ac(it) > get_armour_ac(cur) then
-        return pa_alert_item(it, "Increased AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
       end
     end
   end
@@ -139,16 +167,13 @@ function pa_pickup_armour(it)
   if has_risky_ego(it) then return false end
 
   if is_body_armour(it) then
-    -- Pick up AC upgrades, new egos that don't lose AC, and artefacts that don't lose 5+ AC
+    -- Pick up AC upgrades, and new egos that don't lose AC
     local cur = items.equipped_at("armour")
     if not cur then return false end
     if it.encumbrance > cur.encumbrance then return false end
+    if cur.artefact or it.artefact then return false end
 
     local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-
-    if cur.artefact then return false end
-    if it.artefact then return ac_delta > -5 end
-
     if get_ego(it) == get_ego(cur) then
       return ac_delta > 0 or ac_delta == 0 and it.encumbrance < cur.encumbrance 
     elseif not has_ego(cur) then
@@ -200,9 +225,9 @@ function pa_pickup_armour(it)
     -- Already have something in slot; it must be glowing to pick up
     if not it.is_identified then return false end
 
-    for _, cur in ipairs(all_equipped) do
-      if i == num_slots and cur.artefact then return false end
+    for i, cur in ipairs(all_equipped) do
       if not cur.artefact then break end
+      if i == num_slots then return false end
     end
 
     if it.artefact then return true end
