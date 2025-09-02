@@ -135,9 +135,9 @@ function BRC:load_all_features()
 
             if success then
                 loaded_count = loaded_count + 1
-                self:debug(string.format("Registered %s from _G[%s]", feature_name, name))
+                self:debug(string.format("Registered %s from _G.%s", feature_name, name))
             else
-                self:error(string.format("Failed to register feature from: %s", name))
+                self:error(string.format("Failed to register feature from: _G.%s", name))
             end
         end
     end
