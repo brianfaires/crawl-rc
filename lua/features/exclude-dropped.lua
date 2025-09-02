@@ -36,8 +36,11 @@ local function has_enchantable_weap_in_inv()
     return false
 end
 
+--[[
+    Pulls name from text; returns nil if we should NOT exclude anything
+    Return name of item to exclude, or nil if we should NOT exclude anything
+--]]
 local function get_excludable_name(text, for_exclusion)
-    -- Pulls name from text; returns nil if we should NOT exclude anything
     text = cleanup_text(text, false) -- remove tags
     text = text:gsub("{.*}", "")
     text = text:gsub("[.]", "")
@@ -84,8 +87,6 @@ end
 -- Hook functions
 function f_exclude_dropped.init()
     if not CONFIG.exclude_dropped then return end
-    if CONFIG.debug_init then crawl.mpr("Initializing exclude-dropped") end
-
     create_persistent_data("dropped_item_exclusions", {})
 
     for _,v in ipairs(dropped_item_exclusions) do

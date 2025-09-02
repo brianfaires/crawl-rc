@@ -201,15 +201,15 @@ local monsters_to_mute -- which packs are muted
 local last_fm_turn -- when the mute started
 
 -- Local functions
-local function get_three_pip_action(active, hp, cutoff, res)
-  -- Util for checking against resistance and hp
-  local div = res+1
-  if div == 4 then div = 5 end
+local function get_three_pip_action(is_active, hp, dmg_threshold, resistance)
+  -- Dmg taken is 1/2; 1/3; 1/5 (for 1,2,3 resistance)
+  local divisor = resistance + 1
+  if divisor == 4 then divisor = 5 end
 
-  if active then
-    if hp >= cutoff/div then return "-" end
+  if is_active then
+    if hp >= dmg_threshold / divisor then return "-" end
   else
-    if hp < cutoff/div then return "+" end
+    if hp < dmg_threshold / divisor then return "+" end
   end
 end
 
@@ -261,7 +261,6 @@ end
 
 
 function f_fm_monsters.init()
-    if CONFIG.debug_init then crawl.mpr("Initializing m-monsters") end
   active_fm = {}
   active_fm_index = {}
   monsters_to_mute = {}

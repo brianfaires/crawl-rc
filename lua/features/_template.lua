@@ -10,15 +10,19 @@ f_template = {}
 -- Define BRC_FEATURE_NAME to mark it for auto-loading
 f_template.BRC_FEATURE_NAME = "template_feature"
 
--- Define local (private) constants, configuration, variables, and functions here
+-- Define local (private) constants and configuration
+
+-- Define local (private) variables. Recommended to only use init() for setting their initial values.
+
+-- Define private (local) functions here
 
 -- Public hooks (Remove any hooks you don't use)
 function f_template.init()
-    -- Called when feature is registered
+    -- Set up local state or one-time startup tasks
 end
 
 function f_template.ready()
-    -- Called every turn
+    -- Do something every turn
 end
 
 function f_template.c_message(text, channel)
@@ -36,5 +40,5 @@ function f_template.c_assign_invletter(it)
 end
 
 function f_template.cleanup()
-    -- Called when feature is unregistered
+    -- Do stuff when feature is unregistered
 end

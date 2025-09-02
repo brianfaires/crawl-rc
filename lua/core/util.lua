@@ -1,8 +1,6 @@
 local delayed_mpr_queue
 
 function init_util()
-  if CONFIG.debug_init then crawl.mpr("Initializing util") end
-
   delayed_mpr_queue = {}
 end
 

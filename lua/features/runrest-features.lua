@@ -29,7 +29,7 @@ local function ready_gauntlet_macro()
 end
 
 local function c_message_gauntlet_actions(text, _)
-    -- Hit explore to search gauntlet again
+    -- Search again with CMD_EXPLORE
     if you.branch() == "Gauntlet" then
         if text:find("explor", 1, true) then
             search_gauntlet()
@@ -99,7 +99,7 @@ end
 
 local function c_message_temple_actions(text, _)
     if you.branch() == "Temple" then
-        -- Hit explore to search all altars again
+        -- Search again with CMD_EXPLORE
         if text:find("explor", 1, true) then
             search_altars()
         elseif text:find("welcomes you!", 1, true) then
