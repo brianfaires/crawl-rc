@@ -1,3 +1,13 @@
+--[[
+Feature: pickup-alert-weapons
+Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
+Author: buehler
+Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr_opt_more, get_ego, has_ego, get_hands, is_polearm, is_ranged, get_weap_damage, get_weap_dps, get_weap_score, get_weap_delay, get_skill, util.contains, pa_alert_item, already_contains, add_to_pa_table, get_pa_keys, offhand_is_free, TUNING, has_risky_ego, get_mut, MUTS, iter.invent_iterator, have_shield, ALL_WEAP_SCHOOLS
+--]]
+
+f_pickup_alert_weapons = {}
+--f_pickup_alert_weapons.BRC_FEATURE_NAME = "pickup-alert-weapons"
+
 ---- Cache weapons in inventory ----
 WEAP_CACHE = {}
 local top_attack_skill
@@ -272,7 +282,8 @@ function pa_alert_weapon(it)
 end
 
 
-function init_pa_weapons()
+-- Hook functions
+function f_pickup_alert_weapons.init()
   WEAP_CACHE.weapons = {}
   WEAP_CACHE.egos = {}
   
@@ -299,8 +310,8 @@ end
 
 
 -------- Hooks --------
-function ready_pa_weapons()
-  init_pa_weapons()
+function f_pickup_alert_weapons.ready()
+  f_pickup_alert_weapons:init()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if inv.is_weapon and not is_magic_staff(inv) then
       WEAP_CACHE.add_weapon(inv)

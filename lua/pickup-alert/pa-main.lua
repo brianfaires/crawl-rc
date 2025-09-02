@@ -186,6 +186,6 @@ end
 
 function f_pickup_alert.ready()
   if pause_pa_system then return end
-  ready_pa_weapons()
+  f_pickup_alert_weapons.ready()
   update_high_scores(items.equipped_at("armour"))
 end

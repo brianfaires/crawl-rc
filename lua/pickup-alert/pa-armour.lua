@@ -1,7 +1,18 @@
+--[[
+Feature: pickup-alert-armour
+Description: Armour pickup logic and alert system for the pickup-alert system
+Author: buehler
+Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr_opt_more, get_ego, has_ego, is_armour, is_body_armour, is_shield, is_aux_armour, get_armour_ac, get_armour_ev, get_shield_sh, get_shield_penalty, pa_alert_item, update_high_scores, TUNING, has_risky_ego, get_equipped_aux, offhand_is_free, have_weapon, get_mut, MUTS, iter.invent_iterator
+--]]
+
+f_pickup_alert_armour = {}
+--f_pickup_alert_armour.BRC_FEATURE_NAME = "pickup-alert-armour"
+
 ---- Pickup and Alert features for armour ----
 ARMOUR_ALERT = {}
 
-function init_pa_armour()
+-- Hook functions
+function f_pickup_alert_armour.init()
   ARMOUR_ALERT = {
     artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
     gain_ego = { msg = "Gain ego", emoji = EMOJI.EGO },
