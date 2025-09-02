@@ -1,4 +1,17 @@
-local loaded_pa_armour, loaded_pa_misc, loaded_pa_weapons
+--[[
+Feature: pickup-alert
+Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
+Author: buehler
+Dependencies: CONFIG, COLORS, EMOJI, ALERT_COLORS, with_color, enqueue_mpr_opt_more, enqueue_mpr, create_persistent_data, add_autopickup_func, iter.invent_iterator, util.remove, get_skill_with_item, has_ego, is_armour, is_magic_staff, is_unneeded_ring, is_aux_armour, already_contains, pa_alert_OTA, pa_alert_staff, pa_alert_orb, pa_alert_talisman, pa_alert_armour, pa_alert_weapon, get_plussed_name, get_weapon_info_string, get_armour_info_strings, update_high_scores, add_to_pa_table, get_pa_keys, offhand_is_free, get_mut, MUTS
+--]]
+
+f_pickup_alert = {}
+f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
+
+-- Local state
+local loaded_pa_armour
+local loaded_pa_misc
+local loaded_pa_weapons
 pause_pa_system = nil
 
 function has_configured_force_more(it)
@@ -10,26 +23,27 @@ function has_configured_force_more(it)
   return false
 end
 
-function init_pa_main()
+-- Hook functions
+function f_pickup_alert.init()
   pause_pa_system = false
-  init_pa_data()
+  f_pickup_alert_data.init()
 
-  if CONFIG.debug_init then crawl.mpr("Initializing pa-main") end
-
-  loaded_pa_misc = pa_alert_orb and true or false
-  if pa_alert_armour then
+  if f_pickup_alert_armour then
     loaded_pa_armour = true
-    init_pa_armour()
+    if f_pickup_alert_armour.init then f_pickup_alert_armour.init() end
+    BRC:debug("    pa-armour loaded")
   end
-  if pa_alert_weapon then
+
+  if f_pickup_alert_weapons then
     loaded_pa_weapons = true
-    init_pa_weapons()
+    if f_pickup_alert_weapons.init then f_pickup_alert_weapons.init() end
+    BRC:debug("    pa-weapons loaded")
   end
-  
-  if CONFIG.debug_init then
-    if loaded_pa_armour then crawl.mpr("pa-armour loaded") end
-    if loaded_pa_misc then crawl.mpr("pa-misc loaded") end
-    if loaded_pa_weapons then crawl.mpr("pa-weapons loaded") end
+
+  if f_pickup_alert_misc then
+    loaded_pa_misc = true
+    if f_pickup_alert_misc.init then f_pickup_alert_misc.init() end
+    BRC:debug("    pa-misc loaded")
   end
 
   -- Check for duplicate autopickup creation (affects local only)
@@ -130,8 +144,7 @@ function pa_alert_item(it, alert_type, emoji, force_more)
   return true
 end
 
-------------------- Hooks -------------------
-function c_assign_invletter_item_alerts(it)
+function f_pickup_alert.c_assign_invletter(it)
   pa_alert_OTA(it)
 
   util.remove(pa_recent_alerts, get_plussed_name(it))  
@@ -150,7 +163,7 @@ function c_assign_invletter_item_alerts(it)
   end
 end
 
-function c_message_item_alerts(text, channel)
+function f_pickup_alert.c_message(text, channel)
   if channel == "multiturn" then
     if not pause_pa_system and text:find("ou start ", 1, true) then
       pause_pa_system = true
@@ -171,7 +184,7 @@ function c_message_item_alerts(text, channel)
   end
 end
 
-function ready_item_alerts()
+function f_pickup_alert.ready()
   if pause_pa_system then return end
   ready_pa_weapons()
   update_high_scores(items.equipped_at("armour"))

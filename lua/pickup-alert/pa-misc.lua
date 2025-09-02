@@ -1,3 +1,13 @@
+--[[
+Feature: pickup-alert-misc
+Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
+Author: buehler
+Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr_opt_more, is_orb, is_talisman, is_ring, is_magic_staff, is_shield, is_armour, is_weapon, get_talisman_min_level, get_skill, get_staff_school, get_mut, MUTS, pa_alert_item, already_contains, add_to_pa_table, get_pa_keys, have_shield, util.contains, iter.invent_iterator
+--]]
+
+f_pickup_alert_misc = {}
+--f_pickup_alert_misc.BRC_FEATURE_NAME = "pickup-alert-misc"
+
 function pa_alert_orb(it)
   if not it.is_identified then return false end
   return pa_alert_item(it, "New orb", EMOJI.ORB, CONFIG.fm_alert.orbs)

@@ -1,3 +1,13 @@
+--[[
+Feature: pickup-alert-data
+Description: Data management and persistent storage for the pickup-alert system
+Author: buehler
+Dependencies: CONFIG, create_persistent_data, iter.invent_iterator, remove_from_OTA, add_to_pa_table, get_pa_keys, is_polearm, get_hands, is_ranged, is_armour, get_armour_ac, get_weap_damage, DMG_TYPE, offhand_is_free
+--]]
+
+f_pickup_alert_data = {}
+--f_pickup_alert_data.BRC_FEATURE_NAME = "pickup-alert-data"
+
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
   if it.is_weapon or is_armour(it, true) or is_talisman(it) then
@@ -14,9 +24,8 @@ function already_contains(table_ref, it)
   return table_ref[name] ~= nil and tonumber(table_ref[name]) >= value
 end
 
-function init_pa_data()
-  if CONFIG.debug_init then crawl.mpr("Initializing pa-data") end
-
+-- Hook functions
+function f_pickup_alert_data.init()
   create_persistent_data("pa_OTA_items", CONFIG.alert.one_time)
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
