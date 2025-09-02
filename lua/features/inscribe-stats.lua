@@ -1,62 +1,70 @@
------ Inscribe stats on items -----
--- Weapon inscriptions rely on get_weapon_info_string() from pa-util.lua
-local NUM_PATTERN = "[%+%-:]%d+%.%d*"
+--[[
+Feature: inscribe-stats
+Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
+Author: buehler
+Dependencies: CONFIG, is_shield, is_armour, is_scarf, get_armour_info_strings, get_weapon_info_string, iter.invent_iterator
+--]]
 
+f_inscribe_stats = {}
+f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
+
+-- Local constants
+local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
+
+-- Local functions
 local function inscribe_armour_stats(it)
-  -- Will add to the beginning of inscriptions, or replace it's own values
-  -- This gsub's stats individually to avoid overwriting <color> tags
-  -- NUM_PATTERN searches for numbers w/ decimal, to avoid artefact inscriptions
-  local abbr = is_shield(it) and "SH" or "AC"
-  local primary, ev = get_armour_info_strings(it)
+    local abbr = is_shield(it) and "SH" or "AC"
+    local primary, ev = get_armour_info_strings(it)
 
-  local new_insc
-  if it.inscription:find(abbr .. NUM_PATTERN) then
-    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
-    if ev and ev ~= "" then
-      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
+    local new_insc
+    if it.inscription:find(abbr .. NUM_PATTERN) then
+        -- Replace each stat individually, to avoid overwriting <color> tags
+        new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
+        if ev and ev ~= "" then
+            new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
+        end
+    else
+        new_insc = primary
+        if ev and ev ~= "" then
+            new_insc = new_insc .. ", " .. ev
+        end
+        if it.inscription and it.inscription ~= "" then
+            new_insc = new_insc .. "; " .. it.inscription
+        end
     end
-  else
-    new_insc = primary
-    if ev and ev ~= "" then
-      new_insc = new_insc .. ", " .. ev
-    end
-    if it.inscription and it.inscription ~= "" then
-      new_insc = new_insc .. "; " .. it.inscription
-    end
-  end
 
-  it.inscribe(new_insc, false)
+    it.inscribe(new_insc, false)
 end
 
 local function inscribe_weapon_stats(it)
-  local orig_inscr = it.inscription
-  local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
-  local prefix, suffix = "", ""
+    local orig_inscr = it.inscription
+    local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
+    local prefix, suffix = "", ""
 
-  local idx = orig_inscr:find("DPS:", 1, true)
-  if idx then
-    if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
-    if idx + #dps_inscr - 1 < #orig_inscr then
-      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
+    local idx = orig_inscr:find("DPS:", 1, true)
+    if idx then
+        if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
+        if idx + #dps_inscr - 1 < #orig_inscr then
+            suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
+        end
+    elseif #orig_inscr > 0 then
+        suffix = "; " .. orig_inscr
     end
-  elseif #orig_inscr > 0 then
-    suffix = "; " .. orig_inscr
-  end
 
-  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
+    it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
 function do_stat_inscription(it)
-  if CONFIG.inscribe_weapons and it.is_weapon then
-    inscribe_weapon_stats(it)
-  elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
-    inscribe_armour_stats(it)
-  end
+    if CONFIG.inscribe_weapons and it.is_weapon then
+        inscribe_weapon_stats(it)
+    elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
+        inscribe_armour_stats(it)
+    end
 end
 
------------------- Hooks ------------------
-function ready_inscribe_stats()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    do_stat_inscription(inv)
-  end
+-- Hook functions
+function f_inscribe_stats.ready()
+    for inv in iter.invent_iterator:new(items.inventory()) do
+        do_stat_inscription(inv)
+    end
 end

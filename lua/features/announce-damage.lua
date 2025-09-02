@@ -8,13 +8,13 @@ Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr, enqueue_mpr_opt_mo
 f_announce_damage = {}
 f_announce_damage.BRC_FEATURE_NAME = "announce-damage"
 
--- Private constants
+-- Local constants
 local METER_LENGTH = 7 + 2 * (EMOJI.HP_BORDER and #EMOJI.HP_BORDER or 0)
 
--- Private state
+-- Local state
 local prev = {} -- contains all previous hp/mp values
 
--- Private helper functions
+-- Local functions
 local function create_meter(perc, full, part, empty, border)
     local decade = math.floor(perc / 10)
     local full_count = math.floor(decade / 2)
@@ -100,7 +100,6 @@ end
 
 -- Hook functions
 function f_announce_damage.init()
-    if CONFIG.debug_init then crawl.mpr("Initializing announce-damage") end
     prev = {}
     prev.hp = 0
     prev.mhp = 0

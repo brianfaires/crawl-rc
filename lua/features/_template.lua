@@ -10,7 +10,7 @@ f_template = {}
 -- Define BRC_FEATURE_NAME to mark it for auto-loading
 f_template.BRC_FEATURE_NAME = "template_feature"
 
--- Define private (local) constants, variables, and functions here
+-- Define local (private) constants, configuration, variables, and functions here
 
 -- Public hooks (Remove any hooks you don't use)
 function f_template.init()

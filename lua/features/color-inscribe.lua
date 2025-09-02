@@ -8,7 +8,7 @@ Dependencies: CONFIG, COLORS, do_stat_inscription
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
--- Constants
+-- Local constants + configuration
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
@@ -52,7 +52,7 @@ local COLORIZE_TAGS = {
     {   "MP" .. NEG_NUM, COLORS.darkgrey },
 }
 
--- Private helper functions
+-- Local functions
 local function colorize_subtext(text, s, tag)
     local idx = text:find(s)
     if not idx then return text end

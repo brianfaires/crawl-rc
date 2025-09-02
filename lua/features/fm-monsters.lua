@@ -1,21 +1,26 @@
-------------------- Dynamic force_mores config -------------------
--- hp-specific force_mores() by gammafunk, extended by buehler
--- WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
--- Note: If you want an alert to be silenced by the fm_pack feature,
--- it must be on an alert by itself (not part of a multi-monster pattern)
+--[[
+Feature: fm-monsters
+Description: Dynamic force_more configuration for monsters based on player HP, experience level, and willpower thresholds
+    hp-specific force_mores() by gammafunk, extended by buehler
+    WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
+Author: gammafunk, buehler
+Dependencies: CONFIG, util.append, is_miasma_immune, you.torment_immune
+--]]
 
--- Always screen flash
+f_fm_monsters = {}
+f_fm_monsters.BRC_FEATURE_NAME = "fm-monsters"
+
+-- Local configuration
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
-  -- Noteworthy abilities
-  "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-  "vault guardian", "vault warden", "wendingo", 
-  -- Displacement
-  "deep elf knight", "swamp worm",
-  -- Summoning
-  "deep elf elementalist", 
+    -- Noteworthy abilities
+    "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
+    "vault guardian", "vault warden", "wendingo", 
+    -- Displacement
+    "deep elf knight", "swamp worm",
+    -- Summoning
+    "deep elf elementalist", 
 } -- always_flash_screen_monsters (do not remove this comment)
 
--- Always more prompt
 local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
     "juggernaut", "orbs? of fire", "flayed ghost",
@@ -43,13 +48,16 @@ if not you.torment_immune() then
   })
 end
 
--- Only alert once per pack
+
 local FM_PACK = {
+-- Only alert once per pack
   "boggart", "dream sheep",  "floating eye", "shrike"
 } -- fm_pack (do not remove this comment)
 
--- Once per pack, but alerts created through dynamic adds
+
 local FM_PACK_NO_CREATE = {
+  -- Once per pack, but alerts are created through dynamic-fms below.
+  -- NOTE: The correesponding dynamic-fm must be on an alert by itself (not part of a multi-monster pattern)
   "electric eel", "golden eye", "great orb of eyes", "meliai"
 } -- FM_PACK_NO_CREATE (do not remove this comment)
 
@@ -186,13 +194,15 @@ else
 end
 ------------------- End config section -------------------
 
+-- Local state
 local active_fm -- which ones are on
 local active_fm_index -- lookup table for speed
 local monsters_to_mute -- which packs are muted
 local last_fm_turn -- when the mute started
 
--- Util for checking against resistance and hp
+-- Local functions
 local function get_three_pip_action(active, hp, cutoff, res)
+  -- Util for checking against resistance and hp
   local div = res+1
   if div == 4 then div = 5 end
 
@@ -250,17 +260,16 @@ local function do_pack_mutes()
 end
 
 
-function init_fm_monsters()
-  if CONFIG.debug_init then crawl.mpr("Initializing fm-monsters") end
-
+function f_fm_monsters.init()
+    if CONFIG.debug_init then crawl.mpr("Initializing m-monsters") end
   active_fm = {}
   active_fm_index = {}
   monsters_to_mute = {}
   last_fm_turn = {}
 
-
-  -- Stop on all Uniques & Pan lords (except Orb Guardian)
-  crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
+  if CONFIG.fm_on_uniques then
+    crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
+  end
 
 
   set_all(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
@@ -292,8 +301,8 @@ end
 
 
 ------------------- Hooks -------------------
-function c_message_fm_pack(text, channel)
-  if channel ~= "monster_warning" then return end
+function f_fm_monsters.c_message(text, channel)
+    if channel ~= "monster_warning" then return end
   if CONFIG.fm_pack_duration == 0 then return end
   
   -- Identifies when a mute should be turned on
@@ -306,9 +315,9 @@ function c_message_fm_pack(text, channel)
   end
 end
 
-function ready_fm_monsters()
-  local activated = {}
-  local deactivated = {}
+function f_fm_monsters.ready()
+    local activated = {}
+    local deactivated = {}
 
   local hp, mhp = you.hp()
   local amulet = items.equipped_at("amulet")

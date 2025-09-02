@@ -42,6 +42,7 @@ function init_config()
   CONFIG.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
 
   -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
+  CONFIG.fm_on_uniques = true -- Stop on all Uniques & Pan lords
   CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
   CONFIG.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
   CONFIG.debug_fm_monsters = false -- Get a message when a fm changes

@@ -9,8 +9,10 @@ It then manages the feature's lifecycle and hook dispatching
 BRC = {}
 BRC.VERSION = "1.0.0"
 
--- Private constants
+-- Local configuration
 local SHOW_DEBUG_MESSAGES = true
+
+-- Local constants
 local HOOK_FUNCTIONS = {
   "init",
   "c_answer_prompt",
@@ -26,11 +28,11 @@ local MSG_COLORS = {
   debug = "lightblue"
 }
 
--- Private state
+-- Local state
 local _features = {}
 local _hooks = {}
 
--- Private functions
+-- Local functions
 local function is_feature_module(module_table)
     return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
 end
