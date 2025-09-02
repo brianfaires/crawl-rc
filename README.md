@@ -226,6 +226,9 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   I used: `make -j4 TILES=y BUILD_PCRE=YesPlease`. I couldn't get emojis to work.
   
 ## Dev Notes
+### 0.34 changes needed
+1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
+
 ### To do list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Write persistent data to c_persist after each level (to recover from crashes)
@@ -233,11 +236,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
 1. On alert, prompt/offer to pickup item
 1. On pickup, if safe(), offer to wear/wield item
 1. On drop_inferior inscribe, offer to drop item
-1. If no god or good god, auto-visit Temple instead of force-more
 1. Armour ego alerts: identify new egos or missing resistances (not just compared to cur inventory)
-
-### 0.34 changes needed
-1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal
@@ -266,10 +265,11 @@ https://github.com/gammafunk/dcss-rc#1-include-the-rc-or-lua-file-in-your-rc
 https://doc.dcss.io/index.html
 
 ### How to lookup a players RC file?
-http://crawl.akrasiac.org/rcfiles/crawl-0.25/magusnn.rc
+http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc
 
-### RC Examples & sources used in this repo
+### Great RC Examples & sources used in this repo
 https://github.com/magus/dcss  
-https://github.com/gammafunk/dcss-rc  
-https://underhound.eu/crawl/rcfiles/crawl-0.30/Elmgren.rc  
+https://github.com/gammafunk/dcss-rc
+https://github.com/linewriter1024/crawl-rc
+https://underhound.eu/crawl/rcfiles/crawl-0.30/Elmgren.rc
 https://tavern.dcss.io/t/whats-in-your-rc-file/160/4  
