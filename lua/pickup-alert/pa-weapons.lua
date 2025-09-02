@@ -136,37 +136,28 @@ end
 
 
 ---- Alert types ----
-local function alert_first_ranged(it)
-  if alerted_first_ranged_1h then return false end
-  if not it.is_ranged then return false end
+local lowest_num_hands_alerted = {
+  "Ranged Weapons" = 3, -- Start with 3 (will fire both 1 and 2-handed alerts)
+  "Polearms" = 3        -- Start with 3 (will fire both 1 and 2-handed alerts)
+}
 
-  if get_hands(it) == 1 then
-    alerted_first_ranged = true
-    alerted_first_ranged_1h = true
-    return pa_alert_item(it, "First ranged weapon (1-handed)", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
-  else
-    if alerted_first_ranged then return false end
-    if have_shield() then return false end
-    alerted_first_ranged = true
-    return pa_alert_item(it, "First ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
-  end
-end
+local function alert_first_of_skill(it)
+    local skill = it.weap_skill
+    if not lowest_num_hands_alerted[skill] then return false end
 
-local function alert_first_polearm(it)
-  if alerted_first_polearm_1h then return false end
-  if not is_polearm(it) then return false end
-  if you.skill("Ranged Weapons") > 2 then return false end -- Don't bother if learning ranged
+    local hands = get_hands(it)
+    if lowest_num_hands_alerted[skill] > hands then
+        -- Some early checks to skip alerts
+        if hands == 2 and have_shield() then return false end
+        if skill == "Polearms" and you.skill("Ranged Weapons") >= 3 then return false end
 
-  if get_hands(it) == 1 then
-    alerted_first_polearm = true
-    alerted_first_polearm_1h = true
-    return pa_alert_item(it, "First polearm (1-handed)", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
-  else
-    if alerted_first_polearm then return false end
-    if have_shield() then return false end
-    alerted_first_polearm = true
-    return pa_alert_item(it, "First polearm", EMOJI.POLEARM, CONFIG.fm_alert.early_weap)
-  end
+        -- Update lowest # hands alerted, and alert
+        lowest_num_hands_alerted[skill] = hands
+        local msg = "First " .. string.sub(skill, 1, -2) -- Trim the trailing "s"
+        if hands == 1 then msg = msg .. " (1-handed)" end
+        return pa_alert_item(it, msg, EMOJI.WEAPON, CONFIG.fm_alert.early_weap)
+    end
+    return false
 end
 
 local function alert_early_weapons(it)
@@ -272,8 +263,7 @@ end
 
 function pa_alert_weapon(it)
   if alert_interesting_weapons(it) then return true end
-  if alert_first_ranged(it) then return true end
-  if alert_first_polearm(it) then return true end
+  if alert_first_of_skill(it) then return true end
   if alert_early_weapons(it) then return true end
 
   -- Skip high score alerts if not using weapons
