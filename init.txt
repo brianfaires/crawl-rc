@@ -46,6 +46,7 @@ lua_file = crawl-rc/lua/core/constants.lua
 lua_file = crawl-rc/lua/core/emojis.lua
 lua_file = crawl-rc/lua/core/persistent-data.lua
 lua_file = crawl-rc/lua/core/util.lua
+lua_file = crawl-rc/lua/core/brc.lua
 
 ### Lua feature files ###
 lua_file = crawl-rc/lua/features/after-shaft.lua
@@ -79,112 +80,54 @@ lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 
 ############## Lua Hook Functions ##############
 {
-local buehler_rc_active
-
-function c_assign_invletter(it)
-  if not buehler_rc_active then return end
-  -- Calls with no return values; just triggering on new item pickup
-  if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
-  if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
-  if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
-  if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
-
-  -- Calls with possible return values
-  local ret_val = nil
-  if c_assign_invletter_weapon_slots then ret_val = c_assign_invletter_weapon_slots(it) end
-  if ret_val then return ret_val end
+-- Hook functions that delegate to BRC
+function ready()
+    if BRC then BRC:ready() end
 end
 
 function c_message(text, channel)
-  if not buehler_rc_active then return end
-  if c_message_remind_identify then c_message_remind_identify(text, channel) end
-  if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
-  if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
-  if c_message_fully_recover then c_message_fully_recover(text, channel) end
-  if c_message_after_shaft then c_message_after_shaft(text, channel) end
-  if c_message_item_alerts then c_message_item_alerts(text, channel) end
-  if c_message_runrest_features then c_message_runrest_features(text, channel) end
-  if c_message_fm_pack then c_message_fm_pack(text, channel) end
-  if c_message_fm_disable then c_message_fm_disable(text, channel) end
+    if BRC then BRC:c_message(text, channel) end
 end
 
 function c_answer_prompt(prompt)
-  if not buehler_rc_active then return end
-  if prompt:find("cheaper one?", 1, true) and you.branch() ~= "Bazaar" then
-    crawl.mpr("Replacing shopping list items")
-    return true end
-  if prompt == "Die?" then
-    return false
-  end  
+    if BRC then BRC:c_answer_prompt(prompt) end
 end
 
-function ready()
-  if not buehler_rc_active then return end
-  crawl.redraw_screen()
-  if you.turns() == prev_turn then return end
-
-  prev_turn = you.turns() -- prev_turn is also used by persistent-data.lua
-
-  -- Features (may not be included)
-  if ready_fm_monsters then ready_fm_monsters() end
-  if ready_dynamic_options then ready_dynamic_options() end
-  if ready_inscribe_stats then ready_inscribe_stats() end
-  if ready_safe_consumables then ready_safe_consumables() end
-  if ready_runrest_features then ready_runrest_features() end
-  if ready_after_shaft then ready_after_shaft() end
-  if ready_exclude_dropped then ready_exclude_dropped() end
-  if ready_safe_stairs then ready_safe_stairs() end
-
-  -- Features with text
-  if ready_weapon_slots then ready_weapon_slots() end
-  if ready_fully_recover then ready_fully_recover() end
-  if ready_remind_identify then ready_remind_identify() end
-  if ready_announce_damage then ready_announce_damage() end
-  if ready_item_alerts then ready_item_alerts() end
-  if ready_misc_alerts then ready_misc_alerts() end
-
-  -- Delayed messages
-  mpr_consume_queue()
+function c_assign_invletter(it)
+  if BRC then BRC:c_assign_invletter(it) end
 end
 
 function init_buehler(reset_persistent_data)
-  buehler_rc_active = false
-
-  -- Init core modules
-  init_config()
-  init_emojis()
-  init_util()
-  init_persistent_data(reset_persistent_data)
-
-  -- Init optional features
-  if init_after_shaft then init_after_shaft() end
-  if init_announce_damage then init_announce_damage() end
-  if init_drop_inferior then init_drop_inferior() end
-  if init_dynamic_options then init_dynamic_options() end
-  if init_exclude_dropped then init_exclude_dropped() end
-  if init_fm_monsters then init_fm_monsters() end
-  if init_fully_recover then init_fully_recover() end
-  if init_misc_alerts then init_misc_alerts() end
-  if init_pa_main then init_pa_main() end
-  if init_remind_id then init_remind_id() end
-  if init_runrest_features then init_runrest_features() end
-  if init_safe_stairs then init_safe_stairs() end
-  if init_startup then init_startup() end
-  if init_weapon_slots then init_weapon_slots() end
-
-  if not verify_data_reinit() then
-    crawl.mpr(with_color(COLORS.lightred, "Failed initialization. buehler.rc is inactive."))
-    return
-  else
-    buehler_rc_active = true
+    if CONFIG and CONFIG.debug_init then
+        crawl.mpr("Initializing BRC system")
+    end
+    
+    -- Initialize core modules first (these are required)
+    init_config()
+    init_emojis()
+    init_util()
+    init_persistent_data(reset_persistent_data)
+    
+    -- Load and register all features with BRC
+    local loaded_count = BRC:load_all_features()
+    
+    if loaded_count == 0 then
+        crawl.mpr(with_color(COLORS.lightred, "No features loaded. BRC system is inactive."))
+        return false
+    end
+    
+    -- Success!
     local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-    local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
+    local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
     crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
-  end
-
-   -- Force a full ready() cycle
-  prev_turn = you.turns() - 1
-  ready()
+    
+    -- Log loaded features
+    if CONFIG.debug_init then
+        crawl.mpr(string.format("Loaded %d features", loaded_count))
+        -- Note: Individual feature names are already logged by BRC:load_all_features()
+    end
+    
+    return true
 end
 
 -- This is the only line of top-level code, aside from declaring variables (without values)

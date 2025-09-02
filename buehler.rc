@@ -4156,6 +4156,201 @@ end
 ############################### End lua/core/util.lua ###############################
 ##########################################################################################
 
+################################### Begin lua/core/brc.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--[[
+BRC (Buehler RC) Core Module
+This module serves as the central coordinator for all feature modules
+It automatically loads any global table that contains `BRC_FEATURE_NAME`
+It then manages the feature's lifecycle and hook dispatching
+--]]
+
+-- Global BRC table
+BRC = {}
+BRC.VERSION = "1.0.0"
+
+-- Private constants
+local SHOW_DEBUG_MESSAGES = true
+local HOOK_FUNCTIONS = {
+  "init",
+  "c_answer_prompt",
+  "c_assign_invletter",
+  "c_message",
+  "ready",
+}
+
+local MSG_COLORS = {
+  error = "lightred",
+  warning = "yellow",
+  info = "lightgrey",
+  debug = "lightblue"
+}
+
+-- Private state
+local _features = {}
+local _hooks = {}
+
+-- Private functions
+local function is_feature_module(module_table)
+    return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
+end
+
+local function log_message(message, context, color)
+    message = message or "Unknown message"
+    color = color or MSG_COLORS.info
+    local msg = string.format("[BRC] %s", message)
+    if context then
+        msg = msg .. string.format(" (Context: %s)", context)
+    end
+    crawl.mpr(table.concat({"<", color, ">", msg, "</", color, ">"}))
+end
+
+-- Prevent feature errors from crashing the entire system
+local function safe_call(feature_name, func, ...)
+    if not func then return end
+
+    local success, result = pcall(func, ...)
+    if not success then
+        BRC:error("Function call failed for:" .. feature_name, result)
+    end
+end
+
+-- Hook management
+local function register_hooks(feature_name, feature_module)
+    for _, hook_name in ipairs(HOOK_FUNCTIONS) do
+        if feature_module[hook_name] then
+            if not _hooks[hook_name] then
+                _hooks[hook_name] = {}
+            end
+            table.insert(_hooks[hook_name], {
+                name = feature_name,
+                func = feature_module[hook_name]
+            })
+        end
+    end
+end
+
+local function unregister_hooks(feature_name)
+    for hook_name, hook_list in pairs(_hooks) do
+        for i = #hook_list, 1, -1 do
+            if hook_list[i].name == feature_name then
+                table.remove(hook_list, i)
+            end
+        end
+    end
+end
+
+local function call_hook(hook_name, ...)
+    if not _hooks[hook_name] then return end
+    for _, hook_info in ipairs(_hooks[hook_name]) do
+        safe_call(hook_info.name, hook_info.func, ...)
+    end
+end
+
+-- Public API
+function BRC:register_feature(feature_name, feature_module)
+    if not feature_name or not feature_module then
+        BRC:error("Invalid feature registration: missing name or module")
+        return false
+    end
+    
+    if _features[feature_name] then
+        BRC:error(string.format("Feature '%s' is already registered", feature_name))
+        return false
+    end
+    
+    -- Register the feature and its hooks
+    _features[feature_name] = feature_module
+    register_hooks(feature_name, feature_module)
+
+    -- Initialize the feature
+    if feature_module.init then
+        safe_call(feature_name, feature_module.init)
+    end
+    
+    return true
+end
+
+function BRC:unregister_feature(feature_name)
+    if not _features[feature_name] then
+        BRC:error(string.format("Feature '%s' is not registered", feature_name))
+        return false
+    end
+    
+    unregister_hooks(feature_name)
+    _features[feature_name] = nil
+    
+    BRC:debug(string.format("Feature '%s' unregistered", feature_name))
+    return true
+end
+
+function BRC:load_all_features()
+    local loaded_count = 0
+    
+    -- Scan the global namespace for feature modules and load them
+    for name, value in pairs(_G) do
+        if type(value) == "table" and is_feature_module(value) then
+            local feature_name = value.BRC_FEATURE_NAME
+            local success = self:register_feature(feature_name, value)
+
+            if success then
+                loaded_count = loaded_count + 1
+                self:debug(string.format("Registered %s from _G[%s]", feature_name, name))
+            else
+                self:error(string.format("Failed to register feature from: %s", name))
+            end
+        end
+    end
+    
+    self:debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
+    return loaded_count
+end
+
+-- Hook methods
+function BRC:ready()
+    crawl.redraw_screen()
+    if you.turns() == prev_turn then return end
+    prev_turn = you.turns()
+
+    call_hook("ready")
+    mpr_consume_queue()
+end
+
+function BRC:c_message(text, channel)
+    call_hook("c_message", text, channel)
+end
+
+function BRC:c_answer_prompt(prompt)
+    call_hook("c_answer_prompt", prompt)
+end
+
+function BRC:c_assign_invletter(it)
+    call_hook("c_assign_invletter", it)
+end
+
+-- Logging methods
+function BRC:error(message, context)
+  log_message(message, context, MSG_COLORS.error)
+end
+
+function BRC:warn(message, context)
+  log_message(message, context, MSG_COLORS.warning)
+end
+
+function BRC:log(message, context)
+  log_message(message, context, MSG_COLORS.info)
+end
+
+function BRC:debug(message, context)
+  if not SHOW_DEBUG_MESSAGES then return end
+  log_message(message, context, MSG_COLORS.debug)
+end
+
+}
+############################### End lua/core/brc.lua ###############################
+##########################################################################################
+
 ## (Resuming init.txt) ##
 
 ### Lua feature files ###
@@ -4163,47 +4358,57 @@ end
 ################################### Begin lua/features/after-shaft.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
-function init_after_shaft()
-  if not CONFIG.stop_on_stairs_after_shaft then return end
-  if CONFIG.debug_init then crawl.mpr("Initializing after-shaft") end
+--[[
+Feature: after-shaft
+Description: Automatically stops exploration on stairs after falling into a shaft
+Author: buehler
+Dependencies: CONFIG, create_persistent_data, in_hell
+--]]
 
-  create_persistent_data("as_shaft_depth", 0)
-  create_persistent_data("as_shaft_branch", "NA")
+f_after_shaft = {}
+f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
-  if you.turns() == 0 and you.class() == "Delver" then
-    as_shaft_depth = 1
-    as_shaft_branch = you.branch()
-  end
+-- Hook functions
+function f_after_shaft.init()
+    if not CONFIG.stop_on_stairs_after_shaft then return end
+    if CONFIG.debug_init then crawl.mpr("Initializing after-shaft") end
 
-  if as_shaft_depth ~= 0 then
-    crawl.setopt("explore_stop += stairs")
-  else
-    crawl.setopt("explore_stop -= stairs")
-  end
+    create_persistent_data("as_shaft_depth", 0)
+    create_persistent_data("as_shaft_branch", "NA")
+
+    if you.turns() == 0 and you.class() == "Delver" then
+        as_shaft_depth = 1
+        as_shaft_branch = you.branch()
+    end
+
+    if as_shaft_depth ~= 0 then
+        crawl.setopt("explore_stop += stairs")
+    else
+        crawl.setopt("explore_stop -= stairs")
+    end
 end
 
-------------------- Hooks -------------------
-function c_message_after_shaft(text, channel)
-  if not CONFIG.stop_on_stairs_after_shaft then return end
-  if channel ~= "plain" or in_hell() then return end
-  if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
+function f_after_shaft.c_message(text, channel)
+    if not CONFIG.stop_on_stairs_after_shaft then return end
+    if channel ~= "plain" or in_hell() then return end
+    if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
 
-  local text_fall = "ou fall into a shaft"
-  local text_sucked = "ou are sucked into a shaft"
-  if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
-    as_shaft_depth = you.depth()
-    as_shaft_branch = you.branch()
-    crawl.setopt("explore_stop += stairs")
-  end
+    local text_fall = "ou fall into a shaft"
+    local text_sucked = "ou are sucked into a shaft"
+    if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
+        as_shaft_depth = you.depth()
+        as_shaft_branch = you.branch()
+        crawl.setopt("explore_stop += stairs")
+    end
 end
 
-function ready_after_shaft()
-  if not CONFIG.stop_on_stairs_after_shaft then return end
-  if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
-    crawl.setopt("explore_stop -= stairs")
-    as_shaft_depth = 0
-    as_shaft_branch = "NA"
-  end
+function f_after_shaft.ready()
+    if not CONFIG.stop_on_stairs_after_shaft then return end
+    if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
+        crawl.setopt("explore_stop -= stairs")
+        as_shaft_depth = 0
+        as_shaft_branch = "NA"
+    end
 end
 
 }
@@ -4213,173 +4418,182 @@ end
 ################################### Begin lua/features/announce-damage.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------ Announce changes in HP/MP; modified from https://github.com/magus/dcss -----
-local prev -- contains all previous hp/mp values
+--[[
+Feature: announce-damage
+Description: Announces changes in HP/MP with visual meters and damage warnings
+Author: magus, buehler
+Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr, enqueue_mpr_opt_more
+--]]
 
+f_announce_damage = {}
+f_announce_damage.BRC_FEATURE_NAME = "announce-damage"
+
+-- Private constants
+local METER_LENGTH = 7 + 2 * (EMOJI.HP_BORDER and #EMOJI.HP_BORDER or 0)
+
+-- Private state
+local prev = {} -- contains all previous hp/mp values
+
+-- Private helper functions
 local function create_meter(perc, full, part, empty, border)
-  local decade = math.floor(perc / 10)
-  local full_count = math.floor(decade / 2)
-  local part_count = decade % 2
-  local empty_count = 5 - full_count - part_count
+    local decade = math.floor(perc / 10)
+    local full_count = math.floor(decade / 2)
+    local part_count = decade % 2
+    local empty_count = 5 - full_count - part_count
 
-  local tokens = {}
-  if border then tokens[1] = border end
-  for i = 1, full_count do tokens[#tokens + 1] = full end
-  for i = 1, part_count do tokens[#tokens + 1] = part end
-  for i = 1, empty_count do tokens[#tokens + 1] = empty end
-  if border then tokens[#tokens + 1] = border end
-  return table.concat(tokens)
+    local tokens = {}
+    if border then tokens[1] = border end
+    for i = 1, full_count do tokens[#tokens + 1] = full end
+    for i = 1, part_count do tokens[#tokens + 1] = part end
+    for i = 1, empty_count do tokens[#tokens + 1] = empty end
+    if border then tokens[#tokens + 1] = border end
+    return table.concat(tokens)
 end
 
 local function format_delta(delta)
-  if delta > 0 then
-    return with_color(COLORS.green, "+"..delta)
-  elseif delta < 0 then
-    return with_color(COLORS.red, delta)
-  else
-    return with_color(COLORS.darkgrey, "+0")
-  end
+    if delta > 0 then
+        return with_color(COLORS.green, "+"..delta)
+    elseif delta < 0 then
+        return with_color(COLORS.red, delta)
+    else
+        return with_color(COLORS.darkgrey, "+0")
+    end
 end
 
 local function format_ratio(cur, max)
-  local color
-  if cur <= (max * 0.25) then
-    color = COLORS.lightred
-  elseif cur <= (max * 0.50) then
-    color = COLORS.red
-  elseif cur <= (max *  0.75) then
-    color = COLORS.yellow
-  elseif cur < max then
-    color = COLORS.white
-  else
-    color = COLORS.green
-  end
-  return with_color(color, string.format(" -> %s/%s", cur, max))
-end
-
-
-
-function init_announce_damage()
-  if CONFIG.debug_init then crawl.mpr("Initializing announce-damage") end
-  prev = {}
-  prev.hp = 0
-  prev.mhp = 0
-  prev.mp = 0
-  prev.mmp = 0
-  prev.turn = you.turns()
-
-  if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
-    crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
-  end
+    local color
+    if cur <= (max * 0.25) then
+        color = COLORS.lightred
+    elseif cur <= (max * 0.50) then
+        color = COLORS.red
+    elseif cur <= (max *  0.75) then
+        color = COLORS.yellow
+    elseif cur < max then
+        color = COLORS.white
+    else
+        color = COLORS.green
+    end
+    return with_color(color, string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
-  local hp, mhp = you.hp()
+    local hp, mhp = you.hp()
 
-  local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(
-    hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
-  )
-  msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
-  msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
-  if mhp_delta ~= 0 then
-    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
-  end
+    local msg_tokens = {}
+    msg_tokens[#msg_tokens + 1] = create_meter(
+        hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+    )
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
+    msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
+    if mhp_delta ~= 0 then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
+    end
 
-  if not CONFIG.announce.same_line and hp == mhp then
-    msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
-  end
-  return table.concat(msg_tokens)
+    if not CONFIG.announce.same_line and hp == mhp then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
+    end
+    return table.concat(msg_tokens)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
-  local mp, mmp = you.mp()
-  local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(
-    mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
-  )
-  msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
-  msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
-  if mmp_delta ~= 0 then
-    msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
-  end
-  if not CONFIG.announce.same_line and mp == mmp then
-    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
-  end
-  return table.concat(msg_tokens)
-end
-
-local METER_LENGTH = 7 + 2 * (EMOJI.HP_BORDER and #EMOJI.HP_BORDER or 0)
-local function last_msg_is_meter()
-  local last_msg = crawl.messages(1)
-  local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
-  return check and (check == " HP[" or check == " MP[")
-end
-
-------------------- Hooks -------------------
-function ready_announce_damage()
-  -- Process `prev` early, so we can use returns over nested ifs
-  local hp, mhp = you.hp()
-  local mp, mmp = you.mp()
-  local is_startup = prev.hp == 0
-  local hp_delta = hp - prev.hp
-  local mp_delta = mp - prev.mp
-  local mhp_delta = mhp - prev.mhp
-  local mmp_delta = mmp - prev.mmp
-  local damage_taken = mhp_delta - hp_delta
-  prev.hp = hp
-  prev.mhp = mhp
-  prev.mp = mp
-  prev.mmp = mmp
-
-  if is_startup then return end
-  if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = hp <= CONFIG.announce.very_low_hp * mhp
-
-
-  -- Determine which messages to show
-  local do_hp = true
-  local do_mp = true
-  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
-  if hp_delta >= 0 and hp_delta <  CONFIG.announce.hp_gain_limit then do_hp = false end
-  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
-  if mp_delta >= 0 and mp_delta <  CONFIG.announce.mp_gain_limit then do_mp = false end
-
-  if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
-  if not do_hp and not do_mp then return end
-  if CONFIG.announce.always_both then
-    do_hp = true
-    do_mp = true
-  end
-  
-  -- Put messages together
-  local hp_msg = get_hp_message(hp_delta, mhp_delta)
-  local mp_msg = get_mp_message(mp_delta, mmp_delta)
-  local msg_tokens = {}
-  msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
-  if do_mp and do_hp then
-    msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
-    msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
-  end
-  if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
-  
-
-  -- Add Damage-related warnings, when damage >= threshold
-  if (damage_taken >= mhp * CONFIG.dmg_flash_threshold) then
-    if is_very_low_hp then return end -- mute % HP alerts
-    local summary_tokens = {}
-    local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)
-    if is_force_more_msg then
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
-      summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
-    else
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
-      summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+    local mp, mmp = you.mp()
+    local msg_tokens = {}
+    msg_tokens[#msg_tokens + 1] = create_meter(
+        mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+    )
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
+    msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
+    if mmp_delta ~= 0 then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
     end
-    enqueue_mpr_opt_more(is_force_more_msg, table.concat(summary_tokens))
-  end
+    if not CONFIG.announce.same_line and mp == mmp then
+        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
+    end
+    return table.concat(msg_tokens)
+end
+
+local function last_msg_is_meter()
+    local last_msg = crawl.messages(1)
+    local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
+    return check and (check == " HP[" or check == " MP[")
+end
+
+-- Hook functions
+function f_announce_damage.init()
+    if CONFIG.debug_init then crawl.mpr("Initializing announce-damage") end
+    prev = {}
+    prev.hp = 0
+    prev.mhp = 0
+    prev.mp = 0
+    prev.mmp = 0
+    prev.turn = you.turns()
+
+    if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
+        crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
+    end
+end
+
+function f_announce_damage.ready()
+    -- Update prev immediately, so we can return early below
+    local hp, mhp = you.hp()
+    local mp, mmp = you.mp()
+    local is_startup = prev.hp == 0
+    local hp_delta = hp - prev.hp
+    local mp_delta = mp - prev.mp
+    local mhp_delta = mhp - prev.mhp
+    local mmp_delta = mmp - prev.mmp
+    local damage_taken = mhp_delta - hp_delta
+    prev.hp = hp
+    prev.mhp = mhp
+    prev.mp = mp
+    prev.mmp = mmp
+
+    if is_startup then return end
+    if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
+    local is_very_low_hp = hp <= CONFIG.announce.very_low_hp * mhp
+
+    -- Determine which messages to show
+    local do_hp = true
+    local do_mp = true
+    if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
+    if hp_delta >= 0 and hp_delta <  CONFIG.announce.hp_gain_limit then do_hp = false end
+    if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
+    if mp_delta >= 0 and mp_delta <  CONFIG.announce.mp_gain_limit then do_mp = false end
+
+    if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
+    if not do_hp and not do_mp then return end
+    if CONFIG.announce.always_both then
+        do_hp = true
+        do_mp = true
+    end
+    
+    -- Put messages together
+    local hp_msg = get_hp_message(hp_delta, mhp_delta)
+    local mp_msg = get_mp_message(mp_delta, mmp_delta)
+    local msg_tokens = {}
+    msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
+    if do_mp and do_hp then
+        msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
+        msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
+    end
+    if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
+    
+    -- Add Damage-related warnings, when damage >= threshold
+    if (damage_taken >= mhp * CONFIG.dmg_flash_threshold) then
+        if is_very_low_hp then return end -- mute % HP alerts
+        local summary_tokens = {}
+        local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)
+        if is_force_more_msg then
+            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+            summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
+            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+        else
+            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+            summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
+            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+        end
+        enqueue_mpr_opt_more(is_force_more_msg, table.concat(summary_tokens))
+    end
 end
 
 }
@@ -4389,99 +4603,107 @@ end
 ################################### Begin lua/features/color-inscribe.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
--- Colorize inscriptions --
--- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
--- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
+--[[
+Feature: color-inscribe
+Description: Colorizes inscriptions on items with appropriate colors for resistances, stats, and other properties
+Author: buehler
+Dependencies: CONFIG, COLORS, do_stat_inscription
+--]]
 
+f_color_inscribe = {}
+f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
+
+-- Constants
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local COLORIZE_TAGS = {
-  { "rF" .. MULTI_PLUS, COLORS.lightred },
-  { "rF" .. MULTI_MINUS, COLORS.red },
-  { "rC" .. MULTI_PLUS, COLORS.lightblue },
-  { "rC" .. MULTI_MINUS, COLORS.blue },
-  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
-  { "rN" .. MULTI_MINUS, COLORS.magenta },
-  { "rPois", COLORS.lightgreen },
-  { "rElec", COLORS.lightcyan },
-  { "rCorr", COLORS.yellow },
-  { "rMut", COLORS.brown },
-  { "sInv", COLORS.white },
-  { "MRegen" .. MULTI_PLUS, COLORS.cyan },
-  { "Regen" .. MULTI_PLUS, COLORS.green },
-  { "Stlth" .. MULTI_PLUS, COLORS.white },
-  { "Will" .. MULTI_PLUS, COLORS.brown },
-  { "Will" .. MULTI_MINUS, COLORS.darkgrey },
-  { "Wiz" .. MULTI_PLUS, COLORS.white },
-  { "Wiz" .. MULTI_MINUS, COLORS.darkgrey },
-  { "Slay" .. POS_NUM, COLORS.white},
-  { "Slay" .. NEG_NUM, COLORS.darkgrey },
-  {  "Str" .. POS_NUM, COLORS.white },
-  {  "Str" .. NEG_NUM, COLORS.darkgrey },
-  {  "Dex" .. POS_NUM, COLORS.white },
-  {  "Dex" .. NEG_NUM, COLORS.darkgrey },
-  {  "Int" .. POS_NUM, COLORS.white },
-  {  "Int" .. NEG_NUM, COLORS.darkgrey },
-  {   "AC" .. POS_NUM, COLORS.white },
-  {   "AC" .. NEG_NUM, COLORS.darkgrey },
-  {   "EV" .. POS_NUM, COLORS.white },
-  {   "EV" .. NEG_NUM, COLORS.darkgrey },
-  {   "SH" .. POS_NUM, COLORS.white },
-  {   "SH" .. NEG_NUM, COLORS.darkgrey },
-  {   "HP" .. POS_NUM, COLORS.white },
-  {   "HP" .. NEG_NUM, COLORS.darkgrey },
-  {   "MP" .. POS_NUM, COLORS.white },
-  {   "MP" .. NEG_NUM, COLORS.darkgrey },
-} --COLORIZE_TAGS (do not remove this comment)
+    { "rF" .. MULTI_PLUS, COLORS.lightred },
+    { "rF" .. MULTI_MINUS, COLORS.red },
+    { "rC" .. MULTI_PLUS, COLORS.lightblue },
+    { "rC" .. MULTI_MINUS, COLORS.blue },
+    { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
+    { "rN" .. MULTI_MINUS, COLORS.magenta },
+    { "rPois", COLORS.lightgreen },
+    { "rElec", COLORS.lightcyan },
+    { "rCorr", COLORS.yellow },
+    { "rMut", COLORS.brown },
+    { "sInv", COLORS.white },
+    { "MRegen" .. MULTI_PLUS, COLORS.cyan },
+    { "Regen" .. MULTI_PLUS, COLORS.green },
+    { "Stlth" .. MULTI_PLUS, COLORS.white },
+    { "Will" .. MULTI_PLUS, COLORS.brown },
+    { "Will" .. MULTI_MINUS, COLORS.darkgrey },
+    { "Wiz" .. MULTI_PLUS, COLORS.white },
+    { "Wiz" .. MULTI_MINUS, COLORS.darkgrey },
+    { "Slay" .. POS_NUM, COLORS.white},
+    { "Slay" .. NEG_NUM, COLORS.darkgrey },
+    {  "Str" .. POS_NUM, COLORS.white },
+    {  "Str" .. NEG_NUM, COLORS.darkgrey },
+    {  "Dex" .. POS_NUM, COLORS.white },
+    {  "Dex" .. NEG_NUM, COLORS.darkgrey },
+    {  "Int" .. POS_NUM, COLORS.white },
+    {  "Int" .. NEG_NUM, COLORS.darkgrey },
+    {   "AC" .. POS_NUM, COLORS.white },
+    {   "AC" .. NEG_NUM, COLORS.darkgrey },
+    {   "EV" .. POS_NUM, COLORS.white },
+    {   "EV" .. NEG_NUM, COLORS.darkgrey },
+    {   "SH" .. POS_NUM, COLORS.white },
+    {   "SH" .. NEG_NUM, COLORS.darkgrey },
+    {   "HP" .. POS_NUM, COLORS.white },
+    {   "HP" .. NEG_NUM, COLORS.darkgrey },
+    {   "MP" .. POS_NUM, COLORS.white },
+    {   "MP" .. NEG_NUM, COLORS.darkgrey },
+}
 
-
+-- Private helper functions
 local function colorize_subtext(text, s, tag)
-  local idx = text:find(s)
-  if not idx then return text end
-  if idx > 1 then
-    -- Avoid '!r' or an existing color tag
-    local prev = text:sub(idx-1, idx-1)
-    if prev == "!" or prev == ">" then return text end
-  end
+    local idx = text:find(s)
+    if not idx then return text end
+    if idx > 1 then
+        -- Avoid '!r' or an existing color tag
+        local prev = text:sub(idx-1, idx-1)
+        if prev == "!" or prev == ">" then return text end
+    end
 
-  local retval = text:gsub("(" .. s .. ")", "<" .. tag .. ">%1</" .. tag .. ">")
-  return retval
+    local retval = text:gsub("(" .. s .. ")", "<" .. tag .. ">%1</" .. tag .. ">")
+    return retval
 end
 
+-- Hook functions
+function f_color_inscribe.c_assign_invletter(it)
+    if not CONFIG.colorize_inscriptions then return end
+    if it.artefact then return end
+    -- If enabled, call out to inscribe stats before coloring
+    if do_stat_inscription then do_stat_inscription(it) end
 
-------------------- Hooks -------------------
-function c_assign_invletter_color_inscribe(it)
-  if not CONFIG.colorize_inscriptions then return end
-  if it.artefact then return end
-  -- If enabled, call out to inscribe stats before coloring
-  if do_stat_inscription then do_stat_inscription(it) end
+    local text = it.inscription
+    for _, tag in ipairs(COLORIZE_TAGS) do
+        text = colorize_subtext(text, tag[1], tag[2])
+    end
 
-  local text = it.inscription
-  for _, tag in ipairs(COLORIZE_TAGS) do
-    text = colorize_subtext(text, tag[1], tag[2])
-  end
-
-  it.inscribe(text, false)
+    it.inscribe(text, false)
 end
 
--- To colorize more, need a way to:
-  -- intercept messages before they're displayed (or delete and re-insert)
-  -- insert tags that affect menus
-  -- colorize artefact text
--- function c_message_color_inscribe(text, _)
---   local orig_text = text
---   text = colorize_subtext(text)
---   if text == orig_text then return end
+--[[
+To colorize more, need a way to:
+  intercept messages before they're displayed (or delete and re-insert)
+  insert tags that affect menus
+  colorize artefact text
+function f_color_inscribe.c_message(text, _)
+  local orig_text = text
+  text = colorize_subtext(text)
+  if text == orig_text then return end
 
---   local cleaned = cleanup_text(text)
---   if cleaned:sub(2, 4) == " - " then
---     text = " " .. text
---   end
+  local cleaned = cleanup_text(text)
+  if cleaned:sub(2, 4) == " - " then
+    text = " " .. text
+  end
 
---   crawl.mpr(text)
--- end
+  crawl.mpr(text)
+end
+--]]
 
 }
 ############################### End lua/features/color-inscribe.lua ###############################
@@ -5960,33 +6182,40 @@ end
 ################################### Begin lua/features/startup.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
-function init_startup()
-  if CONFIG.debug_init then crawl.mpr("Initializing startup") end
+--[[
+Feature: startup
+Description: Handles startup features like skill menu display and auto-setting skill targets
+Author: rwbarton, buehler
+Dependencies: CONFIG
+--]]
 
-  if you.turns() == 0 then
-    ---- Skill menu on startup (by rwbarton, edits by buehler) ----
-    if CONFIG.show_skills_on_startup then
-      local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
-      if show_skills_on_startup then
-        crawl.sendkeys("m")
-      end
-    end
-  
-    ---- Auto-set default skill targets ----
-    if CONFIG.auto_set_skill_targets then
-      for _, skill_target in ipairs(CONFIG.auto_set_skill_targets) do
-        local skill, target = unpack(skill_target)
-        if you.skill(skill) < target then
-          for _, s in ipairs(ALL_TRAINING_SKILLS) do
-            you.train_skill (s, 0)
-          end
-          you.set_training_target (skill, target)
-          you.train_skill (skill, 2)
-          break
+f_startup = {}
+f_startup.BRC_FEATURE_NAME = "startup"
+
+function f_startup.ready()
+    if you.turns() == 0 then
+        if CONFIG.show_skills_on_startup then
+            local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
+            if show_skills_on_startup then
+                crawl.sendkeys("m")
+            end
         end
-      end
+        
+        ---- Auto-set default skill targets ----
+        if CONFIG.auto_set_skill_targets then
+            for _, skill_target in ipairs(CONFIG.auto_set_skill_targets) do
+                local skill, target = unpack(skill_target)
+                if you.skill(skill) < target then
+                    for _, s in ipairs(ALL_TRAINING_SKILLS) do
+                        you.train_skill(s, 0)
+                    end
+                    you.set_training_target(skill, target)
+                    you.train_skill(skill, 2)
+                    break
+                end
+            end
+        end
     end
-  end
 end
 
 }
@@ -7586,112 +7815,54 @@ end
 
 ############## Lua Hook Functions ##############
 {
-local buehler_rc_active
-
-function c_assign_invletter(it)
-  if not buehler_rc_active then return end
-  -- Calls with no return values; just triggering on new item pickup
-  if c_assign_invletter_item_alerts then c_assign_invletter_item_alerts(it) end
-  if c_assign_invletter_remind_identify then c_assign_invletter_remind_identify(it) end
-  if c_assign_invletter_drop_inferior then c_assign_invletter_drop_inferior(it) end
-  if c_assign_invletter_color_inscribe then c_assign_invletter_color_inscribe(it) end
-
-  -- Calls with possible return values
-  local ret_val = nil
-  if c_assign_invletter_weapon_slots then ret_val = c_assign_invletter_weapon_slots(it) end
-  if ret_val then return ret_val end
+-- Hook functions that delegate to BRC
+function ready()
+    if BRC then BRC:ready() end
 end
 
 function c_message(text, channel)
-  if not buehler_rc_active then return end
-  if c_message_remind_identify then c_message_remind_identify(text, channel) end
-  if c_message_weapon_slots then c_message_weapon_slots(text, channel) end
-  if c_message_exclude_dropped then c_message_exclude_dropped(text, channel) end
-  if c_message_fully_recover then c_message_fully_recover(text, channel) end
-  if c_message_after_shaft then c_message_after_shaft(text, channel) end
-  if c_message_item_alerts then c_message_item_alerts(text, channel) end
-  if c_message_runrest_features then c_message_runrest_features(text, channel) end
-  if c_message_fm_pack then c_message_fm_pack(text, channel) end
-  if c_message_fm_disable then c_message_fm_disable(text, channel) end
+    if BRC then BRC:c_message(text, channel) end
 end
 
 function c_answer_prompt(prompt)
-  if not buehler_rc_active then return end
-  if prompt:find("cheaper one?", 1, true) and you.branch() ~= "Bazaar" then
-    crawl.mpr("Replacing shopping list items")
-    return true end
-  if prompt == "Die?" then
-    return false
-  end  
+    if BRC then BRC:c_answer_prompt(prompt) end
 end
 
-function ready()
-  if not buehler_rc_active then return end
-  crawl.redraw_screen()
-  if you.turns() == prev_turn then return end
-
-  prev_turn = you.turns() -- prev_turn is also used by persistent-data.lua
-
-  -- Features (may not be included)
-  if ready_fm_monsters then ready_fm_monsters() end
-  if ready_dynamic_options then ready_dynamic_options() end
-  if ready_inscribe_stats then ready_inscribe_stats() end
-  if ready_safe_consumables then ready_safe_consumables() end
-  if ready_runrest_features then ready_runrest_features() end
-  if ready_after_shaft then ready_after_shaft() end
-  if ready_exclude_dropped then ready_exclude_dropped() end
-  if ready_safe_stairs then ready_safe_stairs() end
-
-  -- Features with text
-  if ready_weapon_slots then ready_weapon_slots() end
-  if ready_fully_recover then ready_fully_recover() end
-  if ready_remind_identify then ready_remind_identify() end
-  if ready_announce_damage then ready_announce_damage() end
-  if ready_item_alerts then ready_item_alerts() end
-  if ready_misc_alerts then ready_misc_alerts() end
-
-  -- Delayed messages
-  mpr_consume_queue()
+function c_assign_invletter(it)
+  if BRC then BRC:c_assign_invletter(it) end
 end
 
 function init_buehler(reset_persistent_data)
-  buehler_rc_active = false
-
-  -- Init core modules
-  init_config()
-  init_emojis()
-  init_util()
-  init_persistent_data(reset_persistent_data)
-
-  -- Init optional features
-  if init_after_shaft then init_after_shaft() end
-  if init_announce_damage then init_announce_damage() end
-  if init_drop_inferior then init_drop_inferior() end
-  if init_dynamic_options then init_dynamic_options() end
-  if init_exclude_dropped then init_exclude_dropped() end
-  if init_fm_monsters then init_fm_monsters() end
-  if init_fully_recover then init_fully_recover() end
-  if init_misc_alerts then init_misc_alerts() end
-  if init_pa_main then init_pa_main() end
-  if init_remind_id then init_remind_id() end
-  if init_runrest_features then init_runrest_features() end
-  if init_safe_stairs then init_safe_stairs() end
-  if init_startup then init_startup() end
-  if init_weapon_slots then init_weapon_slots() end
-
-  if not verify_data_reinit() then
-    crawl.mpr(with_color(COLORS.lightred, "Failed initialization. buehler.rc is inactive."))
-    return
-  else
-    buehler_rc_active = true
+    if CONFIG and CONFIG.debug_init then
+        crawl.mpr("Initializing BRC system")
+    end
+    
+    -- Initialize core modules first (these are required)
+    init_config()
+    init_emojis()
+    init_util()
+    init_persistent_data(reset_persistent_data)
+    
+    -- Load and register all features with BRC
+    local loaded_count = BRC:load_all_features()
+    
+    if loaded_count == 0 then
+        crawl.mpr(with_color(COLORS.lightred, "No features loaded. BRC system is inactive."))
+        return false
+    end
+    
+    -- Success!
     local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-    local success_text = string.format(" Successfully initialized buehler.rc v%s! ", prev_buehler_rc_version)
+    local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
     crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
-  end
-
-   -- Force a full ready() cycle
-  prev_turn = you.turns() - 1
-  ready()
+    
+    -- Log loaded features
+    if CONFIG.debug_init then
+        crawl.mpr(string.format("Loaded %d features", loaded_count))
+        -- Note: Individual feature names are already logged by BRC:load_all_features()
+    end
+    
+    return true
 end
 
 -- This is the only line of top-level code, aside from declaring variables (without values)
