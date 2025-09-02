@@ -149,8 +149,6 @@ end
 
 -- Hook functions
 function f_dynamic_options.init()
-    if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
-
     dynopt_cur_god = "No God"
     ignoring_spellcasting = false
     ignoring_spellbooks = false

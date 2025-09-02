@@ -71,8 +71,6 @@ end
 
 -- Hook functions
 function f_misc_alerts.init()
-    if CONFIG.debug_init then crawl.mpr("Initializing misc-alerts") end
-
     prev_available_spell_levels = you.spell_levels()
     below_hp_threshold = false
     create_persistent_data("alerted_max_piety", false)

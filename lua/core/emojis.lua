@@ -1,8 +1,6 @@
 EMOJI = {}
 
 function init_emojis()
-  if CONFIG.debug_init then crawl.mpr("Initializing emojis") end
-
   if CONFIG.emojis then
     EMOJI.RARE_ITEM = "💎"
     EMOJI.ORB = "🔮"

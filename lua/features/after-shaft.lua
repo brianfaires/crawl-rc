@@ -11,8 +11,6 @@ f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 -- Hook functions
 function f_after_shaft.init()
     if not CONFIG.stop_on_stairs_after_shaft then return end
-    if CONFIG.debug_init then crawl.mpr("Initializing after-shaft") end
-
     create_persistent_data("as_shaft_depth", 0)
     create_persistent_data("as_shaft_branch", "NA")
 

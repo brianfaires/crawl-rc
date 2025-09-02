@@ -98,10 +98,6 @@ function c_assign_invletter(it)
 end
 
 function init_buehler(reset_persistent_data)
-    if CONFIG and CONFIG.debug_init then
-        crawl.mpr("Initializing BRC system")
-    end
-    
     -- Initialize core modules first (these are required)
     init_config()
     init_emojis()
@@ -120,12 +116,6 @@ function init_buehler(reset_persistent_data)
     local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
     local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
     crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
-    
-    -- Log loaded features
-    if CONFIG.debug_init then
-        crawl.mpr(string.format("Loaded %d features", loaded_count))
-        -- Note: Individual feature names are already logged by BRC:load_all_features()
-    end
     
     return true
 end

@@ -250,8 +250,4 @@ function init_config()
     talisman = { desc = COLORS.green, item = COLORS.lightgreen },
     misc = { desc = COLORS.brown, item = COLORS.white },
   } -- ALERT_COLORS (do not remove this comment)
-
-  CONFIG.debug_init = false -- track progress through init()
-
-  if CONFIG.debug_init then crawl.mpr("Initialized config") end
 end

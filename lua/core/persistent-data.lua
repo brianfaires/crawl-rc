@@ -106,8 +106,6 @@ function get_var_type(value)
 end
 
 function init_persistent_data(full_reset)
-  if CONFIG.debug_init then crawl.mpr("Initializing persistent-data") end
-
   -- Clear persistent data (data is created via create_persistent_data)
   if full_reset then
     if persistent_var_names then
@@ -160,7 +158,7 @@ function verify_data_reinit()
       failed_reinit = true
       local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", BUEHLER_RC_VERSION)
       crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
-      crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or enable CONFIG.debug_init for more info."))
+      crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or set BRC.DEBUG_MESSAGES=True for more info."))
     end
 
     if failed_reinit and mpr_yesno(with_color(COLORS.yellow, "Deactivate buehler.rc?")) then return false end
