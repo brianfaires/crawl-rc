@@ -79,10 +79,13 @@ end
 
 --------- Functions for armour and weapons ---------
 function get_ego(it)
-  if has_usable_ego(it) then return it.ego(true) end
-  if is_body_armour(it) then
+  if has_usable_ego(it) then
+    return it.ego(true)
+  elseif is_body_armour(it) then
     local qualname = it.name("qual")
-    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
+    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then
+      return qualname
+    end
   end
 end
 

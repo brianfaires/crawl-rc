@@ -8,72 +8,86 @@ Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr_opt_more, get_ego, 
 f_pickup_alert_weapons = {}
 --f_pickup_alert_weapons.BRC_FEATURE_NAME = "pickup-alert-weapons"
 
+-- Local constants + config
+local FIRST_WEAPON_XL_CUTOFF = 4 -- Stop looking for first weapon after this XL
+local RANGED_XL_THRESHOLD = 3 -- At this skill level, don't bother alerting for polearms
+
 ---- Cache weapons in inventory ----
 WEAP_CACHE = {}
 local top_attack_skill
 
-function WEAP_CACHE.get_key(it)
-  local ret_val = it.is_ranged and "range_" or "melee_"
-  ret_val = ret_val .. get_hands(it)
-  if has_ego(it) then ret_val = ret_val .. "b" end
-  return ret_val
+function WEAP_CACHE.get_primary_key(it)
+    local tokens = {}
+    tokens[1] = it.is_ranged and "range_" or "melee_"
+    tokens[2] = tostring(it.hands)
+    if it.branded then tokens[3] = "b"
+    return table.concat({tokens})
+end
+
+-- Get all categories this weapon fits into
+function WEAP_CACHE.get_keys(is_ranged, hands, branded)
+    local base_types = {is_ranged and "range_" or "melee_"}
+    local hand_types = {tostring(hands)}
+    local brand_types = {branded and "b" or ""}
+    
+    -- Add variations for the less restrictive versions
+    if hands == 1 then hand_types[2] = "2" end
+    if branded then brand_types[2] = "" end
+    
+    -- Generate all combinations
+    local keys = {}
+    for _, base in ipairs(base_types) do
+        for _, hand in ipairs(hand_types) do
+            for _, brand in ipairs(brand_types) do
+                keys[#keys+1] = table.concat({base, hand, brand})
+            end
+        end
+    end
+    
+    return keys
 end
 
 function WEAP_CACHE.add_weapon(it)
-  local weap_data = {}
-  weap_data.is_weapon = it.is_weapon
-  weap_data.ego = get_ego(it)
-  weap_data.branded = weap_data.ego ~= nil
-  weap_data.plus = it.plus or 0
-  weap_data.acc = it.accuracy + weap_data.plus
-  weap_data.damage = it.damage
-  weap_data.dps = get_weap_dps(it)
-  weap_data.score = get_weap_score(it)
-  weap_data.unbranded_score = get_weap_score(it, true)
-
-  weap_data.basename = it.name("base")
-  weap_data.subtype = it.subtype()
-  weap_data.is_ranged = it.is_ranged
-  weap_data.hands = get_hands(it)
-  weap_data.artefact = it.artefact
-  weap_data.weap_skill = it.weap_skill
-  weap_data.skill_lvl = get_skill(it.weap_skill)
- 
-  -- Track unique egos
-  if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data.ego) then
-    WEAP_CACHE.egos[#WEAP_CACHE.egos+1] = weap_data.ego
-  end
-
-  -- Track max damage weapons of each type
-  local keys = { WEAP_CACHE.get_key(it) }
-  -- Also track less-restrictive versions of the key
-  if weap_data.is_ranged then keys[#keys+1] = keys[1]:gsub("range", "melee") end
-  if weap_data.branded then
-    local len = #keys
-    for i = 1, len do
-      keys[len+i] = keys[i]:sub(1, -2)
+    local weap_data = {}
+    weap_data.is_weapon = it.is_weapon
+    weap_data.basename = it.name("base")
+    weap_data.subtype = it.subtype()
+    weap_data.weap_skill = it.weap_skill
+    weap_data.skill_lvl = get_skill(it.weap_skill)
+    weap_data.is_ranged = it.is_ranged
+    weap_data.hands = get_hands(it)
+    weap_data.artefact = it.artefact
+    weap_data.ego = get_ego(it)
+    weap_data.branded = weap_data.ego ~= nil
+    weap_data.plus = it.plus or 0
+    weap_data.acc = it.accuracy + weap_data.plus
+    weap_data.damage = it.damage
+    weap_data.dps = get_weap_dps(it)
+    weap_data.score = get_weap_score(it)
+    weap_data.unbranded_score = get_weap_score(it, true)
+    
+    -- Track unique egos
+    if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data.ego) then
+        WEAP_CACHE.egos[#WEAP_CACHE.egos+1] = weap_data.ego
     end
-  end
-  if weap_data.hands == 1 then
-    local len = #keys
-    for i = 1, len do
-      keys[len+i] = keys[i]:gsub("1", "2")
-    end
-  end
-  -- Update the max DPS for each category
-  for _, key in ipairs(keys) do
-    if weap_data.dps > WEAP_CACHE.max_dps[key].dps then
-      WEAP_CACHE.max_dps[key].dps = weap_data.dps
-      WEAP_CACHE.max_dps[key].acc = weap_data.acc
-    end
-  end
 
-  WEAP_CACHE.weapons[#WEAP_CACHE.weapons+1] = weap_data
-  return weap_data
+    -- Track max damage for applicable weapon categories
+    local keys = WEAP_CACHE.get_keys(weap_data.is_ranged, weap_data.hands, weap_data.branded)
+
+    -- Update the max DPS for each category
+    for _, key in ipairs(keys) do
+        if weap_data.dps > WEAP_CACHE.max_dps[key].dps then
+        WEAP_CACHE.max_dps[key].dps = weap_data.dps
+        WEAP_CACHE.max_dps[key].acc = weap_data.acc
+        end
+    end
+
+    WEAP_CACHE.weapons[#WEAP_CACHE.weapons+1] = weap_data
+    return weap_data
 end
 
 function WEAP_CACHE.is_empty()
-  return WEAP_CACHE.max_dps["melee_2"].dps == 0
+    return WEAP_CACHE.max_dps["melee_2"].dps == 0 -- The most restrictive category
 end
 
 function WEAP_CACHE.serialize()
@@ -117,9 +131,15 @@ local function is_weapon_upgrade(it, cur)
   return false
 end
 
+local function need_first_weapon()
+    return you.xl() < FIRST_WEAPON_XL_CUTOFF and WEAP_CACHE.is_empty()
+        and you.skill("Unarmed Combat") == 0
+        and get_mut(MUTS.claws, true) == 0
+end
+
 function pa_pickup_weapon(it)
   -- Check if we need the first weapon of the game
-  if you.xl() < 5 and WEAP_CACHE.is_empty() and you.skill("Unarmed Combat") + get_mut(MUTS.claws, true) == 0 then
+  if need_first_weapon() then
     -- Staves don't go into WEAP_CACHE; check if we're carrying just a staff
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.is_weapon then return false end -- fastest way to check if it's a staff
@@ -149,7 +169,7 @@ local function alert_first_of_skill(it)
     if lowest_num_hands_alerted[skill] > hands then
         -- Some early checks to skip alerts
         if hands == 2 and have_shield() then return false end
-        if skill == "Polearms" and you.skill("Ranged Weapons") >= 3 then return false end
+        if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return false end
 
         -- Update lowest # hands alerted, and alert
         lowest_num_hands_alerted[skill] = hands
@@ -195,7 +215,7 @@ local function alert_interesting_weapon(it, cur)
     return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
   end
 
-  local inv_best = WEAP_CACHE.max_dps[WEAP_CACHE.get_key(it)]
+  local inv_best = WEAP_CACHE.max_dps[WEAP_CACHE.get_primary_key(it)]
   local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
   local best_score = math.max(cur.score, inv_best and get_weap_score(inv_best) or 0)
 

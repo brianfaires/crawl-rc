@@ -189,7 +189,7 @@ function init_config()
     -- Alerts for weapons not requiring an extra hand
     pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
     gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
-    new_ego = 0.8, -- Get ego not in inventory;Alert if DPS ratio > `new_ego`
+    new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > `new_ego`
     low_skill_penalty_damping = 8, -- Increase to soften the penalty to low-trained schools. Penalty is (skill+damp) / (top_skill+damp)
 
     -- Alerts for 2-handed weapons, when carrying 1-handed
