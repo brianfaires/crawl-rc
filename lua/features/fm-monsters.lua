@@ -60,7 +60,8 @@ if not BRC.you.miasma_immune() then
   util.append(ALWAYS_FORCE_MONSTERS, {
     "death drake",
     "tainted leviathan",
-    "putrid mouth" })
+    "putrid mouth",
+  })
 end
 
 if not you.torment_immune() then

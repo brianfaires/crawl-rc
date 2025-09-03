@@ -16,13 +16,10 @@ local _mpr_queue = {}
 -- Local constants
 local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
 
-
 --- BRC.mpr - Wrappers around crawl.mpr ---
 
 -- Display a message, wrapped in a single color tag
-function BRC.mpr.col(text, color, channel)
-  crawl.mpr(BRC.util.color(color, text), channel)
-end
+function BRC.mpr.col(text, color, channel) crawl.mpr(BRC.util.color(color, text), channel) end
 
 -- Message and stop travel/activity
 function BRC.mpr.stop(text, color, channel)
@@ -94,7 +91,6 @@ function BRC.mpr.yesno(text, color, capital_only)
   return false
 end
 
-
 ---- BRC.get - Functions to get non-boolean data ----
 
 --[[
@@ -112,14 +108,10 @@ function BRC.get.equipped_aux(aux_type)
   return all_aux, num_slots
 end
 
-function BRC.get.mut(mutation, include_all) 
-  return you.get_base_mutation_level(mutation, true, include_all, include_all) 
-end
+function BRC.get.mut(mutation, include_all) return you.get_base_mutation_level(mutation, true, include_all, include_all) end
 
 function BRC.get.skill_with_item(it)
-  if BRC.is.magic_staff(it) then 
-    return math.max(get_skill(BRC.get.staff_school(it)), get_skill("Staves")) 
-  end
+  if BRC.is.magic_staff(it) then return math.max(get_skill(BRC.get.staff_school(it)), get_skill("Staves")) end
   if it.is_weapon then return get_skill(it.weap_skill) end
   if BRC.is.body_armour(it) then return get_skill("Armour") end
   if BRC.is.shield(it) then return get_skill("Shields") end
@@ -150,12 +142,9 @@ function BRC.get.talisman_min_level(it)
   return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
 end
 
-
 ---- BRC.is - Boolean type checks of items ----
 
-function BRC.is.amulet(it) 
-  return it and it.name("base") == "amulet" 
-end
+function BRC.is.amulet(it) return it and it.name("base") == "amulet" end
 
 function BRC.is.armour(it, include_orbs)
   -- exclude orbs by default
@@ -164,13 +153,9 @@ function BRC.is.armour(it, include_orbs)
   return true
 end
 
-function BRC.is.aux_armour(it) 
-  return BRC.is.armour(it) and not (BRC.is.body_armour(it) or BRC.is.shield(it)) 
-end
+function BRC.is.aux_armour(it) return BRC.is.armour(it) and not (BRC.is.body_armour(it) or BRC.is.shield(it)) end
 
-function BRC.is.body_armour(it) 
-  return it and it.subtype() == "body" 
-end
+function BRC.is.body_armour(it) return it and it.subtype() == "body" end
 
 function BRC.is.good_ego(it)
   if not it.branded then return false end
@@ -180,17 +165,11 @@ function BRC.is.good_ego(it)
   return true
 end
 
-function BRC.is.jewellery(it) 
-  return it and it.class(true) == "jewellery" 
-end
+function BRC.is.jewellery(it) return it and it.class(true) == "jewellery" end
 
-function BRC.is.magic_staff(it) 
-  return it and it.class and it.class(true) == "magical staff" 
-end
+function BRC.is.magic_staff(it) return it and it.class and it.class(true) == "magical staff" end
 
-function BRC.is.ring(it) 
-  return it and it.name("base") == "ring" 
-end
+function BRC.is.ring(it) return it and it.name("base") == "ring" end
 
 function BRC.is.risky_ego(it)
   local text = it.artefact and it.name() or get_ego(it)
@@ -201,13 +180,9 @@ function BRC.is.risky_ego(it)
   return false
 end
 
-function BRC.is.scarf(it) 
-  return it and it.class(true) == "armour" and it.subtype() == "scarf" 
-end
+function BRC.is.scarf(it) return it and it.class(true) == "armour" and it.subtype() == "scarf" end
 
-function BRC.is.shield(it) 
-  return it and it.is_shield() 
-end
+function BRC.is.shield(it) return it and it.is_shield() end
 
 function BRC.is.talisman(it)
   if not it then return false end
@@ -215,14 +190,9 @@ function BRC.is.talisman(it)
   return c and (c == "talisman" or c == "bauble")
 end
 
-function BRC.is.orb(it) 
-  return it and it.class(true) == "armour" and it.subtype() == "offhand" and not it.is_shield() 
-end
+function BRC.is.orb(it) return it and it.class(true) == "armour" and it.subtype() == "offhand" and not it.is_shield() end
 
-function BRC.is.polearm(it) 
-  return it and it.weap_skill:find("Polearms", 1, true) 
-end
-
+function BRC.is.polearm(it) return it and it.weap_skill:find("Polearms", 1, true) end
 
 ---- BRC.you - Boolean attributes of the character ----
 
@@ -231,13 +201,9 @@ function BRC.you.free_offhand()
   return not items.equipped_at("offhand")
 end
 
-function BRC.you.have_shield() 
-  return BRC.is.shield(items.equipped_at("offhand")) 
-end
+function BRC.you.have_shield() return BRC.is.shield(items.equipped_at("offhand")) end
 
-function BRC.you.in_hell() 
-  return util.contains(ALL_HELL_BRANCHES, you.branch()) 
-end
+function BRC.you.in_hell() return util.contains(ALL_HELL_BRANCHES, you.branch()) end
 
 function BRC.you.by_slimy_wall()
   for x = -1, 1 do
@@ -254,14 +220,9 @@ function BRC.you.miasma_immune()
   return false
 end
 
-function BRC.you.mutation_immune() 
-  return util.contains(ALL_UNDEAD_RACES, you.race()) 
-end
+function BRC.you.mutation_immune() return util.contains(ALL_UNDEAD_RACES, you.race()) end
 
-function BRC.you.zero_stat() 
-  return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0 
-end
-
+function BRC.you.zero_stat() return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0 end
 
 ---- BRC.util - Utility functions ----
 
@@ -312,14 +273,11 @@ end
 -- Wrap text in a color tag
 function BRC.util.color(color, text)
   if not color then return text end
-  return string.format("<%s>%s</%s>", color, text, color) 
+  return string.format("<%s>%s</%s>", color, text, color)
 end
 
 -- Get the ascii code for a key
-function BRC.util.letter_to_ascii(key) 
-  return string.char(string.byte(key) - string.byte("a") + 1) 
-end
-
+function BRC.util.letter_to_ascii(key) return string.char(string.byte(key) - string.byte("a") + 1) end
 
 --- BRC.dump - Debugging utils called from in-game lua interpreter ---
 
@@ -333,13 +291,13 @@ function BRC.dump.all(verbose, skip_char_dump)
   end
 end
 
-function BRC.dump.data(char_dump) 
+function BRC.dump.data(char_dump)
   local tokens = { "\n---CHK_LUA_SAVE---" }
   for _, func in ipairs(chk_lua_save) do
     tokens[#tokens + 1] = util.trim(func())
   end
 
-  BRC.dump.text(table.concat(tokens, "\n"), char_dump) 
+  BRC.dump.text(table.concat(tokens, "\n"), char_dump)
 end
 
 function BRC.dump.inv(char_dump, include_item_info)
@@ -355,7 +313,7 @@ function BRC.dump.inv(char_dump, include_item_info)
     tokens[#tokens + 1] = "\n"
   end
 
-  BRC.dump.text(table.concat(tokens, ""), char_dump) 
+  BRC.dump.text(table.concat(tokens, ""), char_dump)
 end
 
 function BRC.dump.text(text, char_dump)
