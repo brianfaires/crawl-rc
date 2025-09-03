@@ -49,7 +49,7 @@ end
 -- Hook functions
 function f_remind_id.init()
   do_remind_id_check = true
-  create_persistent_data("found_scroll_of_id", false)
+  BRC.data.create("found_scroll_of_id", false)
 end
 
 function f_remind_id.c_assign_invletter(it)

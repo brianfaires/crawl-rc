@@ -47,7 +47,7 @@ function f_pickup_alert.init()
   end
 
   -- Check for duplicate autopickup creation (affects local only)
-  create_persistent_data("num_autopickup_funcs", #chk_force_autopickup + 1)
+  BRC.data.create("num_autopickup_funcs", #chk_force_autopickup + 1)
   if num_autopickup_funcs < #chk_force_autopickup then
     crawl.mpr("Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)")
     crawl.mpr("Expected: " .. num_autopickup_funcs .. " but got: " .. #chk_force_autopickup)

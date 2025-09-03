@@ -102,7 +102,7 @@ function init_buehler(reset_persistent_data)
     init_config()
     init_emojis()
     init_util()
-    init_persistent_data(reset_persistent_data)
+    BRC.data.init(reset_persistent_data)
     
     -- Load and register all features with BRC
     local loaded_count = BRC:load_all_features()

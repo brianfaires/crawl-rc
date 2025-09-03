@@ -169,7 +169,7 @@ end
 
 function BRC.is.good_ego(it)
   if not it.branded then return false end
-  local ego = BRC.data.typeof(it.ego) == BRC.TYPES.string and it.ego or it.ego(true)
+  local ego = BRC.data.typeof(it.ego) == BRC.data.TYPES.string and it.ego or it.ego(true)
   if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   return true
@@ -317,7 +317,7 @@ end
 
 function BRC.dump.all(verbose, skip_char_dump)
   local char_dump = not skip_char_dump
-  if dump_persistent_data then dump_persistent_data(char_dump) end
+  BRC.data.dump(char_dump)
   if verbose then
     BRC.dump.inv(char_dump)
     BRC.dump.text(WEAP_CACHE.serialize(), char_dump)
@@ -359,44 +359,3 @@ function BRC.dump.text(text, char_dump)
   end
 end
 
-function BRC.data.typeof(value)
-  local t = type(value)
-  if t == TYPES.string then
-    return TYPES.string
-  elseif t == TYPES.number then
-    return TYPES.number
-  elseif t == TYPES.boolean then
-    return TYPES.boolean
-  elseif t == TYPES.table then
-    return #value > 0 and TYPES.list or TYPES.dict
-  else
-    return TYPES.unknown
-  end
-end
-
-function BRC.data.tostring(value)
-  local type = BRC.data.typeof(value)
-  if type == TYPES.string then
-    return '"' .. value .. '"'
-  elseif type == TYPES.number then
-    return value
-  elseif type == TYPES.boolean then
-    return value and "true" or "false"
-  elseif type == TYPES.list then
-    local tokens = {}
-    for _, v in ipairs(value) do
-      tokens[#tokens + 1] = BRC.data.tostring(v)
-    end
-    return "{" .. table.concat(tokens, ", ") .. "}"
-  elseif type == TYPES.dict then
-    local tokens = {}
-    for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.data.tostring(v))
-    end
-    return "{" .. table.concat(tokens, ", ") .. "}"
-  else
-    local str = tostring(value) or "nil"
-    BRC.error("Unknown data type for value (" .. str .. "): " .. type)
-    return nil
-  end
-end

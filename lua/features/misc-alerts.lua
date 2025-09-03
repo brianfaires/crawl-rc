@@ -70,7 +70,7 @@ function macro_save_with_message()
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
   saved_game_msg = crawl.c_input_line()
-  create_persistent_data("saved_game_msg", saved_game_msg)
+  BRC.data.create("saved_game_msg", saved_game_msg)
   crawl.sendkeys(BRC.util.letter_to_ascii("s"))
 end
 
@@ -78,7 +78,7 @@ end
 function f_misc_alerts.init()
   prev_available_spell_levels = you.spell_levels()
   below_hp_threshold = false
-  create_persistent_data("alerted_max_piety", false)
+  BRC.data.create("alerted_max_piety", false)
 
   if CONFIG.save_with_msg then
     crawl.setopt("macros += M " .. KEYS.save_game .. " ===macro_save_with_message")

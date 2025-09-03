@@ -24,13 +24,13 @@ end
 
 -- Hook functions
 function f_pickup_alert_data.init()
-  create_persistent_data("pa_OTA_items", CONFIG.alert.one_time)
-  create_persistent_data("pa_recent_alerts", {})
-  create_persistent_data("pa_items_picked", {})
-  create_persistent_data("pa_items_alerted", {})
-  create_persistent_data("ac_high_score", 0)
-  create_persistent_data("weapon_high_score", 0)
-  create_persistent_data("plain_dmg_high_score", 0)
+  BRC.data.create("pa_OTA_items", CONFIG.alert.one_time)
+  BRC.data.create("pa_recent_alerts", {})
+  BRC.data.create("pa_items_picked", {})
+  BRC.data.create("pa_items_alerted", {})
+  BRC.data.create("ac_high_score", 0)
+  BRC.data.create("weapon_high_score", 0)
+  BRC.data.create("plain_dmg_high_score", 0)
 
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do

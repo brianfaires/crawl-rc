@@ -84,7 +84,7 @@ end
 -- Hook functions
 function f_exclude_dropped.init()
   if not CONFIG.exclude_dropped then return end
-  create_persistent_data("dropped_item_exclusions", {})
+  BRC.data.create("dropped_item_exclusions", {})
 
   for _, v in ipairs(dropped_item_exclusions) do
     add_exclusion(v)
