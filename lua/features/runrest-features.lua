@@ -86,7 +86,9 @@ local function ready_stop_on_hell_stairs()
   end
 end
 
-local function search_altars() crawl.sendkeys({ 6, "altar\r" }) end
+local function search_altars()
+  crawl.sendkeys({ 6, "altar\r" })
+end
 
 local function ready_temple_macro()
   if you.branch() == "Temple" and not autosearched_temple then

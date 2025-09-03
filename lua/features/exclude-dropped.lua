@@ -10,9 +10,7 @@ f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
 
 -- Local functions
 local function add_exclusion(item_name)
-  if not util.contains(dropped_item_exclusions, item_name) then
-    dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
-  end
+  if not util.contains(dropped_item_exclusions, item_name) then table.insert(dropped_item_exclusions, item_name) end
   local command = "autopickup_exceptions ^= " .. item_name
   crawl.setopt(command)
 end

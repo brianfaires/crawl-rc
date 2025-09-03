@@ -13,7 +13,9 @@ local do_remind_id_check
 
 -- Local functions
 local IDENTIFY_MSG = BRC.util.color(COLORS.magenta, " You have something to identify. ")
-local function alert_remind_identify() BRC.mpr.stop(EMOJI.REMIND_IDENTIFY .. IDENTIFY_MSG .. EMOJI.REMIND_IDENTIFY) end
+local function alert_remind_identify()
+  BRC.mpr.stop(EMOJI.REMIND_IDENTIFY .. IDENTIFY_MSG .. EMOJI.REMIND_IDENTIFY)
+end
 
 local function get_max_stack_size(class, skip_slot)
   local max_stack_size = 0

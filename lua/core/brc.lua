@@ -148,18 +148,30 @@ function BRC.ready()
   BRC.mpr.consume_queue()
 end
 
-function BRC.c_message(text, channel) call_hook("c_message", text, channel) end
+function BRC.c_message(text, channel)
+  call_hook("c_message", text, channel)
+end
 
-function BRC.c_answer_prompt(prompt) call_hook("c_answer_prompt", prompt) end
+function BRC.c_answer_prompt(prompt)
+  call_hook("c_answer_prompt", prompt)
+end
 
-function BRC.c_assign_invletter(it) call_hook("c_assign_invletter", it) end
+function BRC.c_assign_invletter(it)
+  call_hook("c_assign_invletter", it)
+end
 
 -- Logging methods
-function BRC.error(message, context) log_message(message, context, MSG_COLORS.error) end
+function BRC.error(message, context)
+  log_message(message, context, MSG_COLORS.error)
+end
 
-function BRC.warn(message, context) log_message(message, context, MSG_COLORS.warning) end
+function BRC.warn(message, context)
+  log_message(message, context, MSG_COLORS.warning)
+end
 
-function BRC.log(message, context) log_message(message, context, MSG_COLORS.info) end
+function BRC.log(message, context)
+  log_message(message, context, MSG_COLORS.info)
+end
 
 function BRC.debug(message, context)
   if not SHOW_DEBUG_MESSAGES then return end

@@ -57,7 +57,7 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
 
 -- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
 if not BRC.you.miasma_immune() then
-  util.append(ALWAYS_FORCE_MONSTERS, {
+  util.append(ALWAYS_FORCE_MORE_MONSTERS, {
     "death drake",
     "tainted leviathan",
     "putrid mouth",
@@ -379,7 +379,9 @@ local function set_all(monster_list, option)
   set_monster_option("+", mon_str, option)
 end
 
-local function set_monster_fm(sign, monster_str) set_monster_option(sign, monster_str, "force_more_message") end
+local function set_monster_fm(sign, monster_str)
+  set_monster_option(sign, monster_str, "force_more_message")
+end
 
 local function do_pack_mutes()
   -- Put pending mutes into effect
@@ -458,7 +460,7 @@ function f_fm_monsters.ready()
   local hp, _ = you.hp()
   local amulet = items.equipped_at("amulet")
   if amulet and amulet.name() == "amulet of guardian spirit" or you.race() == "Vine Stalker" then
-    local mp, mmp = you.mp()
+    local mp, _ = you.mp()
     hp = hp + mp
   end
   local willpower = you.willpower()
@@ -537,7 +539,7 @@ function f_fm_monsters.ready()
     end
 
     if action then
-      fm_mon_str = nil
+      local fm_mon_str = nil
       local fm_name = v.pattern
       if v.name then fm_name = v.name end
 

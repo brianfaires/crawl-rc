@@ -138,7 +138,7 @@ function pa_alert_item(it, alert_type, emoji, force_more)
 
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
 
-  pa_recent_alerts[#pa_recent_alerts + 1] = get_plussed_name(it)
+  table.insert(pa_recent_alerts, get_plussed_name(it))
   add_to_pa_table(pa_items_alerted, it)
   you.stop_activity()
   return true

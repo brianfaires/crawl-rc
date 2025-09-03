@@ -35,7 +35,9 @@ local ARMOUR_ALERT = {
   }, -- ARMOUR_ALERT.heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
-local is_new_ego = function(ego_change) return ego_change == GAIN or ego_change == DIFF end
+local is_new_ego = function(ego_change)
+  return ego_change == GAIN or ego_change == DIFF
+end
 
 local function send_armour_alert(it, alert_type)
   return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)

@@ -4,9 +4,15 @@ local persistent_var_names
 local persistent_table_names
 local GET_VAL_STRING = {}
 GET_VAL_STRING = {
-  str = function(value) return '"' .. value .. '"' end,
-  int = function(value) return value end,
-  bool = function(value) return value and "true" or "false" end,
+  str = function(value)
+    return '"' .. value .. '"'
+  end,
+  int = function(value)
+    return value
+  end,
+  bool = function(value)
+    return value and "true" or "false"
+  end,
   list = function(value)
     local tokens = {}
     for _, v in ipairs(value) do
@@ -45,7 +51,9 @@ function create_persistent_data(name, default_value)
   end
 end
 
-function dump_persistent_data(char_dump) BRC.dump.text(serialize_persistent_data(), char_dump) end
+function dump_persistent_data(char_dump)
+  BRC.dump.text(serialize_persistent_data(), char_dump)
+end
 
 function serialize_persistent_data()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
