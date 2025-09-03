@@ -4,12 +4,27 @@
 -- Suppress "unused global variable" warnings for crawl engine globals
 globals = {
     -- Crawl game engine globals
+    "add_autopickup_func",
     "crawl",
     "you",
     "items",
     "view",
     "iter",
     "util",
+
+    -- Crawl hooks (intentionally global)
+    "ready",
+    "c_message",
+    "c_assign_invletter",
+    "c_answer_prompt",
+    "chk_force_autopickup",
+    "chk_lua_save",
+
+    -- Macro functions (intentionally global)
+    "macro_do_safe_upstairs",
+    "macro_do_safe_downstairs",
+    "macro_exploore_fully_recover",
+    "macro_save_with_message",
     
     -- BRC module globals (intentionally global)
     "BRC",
@@ -57,14 +72,8 @@ globals = {
     "weapon_high_score",
     "plain_dmg_high_score",
     "dropped_item_exclusions",
-    
-    -- Functions that are intentionally global
-    "create_persistent_data",
-    "dump_persistent_data",
-    "serialize_persistent_data",
-    "get_var_type",
-    "init_persistent_data",
-    "verify_data_reinit",
+
+    -- BRC Functions (intentionally global)
     "add_exclusion",
     "remove_exclusion",
     "get_OTA_index",
@@ -127,10 +136,8 @@ globals = {
     "is_unneeded_ring",
     "update_high_scores",
     "format_stat",
-    "serialize_chk_lua_save",
-    "serialize_inventory",
     
-    -- Variables that are intentionally global
+    -- Variables (intentionally global)
     "prev_turn",
     "do_more",
     "active_fm",
@@ -145,8 +152,7 @@ globals = {
     "loaded_pa_armour",
     "loaded_pa_misc",
     "loaded_pa_weapons",
-    "pause_pa_system",
-    "chk_lua_save"
+    "pause_pa_system"
 }
 
 -- Suppress specific warning types

@@ -9,7 +9,6 @@ It then manages the feature's lifecycle and hook dispatching
 BRC = {}
 BRC.VERSION = "1.1.0"
 
-
 -- Local configuration
 local SHOW_DEBUG_MESSAGES = true
 
@@ -35,7 +34,7 @@ local _hooks = {}
 
 -- Local functions
 local function is_feature_module(module_table)
-  return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == BRC.data.TYPES.string
+  return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
 end
 
 local function log_message(message, context, color)
@@ -122,7 +121,7 @@ function BRC.load_all_features()
 
   -- Scan the global namespace for feature modules and load them
   for name, value in pairs(_G) do
-    if type(value) == BRC.data.TYPES.table and is_feature_module(value) then
+    if type(value) == "table" and is_feature_module(value) then
       local feature_name = value.BRC_FEATURE_NAME
       local success = BRC.register_feature(feature_name, value)
 

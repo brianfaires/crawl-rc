@@ -169,7 +169,7 @@ end
 
 function BRC.is.good_ego(it)
   if not it.branded then return false end
-  local ego = BRC.data.typeof(it.ego) == BRC.data.TYPES.string and it.ego or it.ego(true)
+  local ego = type(it.ego) == "string" and it.ego or it.ego(true)
   if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
   return true

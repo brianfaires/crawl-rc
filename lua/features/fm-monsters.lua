@@ -543,7 +543,7 @@ function f_fm_monsters.ready()
       local fm_name = v.pattern
       if v.name then fm_name = v.name end
 
-      if type(v.pattern) == BRC.data.TYPES.table then
+      if type(v.pattern) == "table" then
         for _, p in ipairs(v.pattern) do
           if not fm_mon_str then
             fm_mon_str = p

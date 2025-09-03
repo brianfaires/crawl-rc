@@ -35,93 +35,35 @@ local ARMOUR_ALERT = {
   }, -- ARMOUR_ALERT.heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
-local is_new_ego = function(ego_change)
-  return ego_change == GAIN or ego_change == DIFF
-end
+-- Local helper functions
+local function aux_slot_is_impaired(it)
+  local st = it.subtype()
+  -- Skip boots/gloves/helmet if wearing Lear's hauberk
+  local worn = items.equipped_at("armour")
+  if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then return true end
 
-local function send_armour_alert(it, alert_type)
-  return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
-end
-
--- If training armour in early/mid game, alert user to any armour that is the strongest found so far
-local function alert_ac_high_score(it)
-  if not BRC.is.body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
-  if you.xl() > 12 then return false end
-
-  if ac_high_score == 0 then
-    local worn = items.equipped_at("armour")
-    if not worn then return false end
-    ac_high_score = get_armour_ac(worn)
-  else
-    local itAC = get_armour_ac(it)
-    if itAC > ac_high_score then
-      ac_high_score = itAC
-      return pa_alert_item(it, "Highest AC", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
-    end
+  -- Mutation interference
+  if st == "gloves" then
+    return BRC.get.mut(MUTS.demonic_touch, true) >= 3 and not BRC.you.free_offhand()
+      or BRC.get.mut(MUTS.claws, true) > 0 and not items.equipped_at("weapon")
+  elseif st == "boots" then
+    return BRC.get.mut(MUTS.hooves, true) > 0 or BRC.get.mut(MUTS.talons, true) > 0
+  elseif it.name("base"):find("helmet", 1, true) then
+    return BRC.get.mut(MUTS.horns, true) > 0 or BRC.get.mut(MUTS.beak, true) > 0 or BRC.get.mut(MUTS.antennae, true) > 0
   end
 
   return false
 end
 
---[[
-    Alerts armour items that didn't auto-pickup but are worth consideration.
-    This comes after pickup, so there will be no pure upgrades.
-    Optional `unworn_inv_item` param, to compare against an unworn aux armour item in inventory.
---]]
-function pa_alert_armour(it, unworn_inv_item)
-  if BRC.is.body_armour(it) then
-    return alert_body_armour(it)
-  elseif BRC.is.shield(it) then
-    return alert_shield(it)
-  else
-    return alert_aux_armour(it, unworn_inv_item)
-  end
-end
+local function get_adjusted_ev_delta(encumb_delta, ev_delta)
+  local encumb_skills = you.skill("Spellcasting")
+    + you.skill("Ranged Weapons")
+    - you.skill("Armour") / ENCUMB_ARMOUR_DIVISOR
+  local encumb_impact = encumb_skills / you.xl()
+  encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
-local function alert_body_armour(it)
-  local cur = items.equipped_at("armour")
-  if not cur then return false end
-
-  -- Always alert artefacts once identified
-  if it.artefact then
-    if not it.is_identified then return false end
-    return send_armour_alert(it, ARMOUR_ALERT.artefact)
-  end
-
-  -- Get changes to ego, AC, EV, encumbrance
-  local it_ego = get_ego(it)
-  local cur_ego = get_ego(cur)
-  local ego_change = get_ego_change_type(cur_ego, it_ego)
-  local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-  local ev_delta = get_armour_ev(it) - get_armour_ev(cur)
-  local encumb_delta = it.encumbrance - cur.encumbrance
-
-  -- Alert new egos if same encumbrance, or small change to total (AC+EV)
-  if is_new_ego(ego_change) then
-    if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
-
-    local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= TUNING.armour[weight].ignore_small then
-      return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
-    end
-  end
-
-  -- Alert for lighter/heavier armour, based on configured AC/EV ratio
-  if encumb_delta < 0 then
-    if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
-      return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change])
-    end
-  elseif encumb_delta > 0 then
-    local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
-    if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
-      return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change])
-    end
-  end
-
-  -- Alert for highest AC found so far, or early armour with any ego
-  if alert_ac_high_score(it) then return true end
-  if it_ego and you.xl() <= TUNING.armour.early_xl then return pa_alert_item(it, "Early armour", EMOJI.EGO) end
+  -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
+  return ev_delta - encumb_delta * encumb_impact * TUNING.armour.encumb_penalty_weight
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
@@ -136,113 +78,15 @@ local function get_ego_change_type(cur_ego, it_ego)
   end
 end
 
-local function get_adjusted_ev_delta(encumb_delta, ev_delta)
-  local encumb_skills = you.skill("Spellcasting")
-    + you.skill("Ranged Weapons")
-    - you.skill("Armour") / ENCUMB_ARMOUR_DIVISOR
-  local encumb_impact = encumb_skills / you.xl()
-  encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
-
-  -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
-  return ev_delta - encumb_delta * encumb_impact * TUNING.armour.encumb_penalty_weight
+local function is_new_ego(ego_change)
+  return ego_change == GAIN or ego_change == DIFF
 end
 
--- local function should_alert_lighter_armour(ac_delta, ev_delta, ego_change)
---     local meets_ratio = ac_delta >= 0 or (ev_delta / -ac_delta > TUNING.armour.lighter[ego_change])
---     if not meets_ratio then return false end
-
---     -- Apply ego-specific restrictions
---     if ego_change == LOST and ev_delta < TUNING.armour.lighter.min_gain then return false end
---     if ego_change ~= SAME and -ac_delta > TUNING.armour.lighter.max_loss then return false end
-
---     return true
--- end
-
--- local function should_alert_heavier_armour(ac_delta, ev_delta, ego_change)
---     local meets_ratio = ev_delta >= 0 or (ac_delta / -ev_delta > TUNING.armour.heavier[ego_change])
---     if not meets_ratio then return false end
-
---     -- Apply ego-specific restrictions
---     if ego_change == LOST and ac_delta < TUNING.armour.heavier.min_gain then return false end
---     if ego_change ~= SAME and -ev_delta > TUNING.armour.heavier.max_loss then return false end
-
---     return true
--- end
-
-local function should_alert_body_armour(weight, gain, loss, ego_change)
-  local meets_ratio = loss <= 0 or (gain / loss > TUNING.armour[weight][ego_change])
-  if not meets_ratio then return false end
-
-  -- Additional ego-specific restrictions
-  if is_new_ego(ego_change) then
-    return loss <= TUNING.armour[weight].max_loss
-  elseif ego_change == LOST then
-    return gain >= TUNING.armour[weight].min_gain
-  end
-
-  return true
+local function send_armour_alert(it, alert_type)
+  return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
 end
 
-local function alert_shield(it)
-  if it.artefact then
-    return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
-  end
-
-  -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
-  local cur = items.equipped_at("offhand")
-  if not BRC.is.shield(cur) then return false end
-
-  -- Alert: New ego, Gain SH
-  local ego_change = get_ego_change_type(get_ego(cur), get_ego(it))
-  if is_new_ego(ego_change) then
-    local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
-  elseif get_shield_sh(it) > get_shield_sh(cur) then
-    return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
-  end
-end
-
-local function alert_aux_armour(it, unworn_inv_item)
-  if it.artefact then
-    if not it.is_identified then return false end
-    return pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
-  end
-
-  -- Use a list to support Poltergeists; for other races it's a 1-item list
-  local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
-  if #all_equipped < num_slots then
-    if unworn_inv_item then
-      all_equipped[#all_equipped + 1] = unworn_inv_item
-    else
-      -- Catch dangerous brands or items blocked by non-innate mutations
-      return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
-    end
-
-    local it_ego = get_ego(it)
-    for _, cur in ipairs(all_equipped) do
-      local ego_change = get_ego_change_type(get_ego(cur), it_ego)
-      if is_new_ego(ego_change) then
-        local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-        return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
-      elseif get_armour_ac(it) > get_armour_ac(cur) then
-        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
-      end
-    end
-  end
-end
-
--- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
-function pa_pickup_armour(it)
-  if BRC.is.risky_ego(it) then return false end
-
-  if BRC.is.body_armour(it) then
-    return pickup_body_armour(it)
-  elseif BRC.is.shield(it) then
-    return pickup_shield(it)
-  else
-    return pickup_aux_armour(it)
-  end
-end
+-- Local functions: Pickup
 
 local function pickup_body_armour(it)
   local cur = items.equipped_at("armour")
@@ -331,21 +175,184 @@ local function pickup_aux_armour(it)
   end
 end
 
-local function aux_slot_is_impaired(it)
-  local st = it.subtype()
-  -- Skip boots/gloves/helmet if wearing Lear's hauberk
-  local worn = items.equipped_at("armour")
-  if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then return true end
+-- Local functions: Alerting
 
-  -- Mutation interference
-  if st == "gloves" then
-    return BRC.get.mut(MUTS.demonic_touch, true) >= 3 and not BRC.you.free_offhand()
-      or BRC.get.mut(MUTS.claws, true) > 0 and not items.equipped_at("weapon")
-  elseif st == "boots" then
-    return BRC.get.mut(MUTS.hooves, true) > 0 or BRC.get.mut(MUTS.talons, true) > 0
-  elseif it.name("base"):find("helmet", 1, true) then
-    return BRC.get.mut(MUTS.horns, true) > 0 or BRC.get.mut(MUTS.beak, true) > 0 or BRC.get.mut(MUTS.antennae, true) > 0
+local function should_alert_body_armour(weight, gain, loss, ego_change)
+  local meets_ratio = loss <= 0 or (gain / loss > TUNING.armour[weight][ego_change])
+  if not meets_ratio then return false end
+
+  -- Additional ego-specific restrictions
+  if is_new_ego(ego_change) then
+    return loss <= TUNING.armour[weight].max_loss
+  elseif ego_change == LOST then
+    return gain >= TUNING.armour[weight].min_gain
+  end
+
+  return true
+  -- local function should_alert_lighter_armour(ac_delta, ev_delta, ego_change)
+  --     local meets_ratio = ac_delta >= 0 or (ev_delta / -ac_delta > TUNING.armour.lighter[ego_change])
+  --     if not meets_ratio then return false end
+
+  --     -- Apply ego-specific restrictions
+  --     if ego_change == LOST and ev_delta < TUNING.armour.lighter.min_gain then return false end
+  --     if ego_change ~= SAME and -ac_delta > TUNING.armour.lighter.max_loss then return false end
+
+  --     return true
+  -- end
+
+  -- local function should_alert_heavier_armour(ac_delta, ev_delta, ego_change)
+  --     local meets_ratio = ev_delta >= 0 or (ac_delta / -ev_delta > TUNING.armour.heavier[ego_change])
+  --     if not meets_ratio then return false end
+
+  --     -- Apply ego-specific restrictions
+  --     if ego_change == LOST and ac_delta < TUNING.armour.heavier.min_gain then return false end
+  --     if ego_change ~= SAME and -ev_delta > TUNING.armour.heavier.max_loss then return false end
+
+  --     return true
+  -- end
+end
+
+local function alert_body_armour(it)
+  local cur = items.equipped_at("armour")
+  if not cur then return false end
+
+  -- Always alert artefacts once identified
+  if it.artefact then
+    if not it.is_identified then return false end
+    return send_armour_alert(it, ARMOUR_ALERT.artefact)
+  end
+
+  -- Get changes to ego, AC, EV, encumbrance
+  local it_ego = get_ego(it)
+  local cur_ego = get_ego(cur)
+  local ego_change = get_ego_change_type(cur_ego, it_ego)
+  local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
+  local ev_delta = get_armour_ev(it) - get_armour_ev(cur)
+  local encumb_delta = it.encumbrance - cur.encumbrance
+
+  -- Alert new egos if same encumbrance, or small change to total (AC+EV)
+  if is_new_ego(ego_change) then
+    if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
+
+    local weight = encumb_delta < 0 and LIGHTER or HEAVIER
+    if math.abs(ac_delta + ev_delta) <= TUNING.armour[weight].ignore_small then
+      return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
+    end
+  end
+
+  -- Alert for lighter/heavier armour, based on configured AC/EV ratio
+  if encumb_delta < 0 then
+    if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
+      return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change])
+    end
+  elseif encumb_delta > 0 then
+    local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
+    if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
+      return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change])
+    end
+  end
+
+  -- Alert for highest AC found so far, or early armour with any ego
+  if alert_ac_high_score(it) then return true end
+  if it_ego and you.xl() <= TUNING.armour.early_xl then return pa_alert_item(it, "Early armour", EMOJI.EGO) end
+end
+
+local function alert_shield(it)
+  if it.artefact then
+    return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
+  end
+
+  -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
+  local cur = items.equipped_at("offhand")
+  if not BRC.is.shield(cur) then return false end
+
+  -- Alert: New ego, Gain SH
+  local ego_change = get_ego_change_type(get_ego(cur), get_ego(it))
+  if is_new_ego(ego_change) then
+    local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+    return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
+  elseif get_shield_sh(it) > get_shield_sh(cur) then
+    return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+  end
+end
+
+local function alert_aux_armour(it, unworn_inv_item)
+  if it.artefact then
+    if not it.is_identified then return false end
+    return pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+  end
+
+  -- Use a list to support Poltergeists; for other races it's a 1-item list
+  local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
+  if #all_equipped < num_slots then
+    if unworn_inv_item then
+      all_equipped[#all_equipped + 1] = unworn_inv_item
+    else
+      -- Catch dangerous brands or items blocked by non-innate mutations
+      return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
+    end
+
+    local it_ego = get_ego(it)
+    for _, cur in ipairs(all_equipped) do
+      local ego_change = get_ego_change_type(get_ego(cur), it_ego)
+      if is_new_ego(ego_change) then
+        local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+        return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+      elseif get_armour_ac(it) > get_armour_ac(cur) then
+        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+      end
+    end
+  end
+end
+
+-- If training armour in early/mid game, alert user to any armour that is the strongest found so far
+local function alert_ac_high_score(it)
+  if not BRC.is.body_armour(it) then return false end
+  if you.skill("Armour") == 0 then return false end
+  if you.xl() > 12 then return false end
+
+  if ac_high_score == 0 then
+    local worn = items.equipped_at("armour")
+    if not worn then return false end
+    ac_high_score = get_armour_ac(worn)
+  else
+    local itAC = get_armour_ac(it)
+    if itAC > ac_high_score then
+      ac_high_score = itAC
+      return pa_alert_item(it, "Highest AC", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
+    end
   end
 
   return false
+end
+
+
+-- Public API
+
+-- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
+function pa_pickup_armour(it)
+  if BRC.is.risky_ego(it) then return false end
+
+  if BRC.is.body_armour(it) then
+    return pickup_body_armour(it)
+  elseif BRC.is.shield(it) then
+    return pickup_shield(it)
+  else
+    return pickup_aux_armour(it)
+  end
+end
+
+--[[
+    Alerts armour items that didn't auto-pickup but are worth consideration.
+    This comes after pickup, so there will be no pure upgrades.
+    Optional `unworn_inv_item` param, to compare against an unworn aux armour item in inventory.
+--]]
+function pa_alert_armour(it, unworn_inv_item)
+  if BRC.is.body_armour(it) then
+    return alert_body_armour(it)
+  elseif BRC.is.shield(it) then
+    return alert_shield(it)
+  else
+    return alert_aux_armour(it, unworn_inv_item)
+  end
 end

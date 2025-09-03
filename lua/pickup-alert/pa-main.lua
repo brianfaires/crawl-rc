@@ -57,6 +57,7 @@ function f_pickup_alert.init()
 
   ---- Autopickup main ----
   add_autopickup_func(function(it, _)
+    local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
     if pause_pa_system then return end
     if you.have_orb() then return end
     if has_ego(it) and not it.is_identified then return false end
@@ -74,7 +75,6 @@ function f_pickup_alert.init()
       -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
       if BRC.is.aux_armour(it) then return end
 
-      local unworn_aux_item = nil
       local st = it.subtype()
       for inv in iter.invent_iterator:new(items.inventory()) do
         local inv_st = inv.subtype()

@@ -88,7 +88,7 @@ end
 --------- Functions for armour and weapons ---------
 function get_ego(it)
   if BRC.is.good_ego(it) then
-    return it.ego(true)
+    return type(it.ego) == "string" and it.ego or it.ego(true)
   elseif BRC.is.body_armour(it) then
     local qualname = it.name("qual")
     if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
