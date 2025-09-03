@@ -2,7 +2,7 @@
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: CONFIG, COLORS, KEYS, with_color, util.remove, next_to_slimy_wall, have_zero_stat
+Dependencies: CONFIG, COLORS, KEYS, BRC.util.color, util.remove, BRC.you.by_slimy_wall, BRC.you.zero_stat
 --]]
 
 f_fully_recover = {}
@@ -25,7 +25,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - recovery_start_turn
-  crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns))
+  BRC.mpr.col("Fully recovered" .. string.format(" (%d turns)", turns), COLORS.lightgreen)
 
   recovery_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
@@ -67,9 +67,9 @@ end
 
 function should_ignore_status(s)
   if s == "corroded" then
-    return next_to_slimy_wall() or you.branch() == "Dis"
+    return BRC.you.by_slimy_wall() or you.branch() == "Dis"
   elseif s == "slowed" then
-    return have_zero_stat()
+    return BRC.you.zero_stat()
   end
   return false
 end
@@ -121,8 +121,8 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
-      crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
-      crawl.mpr(with_color(COLORS.lightred, "Adjusting CONFIG.rest_off_statuses:"))
+      BRC.mpr.col("Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", COLORS.lightred)
+      BRC.mpr.col("Adjusting CONFIG.rest_off_statuses:", COLORS.lightred)
       remove_statuses_from_config()
       abort_fully_recover()
     else

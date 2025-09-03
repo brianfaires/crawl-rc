@@ -7,7 +7,7 @@ It then manages the feature's lifecycle and hook dispatching
 
 -- Global BRC table
 BRC = {}
-BRC.VERSION = "1.0.0"
+BRC.VERSION = "1.1.0"
 
 -- Local configuration
 local SHOW_DEBUG_MESSAGES = true
@@ -145,7 +145,7 @@ function BRC.ready()
   prev_turn = you.turns()
 
   call_hook("ready")
-  mpr_consume_queue()
+  BRC.mpr.consume_queue()
 end
 
 function BRC.c_message(text, channel) call_hook("c_message", text, channel) end

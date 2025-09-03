@@ -45,7 +45,7 @@ function create_persistent_data(name, default_value)
   end
 end
 
-function dump_persistent_data(char_dump) dump_text(serialize_persistent_data(), char_dump) end
+function dump_persistent_data(char_dump) BRC.dump.text(serialize_persistent_data(), char_dump) end
 
 function serialize_persistent_data()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
@@ -120,7 +120,7 @@ end
 function verify_data_reinit()
   local failed_reinit = false
   local GAME_CHANGE_MONITORS = {
-    buehler_rc_version = BUEHLER_RC_VERSION,
+    buehler_rc_version = BRC.VERSION,
     buehler_name = you.name(),
     buehler_race = you.race(), -- this breaks RC parser without 'buehler_' prefix
     buehler_class = you.class(), -- this breaks RC parser without 'buehler_' prefix
@@ -140,18 +140,18 @@ function verify_data_reinit()
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-        crawl.mpr(with_color(COLORS.lightred, msg))
+        BRC.mpr.col(msg, COLORS.lightred)
       end
     end
 
     if not successful_data_reload then
       failed_reinit = true
       local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", BUEHLER_RC_VERSION)
-      crawl.mpr(with_color(COLORS.lightred, "\n" .. fail_message))
-      crawl.mpr(with_color(COLORS.darkgrey, "Try restarting, or set BRC.DEBUG_MESSAGES=True for more info."))
+      BRC.mpr.col("\n" .. fail_message, COLORS.lightred)
+      BRC.mpr.col("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", COLORS.darkgrey)
     end
 
-    if failed_reinit and mpr_yesno(with_color(COLORS.yellow, "Deactivate buehler.rc?")) then return false end
+    if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", COLORS.yellow) then return false end
   end
 
   for k, v in pairs(GAME_CHANGE_MONITORS) do

@@ -35,17 +35,17 @@ if CONFIG.emojis then
 
   EMOJI.SUCCESS = "✅"
 else
-  EMOJI.REMIND_IDENTIFY = with_color(COLORS.magenta, "?")
-  EMOJI.EXCLAMATION = with_color(COLORS.magenta, "!")
-  EMOJI.EXCLAMATION_2 = with_color(COLORS.lightmagenta, "!!")
+  EMOJI.REMIND_IDENTIFY = BRC.util.color(COLORS.magenta, "?")
+  EMOJI.EXCLAMATION = BRC.util.color(COLORS.magenta, "!")
+  EMOJI.EXCLAMATION_2 = BRC.util.color(COLORS.lightmagenta, "!!")
 
-  EMOJI.HP_BORDER = with_color(COLORS.white, "|")
-  EMOJI.HP_FULL_PIP = with_color(COLORS.green, "+")
-  EMOJI.HP_PART_PIP = with_color(COLORS.lightgrey, "+")
-  EMOJI.HP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
+  EMOJI.HP_BORDER = BRC.util.color(COLORS.white, "|")
+  EMOJI.HP_FULL_PIP = BRC.util.color(COLORS.green, "+")
+  EMOJI.HP_PART_PIP = BRC.util.color(COLORS.lightgrey, "+")
+  EMOJI.HP_EMPTY_PIP = BRC.util.color(COLORS.darkgrey, "-")
 
-  EMOJI.MP_BORDER = with_color(COLORS.white, "|")
-  EMOJI.MP_FULL_PIP = with_color(COLORS.lightblue, "+")
-  EMOJI.MP_PART_PIP = with_color(COLORS.lightgrey, "+")
-  EMOJI.MP_EMPTY_PIP = with_color(COLORS.darkgrey, "-")
+  EMOJI.MP_BORDER = BRC.util.color(COLORS.white, "|")
+  EMOJI.MP_FULL_PIP = BRC.util.color(COLORS.lightblue, "+")
+  EMOJI.MP_PART_PIP = BRC.util.color(COLORS.lightgrey, "+")
+  EMOJI.MP_EMPTY_PIP = BRC.util.color(COLORS.darkgrey, "-")
 end

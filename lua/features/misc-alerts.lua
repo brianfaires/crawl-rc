@@ -22,14 +22,12 @@ local function alert_low_hp()
     below_hp_threshold = hp ~= mhp
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. (100 * CONFIG.alert_low_hp_threshold) .. "% HP"
-    enqueue_mpr_opt_more(
+    local low_hp_msg = " Dropped below " .. (100 * CONFIG.alert_low_hp_threshold) .. "% HP "
+    BRC.mpr.que_optmore(
       true,
       table.concat({
         EMOJI.EXCLAMATION,
-        " ",
-        with_color(COLORS.magenta, low_hp_msg),
-        " ",
+        BRC.util.color(COLORS.magenta, low_hp_msg),
         EMOJI.EXCLAMATION,
       })
     )
@@ -41,7 +39,7 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" then return end
-      mpr_with_more(with_color(COLORS.lightcyan, REMOVE_FAITH_MSG))
+      BRC.mpr.more(REMOVE_FAITH_MSG, COLORS.lightcyan)
       alerted_max_piety = true
     end
   end
@@ -53,9 +51,9 @@ local function alert_spell_level_changes()
     local delta = new_spell_levels - prev_available_spell_levels
     local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
     local avail = " (" .. new_spell_levels .. " available)"
-    crawl.mpr(with_color(COLORS.lightcyan, msg) .. with_color(COLORS.cyan, avail))
+    crawl.mpr(BRC.util.color(COLORS.lightcyan, msg) .. BRC.util.color(COLORS.cyan, avail))
   elseif new_spell_levels < prev_available_spell_levels then
-    crawl.mpr(with_color(COLORS.magenta, new_spell_levels .. " spell levels remaining"))
+    BRC.mpr.col(new_spell_levels .. " spell levels remaining", COLORS.magenta)
   end
 
   prev_available_spell_levels = new_spell_levels
@@ -73,7 +71,7 @@ function macro_save_with_message()
   crawl.formatted_mpr("Leave a message: ", "prompt")
   saved_game_msg = crawl.c_input_line()
   create_persistent_data("saved_game_msg", saved_game_msg)
-  crawl.sendkeys(control_key("s"))
+  crawl.sendkeys(BRC.util.letter_to_ascii("s"))
 end
 
 -- Hook functions

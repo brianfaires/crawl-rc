@@ -2,7 +2,7 @@
 Feature: drop-inferior
 Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
 Author: buehler
-Dependencies: CONFIG, COLORS, with_color, has_risky_ego, has_ego, get_ego, get_armour_ac, iter.invent_iterator
+Dependencies: CONFIG, COLORS, BRC.util.color, BRC.is.risky_ego, has_ego, get_ego, get_armour_ac, iter.invent_iterator
 --]]
 
 f_drop_inferior = {}
@@ -17,7 +17,7 @@ local function inscribe_drop(it)
   it.inscribe(new_inscr, false)
   if CONFIG.msg_on_inscribe then
     local msg = "(You can drop " .. it.slot .. " - " .. it.name() .. ")"
-    crawl.mpr(with_color(COLORS.cyan, msg))
+    BRC.mpr.col(msg, COLORS.cyan)
   end
 end
 
@@ -32,8 +32,8 @@ function f_drop_inferior.c_assign_invletter(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if not (it.is_weapon or is_armour(it)) then return end
-  if has_risky_ego(it) then return end
+  if not (it.is_weapon or BRC.is.armour(it)) then return end
+  if BRC.is.risky_ego(it) then return end
 
   for inv in iter.invent_iterator:new(items.inventory()) do
     if not inv.artefact and inv.subtype() == it.subtype() and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then

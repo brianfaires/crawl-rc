@@ -2,7 +2,7 @@
 Feature: remind-id
 Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, with_color, iter, persistent_data
+Dependencies: CONFIG, COLORS, EMOJI, BRC.util.color, iter, persistent_data
 --]]
 
 f_remind_id = {}
@@ -12,10 +12,9 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 local do_remind_id_check
 
 -- Local functions
+local IDENTIFY_MSG = BRC.util.color(COLORS.magenta, " You have something to identify. ")
 local function alert_remind_identify()
-  crawl.mpr(
-    EMOJI.REMIND_IDENTIFY .. with_color(COLORS.magenta, " You have something to identify. ") .. EMOJI.REMIND_IDENTIFY
-  )
+  BRC.mpr.stop(EMOJI.REMIND_IDENTIFY .. IDENTIFY_MSG .. EMOJI.REMIND_IDENTIFY)
 end
 
 local function get_max_stack_size(class, skip_slot)
@@ -108,7 +107,6 @@ function f_remind_id.ready()
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
       alert_remind_identify()
-      you.stop_activity()
     end
   end
 end

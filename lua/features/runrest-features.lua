@@ -77,10 +77,10 @@ local function ready_stop_on_pan_gates()
 end
 
 local function ready_stop_on_hell_stairs()
-  if stop_on_hell_stairs and not in_hell() then
+  if stop_on_hell_stairs and not BRC.you.in_hell() then
     stop_on_hell_stairs = false
     crawl.setopt("explore_stop -= stairs")
-  elseif not stop_on_hell_stairs and in_hell() then
+  elseif not stop_on_hell_stairs and BRC.you.in_hell() then
     stop_on_hell_stairs = true
     crawl.setopt("explore_stop += stairs")
   end
@@ -102,7 +102,7 @@ local function c_message_temple_actions(text, _)
       search_altars()
     elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
-      enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
+      BRC.mpr.que("Ran to temple exit.", COLORS.darkgrey)
       crawl.sendkeys("X<\r")
     end
   end

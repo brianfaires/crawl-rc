@@ -10,7 +10,7 @@ f_pickup_alert_data = {}
 
 ---- Helpers for using persistent tables in pickup-alert system----
 function add_to_pa_table(table_ref, it)
-  if it.is_weapon or is_armour(it, true) or is_talisman(it) then
+  if it.is_weapon or BRC.is.armour(it, true) or BRC.is.talisman(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then table_ref[name] = value end
@@ -69,7 +69,7 @@ function update_high_scores(it)
   if not it then return end
   local ret_val = nil
 
-  if is_armour(it) then
+  if BRC.is.armour(it) then
     local ac = get_armour_ac(it)
     if ac > ac_high_score then
       ac_high_score = ac
@@ -77,7 +77,7 @@ function update_high_scores(it)
     end
   elseif it.is_weapon then
     -- Don't alert for unusable weapons
-    if get_hands(it) == 2 and not offhand_is_free() then return end
+    if get_hands(it) == 2 and not BRC.you.free_offhand() then return end
 
     local dmg = get_weap_damage(it, DMG_TYPE.branded)
     if dmg > weapon_high_score then

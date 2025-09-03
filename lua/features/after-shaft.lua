@@ -28,7 +28,7 @@ end
 
 function f_after_shaft.c_message(text, channel)
   if not CONFIG.stop_on_stairs_after_shaft then return end
-  if channel ~= "plain" or in_hell() then return end
+  if channel ~= "plain" or BRC.you.in_hell() then return end
   if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
 
   local text_fall = "ou fall into a shaft"

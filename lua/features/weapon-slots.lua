@@ -2,7 +2,7 @@
 Feature: weapon-slots
 Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
 Author: buehler
-Dependencies: CONFIG, COLORS, with_color, iter.invent_iterator, is_magic_staff, is_polearm
+Dependencies: CONFIG, COLORS, BRC.util.color, iter.invent_iterator, is_magic_staff, is_polearm
 --]]
 
 f_weapon_slots = {}
@@ -47,17 +47,17 @@ local function get_priority_ab(it)
   if not it.is_weapon then return -1 end
   if it.equipped then return 1 end
 
-  if is_magic_staff(it) then return 3 end
+  if BRC.is.magic_staff(it) then return 3 end
   if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
-  if is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
+  if BRC.is.polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
   return 2
 end
 
 local function get_priority_w(it)
   if not it.is_weapon then return -1 end
   if it.is_ranged then return 1 end
-  if is_polearm(it) then return 2 end
-  if is_magic_staff(it) then return 3 end
+  if BRC.is.polearm(it) then return 2 end
+  if BRC.is.magic_staff(it) then return 3 end
   return 4
 end
 
@@ -134,7 +134,7 @@ function f_weapon_slots.ready()
     cleanup_weapon_slots()
     do_cleanup_weapon_slots = false
     if slots_changed then
-      crawl.mpr(with_color(COLORS.darkgrey, "Weapon slots updated (ab+w)."))
+      BRC.mpr.col("Weapon slots updated (ab+w).", COLORS.darkgrey)
       crawl.redraw_screen()
       slots_changed = false
     end

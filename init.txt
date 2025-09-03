@@ -108,14 +108,14 @@ function init_buehler(reset_persistent_data)
     local loaded_count = BRC:load_all_features()
     
     if loaded_count == 0 then
-        crawl.mpr(with_color(COLORS.lightred, "No features loaded. BRC system is inactive."))
+        BRC.mpr.col("No features loaded. BRC system is inactive.", COLORS.lightred)
         return false
     end
     
     -- Success!
     local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
     local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
-    crawl.mpr("\n" .. success_emoji .. with_color(COLORS.lightgreen, success_text) .. success_emoji)
+    crawl.mpr("\n" .. success_emoji .. BRC.util.color(COLORS.lightgreen, success_text) .. success_emoji)
     
     return true
 end

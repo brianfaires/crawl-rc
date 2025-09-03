@@ -56,7 +56,12 @@ local ALWAYS_FORCE_MORE_MONSTERS = {
 } -- always_force_more_monsters (do not remove this comment)
 
 -- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
-if not is_miasma_immune() then util.append(ALWAYS_FORCE_MORE_MONSTERS, { "death drake", "putrid mouth" }) end
+if not BRC.you.miasma_immune() then
+  util.append(ALWAYS_FORCE_MONSTERS, {
+    "death drake",
+    "tainted leviathan",
+    "putrid mouth" })
+end
 
 if not you.torment_immune() then
   util.append(ALWAYS_FORCE_MORE_MONSTERS, {
@@ -315,7 +320,7 @@ local FM_PATTERNS = {
 } -- end fm_patterns (do not remove this comment)
 
 -- Set mutators to either flash (if undead) or a conditional fm
-if is_mutation_immune() then
+if BRC.you.mutation_immune() then
   crawl.setopt("flash_screen_message += monster_warning:cacodemon|neqoxec|shining eye")
 else
   table.insert(
@@ -449,12 +454,11 @@ function f_fm_monsters.ready()
   local activated = {}
   local deactivated = {}
 
-  local hp, mhp = you.hp()
+  local hp, _ = you.hp()
   local amulet = items.equipped_at("amulet")
   if amulet and amulet.name() == "amulet of guardian spirit" or you.race() == "Vine Stalker" then
     local mp, mmp = you.mp()
     hp = hp + mp
-    mhp = mhp + mmp
   end
   local willpower = you.willpower()
   local res_mut = you.res_mutation()

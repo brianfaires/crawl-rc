@@ -117,7 +117,7 @@ local function is_weapon_upgrade(it, cur)
     -- Return false if no clear upgrade possible
     if get_hands(it) > cur.hands then return false end
     if cur.is_ranged ~= it.is_ranged then return false end
-    if is_polearm(cur) ~= is_polearm(it) then return false end
+    if BRC.is.polearm(cur) ~= BRC.is.polearm(it) then return false end
 
     if it.artefact then return true end
     if cur.artefact then return false end
@@ -133,7 +133,7 @@ local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
     and WEAP_CACHE.is_empty()
     and you.skill("Unarmed Combat") == 0
-    and get_mut(MUTS.claws, true) == 0
+    and BRC.get.mut(MUTS.claws, true) == 0
 end
 
 function pa_pickup_weapon(it)
@@ -146,7 +146,7 @@ function pa_pickup_weapon(it)
     return true
   end
 
-  if has_risky_ego(it) then return false end
+  if BRC.is.risky_ego(it) then return false end
   if already_contains(pa_items_picked, it) then return false end
   for _, inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end
@@ -166,7 +166,7 @@ local function alert_first_of_skill(it, silent)
   local hands = get_hands(it)
   if lowest_num_hands_alerted[skill] > hands then
     -- Some early checks to skip alerts
-    if hands == 2 and have_shield() then return false end
+    if hands == 2 and BRC.you.have_shield() then return false end
     if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return false end
 
     -- Update lowest # hands alerted, and alert
@@ -189,7 +189,7 @@ local function alert_early_weapons(it)
       then
         if
           get_hands(it) == 1
-          or not have_shield()
+          or not BRC.you.have_shield()
           or you.skill("Shields") <= TUNING.weap.alert.early_ranged.max_shields
         then
           return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
@@ -232,7 +232,7 @@ local function alert_interesting_weapon(it, cur)
   end
 
   if cur.is_ranged ~= it.is_ranged then return false end
-  if is_polearm(cur) ~= is_polearm(it) then return false end
+  if BRC.is.polearm(cur) ~= BRC.is.polearm(it) then return false end
   if 2 * get_skill(it.weap_skill) < get_skill(cur.weap_skill) then return false end
 
   -- Penalize lower-trained skills
@@ -241,7 +241,7 @@ local function alert_interesting_weapon(it, cur)
   local score_ratio = penalty * get_weap_score(it) / best_score
 
   if get_hands(it) > cur.hands then
-    if offhand_is_free() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
+    if BRC.you.free_offhand() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
       local it_ego = get_ego(it)
       local unique_ego = it_ego and not util.contains(WEAP_CACHE.egos, it_ego)
       if unique_ego and score_ratio > TUNING.weap.alert.new_ego then
@@ -331,7 +331,7 @@ end
 function f_pickup_alert_weapons.ready()
   f_pickup_alert_weapons:init()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.is_weapon and not is_magic_staff(inv) then
+    if inv.is_weapon and not BRC.is.magic_staff(inv) then
       WEAP_CACHE.add_weapon(inv)
       update_high_scores(inv)
     end

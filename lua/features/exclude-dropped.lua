@@ -27,7 +27,7 @@ local function has_enchantable_weap_in_inv()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if
       inv.is_weapon
-      and not is_magic_staff(inv)
+      and not BRC.is.magic_staff(inv)
       and inv.plus < 9
       and (not inv.artefact or you.race() == "Mountain Dwarf")
     then
@@ -43,7 +43,7 @@ end
   Return name of item to exclude, or nil if we should NOT exclude anything
 --]]
 local function get_excludable_name(text, for_exclusion)
-  text = cleanup_text(text, false) -- remove tags
+  text = BRC.util.clean_text(text, false) -- remove tags
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")
@@ -112,7 +112,7 @@ function f_exclude_dropped.c_message(text, channel)
     -- Don't exclude if we dropped partial stack (except for jewellery)
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.name("qual"):find(item_name, 1, true) then
-        if is_jewellery(inv) then break end
+        if BRC.is.jewellery(inv) then break end
         local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
         if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
         return

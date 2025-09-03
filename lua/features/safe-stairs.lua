@@ -2,7 +2,7 @@
 Feature: safe-stairs
 Description: Prevents accidental stairs use by warning about backtracking and dangerous locations like Vaults:5
 Author: buehler, rypofalem
-Dependencies: CONFIG, KEYS, view.feature_at, mpr_yesno
+Dependencies: CONFIG, KEYS, view.feature_at, BRC.mpr.yesno
 --]]
 
 f_safe_stairs = {}
@@ -32,14 +32,14 @@ local function check_new_location(key)
         return
       end
     end
-    if not mpr_yesno("Really go right back?") then
+    if not BRC.mpr.yesno("Really go right back?") then
       crawl.mpr("Okay, then.")
       return
     end
   elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
     -- V5 warning idea by rypofalem --
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
-      if not mpr_yesno("Really go to Vaults:5?") then
+      if not BRC.mpr.yesno("Really go to Vaults:5?") then
         crawl.mpr("Okay, then.")
         return
       end

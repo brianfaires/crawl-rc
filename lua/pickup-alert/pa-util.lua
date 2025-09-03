@@ -15,7 +15,7 @@ local function format_stat(abbr, val, is_worn)
 end
 
 function get_armour_info_strings(it)
-  if not is_armour(it) then return "", "" end
+  if not BRC.is.armour(it) then return "", "" end
 
   -- Compare against last slot if poltergeist
   local slot_num = you.race() == "Poltergeist" and 6 or 1
@@ -26,7 +26,7 @@ function get_armour_info_strings(it)
   local is_worn = it.equipped or (it.ininventory and cur and cur.slot == it.slot)
   if cur and not is_worn then
     -- Only show deltas if not same item
-    if is_shield(cur) then
+    if BRC.is.shield(cur) then
       cur_sh = get_shield_sh(cur)
       cur_ev = -get_shield_penalty(cur)
     else
@@ -35,13 +35,13 @@ function get_armour_info_strings(it)
     end
   end
 
-  if is_shield(it) then
+  if BRC.is.shield(it) then
     local sh_str = format_stat("SH", get_shield_sh(it) - cur_sh, is_worn)
     local ev_str = format_stat("EV", -get_shield_penalty(it) - cur_ev, is_worn)
     return sh_str, ev_str
   else
     local ac_str = format_stat("AC", get_armour_ac(it) - cur_ac, is_worn)
-    if not is_body_armour(it) then return ac_str end
+    if not BRC.is.body_armour(it) then return ac_str end
     local ev_str = format_stat("EV", get_armour_ev(it) - cur_ev, is_worn)
     return ac_str, ev_str
   end
@@ -87,9 +87,9 @@ end
 
 --------- Functions for armour and weapons ---------
 function get_ego(it)
-  if has_usable_ego(it) then
+  if BRC.is.good_ego(it) then
     return it.ego(true)
-  elseif is_body_armour(it) then
+  elseif BRC.is.body_armour(it) then
     local qualname = it.name("qual")
     if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
   end
@@ -99,9 +99,9 @@ end
 function get_pa_keys(it, name_type)
   if it.class(true) == "bauble" then
     return it.name("qual"):gsub('"', ""), 0
-  elseif is_talisman(it) or is_orb(it) then
+  elseif BRC.is.talisman(it) or BRC.is.orb(it) then
     return it.name():gsub('"', ""), 0
-  elseif is_magic_staff(it) then
+  elseif BRC.is.magic_staff(it) then
     return it.name("base"):gsub('"', ""), 0
   else
     local name = it.name(name_type or "base"):gsub('"', "")
@@ -113,7 +113,7 @@ end
 
 function get_plussed_name(it, name_type)
   local name, value = get_pa_keys(it, name_type)
-  if is_talisman(it) or is_orb(it) or is_magic_staff(it) then return name end
+  if BRC.is.talisman(it) or BRC.is.orb(it) or BRC.is.magic_staff(it) then return name end
   if value >= 0 then value = "+" .. value end
   return value .. " " .. name
 end
@@ -126,10 +126,10 @@ function has_ego(it, exclude_stat_only_egos)
       local ego = get_ego(it)
       if ego and (ego == "speed" or ego == "heavy") then return false end
     end
-    return it.artefact or has_usable_ego(it) or is_magic_staff(it)
+    return it.artefact or BRC.is.good_ego(it) or BRC.is.magic_staff(it)
   end
 
-  if it.artefact or has_usable_ego(it) then return true end
+  if it.artefact or BRC.is.good_ego(it) then return true end
   local basename = it.name("base")
   if basename:find("troll leather", 1, true) then return true end
   if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
@@ -139,7 +139,7 @@ end
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
   -- dcss v0.33.1
-  local pen = encumb - 2 * get_mut(MUTS.sturdy_frame, true)
+  local pen = encumb - 2 * BRC.get.mut(MUTS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
@@ -171,10 +171,10 @@ function get_armour_ac(it)
   end
 
   local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
-  if not is_body_armour(it) then return ac end
+  if not BRC.is.body_armour(it) then return ac end
 
-  local deformed = get_mut(MUTS.deformed, true) > 0
-  local pseudopods = get_mut(MUTS.pseudopods, true) > 0
+  local deformed = BRC.get.mut(MUTS.deformed, true) > 0
+  local pseudopods = BRC.get.mut(MUTS.pseudopods, true) > 0
   if pseudopods or deformed then return ac * 6 / 10 end
 
   return ac
@@ -225,7 +225,7 @@ function get_shield_sh(it)
   end
 
   local cur = items.equipped_at("offhand")
-  if is_shield(cur) and cur.artefact and cur.slot ~= it.slot then
+  if BRC.is.shield(cur) and cur.artefact and cur.slot ~= it.slot then
     local art_dex = cur.artprops["Dex"]
     if art_dex then dex = dex - art_dex end
   end
@@ -269,7 +269,7 @@ function get_weap_delay(it)
   delay = math.max(delay, 3)
 
   local sh = items.equipped_at("offhand")
-  if is_shield(sh) then delay = delay + get_shield_penalty(sh) end
+  if BRC.is.shield(sh) then delay = delay + get_shield_penalty(sh) end
 
   if it.is_ranged then
     local worn = items.equipped_at("armour")
@@ -348,7 +348,7 @@ function get_weap_damage(it, dmg_type)
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
-  if is_magic_staff(it) then return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type)) end
+  if BRC.is.magic_staff(it) then return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type)) end
 
   if dmg_type == DMG_TYPE.plain then
     local ego = get_ego(it)
@@ -408,7 +408,7 @@ function get_slay_bonuses()
   for i = 0, 20 do
     local it = items.equipped_at(i)
     if it then
-      if is_ring(it) then
+      if BRC.is.ring(it) then
         if it.artefact then
           local name = it.name()
           local idx = name:find("Slay", 1, true)
@@ -428,7 +428,7 @@ function get_slay_bonuses()
         elseif get_ego(it) == "Slay" then
           sum = sum + it.plus
         end
-      elseif it.artefact and (is_armour(it, true) or is_amulet(it)) then
+      elseif it.artefact and (BRC.is.armour(it, true) or BRC.is.amulet(it)) then
         local slay = it.artprops["Slay"]
         if slay then sum = sum + slay end
       end
@@ -436,8 +436,8 @@ function get_slay_bonuses()
   end
 
   if you.race() == "Demonspawn" then
-    sum = sum + 3 * get_mut(MUTS.augmentation, true)
-    sum = sum + get_mut(MUTS.sharp_scales, true)
+    sum = sum + 3 * BRC.get.mut(MUTS.augmentation, true)
+    sum = sum + BRC.get.mut(MUTS.sharp_scales, true)
   end
 
   return sum
@@ -451,7 +451,7 @@ function get_staff_bonus_dmg(it, dmg_type)
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
   end
 
-  local spell_skill = get_skill(get_staff_school(it))
+  local spell_skill = get_skill(BRC.get.staff_school(it))
   local evo_skill = you.skill("Evocations")
 
   local chance = (2 * evo_skill + spell_skill) / 30

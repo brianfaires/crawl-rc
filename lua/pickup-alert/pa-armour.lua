@@ -43,7 +43,7 @@ end
 
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
 local function alert_ac_high_score(it)
-  if not is_body_armour(it) then return false end
+  if not BRC.is.body_armour(it) then return false end
   if you.skill("Armour") == 0 then return false end
   if you.xl() > 12 then return false end
 
@@ -68,9 +68,9 @@ end
     Optional `unworn_inv_item` param, to compare against an unworn aux armour item in inventory.
 --]]
 function pa_alert_armour(it, unworn_inv_item)
-  if is_body_armour(it) then
+  if BRC.is.body_armour(it) then
     return alert_body_armour(it)
-  elseif is_shield(it) then
+  elseif BRC.is.shield(it) then
     return alert_shield(it)
   else
     return alert_aux_armour(it, unworn_inv_item)
@@ -188,7 +188,7 @@ local function alert_shield(it)
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
   local cur = items.equipped_at("offhand")
-  if not is_shield(cur) then return false end
+  if not BRC.is.shield(cur) then return false end
 
   -- Alert: New ego, Gain SH
   local ego_change = get_ego_change_type(get_ego(cur), get_ego(it))
@@ -207,7 +207,7 @@ local function alert_aux_armour(it, unworn_inv_item)
   end
 
   -- Use a list to support Poltergeists; for other races it's a 1-item list
-  local all_equipped, num_slots = get_equipped_aux(it.subtype())
+  local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
   if #all_equipped < num_slots then
     if unworn_inv_item then
       all_equipped[#all_equipped + 1] = unworn_inv_item
@@ -231,11 +231,11 @@ end
 
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
-  if has_risky_ego(it) then return false end
+  if BRC.is.risky_ego(it) then return false end
 
-  if is_body_armour(it) then
+  if BRC.is.body_armour(it) then
     return pickup_body_armour(it)
-  elseif is_shield(it) then
+  elseif BRC.is.shield(it) then
     return pickup_shield(it)
   else
     return pickup_aux_armour(it)
@@ -271,7 +271,7 @@ local function pickup_shield(it)
   local cur = items.equipped_at("offhand")
 
   -- Don't replace these
-  if not is_shield(cur) then return false end
+  if not BRC.is.shield(cur) then return false end
   if cur.encumbrance ~= it.encumbrance then return false end
   if cur.artefact then return false end
 
@@ -293,7 +293,7 @@ local function pickup_aux_armour(it)
   if aux_slot_is_impaired(it) then return false end
   -- Use a list to support Poltergeists; for most races it's a 1-item list
   local st = it.subtype()
-  local all_equipped, num_slots = get_equipped_aux(st)
+  local all_equipped, num_slots = BRC.get.equipped_aux(st)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
     if #all_equipped == 0 and num_slots == 1 then
@@ -337,12 +337,12 @@ local function aux_slot_is_impaired(it)
 
   -- Mutation interference
   if st == "gloves" then
-    return get_mut(MUTS.demonic_touch, true) >= 3 and not offhand_is_free()
-      or get_mut(MUTS.claws, true) > 0 and not have_weapon()
+    return BRC.get.mut(MUTS.demonic_touch, true) >= 3 and not BRC.you.free_offhand()
+      or BRC.get.mut(MUTS.claws, true) > 0 and not items.equipped_at("weapon")
   elseif st == "boots" then
-    return get_mut(MUTS.hooves, true) > 0 or get_mut(MUTS.talons, true) > 0
+    return BRC.get.mut(MUTS.hooves, true) > 0 or BRC.get.mut(MUTS.talons, true) > 0
   elseif it.name("base"):find("helmet", 1, true) then
-    return get_mut(MUTS.horns, true) > 0 or get_mut(MUTS.beak, true) > 0 or get_mut(MUTS.antennae, true) > 0
+    return BRC.get.mut(MUTS.horns, true) > 0 or BRC.get.mut(MUTS.beak, true) > 0 or BRC.get.mut(MUTS.antennae, true) > 0
   end
 
   return false

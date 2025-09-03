@@ -13,7 +13,7 @@ local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
 -- Local functions
 local function inscribe_armour_stats(it)
-  local abbr = is_shield(it) and "SH" or "AC"
+  local abbr = BRC.is.shield(it) and "SH" or "AC"
   local primary, ev = get_armour_info_strings(it)
 
   local new_insc
@@ -49,7 +49,7 @@ end
 function do_stat_inscription(it)
   if CONFIG.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
+  elseif CONFIG.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
     inscribe_armour_stats(it)
   end
 end

@@ -19,17 +19,17 @@ function pa_alert_OTA(it)
 
   local do_alert = true
 
-  if is_shield(it) then
+  if BRC.is.shield(it) then
     if you.skill("Shields") < CONFIG.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if pa_OTA_items[index] == "buckler" then
-      if have_shield() then do_alert = false end
+      if BRC.you.have_shield() then do_alert = false end
     elseif pa_OTA_items[index] == "kite shield" then
       local sh = items.equipped_at("offhand")
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
-  elseif is_armour(it) then
+  elseif BRC.is.armour(it) then
     if you.skill("Armour") < CONFIG.alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
     if you.skill(it.weap_skill) < CONFIG.alert.OTA_require_skill.weapon then return end
@@ -67,25 +67,25 @@ function pa_alert_talisman(it)
     if not it.is_identified then return false end
     return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
   end
-  if get_talisman_min_level(it) > you.skill("Shapeshifting") + CONFIG.alert.talisman_lvl_diff then return false end
+  if BRC.get.talisman_min_level(it) > you.skill("Shapeshifting") + CONFIG.alert.talisman_lvl_diff then return false end
   return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
 end
 
 ---- Smart staff pickup ----
 function pa_pickup_staff(it)
   if not it.is_identified then return false end
-  if get_skill(get_staff_school(it)) == 0 then return false end
+  if get_skill(BRC.get.staff_school(it)) == 0 then return false end
   return not already_contains(pa_items_picked, it)
 end
 
 ---- Exclude superfluous rings ----
 function is_unneeded_ring(it)
-  if not is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = get_mut(MUTS.missing_hand, true)
+  if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
+  local missing_hand = BRC.get.mut(MUTS.missing_hand, true)
   local st = it.subtype()
   local found_first = false
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if is_ring(inv) and inv.subtype() == st then
+    if BRC.is.ring(inv) and inv.subtype() == st then
       if found_first or missing_hand then return true end
       found_first = true
     end
