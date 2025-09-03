@@ -45,7 +45,7 @@ end
 local function dump_var(value)
   local type = typeof(value)
   if type == TYPES.string then
-    return value
+    return '"' .. value.gsub('"', "") .. '"'
   elseif type == TYPES.number then
     return tostring(value)
   elseif type == TYPES.boolean then
@@ -74,6 +74,8 @@ end
 --[[
 create() declares a persistent global variable or table, initialized to the default value if it doesn't exist.
 The variable/list/dict is automatically persisted across saves. Function returns the current value.
+
+Usage: variable_name = BRC.data.create("variable_name", default_value)
 --]]
 function BRC.data.create(name, default_value)
   if _G[name] == nil then _G[name] = default_value end
