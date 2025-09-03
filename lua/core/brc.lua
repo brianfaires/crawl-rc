@@ -34,7 +34,7 @@ local _hooks = {}
 
 -- Local functions
 local function is_feature_module(module_table)
-  return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
+  return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == TYPES.string
 end
 
 local function log_message(message, context, color)
@@ -121,7 +121,7 @@ function BRC.load_all_features()
 
   -- Scan the global namespace for feature modules and load them
   for name, value in pairs(_G) do
-    if type(value) == "table" and is_feature_module(value) then
+    if type(value) == BRC.TYPES.table and is_feature_module(value) then
       local feature_name = value.BRC_FEATURE_NAME
       local success = BRC.register_feature(feature_name, value)
 

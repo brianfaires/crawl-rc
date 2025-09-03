@@ -273,3 +273,13 @@ PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
   "heavy",
   "spectralizing",
 } -- PLAIN_DMG_EGOS (do not remove this comment)
+
+TYPES = {
+  string = "string",
+  number = "number",
+  boolean = "boolean",
+  list = "list",
+  dict = "dict",
+  table = "table",
+  unknown = "unknown",
+}

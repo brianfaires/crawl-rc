@@ -2,32 +2,6 @@
 
 local persistent_var_names
 local persistent_table_names
-local GET_VAL_STRING = {}
-GET_VAL_STRING = {
-  str = function(value)
-    return '"' .. value .. '"'
-  end,
-  int = function(value)
-    return value
-  end,
-  bool = function(value)
-    return value and "true" or "false"
-  end,
-  list = function(value)
-    local tokens = {}
-    for _, v in ipairs(value) do
-      tokens[#tokens + 1] = GET_VAL_STRING[get_var_type(v)](v)
-    end
-    return "{" .. table.concat(tokens, ", ") .. "}"
-  end,
-  dict = function(value)
-    local tokens = {}
-    for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"]=%s', k, GET_VAL_STRING[get_var_type(v)](v))
-    end
-    return "{" .. table.concat(tokens, ", ") .. "}"
-  end,
-} -- GET_VAL_STRING (do not remove this comment)
 
 -- Creates a persistent global variable or table, initialized to the default value
 -- Once initialized, the variable is persisted across saves without re-init
@@ -35,16 +9,13 @@ function create_persistent_data(name, default_value)
   if _G[name] == nil then _G[name] = default_value end
 
   table.insert(chk_lua_save, function()
-    local type = get_var_type(_G[name])
-    if not GET_VAL_STRING[type] then
-      crawl.mpr("Unknown persistence type: " .. type)
-      return
-    end
-    return name .. " = " .. GET_VAL_STRING[type](_G[name]) .. KEYS.LF
+    local type = BRC.data.typeof(_G[name])
+    if type == BRC.TYPES.unknown then return "" end
+    return name .. " = " .. BRC.data.tostring(_G[name]) .. KEYS.LF
   end)
 
-  local var_type = get_var_type(_G[name])
-  if var_type == "list" or var_type == "dict" then
+  local var_type = BRC.data.typeof(_G[name])
+  if var_type == BRC.TYPES.list or var_type == BRC.TYPES.dict then
     persistent_table_names[#persistent_table_names + 1] = name
   else
     persistent_var_names[#persistent_var_names + 1] = name
@@ -60,7 +31,7 @@ function serialize_persistent_data()
   for _, name in ipairs(persistent_table_names) do
     tokens[#tokens + 1] = name
     tokens[#tokens + 1] = ":\n"
-    if get_var_type(_G[name]) == "list" then
+    if BRC.data.typeof(_G[name]) == BRC.TYPES.list then
       for _, item in ipairs(_G[name]) do
         tokens[#tokens + 1] = "  "
         tokens[#tokens + 1] = item
@@ -88,20 +59,7 @@ function serialize_persistent_data()
   return table.concat(tokens)
 end
 
-function get_var_type(value)
-  local t = type(value)
-  if t == "string" then
-    return "str"
-  elseif t == "number" then
-    return "int"
-  elseif t == "boolean" then
-    return "bool"
-  elseif t == "table" then
-    return #value > 0 and "list" or "dict"
-  else
-    return "unknown"
-  end
-end
+
 
 function init_persistent_data(full_reset)
   -- Clear persistent data (data is created via create_persistent_data)
