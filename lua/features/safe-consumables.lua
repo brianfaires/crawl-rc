@@ -1,6 +1,6 @@
 --[[
 Feature: safe-consumables
-Description: Automatically manages protective consumable inscriptions on scrolls and potions, removing unnecessary prompts after identification
+Description: Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
 Author: buehler
 Dependencies: CONFIG, util.contains, iter.invent_iterator
 --]]
@@ -10,8 +10,19 @@ f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
 
 -- Local constants
 local NO_INSCRIPTION_NEEDED = {
-    "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
-    "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation"
+  "acquirement",
+  "amnesia",
+  "blinking",
+  "brand weapon",
+  "enchant armour",
+  "enchant weapon",
+  "identify",
+  "immolation",
+  "noise",
+  "vulnerability",
+  "attraction",
+  "lignification",
+  "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
 -- Hook functions
@@ -22,20 +33,20 @@ function f_safe_consumables.ready()
     local inv_class = inv.class(true)
     local st = inv.subtype()
     if inv_class == "scroll" then
-      if (st == "poison" and you.res_poison() > 0)
+      if
+        (st == "poison" and you.res_poison() > 0)
         or (st == "torment" and you.torment_immune())
-        or util.contains(NO_INSCRIPTION_NEEDED, st) then
-          if inv.inscription:find("%!r") then
-            inv.inscribe(inv.inscription:gsub("%!r", ""), false)
-          end
-      elseif not inv.inscription:find("%!r") then inv.inscribe("!r")
+        or util.contains(NO_INSCRIPTION_NEEDED, st)
+      then
+        if inv.inscription:find("%!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
+      elseif not inv.inscription:find("%!r") then
+        inv.inscribe("!r")
       end
     elseif inv_class == "potion" then
       if util.contains(NO_INSCRIPTION_NEEDED, st) then
-        if inv.inscription:find("%!q") then 
-          inv.inscribe(inv.inscription:gsub("%!q", ""), false)
-        end
-      elseif not inv.inscription:find("%!q") then inv.inscribe("!q")
+        if inv.inscription:find("%!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+      elseif not inv.inscription:find("%!q") then
+        inv.inscribe("!q")
       end
     end
   end

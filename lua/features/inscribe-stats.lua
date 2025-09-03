@@ -2,7 +2,7 @@
 Feature: inscribe-stats
 Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
 Author: buehler
-Dependencies: CONFIG, is_shield, is_armour, is_scarf, get_armour_info_strings, get_weapon_info_string, iter.invent_iterator
+Dependencies: CONFIG, iter, pa-util, util
 --]]
 
 f_inscribe_stats = {}
@@ -20,17 +20,11 @@ local function inscribe_armour_stats(it)
   if it.inscription:find(abbr .. NUM_PATTERN) then
     -- Replace each stat individually, to avoid overwriting <color> tags
     new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
-    if ev and ev ~= "" then
-      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
-    end
+    if ev and ev ~= "" then new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev) end
   else
     new_insc = primary
-    if ev and ev ~= "" then
-      new_insc = new_insc .. ", " .. ev
-    end
-    if it.inscription and it.inscription ~= "" then
-      new_insc = new_insc .. "; " .. it.inscription
-    end
+    if ev and ev ~= "" then new_insc = new_insc .. ", " .. ev end
+    if it.inscription and it.inscription ~= "" then new_insc = new_insc .. "; " .. it.inscription end
   end
 
   it.inscribe(new_insc, false)
@@ -43,10 +37,8 @@ local function inscribe_weapon_stats(it)
 
   local idx = orig_inscr:find("DPS:", 1, true)
   if idx then
-    if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
-    if idx + #dps_inscr - 1 < #orig_inscr then
-      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
-    end
+    if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
+    if idx + #dps_inscr - 1 < #orig_inscr then suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr) end
   elseif #orig_inscr > 0 then
     suffix = "; " .. orig_inscr
   end

@@ -1,6 +1,6 @@
 --[[
 Feature: weapon-slots
-Description: Automatically manages weapon slot assignments to slots a, b, and w with intelligent priority-based organization
+Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
 Author: buehler
 Dependencies: CONFIG, COLORS, with_color, iter.invent_iterator, is_magic_staff, is_polearm
 --]]
@@ -19,7 +19,7 @@ local function cleanup_ab(slot)
   local inv = items.inslot(slot)
   if inv and inv.is_weapon then return end
 
-  for p=1,#priorities_ab do
+  for p = 1, #priorities_ab do
     if priorities_ab[p] > slot then -- Not from earlier slot
       items.swap_slots(priorities_ab[p], slot)
       slots_changed = true
@@ -34,7 +34,7 @@ local function cleanup_w()
   local inv = items.inslot(slot_w)
   if inv and inv.is_weapon then return end
 
-  for p=1,#priorities_w do
+  for p = 1, #priorities_w do
     if priorities_w[p] > 1 then -- Not from slots a or b
       items.swap_slots(priorities_w[p], slot_w)
       slots_changed = true
@@ -68,15 +68,19 @@ local function generate_priorities()
   for inv in iter.invent_iterator:new(items.inventory()) do
     local p = get_priority_w(inv)
     if p > 0 then
-      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
-      else priorities_w[p+1] = inv.slot
+      if priorities_w[p] == -1 then
+        priorities_w[p] = inv.slot
+      else
+        priorities_w[p + 1] = inv.slot
       end
     end
 
     p = get_priority_ab(inv)
     if p > 0 then
-      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
-      else priorities_ab[p+1] = inv.slot
+      if priorities_ab[p] == -1 then
+        priorities_ab[p] = inv.slot
+      else
+        priorities_ab[p + 1] = inv.slot
       end
     end
   end
@@ -90,7 +94,7 @@ local function cleanup_weapon_slots()
 end
 
 local function get_first_empty_slot()
-  for slot=1,52 do
+  for slot = 1, 52 do
     if not items.inslot(slot) then return slot end
   end
 end
@@ -107,8 +111,8 @@ function f_weapon_slots.c_assign_invletter(it)
   if not CONFIG.do_auto_weapon_slots_abw then return end
   if not it.is_weapon then return end
 
-  for i=0,2 do
-    local slot = i==2 and items.letter_to_index("w") or i
+  for i = 0, 2 do
+    local slot = i == 2 and items.letter_to_index("w") or i
 
     local inv = items.inslot(slot)
     if not inv then return slot end

@@ -51,13 +51,9 @@ local function check_new_location(key)
   if not one_way_stair then last_stair_turn = you.turns() end
 end
 
-function macro_do_safe_downstairs()
-  check_new_location(">")
-end
+function macro_do_safe_downstairs() check_new_location(">") end
 
-function macro_do_safe_upstairs()
-  check_new_location("<")
-end
+function macro_do_safe_upstairs() check_new_location("<") end
 
 -- Hook functions
 function f_safe_stairs.init()

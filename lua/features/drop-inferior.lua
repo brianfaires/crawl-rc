@@ -16,7 +16,7 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if CONFIG.msg_on_inscribe then
-    local msg = "(You can drop " .. it.slot .. " - " ..it.name() .. ")"
+    local msg = "(You can drop " .. it.slot .. " - " .. it.name() .. ")"
     crawl.mpr(with_color(COLORS.cyan, msg))
   end
 end
@@ -36,17 +36,16 @@ function f_drop_inferior.c_assign_invletter(it)
   if has_risky_ego(it) then return end
 
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if not inv.artefact and inv.subtype() == it.subtype() and
-      (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
-        if it.is_weapon then
-          if you.race() == "Coglin" then return end -- More trouble than it's worth
-          if inv.plus <= it.plus then inscribe_drop(inv) end
-        else
-          if get_armour_ac(inv) <= get_armour_ac(it) and inv.encumbrance >= it.encumbrance then
-            if you.race() == "Poltergeist" then return end -- More trouble than it's worth 
-            inscribe_drop(inv)
-          end
+    if not inv.artefact and inv.subtype() == it.subtype() and (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
+      if it.is_weapon then
+        if you.race() == "Coglin" then return end -- More trouble than it's worth
+        if inv.plus <= it.plus then inscribe_drop(inv) end
+      else
+        if get_armour_ac(inv) <= get_armour_ac(it) and inv.encumbrance >= it.encumbrance then
+          if you.race() == "Poltergeist" then return end -- More trouble than it's worth
+          inscribe_drop(inv)
         end
+      end
     end
   end
 end

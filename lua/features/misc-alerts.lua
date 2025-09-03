@@ -1,8 +1,8 @@
 --[[
 Feature: misc-alerts
-Description: Provides various game alerts including low HP warnings, faith amulet removal reminders, and spell level change notifications
+Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
 Author: buehler, gammafunk
-Dependencies: CONFIG, COLORS, KEYS, EMOJI, with_color, enqueue_mpr_opt_more, mpr_with_more, create_persistent_data, control_key
+Dependencies: CONFIG, COLORS, CONSTANTS, EMOJI, util, persistent_data
 --]]
 
 f_misc_alerts = {}
@@ -22,10 +22,17 @@ local function alert_low_hp()
     below_hp_threshold = hp ~= mhp
   elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
-    enqueue_mpr_opt_more(true, table.concat({
-      EMOJI.EXCLAMATION, " ", with_color(COLORS.magenta, low_hp_msg), " ", EMOJI.EXCLAMATION
-    }))
+    local low_hp_msg = "Dropped below " .. (100 * CONFIG.alert_low_hp_threshold) .. "% HP"
+    enqueue_mpr_opt_more(
+      true,
+      table.concat({
+        EMOJI.EXCLAMATION,
+        " ",
+        with_color(COLORS.magenta, low_hp_msg),
+        " ",
+        EMOJI.EXCLAMATION,
+      })
+    )
   end
 end
 

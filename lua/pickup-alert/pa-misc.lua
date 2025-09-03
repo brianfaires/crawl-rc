@@ -2,7 +2,7 @@
 Feature: pickup-alert-misc
 Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr_opt_more, is_orb, is_talisman, is_ring, is_magic_staff, is_shield, is_armour, is_weapon, get_talisman_min_level, get_skill, get_staff_school, get_mut, MUTS, pa_alert_item, already_contains, add_to_pa_table, get_pa_keys, have_shield, util.contains, iter.invent_iterator
+Dependencies: CONFIG, COLORS, EMOJI, util, iter
 --]]
 
 f_pickup_alert_misc = {}
@@ -46,11 +46,16 @@ function pa_alert_staff(it)
   local needRes = false
   local basename = it.name("base")
 
-  if basename == "staff of fire" then needRes = you.res_fire() == 0
-  elseif basename == "staff of cold" then needRes = you.res_cold() == 0
-  elseif basename == "staff of air" then needRes = you.res_shock() == 0
-  elseif basename == "staff of poison" then needRes = you.res_poison() == 0
-  elseif basename == "staff of death" then needRes = you.res_draining() == 0
+  if basename == "staff of fire" then
+    needRes = you.res_fire() == 0
+  elseif basename == "staff of cold" then
+    needRes = you.res_cold() == 0
+  elseif basename == "staff of air" then
+    needRes = you.res_shock() == 0
+  elseif basename == "staff of poison" then
+    needRes = you.res_poison() == 0
+  elseif basename == "staff of death" then
+    needRes = you.res_draining() == 0
   end
 
   if not needRes then return false end

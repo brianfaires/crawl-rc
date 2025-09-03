@@ -23,16 +23,22 @@ local function create_meter(perc, full, part, empty, border)
 
   local tokens = {}
   if border then tokens[1] = border end
-  for i = 1, full_count do tokens[#tokens + 1] = full end
-  for i = 1, part_count do tokens[#tokens + 1] = part end
-  for i = 1, empty_count do tokens[#tokens + 1] = empty end
+  for _ = 1, full_count do
+    tokens[#tokens + 1] = full
+  end
+  for _ = 1, part_count do
+    tokens[#tokens + 1] = part
+  end
+  for _ = 1, empty_count do
+    tokens[#tokens + 1] = empty
+  end
   if border then tokens[#tokens + 1] = border end
   return table.concat(tokens)
 end
 
 local function format_delta(delta)
   if delta > 0 then
-    return with_color(COLORS.green, "+"..delta)
+    return with_color(COLORS.green, "+" .. delta)
   elseif delta < 0 then
     return with_color(COLORS.red, delta)
   else
@@ -46,7 +52,7 @@ local function format_ratio(cur, max)
     color = COLORS.lightred
   elseif cur <= (max * 0.50) then
     color = COLORS.red
-  elseif cur <= (max *  0.75) then
+  elseif cur <= (max * 0.75) then
     color = COLORS.yellow
   elseif cur < max then
     color = COLORS.white
@@ -60,9 +66,8 @@ local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
 
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(
-    hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
-  )
+  msg_tokens[#msg_tokens + 1] =
+    create_meter(hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER)
   msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
   if mhp_delta ~= 0 then
@@ -78,9 +83,8 @@ end
 local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(
-    mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
-  )
+  msg_tokens[#msg_tokens + 1] =
+    create_meter(mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER)
   msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
   if mmp_delta ~= 0 then
@@ -94,7 +98,7 @@ end
 
 local function last_msg_is_meter()
   local last_msg = crawl.messages(1)
-  local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
+  local check = last_msg and #last_msg > METER_LENGTH + 4 and last_msg:sub(METER_LENGTH + 1, METER_LENGTH + 4)
   return check and (check == " HP[" or check == " MP[")
 end
 
@@ -135,9 +139,9 @@ function f_announce_damage.ready()
   local do_hp = true
   local do_mp = true
   if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
-  if hp_delta >= 0 and hp_delta <  CONFIG.announce.hp_gain_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then do_hp = false end
   if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
-  if mp_delta >= 0 and mp_delta <  CONFIG.announce.mp_gain_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then do_mp = false end
 
   if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
   if not do_hp and not do_mp then return end
@@ -145,7 +149,7 @@ function f_announce_damage.ready()
     do_hp = true
     do_mp = true
   end
-  
+
   -- Put messages together
   local hp_msg = get_hp_message(hp_delta, mhp_delta)
   local mp_msg = get_mp_message(mp_delta, mmp_delta)
@@ -156,9 +160,9 @@ function f_announce_damage.ready()
     msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
   end
   if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
-  
+
   -- Add Damage-related warnings, when damage >= threshold
-  if (damage_taken >= mhp * CONFIG.dmg_flash_threshold) then
+  if damage_taken >= mhp * CONFIG.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
     local summary_tokens = {}
     local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)

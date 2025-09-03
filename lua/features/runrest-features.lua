@@ -1,8 +1,8 @@
 --[[
 Feature: runrest-features
-Description: Collection of features related to resting and auto-explore stops including altar handling, portal management, and special branch actions
+Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
 Author: buehler
-Dependencies: CONFIG, COLORS, with_color, enqueue_mpr, util.contains, ALL_PORTAL_NAMES, in_hell
+Dependencies: CONFIG, COLORS, util, ALL_PORTAL_NAMES
 --]]
 
 f_runrest_features = {}
@@ -18,7 +18,10 @@ local autosearched_gauntlet
 
 -- Local functions
 local function search_gauntlet()
-  crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
+  crawl.sendkeys({
+    6,
+    "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r",
+  })
 end
 
 local function ready_gauntlet_macro()
@@ -31,9 +34,7 @@ end
 local function c_message_gauntlet_actions(text, _)
   -- Search again with CMD_EXPLORE
   if you.branch() == "Gauntlet" then
-    if text:find("explor", 1, true) then
-      search_gauntlet()
-    end
+    if text:find("explor", 1, true) then search_gauntlet() end
   end
 end
 
@@ -76,7 +77,6 @@ local function ready_stop_on_pan_gates()
 end
 
 local function ready_stop_on_hell_stairs()
-  local branch = you.branch()
   if stop_on_hell_stairs and not in_hell() then
     stop_on_hell_stairs = false
     crawl.setopt("explore_stop -= stairs")
@@ -86,9 +86,7 @@ local function ready_stop_on_hell_stairs()
   end
 end
 
-local function search_altars()
-  crawl.sendkeys({ 6, "altar\r" })
-end
+local function search_altars() crawl.sendkeys({ 6, "altar\r" }) end
 
 local function ready_temple_macro()
   if you.branch() == "Temple" and not autosearched_temple then

@@ -12,11 +12,9 @@ function f_startup.ready()
   if you.turns() == 0 then
     if CONFIG.show_skills_on_startup then
       local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
-      if show_skills_on_startup then
-        crawl.sendkeys("m")
-      end
+      if show_skills_on_startup then crawl.sendkeys("m") end
     end
-    
+
     ---- Auto-set default skill targets ----
     if CONFIG.auto_set_skill_targets then
       for _, skill_target in ipairs(CONFIG.auto_set_skill_targets) do

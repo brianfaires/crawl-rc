@@ -1,8 +1,8 @@
 --[[
 Feature: remind-id
-Description: Reminds player to identify items when they have scrolls of identify, and stops on stack size increases before finding ID scrolls
+Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, with_color, iter.invent_iterator, create_persistent_data
+Dependencies: CONFIG, COLORS, EMOJI, with_color, iter, persistent_data
 --]]
 
 f_remind_id = {}
@@ -14,16 +14,19 @@ local do_remind_id_check
 -- Local functions
 local function alert_remind_identify()
   crawl.mpr(
-    EMOJI.REMIND_IDENTIFY ..
-    with_color(COLORS.magenta, " You have something to identify. ") ..
-    EMOJI.REMIND_IDENTIFY
+    EMOJI.REMIND_IDENTIFY .. with_color(COLORS.magenta, " You have something to identify. ") .. EMOJI.REMIND_IDENTIFY
   )
 end
 
 local function get_max_stack_size(class, skip_slot)
   local max_stack_size = 0
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.quantity > max_stack_size and inv.class(true) == class and inv.slot ~= skip_slot and not inv.is_identified then
+    if
+      inv.quantity > max_stack_size
+      and inv.class(true) == class
+      and inv.slot ~= skip_slot
+      and not inv.is_identified
+    then
       max_stack_size = inv.quantity
     end
   end
@@ -32,18 +35,14 @@ end
 
 local function have_scroll_of_id()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.name("qual") == "scroll of identify" then
-      return true
-    end
+    if inv.name("qual") == "scroll of identify" then return true end
   end
   return false
 end
 
 local function have_unid_item()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if not inv.is_identified then
-      return true
-    end
+    if not inv.is_identified then return true end
   end
   return false
 end
@@ -93,11 +92,11 @@ function f_remind_id.c_message(text, channel)
 
     local it_class = it.class(true)
     if it_class == "scroll" then
-      if it.quantity > math.max(CONFIG.stop_on_scrolls_count-1, get_max_stack_size("scroll", slot)) then
+      if it.quantity > math.max(CONFIG.stop_on_scrolls_count - 1, get_max_stack_size("scroll", slot)) then
         you.stop_activity()
       end
     elseif it_class == "potion" then
-      if it.quantity > math.max(CONFIG.stop_on_pots_count-1, get_max_stack_size("potion", slot)) then
+      if it.quantity > math.max(CONFIG.stop_on_pots_count - 1, get_max_stack_size("potion", slot)) then
         you.stop_activity()
       end
     end

@@ -26,7 +26,7 @@ end
 local function finish_fully_recover()
   local turns = you.turns() - recovery_start_turn
   crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns))
-  
+
   recovery_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
   you.stop_activity()
@@ -44,7 +44,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _,s in ipairs(CONFIG.rest_off_statuses) do
+  for _, s in ipairs(CONFIG.rest_off_statuses) do
     if status:find(s) then
       if not should_ignore_status(s) then return false end
     end
@@ -56,14 +56,12 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _,s in ipairs(CONFIG.rest_off_statuses) do
-    if status:find(s) then
-      table.insert(to_remove, s)
-    end
+  for _, s in ipairs(CONFIG.rest_off_statuses) do
+    if status:find(s) then table.insert(to_remove, s) end
   end
-  for _,s in ipairs(to_remove) do
+  for _, s in ipairs(to_remove) do
     util.remove(CONFIG.rest_off_statuses, s)
-    crawl.mpr("  Removed: " ..s)
+    crawl.mpr("  Removed: " .. s)
   end
 end
 
@@ -84,10 +82,10 @@ end
 -- Attach full recovery to auto-explore
 function macro_explore_fully_recover()
   if fully_recovered() then
-    crawl.do_commands({"CMD_EXPLORE"})
+    crawl.do_commands({ "CMD_EXPLORE" })
   else
     explore_after_recovery = true
-    crawl.do_commands({"CMD_REST"})
+    crawl.do_commands({ "CMD_REST" })
   end
 end
 
@@ -96,7 +94,7 @@ function f_fully_recover.init()
   recovery_start_turn = 0
   explore_after_recovery = false
   util.remove(CONFIG.rest_off_statuses, "slowed") -- special case handled elsewhere
-  
+
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
   crawl.setopt("macros += M " .. KEYS.explore .. " ===macro_explore_fully_recover")
@@ -108,22 +106,27 @@ function f_fully_recover.c_message(text, channel)
       if not fully_recovered() then start_fully_recover() end
     end
   elseif recovery_start_turn > 0 then
-    if channel == "timed_portal" then abort_fully_recover()
-    elseif fully_recovered() then finish_fully_recover()
+    if channel == "timed_portal" then
+      abort_fully_recover()
+    elseif fully_recovered() then
+      finish_fully_recover()
     end
   end
 end
 
 function f_fully_recover.ready()
   if recovery_start_turn > 0 then
-    if fully_recovered() then finish_fully_recover()
-    elseif not you.feel_safe() then abort_fully_recover()
+    if fully_recovered() then
+      finish_fully_recover()
+    elseif not you.feel_safe() then
+      abort_fully_recover()
     elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
       crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
       crawl.mpr(with_color(COLORS.lightred, "Adjusting CONFIG.rest_off_statuses:"))
       remove_statuses_from_config()
       abort_fully_recover()
-    else crawl.do_commands({"CMD_SAFE_WAIT"})
+    else
+      crawl.do_commands({ "CMD_SAFE_WAIT" })
     end
   else
     explore_after_recovery = false

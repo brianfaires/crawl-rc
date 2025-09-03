@@ -8,9 +8,9 @@ local function format_stat(abbr, val, is_worn)
   if val < 0 then
     return abbr .. stat_str
   elseif is_worn then
-    return abbr .. ':' .. stat_str
+    return abbr .. ":" .. stat_str
   else
-    return abbr .. '+' .. stat_str
+    return abbr .. "+" .. stat_str
   end
 end
 
@@ -73,9 +73,17 @@ function get_weapon_info_string(it, dmg_type)
   --This would be nice if it worked in all UIs
   --dps_str = "DPS:<w>" .. dps_str .. "</w> "
   --return dps_str .. "(<red>" .. dmg_str .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
-  return table.concat({ "DPS:", dps_str, " (", dmg_str, "/", delay_str, "), Acc", acc })
+  return table.concat({
+    "DPS:",
+    dps_str,
+    " (",
+    dmg_str,
+    "/",
+    delay_str,
+    "), Acc",
+    acc,
+  })
 end
-
 
 --------- Functions for armour and weapons ---------
 function get_ego(it)
@@ -83,22 +91,20 @@ function get_ego(it)
     return it.ego(true)
   elseif is_body_armour(it) then
     local qualname = it.name("qual")
-    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then
-      return qualname
-    end
+    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
   end
 end
 
 -- Used for data tables
 function get_pa_keys(it, name_type)
   if it.class(true) == "bauble" then
-    return it.name("qual"):gsub("\"", ""), 0
+    return it.name("qual"):gsub('"', ""), 0
   elseif is_talisman(it) or is_orb(it) then
-    return it.name():gsub("\"", ""), 0
+    return it.name():gsub('"', ""), 0
   elseif is_magic_staff(it) then
-    return it.name("base"):gsub("\"", ""), 0
+    return it.name("base"):gsub('"', ""), 0
   else
-    local name = it.name(name_type or "base"):gsub("\"", "")
+    local name = it.name(name_type or "base"):gsub('"', "")
     local value = tonumber(name:sub(1, 3))
     if not value then return name, 0 end
     return util.trim(name:sub(4)), value
@@ -147,13 +153,11 @@ end
 function get_adjusted_dodge_bonus(encumb, str, dex)
   -- dcss v0.33.1
   local size_factor = -2 * get_size_penalty()
-  local dodge_bonus = 8*(10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
+  local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
   if armour_dodge_penalty <= 0 then return dodge_bonus end
 
-  if armour_dodge_penalty >= str then
-    return dodge_bonus * str / (armour_dodge_penalty * 2)
-  end
+  if armour_dodge_penalty >= str then return dodge_bonus * str / (armour_dodge_penalty * 2) end
   return dodge_bonus - dodge_bonus * armour_dodge_penalty / (str * 2)
 end
 
@@ -171,9 +175,7 @@ function get_armour_ac(it)
 
   local deformed = get_mut(MUTS.deformed, true) > 0
   local pseudopods = get_mut(MUTS.pseudopods, true) > 0
-  if pseudopods or deformed then
-    return ac * 6/10
-  end
+  if pseudopods or deformed then return ac * 6 / 10 end
 
   return ac
 end
@@ -211,9 +213,7 @@ end
 
 function get_shield_penalty(sh)
   -- dcss v0.33.1
-  return 2 * sh.encumbrance * sh.encumbrance
-        * (27 - you.skill("Shields")) / 27
-        / (25 + 5 * you.strength())
+  return 2 * sh.encumbrance * sh.encumbrance * (27 - you.skill("Shields")) / 27 / (25 + 5 * you.strength())
 end
 
 function get_shield_sh(it)
@@ -233,16 +233,19 @@ function get_shield_sh(it)
   local it_plus = it.plus or 0
 
   local base_sh = it.ac * 2
-  local shield = base_sh * (50 + you.skill("Shields")*5/2)
+  local shield = base_sh * (50 + you.skill("Shields") * 5 / 2)
   shield = shield + 200 * it_plus
   shield = shield + 38 * (you.skill("Shields") + 3 + dex * (base_sh + 13) / 26)
   return shield / 200
 end
 
 function get_size_penalty()
-  if util.contains(ALL_LITTLE_RACES, you.race()) then return SIZE_PENALTY.LITTLE
-  elseif util.contains(ALL_SMALL_RACES, you.race()) then return SIZE_PENALTY.SMALL
-  elseif util.contains(ALL_LARGE_RACES, you.race()) then return SIZE_PENALTY.LARGE
+  if util.contains(ALL_LITTLE_RACES, you.race()) then
+    return SIZE_PENALTY.LITTLE
+  elseif util.contains(ALL_SMALL_RACES, you.race()) then
+    return SIZE_PENALTY.SMALL
+  elseif util.contains(ALL_LARGE_RACES, you.race()) then
+    return SIZE_PENALTY.LARGE
   end
   return SIZE_PENALTY.NORMAL
 end
@@ -250,15 +253,17 @@ end
 --------- Weapon stats (Shadowing crawl calcs) ---------
 function adjust_delay_for_ego(delay, ego)
   if not ego then return delay end
-  if ego == "speed" then return delay * 2 / 3
-  elseif ego == "heavy" then return delay * 1.5
+  if ego == "speed" then
+    return delay * 2 / 3
+  elseif ego == "heavy" then
+    return delay * 1.5
   end
   return delay
 end
 
 function get_weap_delay(it)
   -- dcss v0.33.1
-  local delay = it.delay - get_skill(it.weap_skill)/2
+  local delay = it.delay - get_skill(it.weap_skill) / 2
   delay = math.max(delay, get_weap_min_delay(it))
   delay = adjust_delay_for_ego(delay, get_ego(it))
   delay = math.max(delay, 3)
@@ -273,12 +278,8 @@ function get_weap_delay(it)
 
       local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
-        if it.artefact and it.artprops["Str"] then
-          str = str + it.artprops["Str"]
-        end
-        if cur.artefact and cur.artprops["Str"] then
-          str = str - cur.artprops["Str"]
-        end
+        if it.artefact and it.artprops["Str"] then str = str + it.artprops["Str"] end
+        if cur.artefact and cur.artprops["Str"] then str = str - cur.artprops["Str"] end
       end
 
       delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
@@ -340,16 +341,14 @@ function get_weap_damage(it, dmg_type)
   if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex end
 
   local stat_mod = 0.75 + 0.025 * stat
-  local skill_mod = (1 + get_skill(it.weap_skill)/25/2) * (1 + you.skill("Fighting")/30/2)
+  local skill_mod = (1 + get_skill(it.weap_skill) / 25 / 2) * (1 + you.skill("Fighting") / 30 / 2)
 
   it_plus = it_plus + get_slay_bonuses()
 
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
-  if is_magic_staff(it) then
-    return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type))
-  end
+  if is_magic_staff(it) then return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type)) end
 
   if dmg_type == DMG_TYPE.plain then
     local ego = get_ego(it)
@@ -361,12 +360,8 @@ function get_weap_damage(it, dmg_type)
     local ego = get_ego(it)
     if ego then
       local brand_bonus = WEAPON_BRAND_BONUSES[ego]
-      if not brand_bonus and dmg_type == DMG_TYPE.scoring then
-        brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego]
-      end
-      if brand_bonus then
-        return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset
-      end
+      if not brand_bonus and dmg_type == DMG_TYPE.scoring then brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego] end
+      if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset end
     end
   end
 
@@ -383,7 +378,6 @@ function get_weap_score(it, no_brand_bonus)
   return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * TUNING.weap.pickup.accuracy_weight
 end
 
-
 --------- Weap stat helpers ---------
 function get_hands(it)
   if you.race() ~= "Formicid" then return it.hands end
@@ -394,9 +388,7 @@ end
 
 -- Get skill level, or average for artefacts w/ multiple skills
 function get_skill(skill)
-  if not skill:find(",", 1, true) then
-    return you.skill(skill)
-  end
+  if not skill:find(",", 1, true) then return you.skill(skill) end
 
   local skills = crawl.split(skill, ",")
   local sum = 0
@@ -405,7 +397,7 @@ function get_skill(skill)
     sum = sum + you.skill(s)
     count = count + 1
   end
-  return sum/count
+  return sum / count
 end
 
 -- Count all slay bonuses from weapons/armour/jewellery
@@ -413,7 +405,7 @@ function get_slay_bonuses()
   local sum = 0
 
   -- Slots can go as high as 18 afaict
-  for i = 0,20 do
+  for i = 0, 20 do
     local it = items.equipped_at(i)
     if it then
       if is_ring(it) then
@@ -421,21 +413,24 @@ function get_slay_bonuses()
           local name = it.name()
           local idx = name:find("Slay", 1, true)
           if idx then
-            local slay = tonumber(name:sub(idx+5, idx+5))
+            local slay = tonumber(name:sub(idx + 5, idx + 5))
             if slay == 1 then
-              local next_digit = tonumber(name:sub(idx+6, idx+6))
+              local next_digit = tonumber(name:sub(idx + 6, idx + 6))
               if next_digit then slay = 10 + next_digit end
             end
 
-            if name:sub(idx+4, idx+4) == "+" then sum = sum + slay
-            else sum = sum - slay end
+            if name:sub(idx + 4, idx + 4) == "+" then
+              sum = sum + slay
+            else
+              sum = sum - slay
+            end
           end
         elseif get_ego(it) == "Slay" then
           sum = sum + it.plus
         end
       elseif it.artefact and (is_armour(it, true) or is_amulet(it)) then
-          local slay = it.artprops["Slay"]
-          if slay then sum = sum + slay end
+        local slay = it.artprops["Slay"]
+        if slay then sum = sum + slay end
       end
     end
   end
@@ -453,18 +448,16 @@ function get_staff_bonus_dmg(it, dmg_type)
   if dmg_type == DMG_TYPE.unbranded then return 0 end
   if dmg_type == DMG_TYPE.plain then
     local basename = it.name("base")
-    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then
-      return 0
-    end
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
   end
 
   local spell_skill = get_skill(get_staff_school(it))
   local evo_skill = you.skill("Evocations")
 
-  local chance = (2*evo_skill + spell_skill) / 30
+  local chance = (2 * evo_skill + spell_skill) / 30
   if chance > 1 then chance = 1 end
   -- 0.75 is an acceptable approximation; most commonly 63/80
   -- Varies by staff type in sometimes complex ways
-  local avg_dmg = 3/4 * (evo_skill/2 + spell_skill)
-  return avg_dmg*chance
+  local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
+  return avg_dmg * chance
 end

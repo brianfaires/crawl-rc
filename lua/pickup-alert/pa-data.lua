@@ -2,7 +2,7 @@
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, create_persistent_data, iter.invent_iterator, remove_from_OTA, add_to_pa_table, get_pa_keys, is_polearm, get_hands, is_ranged, is_armour, get_armour_ac, get_weap_damage, DMG_TYPE, offhand_is_free
+Dependencies: CONFIG, create_persistent_data, iter
 --]]
 
 f_pickup_alert_data = {}
@@ -13,9 +13,7 @@ function add_to_pa_table(table_ref, it)
   if it.is_weapon or is_armour(it, true) or is_talisman(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
-    if not cur_val or value > cur_val then
-      table_ref[name] = value
-    end
+    if not cur_val or value > cur_val then table_ref[name] = value end
   end
 end
 
@@ -30,10 +28,6 @@ function f_pickup_alert_data.init()
   create_persistent_data("pa_recent_alerts", {})
   create_persistent_data("pa_items_picked", {})
   create_persistent_data("pa_items_alerted", {})
-  create_persistent_data("alerted_first_ranged", false)
-  create_persistent_data("alerted_first_ranged_1h", false)
-  create_persistent_data("alerted_first_polearm", false)
-  create_persistent_data("alerted_first_polearm_1h", false)
   create_persistent_data("ac_high_score", 0)
   create_persistent_data("weapon_high_score", 0)
   create_persistent_data("plain_dmg_high_score", 0)
@@ -43,25 +37,13 @@ function f_pickup_alert_data.init()
     remove_from_OTA(inv)
     add_to_pa_table(pa_items_picked, inv)
 
-    if inv.is_weapon then
-      if is_polearm(inv) then
-        alerted_first_polearm = true
-        if get_hands(inv) == 1 then
-          alerted_first_polearm_1h = true
-        end
-      elseif inv.is_ranged then
-        alerted_first_ranged = true
-        if get_hands(inv) == 1 then
-          alerted_first_ranged_1h = true
-        end
-      end
-    end
+    if inv.is_weapon then alert_first_of_skill(inv, true) end
   end
 end
 
 function get_OTA_index(it)
   local qualname = it.name("qual")
-  for i,v in ipairs(pa_OTA_items) do
+  for i, v in ipairs(pa_OTA_items) do
     if v ~= "" and qualname:find(v) then return i end
   end
   return -1

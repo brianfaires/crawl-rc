@@ -18,27 +18,30 @@ f_template.BRC_FEATURE_NAME = "template_feature"
 
 -- Public hooks (Remove any hooks you don't use)
 function f_template.init()
-    -- Set up local state or one-time startup tasks
+  -- Set up local state or one-time startup tasks
 end
 
 function f_template.ready()
-    -- Do something every turn
+  -- Do something every turn
 end
 
 function f_template.c_message(text, channel)
-    -- Respond to incoming messages
+  -- Respond to incoming messages
+  crawl.mpr("echo: " .. text, channel)
 end
 
 function f_template.c_answer_prompt(prompt)
-    -- Respond to prompts (return true/false or nil)
-    return nil
+  -- Respond to prompts (return true/false or nil)
+  if prompt == "Do you want to live?" then return true end
+  return nil
 end
 
 function f_template.c_assign_invletter(it)
-    -- Respond to inventory letter assignment on new item pickup
-    return nil
+  -- Respond to inventory letter assignment on new item pickup
+  if it.name == "Item for slot b" then return 3 end
+  return nil
 end
 
 function f_template.cleanup()
-    -- Do stuff when feature is unregistered
+  -- Do stuff when feature is unregistered
 end

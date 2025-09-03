@@ -2,7 +2,7 @@
 Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, ALERT_COLORS, with_color, enqueue_mpr_opt_more, enqueue_mpr, create_persistent_data, add_autopickup_func, iter.invent_iterator, util.remove, get_skill_with_item, has_ego, is_armour, is_magic_staff, is_unneeded_ring, is_aux_armour, already_contains, pa_alert_OTA, pa_alert_staff, pa_alert_orb, pa_alert_talisman, pa_alert_armour, pa_alert_weapon, get_plussed_name, get_weapon_info_string, get_armour_info_strings, update_high_scores, add_to_pa_table, get_pa_keys, offhand_is_free, get_mut, MUTS
+Dependencies: CONFIG, COLORS, EMOJI, ALERT_COLORS, iter, util, pa-util
 --]]
 
 f_pickup_alert = {}
@@ -56,7 +56,7 @@ function f_pickup_alert.init()
   end
 
   ---- Autopickup main ----
-  add_autopickup_func(function (it, _)
+  add_autopickup_func(function(it, _)
     if pause_pa_system then return end
     if you.have_orb() then return end
     if has_ego(it) and not it.is_identified then return false end
@@ -73,7 +73,7 @@ function f_pickup_alert.init()
     else
       -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
       if is_aux_armour(it) then return end
-      
+
       local unworn_aux_item = nil
       local st = it.subtype()
       for inv in iter.invent_iterator:new(items.inventory()) do
@@ -127,18 +127,18 @@ function pa_alert_item(it, alert_type, emoji, force_more)
     alert_colors = ALERT_COLORS.orb
   elseif is_talisman(it) then
     alert_colors = ALERT_COLORS.talisman
-  else 
+  else
     alert_colors = ALERT_COLORS.misc
   end
   local tokens = {}
   tokens[1] = emoji and emoji or with_color(COLORS.cyan, "----")
-  tokens[#tokens+1] = with_color(alert_colors.desc, " " .. alert_type .. ": ")
-  tokens[#tokens+1] = with_color(alert_colors.item, item_desc .. " ")
-  tokens[#tokens+1] = tokens[1]
+  tokens[#tokens + 1] = with_color(alert_colors.desc, " " .. alert_type .. ": ")
+  tokens[#tokens + 1] = with_color(alert_colors.item, item_desc .. " ")
+  tokens[#tokens + 1] = tokens[1]
 
   enqueue_mpr_opt_more(force_more or has_configured_force_more(it), table.concat(tokens))
 
-  pa_recent_alerts[#pa_recent_alerts+1] = get_plussed_name(it)
+  pa_recent_alerts[#pa_recent_alerts + 1] = get_plussed_name(it)
   add_to_pa_table(pa_items_alerted, it)
   you.stop_activity()
   return true
@@ -147,7 +147,7 @@ end
 function f_pickup_alert.c_assign_invletter(it)
   pa_alert_OTA(it)
 
-  util.remove(pa_recent_alerts, get_plussed_name(it))  
+  util.remove(pa_recent_alerts, get_plussed_name(it))
   if it.is_weapon and you.race() == "Coglin" then
     -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
     -- ie, Reset the alert the first time you pick up.
@@ -165,20 +165,16 @@ end
 
 function f_pickup_alert.c_message(text, channel)
   if channel == "multiturn" then
-    if not pause_pa_system and text:find("ou start ", 1, true) then
-      pause_pa_system = true
-    end
+    if not pause_pa_system and text:find("ou start ", 1, true) then pause_pa_system = true end
   elseif channel == "plain" then
     if pause_pa_system and (text:find("ou stop ", 1, true) or text:find("ou finish ", 1, true)) then
       pause_pa_system = false
     elseif text:find("one exploring", 1, true) or text:find("artly explored", 1, true) then
       local tokens = {}
-      for _,v in ipairs(pa_recent_alerts) do
-        tokens[#tokens+1] = "\n  " .. v
+      for _, v in ipairs(pa_recent_alerts) do
+        tokens[#tokens + 1] = "\n  " .. v
       end
-      if #tokens > 0 then
-        enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens)))
-      end
+      if #tokens > 0 then enqueue_mpr(with_color(COLORS.magenta, "Recent alerts:" .. table.concat(tokens))) end
       pa_recent_alerts = {}
     end
   end

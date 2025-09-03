@@ -2,7 +2,7 @@
 Feature: pickup-alert-weapons
 Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, with_color, enqueue_mpr_opt_more, get_ego, has_ego, get_hands, is_polearm, is_ranged, get_weap_damage, get_weap_dps, get_weap_score, get_weap_delay, get_skill, util.contains, pa_alert_item, already_contains, add_to_pa_table, get_pa_keys, offhand_is_free, TUNING, has_risky_ego, get_mut, MUTS, iter.invent_iterator, have_shield, ALL_WEAP_SCHOOLS
+Dependencies: CONFIG, COLORS, EMOJI, iter, util, pa-util
 --]]
 
 f_pickup_alert_weapons = {}
@@ -20,30 +20,30 @@ function WEAP_CACHE.get_primary_key(it)
   local tokens = {}
   tokens[1] = it.is_ranged and "range_" or "melee_"
   tokens[2] = tostring(it.hands)
-  if it.branded then tokens[3] = "b"
-  return table.concat({tokens})
+  if it.branded then tokens[3] = "b" end
+  return table.concat({ tokens })
 end
 
 -- Get all categories this weapon fits into
 function WEAP_CACHE.get_keys(is_ranged, hands, branded)
-  local base_types = {is_ranged and "range_" or "melee_"}
-  local hand_types = {tostring(hands)}
-  local brand_types = {branded and "b" or ""}
-  
+  local base_types = { is_ranged and "range_" or "melee_" }
+  local hand_types = { tostring(hands) }
+  local brand_types = { branded and "b" or "" }
+
   -- Add variations for the less restrictive versions
   if hands == 1 then hand_types[2] = "2" end
   if branded then brand_types[2] = "" end
-  
+
   -- Generate all combinations
   local keys = {}
   for _, base in ipairs(base_types) do
     for _, hand in ipairs(hand_types) do
       for _, brand in ipairs(brand_types) do
-        keys[#keys+1] = table.concat({base, hand, brand})
+        keys[#keys + 1] = table.concat({ base, hand, brand })
       end
     end
   end
-  
+
   return keys
 end
 
@@ -65,10 +65,10 @@ function WEAP_CACHE.add_weapon(it)
   weap_data.dps = get_weap_dps(it)
   weap_data.score = get_weap_score(it)
   weap_data.unbranded_score = get_weap_score(it, true)
-  
+
   -- Track unique egos
   if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data.ego) then
-    WEAP_CACHE.egos[#WEAP_CACHE.egos+1] = weap_data.ego
+    WEAP_CACHE.egos[#WEAP_CACHE.egos + 1] = weap_data.ego
   end
 
   -- Track max damage for applicable weapon categories
@@ -82,22 +82,20 @@ function WEAP_CACHE.add_weapon(it)
     end
   end
 
-  WEAP_CACHE.weapons[#WEAP_CACHE.weapons+1] = weap_data
+  WEAP_CACHE.weapons[#WEAP_CACHE.weapons + 1] = weap_data
   return weap_data
 end
 
 function WEAP_CACHE.is_empty()
-    return WEAP_CACHE.max_dps["melee_2"].dps == 0 -- The most restrictive category
+  return WEAP_CACHE.max_dps["melee_2"].dps == 0 -- The most restrictive category
 end
 
 function WEAP_CACHE.serialize()
   local tokens = { "\n---INVENTORY WEAPONS---" }
   for _, weap in ipairs(WEAP_CACHE.weapons) do
-    tokens[#tokens+1] = string.format("\n%s\n", weap.basename)
-    for k,v in pairs(weap) do
-      if k ~= "basename" then
-        tokens[#tokens+1] = string.format("  %s: %s\n", k, tostring(v))
-      end
+    tokens[#tokens + 1] = string.format("\n%s\n", weap.basename)
+    for k, v in pairs(weap) do
+      if k ~= "basename" then tokens[#tokens + 1] = string.format("  %s: %s\n", k, tostring(v)) end
     end
   end
   return table.concat(tokens, "")
@@ -123,7 +121,7 @@ local function is_weapon_upgrade(it, cur)
 
     if it.artefact then return true end
     if cur.artefact then return false end
-    
+
     local min_ratio = it.is_ranged and TUNING.weap.pickup.same_type_ranged or TUNING.weap.pickup.same_type_melee
     return get_weap_score(it) / cur.score > min_ratio
   end
@@ -132,9 +130,10 @@ local function is_weapon_upgrade(it, cur)
 end
 
 local function need_first_weapon()
-    return you.xl() < FIRST_WEAPON_XL_CUTOFF and WEAP_CACHE.is_empty()
-        and you.skill("Unarmed Combat") == 0
-        and get_mut(MUTS.claws, true) == 0
+  return you.xl() < FIRST_WEAPON_XL_CUTOFF
+    and WEAP_CACHE.is_empty()
+    and you.skill("Unarmed Combat") == 0
+    and get_mut(MUTS.claws, true) == 0
 end
 
 function pa_pickup_weapon(it)
@@ -149,19 +148,18 @@ function pa_pickup_weapon(it)
 
   if has_risky_ego(it) then return false end
   if already_contains(pa_items_picked, it) then return false end
-  for _,inv in ipairs(WEAP_CACHE.weapons) do
+  for _, inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end
   end
 end
 
-
 ---- Alert types ----
 local lowest_num_hands_alerted = {
-  "Ranged Weapons" = 3, -- Start with 3 (will fire both 1 and 2-handed alerts)
-  "Polearms" = 3        -- Start with 3 (will fire both 1 and 2-handed alerts)
-}
+  ["Ranged Weapons"] = 3, -- Start with 3 (will fire both 1 and 2-handed alerts)
+  ["Polearms"] = 3, -- Start with 3 (will fire both 1 and 2-handed alerts)
+} -- lowest_num_hands_alerted (do not remove this comment)
 
-local function alert_first_of_skill(it)
+local function alert_first_of_skill(it, silent)
   local skill = it.weap_skill
   if not lowest_num_hands_alerted[skill] then return false end
 
@@ -175,6 +173,7 @@ local function alert_first_of_skill(it)
     lowest_num_hands_alerted[skill] = hands
     local msg = "First " .. string.sub(skill, 1, -2) -- Trim the trailing "s"
     if hands == 1 then msg = msg .. " (1-handed)" end
+    if silent then return true end
     return pa_alert_item(it, msg, EMOJI.WEAPON, CONFIG.fm_alert.early_weap)
   end
   return false
@@ -184,12 +183,17 @@ local function alert_early_weapons(it)
   -- Alert really good usable ranged weapons
   if you.xl() <= TUNING.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
-      if it.plus >= TUNING.weap.alert.early_ranged.min_plus and has_ego(it) or
-         it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus then
-          if get_hands(it) == 1 or not have_shield() or
-            you.skill("Shields") <= TUNING.weap.alert.early_ranged.max_shields then
-              return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
-          end
+      if
+        it.plus >= TUNING.weap.alert.early_ranged.min_plus and has_ego(it)
+        or it.plus >= TUNING.weap.alert.early_ranged.branded_min_plus
+      then
+        if
+          get_hands(it) == 1
+          or not have_shield()
+          or you.skill("Shields") <= TUNING.weap.alert.early_ranged.max_shields
+        then
+          return pa_alert_item(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
+        end
       end
     end
   end
@@ -211,9 +215,7 @@ end
 -- Check if weapon is worth alerting for, informed by a weapon currently in inventory
 -- `cur` comes from WEAP_CACHE
 local function alert_interesting_weapon(it, cur)
-  if it.artefact and it.is_identified then
-    return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT)
-  end
+  if it.artefact and it.is_identified then return pa_alert_item(it, "Artefact weapon", EMOJI.ARTEFACT) end
 
   local inv_best = WEAP_CACHE.max_dps[WEAP_CACHE.get_primary_key(it)]
   local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
@@ -228,11 +230,11 @@ local function alert_interesting_weapon(it, cur)
     end
     return false
   end
-  
+
   if cur.is_ranged ~= it.is_ranged then return false end
   if is_polearm(cur) ~= is_polearm(it) then return false end
   if 2 * get_skill(it.weap_skill) < get_skill(cur.weap_skill) then return false end
-  
+
   -- Penalize lower-trained skills
   local damp = TUNING.weap.alert.low_skill_penalty_damping
   local penalty = (get_skill(it.weap_skill) + damp) / (get_skill(top_attack_skill) + damp)
@@ -240,7 +242,9 @@ local function alert_interesting_weapon(it, cur)
 
   if get_hands(it) > cur.hands then
     if offhand_is_free() or (you.skill("Shields") < TUNING.weap.alert.add_hand.ignore_sh_lvl) then
-      if has_ego(it) and not util.contains(WEAP_CACHE.egos, get_ego(it)) and score_ratio > TUNING.weap.alert.new_ego then
+      local it_ego = get_ego(it)
+      local unique_ego = it_ego and not util.contains(WEAP_CACHE.egos, it_ego)
+      if unique_ego and score_ratio > TUNING.weap.alert.new_ego then
         return pa_alert_item(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
         return pa_alert_item(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.upgrade_weap)
@@ -264,12 +268,12 @@ local function alert_interesting_weapon(it, cur)
       return pa_alert_item(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
     end
   end
-  
+
   return false
 end
 
 local function alert_interesting_weapons(it)
-  for _,inv in ipairs(WEAP_CACHE.weapons) do
+  for _, inv in ipairs(WEAP_CACHE.weapons) do
     if alert_interesting_weapon(it, inv) then return true end
   end
   return false
@@ -291,17 +295,22 @@ function pa_alert_weapon(it)
   return alert_weap_high_scores(it)
 end
 
-
 -- Hook functions
 function f_pickup_alert_weapons.init()
   WEAP_CACHE.weapons = {}
   WEAP_CACHE.egos = {}
-  
+
   -- Track max DPS by weapon category
   WEAP_CACHE.max_dps = {}
   local keys = {
-    "melee_1", "melee_1b", "melee_2", "melee_2b",
-    "range_1", "range_1b", "range_2", "range_2b"
+    "melee_1",
+    "melee_1b",
+    "melee_2",
+    "melee_2b",
+    "range_1",
+    "range_1b",
+    "range_2",
+    "range_2b",
   } -- WEAP_CACHE.max_dps (do not remove this comment)
   for _, key in ipairs(keys) do
     WEAP_CACHE.max_dps[key] = { dps = 0, acc = 0 }
@@ -310,14 +319,13 @@ function f_pickup_alert_weapons.init()
   -- Set top weapon skill
   top_attack_skill = "Unarmed Combat"
   local max_weap_skill = get_skill(top_attack_skill)
-  for _,v in ipairs(ALL_WEAP_SCHOOLS) do
+  for _, v in ipairs(ALL_WEAP_SCHOOLS) do
     if get_skill(v) > max_weap_skill then
       max_weap_skill = get_skill(v)
       top_attack_skill = v
     end
   end
 end
-
 
 -------- Hooks --------
 function f_pickup_alert_weapons.ready()
