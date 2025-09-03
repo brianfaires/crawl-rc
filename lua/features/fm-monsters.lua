@@ -12,28 +12,28 @@ f_fm_monsters.BRC_FEATURE_NAME = "fm-monsters"
 
 -- Local configuration
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
-    -- Noteworthy abilities
-    "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-    "vault guardian", "vault warden", "wendingo", 
-    -- Displacement
-    "deep elf knight", "swamp worm",
-    -- Summoning
-    "deep elf elementalist", 
+  -- Noteworthy abilities
+  "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
+  "vault guardian", "vault warden", "wendingo", 
+  -- Displacement
+  "deep elf knight", "swamp worm",
+  -- Summoning
+  "deep elf elementalist", 
 } -- always_flash_screen_monsters (do not remove this comment)
 
 local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
-    "juggernaut", "orbs? of fire", "flayed ghost",
+  "juggernaut", "orbs? of fire", "flayed ghost",
   --Summoning
-    "shadow demon", "guardian serpent",
-    "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
-    "halazid warlock", "demonspawn corrupter",
+  "shadow demon", "guardian serpent",
+  "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
+  "halazid warlock", "demonspawn corrupter",
   --Dangerous abilities
-    "wyrmhole",
-    "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-    "starflower", "merfolk aquamancer", "wretched star",
+  "wyrmhole",
+  "torpor snail", "water nymph", "shambling mangrove", "iron giant",
+  "starflower", "merfolk aquamancer", "wretched star",
   --Dangerous clouds
-    "catoblepas", "apocalypse crab",
+  "catoblepas", "apocalypse crab",
 } -- always_force_more_monsters (do not remove this comment)
 
 -- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
@@ -65,121 +65,121 @@ local FM_PACK_NO_CREATE = {
 local FM_PATTERNS = {
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
   {name = "30hp", cond = "hp", cutoff = 30,
-      pattern = "hound|gnoll"},
+    pattern = "hound|gnoll"},
 
   -- Monsters dangerous until a certain point
   {name = "xl_7", cond = "xl", cutoff = 7,
-      pattern = "orc wizard"},
+    pattern = "orc wizard"},
   {name = "xl_12", cond = "xl", cutoff = 12,
-      pattern = "hydra|bloated husk"},
+    pattern = "hydra|bloated husk"},
 
   -- Monsters that can hit for ~50% of hp from range with unbranded attacks
   {name = "40hp", cond = "hp", cutoff = 40,
-      pattern = "orc priest" },
+    pattern = "orc priest" },
   {name = "50hp", cond = "hp", cutoff = 50,
-      pattern = "orc high priest|manticore" },
+    pattern = "orc high priest|manticore" },
   {name = "60hp", cond = "hp", cutoff = 60,
-      pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
+    pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
   {name = "70hp_melai", cond = "hp", cutoff = 70,
-      pattern = "meliai"},
+    pattern = "meliai"},
   {name = "80hp", cond = "hp", cutoff = 80,
-      pattern = "gargoyle" },
+    pattern = "gargoyle" },
   {name = "90hp", cond = "hp", cutoff = 90,
-      pattern = "deep elf archer|tengu conjurer" },
+    pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110,
-      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" ..
-                  "deep elf high priest|deep troll earth mage|stone giant|cacodemon" },
+    pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" ..
+              "deep elf high priest|deep troll earth mage|stone giant|cacodemon" },
   {name = "120hp", cond = "hp", cutoff = 120,
-      pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
+    pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
   {name = "160hp", cond = "hp", cutoff = 160,
-      pattern = "brimstone fiend|deep elf sorcerer" ..
+    pattern = "brimstone fiend|deep elf sorcerer" ..
               "hell sentinal|war gargoyle|draconian (knight|scorcher)" },
   {name = "200hp", cond = "hp", cutoff = 200,
-      pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
+    pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
 
   -- Monsters that can crowd-control you without sufficient willpower
   -- Cutoff ~10% for most spells; lower for more significant spells like banish
   {name = "willpower2", cond = "will", cutoff = 2,
-      pattern = "basilisk|naga ritualist|vampire(?! (bat|mage|mosquito))|sphinx marauder" },
+    pattern = "basilisk|naga ritualist|vampire(?! (bat|mage|mosquito))|sphinx marauder" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = "deep elf (demonologist|sorcerer|archer)|occultist|" ..
+    pattern = "deep elf (demonologist|sorcerer|archer)|occultist|" ..
               "merfolk siren|fenstrider witch|cacodemon|" ..
               "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" ..
               "glowing orange brain|orc sorcerer|" ..
               "ogre mage|satyr|vault sentinel|iron elemental|" ..
               "death knight|vampire knight" },
   {name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3,
-      pattern = "great orb of eyes" },
+    pattern = "great orb of eyes" },
   {name = "willpower3_golden_eye", cond = "will", cutoff = 3,
-      pattern = "golden eye" },
+    pattern = "golden eye" },
   {name = "willpower4", cond = "will", cutoff = 4,
-      pattern = "merfolk avatar|tainted leviathan|nargun" },
+    pattern = "merfolk avatar|tainted leviathan|nargun" },
 
   -- Brain feed with low int
   {name = "brainfeed", cond = "int", cutoff = 6,
-      pattern = "glowing orange brain|neqoxec" },
+    pattern = "glowing orange brain|neqoxec" },
 
   -- Alert if no resist and HP below cutoff
   {name = "pois_30", cond = "pois", cutoff = 30,
-      pattern = "adder"},
+    pattern = "adder"},
   {name = "pois_80", cond = "pois", cutoff = 80,
-      pattern = "golden dragon|green draconian|swamp dragon" },
+    pattern = "golden dragon|green draconian|swamp dragon" },
   {name = "pois_120", cond = "pois", cutoff = 120,
-      pattern = "green death|naga mage|nagaraja|fenstrider witch" },
+    pattern = "green death|naga mage|nagaraja|fenstrider witch" },
   {name = "pois_140", cond = "pois", cutoff = 140,
-      pattern = "tengu reaver" },
+    pattern = "tengu reaver" },
 
   {name = "elec_40", cond = "elec", cutoff = 40,
-      pattern = "electric eel" },
+    pattern = "electric eel" },
   {name = "elec_80", cond = "elec", cutoff = 80,
-      pattern = "shock serpent|raiju|spark wasp" },
+    pattern = "shock serpent|raiju|spark wasp" },
   {name = "elec_120", cond = "elec", cutoff = 120,
-      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" ..
-                "storm dragon|tengu conjurer" },
+    pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" ..
+              "storm dragon|tengu conjurer" },
   {name = "elec_140", cond = "elec", cutoff = 140,
-      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" ..
-                "ball lightning|tengu reaver" },
+    pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" ..
+              "ball lightning|tengu reaver" },
 
   {name = "corr_60", cond = "corr", cutoff = 60,
-      pattern = "acid dragon" },
+    pattern = "acid dragon" },
   {name = "corr_140", cond = "corr", cutoff = 140,
-      pattern = "tengu reaver|entropy weaver|demonspawn corrupter|moon troll" },
+    pattern = "tengu reaver|entropy weaver|demonspawn corrupter|moon troll" },
 
   {name = "fire_60", cond = "fire", cutoff = 60,
-      pattern = "steam dragon|lindwurm|fire crab|lava snake" },
+    pattern = "steam dragon|lindwurm|fire crab|lava snake" },
   {name = "fire_100", cond = "fire", cutoff = 100,
-      pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
+    pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
   {name = "fire_120", cond = "fire", cutoff = 120,
-      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" ..
-                "ogre mage|molten gargoyle|hell knight" },
+    pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" ..
+              "ogre mage|molten gargoyle|hell knight" },
   {name = "fire_140", cond = "fire", cutoff = 140,
-      pattern = "balrug" },
+    pattern = "balrug" },
   {name = "fire_160", cond = "fire", cutoff = 160,
-      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" ..
-                "fire dragon|salamander tyrant|tengu reaver" },
+    pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" ..
+              "fire dragon|salamander tyrant|tengu reaver" },
   {name = "fire_240", cond = "fire", cutoff = 240,
-      pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
+    pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
 
   {name = "cold_80", cond = "cold", cutoff = 80,
-      pattern = "rime drake" },
+    pattern = "rime drake" },
   {name = "cold_120", cond = "cold", cutoff = 120,
-      pattern = "blizzard demon|bog body|ironbound frostheart|" ..
-                "demonspawn blood saint|white draconian" },
+    pattern = "blizzard demon|bog body|ironbound frostheart|" ..
+              "demonspawn blood saint|white draconian" },
   {name = "cold_160", cond = "cold", cutoff = 160,
-      pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
+    pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
   {name = "cold_180", cond = "cold", cutoff = 180,
-      pattern = "(?<!dread)(?<!ancient) lich" },
+    pattern = "(?<!dread)(?<!ancient) lich" },
   {name = "cold_240", cond = "cold", cutoff = 240,
-      pattern = "crystal (guardian|echidna)" },
+    pattern = "crystal (guardian|echidna)" },
 
   {name = "drain_100", cond = "drain", cutoff = 100,
-      pattern = "orc sorcerer" },
+    pattern = "orc sorcerer" },
   {name = "drain_120", cond = "drain", cutoff = 120,
-      pattern = "necromancer" },
+    pattern = "necromancer" },
   {name = "drain_150", cond = "drain", cutoff = 150,
-      pattern = "revenant|demonspawn blood saint" },
+    pattern = "revenant|demonspawn blood saint" },
   {name = "drain_190", cond = "drain", cutoff = 190,
-      pattern = "shadow dragon" },
+    pattern = "shadow dragon" },
 } -- end fm_patterns (do not remove this comment)
 
 -- Set mutators to either flash (if undead) or a conditional fm
@@ -189,7 +189,7 @@ else
   table.insert(FM_PATTERNS,
     -- Malmutate without rMut
     {name = "malmutate", cond = "mut", cutoff = 1,
-        pattern = "cacodemon|neqoxec|shining eye" }
+      pattern = "cacodemon|neqoxec|shining eye" }
   )
 end
 ------------------- End config section -------------------
@@ -213,9 +213,14 @@ local function get_three_pip_action(is_active, hp, dmg_threshold, resistance)
   end
 end
 
+local MONSTER_OPTION_TOKENS = {
+  "monster_warning:(?<!spectral )(",
+  "",
+  ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+}
 local function set_monster_option(sign, monster_str, option)
-  local fm_str = "monster_warning:(?<!spectral )(" .. monster_str ..
-      ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+  MONSTER_OPTION_TOKENS[2] = monster_str
+  local fm_str = table.concat(MONSTER_OPTION_TOKENS)
   crawl.setopt(option .. " " .. sign .. "= " .. fm_str)
 end
 
@@ -270,7 +275,6 @@ function f_fm_monsters.init()
     crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
   end
 
-
   set_all(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
   set_all(ALWAYS_FORCE_MORE_MONSTERS, "force_more_message")
 
@@ -301,7 +305,7 @@ end
 
 ------------------- Hooks -------------------
 function f_fm_monsters.c_message(text, channel)
-    if channel ~= "monster_warning" then return end
+  if channel ~= "monster_warning" then return end
   if CONFIG.fm_pack_duration == 0 then return end
   
   -- Identifies when a mute should be turned on
@@ -315,8 +319,8 @@ function f_fm_monsters.c_message(text, channel)
 end
 
 function f_fm_monsters.ready()
-    local activated = {}
-    local deactivated = {}
+  local activated = {}
+  local deactivated = {}
 
   local hp, mhp = you.hp()
   local amulet = items.equipped_at("amulet")

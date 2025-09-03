@@ -5,27 +5,27 @@ local persistent_table_names
 local GET_VAL_STRING = {}
 GET_VAL_STRING = {
   str = function(value)
-      return "\"" .. value .. "\""
+    return "\"" .. value .. "\""
   end,
   int = function(value)
-      return value
+    return value
   end,
   bool = function(value)
-      return value and "true" or "false"
+    return value and "true" or "false"
   end,
   list = function(value)
-      local tokens = {}
-      for _,v in ipairs(value) do
-          tokens[#tokens+1] = GET_VAL_STRING[get_var_type(v)](v)
-      end
-      return "{" .. table.concat(tokens, ", ") .. "}"
+    local tokens = {}
+    for _,v in ipairs(value) do
+      tokens[#tokens+1] = GET_VAL_STRING[get_var_type(v)](v)
+    end
+    return "{" .. table.concat(tokens, ", ") .. "}"
   end,
   dict = function(value)
-      local tokens = {}
-      for k,v in pairs(value) do
-        tokens[#tokens+1] = string.format("[\"%s\"]=%s", k, GET_VAL_STRING[get_var_type(v)](v))
-      end
-      return "{" .. table.concat(tokens, ", ") .. "}"
+    local tokens = {}
+    for k,v in pairs(value) do
+      tokens[#tokens+1] = string.format("[\"%s\"]=%s", k, GET_VAL_STRING[get_var_type(v)](v))
+    end
+    return "{" .. table.concat(tokens, ", ") .. "}"
   end
 } -- GET_VAL_STRING (do not remove this comment)
 
@@ -33,18 +33,18 @@ GET_VAL_STRING = {
 -- Once initialized, the variable is persisted across saves without re-init
 function create_persistent_data(name, default_value)
   if _G[name] == nil then
-      _G[name] = default_value
+    _G[name] = default_value
   end
 
   table.insert(chk_lua_save,
-      function()
-          local type = get_var_type(_G[name])
-          if not GET_VAL_STRING[type] then
-              crawl.mpr("Unknown persistence type: " .. type)
-              return
-          end
-          return name .. " = " ..GET_VAL_STRING[type](_G[name]) .. KEYS.LF
-      end)
+    function()
+      local type = get_var_type(_G[name])
+      if not GET_VAL_STRING[type] then
+        crawl.mpr("Unknown persistence type: " .. type)
+        return
+      end
+      return name .. " = " ..GET_VAL_STRING[type](_G[name]) .. KEYS.LF
+    end)
 
   local var_type = get_var_type(_G[name])
   if var_type == "list" or var_type == "dict" then
@@ -97,9 +97,7 @@ function get_var_type(value)
   elseif t == "number" then return "int"
   elseif t == "boolean" then return "bool"
   elseif t == "table" then
-      if #value > 0 then return "list"
-      else return "dict"
-      end
+    return #value > 0 and "list" or "dict"
   else
     return "unknown"
   end

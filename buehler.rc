@@ -3622,27 +3622,27 @@ local persistent_table_names
 local GET_VAL_STRING = {}
 GET_VAL_STRING = {
   str = function(value)
-      return "\"" .. value .. "\""
+    return "\"" .. value .. "\""
   end,
   int = function(value)
-      return value
+    return value
   end,
   bool = function(value)
-      return value and "true" or "false"
+    return value and "true" or "false"
   end,
   list = function(value)
-      local tokens = {}
-      for _,v in ipairs(value) do
-          tokens[#tokens+1] = GET_VAL_STRING[get_var_type(v)](v)
-      end
-      return "{" .. table.concat(tokens, ", ") .. "}"
+    local tokens = {}
+    for _,v in ipairs(value) do
+      tokens[#tokens+1] = GET_VAL_STRING[get_var_type(v)](v)
+    end
+    return "{" .. table.concat(tokens, ", ") .. "}"
   end,
   dict = function(value)
-      local tokens = {}
-      for k,v in pairs(value) do
-        tokens[#tokens+1] = string.format("[\"%s\"]=%s", k, GET_VAL_STRING[get_var_type(v)](v))
-      end
-      return "{" .. table.concat(tokens, ", ") .. "}"
+    local tokens = {}
+    for k,v in pairs(value) do
+      tokens[#tokens+1] = string.format("[\"%s\"]=%s", k, GET_VAL_STRING[get_var_type(v)](v))
+    end
+    return "{" .. table.concat(tokens, ", ") .. "}"
   end
 } -- GET_VAL_STRING (do not remove this comment)
 
@@ -3650,18 +3650,18 @@ GET_VAL_STRING = {
 -- Once initialized, the variable is persisted across saves without re-init
 function create_persistent_data(name, default_value)
   if _G[name] == nil then
-      _G[name] = default_value
+    _G[name] = default_value
   end
 
   table.insert(chk_lua_save,
-      function()
-          local type = get_var_type(_G[name])
-          if not GET_VAL_STRING[type] then
-              crawl.mpr("Unknown persistence type: " .. type)
-              return
-          end
-          return name .. " = " ..GET_VAL_STRING[type](_G[name]) .. KEYS.LF
-      end)
+    function()
+      local type = get_var_type(_G[name])
+      if not GET_VAL_STRING[type] then
+        crawl.mpr("Unknown persistence type: " .. type)
+        return
+      end
+      return name .. " = " ..GET_VAL_STRING[type](_G[name]) .. KEYS.LF
+    end)
 
   local var_type = get_var_type(_G[name])
   if var_type == "list" or var_type == "dict" then
@@ -3714,9 +3714,7 @@ function get_var_type(value)
   elseif t == "number" then return "int"
   elseif t == "boolean" then return "bool"
   elseif t == "table" then
-      if #value > 0 then return "list"
-      else return "dict"
-      end
+    return #value > 0 and "list" or "dict"
   else
     return "unknown"
   end
@@ -3819,27 +3817,27 @@ function cleanup_text(text, escape_chars)
   local len = #text
 
   while pos <= len do
-      local tag_start = text:find("<", pos, true)
-      if not tag_start then
-          -- No more tags, append remaining text
-          tokens[#tokens+1] = text:sub(pos)
-          break
-      end
+    local tag_start = text:find("<", pos, true)
+    if not tag_start then
+      -- No more tags, append remaining text
+      tokens[#tokens+1] = text:sub(pos)
+      break
+    end
 
-      -- Append text before tag
-      if tag_start > pos then
-          tokens[#tokens+1] = text:sub(pos, tag_start - 1)
-      end
+    -- Append text before tag
+    if tag_start > pos then
+      tokens[#tokens+1] = text:sub(pos, tag_start - 1)
+    end
 
-      -- Find end of tag
-      local tag_end = text:find(">", tag_start, true)
-      if not tag_end then
-          -- Malformed tag, append remaining text
-          tokens[#tokens+1] = text:sub(pos)
-          break
-      end
+    -- Find end of tag
+    local tag_end = text:find(">", tag_start, true)
+    if not tag_end then
+      -- Malformed tag, append remaining text
+      tokens[#tokens+1] = text:sub(pos)
+      break
+    end
 
-      pos = tag_end + 1
+    pos = tag_end + 1
   end
 
   -- Join all parts and remove newlines
@@ -4186,140 +4184,140 @@ local _hooks = {}
 
 -- Local functions
 local function is_feature_module(module_table)
-    return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
+  return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
 end
 
 local function log_message(message, context, color)
-    message = message or "Unknown message"
-    color = color or MSG_COLORS.info
-    local msg = string.format("[BRC] %s", message)
-    if context then
-        msg = msg .. string.format(" (Context: %s)", context)
-    end
-    crawl.mpr(table.concat({"<", color, ">", msg, "</", color, ">"}))
+  message = message or "Unknown message"
+  color = color or MSG_COLORS.info
+  local msg = string.format("[BRC] %s", message)
+  if context then
+    msg = msg .. string.format(" (Context: %s)", context)
+  end
+  crawl.mpr(table.concat({"<", color, ">", msg, "</", color, ">"}))
 end
 
 -- Prevent feature errors from crashing the entire system
 local function safe_call(feature_name, func, ...)
-    if not func then return end
+  if not func then return end
 
-    local success, result = pcall(func, ...)
-    if not success then
-        BRC:error("Function call failed for:" .. feature_name, result)
-    end
+  local success, result = pcall(func, ...)
+  if not success then
+    BRC:error("Function call failed for:" .. feature_name, result)
+  end
 end
 
 -- Hook management
 local function register_hooks(feature_name, feature_module)
-    for _, hook_name in ipairs(HOOK_FUNCTIONS) do
-        if feature_module[hook_name] then
-            if not _hooks[hook_name] then
-                _hooks[hook_name] = {}
-            end
-            table.insert(_hooks[hook_name], {
-                name = feature_name,
-                func = feature_module[hook_name]
-            })
-        end
+  for _, hook_name in ipairs(HOOK_FUNCTIONS) do
+    if feature_module[hook_name] then
+      if not _hooks[hook_name] then
+        _hooks[hook_name] = {}
+      end
+      table.insert(_hooks[hook_name], {
+        name = feature_name,
+        func = feature_module[hook_name]
+      })
     end
+  end
 end
 
 local function unregister_hooks(feature_name)
-    for hook_name, hook_list in pairs(_hooks) do
-        for i = #hook_list, 1, -1 do
-            if hook_list[i].name == feature_name then
-                table.remove(hook_list, i)
-            end
-        end
+  for hook_name, hook_list in pairs(_hooks) do
+    for i = #hook_list, 1, -1 do
+      if hook_list[i].name == feature_name then
+        table.remove(hook_list, i)
+      end
     end
+  end
 end
 
 local function call_hook(hook_name, ...)
-    if not _hooks[hook_name] then return end
-    for _, hook_info in ipairs(_hooks[hook_name]) do
-        safe_call(hook_info.name, hook_info.func, ...)
-    end
+  if not _hooks[hook_name] then return end
+  for _, hook_info in ipairs(_hooks[hook_name]) do
+    safe_call(hook_info.name, hook_info.func, ...)
+  end
 end
 
 -- Public API
 function BRC:register_feature(feature_name, feature_module)
-    if not feature_name or not feature_module then
-        BRC:error("Invalid feature registration: missing name or module")
-        return false
-    end
-    
-    if _features[feature_name] then
-        BRC:error(string.format("Feature '%s' is already registered", feature_name))
-        return false
-    end
-    
-    -- Register the feature and its hooks
-    _features[feature_name] = feature_module
-    register_hooks(feature_name, feature_module)
+  if not feature_name or not feature_module then
+    BRC:error("Invalid feature registration: missing name or module")
+    return false
+  end
+  
+  if _features[feature_name] then
+    BRC:error(string.format("Feature '%s' is already registered", feature_name))
+    return false
+  end
+  
+  -- Register the feature and its hooks
+  _features[feature_name] = feature_module
+  register_hooks(feature_name, feature_module)
 
-    -- Initialize the feature
-    if feature_module.init then
-        safe_call(feature_name, feature_module.init)
-    end
-    
-    return true
+  -- Initialize the feature
+  if feature_module.init then
+    safe_call(feature_name, feature_module.init)
+  end
+  
+  return true
 end
 
 function BRC:unregister_feature(feature_name)
-    if not _features[feature_name] then
-        BRC:error(string.format("Feature '%s' is not registered", feature_name))
-        return false
-    end
-    
-    unregister_hooks(feature_name)
-    _features[feature_name] = nil
-    
-    BRC:debug(string.format("Feature '%s' unregistered", feature_name))
-    return true
+  if not _features[feature_name] then
+    BRC:error(string.format("Feature '%s' is not registered", feature_name))
+    return false
+  end
+  
+  unregister_hooks(feature_name)
+  _features[feature_name] = nil
+  
+  BRC:debug(string.format("Feature '%s' unregistered", feature_name))
+  return true
 end
 
 function BRC:load_all_features()
-    local loaded_count = 0
-    
-    -- Scan the global namespace for feature modules and load them
-    for name, value in pairs(_G) do
-        if type(value) == "table" and is_feature_module(value) then
-            local feature_name = value.BRC_FEATURE_NAME
-            local success = self:register_feature(feature_name, value)
+  local loaded_count = 0
+  
+  -- Scan the global namespace for feature modules and load them
+  for name, value in pairs(_G) do
+    if type(value) == "table" and is_feature_module(value) then
+      local feature_name = value.BRC_FEATURE_NAME
+      local success = self:register_feature(feature_name, value)
 
-            if success then
-                loaded_count = loaded_count + 1
-                self:debug(string.format("Registered %s from _G.%s", feature_name, name))
-            else
-                self:error(string.format("Failed to register feature from: _G.%s", name))
-            end
-        end
+      if success then
+        loaded_count = loaded_count + 1
+        self:debug(string.format("Registered %s from _G.%s", feature_name, name))
+      else
+        self:error(string.format("Failed to register feature from: _G.%s", name))
+      end
     end
-    
-    self:debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
-    return loaded_count
+  end
+  
+  self:debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
+  return loaded_count
 end
 
 -- Hook methods
 function BRC:ready()
-    crawl.redraw_screen()
-    if you.turns() == prev_turn then return end
-    prev_turn = you.turns()
+  crawl.redraw_screen()
+  if you.turns() == prev_turn then return end
+  prev_turn = you.turns()
 
-    call_hook("ready")
-    mpr_consume_queue()
+  call_hook("ready")
+  mpr_consume_queue()
 end
 
 function BRC:c_message(text, channel)
-    call_hook("c_message", text, channel)
+  call_hook("c_message", text, channel)
 end
 
 function BRC:c_answer_prompt(prompt)
-    call_hook("c_answer_prompt", prompt)
+  call_hook("c_answer_prompt", prompt)
 end
 
 function BRC:c_assign_invletter(it)
-    call_hook("c_assign_invletter", it)
+  call_hook("c_assign_invletter", it)
 end
 
 -- Logging methods
@@ -4363,43 +4361,43 @@ f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
 -- Hook functions
 function f_after_shaft.init()
-    if not CONFIG.stop_on_stairs_after_shaft then return end
-    create_persistent_data("as_shaft_depth", 0)
-    create_persistent_data("as_shaft_branch", "NA")
+  if not CONFIG.stop_on_stairs_after_shaft then return end
+  create_persistent_data("as_shaft_depth", 0)
+  create_persistent_data("as_shaft_branch", "NA")
 
-    if you.turns() == 0 and you.class() == "Delver" then
-        as_shaft_depth = 1
-        as_shaft_branch = you.branch()
-    end
+  if you.turns() == 0 and you.class() == "Delver" then
+    as_shaft_depth = 1
+    as_shaft_branch = you.branch()
+  end
 
-    if as_shaft_depth ~= 0 then
-        crawl.setopt("explore_stop += stairs")
-    else
-        crawl.setopt("explore_stop -= stairs")
-    end
+  if as_shaft_depth ~= 0 then
+    crawl.setopt("explore_stop += stairs")
+  else
+    crawl.setopt("explore_stop -= stairs")
+  end
 end
 
 function f_after_shaft.c_message(text, channel)
-    if not CONFIG.stop_on_stairs_after_shaft then return end
-    if channel ~= "plain" or in_hell() then return end
-    if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
+  if not CONFIG.stop_on_stairs_after_shaft then return end
+  if channel ~= "plain" or in_hell() then return end
+  if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
 
-    local text_fall = "ou fall into a shaft"
-    local text_sucked = "ou are sucked into a shaft"
-    if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
-        as_shaft_depth = you.depth()
-        as_shaft_branch = you.branch()
-        crawl.setopt("explore_stop += stairs")
-    end
+  local text_fall = "ou fall into a shaft"
+  local text_sucked = "ou are sucked into a shaft"
+  if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
+    as_shaft_depth = you.depth()
+    as_shaft_branch = you.branch()
+    crawl.setopt("explore_stop += stairs")
+  end
 end
 
 function f_after_shaft.ready()
-    if not CONFIG.stop_on_stairs_after_shaft then return end
-    if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
-        crawl.setopt("explore_stop -= stairs")
-        as_shaft_depth = 0
-        as_shaft_branch = "NA"
-    end
+  if not CONFIG.stop_on_stairs_after_shaft then return end
+  if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
+    crawl.setopt("explore_stop -= stairs")
+    as_shaft_depth = 0
+    as_shaft_branch = "NA"
+  end
 end
 
 }
@@ -4427,163 +4425,163 @@ local prev = {} -- contains all previous hp/mp values
 
 -- Local functions
 local function create_meter(perc, full, part, empty, border)
-    local decade = math.floor(perc / 10)
-    local full_count = math.floor(decade / 2)
-    local part_count = decade % 2
-    local empty_count = 5 - full_count - part_count
+  local decade = math.floor(perc / 10)
+  local full_count = math.floor(decade / 2)
+  local part_count = decade % 2
+  local empty_count = 5 - full_count - part_count
 
-    local tokens = {}
-    if border then tokens[1] = border end
-    for i = 1, full_count do tokens[#tokens + 1] = full end
-    for i = 1, part_count do tokens[#tokens + 1] = part end
-    for i = 1, empty_count do tokens[#tokens + 1] = empty end
-    if border then tokens[#tokens + 1] = border end
-    return table.concat(tokens)
+  local tokens = {}
+  if border then tokens[1] = border end
+  for i = 1, full_count do tokens[#tokens + 1] = full end
+  for i = 1, part_count do tokens[#tokens + 1] = part end
+  for i = 1, empty_count do tokens[#tokens + 1] = empty end
+  if border then tokens[#tokens + 1] = border end
+  return table.concat(tokens)
 end
 
 local function format_delta(delta)
-    if delta > 0 then
-        return with_color(COLORS.green, "+"..delta)
-    elseif delta < 0 then
-        return with_color(COLORS.red, delta)
-    else
-        return with_color(COLORS.darkgrey, "+0")
-    end
+  if delta > 0 then
+    return with_color(COLORS.green, "+"..delta)
+  elseif delta < 0 then
+    return with_color(COLORS.red, delta)
+  else
+    return with_color(COLORS.darkgrey, "+0")
+  end
 end
 
 local function format_ratio(cur, max)
-    local color
-    if cur <= (max * 0.25) then
-        color = COLORS.lightred
-    elseif cur <= (max * 0.50) then
-        color = COLORS.red
-    elseif cur <= (max *  0.75) then
-        color = COLORS.yellow
-    elseif cur < max then
-        color = COLORS.white
-    else
-        color = COLORS.green
-    end
-    return with_color(color, string.format(" -> %s/%s", cur, max))
+  local color
+  if cur <= (max * 0.25) then
+    color = COLORS.lightred
+  elseif cur <= (max * 0.50) then
+    color = COLORS.red
+  elseif cur <= (max *  0.75) then
+    color = COLORS.yellow
+  elseif cur < max then
+    color = COLORS.white
+  else
+    color = COLORS.green
+  end
+  return with_color(color, string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
-    local hp, mhp = you.hp()
+  local hp, mhp = you.hp()
 
-    local msg_tokens = {}
-    msg_tokens[#msg_tokens + 1] = create_meter(
-        hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
-    )
-    msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
-    msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
-    if mhp_delta ~= 0 then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
-    end
+  local msg_tokens = {}
+  msg_tokens[#msg_tokens + 1] = create_meter(
+    hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER
+  )
+  msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
+  msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
+  if mhp_delta ~= 0 then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightgrey, string.format(" (%s max HP)", format_delta(mhp_delta)))
+  end
 
-    if not CONFIG.announce.same_line and hp == mhp then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
-    end
-    return table.concat(msg_tokens)
+  if not CONFIG.announce.same_line and hp == mhp then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.white, " (Full HP)")
+  end
+  return table.concat(msg_tokens)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
-    local mp, mmp = you.mp()
-    local msg_tokens = {}
-    msg_tokens[#msg_tokens + 1] = create_meter(
-        mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
-    )
-    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
-    msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
-    if mmp_delta ~= 0 then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
-    end
-    if not CONFIG.announce.same_line and mp == mmp then
-        msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
-    end
-    return table.concat(msg_tokens)
+  local mp, mmp = you.mp()
+  local msg_tokens = {}
+  msg_tokens[#msg_tokens + 1] = create_meter(
+    mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER
+  )
+  msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
+  msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
+  if mmp_delta ~= 0 then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
+  end
+  if not CONFIG.announce.same_line and mp == mmp then
+    msg_tokens[#msg_tokens + 1] = with_color(COLORS.lightcyan, " (Full MP)")
+  end
+  return table.concat(msg_tokens)
 end
 
 local function last_msg_is_meter()
-    local last_msg = crawl.messages(1)
-    local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
-    return check and (check == " HP[" or check == " MP[")
+  local last_msg = crawl.messages(1)
+  local check = last_msg and #last_msg > METER_LENGTH+4 and last_msg:sub(METER_LENGTH+1,METER_LENGTH+4)
+  return check and (check == " HP[" or check == " MP[")
 end
 
 -- Hook functions
 function f_announce_damage.init()
-    prev = {}
-    prev.hp = 0
-    prev.mhp = 0
-    prev.mp = 0
-    prev.mmp = 0
-    prev.turn = you.turns()
+  prev = {}
+  prev.hp = 0
+  prev.mhp = 0
+  prev.mp = 0
+  prev.mmp = 0
+  prev.turn = you.turns()
 
-    if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
-        crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
-    end
+  if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
+    crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
+  end
 end
 
 function f_announce_damage.ready()
-    -- Update prev immediately, so we can return early below
-    local hp, mhp = you.hp()
-    local mp, mmp = you.mp()
-    local is_startup = prev.hp == 0
-    local hp_delta = hp - prev.hp
-    local mp_delta = mp - prev.mp
-    local mhp_delta = mhp - prev.mhp
-    local mmp_delta = mmp - prev.mmp
-    local damage_taken = mhp_delta - hp_delta
-    prev.hp = hp
-    prev.mhp = mhp
-    prev.mp = mp
-    prev.mmp = mmp
+  -- Update prev immediately, so we can return early below
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
+  local is_startup = prev.hp == 0
+  local hp_delta = hp - prev.hp
+  local mp_delta = mp - prev.mp
+  local mhp_delta = mhp - prev.mhp
+  local mmp_delta = mmp - prev.mmp
+  local damage_taken = mhp_delta - hp_delta
+  prev.hp = hp
+  prev.mhp = mhp
+  prev.mp = mp
+  prev.mmp = mmp
 
-    if is_startup then return end
-    if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-    local is_very_low_hp = hp <= CONFIG.announce.very_low_hp * mhp
+  if is_startup then return end
+  if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
+  local is_very_low_hp = hp <= CONFIG.announce.very_low_hp * mhp
 
-    -- Determine which messages to show
-    local do_hp = true
-    local do_mp = true
-    if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
-    if hp_delta >= 0 and hp_delta <  CONFIG.announce.hp_gain_limit then do_hp = false end
-    if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
-    if mp_delta >= 0 and mp_delta <  CONFIG.announce.mp_gain_limit then do_mp = false end
+  -- Determine which messages to show
+  local do_hp = true
+  local do_mp = true
+  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta <  CONFIG.announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta <  CONFIG.announce.mp_gain_limit then do_mp = false end
 
-    if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
-    if not do_hp and not do_mp then return end
-    if CONFIG.announce.always_both then
-        do_hp = true
-        do_mp = true
+  if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
+  if not do_hp and not do_mp then return end
+  if CONFIG.announce.always_both then
+    do_hp = true
+    do_mp = true
+  end
+  
+  -- Put messages together
+  local hp_msg = get_hp_message(hp_delta, mhp_delta)
+  local mp_msg = get_mp_message(mp_delta, mmp_delta)
+  local msg_tokens = {}
+  msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
+  if do_mp and do_hp then
+    msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
+    msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
+  end
+  if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
+  
+  -- Add Damage-related warnings, when damage >= threshold
+  if (damage_taken >= mhp * CONFIG.dmg_flash_threshold) then
+    if is_very_low_hp then return end -- mute % HP alerts
+    local summary_tokens = {}
+    local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)
+    if is_force_more_msg then
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+      summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+    else
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+      summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
+      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
     end
-    
-    -- Put messages together
-    local hp_msg = get_hp_message(hp_delta, mhp_delta)
-    local mp_msg = get_mp_message(mp_delta, mmp_delta)
-    local msg_tokens = {}
-    msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
-    if do_mp and do_hp then
-        msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
-        msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
-    end
-    if #msg_tokens > 0 then enqueue_mpr(table.concat(msg_tokens)) end
-    
-    -- Add Damage-related warnings, when damage >= threshold
-    if (damage_taken >= mhp * CONFIG.dmg_flash_threshold) then
-        if is_very_low_hp then return end -- mute % HP alerts
-        local summary_tokens = {}
-        local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)
-        if is_force_more_msg then
-            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
-            summary_tokens[#summary_tokens + 1] = with_color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
-            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
-        else
-            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
-            summary_tokens[#summary_tokens + 1] = with_color(COLORS.magenta, " BIG DAMAGE ")
-            summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
-        end
-        enqueue_mpr_opt_more(is_force_more_msg, table.concat(summary_tokens))
-    end
+    enqueue_mpr_opt_more(is_force_more_msg, table.concat(summary_tokens))
+  end
 end
 
 }
@@ -4717,42 +4715,42 @@ local DROP_KEY = "~~DROP_ME"
 
 -- Local functions
 local function inscribe_drop(it)
-    local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
-    it.inscribe(new_inscr, false)
-    if CONFIG.msg_on_inscribe then
-        local msg = "(You can drop " .. it.slot .. " - " ..it.name() .. ")"
-        crawl.mpr(with_color(COLORS.cyan, msg))
-    end
+  local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
+  it.inscribe(new_inscr, false)
+  if CONFIG.msg_on_inscribe then
+    local msg = "(You can drop " .. it.slot .. " - " ..it.name() .. ")"
+    crawl.mpr(with_color(COLORS.cyan, msg))
+  end
 end
 
 -- Hook functions
 function f_drop_inferior.init()
-    if not CONFIG.drop_inferior then return end
-    crawl.setopt("drop_filter += " .. DROP_KEY)
+  if not CONFIG.drop_inferior then return end
+  crawl.setopt("drop_filter += " .. DROP_KEY)
 end
 
 function f_drop_inferior.c_assign_invletter(it)
-    if not CONFIG.drop_inferior then return end
-    -- Remove any previous DROP_KEY inscriptions
-    it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
+  if not CONFIG.drop_inferior then return end
+  -- Remove any previous DROP_KEY inscriptions
+  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-    if not (it.is_weapon or is_armour(it)) then return end
-    if has_risky_ego(it) then return end
+  if not (it.is_weapon or is_armour(it)) then return end
+  if has_risky_ego(it) then return end
 
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        if not inv.artefact and inv.subtype() == it.subtype() and
-            (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
-                if it.is_weapon then
-                    if you.race() == "Coglin" then return end -- More trouble than it's worth
-                    if inv.plus <= it.plus then inscribe_drop(inv) end
-                else
-                    if get_armour_ac(inv) <= get_armour_ac(it) and inv.encumbrance >= it.encumbrance then
-                        if you.race() == "Poltergeist" then return end -- More trouble than it's worth 
-                        inscribe_drop(inv)
-                    end
-                end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if not inv.artefact and inv.subtype() == it.subtype() and
+      (not has_ego(inv) or get_ego(inv) == get_ego(it)) then
+        if it.is_weapon then
+          if you.race() == "Coglin" then return end -- More trouble than it's worth
+          if inv.plus <= it.plus then inscribe_drop(inv) end
+        else
+          if get_armour_ac(inv) <= get_armour_ac(it) and inv.encumbrance >= it.encumbrance then
+            if you.race() == "Poltergeist" then return end -- More trouble than it's worth 
+            inscribe_drop(inv)
+          end
         end
     end
+  end
 end
 
 }
@@ -4950,116 +4948,116 @@ f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
 
 -- Local functions
 local function add_exclusion(item_name)
-    if not util.contains(dropped_item_exclusions, item_name) then
-        dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
-    end
-    local command = "autopickup_exceptions ^= " .. item_name
-    crawl.setopt(command)
+  if not util.contains(dropped_item_exclusions, item_name) then
+    dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
+  end
+  local command = "autopickup_exceptions ^= " .. item_name
+  crawl.setopt(command)
 end
 
 local function remove_exclusion(item_name)
-    util.remove(dropped_item_exclusions, item_name)
-    local command = "autopickup_exceptions -= " .. item_name
-    crawl.setopt(command)
+  util.remove(dropped_item_exclusions, item_name)
+  local command = "autopickup_exceptions -= " .. item_name
+  crawl.setopt(command)
 end
 
 local function has_enchantable_weap_in_inv()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        if inv.is_weapon 
-            and not is_magic_staff(inv) 
-            and inv.plus < 9 
-            and (not inv.artefact or you.race() == "Mountain Dwarf") then
-                crawl.mpr(inv.name("qual"))
-                return true
-        end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.is_weapon 
+      and not is_magic_staff(inv) 
+      and inv.plus < 9 
+      and (not inv.artefact or you.race() == "Mountain Dwarf") then
+        crawl.mpr(inv.name("qual"))
+        return true
     end
-    return false
+  end
+  return false
 end
 
 --[[
-    Pulls name from text; returns nil if we should NOT exclude anything
-    Return name of item to exclude, or nil if we should NOT exclude anything
+  Pulls name from text; returns nil if we should NOT exclude anything
+  Return name of item to exclude, or nil if we should NOT exclude anything
 --]]
 local function get_excludable_name(text, for_exclusion)
-    text = cleanup_text(text, false) -- remove tags
-    text = text:gsub("{.*}", "")
-    text = text:gsub("[.]", "")
-    text = text:gsub("%(.*%)", "")
-    text = util.trim(text)
+  text = cleanup_text(text, false) -- remove tags
+  text = text:gsub("{.*}", "")
+  text = text:gsub("[.]", "")
+  text = text:gsub("%(.*%)", "")
+  text = util.trim(text)
 
-    -- jewellery and wands
-    local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
-    if idx then
-        return text:sub(idx, #text)
-    end
+  -- jewellery and wands
+  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
+  if idx then
+    return text:sub(idx, #text)
+  end
 
-    -- misc items
-    for _,item_name in ipairs(ALL_MISC_ITEMS) do
-        if text:find(item_name) then return item_name end
-    end
+  -- misc items
+  for _,item_name in ipairs(ALL_MISC_ITEMS) do
+    if text:find(item_name) then return item_name end
+  end
 
-    -- Missiles; add regex to hit specific missiles
-    for _,item_name in ipairs(ALL_MISSILES) do
-        if text:find(item_name) then
-            return item_name
-        end
+  -- Missiles; add regex to hit specific missiles
+  for _,item_name in ipairs(ALL_MISSILES) do
+    if text:find(item_name) then
+      return item_name
     end
+  end
 
-    -- Potions
-    idx = text:find("potions? of")
-    if idx then
-        return "potions? of " .. util.trim(text:sub(idx+10,#text))
-    end
+  -- Potions
+  idx = text:find("potions? of")
+  if idx then
+    return "potions? of " .. util.trim(text:sub(idx+10,#text))
+  end
 
-    -- Scrolls; Enchant scrolls are special; not always excluded
-    idx = text:find("scrolls? of")
-    if idx then
-        -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-        if for_exclusion and CONFIG.ignore_stashed_weapon_scrolls
-        and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
-        and has_enchantable_weap_in_inv() then
-            return
-        end
-        return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
+  -- Scrolls; Enchant scrolls are special; not always excluded
+  idx = text:find("scrolls? of")
+  if idx then
+    -- Enchant/Brand weapon scrolls continue pickup if they're still useful
+    if for_exclusion and CONFIG.ignore_stashed_weapon_scrolls
+    and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
+    and has_enchantable_weap_in_inv() then
+      return
     end
+    return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
+  end
 end
 
 -- Hook functions
 function f_exclude_dropped.init()
-    if not CONFIG.exclude_dropped then return end
-    create_persistent_data("dropped_item_exclusions", {})
+  if not CONFIG.exclude_dropped then return end
+  create_persistent_data("dropped_item_exclusions", {})
 
-    for _,v in ipairs(dropped_item_exclusions) do
-        add_exclusion(v)
-    end
+  for _,v in ipairs(dropped_item_exclusions) do
+    add_exclusion(v)
+  end
 end
 
 function f_exclude_dropped.c_message(text, channel)
-    if not CONFIG.exclude_dropped then return end
-    if channel ~= "plain" then return end
-    local exclude
-    if text:find("ou drop ", 1, true) then exclude = true
-    elseif text:find(" %- ") then exclude = false
-    else return end
+  if not CONFIG.exclude_dropped then return end
+  if channel ~= "plain" then return end
+  local exclude
+  if text:find("ou drop ", 1, true) then exclude = true
+  elseif text:find(" %- ") then exclude = false
+  else return end
 
-    local item_name = get_excludable_name(text, exclude)
-    if not item_name then return end
+  local item_name = get_excludable_name(text, exclude)
+  if not item_name then return end
 
-    if exclude then
-        -- Don't exclude if we dropped partial stack (except for jewellery)
-        for inv in iter.invent_iterator:new(items.inventory()) do
-            if inv.name("qual"):find(item_name, 1, true) then
-                if is_jewellery(inv) then break end
-                local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
-                if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
-                return
-            end
-        end
-
-        add_exclusion(item_name)
-    else
-        remove_exclusion(item_name)
+  if exclude then
+    -- Don't exclude if we dropped partial stack (except for jewellery)
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      if inv.name("qual"):find(item_name, 1, true) then
+        if is_jewellery(inv) then break end
+        local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
+        if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
+        return
+      end
     end
+
+    add_exclusion(item_name)
+  else
+    remove_exclusion(item_name)
+  end
 end
 
 }
@@ -5088,117 +5086,117 @@ local explore_after_recovery
 
 -- Local functions
 local function abort_fully_recover()
-    recovery_start_turn = 0
-    crawl.setopt("message_colour -= mute:You start waiting.")
-    explore_after_recovery = false
-    you.stop_activity()
+  recovery_start_turn = 0
+  crawl.setopt("message_colour -= mute:You start waiting.")
+  explore_after_recovery = false
+  you.stop_activity()
 end
 
 local function finish_fully_recover()
-    local turns = you.turns() - recovery_start_turn
-    crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns))
-    
-    recovery_start_turn = 0
-    crawl.setopt("message_colour -= mute:You start waiting.")
-    you.stop_activity()
+  local turns = you.turns() - recovery_start_turn
+  crawl.mpr(with_color(COLORS.lightgreen, "Fully recovered") .. string.format(" (%d turns)", turns))
+  
+  recovery_start_turn = 0
+  crawl.setopt("message_colour -= mute:You start waiting.")
+  you.stop_activity()
 
-    if explore_after_recovery then
-        explore_after_recovery = false
-        crawl.sendkeys("o")
-    end
+  if explore_after_recovery then
+    explore_after_recovery = false
+    crawl.sendkeys("o")
+  end
 end
 
 local function fully_recovered()
-    local hp, mhp = you.hp()
-    local mp, mmp = you.mp()
-    if hp ~= mhp then return false end
-    if mp ~= mmp then return false end
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
+  if hp ~= mhp then return false end
+  if mp ~= mmp then return false end
 
-    local status = you.status()
-    for _,s in ipairs(CONFIG.rest_off_statuses) do
-        if status:find(s) then
-            if not should_ignore_status(s) then return false end
-        end
+  local status = you.status()
+  for _,s in ipairs(CONFIG.rest_off_statuses) do
+    if status:find(s) then
+      if not should_ignore_status(s) then return false end
     end
+  end
 
-    return true
+  return true
 end
 
 local function remove_statuses_from_config()
-    local status = you.status()
-    local to_remove = {}
-    for _,s in ipairs(CONFIG.rest_off_statuses) do
-        if status:find(s) then
-            table.insert(to_remove, s)
-        end
+  local status = you.status()
+  local to_remove = {}
+  for _,s in ipairs(CONFIG.rest_off_statuses) do
+    if status:find(s) then
+      table.insert(to_remove, s)
     end
-    for _,s in ipairs(to_remove) do
-        util.remove(CONFIG.rest_off_statuses, s)
-        crawl.mpr("  Removed: " ..s)
-    end
+  end
+  for _,s in ipairs(to_remove) do
+    util.remove(CONFIG.rest_off_statuses, s)
+    crawl.mpr("  Removed: " ..s)
+  end
 end
 
 function should_ignore_status(s)
-    if s == "corroded" then
-        return next_to_slimy_wall() or you.branch() == "Dis"
-    elseif s == "slowed" then
-        return have_zero_stat()
-    end
-    return false
+  if s == "corroded" then
+    return next_to_slimy_wall() or you.branch() == "Dis"
+  elseif s == "slowed" then
+    return have_zero_stat()
+  end
+  return false
 end
 
 local function start_fully_recover()
-    recovery_start_turn = you.turns()
-    crawl.setopt("message_colour += mute:You start waiting.")
+  recovery_start_turn = you.turns()
+  crawl.setopt("message_colour += mute:You start waiting.")
 end
 
 -- Attach full recovery to auto-explore
 function macro_explore_fully_recover()
-    if fully_recovered() then
-        crawl.do_commands({"CMD_EXPLORE"})
-    else
-        explore_after_recovery = true
-        crawl.do_commands({"CMD_REST"})
-    end
+  if fully_recovered() then
+    crawl.do_commands({"CMD_EXPLORE"})
+  else
+    explore_after_recovery = true
+    crawl.do_commands({"CMD_REST"})
+  end
 end
 
 -- Hook functions
 function f_fully_recover.init()
-    recovery_start_turn = 0
-    explore_after_recovery = false
-    util.remove(CONFIG.rest_off_statuses, "slowed") -- special case handled elsewhere
-    
-    crawl.setopt("runrest_ignore_message += recovery:.*")
-    crawl.setopt("runrest_ignore_message += duration:.*")
-    crawl.setopt("macros += M " .. KEYS.explore .. " ===macro_explore_fully_recover")
+  recovery_start_turn = 0
+  explore_after_recovery = false
+  util.remove(CONFIG.rest_off_statuses, "slowed") -- special case handled elsewhere
+  
+  crawl.setopt("runrest_ignore_message += recovery:.*")
+  crawl.setopt("runrest_ignore_message += duration:.*")
+  crawl.setopt("macros += M " .. KEYS.explore .. " ===macro_explore_fully_recover")
 end
 
 function f_fully_recover.c_message(text, channel)
-    if channel == "plain" then
-        if text:find("ou start waiting", 1, true) or text:find("ou start resting", 1, true) then
-            if not fully_recovered() then start_fully_recover() end
-        end
-    elseif recovery_start_turn > 0 then
-        if channel == "timed_portal" then abort_fully_recover()
-        elseif fully_recovered() then finish_fully_recover()
-        end
+  if channel == "plain" then
+    if text:find("ou start waiting", 1, true) or text:find("ou start resting", 1, true) then
+      if not fully_recovered() then start_fully_recover() end
     end
+  elseif recovery_start_turn > 0 then
+    if channel == "timed_portal" then abort_fully_recover()
+    elseif fully_recovered() then finish_fully_recover()
+    end
+  end
 end
 
 function f_fully_recover.ready()
-    if recovery_start_turn > 0 then
-        if fully_recovered() then finish_fully_recover()
-        elseif not you.feel_safe() then abort_fully_recover()
-        elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
-            crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
-            crawl.mpr(with_color(COLORS.lightred, "Adjusting CONFIG.rest_off_statuses:"))
-            remove_statuses_from_config()
-            abort_fully_recover()
-        else crawl.do_commands({"CMD_SAFE_WAIT"})
-        end
-    else
-        explore_after_recovery = false
+  if recovery_start_turn > 0 then
+    if fully_recovered() then finish_fully_recover()
+    elseif not you.feel_safe() then abort_fully_recover()
+    elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
+      crawl.mpr(with_color(COLORS.lightred, "Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns."))
+      crawl.mpr(with_color(COLORS.lightred, "Adjusting CONFIG.rest_off_statuses:"))
+      remove_statuses_from_config()
+      abort_fully_recover()
+    else crawl.do_commands({"CMD_SAFE_WAIT"})
     end
+  else
+    explore_after_recovery = false
+  end
 end
 
 }
@@ -5220,23 +5218,23 @@ f_fm_disable.BRC_FEATURE_NAME = "fm-disable"
 
 -- Local constants + configuration
 local FM_DISABLES = {
-    "ou kneel at the altar",
-    "need to enable at least one skill for training",
-    "Okawaru grants you throwing weapons",
-    "Okawaru offers you a choice",
+  "ou kneel at the altar",
+  "need to enable at least one skill for training",
+  "Okawaru grants you throwing weapons",
+  "Okawaru offers you a choice",
 } -- FM_DISABLES (do not remove this comment)
 
 -- Hook functions
 function f_fm_disable.c_message(text, _)
-    if not CONFIG.fm_disable then return end
-    for _,v in ipairs(FM_DISABLES) do
-        if text:find(v) then
-            crawl.enable_more(false)
-            return
-        end
+  if not CONFIG.fm_disable then return end
+  for _,v in ipairs(FM_DISABLES) do
+    if text:find(v) then
+      crawl.enable_more(false)
+      return
     end
+  end
 
-    crawl.enable_more(true)
+  crawl.enable_more(true)
 end
 
 }
@@ -5260,28 +5258,28 @@ f_fm_monsters.BRC_FEATURE_NAME = "fm-monsters"
 
 -- Local configuration
 local ALWAYS_FLASH_SCREEN_MONSTERS = {
-    -- Noteworthy abilities
-    "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-    "vault guardian", "vault warden", "wendingo", 
-    -- Displacement
-    "deep elf knight", "swamp worm",
-    -- Summoning
-    "deep elf elementalist", 
+  -- Noteworthy abilities
+  "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
+  "vault guardian", "vault warden", "wendingo", 
+  -- Displacement
+  "deep elf knight", "swamp worm",
+  -- Summoning
+  "deep elf elementalist", 
 } -- always_flash_screen_monsters (do not remove this comment)
 
 local ALWAYS_FORCE_MORE_MONSTERS = {
   -- High damage/speed
-    "juggernaut", "orbs? of fire", "flayed ghost",
+  "juggernaut", "orbs? of fire", "flayed ghost",
   --Summoning
-    "shadow demon", "guardian serpent",
-    "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
-    "halazid warlock", "demonspawn corrupter",
+  "shadow demon", "guardian serpent",
+  "draconian stormcaller", "spriggan druid", "dryad", "worldbinder",
+  "halazid warlock", "demonspawn corrupter",
   --Dangerous abilities
-    "wyrmhole",
-    "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-    "starflower", "merfolk aquamancer", "wretched star",
+  "wyrmhole",
+  "torpor snail", "water nymph", "shambling mangrove", "iron giant",
+  "starflower", "merfolk aquamancer", "wretched star",
   --Dangerous clouds
-    "catoblepas", "apocalypse crab",
+  "catoblepas", "apocalypse crab",
 } -- always_force_more_monsters (do not remove this comment)
 
 -- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
@@ -5313,121 +5311,121 @@ local FM_PACK_NO_CREATE = {
 local FM_PATTERNS = {
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
   {name = "30hp", cond = "hp", cutoff = 30,
-      pattern = "hound|gnoll"},
+    pattern = "hound|gnoll"},
 
   -- Monsters dangerous until a certain point
   {name = "xl_7", cond = "xl", cutoff = 7,
-      pattern = "orc wizard"},
+    pattern = "orc wizard"},
   {name = "xl_12", cond = "xl", cutoff = 12,
-      pattern = "hydra|bloated husk"},
+    pattern = "hydra|bloated husk"},
 
   -- Monsters that can hit for ~50% of hp from range with unbranded attacks
   {name = "40hp", cond = "hp", cutoff = 40,
-      pattern = "orc priest" },
+    pattern = "orc priest" },
   {name = "50hp", cond = "hp", cutoff = 50,
-      pattern = "orc high priest|manticore" },
+    pattern = "orc high priest|manticore" },
   {name = "60hp", cond = "hp", cutoff = 60,
-      pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
+    pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)" },
   {name = "70hp_melai", cond = "hp", cutoff = 70,
-      pattern = "meliai"},
+    pattern = "meliai"},
   {name = "80hp", cond = "hp", cutoff = 80,
-      pattern = "gargoyle" },
+    pattern = "gargoyle" },
   {name = "90hp", cond = "hp", cutoff = 90,
-      pattern = "deep elf archer|tengu conjurer" },
+    pattern = "deep elf archer|tengu conjurer" },
   {name = "110hp", cond = "hp", cutoff = 110,
-      pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" ..
-                  "deep elf high priest|deep troll earth mage|stone giant|cacodemon" },
+    pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth" ..
+              "deep elf high priest|deep troll earth mage|stone giant|cacodemon" },
   {name = "120hp", cond = "hp", cutoff = 120,
-      pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
+    pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter" },
   {name = "160hp", cond = "hp", cutoff = 160,
-      pattern = "brimstone fiend|deep elf sorcerer" ..
+    pattern = "brimstone fiend|deep elf sorcerer" ..
               "hell sentinal|war gargoyle|draconian (knight|scorcher)" },
   {name = "200hp", cond = "hp", cutoff = 200,
-      pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
+    pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)" },
 
   -- Monsters that can crowd-control you without sufficient willpower
   -- Cutoff ~10% for most spells; lower for more significant spells like banish
   {name = "willpower2", cond = "will", cutoff = 2,
-      pattern = "basilisk|naga ritualist|vampire(?! (bat|mage|mosquito))|sphinx marauder" },
+    pattern = "basilisk|naga ritualist|vampire(?! (bat|mage|mosquito))|sphinx marauder" },
   {name = "willpower3", cond = "will", cutoff = 3,
-      pattern = "deep elf (demonologist|sorcerer|archer)|occultist|" ..
+    pattern = "deep elf (demonologist|sorcerer|archer)|occultist|" ..
               "merfolk siren|fenstrider witch|cacodemon|" ..
               "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|" ..
               "glowing orange brain|orc sorcerer|" ..
               "ogre mage|satyr|vault sentinel|iron elemental|" ..
               "death knight|vampire knight" },
   {name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3,
-      pattern = "great orb of eyes" },
+    pattern = "great orb of eyes" },
   {name = "willpower3_golden_eye", cond = "will", cutoff = 3,
-      pattern = "golden eye" },
+    pattern = "golden eye" },
   {name = "willpower4", cond = "will", cutoff = 4,
-      pattern = "merfolk avatar|tainted leviathan|nargun" },
+    pattern = "merfolk avatar|tainted leviathan|nargun" },
 
   -- Brain feed with low int
   {name = "brainfeed", cond = "int", cutoff = 6,
-      pattern = "glowing orange brain|neqoxec" },
+    pattern = "glowing orange brain|neqoxec" },
 
   -- Alert if no resist and HP below cutoff
   {name = "pois_30", cond = "pois", cutoff = 30,
-      pattern = "adder"},
+    pattern = "adder"},
   {name = "pois_80", cond = "pois", cutoff = 80,
-      pattern = "golden dragon|green draconian|swamp dragon" },
+    pattern = "golden dragon|green draconian|swamp dragon" },
   {name = "pois_120", cond = "pois", cutoff = 120,
-      pattern = "green death|naga mage|nagaraja|fenstrider witch" },
+    pattern = "green death|naga mage|nagaraja|fenstrider witch" },
   {name = "pois_140", cond = "pois", cutoff = 140,
-      pattern = "tengu reaver" },
+    pattern = "tengu reaver" },
 
   {name = "elec_40", cond = "elec", cutoff = 40,
-      pattern = "electric eel" },
+    pattern = "electric eel" },
   {name = "elec_80", cond = "elec", cutoff = 80,
-      pattern = "shock serpent|raiju|spark wasp" },
+    pattern = "shock serpent|raiju|spark wasp" },
   {name = "elec_120", cond = "elec", cutoff = 120,
-      pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" ..
-                "storm dragon|tengu conjurer" },
+    pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" ..
+              "storm dragon|tengu conjurer" },
   {name = "elec_140", cond = "elec", cutoff = 140,
-      pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" ..
-                "ball lightning|tengu reaver" },
+    pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" ..
+              "ball lightning|tengu reaver" },
 
   {name = "corr_60", cond = "corr", cutoff = 60,
-      pattern = "acid dragon" },
+    pattern = "acid dragon" },
   {name = "corr_140", cond = "corr", cutoff = 140,
-      pattern = "tengu reaver|entropy weaver|demonspawn corrupter|moon troll" },
+    pattern = "tengu reaver|entropy weaver|demonspawn corrupter|moon troll" },
 
   {name = "fire_60", cond = "fire", cutoff = 60,
-      pattern = "steam dragon|lindwurm|fire crab|lava snake" },
+    pattern = "steam dragon|lindwurm|fire crab|lava snake" },
   {name = "fire_100", cond = "fire", cutoff = 100,
-      pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
+    pattern = "efreet|deep elf pyromancer|smoke demon|sun moth" },
   {name = "fire_120", cond = "fire", cutoff = 120,
-      pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" ..
-                "ogre mage|molten gargoyle|hell knight" },
+    pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|" ..
+              "ogre mage|molten gargoyle|hell knight" },
   {name = "fire_140", cond = "fire", cutoff = 140,
-      pattern = "balrug" },
+    pattern = "balrug" },
   {name = "fire_160", cond = "fire", cutoff = 160,
-      pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" ..
-                "fire dragon|salamander tyrant|tengu reaver" },
+    pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" ..
+              "fire dragon|salamander tyrant|tengu reaver" },
   {name = "fire_240", cond = "fire", cutoff = 240,
-      pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
+    pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher" },
 
   {name = "cold_80", cond = "cold", cutoff = 80,
-      pattern = "rime drake" },
+    pattern = "rime drake" },
   {name = "cold_120", cond = "cold", cutoff = 120,
-      pattern = "blizzard demon|bog body|ironbound frostheart|" ..
-                "demonspawn blood saint|white draconian" },
+    pattern = "blizzard demon|bog body|ironbound frostheart|" ..
+              "demonspawn blood saint|white draconian" },
   {name = "cold_160", cond = "cold", cutoff = 160,
-      pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
+    pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver" },
   {name = "cold_180", cond = "cold", cutoff = 180,
-      pattern = "(?<!dread)(?<!ancient) lich" },
+    pattern = "(?<!dread)(?<!ancient) lich" },
   {name = "cold_240", cond = "cold", cutoff = 240,
-      pattern = "crystal (guardian|echidna)" },
+    pattern = "crystal (guardian|echidna)" },
 
   {name = "drain_100", cond = "drain", cutoff = 100,
-      pattern = "orc sorcerer" },
+    pattern = "orc sorcerer" },
   {name = "drain_120", cond = "drain", cutoff = 120,
-      pattern = "necromancer" },
+    pattern = "necromancer" },
   {name = "drain_150", cond = "drain", cutoff = 150,
-      pattern = "revenant|demonspawn blood saint" },
+    pattern = "revenant|demonspawn blood saint" },
   {name = "drain_190", cond = "drain", cutoff = 190,
-      pattern = "shadow dragon" },
+    pattern = "shadow dragon" },
 } -- end fm_patterns (do not remove this comment)
 
 -- Set mutators to either flash (if undead) or a conditional fm
@@ -5437,7 +5435,7 @@ else
   table.insert(FM_PATTERNS,
     -- Malmutate without rMut
     {name = "malmutate", cond = "mut", cutoff = 1,
-        pattern = "cacodemon|neqoxec|shining eye" }
+      pattern = "cacodemon|neqoxec|shining eye" }
   )
 end
 ------------------- End config section -------------------
@@ -5461,9 +5459,14 @@ local function get_three_pip_action(is_active, hp, dmg_threshold, resistance)
   end
 end
 
+local MONSTER_OPTION_TOKENS = {
+  "monster_warning:(?<!spectral )(",
+  "",
+  ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+}
 local function set_monster_option(sign, monster_str, option)
-  local fm_str = "monster_warning:(?<!spectral )(" .. monster_str ..
-      ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+  MONSTER_OPTION_TOKENS[2] = monster_str
+  local fm_str = table.concat(MONSTER_OPTION_TOKENS)
   crawl.setopt(option .. " " .. sign .. "= " .. fm_str)
 end
 
@@ -5518,7 +5521,6 @@ function f_fm_monsters.init()
     crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
   end
 
-
   set_all(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
   set_all(ALWAYS_FORCE_MORE_MONSTERS, "force_more_message")
 
@@ -5549,7 +5551,7 @@ end
 
 ------------------- Hooks -------------------
 function f_fm_monsters.c_message(text, channel)
-    if channel ~= "monster_warning" then return end
+  if channel ~= "monster_warning" then return end
   if CONFIG.fm_pack_duration == 0 then return end
   
   -- Identifies when a mute should be turned on
@@ -5563,8 +5565,8 @@ function f_fm_monsters.c_message(text, channel)
 end
 
 function f_fm_monsters.ready()
-    local activated = {}
-    local deactivated = {}
+  local activated = {}
+  local deactivated = {}
 
   local hp, mhp = you.hp()
   local amulet = items.equipped_at("amulet")
@@ -5696,60 +5698,60 @@ local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
 -- Local functions
 local function inscribe_armour_stats(it)
-    local abbr = is_shield(it) and "SH" or "AC"
-    local primary, ev = get_armour_info_strings(it)
+  local abbr = is_shield(it) and "SH" or "AC"
+  local primary, ev = get_armour_info_strings(it)
 
-    local new_insc
-    if it.inscription:find(abbr .. NUM_PATTERN) then
-        -- Replace each stat individually, to avoid overwriting <color> tags
-        new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
-        if ev and ev ~= "" then
-            new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
-        end
-    else
-        new_insc = primary
-        if ev and ev ~= "" then
-            new_insc = new_insc .. ", " .. ev
-        end
-        if it.inscription and it.inscription ~= "" then
-            new_insc = new_insc .. "; " .. it.inscription
-        end
+  local new_insc
+  if it.inscription:find(abbr .. NUM_PATTERN) then
+    -- Replace each stat individually, to avoid overwriting <color> tags
+    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
+    if ev and ev ~= "" then
+      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
     end
+  else
+    new_insc = primary
+    if ev and ev ~= "" then
+      new_insc = new_insc .. ", " .. ev
+    end
+    if it.inscription and it.inscription ~= "" then
+      new_insc = new_insc .. "; " .. it.inscription
+    end
+  end
 
-    it.inscribe(new_insc, false)
+  it.inscribe(new_insc, false)
 end
 
 local function inscribe_weapon_stats(it)
-    local orig_inscr = it.inscription
-    local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
-    local prefix, suffix = "", ""
+  local orig_inscr = it.inscription
+  local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
+  local prefix, suffix = "", ""
 
-    local idx = orig_inscr:find("DPS:", 1, true)
-    if idx then
-        if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
-        if idx + #dps_inscr - 1 < #orig_inscr then
-            suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
-        end
-    elseif #orig_inscr > 0 then
-        suffix = "; " .. orig_inscr
+  local idx = orig_inscr:find("DPS:", 1, true)
+  if idx then
+    if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
+    if idx + #dps_inscr - 1 < #orig_inscr then
+      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
     end
+  elseif #orig_inscr > 0 then
+    suffix = "; " .. orig_inscr
+  end
 
-    it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
+  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
 function do_stat_inscription(it)
-    if CONFIG.inscribe_weapons and it.is_weapon then
-        inscribe_weapon_stats(it)
-    elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
-        inscribe_armour_stats(it)
-    end
+  if CONFIG.inscribe_weapons and it.is_weapon then
+    inscribe_weapon_stats(it)
+  elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
+    inscribe_armour_stats(it)
+  end
 end
 
 -- Hook functions
 function f_inscribe_stats.ready()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        do_stat_inscription(inv)
-    end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    do_stat_inscription(inv)
+  end
 end
 
 }
@@ -5778,77 +5780,77 @@ local prev_available_spell_levels = 0
 
 -- Local functions
 local function alert_low_hp()
-    local hp, mhp = you.hp()
-    if below_hp_threshold then
-        below_hp_threshold = hp ~= mhp
-    elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
-        below_hp_threshold = true
-        local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
-        enqueue_mpr_opt_more(true, table.concat({
-            EMOJI.EXCLAMATION, " ", with_color(COLORS.magenta, low_hp_msg), " ", EMOJI.EXCLAMATION
-        }))
-    end
+  local hp, mhp = you.hp()
+  if below_hp_threshold then
+    below_hp_threshold = hp ~= mhp
+  elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
+    below_hp_threshold = true
+    local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
+    enqueue_mpr_opt_more(true, table.concat({
+      EMOJI.EXCLAMATION, " ", with_color(COLORS.magenta, low_hp_msg), " ", EMOJI.EXCLAMATION
+    }))
+  end
 end
 
 local function alert_remove_faith()
-    if not alerted_max_piety and you.piety_rank() == 6 then
-        local am = items.equipped_at("amulet")
-        if am and am.subtype() == "amulet of faith" and not am.artefact then
-            if you.god() == "Uskayaw" then return end
-            mpr_with_more(with_color(COLORS.lightcyan, REMOVE_FAITH_MSG))
-            alerted_max_piety = true
-        end
+  if not alerted_max_piety and you.piety_rank() == 6 then
+    local am = items.equipped_at("amulet")
+    if am and am.subtype() == "amulet of faith" and not am.artefact then
+      if you.god() == "Uskayaw" then return end
+      mpr_with_more(with_color(COLORS.lightcyan, REMOVE_FAITH_MSG))
+      alerted_max_piety = true
     end
+  end
 end
 
 local function alert_spell_level_changes()
-    local new_spell_levels = you.spell_levels()
-    if new_spell_levels > prev_available_spell_levels then
-        local delta = new_spell_levels - prev_available_spell_levels
-        local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
-        local avail = " (" .. new_spell_levels .. " available)"
-        crawl.mpr(with_color(COLORS.lightcyan, msg) .. with_color(COLORS.cyan, avail))
-    elseif new_spell_levels < prev_available_spell_levels then
-        crawl.mpr(with_color(COLORS.magenta, new_spell_levels .. " spell levels remaining"))
-    end
+  local new_spell_levels = you.spell_levels()
+  if new_spell_levels > prev_available_spell_levels then
+    local delta = new_spell_levels - prev_available_spell_levels
+    local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
+    local avail = " (" .. new_spell_levels .. " available)"
+    crawl.mpr(with_color(COLORS.lightcyan, msg) .. with_color(COLORS.cyan, avail))
+  elseif new_spell_levels < prev_available_spell_levels then
+    crawl.mpr(with_color(COLORS.magenta, new_spell_levels .. " spell levels remaining"))
+  end
 
-    prev_available_spell_levels = new_spell_levels
+  prev_available_spell_levels = new_spell_levels
 end
 
 -- Save with message functionality
 -- by gammafunk, edits by buehler
 function macro_save_with_message()
-    crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
-    local res = crawl.getch()
-    if not (string.char(res) == "y" or string.char(res) == "Y") then
-        crawl.mpr("Okay, then.")
-        return
-    end
-    crawl.formatted_mpr("Leave a message: ", "prompt")
-    saved_game_msg = crawl.c_input_line()
-    create_persistent_data("saved_game_msg", saved_game_msg)
-    crawl.sendkeys(control_key("s"))
+  crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
+  local res = crawl.getch()
+  if not (string.char(res) == "y" or string.char(res) == "Y") then
+    crawl.mpr("Okay, then.")
+    return
+  end
+  crawl.formatted_mpr("Leave a message: ", "prompt")
+  saved_game_msg = crawl.c_input_line()
+  create_persistent_data("saved_game_msg", saved_game_msg)
+  crawl.sendkeys(control_key("s"))
 end
 
 -- Hook functions
 function f_misc_alerts.init()
-    prev_available_spell_levels = you.spell_levels()
-    below_hp_threshold = false
-    create_persistent_data("alerted_max_piety", false)
+  prev_available_spell_levels = you.spell_levels()
+  below_hp_threshold = false
+  create_persistent_data("alerted_max_piety", false)
 
-    if CONFIG.save_with_msg then
-        crawl.setopt("macros += M " .. KEYS.save_game .. " ===macro_save_with_message")
-        if saved_game_msg and saved_game_msg ~= "" then
-            crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
-            saved_game_msg = nil
-        end
+  if CONFIG.save_with_msg then
+    crawl.setopt("macros += M " .. KEYS.save_game .. " ===macro_save_with_message")
+    if saved_game_msg and saved_game_msg ~= "" then
+      crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
+      saved_game_msg = nil
     end
+  end
 end
 
 function f_misc_alerts.ready()
-    if CONFIG.alert_remove_faith then alert_remove_faith() end
-    if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
-    if CONFIG.alert_spell_level_changes then alert_spell_level_changes() end
+  if CONFIG.alert_remove_faith then alert_remove_faith() end
+  if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
+  if CONFIG.alert_spell_level_changes then alert_spell_level_changes() end
 end
 
 }
@@ -5873,105 +5875,105 @@ local do_remind_id_check
 
 -- Local functions
 local function alert_remind_identify()
-    crawl.mpr(
-        EMOJI.REMIND_IDENTIFY ..
-        with_color(COLORS.magenta, " You have something to identify. ") ..
-        EMOJI.REMIND_IDENTIFY
-    )
+  crawl.mpr(
+    EMOJI.REMIND_IDENTIFY ..
+    with_color(COLORS.magenta, " You have something to identify. ") ..
+    EMOJI.REMIND_IDENTIFY
+  )
 end
 
 local function get_max_stack_size(class, skip_slot)
-    local max_stack_size = 0
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        if inv.quantity > max_stack_size and inv.class(true) == class and inv.slot ~= skip_slot and not inv.is_identified then
-            max_stack_size = inv.quantity
-        end
+  local max_stack_size = 0
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.quantity > max_stack_size and inv.class(true) == class and inv.slot ~= skip_slot and not inv.is_identified then
+      max_stack_size = inv.quantity
     end
-    return max_stack_size
+  end
+  return max_stack_size
 end
 
 local function have_scroll_of_id()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        if inv.name("qual") == "scroll of identify" then
-            return true
-        end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.name("qual") == "scroll of identify" then
+      return true
     end
-    return false
+  end
+  return false
 end
 
 local function have_unid_item()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        if not inv.is_identified then
-            return true
-        end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if not inv.is_identified then
+      return true
     end
-    return false
+  end
+  return false
 end
 
 -- Hook functions
 function f_remind_id.init()
-    do_remind_id_check = true
-    create_persistent_data("found_scroll_of_id", false)
+  do_remind_id_check = true
+  create_persistent_data("found_scroll_of_id", false)
 end
 
 function f_remind_id.c_assign_invletter(it)
-    if not it.is_identified then
-        if have_scroll_of_id() then
-            you.stop_activity()
-            do_remind_id_check = true
-            return
-        end
-    elseif it.name("qual") == "scroll of identify" then
-        if have_unid_item() then
-            you.stop_activity()
-            do_remind_id_check = true
-            return
-        end
+  if not it.is_identified then
+    if have_scroll_of_id() then
+      you.stop_activity()
+      do_remind_id_check = true
+      return
     end
+  elseif it.name("qual") == "scroll of identify" then
+    if have_unid_item() then
+      you.stop_activity()
+      do_remind_id_check = true
+      return
+    end
+  end
 end
 
 function f_remind_id.c_message(text, channel)
-    if channel ~= "plain" then return end
+  if channel ~= "plain" then return end
 
-    if text:find("scrolls? of identify") then
-        found_scroll_of_id = true
-        if not text:find("ou drop ", 1, true) and have_unid_item() then
-            you.stop_activity()
-            do_remind_id_check = true
-        end
-    elseif not found_scroll_of_id then
-        -- Pre-ID: Stop when largest stack of pots/scrolls increases
-        local idx = text:find(" %- ")
-        if not idx then return end
-
-        local slot = items.letter_to_index(text:sub(idx - 1, idx - 1))
-        local it = items.inslot(slot)
-
-        if it.is_identified then return end
-        -- Picking up known items still returns identified == false
-        -- Doing some hacky checks below instead
-
-        local it_class = it.class(true)
-        if it_class == "scroll" then
-            if it.quantity > math.max(CONFIG.stop_on_scrolls_count-1, get_max_stack_size("scroll", slot)) then
-                you.stop_activity()
-            end
-        elseif it_class == "potion" then
-            if it.quantity > math.max(CONFIG.stop_on_pots_count-1, get_max_stack_size("potion", slot)) then
-                you.stop_activity()
-            end
-        end
+  if text:find("scrolls? of identify") then
+    found_scroll_of_id = true
+    if not text:find("ou drop ", 1, true) and have_unid_item() then
+      you.stop_activity()
+      do_remind_id_check = true
     end
+  elseif not found_scroll_of_id then
+    -- Pre-ID: Stop when largest stack of pots/scrolls increases
+    local idx = text:find(" %- ")
+    if not idx then return end
+
+    local slot = items.letter_to_index(text:sub(idx - 1, idx - 1))
+    local it = items.inslot(slot)
+
+    if it.is_identified then return end
+    -- Picking up known items still returns identified == false
+    -- Doing some hacky checks below instead
+
+    local it_class = it.class(true)
+    if it_class == "scroll" then
+      if it.quantity > math.max(CONFIG.stop_on_scrolls_count-1, get_max_stack_size("scroll", slot)) then
+        you.stop_activity()
+      end
+    elseif it_class == "potion" then
+      if it.quantity > math.max(CONFIG.stop_on_pots_count-1, get_max_stack_size("potion", slot)) then
+        you.stop_activity()
+      end
+    end
+  end
 end
 
 function f_remind_id.ready()
-    if do_remind_id_check then
-        do_remind_id_check = false
-        if have_unid_item() and have_scroll_of_id() then
-            alert_remind_identify()
-            you.stop_activity()
-        end
+  if do_remind_id_check then
+    do_remind_id_check = false
+    if have_unid_item() and have_scroll_of_id() then
+      alert_remind_identify()
+      you.stop_activity()
     end
+  end
 end
 
 }
@@ -6001,120 +6003,120 @@ local autosearched_gauntlet
 
 -- Local functions
 local function search_gauntlet()
-    crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
+  crawl.sendkeys({ 6, "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r" })
 end
 
 local function ready_gauntlet_macro()
-    if you.branch() == "Gauntlet" and not autosearched_gauntlet then
-        search_gauntlet()
-        autosearched_gauntlet = true
-    end
+  if you.branch() == "Gauntlet" and not autosearched_gauntlet then
+    search_gauntlet()
+    autosearched_gauntlet = true
+  end
 end
 
 local function c_message_gauntlet_actions(text, _)
-    -- Search again with CMD_EXPLORE
-    if you.branch() == "Gauntlet" then
-        if text:find("explor", 1, true) then
-            search_gauntlet()
-        end
+  -- Search again with CMD_EXPLORE
+  if you.branch() == "Gauntlet" then
+    if text:find("explor", 1, true) then
+      search_gauntlet()
     end
+  end
 end
 
 local function religion_is_handled()
-    if you.race() == "Demigod" then return true end
-    if you.god() == "No God" then return false end
-    if you.good_god() then return you.xl() > 9 end
-    return true
+  if you.race() == "Demigod" then return true end
+  if you.god() == "No God" then return false end
+  if you.good_god() then return you.xl() > 9 end
+  return true
 end
 
 local function ready_ignore_altars()
-    if stop_on_altars and religion_is_handled() then
-        stop_on_altars = false
-        crawl.setopt("explore_stop -= altars")
-    elseif not stop_on_altars and not religion_is_handled() then
-        stop_on_altars = true
-        crawl.setopt("explore_stop += altars")
-    end
+  if stop_on_altars and religion_is_handled() then
+    stop_on_altars = false
+    crawl.setopt("explore_stop -= altars")
+  elseif not stop_on_altars and not religion_is_handled() then
+    stop_on_altars = true
+    crawl.setopt("explore_stop += altars")
+  end
 end
 
 local function ready_ignore_exits()
-    if stop_on_portals and util.contains(ALL_PORTAL_NAMES, you.branch()) then
-        stop_on_portals = false
-        crawl.setopt("explore_stop -= portals")
-    elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, you.branch()) then
-        stop_on_portals = true
-        crawl.setopt("explore_stop += portals")
-    end
+  if stop_on_portals and util.contains(ALL_PORTAL_NAMES, you.branch()) then
+    stop_on_portals = false
+    crawl.setopt("explore_stop -= portals")
+  elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, you.branch()) then
+    stop_on_portals = true
+    crawl.setopt("explore_stop += portals")
+  end
 end
 
 local function ready_stop_on_pan_gates()
-    local branch = you.branch()
-    if stop_on_pan_gates and branch ~= "Pan" then
-        stop_on_pan_gates = false
-        crawl.setopt("explore_stop -= stairs")
-    elseif not stop_on_pan_gates and branch == "Pan" then
-        stop_on_pan_gates = true
-        crawl.setopt("explore_stop += stairs")
-    end
+  local branch = you.branch()
+  if stop_on_pan_gates and branch ~= "Pan" then
+    stop_on_pan_gates = false
+    crawl.setopt("explore_stop -= stairs")
+  elseif not stop_on_pan_gates and branch == "Pan" then
+    stop_on_pan_gates = true
+    crawl.setopt("explore_stop += stairs")
+  end
 end
 
 local function ready_stop_on_hell_stairs()
-    local branch = you.branch()
-    if stop_on_hell_stairs and not in_hell() then
-        stop_on_hell_stairs = false
-        crawl.setopt("explore_stop -= stairs")
-    elseif not stop_on_hell_stairs and in_hell() then
-        stop_on_hell_stairs = true
-        crawl.setopt("explore_stop += stairs")
-    end
+  local branch = you.branch()
+  if stop_on_hell_stairs and not in_hell() then
+    stop_on_hell_stairs = false
+    crawl.setopt("explore_stop -= stairs")
+  elseif not stop_on_hell_stairs and in_hell() then
+    stop_on_hell_stairs = true
+    crawl.setopt("explore_stop += stairs")
+  end
 end
 
 local function search_altars()
-    crawl.sendkeys({ 6, "altar\r" })
+  crawl.sendkeys({ 6, "altar\r" })
 end
 
 local function ready_temple_macro()
-    if you.branch() == "Temple" and not autosearched_temple then
-        search_altars()
-        autosearched_temple = true
-    end
+  if you.branch() == "Temple" and not autosearched_temple then
+    search_altars()
+    autosearched_temple = true
+  end
 end
 
 local function c_message_temple_actions(text, _)
-    if you.branch() == "Temple" then
-        -- Search again with CMD_EXPLORE
-        if text:find("explor", 1, true) then
-            search_altars()
-        elseif text:find("welcomes you!", 1, true) then
-            -- Run to staircase after worship
-            enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
-            crawl.sendkeys("X<\r")
-        end
+  if you.branch() == "Temple" then
+    -- Search again with CMD_EXPLORE
+    if text:find("explor", 1, true) then
+      search_altars()
+    elseif text:find("welcomes you!", 1, true) then
+      -- Run to staircase after worship
+      enqueue_mpr(with_color(COLORS.darkgrey, "Ran to temple exit."))
+      crawl.sendkeys("X<\r")
     end
+  end
 end
 
 -- Hook functions
 function f_runrest_features.init()
-    stop_on_altars = true
-    stop_on_portals = true
-    stop_on_pan_gates = false
-    stop_on_hell_stairs = false
-    autosearched_temple = false
-    autosearched_gauntlet = false
+  stop_on_altars = true
+  stop_on_portals = true
+  stop_on_pan_gates = false
+  stop_on_hell_stairs = false
+  autosearched_temple = false
+  autosearched_gauntlet = false
 end
 
 function f_runrest_features.c_message(text, _)
-    if CONFIG.temple_macros then c_message_temple_actions(text, _) end
-    if CONFIG.gauntlet_macros then c_message_gauntlet_actions(text, _) end
+  if CONFIG.temple_macros then c_message_temple_actions(text, _) end
+  if CONFIG.gauntlet_macros then c_message_gauntlet_actions(text, _) end
 end
 
 function f_runrest_features.ready()
-    if CONFIG.ignore_altars then ready_ignore_altars() end
-    if CONFIG.ignore_portal_exits then ready_ignore_exits() end
-    if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
-    if CONFIG.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
-    if CONFIG.temple_macros then ready_temple_macro() end
-    if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
+  if CONFIG.ignore_altars then ready_ignore_altars() end
+  if CONFIG.ignore_portal_exits then ready_ignore_exits() end
+  if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
+  if CONFIG.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
+  if CONFIG.temple_macros then ready_temple_macro() end
+  if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
 end
 
 }
@@ -6142,29 +6144,29 @@ local NO_INSCRIPTION_NEEDED = {
 
 -- Hook functions
 function f_safe_consumables.ready()
-    if not CONFIG.safe_consumables then return end
-    -- Remove the default "!r" and "!q" inscriptions after identify
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        local inv_class = inv.class(true)
-        local st = inv.subtype()
-        if inv_class == "scroll" then
-            if (st == "poison" and you.res_poison() > 0)
-                or (st == "torment" and you.torment_immune())
-                or util.contains(NO_INSCRIPTION_NEEDED, st) then
-                    if inv.inscription:find("%!r") then
-                        inv.inscribe(inv.inscription:gsub("%!r", ""), false)
-                    end
-            elseif not inv.inscription:find("%!r") then inv.inscribe("!r")
-            end
-        elseif inv_class == "potion" then
-            if util.contains(NO_INSCRIPTION_NEEDED, st) then
-                if inv.inscription:find("%!q") then 
-                    inv.inscribe(inv.inscription:gsub("%!q", ""), false)
-                end
-            elseif not inv.inscription:find("%!q") then inv.inscribe("!q")
-            end
+  if not CONFIG.safe_consumables then return end
+  -- Remove the default "!r" and "!q" inscriptions after identify
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local inv_class = inv.class(true)
+    local st = inv.subtype()
+    if inv_class == "scroll" then
+      if (st == "poison" and you.res_poison() > 0)
+        or (st == "torment" and you.torment_immune())
+        or util.contains(NO_INSCRIPTION_NEEDED, st) then
+          if inv.inscription:find("%!r") then
+            inv.inscribe(inv.inscription:gsub("%!r", ""), false)
+          end
+      elseif not inv.inscription:find("%!r") then inv.inscribe("!r")
+      end
+    elseif inv_class == "potion" then
+      if util.contains(NO_INSCRIPTION_NEEDED, st) then
+        if inv.inscription:find("%!q") then 
+          inv.inscribe(inv.inscription:gsub("%!q", ""), false)
         end
+      elseif not inv.inscription:find("%!q") then inv.inscribe("!q")
+      end
     end
+  end
 end
 
 }
@@ -6192,63 +6194,63 @@ local v5_unwarned
 
 -- Local functions
 local function check_new_location(key)
-    local feature = view.feature_at(0, 0)
-    local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
+  local feature = view.feature_at(0, 0)
+  local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
-    local turn_diff = you.turns() - last_stair_turn
-    if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
-        if key == ">" then
-            if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
-                crawl.sendkeys(key)
-                return
-            end
-        else
-            if not feature:find("up", 1, true) then
-                crawl.sendkeys(key)
-                return
-            end
-        end
-        if not mpr_yesno("Really go right back?") then
-            crawl.mpr("Okay, then.")
-            return
-        end
-    elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
-        -- V5 warning idea by rypofalem --
-        if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
-            if not mpr_yesno("Really go to Vaults:5?") then
-                crawl.mpr("Okay, then.")
-                return
-            end
-            v5_unwarned = false
-        end
+  local turn_diff = you.turns() - last_stair_turn
+  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
+    if key == ">" then
+      if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
+        crawl.sendkeys(key)
+        return
+      end
+    else
+      if not feature:find("up", 1, true) then
+        crawl.sendkeys(key)
+        return
+      end
     end
+    if not mpr_yesno("Really go right back?") then
+      crawl.mpr("Okay, then.")
+      return
+    end
+  elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
+    -- V5 warning idea by rypofalem --
+    if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
+      if not mpr_yesno("Really go to Vaults:5?") then
+        crawl.mpr("Okay, then.")
+        return
+      end
+      v5_unwarned = false
+    end
+  end
 
-    crawl.sendkeys(key)
-    if not one_way_stair then last_stair_turn = you.turns() end
+  crawl.sendkeys(key)
+  if not one_way_stair then last_stair_turn = you.turns() end
 end
 
 function macro_do_safe_downstairs()
-    check_new_location(">")
+  check_new_location(">")
 end
 
 function macro_do_safe_upstairs()
-    check_new_location("<")
+  check_new_location("<")
 end
 
 -- Hook functions
 function f_safe_stairs.init()
-    prev_location = you.branch() .. you.depth()
-    cur_location = you.branch() .. you.depth()
-    last_stair_turn = 0
-    v5_unwarned = true
+  prev_location = you.branch() .. you.depth()
+  cur_location = you.branch() .. you.depth()
+  last_stair_turn = 0
+  v5_unwarned = true
 
-    crawl.setopt("macros += M " .. KEYS.go_downstairs .. " ===macro_do_safe_downstairs")
-    crawl.setopt("macros += M " .. KEYS.go_upstairs .. " ===macro_do_safe_upstairs")
+  crawl.setopt("macros += M " .. KEYS.go_downstairs .. " ===macro_do_safe_downstairs")
+  crawl.setopt("macros += M " .. KEYS.go_upstairs .. " ===macro_do_safe_upstairs")
 end
 
 function f_safe_stairs.ready()
-    prev_location = cur_location
-    cur_location = you.branch() .. you.depth()
+  prev_location = cur_location
+  cur_location = you.branch() .. you.depth()
 end
 
 }
@@ -6269,29 +6271,29 @@ f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
 
 function f_startup.ready()
-    if you.turns() == 0 then
-        if CONFIG.show_skills_on_startup then
-            local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
-            if show_skills_on_startup then
-                crawl.sendkeys("m")
-            end
-        end
-        
-        ---- Auto-set default skill targets ----
-        if CONFIG.auto_set_skill_targets then
-            for _, skill_target in ipairs(CONFIG.auto_set_skill_targets) do
-                local skill, target = unpack(skill_target)
-                if you.skill(skill) < target then
-                    for _, s in ipairs(ALL_TRAINING_SKILLS) do
-                        you.train_skill(s, 0)
-                    end
-                    you.set_training_target(skill, target)
-                    you.train_skill(skill, 2)
-                    break
-                end
-            end
-        end
+  if you.turns() == 0 then
+    if CONFIG.show_skills_on_startup then
+      local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
+      if show_skills_on_startup then
+        crawl.sendkeys("m")
+      end
     end
+    
+    ---- Auto-set default skill targets ----
+    if CONFIG.auto_set_skill_targets then
+      for _, skill_target in ipairs(CONFIG.auto_set_skill_targets) do
+        local skill, target = unpack(skill_target)
+        if you.skill(skill) < target then
+          for _, s in ipairs(ALL_TRAINING_SKILLS) do
+            you.train_skill(s, 0)
+          end
+          you.set_training_target(skill, target)
+          you.train_skill(skill, 2)
+          break
+        end
+      end
+    end
+  end
 end
 
 }
@@ -6319,125 +6321,125 @@ local slots_changed
 
 -- Local functions
 local function cleanup_ab(slot)
-    local inv = items.inslot(slot)
-    if inv and inv.is_weapon then return end
+  local inv = items.inslot(slot)
+  if inv and inv.is_weapon then return end
 
-    for p=1,#priorities_ab do
-        if priorities_ab[p] > slot then -- Not from earlier slot
-            items.swap_slots(priorities_ab[p], slot)
-            slots_changed = true
-            priorities_ab[p] = -1
-            return
-        end
+  for p=1,#priorities_ab do
+    if priorities_ab[p] > slot then -- Not from earlier slot
+      items.swap_slots(priorities_ab[p], slot)
+      slots_changed = true
+      priorities_ab[p] = -1
+      return
     end
+  end
 end
 
 local function cleanup_w()
-    local slot_w = items.letter_to_index("w")
-    local inv = items.inslot(slot_w)
-    if inv and inv.is_weapon then return end
+  local slot_w = items.letter_to_index("w")
+  local inv = items.inslot(slot_w)
+  if inv and inv.is_weapon then return end
 
-    for p=1,#priorities_w do
-        if priorities_w[p] > 1 then -- Not from slots a or b
-            items.swap_slots(priorities_w[p], slot_w)
-            slots_changed = true
-            return
-        end
+  for p=1,#priorities_w do
+    if priorities_w[p] > 1 then -- Not from slots a or b
+      items.swap_slots(priorities_w[p], slot_w)
+      slots_changed = true
+      return
     end
+  end
 end
 
 local function get_priority_ab(it)
-    if not it.is_weapon then return -1 end
-    if it.equipped then return 1 end
+  if not it.is_weapon then return -1 end
+  if it.equipped then return 1 end
 
-    if is_magic_staff(it) then return 3 end
-    if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
-    if is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
-    return 2
+  if is_magic_staff(it) then return 3 end
+  if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
+  if is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
+  return 2
 end
 
 local function get_priority_w(it)
-    if not it.is_weapon then return -1 end
-    if it.is_ranged then return 1 end
-    if is_polearm(it) then return 2 end
-    if is_magic_staff(it) then return 3 end
-    return 4
+  if not it.is_weapon then return -1 end
+  if it.is_ranged then return 1 end
+  if is_polearm(it) then return 2 end
+  if is_magic_staff(it) then return 3 end
+  return 4
 end
 
 local function generate_priorities()
-    priorities_ab = { -1, -1, -1, -1, -1 }
-    priorities_w = { -1, -1, -1, -1 }
+  priorities_ab = { -1, -1, -1, -1, -1 }
+  priorities_w = { -1, -1, -1, -1 }
 
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        local p = get_priority_w(inv)
-        if p > 0 then
-            if priorities_w[p] == -1 then priorities_w[p] = inv.slot
-            else priorities_w[p+1] = inv.slot
-            end
-        end
-
-        p = get_priority_ab(inv)
-        if p > 0 then
-            if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
-            else priorities_ab[p+1] = inv.slot
-            end
-        end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    local p = get_priority_w(inv)
+    if p > 0 then
+      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
+      else priorities_w[p+1] = inv.slot
+      end
     end
+
+    p = get_priority_ab(inv)
+    if p > 0 then
+      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
+      else priorities_ab[p+1] = inv.slot
+      end
+    end
+  end
 end
 
 local function cleanup_weapon_slots()
-    generate_priorities()
-    cleanup_ab(0)
-    cleanup_ab(1)
-    cleanup_w()
+  generate_priorities()
+  cleanup_ab(0)
+  cleanup_ab(1)
+  cleanup_w()
 end
 
 local function get_first_empty_slot()
-    for slot=1,52 do
-        if not items.inslot(slot) then return slot end
-    end
+  for slot=1,52 do
+    if not items.inslot(slot) then return slot end
+  end
 end
 
 -- Hook functions
 function f_weapon_slots.init()
-    do_cleanup_weapon_slots = false
-    slots_changed = false
-    priorities_ab = nil
-    priorities_w = nil
+  do_cleanup_weapon_slots = false
+  slots_changed = false
+  priorities_ab = nil
+  priorities_w = nil
 end
 
 function f_weapon_slots.c_assign_invletter(it)
-    if not CONFIG.do_auto_weapon_slots_abw then return end
-    if not it.is_weapon then return end
+  if not CONFIG.do_auto_weapon_slots_abw then return end
+  if not it.is_weapon then return end
 
-    for i=0,2 do
-        local slot = i==2 and items.letter_to_index("w") or i
+  for i=0,2 do
+    local slot = i==2 and items.letter_to_index("w") or i
 
-        local inv = items.inslot(slot)
-        if not inv then return slot end
-        if not inv.is_weapon then
-            items.swap_slots(slot, get_first_empty_slot())
-            slots_changed = true
-            return slot
-        end
+    local inv = items.inslot(slot)
+    if not inv then return slot end
+    if not inv.is_weapon then
+      items.swap_slots(slot, get_first_empty_slot())
+      slots_changed = true
+      return slot
     end
+  end
 end
 
 function f_weapon_slots.c_message(text, channel)
-    if not CONFIG.do_auto_weapon_slots_abw then return end
-    do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
+  if not CONFIG.do_auto_weapon_slots_abw then return end
+  do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
 end
 
 function f_weapon_slots.ready()
-    if do_cleanup_weapon_slots then
-        cleanup_weapon_slots()
-        do_cleanup_weapon_slots = false
-        if slots_changed then
-            crawl.mpr(with_color(COLORS.darkgrey, "Weapon slots updated (ab+w)."))
-            crawl.redraw_screen()
-            slots_changed = false
-        end
+  if do_cleanup_weapon_slots then
+    cleanup_weapon_slots()
+    do_cleanup_weapon_slots = false
+    if slots_changed then
+      crawl.mpr(with_color(COLORS.darkgrey, "Weapon slots updated (ab+w)."))
+      crawl.redraw_screen()
+      slots_changed = false
     end
+  end
 end
 
 }
@@ -7274,22 +7276,22 @@ local HEAVIER = "heavier"
 local LIGHTER = "lighter"
 
 local ARMOUR_ALERT = {
-    artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-    [GAIN] = { msg = "Gain ego", emoji = EMOJI.EGO },
-    [DIFF] = { msg = "Diff ego", emoji = EMOJI.EGO },
-    [LIGHTER] = {
-      [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-      [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-      [SAME] = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-      [LOST] = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
-    },
-    [HEAVIER] = {
-      [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-      [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-      [SAME] = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-      [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
-    } -- ARMOUR_ALERT.heavier (do not remove this comment)
-  } -- ARMOUR_ALERT (do not remove this comment)
+  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
+  [GAIN] = { msg = "Gain ego", emoji = EMOJI.EGO },
+  [DIFF] = { msg = "Diff ego", emoji = EMOJI.EGO },
+  [LIGHTER] = {
+    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+    [SAME] = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+  },
+  [HEAVIER] = {
+    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+    [SAME] = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
+    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+  } -- ARMOUR_ALERT.heavier (do not remove this comment)
+} -- ARMOUR_ALERT (do not remove this comment)
 
 local is_new_ego = function(ego_change)
   return ego_change == GAIN or ego_change == DIFF
@@ -7353,54 +7355,54 @@ local function alert_body_armour(it)
     local ev_delta = get_armour_ev(it) - get_armour_ev(cur)
     local encumb_delta = it.encumbrance - cur.encumbrance
 
-    -- Alert new egos if same encumbrance, or small change to total (AC+EV)
-    if is_new_ego(ego_change) then
-        if encumb_delta == 0 then
-            return send_armour_alert(it, ARMOUR_ALERT[ego_change])
-        end
-
-        local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-        if math.abs(ac_delta + ev_delta) <= TUNING.armour[weight].ignore_small then
-            return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
-        end
+  -- Alert new egos if same encumbrance, or small change to total (AC+EV)
+  if is_new_ego(ego_change) then
+    if encumb_delta == 0 then
+      return send_armour_alert(it, ARMOUR_ALERT[ego_change])
     end
 
-    -- Alert for lighter/heavier armour, based on configured AC/EV ratio
-    if encumb_delta < 0 then
-        if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
-            return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change])
-        end
-    elseif encumb_delta > 0 then
-        local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
-        if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
-            return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change])
-        end
+    local weight = encumb_delta < 0 and LIGHTER or HEAVIER
+    if math.abs(ac_delta + ev_delta) <= TUNING.armour[weight].ignore_small then
+      return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
+  end
 
-    -- Alert for highest AC found so far, or early armour with any ego
-    if alert_ac_high_score(it) then return true end
-    if it_ego and you.xl() <= TUNING.armour.early_xl then
-        return pa_alert_item(it, "Early armour", EMOJI.EGO)
+  -- Alert for lighter/heavier armour, based on configured AC/EV ratio
+  if encumb_delta < 0 then
+    if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
+      return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change])
     end
+  elseif encumb_delta > 0 then
+    local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
+    if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
+      return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change])
+    end
+  end
+
+  -- Alert for highest AC found so far, or early armour with any ego
+  if alert_ac_high_score(it) then return true end
+  if it_ego and you.xl() <= TUNING.armour.early_xl then
+    return pa_alert_item(it, "Early armour", EMOJI.EGO)
+  end
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
-    if it_ego == cur_ego then return SAME
-    elseif not it_ego then return LOST
-    elseif not cur_ego then return GAIN
-    else return DIFF
-    end
+  if it_ego == cur_ego then return SAME
+  elseif not it_ego then return LOST
+  elseif not cur_ego then return GAIN
+  else return DIFF
+  end
 end
 
 local function get_adjusted_ev_delta(encumb_delta, ev_delta)
-    local encumb_skills = you.skill("Spellcasting")
-                        + you.skill("Ranged Weapons")
-                        - you.skill("Armour") / ENCUMB_ARMOUR_DIVISOR
-    local encumb_impact = encumb_skills / you.xl()
-    encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
+  local encumb_skills = you.skill("Spellcasting")
+                      + you.skill("Ranged Weapons")
+                      - you.skill("Armour") / ENCUMB_ARMOUR_DIVISOR
+  local encumb_impact = encumb_skills / you.xl()
+  encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
-    -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
-    return ev_delta - encumb_delta * encumb_impact * TUNING.armour.encumb_penalty_weight
+  -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
+  return ev_delta - encumb_delta * encumb_impact * TUNING.armour.encumb_penalty_weight
 end
 
 -- local function should_alert_lighter_armour(ac_delta, ev_delta, ego_change)
@@ -7453,38 +7455,38 @@ local function alert_shield(it)
     if is_new_ego(ego_change) then
         local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
         return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
-    elseif get_shield_sh(it) > get_shield_sh(cur) then
-        return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
-    end
+  elseif get_shield_sh(it) > get_shield_sh(cur) then
+    return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+  end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
-    if it.artefact then
-        if not it.is_identified then return false end
-        return pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+  if it.artefact then
+    if not it.is_identified then return false end
+    return pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+  end
+
+  -- Use a list to support Poltergeists; for other races it's a 1-item list
+  local all_equipped, num_slots = get_equipped_aux(it.subtype())
+  if #all_equipped < num_slots then
+    if unworn_inv_item then
+      all_equipped[#all_equipped+1] = unworn_inv_item
+    else
+      -- Catch dangerous brands or items blocked by non-innate mutations
+      return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
     end
 
-    -- Use a list to support Poltergeists; for other races it's a 1-item list
-    local all_equipped, num_slots = get_equipped_aux(it.subtype())
-    if #all_equipped < num_slots then
-        if unworn_inv_item then
-            all_equipped[#all_equipped+1] = unworn_inv_item
-        else
-            -- Catch dangerous brands or items blocked by non-innate mutations
-            return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
-        end
-
-        local it_ego = get_ego(it)
-        for _, cur in ipairs(all_equipped) do
-            local ego_change = get_ego_change_type(get_ego(cur), it_ego)
-            if is_new_ego(ego_change) then
-                local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-                return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
-            elseif get_armour_ac(it) > get_armour_ac(cur) then
-                return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
-            end
-        end
+    local it_ego = get_ego(it)
+    for _, cur in ipairs(all_equipped) do
+      local ego_change = get_ego_change_type(get_ego(cur), it_ego)
+      if is_new_ego(ego_change) then
+        local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+        return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+      elseif get_armour_ac(it) > get_armour_ac(cur) then
+        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+      end
     end
+  end
 end
 
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
@@ -7501,116 +7503,116 @@ function pa_pickup_armour(it)
 end
 
 local function pickup_body_armour(it)
-    local cur = items.equipped_at("armour")
-    if not cur then return false end -- surely am naked for a reason
+  local cur = items.equipped_at("armour")
+  if not cur then return false end -- surely am naked for a reason
 
-    -- No pickup if either item is an artefact
-    if cur.artefact or it.artefact then return false end
+  -- No pickup if either item is an artefact
+  if cur.artefact or it.artefact then return false end
 
-    -- No pickup if adding encumbrance or losing AC
-    local encumb_delta = it.encumbrance - cur.encumbrance
-    if encumb_delta > 0 then return false end
+  -- No pickup if adding encumbrance or losing AC
+  local encumb_delta = it.encumbrance - cur.encumbrance
+  if encumb_delta > 0 then return false end
 
-    local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-    if ac_delta < 0 then return false end
+  local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
+  if ac_delta < 0 then return false end
 
-    -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
-    local it_ego = get_ego(it)
-    local cur_ego = get_ego(cur)
-    if cur_ego then
-        if not it_ego then return false end
-        return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
-    else
-        return it_ego or ac_delta > 0 or encumb_delta < 0
-    end
+  -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
+  local it_ego = get_ego(it)
+  local cur_ego = get_ego(cur)
+  if cur_ego then
+    if not it_ego then return false end
+    return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
+  else
+    return it_ego or ac_delta > 0 or encumb_delta < 0
+  end
 end
 
 local function pickup_shield(it)
-    local cur = items.equipped_at("offhand")
+  local cur = items.equipped_at("offhand")
 
-    -- Don't replace these
-    if not is_shield(cur) then return false end
-    if cur.encumbrance ~= it.encumbrance then return false end
-    if cur.artefact then return false end
+  -- Don't replace these
+  if not is_shield(cur) then return false end
+  if cur.encumbrance ~= it.encumbrance then return false end
+  if cur.artefact then return false end
 
-    -- Pickup: artefact
-    if it.artefact then return true end
+  -- Pickup: artefact
+  if it.artefact then return true end
 
-    -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
-    local cur_ego = get_ego(cur)
-    local it_ego = get_ego(it)
-    if cur_ego then
-        if it_ego == cur_ego then return it.plus > cur.plus end
-        return it_ego and it.plus >= cur.plus
-    end
-    return it_ego or it.plus > cur.plus
+  -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
+  local cur_ego = get_ego(cur)
+  local it_ego = get_ego(it)
+  if cur_ego then
+    if it_ego == cur_ego then return it.plus > cur.plus end
+    return it_ego and it.plus >= cur.plus
+  end
+  return it_ego or it.plus > cur.plus
 end
 
 local function pickup_aux_armour(it)
-    -- Pickup: Anything if the slot is empty
-    if aux_slot_is_impaired(it) then return false end
-    -- Use a list to support Poltergeists; for most races it's a 1-item list
-    local st = it.subtype()
-    local all_equipped, num_slots = get_equipped_aux(st)
-    if #all_equipped < num_slots then
-        -- If we're carrying one (implying a blocking mutation), don't pickup another
-        if #all_equipped == 0 and num_slots == 1 then
-            for inv in iter.invent_iterator:new(items.inventory()) do
-                if inv.subtype() == st then
-                    return false
-                end
-            end
+  -- Pickup: Anything if the slot is empty
+  if aux_slot_is_impaired(it) then return false end
+  -- Use a list to support Poltergeists; for most races it's a 1-item list
+  local st = it.subtype()
+  local all_equipped, num_slots = get_equipped_aux(st)
+  if #all_equipped < num_slots then
+    -- If we're carrying one (implying a blocking mutation), don't pickup another
+    if #all_equipped == 0 and num_slots == 1 then
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.subtype() == st then
+          return false
         end
-
-        return true
-    end    
-
-    -- Pickup: artefact, unless slot(s) already full of artefact(s)
-    for i, cur in ipairs(all_equipped) do
-      if not cur.artefact then break end
-      if i == num_slots then return false end
+      end
     end
-    if it.is_identified and it.artefact then return true end
 
-    -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
-    local it_ac = get_armour_ac(it)
-    local it_ego = get_ego(it)
-    for _, cur in ipairs(all_equipped) do
-        local cur_ac = get_armour_ac(cur)
-        local cur_ego = get_ego(cur)
-        if cur_ego then
-            if it_ego then
-                if it_ac > cur_ac then return true end
-                if it_ac == cur_ac and it_ego ~= cur_ego then return true end
-            end
-        else
-            if it_ego or it_ac > cur_ac then return true end
-        end
+    return true
+  end    
+
+  -- Pickup: artefact, unless slot(s) already full of artefact(s)
+  for i, cur in ipairs(all_equipped) do
+    if not cur.artefact then break end
+    if i == num_slots then return false end
     end
+  if it.is_identified and it.artefact then return true end
+
+  -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
+  local it_ac = get_armour_ac(it)
+  local it_ego = get_ego(it)
+  for _, cur in ipairs(all_equipped) do
+    local cur_ac = get_armour_ac(cur)
+    local cur_ego = get_ego(cur)
+    if cur_ego then
+      if it_ego then
+        if it_ac > cur_ac then return true end
+        if it_ac == cur_ac and it_ego ~= cur_ego then return true end
+      end
+    else
+      if it_ego or it_ac > cur_ac then return true end
+    end
+  end
 end
 
 local function aux_slot_is_impaired(it)
-    local st = it.subtype()
-    -- Skip boots/gloves/helmet if wearing Lear's hauberk
-    local worn = items.equipped_at("armour")
-    if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then
-        return true
-    end
+  local st = it.subtype()
+  -- Skip boots/gloves/helmet if wearing Lear's hauberk
+  local worn = items.equipped_at("armour")
+  if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then
+    return true
+  end
 
-    -- Mutation interference
-    if st == "gloves" then
-        return get_mut(MUTS.demonic_touch, true) >= 3 and not offhand_is_free() 
-            or get_mut(MUTS.claws, true) > 0 and not have_weapon()
-    elseif st == "boots" then
-        return get_mut(MUTS.hooves, true) > 0
-            or get_mut(MUTS.talons, true) > 0
-    elseif it.name("base"):find("helmet", 1, true) then
-        return get_mut(MUTS.horns, true) > 0
-            or get_mut(MUTS.beak, true) > 0
-            or get_mut(MUTS.antennae, true) > 0
-    end
+  -- Mutation interference
+  if st == "gloves" then
+    return get_mut(MUTS.demonic_touch, true) >= 3 and not offhand_is_free() 
+      or get_mut(MUTS.claws, true) > 0 and not have_weapon()
+  elseif st == "boots" then
+    return get_mut(MUTS.hooves, true) > 0
+      or get_mut(MUTS.talons, true) > 0
+  elseif it.name("base"):find("helmet", 1, true) then
+    return get_mut(MUTS.horns, true) > 0
+      or get_mut(MUTS.beak, true) > 0
+      or get_mut(MUTS.antennae, true) > 0
+  end
 
-    return false
+  return false
 end
 
 }
@@ -7736,73 +7738,73 @@ WEAP_CACHE = {}
 local top_attack_skill
 
 function WEAP_CACHE.get_primary_key(it)
-    local tokens = {}
-    tokens[1] = it.is_ranged and "range_" or "melee_"
-    tokens[2] = tostring(it.hands)
-    if it.branded then tokens[3] = "b"
-    return table.concat({tokens})
+  local tokens = {}
+  tokens[1] = it.is_ranged and "range_" or "melee_"
+  tokens[2] = tostring(it.hands)
+  if it.branded then tokens[3] = "b"
+  return table.concat({tokens})
 end
 
 -- Get all categories this weapon fits into
 function WEAP_CACHE.get_keys(is_ranged, hands, branded)
-    local base_types = {is_ranged and "range_" or "melee_"}
-    local hand_types = {tostring(hands)}
-    local brand_types = {branded and "b" or ""}
-    
-    -- Add variations for the less restrictive versions
-    if hands == 1 then hand_types[2] = "2" end
-    if branded then brand_types[2] = "" end
-    
-    -- Generate all combinations
-    local keys = {}
-    for _, base in ipairs(base_types) do
-        for _, hand in ipairs(hand_types) do
-            for _, brand in ipairs(brand_types) do
-                keys[#keys+1] = table.concat({base, hand, brand})
-            end
-        end
+  local base_types = {is_ranged and "range_" or "melee_"}
+  local hand_types = {tostring(hands)}
+  local brand_types = {branded and "b" or ""}
+  
+  -- Add variations for the less restrictive versions
+  if hands == 1 then hand_types[2] = "2" end
+  if branded then brand_types[2] = "" end
+  
+  -- Generate all combinations
+  local keys = {}
+  for _, base in ipairs(base_types) do
+    for _, hand in ipairs(hand_types) do
+      for _, brand in ipairs(brand_types) do
+        keys[#keys+1] = table.concat({base, hand, brand})
+      end
     end
-    
-    return keys
+  end
+  
+  return keys
 end
 
 function WEAP_CACHE.add_weapon(it)
-    local weap_data = {}
-    weap_data.is_weapon = it.is_weapon
-    weap_data.basename = it.name("base")
-    weap_data.subtype = it.subtype()
-    weap_data.weap_skill = it.weap_skill
-    weap_data.skill_lvl = get_skill(it.weap_skill)
-    weap_data.is_ranged = it.is_ranged
-    weap_data.hands = get_hands(it)
-    weap_data.artefact = it.artefact
-    weap_data.ego = get_ego(it)
-    weap_data.branded = weap_data.ego ~= nil
-    weap_data.plus = it.plus or 0
-    weap_data.acc = it.accuracy + weap_data.plus
-    weap_data.damage = it.damage
-    weap_data.dps = get_weap_dps(it)
-    weap_data.score = get_weap_score(it)
-    weap_data.unbranded_score = get_weap_score(it, true)
-    
-    -- Track unique egos
-    if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data.ego) then
-        WEAP_CACHE.egos[#WEAP_CACHE.egos+1] = weap_data.ego
+  local weap_data = {}
+  weap_data.is_weapon = it.is_weapon
+  weap_data.basename = it.name("base")
+  weap_data.subtype = it.subtype()
+  weap_data.weap_skill = it.weap_skill
+  weap_data.skill_lvl = get_skill(it.weap_skill)
+  weap_data.is_ranged = it.is_ranged
+  weap_data.hands = get_hands(it)
+  weap_data.artefact = it.artefact
+  weap_data.ego = get_ego(it)
+  weap_data.branded = weap_data.ego ~= nil
+  weap_data.plus = it.plus or 0
+  weap_data.acc = it.accuracy + weap_data.plus
+  weap_data.damage = it.damage
+  weap_data.dps = get_weap_dps(it)
+  weap_data.score = get_weap_score(it)
+  weap_data.unbranded_score = get_weap_score(it, true)
+  
+  -- Track unique egos
+  if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data.ego) then
+    WEAP_CACHE.egos[#WEAP_CACHE.egos+1] = weap_data.ego
+  end
+
+  -- Track max damage for applicable weapon categories
+  local keys = WEAP_CACHE.get_keys(weap_data.is_ranged, weap_data.hands, weap_data.branded)
+
+  -- Update the max DPS for each category
+  for _, key in ipairs(keys) do
+    if weap_data.dps > WEAP_CACHE.max_dps[key].dps then
+      WEAP_CACHE.max_dps[key].dps = weap_data.dps
+      WEAP_CACHE.max_dps[key].acc = weap_data.acc
     end
+  end
 
-    -- Track max damage for applicable weapon categories
-    local keys = WEAP_CACHE.get_keys(weap_data.is_ranged, weap_data.hands, weap_data.branded)
-
-    -- Update the max DPS for each category
-    for _, key in ipairs(keys) do
-        if weap_data.dps > WEAP_CACHE.max_dps[key].dps then
-        WEAP_CACHE.max_dps[key].dps = weap_data.dps
-        WEAP_CACHE.max_dps[key].acc = weap_data.acc
-        end
-    end
-
-    WEAP_CACHE.weapons[#WEAP_CACHE.weapons+1] = weap_data
-    return weap_data
+  WEAP_CACHE.weapons[#WEAP_CACHE.weapons+1] = weap_data
+  return weap_data
 end
 
 function WEAP_CACHE.is_empty()
@@ -7881,22 +7883,22 @@ local lowest_num_hands_alerted = {
 }
 
 local function alert_first_of_skill(it)
-    local skill = it.weap_skill
-    if not lowest_num_hands_alerted[skill] then return false end
+  local skill = it.weap_skill
+  if not lowest_num_hands_alerted[skill] then return false end
 
-    local hands = get_hands(it)
-    if lowest_num_hands_alerted[skill] > hands then
-        -- Some early checks to skip alerts
-        if hands == 2 and have_shield() then return false end
-        if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return false end
+  local hands = get_hands(it)
+  if lowest_num_hands_alerted[skill] > hands then
+    -- Some early checks to skip alerts
+    if hands == 2 and have_shield() then return false end
+    if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return false end
 
-        -- Update lowest # hands alerted, and alert
-        lowest_num_hands_alerted[skill] = hands
-        local msg = "First " .. string.sub(skill, 1, -2) -- Trim the trailing "s"
-        if hands == 1 then msg = msg .. " (1-handed)" end
-        return pa_alert_item(it, msg, EMOJI.WEAPON, CONFIG.fm_alert.early_weap)
-    end
-    return false
+    -- Update lowest # hands alerted, and alert
+    lowest_num_hands_alerted[skill] = hands
+    local msg = "First " .. string.sub(skill, 1, -2) -- Trim the trailing "s"
+    if hands == 1 then msg = msg .. " (1-handed)" end
+    return pa_alert_item(it, msg, EMOJI.WEAPON, CONFIG.fm_alert.early_weap)
+  end
+  return false
 end
 
 local function alert_early_weapons(it)

@@ -18,22 +18,22 @@ local HEAVIER = "heavier"
 local LIGHTER = "lighter"
 
 local ARMOUR_ALERT = {
-    artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
-    [GAIN] = { msg = "Gain ego", emoji = EMOJI.EGO },
-    [DIFF] = { msg = "Diff ego", emoji = EMOJI.EGO },
-    [LIGHTER] = {
-      [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
-      [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
-      [SAME] = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
-      [LOST] = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
-    },
-    [HEAVIER] = {
-      [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
-      [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
-      [SAME] = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
-      [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
-    } -- ARMOUR_ALERT.heavier (do not remove this comment)
-  } -- ARMOUR_ALERT (do not remove this comment)
+  artefact = { msg = "Artefact armour", emoji = EMOJI.ARTEFACT },
+  [GAIN] = { msg = "Gain ego", emoji = EMOJI.EGO },
+  [DIFF] = { msg = "Diff ego", emoji = EMOJI.EGO },
+  [LIGHTER] = {
+    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = EMOJI.EGO },
+    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = EMOJI.EGO },
+    [SAME] = { msg = "Lighter armour", emoji = EMOJI.LIGHTER },
+    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = EMOJI.LIGHTER }
+  },
+  [HEAVIER] = {
+    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = EMOJI.EGO },
+    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = EMOJI.EGO },
+    [SAME] = { msg = "Heavier Armour", emoji = EMOJI.HEAVIER },
+    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = EMOJI.HEAVIER }
+  } -- ARMOUR_ALERT.heavier (do not remove this comment)
+} -- ARMOUR_ALERT (do not remove this comment)
 
 local is_new_ego = function(ego_change)
   return ego_change == GAIN or ego_change == DIFF
@@ -97,54 +97,54 @@ local function alert_body_armour(it)
     local ev_delta = get_armour_ev(it) - get_armour_ev(cur)
     local encumb_delta = it.encumbrance - cur.encumbrance
 
-    -- Alert new egos if same encumbrance, or small change to total (AC+EV)
-    if is_new_ego(ego_change) then
-        if encumb_delta == 0 then
-            return send_armour_alert(it, ARMOUR_ALERT[ego_change])
-        end
-
-        local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-        if math.abs(ac_delta + ev_delta) <= TUNING.armour[weight].ignore_small then
-            return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
-        end
+  -- Alert new egos if same encumbrance, or small change to total (AC+EV)
+  if is_new_ego(ego_change) then
+    if encumb_delta == 0 then
+      return send_armour_alert(it, ARMOUR_ALERT[ego_change])
     end
 
-    -- Alert for lighter/heavier armour, based on configured AC/EV ratio
-    if encumb_delta < 0 then
-        if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
-            return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change])
-        end
-    elseif encumb_delta > 0 then
-        local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
-        if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
-            return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change])
-        end
+    local weight = encumb_delta < 0 and LIGHTER or HEAVIER
+    if math.abs(ac_delta + ev_delta) <= TUNING.armour[weight].ignore_small then
+      return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
+  end
 
-    -- Alert for highest AC found so far, or early armour with any ego
-    if alert_ac_high_score(it) then return true end
-    if it_ego and you.xl() <= TUNING.armour.early_xl then
-        return pa_alert_item(it, "Early armour", EMOJI.EGO)
+  -- Alert for lighter/heavier armour, based on configured AC/EV ratio
+  if encumb_delta < 0 then
+    if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
+      return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change])
     end
+  elseif encumb_delta > 0 then
+    local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
+    if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
+      return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change])
+    end
+  end
+
+  -- Alert for highest AC found so far, or early armour with any ego
+  if alert_ac_high_score(it) then return true end
+  if it_ego and you.xl() <= TUNING.armour.early_xl then
+    return pa_alert_item(it, "Early armour", EMOJI.EGO)
+  end
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
-    if it_ego == cur_ego then return SAME
-    elseif not it_ego then return LOST
-    elseif not cur_ego then return GAIN
-    else return DIFF
-    end
+  if it_ego == cur_ego then return SAME
+  elseif not it_ego then return LOST
+  elseif not cur_ego then return GAIN
+  else return DIFF
+  end
 end
 
 local function get_adjusted_ev_delta(encumb_delta, ev_delta)
-    local encumb_skills = you.skill("Spellcasting")
-                        + you.skill("Ranged Weapons")
-                        - you.skill("Armour") / ENCUMB_ARMOUR_DIVISOR
-    local encumb_impact = encumb_skills / you.xl()
-    encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
+  local encumb_skills = you.skill("Spellcasting")
+                      + you.skill("Ranged Weapons")
+                      - you.skill("Armour") / ENCUMB_ARMOUR_DIVISOR
+  local encumb_impact = encumb_skills / you.xl()
+  encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
-    -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
-    return ev_delta - encumb_delta * encumb_impact * TUNING.armour.encumb_penalty_weight
+  -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
+  return ev_delta - encumb_delta * encumb_impact * TUNING.armour.encumb_penalty_weight
 end
 
 -- local function should_alert_lighter_armour(ac_delta, ev_delta, ego_change)
@@ -197,38 +197,38 @@ local function alert_shield(it)
     if is_new_ego(ego_change) then
         local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
         return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
-    elseif get_shield_sh(it) > get_shield_sh(cur) then
-        return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
-    end
+  elseif get_shield_sh(it) > get_shield_sh(cur) then
+    return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+  end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
-    if it.artefact then
-        if not it.is_identified then return false end
-        return pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+  if it.artefact then
+    if not it.is_identified then return false end
+    return pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+  end
+
+  -- Use a list to support Poltergeists; for other races it's a 1-item list
+  local all_equipped, num_slots = get_equipped_aux(it.subtype())
+  if #all_equipped < num_slots then
+    if unworn_inv_item then
+      all_equipped[#all_equipped+1] = unworn_inv_item
+    else
+      -- Catch dangerous brands or items blocked by non-innate mutations
+      return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
     end
 
-    -- Use a list to support Poltergeists; for other races it's a 1-item list
-    local all_equipped, num_slots = get_equipped_aux(it.subtype())
-    if #all_equipped < num_slots then
-        if unworn_inv_item then
-            all_equipped[#all_equipped+1] = unworn_inv_item
-        else
-            -- Catch dangerous brands or items blocked by non-innate mutations
-            return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
-        end
-
-        local it_ego = get_ego(it)
-        for _, cur in ipairs(all_equipped) do
-            local ego_change = get_ego_change_type(get_ego(cur), it_ego)
-            if is_new_ego(ego_change) then
-                local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-                return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
-            elseif get_armour_ac(it) > get_armour_ac(cur) then
-                return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
-            end
-        end
+    local it_ego = get_ego(it)
+    for _, cur in ipairs(all_equipped) do
+      local ego_change = get_ego_change_type(get_ego(cur), it_ego)
+      if is_new_ego(ego_change) then
+        local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+        return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+      elseif get_armour_ac(it) > get_armour_ac(cur) then
+        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+      end
     end
+  end
 end
 
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
@@ -245,114 +245,114 @@ function pa_pickup_armour(it)
 end
 
 local function pickup_body_armour(it)
-    local cur = items.equipped_at("armour")
-    if not cur then return false end -- surely am naked for a reason
+  local cur = items.equipped_at("armour")
+  if not cur then return false end -- surely am naked for a reason
 
-    -- No pickup if either item is an artefact
-    if cur.artefact or it.artefact then return false end
+  -- No pickup if either item is an artefact
+  if cur.artefact or it.artefact then return false end
 
-    -- No pickup if adding encumbrance or losing AC
-    local encumb_delta = it.encumbrance - cur.encumbrance
-    if encumb_delta > 0 then return false end
+  -- No pickup if adding encumbrance or losing AC
+  local encumb_delta = it.encumbrance - cur.encumbrance
+  if encumb_delta > 0 then return false end
 
-    local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-    if ac_delta < 0 then return false end
+  local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
+  if ac_delta < 0 then return false end
 
-    -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
-    local it_ego = get_ego(it)
-    local cur_ego = get_ego(cur)
-    if cur_ego then
-        if not it_ego then return false end
-        return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
-    else
-        return it_ego or ac_delta > 0 or encumb_delta < 0
-    end
+  -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
+  local it_ego = get_ego(it)
+  local cur_ego = get_ego(cur)
+  if cur_ego then
+    if not it_ego then return false end
+    return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
+  else
+    return it_ego or ac_delta > 0 or encumb_delta < 0
+  end
 end
 
 local function pickup_shield(it)
-    local cur = items.equipped_at("offhand")
+  local cur = items.equipped_at("offhand")
 
-    -- Don't replace these
-    if not is_shield(cur) then return false end
-    if cur.encumbrance ~= it.encumbrance then return false end
-    if cur.artefact then return false end
+  -- Don't replace these
+  if not is_shield(cur) then return false end
+  if cur.encumbrance ~= it.encumbrance then return false end
+  if cur.artefact then return false end
 
-    -- Pickup: artefact
-    if it.artefact then return true end
+  -- Pickup: artefact
+  if it.artefact then return true end
 
-    -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
-    local cur_ego = get_ego(cur)
-    local it_ego = get_ego(it)
-    if cur_ego then
-        if it_ego == cur_ego then return it.plus > cur.plus end
-        return it_ego and it.plus >= cur.plus
-    end
-    return it_ego or it.plus > cur.plus
+  -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
+  local cur_ego = get_ego(cur)
+  local it_ego = get_ego(it)
+  if cur_ego then
+    if it_ego == cur_ego then return it.plus > cur.plus end
+    return it_ego and it.plus >= cur.plus
+  end
+  return it_ego or it.plus > cur.plus
 end
 
 local function pickup_aux_armour(it)
-    -- Pickup: Anything if the slot is empty
-    if aux_slot_is_impaired(it) then return false end
-    -- Use a list to support Poltergeists; for most races it's a 1-item list
-    local st = it.subtype()
-    local all_equipped, num_slots = get_equipped_aux(st)
-    if #all_equipped < num_slots then
-        -- If we're carrying one (implying a blocking mutation), don't pickup another
-        if #all_equipped == 0 and num_slots == 1 then
-            for inv in iter.invent_iterator:new(items.inventory()) do
-                if inv.subtype() == st then
-                    return false
-                end
-            end
+  -- Pickup: Anything if the slot is empty
+  if aux_slot_is_impaired(it) then return false end
+  -- Use a list to support Poltergeists; for most races it's a 1-item list
+  local st = it.subtype()
+  local all_equipped, num_slots = get_equipped_aux(st)
+  if #all_equipped < num_slots then
+    -- If we're carrying one (implying a blocking mutation), don't pickup another
+    if #all_equipped == 0 and num_slots == 1 then
+      for inv in iter.invent_iterator:new(items.inventory()) do
+        if inv.subtype() == st then
+          return false
         end
-
-        return true
-    end    
-
-    -- Pickup: artefact, unless slot(s) already full of artefact(s)
-    for i, cur in ipairs(all_equipped) do
-      if not cur.artefact then break end
-      if i == num_slots then return false end
+      end
     end
-    if it.is_identified and it.artefact then return true end
 
-    -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
-    local it_ac = get_armour_ac(it)
-    local it_ego = get_ego(it)
-    for _, cur in ipairs(all_equipped) do
-        local cur_ac = get_armour_ac(cur)
-        local cur_ego = get_ego(cur)
-        if cur_ego then
-            if it_ego then
-                if it_ac > cur_ac then return true end
-                if it_ac == cur_ac and it_ego ~= cur_ego then return true end
-            end
-        else
-            if it_ego or it_ac > cur_ac then return true end
-        end
+    return true
+  end    
+
+  -- Pickup: artefact, unless slot(s) already full of artefact(s)
+  for i, cur in ipairs(all_equipped) do
+    if not cur.artefact then break end
+    if i == num_slots then return false end
     end
+  if it.is_identified and it.artefact then return true end
+
+  -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
+  local it_ac = get_armour_ac(it)
+  local it_ego = get_ego(it)
+  for _, cur in ipairs(all_equipped) do
+    local cur_ac = get_armour_ac(cur)
+    local cur_ego = get_ego(cur)
+    if cur_ego then
+      if it_ego then
+        if it_ac > cur_ac then return true end
+        if it_ac == cur_ac and it_ego ~= cur_ego then return true end
+      end
+    else
+      if it_ego or it_ac > cur_ac then return true end
+    end
+  end
 end
 
 local function aux_slot_is_impaired(it)
-    local st = it.subtype()
-    -- Skip boots/gloves/helmet if wearing Lear's hauberk
-    local worn = items.equipped_at("armour")
-    if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then
-        return true
-    end
+  local st = it.subtype()
+  -- Skip boots/gloves/helmet if wearing Lear's hauberk
+  local worn = items.equipped_at("armour")
+  if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then
+    return true
+  end
 
-    -- Mutation interference
-    if st == "gloves" then
-        return get_mut(MUTS.demonic_touch, true) >= 3 and not offhand_is_free() 
-            or get_mut(MUTS.claws, true) > 0 and not have_weapon()
-    elseif st == "boots" then
-        return get_mut(MUTS.hooves, true) > 0
-            or get_mut(MUTS.talons, true) > 0
-    elseif it.name("base"):find("helmet", 1, true) then
-        return get_mut(MUTS.horns, true) > 0
-            or get_mut(MUTS.beak, true) > 0
-            or get_mut(MUTS.antennae, true) > 0
-    end
+  -- Mutation interference
+  if st == "gloves" then
+    return get_mut(MUTS.demonic_touch, true) >= 3 and not offhand_is_free() 
+      or get_mut(MUTS.claws, true) > 0 and not have_weapon()
+  elseif st == "boots" then
+    return get_mut(MUTS.hooves, true) > 0
+      or get_mut(MUTS.talons, true) > 0
+  elseif it.name("base"):find("helmet", 1, true) then
+    return get_mut(MUTS.horns, true) > 0
+      or get_mut(MUTS.beak, true) > 0
+      or get_mut(MUTS.antennae, true) > 0
+  end
 
-    return false
+  return false
 end

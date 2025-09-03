@@ -13,58 +13,58 @@ local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
 -- Local functions
 local function inscribe_armour_stats(it)
-    local abbr = is_shield(it) and "SH" or "AC"
-    local primary, ev = get_armour_info_strings(it)
+  local abbr = is_shield(it) and "SH" or "AC"
+  local primary, ev = get_armour_info_strings(it)
 
-    local new_insc
-    if it.inscription:find(abbr .. NUM_PATTERN) then
-        -- Replace each stat individually, to avoid overwriting <color> tags
-        new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
-        if ev and ev ~= "" then
-            new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
-        end
-    else
-        new_insc = primary
-        if ev and ev ~= "" then
-            new_insc = new_insc .. ", " .. ev
-        end
-        if it.inscription and it.inscription ~= "" then
-            new_insc = new_insc .. "; " .. it.inscription
-        end
+  local new_insc
+  if it.inscription:find(abbr .. NUM_PATTERN) then
+    -- Replace each stat individually, to avoid overwriting <color> tags
+    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
+    if ev and ev ~= "" then
+      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
     end
+  else
+    new_insc = primary
+    if ev and ev ~= "" then
+      new_insc = new_insc .. ", " .. ev
+    end
+    if it.inscription and it.inscription ~= "" then
+      new_insc = new_insc .. "; " .. it.inscription
+    end
+  end
 
-    it.inscribe(new_insc, false)
+  it.inscribe(new_insc, false)
 end
 
 local function inscribe_weapon_stats(it)
-    local orig_inscr = it.inscription
-    local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
-    local prefix, suffix = "", ""
+  local orig_inscr = it.inscription
+  local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
+  local prefix, suffix = "", ""
 
-    local idx = orig_inscr:find("DPS:", 1, true)
-    if idx then
-        if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
-        if idx + #dps_inscr - 1 < #orig_inscr then
-            suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
-        end
-    elseif #orig_inscr > 0 then
-        suffix = "; " .. orig_inscr
+  local idx = orig_inscr:find("DPS:", 1, true)
+  if idx then
+    if idx > 1 then prefix = orig_inscr:sub(1, idx-1) .. "; " end
+    if idx + #dps_inscr - 1 < #orig_inscr then
+      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
     end
+  elseif #orig_inscr > 0 then
+    suffix = "; " .. orig_inscr
+  end
 
-    it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
+  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
 function do_stat_inscription(it)
-    if CONFIG.inscribe_weapons and it.is_weapon then
-        inscribe_weapon_stats(it)
-    elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
-        inscribe_armour_stats(it)
-    end
+  if CONFIG.inscribe_weapons and it.is_weapon then
+    inscribe_weapon_stats(it)
+  elseif CONFIG.inscribe_armour and is_armour(it) and not is_scarf(it) then
+    inscribe_armour_stats(it)
+  end
 end
 
 -- Hook functions
 function f_inscribe_stats.ready()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-        do_stat_inscription(inv)
-    end
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    do_stat_inscription(inv)
+  end
 end
