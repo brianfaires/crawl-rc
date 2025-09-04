@@ -148,7 +148,7 @@ Alerts generated for:
 - Items with new egos or increased AC.
 - Early ego armour, even if not training armour
 - The highest AC body armour seen so far (if training armour).
-- Other armour, depending on a number of factors and the thresholds in `TUNING.armour`  .
+- Other armour, depending on a number of factors and the thresholds in `BRC.Tuning.armour`  .
   In general, 1 AC is valued ~1.2EV,
 - Will alert "useless" items if you have one of the same type in inventory.
   This is to avoid skipping items due to temporary mutations.
@@ -158,7 +158,7 @@ Picks up upgrades and artefacts of the same weapon type you have. Alerts generat
 - Early strong weapons, with little regard for what skills are already trained.
 - First ranged and 1-handed ranged weapons.
 - First polearm and 1-handed polearm.
-- Other weapons, using a score that is primarily the weapon's DPS. Tune the thresholds in `TUNING.weap`.
+- Other weapons, using a score that is primarily the weapon's DPS. Tune the thresholds in `BRC.Tuning.weap`.
 - High scores: items that set a new record for:
   - Overall damage
   - Damage w/o brand

@@ -21,7 +21,7 @@ local do_remind_id_check
 
 -- Local functions
 local function alert_remind_identify()
-  BRC.mpr.stop(EMOJI.REMIND_IDENTIFY .. IDENTIFY_MSG .. EMOJI.REMIND_IDENTIFY)
+  BRC.mpr.stop(BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .. BRC.Emoji.REMIND_ID)
 end
 
 local function get_max_stack_size(class, skip_slot)

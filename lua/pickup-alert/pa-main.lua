@@ -156,29 +156,29 @@ end
 
 function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local item_desc = f_pa_data.get_name(it, "plain")
-  local alert_colors
+  local alert_col
   if it.is_weapon then
-    alert_colors = ALERT_COLORS.weapon
+    alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
-    item_desc = item_desc .. BRC.util.color(ALERT_COLORS.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
+    item_desc = item_desc .. BRC.util.color(BRC.AlertColor.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
   elseif BRC.is.body_armour(it) then
-    alert_colors = ALERT_COLORS.body_arm
+    alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
     local ac, ev = get_armour_info_strings(it)
-    item_desc = item_desc .. BRC.util.color(ALERT_COLORS.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
+    item_desc = item_desc .. BRC.util.color(BRC.AlertColor.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
   elseif BRC.is.armour(it) then
-    alert_colors = ALERT_COLORS.aux_arm
+    alert_col = BRC.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
-    alert_colors = ALERT_COLORS.orb
+    alert_col = BRC.AlertColor.orb
   elseif BRC.is.talisman(it) then
-    alert_colors = ALERT_COLORS.talisman
+    alert_col = BRC.AlertColor.talisman
   else
-    alert_colors = ALERT_COLORS.misc
+    alert_col = BRC.AlertColor.misc
   end
   local tokens = {}
   tokens[1] = emoji and emoji or BRC.util.color(COLORS.cyan, "----")
-  tokens[#tokens + 1] = BRC.util.color(alert_colors.desc, " " .. alert_type .. ": ")
-  tokens[#tokens + 1] = BRC.util.color(alert_colors.item, item_desc .. " ")
+  tokens[#tokens + 1] = BRC.util.color(alert_col.desc, " " .. alert_type .. ": ")
+  tokens[#tokens + 1] = BRC.util.color(alert_col.item, item_desc .. " ")
   tokens[#tokens + 1] = tokens[1]
 
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))

@@ -30,9 +30,9 @@ local function alert_low_hp()
     BRC.mpr.que_optmore(
       true,
       table.concat({
-        EMOJI.EXCLAMATION,
+        BRC.Emoji.EXCLAMATION,
         BRC.util.color(COLORS.magenta, low_hp_msg),
-        EMOJI.EXCLAMATION,
+        BRC.Emoji.EXCLAMATION,
       })
     )
   end

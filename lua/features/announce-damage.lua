@@ -12,7 +12,7 @@ f_announce_damage.BRC_FEATURE_NAME = "announce-damage"
 ad_prev = BRC.data.create("ad_prev", {hp = 0, mhp = 0, mp = 0, mmp = 0})
 
 -- Local constants
-local METER_LENGTH = 7 + 2 * (EMOJI.HP_BORDER and #EMOJI.HP_BORDER or 0)
+local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 
 -- Local functions
 local function create_meter(perc, full, part, empty, border)
@@ -67,7 +67,7 @@ local function get_hp_message(hp_delta, mhp_delta)
 
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] =
-    create_meter(hp / mhp * 100, EMOJI.HP_FULL_PIP, EMOJI.HP_PART_PIP, EMOJI.HP_EMPTY_PIP, EMOJI.HP_BORDER)
+    create_meter(hp / mhp * 100, BRC.Emoji.HP_FULL, BRC.Emoji.HP_PART, BRC.Emoji.HP_EMPTY, BRC.Emoji.HP_BORDER)
   msg_tokens[#msg_tokens + 1] = BRC.util.color(COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
   if mhp_delta ~= 0 then
@@ -85,7 +85,7 @@ local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] =
-    create_meter(mp / mmp * 100, EMOJI.MP_FULL_PIP, EMOJI.MP_PART_PIP, EMOJI.MP_EMPTY_PIP, EMOJI.MP_BORDER)
+    create_meter(mp / mmp * 100, BRC.Emoji.MP_FULL, BRC.Emoji.MP_PART, BRC.Emoji.MP_EMPTY, BRC.Emoji.MP_BORDER)
   msg_tokens[#msg_tokens + 1] = BRC.util.color(COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
   if mmp_delta ~= 0 then
@@ -166,13 +166,13 @@ function f_announce_damage.ready()
     local summary_tokens = {}
     local is_force_more_msg = damage_taken >= (mhp * BRC.Config.dmg_fm_threshold)
     if is_force_more_msg then
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
       summary_tokens[#summary_tokens + 1] = BRC.util.color(COLORS.lightmagenta, " MASSIVE DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
+      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
     else
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
       summary_tokens[#summary_tokens + 1] = BRC.util.color(COLORS.magenta, " BIG DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION
+      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
     end
     BRC.mpr.que_optmore(is_force_more_msg, table.concat(summary_tokens))
   end

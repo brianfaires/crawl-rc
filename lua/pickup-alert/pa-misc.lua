@@ -10,7 +10,7 @@ f_pickup_alert_misc = {}
 
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  return f_pickup_alert.do_alert(it, "New orb", EMOJI.ORB, BRC.Config.fm_alert.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, BRC.Config.fm_alert.orbs)
 end
 
 function pa_alert_OTA(it)
@@ -37,7 +37,7 @@ function pa_alert_OTA(it)
 
   f_pa_data.remove_from_OTA(it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Rare item", EMOJI.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Rare item", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
 end
 
 ---- Alert for needed resists ----
@@ -59,17 +59,17 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, BRC.Config.fm_alert.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, BRC.Config.fm_alert.staff_resists)
 end
 
 function pa_alert_talisman(it)
   if it.artefact then
     if not it.is_identified then return false end
-    return f_pickup_alert.do_alert(it, "Artefact talisman", EMOJI.TALISMAN, BRC.Config.fm_alert.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
   end
   local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
   if required_skill > you.skill("Shapeshifting") then return false end
-  return f_pickup_alert.do_alert(it, "New talisman", EMOJI.TALISMAN, BRC.Config.fm_alert.talismans)
+  return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
 end
 
 ---- Smart staff pickup ----

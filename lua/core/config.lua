@@ -181,14 +181,14 @@ BRC.Config.fm_alert = {
 } -- BRC.Config.fm_alert (do not remove this comment)
 
 -- Heuristics for tuning the pickup/alert system
-TUNING = {}
+BRC.Tuning = {}
 
 -- For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
 -- Lower values mean more alerts. gain/diff/same/lose refers to egos.
 -- min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
 -- ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
 
-TUNING.armour = {
+BRC.Tuning.armour = {
   lighter = {
     gain_ego = 0.6,
     diff_ego = 0.8,
@@ -209,22 +209,22 @@ TUNING.armour = {
   },
   encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
   early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
-} -- TUNING.armour (do not remove this comment)
+} -- BRC.Tuning.armour (do not remove this comment)
 
 -- All 'magic numbers' used in the weapon pickup/alert system. 2 common types of values:
 -- 1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
 -- 2. Cutoffs for when alerts are active (XL, skill_level)
 -- Pickup/alert system will try to upgrade ANY weapon in your inventory.
 -- "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score includes DPS/brand/accuracy.
-TUNING.weap = {}
-TUNING.weap.pickup = {
+BRC.Tuning.weap = {}
+BRC.Tuning.weap.pickup = {
   add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
   same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
   same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
   accuracy_weight = 0.25, -- Treat +1 Accuracy as +`accuracy_weight` DPS
-} -- TUNING.weap.pickup (do not remove this comment)
+} -- BRC.Tuning.weap.pickup (do not remove this comment)
 
-TUNING.weap.alert = {
+BRC.Tuning.weap.alert = {
   -- Alerts for weapons not requiring an extra hand
   pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
   gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
@@ -251,12 +251,12 @@ TUNING.weap.alert = {
     min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
     branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
     max_shields = 8.0, -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
-  }, -- TUNING.weap.alert.early_ranged (do not remove this comment)
-} -- TUNING.weap.alert (do not remove this comment)
+  }, -- BRC.Tuning.weap.alert.early_ranged (do not remove this comment)
+} -- BRC.Tuning.weap.alert (do not remove this comment)
 
 -- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
 -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
-WEAPON_BRAND_BONUSES = {
+BRC.BrandBonus = {
   chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
   distort = { factor = 1.0, offset = 6.0 },
   drain = { factor = 1.25, offset = 2.0 },
@@ -275,11 +275,12 @@ WEAPON_BRAND_BONUSES = {
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
     vamp = { factor = 1.2, offset = 0 },
-  }, -- WEAPON_BRAND_BONUSES.subtle (do not remove this comment)
-} -- WEAPON_BRAND_BONUSES (do not remove this comment)
+  }, -- BRC.BrandBonus.subtle (do not remove this comment)
+} -- BRC.BrandBonus (do not remove this comment)
 
--- Cosemtic only
-ALERT_COLORS = {
+
+-- Cosemtic settings
+BRC.AlertColor = {
   weapon = {
     desc = COLORS.magenta,
     item = COLORS.yellow,
@@ -294,4 +295,55 @@ ALERT_COLORS = {
   orb = { desc = COLORS.green, item = COLORS.lightgreen },
   talisman = { desc = COLORS.green, item = COLORS.lightgreen },
   misc = { desc = COLORS.brown, item = COLORS.white },
-} -- ALERT_COLORS (do not remove this comment)
+} -- BRC.AlertColor (do not remove this comment)
+
+BRC.Emoji = {}
+if BRC.Config.emojis then
+  BRC.Emoji.RARE_ITEM = "💎"
+  BRC.Emoji.ORB = "🔮"
+  BRC.Emoji.TALISMAN = "🧬"
+
+  BRC.Emoji.WEAPON = "⚔️"
+  BRC.Emoji.RANGED = "🏹"
+  BRC.Emoji.POLEARM = "🔱"
+  BRC.Emoji.TWO_HAND = "✋🤚"
+  BRC.Emoji.CAUTION = "⚠️"
+
+  BRC.Emoji.STAFF_RESISTANCE = "🔥"
+
+  BRC.Emoji.ACCURACY = "🎯"
+  BRC.Emoji.STRONGER = "💪"
+  BRC.Emoji.STRONGEST = "💪💪"
+  BRC.Emoji.EGO = "✨"
+  BRC.Emoji.LIGHTER = "⏬"
+  BRC.Emoji.HEAVIER = "⏫"
+  BRC.Emoji.ARTEFACT = "💠"
+
+  BRC.Emoji.REMIND_ID = "🎁"
+  BRC.Emoji.EXCLAMATION = "❗"
+  BRC.Emoji.EXCLAMATION_2 = "‼️"
+
+  BRC.Emoji.HP_FULL = "❤️"
+  BRC.Emoji.HP_PART = "❤️‍🩹"
+  BRC.Emoji.HP_EMPTY = "🤍"
+
+  BRC.Emoji.MP_FULL = "🟦"
+  BRC.Emoji.MP_PART = "🔹"
+  BRC.Emoji.MP_EMPTY = "➖"
+
+  BRC.Emoji.SUCCESS = "✅"
+else
+  BRC.Emoji.REMIND_ID = BRC.util.color(COLORS.magenta, "?")
+  BRC.Emoji.EXCLAMATION = BRC.util.color(COLORS.magenta, "!")
+  BRC.Emoji.EXCLAMATION_2 = BRC.util.color(COLORS.lightmagenta, "!!")
+
+  BRC.Emoji.HP_BORDER = BRC.util.color(COLORS.white, "|")
+  BRC.Emoji.HP_FULL = BRC.util.color(COLORS.green, "+")
+  BRC.Emoji.HP_PART = BRC.util.color(COLORS.lightgrey, "+")
+  BRC.Emoji.HP_EMPTY = BRC.util.color(COLORS.darkgrey, "-")
+
+  BRC.Emoji.MP_BORDER = BRC.util.color(COLORS.white, "|")
+  BRC.Emoji.MP_FULL = BRC.util.color(COLORS.lightblue, "+")
+  BRC.Emoji.MP_PART = BRC.util.color(COLORS.lightgrey, "+")
+  BRC.Emoji.MP_EMPTY = BRC.util.color(COLORS.darkgrey, "-")
+end

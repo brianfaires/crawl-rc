@@ -330,14 +330,14 @@ function get_weap_damage(it, dmg_type)
   if dmg_type == DMG_TYPE.plain then
     local ego = get_ego(it)
     if ego and util.contains(PLAIN_DMG_EGOS, ego) then
-      local brand_bonus = WEAPON_BRAND_BONUSES[ego] or WEAPON_BRAND_BONUSES.subtle[ego]
+      local brand_bonus = WEAPON_BRAND_BONUSES[ego] or BRC.BrandBonus.subtle[ego]
       return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset
     end
   elseif dmg_type >= DMG_TYPE.branded then
     local ego = get_ego(it)
     if ego then
       local brand_bonus = WEAPON_BRAND_BONUSES[ego]
-      if not brand_bonus and dmg_type == DMG_TYPE.scoring then brand_bonus = WEAPON_BRAND_BONUSES.subtle[ego] end
+      if not brand_bonus and dmg_type == DMG_TYPE.scoring then brand_bonus = BRC.BrandBonus.subtle[ego] end
       if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset end
     end
   end
@@ -348,11 +348,11 @@ end
 function get_weap_score(it, no_brand_bonus)
   if it.dps and it.acc then
     -- Handle cached /  high-score tuples in WEAP_CACHE
-    return it.dps + it.acc * TUNING.weap.pickup.accuracy_weight
+    return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
   end
   local it_plus = it.plus or 0
   local dmg_type = no_brand_bonus and DMG_TYPE.unbranded or DMG_TYPE.scoring
-  return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * TUNING.weap.pickup.accuracy_weight
+  return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
 end
 
 --------- Weap stat helpers ---------
