@@ -8,7 +8,7 @@ Dependencies: CONFIG, iter, pa-util, util
 f_inscribe_stats = {}
 f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
 
--- Local constants
+-- Local constants / configuration
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
 -- Local functions
@@ -46,6 +46,7 @@ local function inscribe_weapon_stats(it)
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
+-- Hook functions
 function do_stat_inscription(it)
   if CONFIG.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)

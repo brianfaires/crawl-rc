@@ -8,7 +8,7 @@ Dependencies: CONFIG, COLORS, EMOJI, iter, util, pa-util
 f_pickup_alert_armour = {}
 --f_pickup_alert_armour.BRC_FEATURE_NAME = "pickup-alert-armour"
 
--- Local constants + config
+-- Local constants / configuration
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
 local SAME = "same_ego"
 local LOST = "lost_ego"
@@ -35,7 +35,7 @@ local ARMOUR_ALERT = {
   }, -- ARMOUR_ALERT.heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
--- Local helper functions
+-- Local functions
 local function aux_slot_is_impaired(it)
   local st = it.subtype()
   -- Skip boots/gloves/helmet if wearing Lear's hauberk
@@ -83,11 +83,10 @@ local function is_new_ego(ego_change)
 end
 
 local function send_armour_alert(it, alert_type)
-  return pa_alert_item(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
+  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
 end
 
 -- Local functions: Pickup
-
 local function pickup_body_armour(it)
   local cur = items.equipped_at("armour")
   if not cur then return false end -- surely am naked for a reason
@@ -176,7 +175,6 @@ local function pickup_aux_armour(it)
 end
 
 -- Local functions: Alerting
-
 local function should_alert_body_armour(weight, gain, loss, ego_change)
   local meets_ratio = loss <= 0 or (gain / loss > TUNING.armour[weight][ego_change])
   if not meets_ratio then return false end
@@ -210,6 +208,27 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
 
   --     return true
   -- end
+end
+
+-- If training armour in early/mid game, alert user to any armour that is the strongest found so far
+local function alert_ac_high_score(it)
+  if not BRC.is.body_armour(it) then return false end
+  if you.skill("Armour") == 0 then return false end
+  if you.xl() > 12 then return false end
+
+  if ac_high_score == 0 then
+    local worn = items.equipped_at("armour")
+    if not worn then return false end
+    ac_high_score = get_armour_ac(worn)
+  else
+    local itAC = get_armour_ac(it)
+    if itAC > ac_high_score then
+      ac_high_score = itAC
+      return f_pickup_alert.do_alert(it, "Highest AC", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
+    end
+  end
+
+  return false
 end
 
 local function alert_body_armour(it)
@@ -254,12 +273,14 @@ local function alert_body_armour(it)
 
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_ac_high_score(it) then return true end
-  if it_ego and you.xl() <= TUNING.armour.early_xl then return pa_alert_item(it, "Early armour", EMOJI.EGO) end
+  if it_ego and you.xl() <= TUNING.armour.early_xl then
+    return f_pickup_alert.do_alert(it, "Early armour", EMOJI.EGO)
+  end
 end
 
 local function alert_shield(it)
   if it.artefact then
-    return it.is_identified and pa_alert_item(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
+    return it.is_identified and f_pickup_alert.do_alert(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -270,16 +291,16 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(get_ego(cur), get_ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
   elseif get_shield_sh(it) > get_shield_sh(cur) then
-    return pa_alert_item(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
     if not it.is_identified then return false end
-    return pa_alert_item(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
   end
 
   -- Use a list to support Poltergeists; for other races it's a 1-item list
@@ -289,7 +310,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return pa_alert_item(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
     end
 
     local it_ego = get_ego(it)
@@ -297,38 +318,16 @@ local function alert_aux_armour(it, unworn_inv_item)
       local ego_change = get_ego_change_type(get_ego(cur), it_ego)
       if is_new_ego(ego_change) then
         local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-        return pa_alert_item(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+        return f_pickup_alert.do_alert(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
       elseif get_armour_ac(it) > get_armour_ac(cur) then
-        return pa_alert_item(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+        return f_pickup_alert.do_alert(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
       end
     end
   end
 end
 
--- If training armour in early/mid game, alert user to any armour that is the strongest found so far
-local function alert_ac_high_score(it)
-  if not BRC.is.body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
-  if you.xl() > 12 then return false end
 
-  if ac_high_score == 0 then
-    local worn = items.equipped_at("armour")
-    if not worn then return false end
-    ac_high_score = get_armour_ac(worn)
-  else
-    local itAC = get_armour_ac(it)
-    if itAC > ac_high_score then
-      ac_high_score = itAC
-      return pa_alert_item(it, "Highest AC", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
-    end
-  end
-
-  return false
-end
-
-
--- Public API
-
+-- Hook functions
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function pa_pickup_armour(it)
   if BRC.is.risky_ego(it) then return false end

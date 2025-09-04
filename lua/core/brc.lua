@@ -28,9 +28,10 @@ local MSG_COLORS = {
   debug = "lightblue",
 }
 
--- Local state
+-- Local variables
 local _features = {}
 local _hooks = {}
+local prev_turn
 
 -- Local functions
 local function is_feature_module(module_table)
@@ -82,6 +83,25 @@ local function call_hook(hook_name, ...)
 end
 
 -- Public API
+function BRC.init(reset_persistent_data)
+  BRC.data.init(reset_persistent_data)
+
+  local loaded_count = BRC.load_all_features()
+  if loaded_count == 0 then
+    BRC.mpr.col("No features loaded. BRC system is inactive.", COLORS.lightred)
+    return false
+  end
+
+  -- Success!
+  local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
+  local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
+  crawl.mpr("\n" .. success_emoji .. BRC.util.color(COLORS.lightgreen, success_text) .. success_emoji)
+
+  prev_turn = -1
+  BRC.ready()
+  return true
+end
+
 function BRC.register_feature(feature_name, feature_module)
   if not feature_name or not feature_module then
     BRC.error("Invalid feature registration: missing name or module")
@@ -93,13 +113,11 @@ function BRC.register_feature(feature_name, feature_module)
     return false
   end
 
-  -- Register the feature and its hooks
   _features[feature_name] = feature_module
   register_hooks(feature_name, feature_module)
-
-  -- Initialize the feature
   if feature_module.init then safe_call(feature_name, feature_module.init) end
 
+  BRC.debug(string.format("Feature '%s' registered", feature_name))
   return true
 end
 
@@ -111,6 +129,7 @@ function BRC.unregister_feature(feature_name)
 
   unregister_hooks(feature_name)
   _features[feature_name] = nil
+  if _features[feature_name].cleanup then safe_call(feature_name, _features[feature_name].cleanup) end
 
   BRC.debug(string.format("Feature '%s' unregistered", feature_name))
   return true
@@ -127,9 +146,9 @@ function BRC.load_all_features()
 
       if success then
         loaded_count = loaded_count + 1
-        BRC.debug(string.format("Registered %s from _G.%s", feature_name, name))
+        BRC.debug(string.format('Registered %s from _G["%s"]', feature_name, name))
       else
-        BRC.error(string.format("Failed to register feature from: _G.%s", name))
+        BRC.error(string.format('Failed to register feature from: _G["%s"]', name))
       end
     end
   end

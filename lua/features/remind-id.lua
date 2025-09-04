@@ -8,11 +8,18 @@ Dependencies: CONFIG, COLORS, EMOJI, BRC.util.color, iter, persistent_data
 f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
 
--- Local state
+-- Persistent variables
+ri_max_scroll_stack = BRC.data.create("ri_max_scroll_stack", CONFIG.stop_on_scrolls_count - 1)
+ri_max_potion_stack = BRC.data.create("ri_max_potion_stack", CONFIG.stop_on_pots_count - 1)
+found_scroll_of_id = BRC.data.create("found_scroll_of_id", false)
+
+-- Local constants / configuration
+local IDENTIFY_MSG = BRC.util.color(COLORS.magenta, " You have something to identify. ")
+
+-- Local variables
 local do_remind_id_check
 
 -- Local functions
-local IDENTIFY_MSG = BRC.util.color(COLORS.magenta, " You have something to identify. ")
 local function alert_remind_identify()
   BRC.mpr.stop(EMOJI.REMIND_IDENTIFY .. IDENTIFY_MSG .. EMOJI.REMIND_IDENTIFY)
 end
@@ -20,8 +27,7 @@ end
 local function get_max_stack_size(class, skip_slot)
   local max_stack_size = 0
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if
-      inv.quantity > max_stack_size
+    if inv.quantity > max_stack_size
       and inv.class(true) == class
       and inv.slot ~= skip_slot
       and not inv.is_identified
@@ -49,7 +55,6 @@ end
 -- Hook functions
 function f_remind_id.init()
   do_remind_id_check = true
-  BRC.data.create("found_scroll_of_id", false)
 end
 
 function f_remind_id.c_assign_invletter(it)
@@ -91,12 +96,14 @@ function f_remind_id.c_message(text, channel)
 
     local it_class = it.class(true)
     if it_class == "scroll" then
-      if it.quantity > math.max(CONFIG.stop_on_scrolls_count - 1, get_max_stack_size("scroll", slot)) then
+      if it.quantity > math.max(ri_max_scroll_stack, get_max_stack_size("scroll", slot)) then
         you.stop_activity()
+        ri_max_scroll_stack = it.quantity
       end
     elseif it_class == "potion" then
-      if it.quantity > math.max(CONFIG.stop_on_pots_count - 1, get_max_stack_size("potion", slot)) then
+      if it.quantity > math.max(ri_max_potion_stack, get_max_stack_size("potion", slot)) then
         you.stop_activity()
+        ri_max_potion_stack = it.quantity
       end
     end
   end

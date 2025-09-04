@@ -95,29 +95,6 @@ function get_ego(it)
   end
 end
 
--- Used for data tables
-function get_pa_keys(it, name_type)
-  if it.class(true) == "bauble" then
-    return it.name("qual"):gsub('"', ""), 0
-  elseif BRC.is.talisman(it) or BRC.is.orb(it) then
-    return it.name():gsub('"', ""), 0
-  elseif BRC.is.magic_staff(it) then
-    return it.name("base"):gsub('"', ""), 0
-  else
-    local name = it.name(name_type or "base"):gsub('"', "")
-    local value = tonumber(name:sub(1, 3))
-    if not value then return name, 0 end
-    return util.trim(name:sub(4)), value
-  end
-end
-
-function get_plussed_name(it, name_type)
-  local name, value = get_pa_keys(it, name_type)
-  if BRC.is.talisman(it) or BRC.is.orb(it) or BRC.is.magic_staff(it) then return name end
-  if value >= 0 then value = "+" .. value end
-  return value .. " " .. name
-end
-
 -- Custom def of ego/branded
 function has_ego(it, exclude_stat_only_egos)
   if not it then return false end

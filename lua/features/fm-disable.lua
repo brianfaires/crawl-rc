@@ -8,7 +8,7 @@ Dependencies: CONFIG
 f_fm_disable = {}
 f_fm_disable.BRC_FEATURE_NAME = "fm-disable"
 
--- Local constants + configuration
+-- Local constants / configuration
 local FM_DISABLES = {
   "ou kneel at the altar",
   "need to enable at least one skill for training",

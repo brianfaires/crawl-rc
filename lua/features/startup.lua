@@ -8,6 +8,7 @@ Dependencies: CONFIG
 f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
 
+-- Hook functions
 function f_startup.ready()
   if you.turns() == 0 then
     if CONFIG.show_skills_on_startup then

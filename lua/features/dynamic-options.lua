@@ -8,7 +8,7 @@ Dependencies: CONFIG, ALL_SPELLBOOKS, ALL_UNDEAD_RACES, ALL_POIS_RES_RACES, util
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
 
--- Local constants + configuration
+-- Local constants / configuration
 local EARLY_XL = 5
 local MID_XL = 10
 local LATE_XL = 15

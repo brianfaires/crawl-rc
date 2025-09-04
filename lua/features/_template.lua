@@ -1,8 +1,8 @@
 --[[
 Feature: _template
-Description: Template for new features
-Author: buehler
-Dependencies: CONFIG
+Description: Brief description of what this feature does
+Author: Your Name
+Dependencies: List any dependencies (e.g., BRC.data)
 --]]
 
 -- Define the feature module here, in the global namespace for auto-loading
@@ -19,41 +19,41 @@ template_dict = BRC.data.create("template_dict", {})
 -- Define local (private) constants and configuration
 
 -- Define local (private) variables. Recommended to only use init() for setting their initial values.
+local my_name
 
--- Define private (local) functions here
--- Hook functions
+-- Define local (private) functions here
+
+-- Public hook functions (Remove any hooks you don't use)
 function f_template.init()
-  -- Called when the feature is registered; once on startup.
-  template_counter = template_counter + 1
-  
-  BRC.debug("Template feature initialized, counter: " .. template_counter)
+  -- Init local vars, and other one-time startup tasks
+  my_name = "be" .. string.rep("u", template_counter) .. "hler"
 end
 
 function f_template.ready()
   -- Called at the start of each turn
-  if not template_flag then
-    template_flag = true
-  end
+  template_counter = template_counter + 1
+  template_flag = not template_flag
+  template_dict.num_startups = template_counter
 end
 
 function f_template.c_message(text, channel)
-  -- Respond to incoming messages
-  crawl.mpr("echo: " .. text, channel)
+  -- React to incoming messages
+  crawl.mpr(my_name .. " got the message: " .. text, channel)
 end
 
 function f_template.c_answer_prompt(prompt)
   -- Respond to prompts (return true/false or nil)
-  if prompt == "Do you want to live?" then return true end
+  if util.contains(template_list, prompt) then return true end
   return nil -- Abstain from answering
 end
 
 function f_template.c_assign_invletter(it)
-  -- Respond to inventory letter assignment on new item pickup
+  -- Inventory letter assignment; fires on every pickup of a new item
   if it.name() == "Item headed for slot b" then return 3 end
   return nil
 end
 
 function f_template.cleanup()
   -- Do stuff when feature is unregistered
-  template_flag = false
+  template_dict = nil
 end

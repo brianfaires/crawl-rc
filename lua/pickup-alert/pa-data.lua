@@ -5,43 +5,56 @@ Author: buehler
 Dependencies: CONFIG, create_persistent_data, iter
 --]]
 
-f_pickup_alert_data = {}
---f_pickup_alert_data.BRC_FEATURE_NAME = "pickup-alert-data"
+f_pa_data = {}
+--f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
+
+-- Persistent variables
+pa_OTA_items = BRC.data.create("pa_OTA_items", CONFIG.alert.one_time)
+pa_recent_alerts = BRC.data.create("pa_recent_alerts", {})
+pa_items_picked = BRC.data.create("pa_items_picked", {})
+pa_items_alerted = BRC.data.create("pa_items_alerted", {})
+
+ac_high_score = BRC.data.create("ac_high_score", 0)
+weapon_high_score = BRC.data.create("weapon_high_score", 0)
+plain_dmg_high_score = BRC.data.create("plain_dmg_high_score", 0)
 
 ---- Helpers for using persistent tables in pickup-alert system----
-function add_to_pa_table(table_ref, it)
+function f_pa_data.append(table_ref, it)
   if it.is_weapon or BRC.is.armour(it, true) or BRC.is.talisman(it) then
-    local name, value = get_pa_keys(it)
+    local name, value = f_pa_data.get_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then table_ref[name] = value end
   end
 end
 
-function already_contains(table_ref, it)
-  local name, value = get_pa_keys(it)
+function f_pa_data.contains(table_ref, it)
+  local name, value = f_pa_data.get_keys(it)
   return table_ref[name] ~= nil and tonumber(table_ref[name]) >= value
 end
 
--- Hook functions
-function f_pickup_alert_data.init()
-  BRC.data.create("pa_OTA_items", CONFIG.alert.one_time)
-  BRC.data.create("pa_recent_alerts", {})
-  BRC.data.create("pa_items_picked", {})
-  BRC.data.create("pa_items_alerted", {})
-  BRC.data.create("ac_high_score", 0)
-  BRC.data.create("weapon_high_score", 0)
-  BRC.data.create("plain_dmg_high_score", 0)
-
-  -- Update alerts & tables for starting items
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    remove_from_OTA(inv)
-    add_to_pa_table(pa_items_picked, inv)
-
-    if inv.is_weapon then alert_first_of_skill(inv, true) end
+function f_pa_data.get_keys(it, name_type)
+  if it.class(true) == "bauble" then
+    return it.name("qual"):gsub('"', ""), 0
+  elseif BRC.is.talisman(it) or BRC.is.orb(it) then
+    return it.name():gsub('"', ""), 0
+  elseif BRC.is.magic_staff(it) then
+    return it.name("base"):gsub('"', ""), 0
+  else
+    local name = it.name(name_type or "base"):gsub('"', "")
+    local value = tonumber(name:sub(1, 3))
+    if not value then return name, 0 end
+    return util.trim(name:sub(4)), value
   end
 end
 
-function get_OTA_index(it)
+function f_pa_data.get_name(it, name_type)
+  local name, value = f_pa_data.get_keys(it, name_type)
+  if BRC.is.talisman(it) or BRC.is.orb(it) or BRC.is.magic_staff(it) then return name end
+  if value >= 0 then value = "+" .. value end
+  return value .. " " .. name
+end
+
+function f_pa_data.get_OTA_index(it)
   local qualname = it.name("qual")
   for i, v in ipairs(pa_OTA_items) do
     if v ~= "" and qualname:find(v) then return i end
@@ -49,11 +62,11 @@ function get_OTA_index(it)
   return -1
 end
 
-function remove_from_OTA(it)
+function f_pa_data.remove_from_OTA(it)
   local found = false
   local idx
   repeat
-    idx = get_OTA_index(it)
+    idx = f_pa_data.get_OTA_index(it)
     if idx ~= -1 then
       util.remove(pa_OTA_items, pa_OTA_items[idx])
       found = true
@@ -63,9 +76,8 @@ function remove_from_OTA(it)
   return found
 end
 
---- Set all single high scores ---
 -- Returns a string if item is a new high score, else nil
-function update_high_scores(it)
+function f_pa_data.update_high_scores(it)
   if not it then return end
   local ret_val = nil
 
@@ -93,4 +105,14 @@ function update_high_scores(it)
   end
 
   return ret_val
+end
+
+-- Hook functions
+function f_pa_data.init()
+
+  -- Update alerts & tables for starting items
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    f_pa_data.remove_from_OTA(inv)
+    f_pa_data.append(pa_items_picked, inv)
+  end
 end

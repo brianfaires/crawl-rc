@@ -8,13 +8,17 @@ Dependencies: CONFIG, COLORS, EMOJI, ALERT_COLORS, iter, util, pa-util
 f_pickup_alert = {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
--- Local state
+-- Persistent variables
+num_autopickup_funcs = BRC.data.create("num_autopickup_funcs", #chk_force_autopickup + 1)
+
+-- Local variables
 local loaded_pa_armour
 local loaded_pa_misc
 local loaded_pa_weapons
 pause_pa_system = nil
 
-function has_configured_force_more(it)
+-- Local functions
+local function has_configured_force_more(it)
   if it.artefact then
     if CONFIG.fm_alert.artefact then return true end
     if CONFIG.fm_alert.trained_artefacts and BRC.get.skill_with_item(it) > 0 then return true end
@@ -26,7 +30,7 @@ end
 -- Hook functions
 function f_pickup_alert.init()
   pause_pa_system = false
-  f_pickup_alert_data.init()
+  f_pa_data.init()
 
   if f_pickup_alert_armour then
     loaded_pa_armour = true
@@ -47,7 +51,6 @@ function f_pickup_alert.init()
   end
 
   -- Check for duplicate autopickup creation (affects local only)
-  BRC.data.create("num_autopickup_funcs", #chk_force_autopickup + 1)
   if num_autopickup_funcs < #chk_force_autopickup then
     crawl.mpr("Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)")
     crawl.mpr("Expected: " .. num_autopickup_funcs .. " but got: " .. #chk_force_autopickup)
@@ -87,7 +90,7 @@ function f_pickup_alert.init()
     end
 
     -- Not picking up this item. Now check for alerts.
-    if not CONFIG.alert.system_enabled or already_contains(pa_items_alerted, it) then return end
+    if not CONFIG.alert.system_enabled or f_pa_data.contains(pa_items_alerted, it) then return end
 
     if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
       if pa_alert_OTA(it) then return end
@@ -109,56 +112,21 @@ function f_pickup_alert.init()
   end)
 end
 
-function pa_alert_item(it, alert_type, emoji, force_more)
-  local item_desc = get_plussed_name(it, "plain")
-  local alert_colors
-  if it.is_weapon then
-    alert_colors = ALERT_COLORS.weapon
-    update_high_scores(it)
-    item_desc = item_desc .. BRC.util.color(ALERT_COLORS.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
-  elseif BRC.is.body_armour(it) then
-    alert_colors = ALERT_COLORS.body_arm
-    update_high_scores(it)
-    local ac, ev = get_armour_info_strings(it)
-    item_desc = item_desc .. BRC.util.color(ALERT_COLORS.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
-  elseif BRC.is.armour(it) then
-    alert_colors = ALERT_COLORS.aux_arm
-  elseif BRC.is.orb(it) then
-    alert_colors = ALERT_COLORS.orb
-  elseif BRC.is.talisman(it) then
-    alert_colors = ALERT_COLORS.talisman
-  else
-    alert_colors = ALERT_COLORS.misc
-  end
-  local tokens = {}
-  tokens[1] = emoji and emoji or BRC.util.color(COLORS.cyan, "----")
-  tokens[#tokens + 1] = BRC.util.color(alert_colors.desc, " " .. alert_type .. ": ")
-  tokens[#tokens + 1] = BRC.util.color(alert_colors.item, item_desc .. " ")
-  tokens[#tokens + 1] = tokens[1]
-
-  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
-
-  table.insert(pa_recent_alerts, get_plussed_name(it))
-  add_to_pa_table(pa_items_alerted, it)
-  you.stop_activity()
-  return true
-end
-
 function f_pickup_alert.c_assign_invletter(it)
   pa_alert_OTA(it)
 
-  util.remove(pa_recent_alerts, get_plussed_name(it))
+  util.remove(pa_recent_alerts, f_pa_data.get_name(it))
   if it.is_weapon and you.race() == "Coglin" then
     -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
     -- ie, Reset the alert the first time you pick up.
-    local name, _ = get_pa_keys(it)
+    local name, _ = f_pa_data.get_keys(it)
     if pa_items_picked[name] == nil then pa_items_alerted[name] = nil end
   end
 
-  add_to_pa_table(pa_items_picked, it)
+  f_pa_data.append(pa_items_picked, it)
 
   if it.is_weapon or BRC.is.armour(it) then
-    update_high_scores(it)
+    f_pa_data.update_high_scores(it)
     you.stop_activity() -- crawl misses this sometimes
   end
 end
@@ -183,5 +151,40 @@ end
 function f_pickup_alert.ready()
   if pause_pa_system then return end
   f_pickup_alert_weapons.ready()
-  update_high_scores(items.equipped_at("armour"))
+  f_pa_data.update_high_scores(items.equipped_at("armour"))
+end
+
+function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
+  local item_desc = f_pa_data.get_name(it, "plain")
+  local alert_colors
+  if it.is_weapon then
+    alert_colors = ALERT_COLORS.weapon
+    f_pa_data.update_high_scores(it)
+    item_desc = item_desc .. BRC.util.color(ALERT_COLORS.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
+  elseif BRC.is.body_armour(it) then
+    alert_colors = ALERT_COLORS.body_arm
+    f_pa_data.update_high_scores(it)
+    local ac, ev = get_armour_info_strings(it)
+    item_desc = item_desc .. BRC.util.color(ALERT_COLORS.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
+  elseif BRC.is.armour(it) then
+    alert_colors = ALERT_COLORS.aux_arm
+  elseif BRC.is.orb(it) then
+    alert_colors = ALERT_COLORS.orb
+  elseif BRC.is.talisman(it) then
+    alert_colors = ALERT_COLORS.talisman
+  else
+    alert_colors = ALERT_COLORS.misc
+  end
+  local tokens = {}
+  tokens[1] = emoji and emoji or BRC.util.color(COLORS.cyan, "----")
+  tokens[#tokens + 1] = BRC.util.color(alert_colors.desc, " " .. alert_type .. ": ")
+  tokens[#tokens + 1] = BRC.util.color(alert_colors.item, item_desc .. " ")
+  tokens[#tokens + 1] = tokens[1]
+
+  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
+
+  table.insert(pa_recent_alerts, f_pa_data.get_name(it))
+  f_pa_data.append(pa_items_alerted, it)
+  you.stop_activity()
+  return true
 end

@@ -8,11 +8,11 @@ Dependencies: CONFIG, COLORS, EMOJI, BRC.util.color, BRC.mpr.que, BRC.mpr.que_op
 f_announce_damage = {}
 f_announce_damage.BRC_FEATURE_NAME = "announce-damage"
 
+-- Persistent variables
+ad_prev = BRC.data.create("ad_prev", {hp = 0, mhp = 0, mp = 0, mmp = 0})
+
 -- Local constants
 local METER_LENGTH = 7 + 2 * (EMOJI.HP_BORDER and #EMOJI.HP_BORDER or 0)
-
--- Local state
-local prev = {} -- contains all previous hp/mp values
 
 -- Local functions
 local function create_meter(perc, full, part, empty, border)
@@ -105,12 +105,10 @@ end
 
 -- Hook functions
 function f_announce_damage.init()
-  prev = {}
-  prev.hp = 0
-  prev.mhp = 0
-  prev.mp = 0
-  prev.mmp = 0
-  prev.turn = you.turns()
+  ad_prev.hp = 0
+  ad_prev.mhp = 0
+  ad_prev.mp = 0
+  ad_prev.mmp = 0
 
   if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
     crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
@@ -121,16 +119,16 @@ function f_announce_damage.ready()
   -- Update prev immediately, so we can return early below
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
-  local is_startup = prev.hp == 0
-  local hp_delta = hp - prev.hp
-  local mp_delta = mp - prev.mp
-  local mhp_delta = mhp - prev.mhp
-  local mmp_delta = mmp - prev.mmp
+  local is_startup = ad_prev.hp == 0
+  local hp_delta = hp - ad_prev.hp
+  local mp_delta = mp - ad_prev.mp
+  local mhp_delta = mhp - ad_prev.mhp
+  local mmp_delta = mmp - ad_prev.mmp
   local damage_taken = mhp_delta - hp_delta
-  prev.hp = hp
-  prev.mhp = mhp
-  prev.mp = mp
-  prev.mmp = mmp
+  ad_prev.hp = hp
+  ad_prev.mhp = mhp
+  ad_prev.mp = mp
+  ad_prev.mmp = mmp
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end

@@ -8,7 +8,7 @@ Dependencies: CONFIG, COLORS, BRC.util.color, iter.invent_iterator, is_magic_sta
 f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
 
--- Local state
+-- Local variables
 local do_cleanup_weapon_slots
 local priorities_ab
 local priorities_w
@@ -124,6 +124,7 @@ function f_weapon_slots.c_assign_invletter(it)
   end
 end
 
+-- Hook functions
 function f_weapon_slots.c_message(text, channel)
   if not CONFIG.do_auto_weapon_slots_abw then return end
   do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)

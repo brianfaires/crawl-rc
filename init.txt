@@ -97,30 +97,8 @@ function c_assign_invletter(it)
   if BRC then BRC:c_assign_invletter(it) end
 end
 
-function init_buehler(reset_persistent_data)
-    -- Initialize core modules first (these are required)
-    init_config()
-    init_emojis()
-    init_util()
-    BRC.data.init(reset_persistent_data)
-    
-    -- Load and register all features with BRC
-    local loaded_count = BRC:load_all_features()
-    
-    if loaded_count == 0 then
-        BRC.mpr.col("No features loaded. BRC system is inactive.", COLORS.lightred)
-        return false
-    end
-    
-    -- Success!
-    local success_emoji = CONFIG.emojis and EMOJI.SUCCESS or ""
-    local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
-    crawl.mpr("\n" .. success_emoji .. BRC.util.color(COLORS.lightgreen, success_text) .. success_emoji)
-    
-    return true
-end
 
 -- This is the only line of top-level code, aside from declaring variables (without values)
 -- Done to give confidence in simple re-inits
-init_buehler(you.turns() == 0)
+if BRC then BRC:init(you.turns() == 0) end
 }

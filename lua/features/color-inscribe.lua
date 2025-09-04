@@ -8,7 +8,7 @@ Dependencies: CONFIG, COLORS, do_stat_inscription
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
--- Local constants + configuration
+-- Local constants / configuration
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"

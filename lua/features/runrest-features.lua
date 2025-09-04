@@ -8,13 +8,15 @@ Dependencies: CONFIG, COLORS, util, ALL_PORTAL_NAMES
 f_runrest_features = {}
 f_runrest_features.BRC_FEATURE_NAME = "runrest-features"
 
--- Local state
+-- Persistent variables
+rr_autosearched_temple = BRC.data.create("rr_autosearched_temple", false)
+rr_autosearched_gauntlet = BRC.data.create("rr_autosearched_gauntlet", false)
+
+-- Local variables
 local stop_on_altars
 local stop_on_portals
 local stop_on_pan_gates
 local stop_on_hell_stairs
-local autosearched_temple
-local autosearched_gauntlet
 
 -- Local functions
 local function search_gauntlet()
@@ -25,13 +27,13 @@ local function search_gauntlet()
 end
 
 local function ready_gauntlet_macro()
-  if you.branch() == "Gauntlet" and not autosearched_gauntlet then
+  if you.branch() == "Gauntlet" and not rr_autosearched_gauntlet then
     search_gauntlet()
-    autosearched_gauntlet = true
+    rr_autosearched_gauntlet = true
   end
 end
 
-local function c_message_gauntlet_actions(text, _)
+local function c_message_gauntlet(text, _)
   -- Search again with CMD_EXPLORE
   if you.branch() == "Gauntlet" then
     if text:find("explor", 1, true) then search_gauntlet() end
@@ -91,13 +93,13 @@ local function search_altars()
 end
 
 local function ready_temple_macro()
-  if you.branch() == "Temple" and not autosearched_temple then
+  if you.branch() == "Temple" and not rr_autosearched_temple then
     search_altars()
-    autosearched_temple = true
+    rr_autosearched_temple = true
   end
 end
 
-local function c_message_temple_actions(text, _)
+local function c_message_temple(text, _)
   if you.branch() == "Temple" then
     -- Search again with CMD_EXPLORE
     if text:find("explor", 1, true) then
@@ -116,13 +118,11 @@ function f_runrest_features.init()
   stop_on_portals = true
   stop_on_pan_gates = false
   stop_on_hell_stairs = false
-  autosearched_temple = false
-  autosearched_gauntlet = false
 end
 
 function f_runrest_features.c_message(text, _)
-  if CONFIG.temple_macros then c_message_temple_actions(text, _) end
-  if CONFIG.gauntlet_macros then c_message_gauntlet_actions(text, _) end
+  if CONFIG.temple_macros then c_message_temple(text, _) end
+  if CONFIG.gauntlet_macros then c_message_gauntlet(text, _) end
 end
 
 function f_runrest_features.ready()

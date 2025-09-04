@@ -8,15 +8,18 @@ Dependencies: CONFIG, CONSTANTS, iter, util
 f_exclude_dropped = {}
 f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
 
+-- Persistent variables
+ed_dropped_items = BRC.data.create("ed_dropped_items", {})
+
 -- Local functions
 local function add_exclusion(item_name)
-  if not util.contains(dropped_item_exclusions, item_name) then table.insert(dropped_item_exclusions, item_name) end
+  if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
   local command = "autopickup_exceptions ^= " .. item_name
   crawl.setopt(command)
 end
 
 local function remove_exclusion(item_name)
-  util.remove(dropped_item_exclusions, item_name)
+  util.remove(ed_dropped_items, item_name)
   local command = "autopickup_exceptions -= " .. item_name
   crawl.setopt(command)
 end
@@ -84,9 +87,8 @@ end
 -- Hook functions
 function f_exclude_dropped.init()
   if not CONFIG.exclude_dropped then return end
-  BRC.data.create("dropped_item_exclusions", {})
 
-  for _, v in ipairs(dropped_item_exclusions) do
+  for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)
   end
 end

@@ -8,7 +8,7 @@ Dependencies: CONFIG, create_persistent_data, in_hell
 f_after_shaft = {}
 f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
--- Define persistent variables globally
+-- Persistent variables
 as_shaft_depth = BRC.data.create("as_shaft_depth", 0)
 as_shaft_branch = BRC.data.create("as_shaft_branch", "NA")
 

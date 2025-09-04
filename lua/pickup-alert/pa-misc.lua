@@ -10,11 +10,11 @@ f_pickup_alert_misc = {}
 
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  return pa_alert_item(it, "New orb", EMOJI.ORB, CONFIG.fm_alert.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", EMOJI.ORB, CONFIG.fm_alert.orbs)
 end
 
 function pa_alert_OTA(it)
-  local index = get_OTA_index(it)
+  local index = f_pa_data.get_OTA_index(it)
   if index == -1 then return end
 
   local do_alert = true
@@ -35,9 +35,9 @@ function pa_alert_OTA(it)
     if you.skill(it.weap_skill) < CONFIG.alert.OTA_require_skill.weapon then return end
   end
 
-  remove_from_OTA(it)
+  f_pa_data.remove_from_OTA(it)
   if not do_alert then return false end
-  return pa_alert_item(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert.one_time_alerts)
 end
 
 ---- Alert for needed resists ----
@@ -59,23 +59,23 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  return pa_alert_item(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert.staff_resists)
 end
 
 function pa_alert_talisman(it)
   if it.artefact then
     if not it.is_identified then return false end
-    return pa_alert_item(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
   end
   if BRC.get.talisman_min_level(it) > you.skill("Shapeshifting") + CONFIG.alert.talisman_lvl_diff then return false end
-  return pa_alert_item(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
+  return f_pickup_alert.do_alert(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
 end
 
 ---- Smart staff pickup ----
 function pa_pickup_staff(it)
   if not it.is_identified then return false end
   if get_skill(BRC.get.staff_school(it)) == 0 then return false end
-  return not already_contains(pa_items_picked, it)
+  return not f_pa_data.contains(pa_items_picked, it)
 end
 
 ---- Exclude superfluous rings ----
