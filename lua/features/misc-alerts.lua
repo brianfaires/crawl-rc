@@ -24,9 +24,9 @@ local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
+  elseif hp <= BRC.Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = " Dropped below " .. (100 * CONFIG.alert_low_hp_threshold) .. "% HP "
+    local low_hp_msg = " Dropped below " .. (100 * BRC.Config.alert_low_hp_threshold) .. "% HP "
     BRC.mpr.que_optmore(
       true,
       table.concat({
@@ -82,7 +82,7 @@ function f_misc_alerts.init()
   ma_prev_spell_levels = you.spell_levels()
   below_hp_threshold = false
 
-  if CONFIG.save_with_msg then
+  if BRC.Config.save_with_msg then
     crawl.setopt("macros += M " .. KEYS.save_game .. " ===f_misc_alerts.macro_save_w_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr("MESSAGE: " .. ma_saved_msg)
@@ -92,7 +92,7 @@ function f_misc_alerts.init()
 end
 
 function f_misc_alerts.ready()
-  if CONFIG.alert_remove_faith then alert_remove_faith() end
-  if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
-  if CONFIG.alert_spell_level_changes then alert_spell_level_changes() end
+  if BRC.Config.alert_remove_faith then alert_remove_faith() end
+  if BRC.Config.alert_low_hp_threshold > 0 then alert_low_hp() end
+  if BRC.Config.alert_spell_level_changes then alert_spell_level_changes() end
 end

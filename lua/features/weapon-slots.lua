@@ -108,7 +108,7 @@ function f_weapon_slots.init()
 end
 
 function f_weapon_slots.c_assign_invletter(it)
-  if not CONFIG.do_auto_weapon_slots_abw then return end
+  if not BRC.Config.do_auto_weapon_slots_abw then return end
   if not it.is_weapon then return end
 
   for i = 0, 2 do
@@ -126,7 +126,7 @@ end
 
 -- Hook functions
 function f_weapon_slots.c_message(text, channel)
-  if not CONFIG.do_auto_weapon_slots_abw then return end
+  if not BRC.Config.do_auto_weapon_slots_abw then return end
   do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
 end
 

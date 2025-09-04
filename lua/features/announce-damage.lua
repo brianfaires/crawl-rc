@@ -75,7 +75,7 @@ local function get_hp_message(hp_delta, mhp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.util.color(COLORS.lightgrey, text)
   end
 
-  if not CONFIG.announce.same_line and hp == mhp then
+  if not BRC.Config.announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = BRC.util.color(COLORS.white, " (Full HP)")
   end
   return table.concat(msg_tokens)
@@ -91,7 +91,7 @@ local function get_mp_message(mp_delta, mmp_delta)
   if mmp_delta ~= 0 then
     msg_tokens[#msg_tokens + 1] = BRC.util.color(COLORS.cyan, string.format(" (%s max MP)", format_delta(mmp_delta)))
   end
-  if not CONFIG.announce.same_line and mp == mmp then
+  if not BRC.Config.announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = BRC.util.color(COLORS.lightcyan, " (Full MP)")
   end
   return table.concat(msg_tokens)
@@ -110,7 +110,7 @@ function f_announce_damage.init()
   ad_prev.mp = 0
   ad_prev.mmp = 0
 
-  if CONFIG.dmg_fm_threshold > 0 and CONFIG.dmg_fm_threshold <= 0.5 then
+  if BRC.Config.dmg_fm_threshold > 0 and BRC.Config.dmg_fm_threshold <= 0.5 then
     crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
   end
 end
@@ -132,19 +132,19 @@ function f_announce_damage.ready()
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = hp <= CONFIG.announce.very_low_hp * mhp
+  local is_very_low_hp = hp <= BRC.Config.announce.very_low_hp * mhp
 
   -- Determine which messages to show
   local do_hp = true
   local do_mp = true
-  if hp_delta <= 0 and hp_delta > -CONFIG.announce.hp_loss_limit then do_hp = false end
-  if hp_delta >= 0 and hp_delta < CONFIG.announce.hp_gain_limit then do_hp = false end
-  if mp_delta <= 0 and mp_delta > -CONFIG.announce.mp_loss_limit then do_mp = false end
-  if mp_delta >= 0 and mp_delta < CONFIG.announce.mp_gain_limit then do_mp = false end
+  if hp_delta <= 0 and hp_delta > -BRC.Config.announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta < BRC.Config.announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -BRC.Config.announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta < BRC.Config.announce.mp_gain_limit then do_mp = false end
 
   if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
   if not do_hp and not do_mp then return end
-  if CONFIG.announce.always_both then
+  if BRC.Config.announce.always_both then
     do_hp = true
     do_mp = true
   end
@@ -153,18 +153,18 @@ function f_announce_damage.ready()
   local hp_msg = get_hp_message(hp_delta, mhp_delta)
   local mp_msg = get_mp_message(mp_delta, mmp_delta)
   local msg_tokens = {}
-  msg_tokens[1] = (CONFIG.announce.hp_first and do_hp) and hp_msg or mp_msg
+  msg_tokens[1] = (BRC.Config.announce.hp_first and do_hp) and hp_msg or mp_msg
   if do_mp and do_hp then
-    msg_tokens[2] = CONFIG.announce.same_line and "       " or "\n"
-    msg_tokens[3] = CONFIG.announce.hp_first and mp_msg or hp_msg
+    msg_tokens[2] = BRC.Config.announce.same_line and "       " or "\n"
+    msg_tokens[3] = BRC.Config.announce.hp_first and mp_msg or hp_msg
   end
   if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
 
   -- Add Damage-related warnings, when damage >= threshold
-  if damage_taken >= mhp * CONFIG.dmg_flash_threshold then
+  if damage_taken >= mhp * BRC.Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
     local summary_tokens = {}
-    local is_force_more_msg = damage_taken >= (mhp * CONFIG.dmg_fm_threshold)
+    local is_force_more_msg = damage_taken >= (mhp * BRC.Config.dmg_fm_threshold)
     if is_force_more_msg then
       summary_tokens[#summary_tokens + 1] = EMOJI.EXCLAMATION_2
       summary_tokens[#summary_tokens + 1] = BRC.util.color(COLORS.lightmagenta, " MASSIVE DAMAGE ")

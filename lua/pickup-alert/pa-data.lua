@@ -9,7 +9,7 @@ f_pa_data = {}
 --f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
 
 -- Persistent variables
-pa_OTA_items = BRC.data.create("pa_OTA_items", CONFIG.alert.one_time)
+pa_OTA_items = BRC.data.create("pa_OTA_items", BRC.Config.alert.one_time)
 pa_recent_alerts = BRC.data.create("pa_recent_alerts", {})
 pa_items_picked = BRC.data.create("pa_items_picked", {})
 pa_items_alerted = BRC.data.create("pa_items_alerted", {})

@@ -10,7 +10,7 @@ f_pickup_alert_misc = {}
 
 function pa_alert_orb(it)
   if not it.is_identified then return false end
-  return f_pickup_alert.do_alert(it, "New orb", EMOJI.ORB, CONFIG.fm_alert.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", EMOJI.ORB, BRC.Config.fm_alert.orbs)
 end
 
 function pa_alert_OTA(it)
@@ -20,7 +20,7 @@ function pa_alert_OTA(it)
   local do_alert = true
 
   if BRC.is.shield(it) then
-    if you.skill("Shields") < CONFIG.alert.OTA_require_skill.shield then return end
+    if you.skill("Shields") < BRC.Config.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if pa_OTA_items[index] == "buckler" then
@@ -30,14 +30,14 @@ function pa_alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif BRC.is.armour(it) then
-    if you.skill("Armour") < CONFIG.alert.OTA_require_skill.armour then return end
+    if you.skill("Armour") < BRC.Config.alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
-    if you.skill(it.weap_skill) < CONFIG.alert.OTA_require_skill.weapon then return end
+    if you.skill(it.weap_skill) < BRC.Config.alert.OTA_require_skill.weapon then return end
   end
 
   f_pa_data.remove_from_OTA(it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Rare item", EMOJI.RARE_ITEM, CONFIG.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Rare item", EMOJI.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
 end
 
 ---- Alert for needed resists ----
@@ -59,16 +59,17 @@ function pa_alert_staff(it)
   end
 
   if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, CONFIG.fm_alert.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", EMOJI.STAFF_RESISTANCE, BRC.Config.fm_alert.staff_resists)
 end
 
 function pa_alert_talisman(it)
   if it.artefact then
     if not it.is_identified then return false end
-    return f_pickup_alert.do_alert(it, "Artefact talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", EMOJI.TALISMAN, BRC.Config.fm_alert.talismans)
   end
-  if BRC.get.talisman_min_level(it) > you.skill("Shapeshifting") + CONFIG.alert.talisman_lvl_diff then return false end
-  return f_pickup_alert.do_alert(it, "New talisman", EMOJI.TALISMAN, CONFIG.fm_alert.talismans)
+  local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
+  if required_skill > you.skill("Shapeshifting") then return false end
+  return f_pickup_alert.do_alert(it, "New talisman", EMOJI.TALISMAN, BRC.Config.fm_alert.talismans)
 end
 
 ---- Smart staff pickup ----

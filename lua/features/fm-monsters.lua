@@ -392,7 +392,7 @@ local function do_pack_mutes()
 
   -- Remove mutes that have expired (FM_PACK includes FM_PACK_NO_CREATE)
   for _, v in ipairs(FM_PACK) do
-    if last_fm_turn[v] ~= -1 and you.turns() >= last_fm_turn[v] + CONFIG.fm_pack_duration then
+    if last_fm_turn[v] ~= -1 and you.turns() >= last_fm_turn[v] + BRC.Config.fm_pack_duration then
       last_fm_turn[v] = -1
       if util.contains(FM_PACK_NO_CREATE, v) then
         active_fm[active_fm_index[v]] = false -- Set to false so the main logic can conditionally re-enable it
@@ -409,7 +409,7 @@ function f_fm_monsters.init()
   monsters_to_mute = {}
   last_fm_turn = {}
 
-  if CONFIG.fm_on_uniques then
+  if BRC.Config.fm_on_uniques then
     crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
   end
 
@@ -441,7 +441,7 @@ end
 ------------------- Hooks -------------------
 function f_fm_monsters.c_message(text, channel)
   if channel ~= "monster_warning" then return end
-  if CONFIG.fm_pack_duration == 0 then return end
+  if BRC.Config.fm_pack_duration == 0 then return end
 
   -- Identifies when a mute should be turned on
   if not text:find("comes? into view") then return end
@@ -473,7 +473,7 @@ function f_fm_monsters.ready()
   local res_drain = you.res_draining()
   local int = you.intelligence()
 
-  local is_zig_condition = CONFIG.disable_fm_monsters_in_zigs and you.branch() == "Zig"
+  local is_zig_condition = BRC.Config.disable_fm_monsters_in_zigs and you.branch() == "Zig"
 
   for i, v in ipairs(FM_PATTERNS) do
     local action = nil
@@ -558,7 +558,7 @@ function f_fm_monsters.ready()
       set_monster_fm(action, fm_mon_str)
       active_fm[i] = not active_fm[i]
 
-      if CONFIG.debug_fm_monsters then
+      if BRC.Config.debug_fm_monsters then
         if action == "+" then
           activated[#activated + 1] = fm_name
         elseif action == "-" then
@@ -568,10 +568,10 @@ function f_fm_monsters.ready()
     end
   end
 
-  if CONFIG.debug_fm_monsters then
+  if BRC.Config.debug_fm_monsters then
     if #activated > 0 then crawl.mpr("Activating force_mores: " .. table.concat(activated, ", ")) end
     if #deactivated > 0 then crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", ")) end
   end
 
-  if CONFIG.fm_pack_duration > 0 then do_pack_mutes() end
+  if BRC.Config.fm_pack_duration > 0 then do_pack_mutes() end
 end

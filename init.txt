@@ -1,5 +1,5 @@
 ## Config at start of file
-lua_file = crawl-rc/lua/core/config.lua
+lua_file = crawl-rc/lua/core/BRC.Config.lua
 
 ####### Main options #######
 easy_confirm = all

@@ -32,7 +32,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = get_weapon_info_string(it, CONFIG.inscribe_dps_type)
+  local dps_inscr = get_weapon_info_string(it, BRC.Config.inscribe_dps_type)
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
@@ -48,9 +48,9 @@ end
 
 -- Hook functions
 function do_stat_inscription(it)
-  if CONFIG.inscribe_weapons and it.is_weapon then
+  if BRC.Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif CONFIG.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
+  elseif BRC.Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
     inscribe_armour_stats(it)
   end
 end

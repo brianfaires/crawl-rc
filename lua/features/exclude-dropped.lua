@@ -74,7 +74,7 @@ local function get_excludable_name(text, for_exclusion)
     -- Enchant/Brand weapon scrolls continue pickup if they're still useful
     if
       for_exclusion
-      and CONFIG.ignore_stashed_weapon_scrolls
+      and BRC.Config.ignore_stashed_weapon_scrolls
       and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
       and has_enchantable_weap_in_inv()
     then
@@ -86,7 +86,7 @@ end
 
 -- Hook functions
 function f_exclude_dropped.init()
-  if not CONFIG.exclude_dropped then return end
+  if not BRC.Config.exclude_dropped then return end
 
   for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)
@@ -94,7 +94,7 @@ function f_exclude_dropped.init()
 end
 
 function f_exclude_dropped.c_message(text, channel)
-  if not CONFIG.exclude_dropped then return end
+  if not BRC.Config.exclude_dropped then return end
   if channel ~= "plain" then return end
   local exclude
   if text:find("ou drop ", 1, true) then

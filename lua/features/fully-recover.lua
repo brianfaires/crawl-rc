@@ -44,7 +44,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(CONFIG.rest_off_statuses) do
+  for _, s in ipairs(BRC.Config.rest_off_statuses) do
     if status:find(s) then
       if not should_ignore_status(s) then return false end
     end
@@ -56,11 +56,11 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(CONFIG.rest_off_statuses) do
+  for _, s in ipairs(BRC.Config.rest_off_statuses) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(CONFIG.rest_off_statuses, s)
+    util.remove(BRC.Config.rest_off_statuses, s)
     crawl.mpr("  Removed: " .. s)
   end
 end
@@ -93,7 +93,7 @@ end
 function f_fully_recover.init()
   fr_start_turn = 0
   fr_explore_after = false
-  util.remove(CONFIG.rest_off_statuses, "slowed") -- special case handled elsewhere
+  util.remove(BRC.Config.rest_off_statuses, "slowed") -- special case handled elsewhere
 
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
@@ -122,7 +122,7 @@ function f_fully_recover.ready()
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
       BRC.mpr.col("Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", COLORS.lightred)
-      BRC.mpr.col("Adjusting CONFIG.rest_off_statuses:", COLORS.lightred)
+      BRC.mpr.col("Adjusting BRC.Config.rest_off_statuses:", COLORS.lightred)
       remove_statuses_from_config()
       abort_fully_recover()
     else

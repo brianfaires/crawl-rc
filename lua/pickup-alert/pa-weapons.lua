@@ -178,7 +178,7 @@ local function alert_first_of_skill(it, silent)
     local msg = "First " .. string.sub(skill, 1, -2) -- Trim the trailing "s"
     if hands == 1 then msg = msg .. " (1-handed)" end
     if silent then return true end
-    return f_pickup_alert.do_alert(it, msg, EMOJI.WEAPON, CONFIG.fm_alert.early_weap)
+    return f_pickup_alert.do_alert(it, msg, EMOJI.WEAPON, BRC.Config.fm_alert.early_weap)
   end
   return false
 end
@@ -196,7 +196,7 @@ local function alert_early_weapons(it)
           or not BRC.you.have_shield()
           or you.skill("Shields") <= TUNING.weap.alert.early_ranged.max_shields
         then
-          return f_pickup_alert.do_alert(it, "Ranged weapon", EMOJI.RANGED, CONFIG.fm_alert.early_weap)
+          return f_pickup_alert.do_alert(it, "Ranged weapon", EMOJI.RANGED, BRC.Config.fm_alert.early_weap)
         end
       end
     end
@@ -209,7 +209,7 @@ local function alert_early_weapons(it)
     if skill_diff > max_skill_diff then return false end
 
     if has_ego(it) or it.plus and it.plus >= TUNING.weap.alert.early.branded_min_plus then
-      return f_pickup_alert.do_alert(it, "Early weapon", EMOJI.WEAPON, CONFIG.fm_alert.early_weap)
+      return f_pickup_alert.do_alert(it, "Early weapon", EMOJI.WEAPON, BRC.Config.fm_alert.early_weap)
     end
   end
 
@@ -228,9 +228,9 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     if not cur.artefact and has_ego(it, true) and get_ego(it) ~= cur.ego then
-      return f_pickup_alert.do_alert(it, "Diff ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
+      return f_pickup_alert.do_alert(it, "Diff ego", EMOJI.EGO, BRC.Config.fm_alert.weap_ego)
     elseif get_weap_score(it) > best_score or get_weap_dps(it) > best_dps then
-      return f_pickup_alert.do_alert(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
+      return f_pickup_alert.do_alert(it, "Weapon upgrade", EMOJI.WEAPON, BRC.Config.fm_alert.upgrade_weap)
     end
     return false
   end
@@ -249,12 +249,12 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       local unique_ego = it_ego and not util.contains(WEAP_CACHE.egos, it_ego)
       if unique_ego and score_ratio > TUNING.weap.alert.new_ego then
-        return f_pickup_alert.do_alert(it, "New ego (2-handed)", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
+        return f_pickup_alert.do_alert(it, "New ego (2-handed)", EMOJI.EGO, BRC.Config.fm_alert.weap_ego)
       elseif score_ratio > TUNING.weap.alert.add_hand.not_using then
-        return f_pickup_alert.do_alert(it, "2-handed weapon", EMOJI.TWO_HANDED, CONFIG.fm_alert.upgrade_weap)
+        return f_pickup_alert.do_alert(it, "2-handed weapon", EMOJI.TWO_HANDED, BRC.Config.fm_alert.upgrade_weap)
       end
     elseif has_ego(it) and not has_ego(cur) and score_ratio > TUNING.weap.alert.add_hand.add_ego_lose_sh then
-      return f_pickup_alert.do_alert(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, CONFIG.fm_alert.weap_ego)
+      return f_pickup_alert.do_alert(it, "2-handed weapon (Gain ego)", EMOJI.TWO_HANDED, BRC.Config.fm_alert.weap_ego)
     end
   else -- No extra hand required
     if cur.artefact then return false end
@@ -262,14 +262,14 @@ local function alert_interesting_weapon(it, cur)
       local it_ego = get_ego(it)
       if not has_ego(cur) then
         if score_ratio > TUNING.weap.alert.gain_ego then
-          return f_pickup_alert.do_alert(it, "Gain ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
+          return f_pickup_alert.do_alert(it, "Gain ego", EMOJI.EGO, BRC.Config.fm_alert.weap_ego)
         end
       elseif not util.contains(WEAP_CACHE.egos, it_ego) and score_ratio > TUNING.weap.alert.new_ego then
-        return f_pickup_alert.do_alert(it, "New ego", EMOJI.EGO, CONFIG.fm_alert.weap_ego)
+        return f_pickup_alert.do_alert(it, "New ego", EMOJI.EGO, BRC.Config.fm_alert.weap_ego)
       end
     end
     if score_ratio > TUNING.weap.alert.pure_dps then
-      return f_pickup_alert.do_alert(it, "Weapon upgrade", EMOJI.WEAPON, CONFIG.fm_alert.upgrade_weap)
+      return f_pickup_alert.do_alert(it, "Weapon upgrade", EMOJI.WEAPON, BRC.Config.fm_alert.upgrade_weap)
     end
   end
 
@@ -286,7 +286,7 @@ end
 local function alert_weap_high_scores(it)
   local category = f_pa_data.update_high_scores(it)
   if not category then return false end
-  return f_pickup_alert.do_alert(it, category, EMOJI.WEAPON, CONFIG.fm_alert.high_score_weap)
+  return f_pickup_alert.do_alert(it, category, EMOJI.WEAPON, BRC.Config.fm_alert.high_score_weap)
 end
 
 function pa_alert_weapon(it)

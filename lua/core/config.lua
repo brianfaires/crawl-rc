@@ -1,14 +1,14 @@
-CONFIG = {}
+BRC.Config = {}
 
-CONFIG.emojis = true -- Use emojis in alerts and announcements
+BRC.Config.emojis = true -- Use emojis in alerts and announcements
 
 -- after-shaft.lua
-CONFIG.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft, until back to original level
+BRC.Config.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft, until back to original level
 
 -- announce-damage.lua: Announce HP/MP changes
-CONFIG.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
-CONFIG.dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
-CONFIG.announce = {
+BRC.Config.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
+BRC.Config.dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
+BRC.Config.announce = {
   hp_loss_limit = 1, -- Announce when HP loss >= this
   hp_gain_limit = 4, -- Announce when HP gain >= this
   mp_loss_limit = 1, -- Announce when MP loss >= this
@@ -17,10 +17,10 @@ CONFIG.announce = {
   same_line = true, -- Show HP/MP on the same line
   always_both = true, -- If showing one, show both
   very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
-} -- CONFIG.announce (do not remove this comment)
+} -- BRC.Config.announce (do not remove this comment)
 --[[
   Alternative: To display meters every turn at bottom of msg window, use these settings
-  CONFIG.announce = {
+  BRC.Config.announce = {
     hp_loss_limit = 0,
     hp_gain_limit = 0,
     mp_loss_limit = 0,
@@ -28,32 +28,32 @@ CONFIG.announce = {
     hp_first = true,
     same_line = true,
     always_both = true
-  } -- CONFIG.announce (do not remove this comment)
+  } -- BRC.Config.announce (do not remove this comment)
 --]]
 
 -- color-inscribe.lua
-CONFIG.colorize_inscriptions = true -- Colorize inscriptions on pickup
+BRC.Config.colorize_inscriptions = true -- Colorize inscriptions on pickup
 
 -- drop-inferior.lua
-CONFIG.drop_inferior = true -- Mark items for drop when better item picked up
-CONFIG.msg_on_inscribe = true -- Show a message when an item is marked for drop
+BRC.Config.drop_inferior = true -- Mark items for drop when better item picked up
+BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for drop
 
 -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
-CONFIG.exclude_dropped = true -- Exclude items from auto-pickup when dropped
-CONFIG.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
+BRC.Config.exclude_dropped = true -- Exclude items from auto-pickup when dropped
+BRC.Config.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
 
 -- fm-disable.lua: Disable built-in force_mores that can't be easily removed
-CONFIG.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
+BRC.Config.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
 
 -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
-CONFIG.fm_on_uniques = true -- Stop on all Uniques & Pan lords
-CONFIG.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
-CONFIG.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
-CONFIG.debug_fm_monsters = false -- Get a message when a fm changes
+BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
+BRC.Config.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
+BRC.Config.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
+BRC.Config.debug_fm_monsters = false -- Get a message when a fm changes
 
 -- fully-recover.lua: Rest off bad statuses during rest
 -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
-CONFIG.rest_off_statuses = {
+BRC.Config.rest_off_statuses = {
   "berserk",
   "confused",
   "corroded",
@@ -64,59 +64,59 @@ CONFIG.rest_off_statuses = {
   "tree%-form",
   "vulnerable",
   "weakened",
-} -- CONFIG.rest_off_statuses (do not remove this comment)
+} -- BRC.Config.rest_off_statuses (do not remove this comment)
 
 -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
-CONFIG.inscribe_weapons = true
-CONFIG.inscribe_armour = true
-CONFIG.inscribe_dps_type = DMG_TYPE.plain -- How to calc dmg for weapon inscriptions
+BRC.Config.inscribe_weapons = true
+BRC.Config.inscribe_armour = true
+BRC.Config.inscribe_dps_type = DMG_TYPE.plain -- How to calc dmg for weapon inscriptions
 
 -- misc-alerts.lua
-CONFIG.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
-CONFIG.alert_remove_faith = true -- Reminder to remove amulet at max piety
-CONFIG.alert_spell_level_changes = true -- Alert when you gain additional spell levels
-CONFIG.save_with_msg = true -- Shift-S to save and leave yourself a message
+BRC.Config.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
+BRC.Config.alert_remove_faith = true -- Reminder to remove amulet at max piety
+BRC.Config.alert_spell_level_changes = true -- Alert when you gain additional spell levels
+BRC.Config.save_with_msg = true -- Shift-S to save and leave yourself a message
 
 -- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:
-CONFIG.stop_on_scrolls_count = 2 -- Stop on a stack of this many un-ID'd scrolls
-CONFIG.stop_on_pots_count = 3 -- Stop on a stack of this many un-ID'd potions
+BRC.Config.stop_on_scrolls_count = 2 -- Stop on a stack of this many un-ID'd scrolls
+BRC.Config.stop_on_pots_count = 3 -- Stop on a stack of this many un-ID'd potions
 
 -- runrest-features.lua: Runrest features
-CONFIG.ignore_altars = true -- when you have a god already
-CONFIG.ignore_portal_exits = true -- don't stop explore on portal exits
-CONFIG.stop_on_hell_stairs = true -- stop explore on hell stairs
-CONFIG.stop_on_pan_gates = true -- stop explore on pan gates
-CONFIG.temple_macros = true -- auto-search altars; run to exit after worship
-CONFIG.gauntlet_macros = true -- auto-search with filters
+BRC.Config.ignore_altars = true -- when you have a god already
+BRC.Config.ignore_portal_exits = true -- don't stop explore on portal exits
+BRC.Config.stop_on_hell_stairs = true -- stop explore on hell stairs
+BRC.Config.stop_on_pan_gates = true -- stop explore on pan gates
+BRC.Config.temple_macros = true -- auto-search altars; run to exit after worship
+BRC.Config.gauntlet_macros = true -- auto-search with filters
 
 -- safe-consumables.lua
-CONFIG.safe_consumables = true -- Maintain !r and !q on all consumables that need one
+BRC.Config.safe_consumables = true -- Maintain !r and !q on all consumables that need one
 
 -- safe-stairs.lua: Detect/warn for accidental stair usage
-CONFIG.warn_v5 = true -- Prompt before entering Vaults:5
-CONFIG.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
+BRC.Config.warn_v5 = true -- Prompt before entering Vaults:5
+BRC.Config.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
 
 -- startup.lua: Startup features
-CONFIG.show_skills_on_startup = true
-CONFIG.auto_set_skill_targets = {
+BRC.Config.show_skills_on_startup = true
+BRC.Config.auto_set_skill_targets = {
   { "Stealth", 2.0 }, -- First, focus stealth to 2.0
   { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
 } -- auto_set_skill_targets (do not remove this comment)
 
 -- weapon-slots.lua: Always use a/b/w slots for weapons
-CONFIG.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
+BRC.Config.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
 
 ---- Pickup/Alert system
 ---- This does not affect other autopickup settings; just the buehler Pickup/Alert system
 -- Choose which items are auto-picked up
-CONFIG.pickup = {
+BRC.Config.pickup = {
   armour = true,
   weapons = true,
   staves = true,
-} -- CONFIG.pickup (do not remove this comment)
+} -- BRC.Config.pickup (do not remove this comment)
 
 -- Which alerts are enabled
-CONFIG.alert = {
+BRC.Config.alert = {
   system_enabled = true, -- If false, no alerts are generated
   armour = true,
   weapons = true,
@@ -155,14 +155,14 @@ CONFIG.alert = {
     "buckler",
     "kite shield",
     "tower shield",
-  }, -- CONFIG.alert.one_time (do not remove this comment)
+  }, -- BRC.Config.alert.one_time (do not remove this comment)
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
   OTA_require_skill = { weapon = 3, armour = 2.5, shield = 0 },
-} -- CONFIG.alert (do not remove this comment)
+} -- BRC.Config.alert (do not remove this comment)
 
 -- Which alerts generate a force_more
-CONFIG.fm_alert = {
+BRC.Config.fm_alert = {
   early_weap = false, -- Good weapons found early
   upgrade_weap = false, -- Better DPS / weapon_score
   weap_ego = false, -- New or diff egos
@@ -178,7 +178,7 @@ CONFIG.fm_alert = {
   orbs = false,
   talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
   staff_resists = false,
-} -- CONFIG.fm_alert (do not remove this comment)
+} -- BRC.Config.fm_alert (do not remove this comment)
 
 -- Heuristics for tuning the pickup/alert system
 TUNING = {}

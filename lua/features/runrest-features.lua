@@ -121,15 +121,15 @@ function f_runrest_features.init()
 end
 
 function f_runrest_features.c_message(text, _)
-  if CONFIG.temple_macros then c_message_temple(text, _) end
-  if CONFIG.gauntlet_macros then c_message_gauntlet(text, _) end
+  if BRC.Config.temple_macros then c_message_temple(text, _) end
+  if BRC.Config.gauntlet_macros then c_message_gauntlet(text, _) end
 end
 
 function f_runrest_features.ready()
-  if CONFIG.ignore_altars then ready_ignore_altars() end
-  if CONFIG.ignore_portal_exits then ready_ignore_exits() end
-  if CONFIG.stop_on_pan_gates then ready_stop_on_pan_gates() end
-  if CONFIG.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
-  if CONFIG.temple_macros then ready_temple_macro() end
-  if CONFIG.gauntlet_macros then ready_gauntlet_macro() end
+  if BRC.Config.ignore_altars then ready_ignore_altars() end
+  if BRC.Config.ignore_portal_exits then ready_ignore_exits() end
+  if BRC.Config.stop_on_pan_gates then ready_stop_on_pan_gates() end
+  if BRC.Config.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
+  if BRC.Config.temple_macros then ready_temple_macro() end
+  if BRC.Config.gauntlet_macros then ready_gauntlet_macro() end
 end

@@ -6,8 +6,8 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
   [buehler.rc](buehler.rc) contains [init.txt](init.txt) and all the files it references.
 - To merge with an existing RC file, make sure any Lua hook functions (such as `ready()`) are only defined
   once. If duplicate functions exist, combine them.
-- Most features can be toggled on/off or configured to your tastes in [core/config.lua](core/config.lua).
-  See [config.lua section](#luacoreconfiglua) for details.
+- Most features can be toggled on/off or configured to your tastes in [core/BRC.Config.lua](core/BRC.Config.lua).
+  See [BRC.Config.lua section](#luacoreconfiglua) for details.
 - Features can also be excluded by just removing or commenting out the one line in [init.txt](init.txt) where it is included.
 - If you copy-paste individual files into another RC, be sure to include:
   1. The hook functions from [init.txt](init.txt).
@@ -89,11 +89,11 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 
 ### [lua/features/fully-recover.lua](lua/features/fully-recover.lua)
 - Updates resting to fully recover from temporary negative statuses.
-- Configure which statuses in `CONFIG.rest_off_statuses`.
+- Configure which statuses in `BRC.Config.rest_off_statuses`.
 
 ### [lua/features/inscribe-stats.lua](lua/features/inscribe-stats.lua)
 - Weapons in inventory are inscribed with their stats and an ideal DPS (max damage per 10 aut).
-- Configured by default to ignore brand damage. Can be changed in CONFIG.
+- Configured by default to ignore brand damage. Can be changed in BRC.Config.
 - Unworn armour is inscribed with stats relative to what you're wearing.
 - Updates in real time with skill/stats/etc.
 
@@ -123,7 +123,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 ### [lua/features/startup.lua](lua/features/startup.lua)
 - One-time actions on new games:
   - Open the skills menu
-  - Exclusively train the first skill in CONFIG.auto_set_skill_targets below its target
+  - Exclusively train the first skill in BRC.Config.auto_set_skill_targets below its target
 
 ### [lua/features/weapon-slots.lua](lua/features/weapon-slots.lua)
 - Keeps weapons in slots a/b/w. Reassignments happen whenever you pickup or drop an item.
@@ -166,9 +166,9 @@ Picks up upgrades and artefacts of the same weapon type you have. Alerts generat
 
 ### [lua/pickup-alert/pa-misc.lua](lua/pickup-alert/pa-misc.lua) (Misc)
 Picks up staves when you are training the relevant spell school. Alerts are generated for:
-- The first instance of anything in the `CONFIG.alert.one_time` list.
+- The first instance of anything in the `BRC.Config.alert.one_time` list.
 - First orb of each type.
-- First talisman of each type, if the min skill is within `CONFIG.alert.talisman_lvl_diff` levels.
+- First talisman of each type, if the min skill is within `BRC.Config.alert.talisman_lvl_diff` levels.
 - Staves that provide you a needed resistance.
 
 ### Other files for pickup-alert system
@@ -181,7 +181,7 @@ These are auto-included as necessary. Just listing for reference.
   Controls all the features, and defines/hooks an autopickup function.
 
 ## Core files
-### [lua/core/config.lua](lua/core/config.lua)
+### [lua/core/BRC.Config.lua](lua/core/BRC.Config.lua)
 This comes first in [buehler.rc](buehler.rc), so you can adjust behavior
   without digging into the code or rebuilding [buehler.rc](buehler.rc).  
 Most features are entirely configured here. The ones that aren't here typically are configured with 
@@ -216,7 +216,7 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
     - `init_buehler(1)` will also reset all persistent data.
     - `debug_dump()` whenever something seems weird, I do this. `debug_dump(1)` for verbose export.
     - `buehler_rc_active = false` will disable everything
-    - `CONFIG.<setting_name> = <value>` will work mid game if you really want to.
+    - `BRC.Config.<setting_name> = <value>` will work mid game if you really want to.
 - The RC prioritizes webtiles. It works locally, but here are some issues I've seen previously:
   - Running locally, switching between characters does some weird things with RC/lua files and autopickup functions.
     I think all the issues are mitigated. If you get warnings when switching characters, just close+reopen crawl.

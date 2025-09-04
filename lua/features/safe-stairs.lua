@@ -22,7 +22,7 @@ local function check_new_location(key)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
   local turn_diff = you.turns() - ss_last_stair_turn
-  if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
+  if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
     if key == ">" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
         crawl.sendkeys(key)
@@ -38,7 +38,7 @@ local function check_new_location(key)
       crawl.mpr("Okay, then.")
       return
     end
-  elseif CONFIG.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and key == ">" then
+  elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and key == ">" then
     -- V5 warning idea by rypofalem --
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then

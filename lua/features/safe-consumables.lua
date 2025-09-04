@@ -27,7 +27,7 @@ local NO_INSCRIPTION_NEEDED = {
 
 -- Hook functions
 function f_safe_consumables.ready()
-  if not CONFIG.safe_consumables then return end
+  if not BRC.Config.safe_consumables then return end
   -- Remove the default "!r" and "!q" inscriptions after identify
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_class = inv.class(true)

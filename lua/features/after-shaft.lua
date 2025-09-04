@@ -14,7 +14,7 @@ as_shaft_branch = BRC.data.create("as_shaft_branch", "NA")
 
 -- Hook functions
 function f_after_shaft.init()
-  if not CONFIG.stop_on_stairs_after_shaft then return end
+  if not BRC.Config.stop_on_stairs_after_shaft then return end
 
   if you.turns() == 0 and you.class() == "Delver" then
     as_shaft_depth = 1
@@ -29,7 +29,7 @@ function f_after_shaft.init()
 end
 
 function f_after_shaft.c_message(text, channel)
-  if not CONFIG.stop_on_stairs_after_shaft then return end
+  if not BRC.Config.stop_on_stairs_after_shaft then return end
   if channel ~= "plain" or BRC.you.in_hell() then return end
   if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
 
@@ -43,7 +43,7 @@ function f_after_shaft.c_message(text, channel)
 end
 
 function f_after_shaft.ready()
-  if not CONFIG.stop_on_stairs_after_shaft then return end
+  if not BRC.Config.stop_on_stairs_after_shaft then return end
   if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
     crawl.setopt("explore_stop -= stairs")
     as_shaft_depth = 0

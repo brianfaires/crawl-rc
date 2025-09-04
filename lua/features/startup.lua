@@ -11,14 +11,14 @@ f_startup.BRC_FEATURE_NAME = "startup"
 -- Hook functions
 function f_startup.ready()
   if you.turns() == 0 then
-    if CONFIG.show_skills_on_startup then
+    if BRC.Config.show_skills_on_startup then
       local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
       if show_skills_on_startup then crawl.sendkeys("m") end
     end
 
     ---- Auto-set default skill targets ----
-    if CONFIG.auto_set_skill_targets then
-      for _, skill_target in ipairs(CONFIG.auto_set_skill_targets) do
+    if BRC.Config.auto_set_skill_targets then
+      for _, skill_target in ipairs(BRC.Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then
           for _, s in ipairs(ALL_TRAINING_SKILLS) do

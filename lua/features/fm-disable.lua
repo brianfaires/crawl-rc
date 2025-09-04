@@ -18,7 +18,7 @@ local FM_DISABLES = {
 
 -- Hook functions
 function f_fm_disable.c_message(text, _)
-  if not CONFIG.fm_disable then return end
+  if not BRC.Config.fm_disable then return end
   for _, v in ipairs(FM_DISABLES) do
     if text:find(v) then
       crawl.enable_more(false)

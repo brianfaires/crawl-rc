@@ -1,6 +1,6 @@
 EMOJI = {}
 
-if CONFIG.emojis then
+if BRC.Config.emojis then
   EMOJI.RARE_ITEM = "💎"
   EMOJI.ORB = "🔮"
   EMOJI.TALISMAN = "🧬"

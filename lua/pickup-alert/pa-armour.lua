@@ -83,7 +83,7 @@ local function is_new_ego(ego_change)
 end
 
 local function send_armour_alert(it, alert_type)
-  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, CONFIG.fm_alert.body_armour)
+  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, BRC.Config.fm_alert.body_armour)
 end
 
 -- Local functions: Pickup
@@ -224,7 +224,7 @@ local function alert_ac_high_score(it)
     local itAC = get_armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
-      return f_pickup_alert.do_alert(it, "Highest AC", EMOJI.STRONGEST, CONFIG.fm_alert.high_score_armour)
+      return f_pickup_alert.do_alert(it, "Highest AC", EMOJI.STRONGEST, BRC.Config.fm_alert.high_score_armour)
     end
   end
 
@@ -280,7 +280,8 @@ end
 
 local function alert_shield(it)
   if it.artefact then
-    return it.is_identified and f_pickup_alert.do_alert(it, "Artefact shield", EMOJI.ARTEFACT, CONFIG.fm_alert.shields)
+    if not it.is_identified then return false end
+    return f_pickup_alert.do_alert(it, "Artefact shield", EMOJI.ARTEFACT, BRC.Config.fm_alert.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -291,16 +292,16 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(get_ego(cur), get_ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return f_pickup_alert.do_alert(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, EMOJI.EGO, BRC.Config.fm_alert.shields)
   elseif get_shield_sh(it) > get_shield_sh(cur) then
-    return f_pickup_alert.do_alert(it, "Higher SH", EMOJI.STRONGER, CONFIG.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", EMOJI.STRONGER, BRC.Config.fm_alert.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
     if not it.is_identified then return false end
-    return f_pickup_alert.do_alert(it, "Artefact aux armour", EMOJI.ARTEFACT, CONFIG.fm_alert.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", EMOJI.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 
   -- Use a list to support Poltergeists; for other races it's a 1-item list
@@ -310,7 +311,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return f_pickup_alert.do_alert(it, "Aux armour", EMOJI.EXCLAMATION, CONFIG.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", EMOJI.EXCLAMATION, BRC.Config.fm_alert.aux_armour)
     end
 
     local it_ego = get_ego(it)
@@ -318,9 +319,9 @@ local function alert_aux_armour(it, unworn_inv_item)
       local ego_change = get_ego_change_type(get_ego(cur), it_ego)
       if is_new_ego(ego_change) then
         local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-        return f_pickup_alert.do_alert(it, alert_msg, EMOJI.EGO, CONFIG.fm_alert.aux_armour)
+        return f_pickup_alert.do_alert(it, alert_msg, EMOJI.EGO, BRC.Config.fm_alert.aux_armour)
       elseif get_armour_ac(it) > get_armour_ac(cur) then
-        return f_pickup_alert.do_alert(it, "Higher AC", EMOJI.STRONGER, CONFIG.fm_alert.aux_armour)
+        return f_pickup_alert.do_alert(it, "Higher AC", EMOJI.STRONGER, BRC.Config.fm_alert.aux_armour)
       end
     end
   end

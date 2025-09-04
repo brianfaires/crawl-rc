@@ -20,10 +20,10 @@ pause_pa_system = nil
 -- Local functions
 local function has_configured_force_more(it)
   if it.artefact then
-    if CONFIG.fm_alert.artefact then return true end
-    if CONFIG.fm_alert.trained_artefacts and BRC.get.skill_with_item(it) > 0 then return true end
+    if BRC.Config.fm_alert.artefact then return true end
+    if BRC.Config.fm_alert.trained_artefacts and BRC.get.skill_with_item(it) > 0 then return true end
   end
-  if CONFIG.fm_alert.armour_ego and BRC.is.armour(it) and has_ego(it) then return true end
+  if BRC.Config.fm_alert.armour_ego and BRC.is.armour(it) and has_ego(it) then return true end
   return false
 end
 
@@ -65,11 +65,11 @@ function f_pickup_alert.init()
     if you.have_orb() then return end
     if has_ego(it) and not it.is_identified then return false end
     if not it.is_useless then
-      if loaded_pa_armour and CONFIG.pickup.armour and BRC.is.armour(it) then
+      if loaded_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
         if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_misc and CONFIG.pickup.staves and BRC.is.magic_staff(it) then
+      elseif loaded_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
         if pa_pickup_staff(it) then return true end
-      elseif loaded_pa_weapons and CONFIG.pickup.weapons and it.is_weapon then
+      elseif loaded_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
         if pa_pickup_weapon(it) then return true end
       elseif loaded_pa_misc and is_unneeded_ring(it) then
         return false
@@ -90,22 +90,22 @@ function f_pickup_alert.init()
     end
 
     -- Not picking up this item. Now check for alerts.
-    if not CONFIG.alert.system_enabled or f_pa_data.contains(pa_items_alerted, it) then return end
+    if not BRC.Config.alert.system_enabled or f_pa_data.contains(pa_items_alerted, it) then return end
 
-    if loaded_pa_misc and CONFIG.alert.one_time and #CONFIG.alert.one_time > 0 then
+    if loaded_pa_misc and BRC.Config.alert.one_time and #BRC.Config.alert.one_time > 0 then
       if pa_alert_OTA(it) then return end
     end
 
-    if loaded_pa_misc and CONFIG.alert.staff_resists and BRC.is.magic_staff(it) then
+    if loaded_pa_misc and BRC.Config.alert.staff_resists and BRC.is.magic_staff(it) then
       if pa_alert_staff(it) then return end
-    elseif loaded_pa_misc and CONFIG.alert.orbs and BRC.is.orb(it) then
+    elseif loaded_pa_misc and BRC.Config.alert.orbs and BRC.is.orb(it) then
       if pa_alert_orb(it) then return end
-    elseif loaded_pa_misc and CONFIG.alert.talismans and BRC.is.talisman(it) then
+    elseif loaded_pa_misc and BRC.Config.alert.talismans and BRC.is.talisman(it) then
       if pa_alert_talisman(it) then return end
-    elseif loaded_pa_armour and CONFIG.alert.armour and BRC.is.armour(it) then
+    elseif loaded_pa_armour and BRC.Config.alert.armour and BRC.is.armour(it) then
       if pa_alert_armour(it, unworn_aux_item) then return end
     else
-      if loaded_pa_weapons and CONFIG.alert.weapons and it.is_weapon then
+      if loaded_pa_weapons and BRC.Config.alert.weapons and it.is_weapon then
         if pa_alert_weapon(it) then return end
       end
     end
