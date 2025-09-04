@@ -2,18 +2,17 @@
 
 -- Suppress "unused global variable" warnings
 read_globals = {
-}
-
-globals = {
     -- Crawl game engine globals
-    "add_autopickup_func",
     "crawl",
+    "add_autopickup_func",
     "you",
     "items",
     "view",
     "iter",
     "util",
+}
 
+globals = {
     -- Crawl hooks
     "ready",
     "c_message",
