@@ -106,9 +106,11 @@ BRC.Config.auto_set_skill_targets = {
 -- weapon-slots.lua: Always use a/b/w slots for weapons
 BRC.Config.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
 
----- Pickup/Alert system
----- This does not affect other autopickup settings; just the buehler Pickup/Alert system
--- Choose which items are auto-picked up
+--[[
+  Pickup/Alert system
+  This does not affect other autopickup settings; just the BRC Pickup/Alert system
+  Choose which items are auto-picked up
+--]]
 BRC.Config.pickup = {
   armour = true,
   weapons = true,
@@ -183,11 +185,13 @@ BRC.Config.fm_alert = {
 -- Heuristics for tuning the pickup/alert system
 BRC.Tuning = {}
 
--- For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
--- Lower values mean more alerts. gain/diff/same/lose refers to egos.
--- min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
--- ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
-
+--[[
+  BRC.Tuning.armour: Magic numbers for the armour pickup/alert system.
+  For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
+  Lower values mean more alerts. gain/diff/same/lose refers to egos.
+  min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
+  ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
+--]]
 BRC.Tuning.armour = {
   lighter = {
     gain_ego = 0.6,
@@ -211,11 +215,13 @@ BRC.Tuning.armour = {
   early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
 } -- BRC.Tuning.armour (do not remove this comment)
 
--- All 'magic numbers' used in the weapon pickup/alert system. 2 common types of values:
--- 1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
--- 2. Cutoffs for when alerts are active (XL, skill_level)
--- Pickup/alert system will try to upgrade ANY weapon in your inventory.
--- "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score includes DPS/brand/accuracy.
+--[[
+  BRC.Tuning.weap: Magic numbers for the weapon pickup/alert system. Two common types of values:
+    1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
+    2. Cutoffs for when alerts are active (XL, skill_level)
+  Pickup/alert system will try to upgrade ANY weapon in your inventory.
+  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS, brand, and accuracy.
+--]]
 BRC.Tuning.weap = {}
 BRC.Tuning.weap.pickup = {
   add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
