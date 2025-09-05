@@ -55,12 +55,12 @@ local function get_excludable_name(text, for_exclusion)
   if idx then return text:sub(idx, #text) end
 
   -- misc items
-  for _, item_name in ipairs(ALL_MISC_ITEMS) do
+  for _, item_name in ipairs(BRC.ALL_MISC_ITEMS) do
     if text:find(item_name) then return item_name end
   end
 
   -- Missiles; add regex to hit specific missiles
-  for _, item_name in ipairs(ALL_MISSILES) do
+  for _, item_name in ipairs(BRC.ALL_MISSILES) do
     if text:find(item_name) then return item_name end
   end
 

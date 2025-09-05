@@ -2,7 +2,7 @@
 Feature: drop-inferior
 Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
 Author: buehler
-Dependencies: CONFIG, COLORS, BRC.util.color, BRC.is.risky_ego, has_ego, get_ego, get_armour_ac, iter.invent_iterator
+Dependencies: CONFIG, BRC.COLORS, BRC.util, iter
 --]]
 
 f_drop_inferior = {}
@@ -17,7 +17,7 @@ local function inscribe_drop(it)
   it.inscribe(new_inscr, false)
   if BRC.Config.msg_on_inscribe then
     local msg = "(You can drop " .. it.slot .. " - " .. it.name() .. ")"
-    BRC.mpr.col(msg, COLORS.cyan)
+    BRC.mpr.col(msg, BRC.COLORS.cyan)
   end
 end
 

@@ -2,7 +2,7 @@
 Feature: weapon-slots
 Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
 Author: buehler
-Dependencies: CONFIG, COLORS, BRC.util.color, iter.invent_iterator, is_magic_staff, is_polearm
+Dependencies: CONFIG, BRC.COLORS, BRC.util.color, iter.invent_iterator, is_magic_staff, is_polearm
 --]]
 
 f_weapon_slots = {}
@@ -135,7 +135,7 @@ function f_weapon_slots.ready()
     cleanup_weapon_slots()
     do_cleanup_weapon_slots = false
     if slots_changed then
-      BRC.mpr.col("Weapon slots updated (ab+w).", COLORS.darkgrey)
+      BRC.mpr.col("Weapon slots updated (ab+w).", BRC.COLORS.darkgrey)
       crawl.redraw_screen()
       slots_changed = false
     end

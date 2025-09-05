@@ -125,7 +125,7 @@ function BRC.get.skill_with_item(it)
 end
 
 function BRC.get.staff_school(it)
-  for k, v in pairs(ALL_STAFF_SCHOOLS) do
+  for k, v in pairs(BRC.ALL_STAFF_SCHOOLS) do
     if it.subtype() == k then return v end
   end
 end
@@ -170,8 +170,8 @@ end
 function BRC.is.good_ego(it)
   if not it.branded then return false end
   local ego = type(it.ego) == "string" and it.ego or it.ego(true)
-  if ego == "holy" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
-  if ego == "rPois" and util.contains(ALL_POIS_RES_RACES, you.race()) then return false end
+  if ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return false end
+  if ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return false end
   return true
 end
 
@@ -190,7 +190,7 @@ end
 function BRC.is.risky_ego(it)
   local text = it.artefact and it.name() or get_ego(it)
   if not text then return false end
-  for _, v in ipairs(RISKY_EGOS) do
+  for _, v in ipairs(BRC.ALL_RISKY_EGOS) do
     if text:find(v) then return true end
   end
   return false
@@ -221,7 +221,7 @@ end
 ---- BRC.you - Boolean attributes of the character ----
 
 function BRC.you.free_offhand()
-  if BRC.get.mut(MUTS.missing_hand, true) > 0 then return true end
+  if BRC.get.mut(BRC.MUTATIONS.missing_hand, true) > 0 then return true end
   return not items.equipped_at("offhand")
 end
 
@@ -230,7 +230,7 @@ function BRC.you.have_shield()
 end
 
 function BRC.you.in_hell()
-  return util.contains(ALL_HELL_BRANCHES, you.branch())
+  return util.contains(BRC.ALL_HELL_BRANCHES, you.branch())
 end
 
 function BRC.you.by_slimy_wall()
@@ -243,13 +243,13 @@ function BRC.you.by_slimy_wall()
 end
 
 function BRC.you.miasma_immune()
-  if util.contains(ALL_UNDEAD_RACES, you.race()) then return true end
-  if util.contains(ALL_NONLIVING_RACES, you.race()) then return true end
+  if util.contains(BRC.ALL_UNDEAD_RACES, you.race()) then return true end
+  if util.contains(BRC.ALL_NONLIVING_RACES, you.race()) then return true end
   return false
 end
 
 function BRC.you.mutation_immune()
-  return util.contains(ALL_UNDEAD_RACES, you.race())
+  return util.contains(BRC.ALL_UNDEAD_RACES, you.race())
 end
 
 function BRC.you.zero_stat()
@@ -351,7 +351,7 @@ function BRC.dump.inv(char_dump, include_item_info)
 end
 
 function BRC.dump.text(text, char_dump)
-  BRC.mpr.col(text, COLORS.white)
+  BRC.mpr.col(text, BRC.COLORS.white)
 
   if char_dump then
     crawl.take_note(text)

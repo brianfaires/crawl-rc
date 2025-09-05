@@ -2,7 +2,7 @@
 Feature: safe-stairs
 Description: Prevents accidental stairs use by warning about backtracking and dangerous locations like Vaults:5
 Author: buehler, rypofalem
-Dependencies: CONFIG, KEYS, view.feature_at, BRC.mpr.yesno
+Dependencies: CONFIG, BRC.KEYS, view.feature_at, BRC.mpr.yesno
 --]]
 
 f_safe_stairs = {}
@@ -68,8 +68,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  crawl.setopt("macros += M " .. KEYS.go_downstairs .. " ===f_safe_stairs.macro_downstairs")
-  crawl.setopt("macros += M " .. KEYS.go_upstairs .. " ===f_safe_stairs.macro_upstairs")
+  crawl.setopt("macros += M " .. BRC.KEYS.go_downstairs .. " ===f_safe_stairs.macro_downstairs")
+  crawl.setopt("macros += M " .. BRC.KEYS.go_upstairs .. " ===f_safe_stairs.macro_upstairs")
 end
 
 function f_safe_stairs.ready()

@@ -83,7 +83,7 @@ function BRC.data.create(name, default_value)
   table.insert(chk_lua_save, function()
     local var_type = typeof(_G[name])
     if var_type == TYPES.unknown then return "" end
-    return name .. " = " .. dump_var(_G[name]) .. KEYS.LF
+    return name .. " = " .. dump_var(_G[name]) .. BRC.KEYS.LF
   end)
 
   local var_type = typeof(_G[name])
@@ -176,18 +176,18 @@ function BRC.data.verify_reinit()
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-        BRC.mpr.col(msg, COLORS.lightred)
+        BRC.mpr.col(msg, BRC.COLORS.lightred)
       end
     end
 
     if not _G.successful_data_reload then
       failed_reinit = true
       local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", BRC.VERSION)
-      BRC.mpr.col("\n" .. fail_message, COLORS.lightred)
-      BRC.mpr.col("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", COLORS.darkgrey)
+      BRC.mpr.col("\n" .. fail_message, BRC.COLORS.lightred)
+      BRC.mpr.col("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
     end
 
-    if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", COLORS.yellow) then return false end
+    if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
   end
 
   for k, v in pairs(GAME_CHANGE_MONITORS) do

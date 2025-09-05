@@ -2,7 +2,7 @@
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, iter, util, pa-util
+Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
 --]]
 
 f_pickup_alert_armour = {}
@@ -44,12 +44,15 @@ local function aux_slot_is_impaired(it)
 
   -- Mutation interference
   if st == "gloves" then
-    return BRC.get.mut(MUTS.demonic_touch, true) >= 3 and not BRC.you.free_offhand()
-      or BRC.get.mut(MUTS.claws, true) > 0 and not items.equipped_at("weapon")
+    return BRC.get.mut(BRC.MUTATIONS.demonic_touch, true) >= 3 and not BRC.you.free_offhand()
+        or BRC.get.mut(BRC.MUTATIONS.claws, true) > 0 and not items.equipped_at("weapon")
   elseif st == "boots" then
-    return BRC.get.mut(MUTS.hooves, true) > 0 or BRC.get.mut(MUTS.talons, true) > 0
+    return BRC.get.mut(BRC.MUTATIONS.hooves, true) > 0
+        or BRC.get.mut(BRC.MUTATIONS.talons, true) > 0
   elseif it.name("base"):find("helmet", 1, true) then
-    return BRC.get.mut(MUTS.horns, true) > 0 or BRC.get.mut(MUTS.beak, true) > 0 or BRC.get.mut(MUTS.antennae, true) > 0
+    return BRC.get.mut(BRC.MUTATIONS.horns, true) > 0
+        or BRC.get.mut(BRC.MUTATIONS.beak, true) > 0
+        or BRC.get.mut(BRC.MUTATIONS.antennae, true) > 0
   end
 
   return false

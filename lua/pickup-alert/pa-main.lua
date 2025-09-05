@@ -2,7 +2,7 @@
 Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, ALERT_COLORS, iter, util, pa-util
+Dependencies: CONFIG, BRC.COLORS, EMOJI, ALERT_BRC.COLORS, iter, util, pa-util
 --]]
 
 f_pickup_alert = {}
@@ -142,7 +142,7 @@ function f_pickup_alert.c_message(text, channel)
       for _, v in ipairs(pa_recent_alerts) do
         tokens[#tokens + 1] = "\n  " .. v
       end
-      if #tokens > 0 then BRC.mpr.que("Recent alerts:" .. table.concat(tokens), COLORS.magenta) end
+      if #tokens > 0 then BRC.mpr.que("Recent alerts:" .. table.concat(tokens), BRC.COLORS.magenta) end
       pa_recent_alerts = {}
     end
   end
@@ -176,7 +176,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
     alert_col = BRC.AlertColor.misc
   end
   local tokens = {}
-  tokens[1] = emoji and emoji or BRC.util.color(COLORS.cyan, "----")
+  tokens[1] = emoji and emoji or BRC.util.color(BRC.COLORS.cyan, "----")
   tokens[#tokens + 1] = BRC.util.color(alert_col.desc, " " .. alert_type .. ": ")
   tokens[#tokens + 1] = BRC.util.color(alert_col.item, item_desc .. " ")
   tokens[#tokens + 1] = tokens[1]

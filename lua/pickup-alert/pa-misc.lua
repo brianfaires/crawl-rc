@@ -2,7 +2,7 @@
 Feature: pickup-alert-misc
 Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, util, iter
+Dependencies: CONFIG, BRC.COLORS, EMOJI, util, iter
 --]]
 
 f_pickup_alert_misc = {}
@@ -82,7 +82,7 @@ end
 ---- Exclude superfluous rings ----
 function is_unneeded_ring(it)
   if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = BRC.get.mut(MUTS.missing_hand, true)
+  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true)
   local st = it.subtype()
   local found_first = false
   for inv in iter.invent_iterator:new(items.inventory()) do

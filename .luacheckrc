@@ -26,28 +26,7 @@ globals = {
 
     -- Configuration and constants
     "CONFIG",
-    "COLORS",
-    "EMOJI",
-    "KEYS",
     "TUNING",
-    "MUTS",
-    "ALL_STAFF_SCHOOLS",
-    "RISKY_EGOS",
-    "ALL_POIS_RES_RACES",
-    "ALL_UNDEAD_RACES",
-    "ALL_NONLIVING_RACES",
-    "ALL_HELL_BRANCHES",
-    "ALL_WEAP_SCHOOLS",
-    "ALL_MISC_ITEMS",
-    "ALL_MISSILES",
-    "ALL_LITTLE_RACES",
-    "ALL_SMALL_RACES",
-    "ALL_LARGE_RACES",
-    "SIZE_PENALTY",
-    "DMG_TYPE",
-    "WEAPON_BRAND_BONUSES",
-    "PLAIN_DMG_EGOS",
-    "ARMOUR_ALERT",
     "WEAP_CACHE",
 
 }

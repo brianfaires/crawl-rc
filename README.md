@@ -189,7 +189,7 @@ Most features are entirely configured here. The ones that aren't here typically 
 
 ### [lua/core/constants.lua](lua/core/constants.lua)
 In an attempt to future-proof, contains definitions for things like
-  `ALL_WEAP_SCHOOLS` and `ALL_PORTAL_NAMES`. Update as needed.
+  `BRC.ALL_WEAP_SCHOOLS` and `BRC.ALL_PORTAL_NAMES`. Update as needed.
 
 ### [lua/core/util.lua](lua/core/util.lua)
 Required a lot of places. Nothing in here is necessarily specific to this repo.

@@ -2,7 +2,7 @@
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
 Author: buehler, gammafunk
-Dependencies: CONFIG, COLORS, CONSTANTS, EMOJI, util, persistent_data
+Dependencies: CONFIG, BRC.COLORS, CONSTANTS, EMOJI, util, persistent_data
 --]]
 
 f_misc_alerts = {}
@@ -31,7 +31,7 @@ local function alert_low_hp()
       true,
       table.concat({
         BRC.Emoji.EXCLAMATION,
-        BRC.util.color(COLORS.magenta, low_hp_msg),
+        BRC.util.color(BRC.COLORS.magenta, low_hp_msg),
         BRC.Emoji.EXCLAMATION,
       })
     )
@@ -43,7 +43,7 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" then return end
-      BRC.mpr.more(REMOVE_FAITH_MSG, COLORS.lightcyan)
+      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COLORS.lightcyan)
       ma_alerted_max_piety = true
     end
   end
@@ -55,9 +55,9 @@ local function alert_spell_level_changes()
     local delta = new_spell_levels - ma_prev_spell_levels
     local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
     local avail = " (" .. new_spell_levels .. " available)"
-    crawl.mpr(BRC.util.color(COLORS.lightcyan, msg) .. BRC.util.color(COLORS.cyan, avail))
+    crawl.mpr(BRC.util.color(BRC.COLORS.lightcyan, msg) .. BRC.util.color(BRC.COLORS.cyan, avail))
   elseif new_spell_levels < ma_prev_spell_levels then
-    BRC.mpr.col(new_spell_levels .. " spell levels remaining", COLORS.magenta)
+    BRC.mpr.col(new_spell_levels .. " spell levels remaining", BRC.COLORS.magenta)
   end
 
   ma_prev_spell_levels = new_spell_levels
@@ -83,7 +83,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    crawl.setopt("macros += M " .. KEYS.save_game .. " ===f_misc_alerts.macro_save_w_message")
+    crawl.setopt("macros += M " .. BRC.KEYS.save_game .. " ===f_misc_alerts.macro_save_w_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr("MESSAGE: " .. ma_saved_msg)
       ma_saved_msg = nil

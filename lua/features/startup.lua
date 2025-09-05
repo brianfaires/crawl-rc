@@ -21,7 +21,7 @@ function f_startup.ready()
       for _, skill_target in ipairs(BRC.Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then
-          for _, s in ipairs(ALL_TRAINING_SKILLS) do
+          for _, s in ipairs(BRC.ALL_TRAINING_SKILLS) do
             you.train_skill(s, 0)
           end
           you.set_training_target(skill, target)

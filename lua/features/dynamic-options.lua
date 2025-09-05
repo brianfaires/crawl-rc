@@ -2,7 +2,7 @@
 Feature: dynamic-options
 Description: Changes options based on game state: xl, class, race, god, skills
 Author: buehler
-Dependencies: CONFIG, ALL_SPELLBOOKS, ALL_UNDEAD_RACES, ALL_POIS_RES_RACES, util.contains
+Dependencies: CONFIG, BRC.ALL_SPELLBOOKS, BRC.ALL_UNDEAD_RACES, BRC.ALL_POIS_RES_RACES, util.contains
 --]]
 
 f_dynamic_options = {}
@@ -26,7 +26,7 @@ local LATE_XL_FMs = {
   "monster_warning:carrying a wand of",
 } -- LATE_XL_FMs (do not remove this comment)
 
-local IGNORE_SPELLBOOKS_STRING = table.concat(ALL_SPELLBOOKS, ", ")
+local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.ALL_SPELLBOOKS, ", ")
 local SPELLCASTING_ITEMS_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 -- Local state
@@ -81,11 +81,11 @@ local function set_god_options()
 end
 
 local function set_race_options()
-  if util.contains(ALL_UNDEAD_RACES, you.race()) then
+  if util.contains(BRC.ALL_UNDEAD_RACES, you.race()) then
     crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
   end
 
-  if not util.contains(ALL_POIS_RES_RACES, you.race()) then
+  if not util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then
     crawl.setopt("force_more_message += monster_warning:curare")
   end
 

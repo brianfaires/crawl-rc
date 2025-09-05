@@ -91,13 +91,13 @@ function f_pa_data.update_high_scores(it)
     -- Don't alert for unusable weapons
     if get_hands(it) == 2 and not BRC.you.free_offhand() then return end
 
-    local dmg = get_weap_damage(it, DMG_TYPE.branded)
+    local dmg = get_weap_damage(it, BRC.DMG_TYPE.branded)
     if dmg > weapon_high_score then
       weapon_high_score = dmg
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    dmg = get_weap_damage(it, DMG_TYPE.plain)
+    dmg = get_weap_damage(it, BRC.DMG_TYPE.plain)
     if dmg > plain_dmg_high_score then
       plain_dmg_high_score = dmg
       if not ret_val then ret_val = "Highest plain damage" end

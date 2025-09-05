@@ -2,7 +2,7 @@
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: CONFIG, COLORS, KEYS, BRC.util.color, util.remove, BRC.you.by_slimy_wall, BRC.you.zero_stat
+Dependencies: CONFIG, BRC.COLORS, BRC.KEYS, BRC.util.color, util.remove, BRC.you.by_slimy_wall, BRC.you.zero_stat
 --]]
 
 f_fully_recover = {}
@@ -25,7 +25,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - fr_start_turn
-  BRC.mpr.col("Fully recovered" .. string.format(" (%d turns)", turns), COLORS.lightgreen)
+  BRC.mpr.col("Fully recovered" .. string.format(" (%d turns)", turns), BRC.COLORS.lightgreen)
 
   fr_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
@@ -97,7 +97,7 @@ function f_fully_recover.init()
 
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt("macros += M " .. KEYS.explore .. " ===f_fully_recover.macro_explore")
+  crawl.setopt("macros += M " .. BRC.KEYS.explore .. " ===f_fully_recover.macro_explore")
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -121,8 +121,8 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.mpr.col("Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", COLORS.lightred)
-      BRC.mpr.col("Adjusting BRC.Config.rest_off_statuses:", COLORS.lightred)
+      BRC.mpr.col("Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", BRC.COLORS.lightred)
+      BRC.mpr.col("Adjusting BRC.Config.rest_off_statuses:", BRC.COLORS.lightred)
       remove_statuses_from_config()
       abort_fully_recover()
     else

@@ -1,6 +1,6 @@
 -- Lists of things that may need to be updated with future changes
 ---- Items ----
-ALL_MISC_ITEMS = {
+BRC.ALL_MISC_ITEMS = {
   "box of beasts",
   "condenser vane",
   "figurine of a ziggurat",
@@ -11,10 +11,10 @@ ALL_MISC_ITEMS = {
   "phial of floods",
   "sack of spiders",
   "tin of tremorstones",
-} -- ALL_MISC_ITEMS (do not remove this comment)
+} -- BRC.ALL_MISC_ITEMS (do not remove this comment)
 
 -- This is checked against the full text of the pickup message, so use patterns to match
-ALL_MISSILES = {
+BRC.ALL_MISSILES = {
   "poisoned dart",
   "atropa-tipped dart",
   "curare-tipped dart",
@@ -27,10 +27,10 @@ ALL_MISSILES = {
   "javelin",
   "large rock",
   "throwing net",
-} -- ALL_MISSILES (do not remove this comment)
+} -- BRC.ALL_MISSILES (do not remove this comment)
 
 -- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed
-ALL_SPELLBOOKS = {
+BRC.ALL_SPELLBOOKS = {
   "parchment of",
   "book of",
   "Necronomicon",
@@ -82,47 +82,47 @@ ALL_SPELLBOOKS = {
   "Tome",
   "Vellum",
   "Volume",
-} -- ALL_SPELLBOOKS (do not remove this comment)
+} -- BRC.ALL_SPELLBOOKS (do not remove this comment)
 
 ---- Races ----
-ALL_UNDEAD_RACES = {
+BRC.ALL_UNDEAD_RACES = {
   "Demonspawn",
   "Mummy",
   "Poltergeist",
   "Revenant",
-} -- ALL_UNDEAD_RACES (do not remove this comment)
+} -- BRC.ALL_UNDEAD_RACES (do not remove this comment)
 
-ALL_NONLIVING_RACES = {
+BRC.ALL_NONLIVING_RACES = {
   "Djinni",
   "Gargoyle",
-} -- ALL_UNDEAD_RACES (do not remove this comment)
+} -- BRC.ALL_NONLIVING_RACES (do not remove this comment)
 
-ALL_POIS_RES_RACES = {
+BRC.ALL_POIS_RES_RACES = {
   "Djinni",
   "Gargoyle",
   "Mummy",
   "Naga",
   "Poltergeist",
   "Revenant",
-} -- ALL_POIS_RES_RACES (do not remove this comment)
+} -- BRC.ALL_POIS_RES_RACES (do not remove this comment)
 
-ALL_LITTLE_RACES = {
+BRC.ALL_LITTLE_RACES = {
   "Spriggan",
-} -- ALL_LITTLE_RACES (do not remove this comment)
+} -- BRC.ALL_LITTLE_RACES (do not remove this comment)
 
-ALL_SMALL_RACES = {
+BRC.ALL_SMALL_RACES = {
   "Kobold",
-} -- ALL_SMALL_RACES (do not remove this comment)
+} -- BRC.ALL_SMALL_RACES (do not remove this comment)
 
-ALL_LARGE_RACES = {
+BRC.ALL_LARGE_RACES = {
   "Armataur",
   "Naga",
   "Oni",
   "Troll",
-} -- ALL_LARGE_RACES (do not remove this comment)
+} -- BRC.ALL_LARGE_RACES (do not remove this comment)
 
 ---- Skills ----
-ALL_STAFF_SCHOOLS = {
+BRC.ALL_STAFF_SCHOOLS = {
   air = "Air Magic",
   alchemy = "Alchemy",
   cold = "Ice Magic",
@@ -130,9 +130,9 @@ ALL_STAFF_SCHOOLS = {
   earth = "Earth Magic",
   fire = "Fire Magic",
   conjuration = "Conjurations",
-} -- ALL_STAFF_SCHOOLS (do not remove this comment)
+} -- BRC.ALL_STAFF_SCHOOLS (do not remove this comment)
 
-ALL_TRAINING_SKILLS = {
+BRC.ALL_TRAINING_SKILLS = {
   "Air Magic",
   "Alchemy",
   "Armour",
@@ -162,9 +162,9 @@ ALL_TRAINING_SKILLS = {
   "Translocations",
   "Unarmed Combat",
   "Throwing",
-} -- ALL_TRAINING_SKILLS (do not remove this comment)
+} -- BRC.ALL_TRAINING_SKILLS (do not remove this comment)
 
-ALL_WEAP_SCHOOLS = {
+BRC.ALL_WEAP_SCHOOLS = {
   "axes",
   "maces & flails",
   "polearms",
@@ -173,10 +173,10 @@ ALL_WEAP_SCHOOLS = {
   "staves",
   "unarmed combat",
   "ranged weapons",
-} -- ALL_WEAP_SCHOOLS (do not remove this comment)
+} -- BRC.ALL_WEAP_SCHOOLS (do not remove this comment)
 
----- Other ----
-ALL_PORTAL_NAMES = {
+---- Branches ----
+BRC.ALL_PORTAL_NAMES = {
   "Bailey",
   "Bazaar",
   "Desolation",
@@ -189,18 +189,35 @@ ALL_PORTAL_NAMES = {
   "Volcano",
   "Wizlab",
   "Zig",
-} -- ALL_PORTAL_NAMES (do not remove this comment)
+} -- BRC.ALL_PORTAL_NAMES (do not remove this comment)
 
-ALL_HELL_BRANCHES = {
+BRC.ALL_HELL_BRANCHES = {
   "Coc",
   "Dis",
   "Geh",
   "Hell",
   "Tar",
-} -- ALL_HELL_BRANCHES (do not remove this comment)
+} -- BRC.ALL_HELL_BRANCHES (do not remove this comment)
 
+---- Egos ----
+BRC.PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
+  "distortion",
+  "heavy",
+  "spectralizing",
+} -- BRC.PLAIN_DMG_EGOS (do not remove this comment)
+
+BRC.ALL_RISKY_EGOS = {
+  "chaos",
+  "distortion",
+  "harm",
+  "heavy",
+  "infusion",
+  "ponderous",
+} -- BRC.ALL_RISKY_EGOS (do not remove this comment)
+
+---- Other ----
 -- Would prefer to use integer values, but they don't work in all menus
-COLORS = {
+BRC.COLORS = {
   blue = "blue",
   green = "green",
   cyan = "cyan",
@@ -217,27 +234,18 @@ COLORS = {
   yellow = "yellow",
   white = "w",
   black = "black",
-} -- COLORS (do not remove this comment)
+} -- BRC.COLORS (do not remove this comment)
 
-RISKY_EGOS = {
-  "chaos",
-  "distortion",
-  "harm",
-  "heavy",
-  "infusion",
-  "ponderous",
-} -- RISKY_EGOS (do not remove this comment)
-
-KEYS = {
+BRC.KEYS = {
   LF = string.char(10),
   CR = string.char(13),
   explore = crawl.get_command("CMD_EXPLORE") or "o",
   save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
   go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
   go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">",
-} -- KEYS (do not remove this comment)
+} -- BRC.KEYS (do not remove this comment)
 
-MUTS = {
+BRC.MUTATIONS = {
   antennae = "antennae",
   augmentation = "augmentation",
   beak = "beak",
@@ -251,25 +259,19 @@ MUTS = {
   sharp_scales = "sharp scales",
   sturdy_frame = "sturdy frame",
   talons = "talons",
-} -- MUTS (do not remove this comment)
+} -- BRC.MUTATIONS (do not remove this comment)
 
-SIZE_PENALTY = {
+BRC.SIZE_PENALTY = {
   LITTLE = -2,
   SMALL = -1,
   NORMAL = 0,
   LARGE = 1,
   GIANT = 2,
-} -- SIZE_PENALTY (do not remove this comment)
+} -- BRC.SIZE_PENALTY (do not remove this comment)
 
-DMG_TYPE = {
+BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
   plain = 2, -- Include brand dmg with no associated damage type
   branded = 3, -- Include full brand dmg
   scoring = 4, -- Include boosts for non-damaging brands
-} -- DMG_TYPE (do not remove this comment)
-
-PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
-  "distortion",
-  "heavy",
-  "spectralizing",
-} -- PLAIN_DMG_EGOS (do not remove this comment)
+} -- BRC.DMG_TYPE (do not remove this comment)

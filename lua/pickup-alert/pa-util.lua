@@ -49,7 +49,7 @@ end
 
 function get_weapon_info_string(it, dmg_type)
   if not it.is_weapon then return end
-  local dmg = get_weap_damage(it, dmg_type or BRC.Config.inscribe_dps_type or DMG_TYPE.plain)
+  local dmg = get_weap_damage(it, dmg_type or BRC.Config.inscribe_dps_type or BRC.DMG_TYPE.plain)
   local dmg_str = string.format("%.1f", dmg)
   if dmg < 10 then dmg_str = string.format("%.2f", dmg) end
   if dmg > 99.9 then dmg_str = ">100" end
@@ -116,7 +116,7 @@ end
 --------- Armour (Shadowing crawl calcs) ---------
 function get_unadjusted_armour_pen(encumb)
   -- dcss v0.33.1
-  local pen = encumb - 2 * BRC.get.mut(MUTS.sturdy_frame, true)
+  local pen = encumb - 2 * BRC.get.mut(BRC.MUTATIONS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
@@ -150,8 +150,8 @@ function get_armour_ac(it)
   local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
   if not BRC.is.body_armour(it) then return ac end
 
-  local deformed = BRC.get.mut(MUTS.deformed, true) > 0
-  local pseudopods = BRC.get.mut(MUTS.pseudopods, true) > 0
+  local deformed = BRC.get.mut(BRC.MUTATIONS.deformed, true) > 0
+  local pseudopods = BRC.get.mut(BRC.MUTATIONS.pseudopods, true) > 0
   if pseudopods or deformed then return ac * 6 / 10 end
 
   return ac
@@ -217,14 +217,14 @@ function get_shield_sh(it)
 end
 
 function get_size_penalty()
-  if util.contains(ALL_LITTLE_RACES, you.race()) then
-    return SIZE_PENALTY.LITTLE
-  elseif util.contains(ALL_SMALL_RACES, you.race()) then
-    return SIZE_PENALTY.SMALL
-  elseif util.contains(ALL_LARGE_RACES, you.race()) then
-    return SIZE_PENALTY.LARGE
+  if util.contains(BRC.ALL_LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.ALL_SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.ALL_LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
   end
-  return SIZE_PENALTY.NORMAL
+  return BRC.SIZE_PENALTY.NORMAL
 end
 
 --------- Weapon stats (Shadowing crawl calcs) ---------
@@ -284,7 +284,7 @@ function get_weap_min_delay(it)
 end
 
 function get_weap_dps(it, dmg_type)
-  if not dmg_type then dmg_type = DMG_TYPE.scoring end
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
   return get_weap_damage(it, dmg_type) / get_weap_delay(it)
 end
 
@@ -292,7 +292,7 @@ function get_weap_damage(it, dmg_type)
   -- Returns an adjusted weapon damage = damage * speed
   -- Includes stat/slay changes between weapon and the one currently wielded
   -- Aux attacks not included
-  if not dmg_type then dmg_type = DMG_TYPE.scoring end
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
   local it_plus = it.plus or 0
   -- Adjust str/dex/slay from artefacts
   local str = you.strength()
@@ -327,18 +327,18 @@ function get_weap_damage(it, dmg_type)
 
   if BRC.is.magic_staff(it) then return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type)) end
 
-  if dmg_type == DMG_TYPE.plain then
+  if dmg_type == BRC.DMG_TYPE.plain then
     local ego = get_ego(it)
-    if ego and util.contains(PLAIN_DMG_EGOS, ego) then
-      local brand_bonus = WEAPON_BRAND_BONUSES[ego] or BRC.BrandBonus.subtle[ego]
-      return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset
+    if ego and util.contains(BRC.PLAIN_DMG_EGOS, ego) then
+      local bonus = BRC.BrandBonus[ego] or BRC.BrandBonus.subtle[ego]
+      return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
     end
-  elseif dmg_type >= DMG_TYPE.branded then
+  elseif dmg_type >= BRC.DMG_TYPE.branded then
     local ego = get_ego(it)
     if ego then
-      local brand_bonus = WEAPON_BRAND_BONUSES[ego]
-      if not brand_bonus and dmg_type == DMG_TYPE.scoring then brand_bonus = BRC.BrandBonus.subtle[ego] end
-      if brand_bonus then return brand_bonus.factor * pre_brand_dmg_no_plus + it_plus + brand_bonus.offset end
+      local bonus = BRC.BrandBonus[ego]
+      if not bonus and dmg_type == BRC.DMG_TYPE.scoring then bonus = BRC.BrandBonus.subtle[ego] end
+      if bonus then return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset end
     end
   end
 
@@ -351,7 +351,7 @@ function get_weap_score(it, no_brand_bonus)
     return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
   end
   local it_plus = it.plus or 0
-  local dmg_type = no_brand_bonus and DMG_TYPE.unbranded or DMG_TYPE.scoring
+  local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
   return get_weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
 end
 
@@ -413,8 +413,8 @@ function get_slay_bonuses()
   end
 
   if you.race() == "Demonspawn" then
-    sum = sum + 3 * BRC.get.mut(MUTS.augmentation, true)
-    sum = sum + BRC.get.mut(MUTS.sharp_scales, true)
+    sum = sum + 3 * BRC.get.mut(BRC.MUTATIONS.augmentation, true)
+    sum = sum + BRC.get.mut(BRC.MUTATIONS.sharp_scales, true)
   end
 
   return sum
@@ -422,8 +422,8 @@ end
 
 function get_staff_bonus_dmg(it, dmg_type)
   -- dcss v0.33.1
-  if dmg_type == DMG_TYPE.unbranded then return 0 end
-  if dmg_type == DMG_TYPE.plain then
+  if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
+  if dmg_type == BRC.DMG_TYPE.plain then
     local basename = it.name("base")
     if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
   end

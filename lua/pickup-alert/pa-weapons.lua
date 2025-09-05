@@ -2,7 +2,7 @@
 Feature: pickup-alert-weapons
 Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, COLORS, EMOJI, iter, util, pa-util
+Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
 --]]
 
 f_pickup_alert_weapons = {}
@@ -141,7 +141,7 @@ local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
     and WEAP_CACHE.is_empty()
     and you.skill("Unarmed Combat") == 0
-    and BRC.get.mut(MUTS.claws, true) == 0
+    and BRC.get.mut(BRC.MUTATIONS.claws, true) == 0
 end
 
 -- Hook functions
@@ -323,7 +323,7 @@ function f_pickup_alert_weapons.init()
   -- Set top weapon skill
   top_attack_skill = "Unarmed Combat"
   local max_weap_skill = get_skill(top_attack_skill)
-  for _, v in ipairs(ALL_WEAP_SCHOOLS) do
+  for _, v in ipairs(BRC.ALL_WEAP_SCHOOLS) do
     if get_skill(v) > max_weap_skill then
       max_weap_skill = get_skill(v)
       top_attack_skill = v

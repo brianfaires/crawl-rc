@@ -2,7 +2,7 @@
 Feature: runrest-features
 Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
 Author: buehler
-Dependencies: CONFIG, COLORS, util, ALL_PORTAL_NAMES
+Dependencies: CONFIG, BRC.COLORS, util, BRC.ALL_PORTAL_NAMES
 --]]
 
 f_runrest_features = {}
@@ -58,10 +58,10 @@ local function ready_ignore_altars()
 end
 
 local function ready_ignore_exits()
-  if stop_on_portals and util.contains(ALL_PORTAL_NAMES, you.branch()) then
+  if stop_on_portals and util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
     crawl.setopt("explore_stop -= portals")
-  elseif not stop_on_portals and not util.contains(ALL_PORTAL_NAMES, you.branch()) then
+  elseif not stop_on_portals and not util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = true
     crawl.setopt("explore_stop += portals")
   end
@@ -106,7 +106,7 @@ local function c_message_temple(text, _)
       search_altars()
     elseif text:find("welcomes you!", 1, true) then
       -- Run to staircase after worship
-      BRC.mpr.que("Ran to temple exit.", COLORS.darkgrey)
+      BRC.mpr.que("Ran to temple exit.", BRC.COLORS.darkgrey)
       crawl.sendkeys("X<\r")
     end
   end
