@@ -15,7 +15,7 @@ num_autopickup_funcs = BRC.data.create("num_autopickup_funcs", #chk_force_autopi
 local loaded_pa_armour
 local loaded_pa_misc
 local loaded_pa_weapons
-pause_pa_system = nil
+local pause_pa_system = nil
 
 -- Local functions
 local function has_configured_force_more(it)
@@ -28,6 +28,55 @@ local function has_configured_force_more(it)
 end
 
 -- Hook functions
+function f_pickup_alert.autopickup(it, _)local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
+  if pause_pa_system then return end
+  if you.have_orb() then return end
+  if has_ego(it) and not it.is_identified then return false end
+  if not it.is_useless then
+    if loaded_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
+      if pa_pickup_armour(it) then return true end
+    elseif loaded_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
+      if pa_pickup_staff(it) then return true end
+    elseif loaded_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
+      if pa_pickup_weapon(it) then return true end
+    elseif loaded_pa_misc and is_unneeded_ring(it) then
+      return false
+    end
+  else
+    -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
+    if BRC.is.aux_armour(it) then return end
+
+    local st = it.subtype()
+    for inv in iter.invent_iterator:new(items.inventory()) do
+      local inv_st = inv.subtype()
+      if inv_st and inv_st == st then
+        unworn_aux_item = inv
+        break
+      end
+    end
+    if not unworn_aux_item then return end
+  end
+
+  -- Not picking up this item. Now check for alerts.
+  if not BRC.Config.alert.system_enabled or f_pa_data.contains(pa_items_alerted, it) then return end
+
+  if loaded_pa_misc and BRC.Config.alert.one_time and #BRC.Config.alert.one_time > 0 then
+    if pa_alert_OTA(it) then return end
+  end
+
+  if loaded_pa_misc and BRC.Config.alert.staff_resists and BRC.is.magic_staff(it) then
+    if pa_alert_staff(it) then return end
+  elseif loaded_pa_misc and BRC.Config.alert.orbs and BRC.is.orb(it) then
+    if pa_alert_orb(it) then return end
+  elseif loaded_pa_misc and BRC.Config.alert.talismans and BRC.is.talisman(it) then
+    if pa_alert_talisman(it) then return end
+  elseif loaded_pa_armour and BRC.Config.alert.armour and BRC.is.armour(it) then
+    if pa_alert_armour(it, unworn_aux_item) then return end
+  elseif loaded_pa_weapons and BRC.Config.alert.weapons and it.is_weapon then
+    if pa_alert_weapon(it) then return end
+  end
+end
+
 function f_pickup_alert.init()
   pause_pa_system = false
   f_pa_data.init()
@@ -58,58 +107,8 @@ function f_pickup_alert.init()
     return
   end
 
-  ---- Autopickup main ----
-  add_autopickup_func(function(it, _)
-    local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
-    if pause_pa_system then return end
-    if you.have_orb() then return end
-    if has_ego(it) and not it.is_identified then return false end
-    if not it.is_useless then
-      if loaded_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
-        if pa_pickup_armour(it) then return true end
-      elseif loaded_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
-        if pa_pickup_staff(it) then return true end
-      elseif loaded_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
-        if pa_pickup_weapon(it) then return true end
-      elseif loaded_pa_misc and is_unneeded_ring(it) then
-        return false
-      end
-    else
-      -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-      if BRC.is.aux_armour(it) then return end
-
-      local st = it.subtype()
-      for inv in iter.invent_iterator:new(items.inventory()) do
-        local inv_st = inv.subtype()
-        if inv_st and inv_st == st then
-          unworn_aux_item = inv
-          break
-        end
-      end
-      if not unworn_aux_item then return end
-    end
-
-    -- Not picking up this item. Now check for alerts.
-    if not BRC.Config.alert.system_enabled or f_pa_data.contains(pa_items_alerted, it) then return end
-
-    if loaded_pa_misc and BRC.Config.alert.one_time and #BRC.Config.alert.one_time > 0 then
-      if pa_alert_OTA(it) then return end
-    end
-
-    if loaded_pa_misc and BRC.Config.alert.staff_resists and BRC.is.magic_staff(it) then
-      if pa_alert_staff(it) then return end
-    elseif loaded_pa_misc and BRC.Config.alert.orbs and BRC.is.orb(it) then
-      if pa_alert_orb(it) then return end
-    elseif loaded_pa_misc and BRC.Config.alert.talismans and BRC.is.talisman(it) then
-      if pa_alert_talisman(it) then return end
-    elseif loaded_pa_armour and BRC.Config.alert.armour and BRC.is.armour(it) then
-      if pa_alert_armour(it, unworn_aux_item) then return end
-    else
-      if loaded_pa_weapons and BRC.Config.alert.weapons and it.is_weapon then
-        if pa_alert_weapon(it) then return end
-      end
-    end
-  end)
+  -- Hook to the autopickup function
+  add_autopickup_func(function(it, _) return f_pickup_alert.autopickup(it, _) end)
 end
 
 function f_pickup_alert.c_assign_invletter(it)
