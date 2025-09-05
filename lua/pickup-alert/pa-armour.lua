@@ -101,12 +101,12 @@ local function pickup_body_armour(it)
   local encumb_delta = it.encumbrance - cur.encumbrance
   if encumb_delta > 0 then return false end
 
-  local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
+  local ac_delta = BRC.get.armour_ac(it) - BRC.get.armour_ac(cur)
   if ac_delta < 0 then return false end
 
   -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
-  local it_ego = get_ego(it)
-  local cur_ego = get_ego(cur)
+  local it_ego = BRC.get.ego(it)
+  local cur_ego = BRC.get.ego(cur)
   if cur_ego then
     if not it_ego then return false end
     return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
@@ -127,8 +127,8 @@ local function pickup_shield(it)
   if it.artefact then return true end
 
   -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
-  local cur_ego = get_ego(cur)
-  local it_ego = get_ego(it)
+  local cur_ego = BRC.get.ego(cur)
+  local it_ego = BRC.get.ego(it)
   if cur_ego then
     if it_ego == cur_ego then return it.plus > cur.plus end
     return it_ego and it.plus >= cur.plus
@@ -161,11 +161,11 @@ local function pickup_aux_armour(it)
   if it.is_identified and it.artefact then return true end
 
   -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
-  local it_ac = get_armour_ac(it)
-  local it_ego = get_ego(it)
+  local it_ac = BRC.get.armour_ac(it)
+  local it_ego = BRC.get.ego(it)
   for _, cur in ipairs(all_equipped) do
-    local cur_ac = get_armour_ac(cur)
-    local cur_ego = get_ego(cur)
+    local cur_ac = BRC.get.armour_ac(cur)
+    local cur_ego = BRC.get.ego(cur)
     if cur_ego then
       if it_ego then
         if it_ac > cur_ac then return true end
@@ -222,9 +222,9 @@ local function alert_ac_high_score(it)
   if ac_high_score == 0 then
     local worn = items.equipped_at("armour")
     if not worn then return false end
-    ac_high_score = get_armour_ac(worn)
+    ac_high_score = BRC.get.armour_ac(worn)
   else
-    local itAC = get_armour_ac(it)
+    local itAC = BRC.get.armour_ac(it)
     if itAC > ac_high_score then
       ac_high_score = itAC
       return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, BRC.Config.fm_alert.high_score_armour)
@@ -245,11 +245,11 @@ local function alert_body_armour(it)
   end
 
   -- Get changes to ego, AC, EV, encumbrance
-  local it_ego = get_ego(it)
-  local cur_ego = get_ego(cur)
+  local it_ego = BRC.get.ego(it)
+  local cur_ego = BRC.get.ego(cur)
   local ego_change = get_ego_change_type(cur_ego, it_ego)
-  local ac_delta = get_armour_ac(it) - get_armour_ac(cur)
-  local ev_delta = get_armour_ev(it) - get_armour_ev(cur)
+  local ac_delta = BRC.get.armour_ac(it) - BRC.get.armour_ac(cur)
+  local ev_delta = BRC.get.armour_ev(it) - BRC.get.armour_ev(cur)
   local encumb_delta = it.encumbrance - cur.encumbrance
 
   -- Alert new egos if same encumbrance, or small change to total (AC+EV)
@@ -292,11 +292,11 @@ local function alert_shield(it)
   if not BRC.is.shield(cur) then return false end
 
   -- Alert: New ego, Gain SH
-  local ego_change = get_ego_change_type(get_ego(cur), get_ego(it))
+  local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
     return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.shields)
-  elseif get_shield_sh(it) > get_shield_sh(cur) then
+  elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
     return f_pickup_alert.do_alert(it, "Higher SH", BRC.Emoji.STRONGER, BRC.Config.fm_alert.shields)
   end
 end
@@ -317,13 +317,13 @@ local function alert_aux_armour(it, unworn_inv_item)
       return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, BRC.Config.fm_alert.aux_armour)
     end
 
-    local it_ego = get_ego(it)
+    local it_ego = BRC.get.ego(it)
     for _, cur in ipairs(all_equipped) do
-      local ego_change = get_ego_change_type(get_ego(cur), it_ego)
+      local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
       if is_new_ego(ego_change) then
         local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
         return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.aux_armour)
-      elseif get_armour_ac(it) > get_armour_ac(cur) then
+      elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
         return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, BRC.Config.fm_alert.aux_armour)
       end
     end

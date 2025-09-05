@@ -82,22 +82,22 @@ function f_pa_data.update_high_scores(it)
   local ret_val = nil
 
   if BRC.is.armour(it) then
-    local ac = get_armour_ac(it)
+    local ac = BRC.get.armour_ac(it)
     if ac > ac_high_score then
       ac_high_score = ac
       if not ret_val then ret_val = "Highest AC" end
     end
   elseif it.is_weapon then
     -- Don't alert for unusable weapons
-    if get_hands(it) == 2 and not BRC.you.free_offhand() then return end
+    if BRC.get.hands(it) == 2 and not BRC.you.free_offhand() then return end
 
-    local dmg = get_weap_damage(it, BRC.DMG_TYPE.branded)
+    local dmg = BRC.get.weap_damage(it, BRC.DMG_TYPE.branded)
     if dmg > weapon_high_score then
       weapon_high_score = dmg
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    dmg = get_weap_damage(it, BRC.DMG_TYPE.plain)
+    dmg = BRC.get.weap_damage(it, BRC.DMG_TYPE.plain)
     if dmg > plain_dmg_high_score then
       plain_dmg_high_score = dmg
       if not ret_val then ret_val = "Highest plain damage" end

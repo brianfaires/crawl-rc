@@ -23,7 +23,7 @@ local function has_configured_force_more(it)
     if BRC.Config.fm_alert.artefact then return true end
     if BRC.Config.fm_alert.trained_artefacts and BRC.get.skill_with_item(it) > 0 then return true end
   end
-  if BRC.Config.fm_alert.armour_ego and BRC.is.armour(it) and has_ego(it) then return true end
+  if BRC.Config.fm_alert.armour_ego and BRC.is.armour(it) and BRC.is.branded(it) then return true end
   return false
 end
 
@@ -31,7 +31,7 @@ end
 function f_pickup_alert.autopickup(it, _)local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
   if pause_pa_system then return end
   if you.have_orb() then return end
-  if has_ego(it) and not it.is_identified then return false end
+  if BRC.is.branded(it) and not it.is_identified then return false end
   if not it.is_useless then
     if loaded_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
       if pa_pickup_armour(it) then return true end
@@ -159,11 +159,11 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if it.is_weapon then
     alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
-    item_desc = item_desc .. BRC.util.color(BRC.AlertColor.weapon.stats, " (" .. get_weapon_info_string(it) .. ")")
+    item_desc = item_desc .. BRC.util.color(BRC.AlertColor.weapon.stats, " (" .. BRC.get.weapon_info(it) .. ")")
   elseif BRC.is.body_armour(it) then
     alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
-    local ac, ev = get_armour_info_strings(it)
+    local ac, ev = BRC.get.armour_info(it)
     item_desc = item_desc .. BRC.util.color(BRC.AlertColor.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
   elseif BRC.is.armour(it) then
     alert_col = BRC.AlertColor.aux_arm

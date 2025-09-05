@@ -10,7 +10,7 @@ f_template = {}
 -- Define BRC_FEATURE_NAME to mark it for auto-loading
 f_template.BRC_FEATURE_NAME = "template_feature"
 
--- Define persistent variables globally
+-- Define persistent variables globally (use unique names)
 template_counter = BRC.data.create("template_counter", 0)
 template_flag = BRC.data.create("template_flag", false)
 template_list = BRC.data.create("template_list", {})

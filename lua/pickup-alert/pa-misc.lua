@@ -75,7 +75,7 @@ end
 ---- Smart staff pickup ----
 function pa_pickup_staff(it)
   if not it.is_identified then return false end
-  if get_skill(BRC.get.staff_school(it)) == 0 then return false end
+  if BRC.get.skill(BRC.get.staff_school(it)) == 0 then return false end
   return not f_pa_data.contains(pa_items_picked, it)
 end
 

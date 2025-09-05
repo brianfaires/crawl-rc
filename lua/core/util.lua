@@ -115,11 +115,11 @@ function BRC.get.mut(mutation, include_all)
 end
 
 function BRC.get.skill_with_item(it)
-  if BRC.is.magic_staff(it) then return math.max(get_skill(BRC.get.staff_school(it)), get_skill("Staves")) end
-  if it.is_weapon then return get_skill(it.weap_skill) end
-  if BRC.is.body_armour(it) then return get_skill("Armour") end
-  if BRC.is.shield(it) then return get_skill("Shields") end
-  if BRC.is.talisman(it) then return get_skill("Shapeshifting") end
+  if BRC.is.magic_staff(it) then return math.max(BRC.get.skill(BRC.get.staff_school(it)), BRC.get.skill("Staves")) end
+  if it.is_weapon then return BRC.get.skill(it.weap_skill) end
+  if BRC.is.body_armour(it) then return BRC.get.skill("Armour") end
+  if BRC.is.shield(it) then return BRC.get.skill("Shields") end
+  if BRC.is.talisman(it) then return BRC.get.skill("Shapeshifting") end
 
   return 1 -- Fallback to 1
 end
@@ -188,7 +188,7 @@ function BRC.is.ring(it)
 end
 
 function BRC.is.risky_ego(it)
-  local text = it.artefact and it.name() or get_ego(it)
+  local text = it.artefact and it.name() or BRC.get.ego(it)
   if not text then return false end
   for _, v in ipairs(BRC.ALL_RISKY_EGOS) do
     if text:find(v) then return true end
