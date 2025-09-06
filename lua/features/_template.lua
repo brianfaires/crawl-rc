@@ -11,10 +11,10 @@ f_template = {}
 f_template.BRC_FEATURE_NAME = "template_feature"
 
 -- Define persistent variables globally (use unique names)
-template_counter = BRC.data.create("template_counter", 0)
-template_flag = BRC.data.create("template_flag", false)
-template_list = BRC.data.create("template_list", {})
-template_dict = BRC.data.create("template_dict", {})
+template_counter = BRC.data.persist("template_counter", 0)
+template_flag = BRC.data.persist("template_flag", false)
+template_list = BRC.data.persist("template_list", {})
+template_dict = BRC.data.persist("template_dict", {})
 
 -- Define local (private) constants and configuration
 

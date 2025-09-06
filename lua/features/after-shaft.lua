@@ -2,15 +2,15 @@
 Feature: after-shaft
 Description: Automatically stops exploration on stairs after falling into a shaft
 Author: buehler
-Dependencies: CONFIG, create_persistent_data, in_hell
+Dependencies: CONFIG, in_hell
 --]]
 
 f_after_shaft = {}
 f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
 -- Persistent variables
-as_shaft_depth = BRC.data.create("as_shaft_depth", 0)
-as_shaft_branch = BRC.data.create("as_shaft_branch", "NA")
+as_shaft_depth = BRC.data.persist("as_shaft_depth", 0)
+as_shaft_branch = BRC.data.persist("as_shaft_branch", "NA")
 
 -- Hook functions
 function f_after_shaft.init()

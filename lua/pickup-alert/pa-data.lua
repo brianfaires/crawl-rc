@@ -2,21 +2,21 @@
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, create_persistent_data, iter
+Dependencies: CONFIG, iter
 --]]
 
 f_pa_data = {}
 --f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
 
 -- Persistent variables
-pa_OTA_items = BRC.data.create("pa_OTA_items", BRC.Config.alert.one_time)
-pa_recent_alerts = BRC.data.create("pa_recent_alerts", {})
-pa_items_picked = BRC.data.create("pa_items_picked", {})
-pa_items_alerted = BRC.data.create("pa_items_alerted", {})
+pa_OTA_items = BRC.data.persist("pa_OTA_items", BRC.Config.alert.one_time)
+pa_recent_alerts = BRC.data.persist("pa_recent_alerts", {})
+pa_items_picked = BRC.data.persist("pa_items_picked", {})
+pa_items_alerted = BRC.data.persist("pa_items_alerted", {})
 
-ac_high_score = BRC.data.create("ac_high_score", 0)
-weapon_high_score = BRC.data.create("weapon_high_score", 0)
-plain_dmg_high_score = BRC.data.create("plain_dmg_high_score", 0)
+ac_high_score = BRC.data.persist("ac_high_score", 0)
+weapon_high_score = BRC.data.persist("weapon_high_score", 0)
+plain_dmg_high_score = BRC.data.persist("plain_dmg_high_score", 0)
 
 ---- Helpers for using persistent tables in pickup-alert system----
 function f_pa_data.append(table_ref, it)

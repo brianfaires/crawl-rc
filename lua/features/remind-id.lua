@@ -9,9 +9,9 @@ f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
 
 -- Persistent variables
-ri_max_scroll_stack = BRC.data.create("ri_max_scroll_stack", BRC.Config.stop_on_scrolls_count - 1)
-ri_max_potion_stack = BRC.data.create("ri_max_potion_stack", BRC.Config.stop_on_pots_count - 1)
-found_scroll_of_id = BRC.data.create("found_scroll_of_id", false)
+ri_max_scroll_stack = BRC.data.persist("ri_max_scroll_stack", BRC.Config.stop_on_scrolls_count - 1)
+ri_max_potion_stack = BRC.data.persist("ri_max_potion_stack", BRC.Config.stop_on_pots_count - 1)
+found_scroll_of_id = BRC.data.persist("found_scroll_of_id", false)
 
 -- Local constants / configuration
 local IDENTIFY_MSG = BRC.text.color(BRC.COLORS.magenta, " You have something to identify. ")

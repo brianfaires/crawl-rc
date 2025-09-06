@@ -9,7 +9,7 @@ f_pickup_alert_weapons = {}
 --f_pickup_alert_weapons.BRC_FEATURE_NAME = "pickup-alert-weapons"
 
 -- Persistent variables
-lowest_num_hands_alerted = BRC.data.create("lowest_num_hands_alerted", {
+lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
   ["Polearms"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
 }) -- lowest_num_hands_alerted (do not remove this comment)

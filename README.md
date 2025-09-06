@@ -173,8 +173,6 @@ Picks up staves when you are training the relevant spell school. Alerts are gene
 
 ### Other files for pickup-alert system
 These are auto-included as necessary. Just listing for reference.
-- [lua/pickup-alert/pa-util.lua](lua/pickup-alert/pa-util.lua):
-  Like [lua/core/util.lua](lua/core/util.lua) but specific to the pickup-alert system.
 - [lua/pickup-alert/pa-data.lua](lua/pickup-alert/pa-data.lua):
   Handles persistent data, saved with your character.
 - [lua/pickup-alert/pa-main.lua](lua/pickup-alert/pa-main.lua):
@@ -182,27 +180,35 @@ These are auto-included as necessary. Just listing for reference.
 
 ## Core files
 ### [lua/core/BRC.Config.lua](lua/core/BRC.Config.lua)
-This comes first in [buehler.rc](buehler.rc), so you can adjust behavior
-  without digging into the code or rebuilding [buehler.rc](buehler.rc).  
+This comes first in [buehler.rc](buehler.rc), so you can adjust behavior without digging into the code or rebuilding [buehler.rc](buehler.rc).
+#### BRC.Config: Feature configuration
 Most features are entirely configured here. The ones that aren't here typically are configured with 
-  a bunch of messages. So those are set in the feature file instead.
+  a bunch of messages, which are set in the feature file instead.
+
+#### BRC.Tuning:
+Heuristics to adjust the behavior of the pickup + alert system.
+If you find it's alerting too often or not enough for something, this is what should be adjusted.
+
+#### BRC.BrandBonus
+Adjust the impact that each brand has on damage & DPS calculations.
+This will affect how weapons compare against each other, and DPS inscriptions (if configured to inscribe branded damage).
+
+#### Cosmetic only: BRC.AlertColor and BRC.Emoji
+- Adjust the text coloring for item alerts.
+- Define the emojis to use in announce-damage and alerts. Or, define text to replace the emojis.
 
 ### [lua/core/constants.lua](lua/core/constants.lua)
 In an attempt to future-proof, contains definitions for things like
   `BRC.ALL_WEAP_SCHOOLS` and `BRC.ALL_PORTAL_NAMES`. Update as needed.
 
-### [lua/core/util.lua](lua/core/util.lua)
-Required a lot of places. Nothing in here is necessarily specific to this repo.
-
-### [lua/core/persistent-data.lua](lua/core/persistent-data.lua)
+### [lua/core/data.lua](lua/core/data.lua)
 - Handles saving and loading of persistent data between game sessions. Data is specific to one game/character.
 - If any data from the previous save fails to load, you'll get a warning on startup.
   This can happen after a crash, or if changes to the RC cause errors.
   The impact is low - it just forgets things like which items it's already alerted.
 
-### [lua/core/emojis.lua](lua/core/emojis.lua)
-- Define the emojis you want used in announce-damage and any alerts.
-- Can also define text to replace the emojis.
+### [lua/core/util.lua](lua/core/util.lua)
+Required a lot of places. Nothing in here is necessarily specific to this repo.
 
 ## Notes
 - LMK if you find any bugs! It'd be helpful if you include your RC or Config, and a character dump after

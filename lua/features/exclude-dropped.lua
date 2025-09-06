@@ -9,7 +9,7 @@ f_exclude_dropped = {}
 f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
 
 -- Persistent variables
-ed_dropped_items = BRC.data.create("ed_dropped_items", {})
+ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
 
 -- Local functions
 local function add_exclusion(item_name)

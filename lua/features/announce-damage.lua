@@ -9,7 +9,7 @@ f_announce_damage = {}
 f_announce_damage.BRC_FEATURE_NAME = "announce-damage"
 
 -- Persistent variables
-ad_prev = BRC.data.create("ad_prev", {hp = 0, mhp = 0, mp = 0, mmp = 0})
+ad_prev = BRC.data.persist("ad_prev", {hp = 0, mhp = 0, mp = 0, mmp = 0})
 
 -- Local constants
 local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)

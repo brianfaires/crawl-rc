@@ -9,8 +9,8 @@ f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
 
 -- Persistent variables
-fr_start_turn = BRC.data.create("fr_start_turn", 0)
-fr_explore_after = BRC.data.create("fr_explore_after", false)
+fr_start_turn = BRC.data.persist("fr_start_turn", 0)
+fr_explore_after = BRC.data.persist("fr_explore_after", false)
 
 -- Local constants / configuration
 local MAX_TURNS_TO_WAIT = 500

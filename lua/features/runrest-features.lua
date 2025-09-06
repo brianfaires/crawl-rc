@@ -9,8 +9,8 @@ f_runrest_features = {}
 f_runrest_features.BRC_FEATURE_NAME = "runrest-features"
 
 -- Persistent variables
-rr_autosearched_temple = BRC.data.create("rr_autosearched_temple", false)
-rr_autosearched_gauntlet = BRC.data.create("rr_autosearched_gauntlet", false)
+rr_autosearched_temple = BRC.data.persist("rr_autosearched_temple", false)
+rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
 
 -- Local variables
 local stop_on_altars

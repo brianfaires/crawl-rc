@@ -44,7 +44,7 @@ include = crawl-rc/rc/slot-defaults.rc
 ### buehler.rc core files ###
 lua_file = crawl-rc/lua/core/constants.lua
 lua_file = crawl-rc/lua/core/emojis.lua
-lua_file = crawl-rc/lua/core/persistent-data.lua
+lua_file = crawl-rc/lua/core/data.lua
 lua_file = crawl-rc/lua/core/util.lua
 lua_file = crawl-rc/lua/core/brc.lua
 

@@ -7,7 +7,6 @@ Manages persistent data across games and saves
 BRC.data = {}
 
 -- Local constants
-
 local TYPES = {
   string = "string",
   number = "number",
@@ -42,7 +41,7 @@ local function typeof(value)
   end
 end
 
-local function dump_var(value)
+local function get_pretty_string(value)
   local type = typeof(value)
   if type == TYPES.string then
     return '"' .. value.gsub('"', "") .. '"'
@@ -53,13 +52,13 @@ local function dump_var(value)
   elseif type == TYPES.list then
     local tokens = {}
     for _, v in ipairs(value) do
-      tokens[#tokens + 1] = dump_var(v)
+      tokens[#tokens + 1] = get_pretty_string(v)
     end
     return "{" .. table.concat(tokens, ", ") .. "}"
   elseif type == TYPES.dict then
     local tokens = {}
     for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"] = %s', k, dump_var(v))
+      tokens[#tokens + 1] = string.format('["%s"] = %s', k, get_pretty_string(v))
     end
     return "{" .. table.concat(tokens, ", ") .. "}"
   else
@@ -72,18 +71,18 @@ end
 -- Public API
 
 --[[
-create() declares a persistent global variable or table, initialized to the default value if it doesn't exist.
-The variable/list/dict is automatically persisted across saves. Function returns the current value.
-
-Usage: variable_name = BRC.data.create("variable_name", default_value)
+BRC.data.persist() creates a persistent global variable or table, initialized to the default value if it doesn't exist.
+The variable/list/dict is automatically persisted across saves.
+Returns the current value.
+Usage: variable_name = BRC.data.persist("variable_name", default_value)
 --]]
-function BRC.data.create(name, default_value)
+function BRC.data.persist(name, default_value)
   if _G[name] == nil then _G[name] = default_value end
 
   table.insert(chk_lua_save, function()
     local var_type = typeof(_G[name])
     if var_type == TYPES.unknown then return "" end
-    return name .. " = " .. dump_var(_G[name]) .. BRC.KEYS.LF
+    return name .. " = " .. get_pretty_string(_G[name]) .. BRC.KEYS.LF
   end)
 
   local var_type = typeof(_G[name])
@@ -104,7 +103,7 @@ function BRC.data.dump(char_dump)
     if typeof(_G[name]) == TYPES.list then
       for _, item in ipairs(_G[name]) do
         tokens[#tokens + 1] = "  "
-        tokens[#tokens + 1] = dump_var(item)
+        tokens[#tokens + 1] = get_pretty_string(item)
         tokens[#tokens + 1] = "\n"
       end
     else
@@ -112,7 +111,7 @@ function BRC.data.dump(char_dump)
         tokens[#tokens + 1] = "  "
         tokens[#tokens + 1] = tostring(k)
         tokens[#tokens + 1] = " = "
-        tokens[#tokens + 1] = dump_var(v)
+        tokens[#tokens + 1] = get_pretty_string(v)
         tokens[#tokens + 1] = "\n"
       end
     end
@@ -130,7 +129,7 @@ function BRC.data.dump(char_dump)
 end
 
 function BRC.data.init(full_reset)
-  -- Clear persistent data (data is created via BRC.data.create)
+  -- Clear persistent data (data is created via BRC.data.persist)
   if full_reset then
     if _persistent_var_names then
       for _, name in ipairs(_persistent_var_names) do
@@ -166,9 +165,9 @@ function BRC.data.verify_reinit()
   -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
   -- Default successful_data_reload to false, to confirm the data reload set it to true
   for k, v in pairs(GAME_CHANGE_MONITORS) do
-    BRC.data.create("prev_" .. k, v)
+    BRC.data.persist("prev_" .. k, v)
   end
-  BRC.data.create("successful_data_reload", false)
+  BRC.data.persist("successful_data_reload", false)
 
   if you.turns() > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do

@@ -9,10 +9,10 @@ f_safe_stairs = {}
 f_safe_stairs.BRC_FEATURE_NAME = "safe-stairs"
 
 -- Persistent variables
-ss_prev_location = BRC.data.create("ss_prev_location", "")
-ss_cur_location = BRC.data.create("ss_cur_location", "")
-ss_last_stair_turn = BRC.data.create("ss_last_stair_turn", 0)
-ss_v5_unwarned = BRC.data.create("ss_v5_unwarned", true)
+ss_prev_location = BRC.data.persist("ss_prev_location", "")
+ss_cur_location = BRC.data.persist("ss_cur_location", "")
+ss_last_stair_turn = BRC.data.persist("ss_last_stair_turn", 0)
+ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
 
 -- Local constants
 

@@ -9,7 +9,7 @@ f_pickup_alert = {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
 -- Persistent variables
-num_autopickup_funcs = BRC.data.create("num_autopickup_funcs", #chk_force_autopickup + 1)
+num_autopickup_funcs = BRC.data.persist("num_autopickup_funcs", #chk_force_autopickup + 1)
 
 -- Local variables
 local loaded_pa_armour

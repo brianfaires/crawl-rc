@@ -9,9 +9,9 @@ f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
 
 -- Persistent variables
-ma_alerted_max_piety = BRC.data.create("ma_alerted_max_piety", false)
-ma_prev_spell_levels = BRC.data.create("ma_prev_spell_levels", 0)
-ma_saved_msg = BRC.data.create("ma_saved_msg", "")
+ma_alerted_max_piety = BRC.data.persist("ma_alerted_max_piety", false)
+ma_prev_spell_levels = BRC.data.persist("ma_prev_spell_levels", 0)
+ma_saved_msg = BRC.data.persist("ma_saved_msg", "")
 
 -- Local constants / configuration
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
