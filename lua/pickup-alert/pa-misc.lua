@@ -5,17 +5,17 @@ Author: buehler
 Dependencies: CONFIG, BRC.COLORS, EMOJI, util, iter
 --]]
 
-f_pickup_alert_misc = {}
---f_pickup_alert_misc.BRC_FEATURE_NAME = "pickup-alert-misc"
+f_pa_misc = {}
+--f_pa_misc.BRC_FEATURE_NAME = "pickup-alert-misc"
 
-function pa_alert_orb(it)
+function f_pa_misc.alert_orb(it)
   if not it.is_identified then return false end
   return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, BRC.Config.fm_alert.orbs)
 end
 
-function pa_alert_OTA(it)
-  local index = f_pa_data.get_OTA_index(it)
-  if index == -1 then return end
+function f_pa_misc.alert_OTA(it)
+  local ota_item = f_pa_data.find(f_pa_data.pa_OTA_items, it)
+  if not ota_item then return end
 
   local do_alert = true
 
@@ -23,9 +23,9 @@ function pa_alert_OTA(it)
     if you.skill("Shields") < BRC.Config.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
-    if pa_OTA_items[index] == "buckler" then
+    if ota_item == "buckler" then
       if BRC.you.have_shield() then do_alert = false end
-    elseif pa_OTA_items[index] == "kite shield" then
+    elseif ota_item == "kite shield" then
       local sh = items.equipped_at("offhand")
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
@@ -35,13 +35,12 @@ function pa_alert_OTA(it)
     if you.skill(it.weap_skill) < BRC.Config.alert.OTA_require_skill.weapon then return end
   end
 
-  f_pa_data.remove_from_OTA(it)
+  f_pa_data.remove(f_pa_data.pa_OTA_items, it)
   if not do_alert then return false end
   return f_pickup_alert.do_alert(it, "Rare item", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
 end
 
----- Alert for needed resists ----
-function pa_alert_staff(it)
+function f_pa_misc.alert_staff(it)
   if not it.is_identified then return false end
   local needRes = false
   local basename = it.name("base")
@@ -62,7 +61,7 @@ function pa_alert_staff(it)
   return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, BRC.Config.fm_alert.staff_resists)
 end
 
-function pa_alert_talisman(it)
+function f_pa_misc.alert_talisman(it)
   if it.artefact then
     if not it.is_identified then return false end
     return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
@@ -72,15 +71,7 @@ function pa_alert_talisman(it)
   return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
 end
 
----- Smart staff pickup ----
-function pa_pickup_staff(it)
-  if not it.is_identified then return false end
-  if BRC.get.skill(BRC.get.staff_school(it)) == 0 then return false end
-  return not f_pa_data.contains(pa_items_picked, it)
-end
-
----- Exclude superfluous rings ----
-function is_unneeded_ring(it)
+function f_pa_misc.is_unneeded_ring(it)
   if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
   local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true)
   local st = it.subtype()
@@ -92,4 +83,10 @@ function is_unneeded_ring(it)
     end
   end
   return false
+end
+
+function f_pa_misc.pickup_staff(it)
+  if not it.is_identified then return false end
+  if BRC.get.skill(BRC.get.staff_school(it)) == 0 then return false end
+  return not f_pa_data.find(pa_items_picked, it)
 end

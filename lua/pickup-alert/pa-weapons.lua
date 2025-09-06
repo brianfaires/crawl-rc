@@ -5,8 +5,8 @@ Author: buehler
 Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
 --]]
 
-f_pickup_alert_weapons = {}
---f_pickup_alert_weapons.BRC_FEATURE_NAME = "pickup-alert-weapons"
+f_pa_weapons = {}
+--f_pa_weapons.BRC_FEATURE_NAME = "pickup-alert-weapons"
 
 -- Persistent variables
 lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
@@ -156,7 +156,7 @@ function pa_pickup_weapon(it)
   end
 
   if BRC.is.risky_ego(it) then return false end
-  if f_pa_data.contains(pa_items_picked, it) then return false end
+  if f_pa_data.find(pa_items_picked, it) then return false end
   for _, inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end
   end
@@ -303,7 +303,7 @@ function pa_alert_weapon(it)
 end
 
 -- Hook functions
-function f_pickup_alert_weapons.init()
+function f_pa_weapons.init()
   WEAP_CACHE.weapons = {}
   WEAP_CACHE.egos = {}
 
@@ -335,8 +335,8 @@ function f_pickup_alert_weapons.init()
 end
 
 -------- Hooks --------
-function f_pickup_alert_weapons.ready()
-  f_pickup_alert_weapons:init()
+function f_pa_weapons.ready()
+  f_pa_weapons:init()
   for inv in iter.invent_iterator:new(items.inventory()) do
     if inv.is_weapon and not BRC.is.magic_staff(inv) then
       WEAP_CACHE.add_weapon(inv)

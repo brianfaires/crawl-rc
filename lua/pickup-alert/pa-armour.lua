@@ -5,8 +5,8 @@ Author: buehler
 Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
 --]]
 
-f_pickup_alert_armour = {}
---f_pickup_alert_armour.BRC_FEATURE_NAME = "pickup-alert-armour"
+f_pa_armour = {}
+--f_pa_armour.BRC_FEATURE_NAME = "pickup-alert-armour"
 
 -- Local constants / configuration
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
@@ -214,19 +214,19 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
 end
 
 -- If training armour in early/mid game, alert user to any armour that is the strongest found so far
-local function alert_ac_high_score(it)
+local function alert_pa_high_score_ac(it)
   if not BRC.is.body_armour(it) then return false end
   if you.skill("Armour") == 0 then return false end
   if you.xl() > 12 then return false end
 
-  if ac_high_score == 0 then
+  if pa_high_score.ac == 0 then
     local worn = items.equipped_at("armour")
     if not worn then return false end
-    ac_high_score = BRC.get.armour_ac(worn)
+    pa_high_score.ac = BRC.get.armour_ac(worn)
   else
     local itAC = BRC.get.armour_ac(it)
-    if itAC > ac_high_score then
-      ac_high_score = itAC
+    if itAC > pa_high_score.ac then
+      pa_high_score.ac = itAC
       return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, BRC.Config.fm_alert.high_score_armour)
     end
   end
@@ -275,7 +275,7 @@ local function alert_body_armour(it)
   end
 
   -- Alert for highest AC found so far, or early armour with any ego
-  if alert_ac_high_score(it) then return true end
+  if alert_pa_high_score_ac(it) then return true end
   if it_ego and you.xl() <= BRC.Tuning.armour.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
   end
@@ -333,7 +333,7 @@ end
 
 -- Hook functions
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
-function pa_pickup_armour(it)
+function f_pa_armour.pickup_armour(it)
   if BRC.is.risky_ego(it) then return false end
 
   if BRC.is.body_armour(it) then
@@ -350,7 +350,7 @@ end
     This comes after pickup, so there will be no pure upgrades.
     Optional `unworn_inv_item` param, to compare against an unworn aux armour item in inventory.
 --]]
-function pa_alert_armour(it, unworn_inv_item)
+function f_pa_armour.alert_armour(it, unworn_inv_item)
   if BRC.is.body_armour(it) then
     return alert_body_armour(it)
   elseif BRC.is.shield(it) then
