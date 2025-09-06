@@ -31,7 +31,7 @@ local function alert_low_hp()
       true,
       table.concat({
         BRC.Emoji.EXCLAMATION,
-        BRC.util.color(BRC.COLORS.magenta, low_hp_msg),
+        BRC.text.color(BRC.COLORS.magenta, low_hp_msg),
         BRC.Emoji.EXCLAMATION,
       })
     )
@@ -55,7 +55,7 @@ local function alert_spell_level_changes()
     local delta = new_spell_levels - ma_prev_spell_levels
     local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
     local avail = " (" .. new_spell_levels .. " available)"
-    crawl.mpr(BRC.util.color(BRC.COLORS.lightcyan, msg) .. BRC.util.color(BRC.COLORS.cyan, avail))
+    crawl.mpr(BRC.text.color(BRC.COLORS.lightcyan, msg) .. BRC.text.color(BRC.COLORS.cyan, avail))
   elseif new_spell_levels < ma_prev_spell_levels then
     BRC.mpr.col(new_spell_levels .. " spell levels remaining", BRC.COLORS.magenta)
   end
@@ -74,7 +74,7 @@ function f_misc_alerts.macro_save_w_message()
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
-  crawl.sendkeys(BRC.util.letter_to_ascii("s"))
+  crawl.sendkeys(BRC.text.letter_to_ascii("s"))
 end
 
 -- Hook functions

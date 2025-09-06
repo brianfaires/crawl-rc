@@ -21,7 +21,7 @@ local pause_pa_system = nil
 local function has_configured_force_more(it)
   if it.artefact then
     if BRC.Config.fm_alert.artefact then return true end
-    if BRC.Config.fm_alert.trained_artefacts and BRC.get.skill_with_item(it) > 0 then return true end
+    if BRC.Config.fm_alert.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
   end
   if BRC.Config.fm_alert.armour_ego and BRC.is.armour(it) and BRC.is.branded(it) then return true end
   return false
@@ -159,12 +159,12 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if it.is_weapon then
     alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
-    item_desc = item_desc .. BRC.util.color(BRC.AlertColor.weapon.stats, " (" .. BRC.get.weapon_info(it) .. ")")
+    item_desc = item_desc .. BRC.text.color(BRC.AlertColor.weapon.stats, " (" .. BRC.get.weapon_info(it) .. ")")
   elseif BRC.is.body_armour(it) then
     alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
     local ac, ev = BRC.get.armour_info(it)
-    item_desc = item_desc .. BRC.util.color(BRC.AlertColor.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
+    item_desc = item_desc .. BRC.text.color(BRC.AlertColor.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
   elseif BRC.is.armour(it) then
     alert_col = BRC.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
@@ -175,9 +175,9 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
     alert_col = BRC.AlertColor.misc
   end
   local tokens = {}
-  tokens[1] = emoji and emoji or BRC.util.color(BRC.COLORS.cyan, "----")
-  tokens[#tokens + 1] = BRC.util.color(alert_col.desc, " " .. alert_type .. ": ")
-  tokens[#tokens + 1] = BRC.util.color(alert_col.item, item_desc .. " ")
+  tokens[1] = emoji and emoji or BRC.text.color(BRC.COLORS.cyan, "----")
+  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, " " .. alert_type .. ": ")
+  tokens[#tokens + 1] = BRC.text.color(alert_col.item, item_desc .. " ")
   tokens[#tokens + 1] = tokens[1]
 
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))

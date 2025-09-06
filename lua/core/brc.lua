@@ -95,7 +95,7 @@ function BRC.init(reset_persistent_data)
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
   local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
-  crawl.mpr("\n" .. success_emoji .. BRC.util.color(BRC.COLORS.lightgreen, success_text) .. success_emoji)
+  crawl.mpr("\n" .. success_emoji .. BRC.text.color(BRC.COLORS.lightgreen, success_text) .. success_emoji)
 
   prev_turn = -1
   BRC.ready()

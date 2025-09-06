@@ -339,17 +339,17 @@ if BRC.Config.emojis then
 
   BRC.Emoji.SUCCESS = "✅"
 else
-  BRC.Emoji.REMIND_ID = BRC.util.color(BRC.COLORS.magenta, "?")
-  BRC.Emoji.EXCLAMATION = BRC.util.color(BRC.COLORS.magenta, "!")
-  BRC.Emoji.EXCLAMATION_2 = BRC.util.color(BRC.COLORS.lightmagenta, "!!")
+  BRC.Emoji.REMIND_ID = BRC.text.color(BRC.COLORS.magenta, "?")
+  BRC.Emoji.EXCLAMATION = BRC.text.color(BRC.COLORS.magenta, "!")
+  BRC.Emoji.EXCLAMATION_2 = BRC.text.color(BRC.COLORS.lightmagenta, "!!")
 
-  BRC.Emoji.HP_BORDER = BRC.util.color(BRC.COLORS.white, "|")
-  BRC.Emoji.HP_FULL = BRC.util.color(BRC.COLORS.green, "+")
-  BRC.Emoji.HP_PART = BRC.util.color(BRC.COLORS.lightgrey, "+")
-  BRC.Emoji.HP_EMPTY = BRC.util.color(BRC.COLORS.darkgrey, "-")
+  BRC.Emoji.HP_BORDER = BRC.text.color(BRC.COLORS.white, "|")
+  BRC.Emoji.HP_FULL = BRC.text.color(BRC.COLORS.green, "+")
+  BRC.Emoji.HP_PART = BRC.text.color(BRC.COLORS.lightgrey, "+")
+  BRC.Emoji.HP_EMPTY = BRC.text.color(BRC.COLORS.darkgrey, "-")
 
-  BRC.Emoji.MP_BORDER = BRC.util.color(BRC.COLORS.white, "|")
-  BRC.Emoji.MP_FULL = BRC.util.color(BRC.COLORS.lightblue, "+")
-  BRC.Emoji.MP_PART = BRC.util.color(BRC.COLORS.lightgrey, "+")
-  BRC.Emoji.MP_EMPTY = BRC.util.color(BRC.COLORS.darkgrey, "-")
+  BRC.Emoji.MP_BORDER = BRC.text.color(BRC.COLORS.white, "|")
+  BRC.Emoji.MP_FULL = BRC.text.color(BRC.COLORS.lightblue, "+")
+  BRC.Emoji.MP_PART = BRC.text.color(BRC.COLORS.lightgrey, "+")
+  BRC.Emoji.MP_EMPTY = BRC.text.color(BRC.COLORS.darkgrey, "-")
 end

@@ -44,7 +44,7 @@ end
   Return name of item to exclude, or nil if we should NOT exclude anything
 --]]
 local function get_excludable_name(text, for_exclusion)
-  text = BRC.util.clean_text(text, false) -- remove tags
+  text = BRC.text.clean_text(text, false) -- remove tags
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")

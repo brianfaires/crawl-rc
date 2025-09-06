@@ -2,7 +2,7 @@
 Feature: announce-damage
 Description: Announces changes in HP/MP with visual meters and damage warnings
 Author: magus, buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, BRC.util.color, BRC.mpr.que, BRC.mpr.que_optmore
+Dependencies: CONFIG, BRC.COLORS, EMOJI, BRC.text.color, BRC.mpr.que, BRC.mpr.que_optmore
 --]]
 
 f_announce_damage = {}
@@ -38,11 +38,11 @@ end
 
 local function format_delta(delta)
   if delta > 0 then
-    return BRC.util.color(BRC.COLORS.green, "+" .. delta)
+    return BRC.text.color(BRC.COLORS.green, "+" .. delta)
   elseif delta < 0 then
-    return BRC.util.color(BRC.COLORS.red, delta)
+    return BRC.text.color(BRC.COLORS.red, delta)
   else
-    return BRC.util.color(BRC.COLORS.darkgrey, "+0")
+    return BRC.text.color(BRC.COLORS.darkgrey, "+0")
   end
 end
 
@@ -59,7 +59,7 @@ local function format_ratio(cur, max)
   else
     color = BRC.COLORS.green
   end
-  return BRC.util.color(color, string.format(" -> %s/%s", cur, max))
+  return BRC.text.color(color, string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
@@ -68,15 +68,15 @@ local function get_hp_message(hp_delta, mhp_delta)
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] =
     create_meter(hp / mhp * 100, BRC.Emoji.HP_FULL, BRC.Emoji.HP_PART, BRC.Emoji.HP_EMPTY, BRC.Emoji.HP_BORDER)
-  msg_tokens[#msg_tokens + 1] = BRC.util.color(BRC.COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
+  msg_tokens[#msg_tokens + 1] = BRC.text.color(BRC.COLORS.white, string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
   if mhp_delta ~= 0 then
     local text = string.format(" (%s max HP)", format_delta(mhp_delta))
-    msg_tokens[#msg_tokens + 1] = BRC.util.color(BRC.COLORS.lightgrey, text)
+    msg_tokens[#msg_tokens + 1] = BRC.text.color(BRC.COLORS.lightgrey, text)
   end
 
   if not BRC.Config.announce.same_line and hp == mhp then
-    msg_tokens[#msg_tokens + 1] = BRC.util.color(BRC.COLORS.white, " (Full HP)")
+    msg_tokens[#msg_tokens + 1] = BRC.text.color(BRC.COLORS.white, " (Full HP)")
   end
   return table.concat(msg_tokens)
 end
@@ -86,14 +86,14 @@ local function get_mp_message(mp_delta, mmp_delta)
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] =
     create_meter(mp / mmp * 100, BRC.Emoji.MP_FULL, BRC.Emoji.MP_PART, BRC.Emoji.MP_EMPTY, BRC.Emoji.MP_BORDER)
-  msg_tokens[#msg_tokens + 1] = BRC.util.color(BRC.COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
+  msg_tokens[#msg_tokens + 1] = BRC.text.color(BRC.COLORS.lightcyan, string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
   if mmp_delta ~= 0 then
     local tok = string.format(" (%s max MP)", format_delta(mmp_delta))
-    msg_tokens[#msg_tokens + 1] = BRC.util.color(BRC.COLORS.cyan, tok)
+    msg_tokens[#msg_tokens + 1] = BRC.text.color(BRC.COLORS.cyan, tok)
   end
   if not BRC.Config.announce.same_line and mp == mmp then
-    msg_tokens[#msg_tokens + 1] = BRC.util.color(BRC.COLORS.lightcyan, " (Full MP)")
+    msg_tokens[#msg_tokens + 1] = BRC.text.color(BRC.COLORS.lightcyan, " (Full MP)")
   end
   return table.concat(msg_tokens)
 end
@@ -168,11 +168,11 @@ function f_announce_damage.ready()
     local is_force_more_msg = damage_taken >= (mhp * BRC.Config.dmg_fm_threshold)
     if is_force_more_msg then
       summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
-      summary_tokens[#summary_tokens + 1] = BRC.util.color(BRC.COLORS.lightmagenta, " MASSIVE DAMAGE ")
+      summary_tokens[#summary_tokens + 1] = BRC.text.color(BRC.COLORS.lightmagenta, " MASSIVE DAMAGE ")
       summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
     else
       summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
-      summary_tokens[#summary_tokens + 1] = BRC.util.color(BRC.COLORS.magenta, " BIG DAMAGE ")
+      summary_tokens[#summary_tokens + 1] = BRC.text.color(BRC.COLORS.magenta, " BIG DAMAGE ")
       summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
     end
     BRC.mpr.que_optmore(is_force_more_msg, table.concat(summary_tokens))
