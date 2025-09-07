@@ -2,7 +2,7 @@
 Feature: remind-id
 Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, BRC.text.color, iter, persistent_data
+Dependencies: CONFIG,
 --]]
 
 f_remind_id = {}
@@ -14,7 +14,7 @@ ri_max_potion_stack = BRC.data.persist("ri_max_potion_stack", BRC.Config.stop_on
 found_scroll_of_id = BRC.data.persist("found_scroll_of_id", false)
 
 -- Local constants / configuration
-local IDENTIFY_MSG = BRC.text.color(BRC.COLORS.magenta, " You have something to identify. ")
+local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
 
 -- Local variables
 local do_remind_id_check

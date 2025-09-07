@@ -267,7 +267,7 @@ BRC.COLORS = {
   lightred = "lightred",
   lightmagenta = "lightmagenta",
   yellow = "yellow",
-  white = "w",
+  white = "white",
   black = "black",
 } -- BRC.COLORS (do not remove this comment)
 

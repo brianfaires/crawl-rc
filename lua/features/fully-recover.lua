@@ -2,7 +2,7 @@
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, BRC.KEYS, BRC.text.color, util.remove, BRC.you.by_slimy_wall, BRC.you.zero_stat
+Dependencies: CONFIG,
 --]]
 
 f_fully_recover = {}

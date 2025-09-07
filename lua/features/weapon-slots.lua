@@ -2,7 +2,7 @@
 Feature: weapon-slots
 Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, BRC.text.color, iter.invent_iterator, is_magic_staff, is_polearm
+Dependencies: CONFIG,
 --]]
 
 f_weapon_slots = {}

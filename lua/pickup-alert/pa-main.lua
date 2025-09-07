@@ -170,7 +170,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
     alert_col = BRC.AlertColor.misc
   end
   local tokens = {}
-  tokens[1] = emoji and emoji or BRC.text.color(BRC.COLORS.cyan, "----")
+  tokens[1] = emoji and emoji or BRC.text.cyan("----")
   tokens[#tokens + 1] = BRC.text.color(alert_col.desc, " " .. alert_type .. ": ")
   tokens[#tokens + 1] = BRC.text.color(alert_col.item, item_name .. " ")
   tokens[#tokens + 1] = tokens[1]

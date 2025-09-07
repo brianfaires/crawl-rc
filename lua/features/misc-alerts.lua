@@ -31,7 +31,7 @@ local function alert_low_hp()
       true,
       table.concat({
         BRC.Emoji.EXCLAMATION,
-        BRC.text.color(BRC.COLORS.magenta, low_hp_msg),
+        BRC.text.magenta(low_hp_msg),
         BRC.Emoji.EXCLAMATION,
       })
     )
@@ -55,7 +55,7 @@ local function alert_spell_level_changes()
     local delta = new_spell_levels - ma_prev_spell_levels
     local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
     local avail = " (" .. new_spell_levels .. " available)"
-    crawl.mpr(BRC.text.color(BRC.COLORS.lightcyan, msg) .. BRC.text.color(BRC.COLORS.cyan, avail))
+    crawl.mpr(BRC.text.lightcyan(msg) .. BRC.text.cyan(avail))
   elseif new_spell_levels < ma_prev_spell_levels then
     BRC.mpr.col(new_spell_levels .. " spell levels remaining", BRC.COLORS.magenta)
   end

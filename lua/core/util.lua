@@ -17,6 +17,66 @@ local _mpr_queue = {}
 -- Local constants
 local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
 
+---- BRC.text - Utility functions ----
+
+-- Remove tags from text, and optionally escape special characters
+function BRC.text.clean_text(text, escape_chars)
+  -- Fast path: if no tags, just handle newlines and escaping
+  if not text:find("<", 1, true) then
+    local one_line = text:gsub("\n", "")
+    if escape_chars then return one_line:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
+    return one_line
+  end
+
+  local tokens = {}
+  local pos = 1
+  local len = #text
+
+  while pos <= len do
+    local tag_start = text:find("<", pos, true)
+    if not tag_start then
+      -- No more tags, append remaining text
+      tokens[#tokens + 1] = text:sub(pos)
+      break
+    end
+
+    -- Append text before tag
+    if tag_start > pos then tokens[#tokens + 1] = text:sub(pos, tag_start - 1) end
+
+    -- Find end of tag
+    local tag_end = text:find(">", tag_start, true)
+    if not tag_end then
+      -- Malformed tag, append remaining text
+      tokens[#tokens + 1] = text:sub(pos)
+      break
+    end
+
+    pos = tag_end + 1
+  end
+
+  -- Join all parts and remove newlines
+  local cleaned = table.concat(tokens):gsub("\n", "")
+
+  -- Handle escaping if needed
+  if escape_chars then return cleaned:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
+
+  return cleaned
+end
+
+-- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text[color]("Hello")
+for k, v in pairs(BRC.COLORS) do
+  BRC.text[k] = function(text) return string.format("<%s>%s</%s>", v, text, v) end
+end
+function BRC.text.color(color, text)
+  return color and BRC.text[color](text) or text
+end
+
+-- Get the ascii code for a key
+function BRC.text.letter_to_ascii(key)
+  return string.char(string.byte(key) - string.byte("a") + 1)
+end
+
+
 --- BRC.mpr - Wrappers around crawl.mpr ---
 
 -- Display a message, wrapped in a single color tag
@@ -52,8 +112,7 @@ function BRC.mpr.que(text, color, channel)
   for _, msg in ipairs(_mpr_queue) do
     if msg.text == text and msg.channel == channel then return end
   end
-  local msg = BRC.text.color(color, text)
-  _mpr_queue[#_mpr_queue + 1] = { text = msg, channel = channel, show_more = false }
+  _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color,text), channel = channel, show_more = false }
 end
 
 -- Queue msg w/ conditional force-more prompt
@@ -61,8 +120,7 @@ function BRC.mpr.que_optmore(show_more, text, color, channel)
   for _, msg in ipairs(_mpr_queue) do
     if msg.text == text and msg.channel == channel and msg.show_more == show_more then return end
   end
-  local msg = BRC.text.color(color, text)
-  _mpr_queue[#_mpr_queue + 1] = { text = msg, channel = channel, show_more = show_more }
+  _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color, text), channel = channel, show_more = show_more }
 end
 
 -- Display and consume the message queue
@@ -86,8 +144,7 @@ end
 -- Get a yes/no response
 function BRC.mpr.yesno(text, color, capital_only)
   local suffix = capital_only and " (Y/n)" or " (y/n)"
-  local msg = BRC.text.color(color, text .. suffix)
-  crawl.formatted_mpr(msg, "prompt")
+  crawl.formatted_mpr(BRC.text.color(color, text .. suffix), "prompt")
   local res = crawl.getch()
   if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
   crawl.mpr("Okay, then.")
@@ -251,63 +308,6 @@ end
 
 function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
-end
-
----- BRC.text - Utility functions ----
-
--- Remove tags from text, and optionally escape special characters
-function BRC.text.clean_text(text, escape_chars)
-  -- Fast path: if no tags, just handle newlines and escaping
-  if not text:find("<", 1, true) then
-    local one_line = text:gsub("\n", "")
-    if escape_chars then return one_line:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
-    return one_line
-  end
-
-  local tokens = {}
-  local pos = 1
-  local len = #text
-
-  while pos <= len do
-    local tag_start = text:find("<", pos, true)
-    if not tag_start then
-      -- No more tags, append remaining text
-      tokens[#tokens + 1] = text:sub(pos)
-      break
-    end
-
-    -- Append text before tag
-    if tag_start > pos then tokens[#tokens + 1] = text:sub(pos, tag_start - 1) end
-
-    -- Find end of tag
-    local tag_end = text:find(">", tag_start, true)
-    if not tag_end then
-      -- Malformed tag, append remaining text
-      tokens[#tokens + 1] = text:sub(pos)
-      break
-    end
-
-    pos = tag_end + 1
-  end
-
-  -- Join all parts and remove newlines
-  local cleaned = table.concat(tokens):gsub("\n", "")
-
-  -- Handle escaping if needed
-  if escape_chars then return cleaned:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
-
-  return cleaned
-end
-
--- Wrap text in a color tag
-function BRC.text.color(color, text)
-  if not color then return text end
-  return string.format("<%s>%s</%s>", color, text, color)
-end
-
--- Get the ascii code for a key
-function BRC.text.letter_to_ascii(key)
-  return string.char(string.byte(key) - string.byte("a") + 1)
 end
 
 --- BRC.dump - Debugging utils called from in-game lua interpreter ---
@@ -591,7 +591,7 @@ function BRC.get.weapon_info(it, dmg_type)
   --This would be nice if it worked in all UIs
   --local dps = "DPS:<w>" .. dps .. "</w> "
   --return dps .. "(<red>" .. dmg .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
-  return string.format("DPS: %s (%s/%s), Acc %s", dps, dmg, delay_str, acc)
+  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
 end
 
 -- Egos
