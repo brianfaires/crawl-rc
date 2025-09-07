@@ -37,8 +37,8 @@ local function has_enchantable_weap_in_inv()
 end
 
 --[[
-  Pulls name from text; returns nil if we should NOT exclude anything
-  Return name of item to exclude, or nil if we should NOT exclude anything
+  get_excludable_name() - Pulls name from text; returns nil if we should NOT exclude anything
+  Returns name of item to exclude, or nil if we should NOT exclude anything
 --]]
 local function get_excludable_name(text, for_exclusion)
   text = BRC.text.clean_text(text, false) -- remove tags

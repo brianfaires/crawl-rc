@@ -81,7 +81,7 @@ function f_color_inscribe.c_assign_invletter(it)
 end
 
 --[[
-To colorize more, need a way to:
+TODO: To colorize more, need a way to:
   intercept messages before they're displayed (or delete and re-insert)
   insert tags that affect menus
   colorize artefact text

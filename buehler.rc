@@ -4198,9 +4198,11 @@ end
 ---- BRC.get - Functions to get non-boolean data ----
 
 --[[
-Returns 2 values: A list of equipped items of the type, and the num_slots (ie maximum size the list can ever be)
-This is usually a list of length 1, and num_slots 1. Poltergeists will get all worn aux armours and num_slots=6.
-It is possible to have a list with fewer than num_slots items in it.
+BRC.get.equipped_aux() - Returns 2 values:
+  1. A list of equipped items of the type
+  2. the num_slots (ie maximum size the list can ever be). This is usually a list of length 1, with num_slots==1.
+  Poltergeists will get all worn aux armours and num_slots=6.
+The length of the list <= num_slots.
 --]]
 function BRC.get.equipped_aux(aux_type)
   local all_aux = {}
@@ -4655,7 +4657,7 @@ function BRC.get.hands(it)
 end
 
 --[[
-BRC.is.branded - Checks if an item is branded, with a custom definition:
+BRC.is.branded() - Checks if an item is branded, with a custom definition:
 Excludes unusable egos. Includes: artefacts, and armour with innate egos (except steam dragon scales)
 --]]
 function BRC.is.branded(it, exclude_stat_only_egos)
@@ -5350,7 +5352,7 @@ function f_color_inscribe.c_assign_invletter(it)
 end
 
 --[[
-To colorize more, need a way to:
+TODO: To colorize more, need a way to:
   intercept messages before they're displayed (or delete and re-insert)
   insert tags that affect menus
   colorize artefact text
@@ -5649,8 +5651,8 @@ local function has_enchantable_weap_in_inv()
 end
 
 --[[
-  Pulls name from text; returns nil if we should NOT exclude anything
-  Return name of item to exclude, or nil if we should NOT exclude anything
+  get_excludable_name() - Pulls name from text; returns nil if we should NOT exclude anything
+  Returns name of item to exclude, or nil if we should NOT exclude anything
 --]]
 local function get_excludable_name(text, for_exclusion)
   text = BRC.text.clean_text(text, false) -- remove tags
@@ -7846,7 +7848,7 @@ function f_pa_armour.pickup_armour(it)
 end
 
 --[[
-    Alerts armour items that didn't auto-pickup but are worth consideration.
+    f_pa_armour.alert_armour() - Alerts armour items that didn't auto-pickup but are worth consideration.
     This comes after pickup, so there will be no pure upgrades.
     Optional `unworn_inv_item` param, to compare against an unworn aux armour item in inventory.
 --]]

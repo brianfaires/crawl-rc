@@ -185,9 +185,11 @@ end
 ---- BRC.get - Functions to get non-boolean data ----
 
 --[[
-Returns 2 values: A list of equipped items of the type, and the num_slots (ie maximum size the list can ever be)
-This is usually a list of length 1, and num_slots 1. Poltergeists will get all worn aux armours and num_slots=6.
-It is possible to have a list with fewer than num_slots items in it.
+BRC.get.equipped_aux() - Returns 2 values:
+  1. A list of equipped items of the type
+  2. the num_slots (ie maximum size the list can ever be). This is usually a list of length 1, with num_slots==1.
+  Poltergeists will get all worn aux armours and num_slots=6.
+The length of the list <= num_slots.
 --]]
 function BRC.get.equipped_aux(aux_type)
   local all_aux = {}
@@ -642,7 +644,7 @@ function BRC.get.hands(it)
 end
 
 --[[
-BRC.is.branded - Checks if an item is branded, with a custom definition:
+BRC.is.branded() - Checks if an item is branded, with a custom definition:
 Excludes unusable egos. Includes: artefacts, and armour with innate egos (except steam dragon scales)
 --]]
 function BRC.is.branded(it, exclude_stat_only_egos)

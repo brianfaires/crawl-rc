@@ -345,7 +345,7 @@ function f_pa_armour.pickup_armour(it)
 end
 
 --[[
-    Alerts armour items that didn't auto-pickup but are worth consideration.
+    f_pa_armour.alert_armour() - Alerts armour items that didn't auto-pickup but are worth consideration.
     This comes after pickup, so there will be no pure upgrades.
     Optional `unworn_inv_item` param, to compare against an unworn aux armour item in inventory.
 --]]
