@@ -48,7 +48,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("(ring|amulet|wand) of", 1, true)
+  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
   -- misc items

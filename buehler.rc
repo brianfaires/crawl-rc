@@ -4608,6 +4608,10 @@ function BRC.get.hands(it)
   return 1
 end
 
+--[[
+BRC.is.branded - Checks if an item is branded, with a custom definition:
+Excludes unusable egos. Includes: artefacts, and armour with innate egos (except steam dragon scales)
+--]]
 function BRC.is.branded(it, exclude_stat_only_egos)
   if not it then return false end
   if it.is_weapon then
@@ -5644,7 +5648,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("(ring|amulet|wand) of", 1, true)
+  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
   -- misc items
@@ -5910,6 +5914,7 @@ Feature: fm-monsters
 Description: Dynamic force_more configuration for monsters based on player HP, xl, willpower, resistances, etc.
     hp-specific force_mores() by gammafunk, extended by buehler
     WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
+    POSIX regex are required for this feature to use '|' in patterns.
 Author: gammafunk, buehler
 Dependencies: CONFIG, util.append, is_miasma_immune, you.torment_immune
 --]]

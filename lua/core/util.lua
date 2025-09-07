@@ -611,6 +611,10 @@ function BRC.get.hands(it)
   return 1
 end
 
+--[[
+BRC.is.branded - Checks if an item is branded, with a custom definition:
+Excludes unusable egos. Includes: artefacts, and armour with innate egos (except steam dragon scales)
+--]]
 function BRC.is.branded(it, exclude_stat_only_egos)
   if not it then return false end
   if it.is_weapon then
