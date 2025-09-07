@@ -34,7 +34,7 @@ local function ready_gauntlet_macro()
 end
 
 local function c_message_gauntlet(text, _)
-  -- Search again with CMD_EXPLORE
+  -- Search again after explore
   if you.branch() == "Gauntlet" then
     if text:find("explor", 1, true) then search_gauntlet() end
   end
@@ -101,7 +101,7 @@ end
 
 local function c_message_temple(text, _)
   if you.branch() == "Temple" then
-    -- Search again with CMD_EXPLORE
+    -- Search again after explore
     if text:find("explor", 1, true) then
       search_altars()
     end

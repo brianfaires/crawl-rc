@@ -5853,7 +5853,11 @@ end
 -- Attach full recovery to auto-explore
 function f_fully_recover.macro_explore()
   if fully_recovered() then
-    crawl.do_commands({ "CMD_EXPLORE" })
+    if fr_start_turn > 0 then
+      finish_fully_recover()
+    else
+      crawl.do_commands({ "CMD_EXPLORE" })
+    end
   else
     fr_explore_after = true
     crawl.do_commands({ "CMD_REST" })
@@ -6742,7 +6746,7 @@ local function ready_gauntlet_macro()
 end
 
 local function c_message_gauntlet(text, _)
-  -- Search again with CMD_EXPLORE
+  -- Search again after explore
   if you.branch() == "Gauntlet" then
     if text:find("explor", 1, true) then search_gauntlet() end
   end
@@ -6809,7 +6813,7 @@ end
 
 local function c_message_temple(text, _)
   if you.branch() == "Temple" then
-    -- Search again with CMD_EXPLORE
+    -- Search again after explore
     if text:find("explor", 1, true) then
       search_altars()
     end

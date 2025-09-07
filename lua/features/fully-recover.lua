@@ -83,7 +83,11 @@ end
 -- Attach full recovery to auto-explore
 function f_fully_recover.macro_explore()
   if fully_recovered() then
-    crawl.do_commands({ "CMD_EXPLORE" })
+    if fr_start_turn > 0 then
+      finish_fully_recover()
+    else
+      crawl.do_commands({ "CMD_EXPLORE" })
+    end
   else
     fr_explore_after = true
     crawl.do_commands({ "CMD_REST" })
