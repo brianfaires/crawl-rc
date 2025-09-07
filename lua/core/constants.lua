@@ -224,7 +224,6 @@ BRC.ALL_RISKY_EGOS = {
 } -- BRC.ALL_RISKY_EGOS (do not remove this comment)
 
 ---- Other ----
--- Would prefer to use integer values, but they don't work in all menus
 BRC.KEYS = {
   LF = string.char(10),
   CR = string.char(13),
@@ -232,6 +231,7 @@ BRC.KEYS = {
   save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
   go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
   go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">",
+  search = crawl.get_command("CMD_SEARCH_STASHES") or BRC.util.control_key("f"),
 } -- BRC.KEYS (do not remove this comment)
 
 BRC.MUTATIONS = {
@@ -258,6 +258,7 @@ BRC.SIZE_PENALTY = {
   GIANT = 2,
 } -- BRC.SIZE_PENALTY (do not remove this comment)
 
+-- Would prefer to use integer values, but they don't work in all menus
 BRC.COLORS = {
   blue = "blue",
   green = "green",

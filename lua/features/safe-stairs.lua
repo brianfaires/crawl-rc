@@ -1,7 +1,7 @@
 --[[
 Feature: safe-stairs
 Description: Prevents accidental stairs use by warning about backtracking and dangerous locations like Vaults:5
-Author: buehler, rypofalem
+Author: buehler, rypofalem (V5 warning idea)
 Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
@@ -17,29 +17,29 @@ ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
 -- Local constants
 
 -- Local functions
-local function check_new_location(key)
+local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
   local turn_diff = you.turns() - ss_last_stair_turn
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
-    if key == ">" then
+    if cmd == "CMD_GO_DOWNSTAIRS" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
-        crawl.sendkeys(key)
+        crawl.do_commands({ cmd })
         return
       end
     else
       if not feature:find("up", 1, true) then
-        crawl.sendkeys(key)
+        crawl.do_commands({ cmd })
         return
       end
     end
+
     if not BRC.mpr.yesno("Really go right back?") then
       crawl.mpr("Okay, then.")
       return
     end
-  elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and key == ">" then
-    -- V5 warning idea by rypofalem --
+  elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
         crawl.mpr("Okay, then.")
@@ -49,16 +49,16 @@ local function check_new_location(key)
     end
   end
 
-  crawl.sendkeys(key)
+  crawl.do_commands({ cmd })
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
 function f_safe_stairs.macro_downstairs()
-  check_new_location(">")
+  check_new_location("CMD_GO_DOWNSTAIRS")
 end
 
 function f_safe_stairs.macro_upstairs()
-  check_new_location("<")
+  check_new_location("CMD_GO_UPSTAIRS")
 end
 
 -- Hook functions

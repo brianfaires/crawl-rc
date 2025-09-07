@@ -3749,7 +3749,6 @@ BRC.ALL_RISKY_EGOS = {
 } -- BRC.ALL_RISKY_EGOS (do not remove this comment)
 
 ---- Other ----
--- Would prefer to use integer values, but they don't work in all menus
 BRC.KEYS = {
   LF = string.char(10),
   CR = string.char(13),
@@ -3757,6 +3756,7 @@ BRC.KEYS = {
   save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
   go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
   go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">",
+  search = crawl.get_command("CMD_SEARCH_STASHES") or BRC.util.control_key("f"),
 } -- BRC.KEYS (do not remove this comment)
 
 BRC.MUTATIONS = {
@@ -3783,6 +3783,7 @@ BRC.SIZE_PENALTY = {
   GIANT = 2,
 } -- BRC.SIZE_PENALTY (do not remove this comment)
 
+-- Would prefer to use integer values, but they don't work in all menus
 BRC.COLORS = {
   blue = "blue",
   green = "green",
@@ -4115,11 +4116,6 @@ for k, v in pairs(BRC.COLORS) do
 end
 function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
-end
-
--- Get the ascii code for a key
-function BRC.text.letter_to_ascii(key)
-  return string.char(string.byte(key) - string.byte("a") + 1)
 end
 
 --- BRC.mpr - Wrappers around crawl.mpr ---
@@ -5808,7 +5804,7 @@ local function finish_fully_recover()
 
   if fr_explore_after then
     fr_explore_after = false
-    crawl.sendkeys("o")
+    crawl.do_commands({ "CMD_EXPLORE" })
   end
 end
 
@@ -6544,7 +6540,7 @@ end
 
 -- Save with message functionality
 -- by gammafunk, edits by buehler
-function f_misc_alerts.macro_save_w_message()
+function f_misc_alerts.macro_save_with_message()
   crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
   local res = crawl.getch()
   if not (string.char(res) == "y" or string.char(res) == "Y") then
@@ -6553,7 +6549,7 @@ function f_misc_alerts.macro_save_w_message()
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
-  crawl.sendkeys(BRC.text.letter_to_ascii("s"))
+  crawl.do_commands({ "CMD_SAVE_GAME_NOW" })
 end
 
 -- Hook functions
@@ -6562,7 +6558,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_w_message")
+    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_with_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
@@ -6724,6 +6720,9 @@ f_runrest_features.BRC_FEATURE_NAME = "runrest-features"
 rr_autosearched_temple = BRC.data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
 
+-- Local constants / configuration
+local GAUNTLET_SEARCH_STRING = "gauntlet && !!leading && !!transporter && !!pieces && !!trap"
+
 -- Local variables
 local stop_on_altars
 local stop_on_portals
@@ -6732,10 +6731,7 @@ local stop_on_hell_stairs
 
 -- Local functions
 local function search_gauntlet()
-  crawl.sendkeys({
-    6,
-    "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r",
-  })
+  crawl.sendkeys({ BRC.KEYS.search, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
 end
 
 local function ready_gauntlet_macro()
@@ -6801,7 +6797,7 @@ local function ready_stop_on_hell_stairs()
 end
 
 local function search_altars()
-  crawl.sendkeys({ 6, "altar\r" })
+  crawl.sendkeys({ BRC.KEYS.search, "altar", BRC.KEYS.CR })
 end
 
 local function ready_temple_macro()
@@ -6816,10 +6812,6 @@ local function c_message_temple(text, _)
     -- Search again with CMD_EXPLORE
     if text:find("explor", 1, true) then
       search_altars()
-    elseif text:find("welcomes you!", 1, true) then
-      -- Run to staircase after worship
-      BRC.mpr.que("Ran to temple exit.", BRC.COLORS.darkgrey)
-      crawl.sendkeys("X<\r")
     end
   end
 end
@@ -6917,7 +6909,7 @@ end
 --[[
 Feature: safe-stairs
 Description: Prevents accidental stairs use by warning about backtracking and dangerous locations like Vaults:5
-Author: buehler, rypofalem
+Author: buehler, rypofalem (V5 warning idea)
 Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
@@ -6933,29 +6925,29 @@ ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
 -- Local constants
 
 -- Local functions
-local function check_new_location(key)
+local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
   local turn_diff = you.turns() - ss_last_stair_turn
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
-    if key == ">" then
+    if cmd == "CMD_GO_DOWNSTAIRS" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
-        crawl.sendkeys(key)
+        crawl.do_commands({ cmd })
         return
       end
     else
       if not feature:find("up", 1, true) then
-        crawl.sendkeys(key)
+        crawl.do_commands({ cmd })
         return
       end
     end
+
     if not BRC.mpr.yesno("Really go right back?") then
       crawl.mpr("Okay, then.")
       return
     end
-  elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and key == ">" then
-    -- V5 warning idea by rypofalem --
+  elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
         crawl.mpr("Okay, then.")
@@ -6965,16 +6957,16 @@ local function check_new_location(key)
     end
   end
 
-  crawl.sendkeys(key)
+  crawl.do_commands({ cmd })
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
 function f_safe_stairs.macro_downstairs()
-  check_new_location(">")
+  check_new_location("CMD_GO_DOWNSTAIRS")
 end
 
 function f_safe_stairs.macro_upstairs()
-  check_new_location("<")
+  check_new_location("CMD_GO_UPSTAIRS")
 end
 
 -- Hook functions
@@ -7015,7 +7007,7 @@ function f_startup.ready()
   if you.turns() == 0 then
     if BRC.Config.show_skills_on_startup then
       local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
-      if show_skills_on_startup then crawl.sendkeys("m") end
+      if show_skills_on_startup then crawl.do_commands({ "CMD_DISPLAY_SKILLS" }) end
     end
 
     ---- Auto-set default skill targets ----

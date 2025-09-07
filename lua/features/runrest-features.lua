@@ -12,6 +12,9 @@ f_runrest_features.BRC_FEATURE_NAME = "runrest-features"
 rr_autosearched_temple = BRC.data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
 
+-- Local constants / configuration
+local GAUNTLET_SEARCH_STRING = "gauntlet && !!leading && !!transporter && !!pieces && !!trap"
+
 -- Local variables
 local stop_on_altars
 local stop_on_portals
@@ -20,10 +23,7 @@ local stop_on_hell_stairs
 
 -- Local functions
 local function search_gauntlet()
-  crawl.sendkeys({
-    6,
-    "gauntlet && !!leading && !!transporter && !!pieces && !!trap\r",
-  })
+  crawl.sendkeys({ BRC.KEYS.search, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
 end
 
 local function ready_gauntlet_macro()
@@ -89,7 +89,7 @@ local function ready_stop_on_hell_stairs()
 end
 
 local function search_altars()
-  crawl.sendkeys({ 6, "altar\r" })
+  crawl.sendkeys({ BRC.KEYS.search, "altar", BRC.KEYS.CR })
 end
 
 local function ready_temple_macro()
@@ -104,10 +104,6 @@ local function c_message_temple(text, _)
     -- Search again with CMD_EXPLORE
     if text:find("explor", 1, true) then
       search_altars()
-    elseif text:find("welcomes you!", 1, true) then
-      -- Run to staircase after worship
-      BRC.mpr.que("Ran to temple exit.", BRC.COLORS.darkgrey)
-      crawl.sendkeys("X<\r")
     end
   end
 end

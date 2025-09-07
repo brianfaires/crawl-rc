@@ -34,7 +34,7 @@ local function finish_fully_recover()
 
   if fr_explore_after then
     fr_explore_after = false
-    crawl.sendkeys("o")
+    crawl.do_commands({ "CMD_EXPLORE" })
   end
 end
 

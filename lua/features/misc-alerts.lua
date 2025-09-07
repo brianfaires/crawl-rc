@@ -58,7 +58,7 @@ end
 
 -- Save with message functionality
 -- by gammafunk, edits by buehler
-function f_misc_alerts.macro_save_w_message()
+function f_misc_alerts.macro_save_with_message()
   crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
   local res = crawl.getch()
   if not (string.char(res) == "y" or string.char(res) == "Y") then
@@ -67,7 +67,7 @@ function f_misc_alerts.macro_save_w_message()
   end
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
-  crawl.sendkeys(BRC.text.letter_to_ascii("s"))
+  crawl.do_commands({ "CMD_SAVE_GAME_NOW" })
 end
 
 -- Hook functions
@@ -76,7 +76,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_w_message")
+    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_with_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil

@@ -104,11 +104,6 @@ function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
 end
 
--- Get the ascii code for a key
-function BRC.text.letter_to_ascii(key)
-  return string.char(string.byte(key) - string.byte("a") + 1)
-end
-
 --- BRC.mpr - Wrappers around crawl.mpr ---
 
 -- Display a message, wrapped in a single color tag
