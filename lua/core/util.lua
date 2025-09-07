@@ -12,6 +12,7 @@ BRC.mpr = {}
 BRC.get = {}
 BRC.is = {}
 BRC.you = {}
+BRC.set = {}
 BRC.dump = {}
 
 -- Local variables
@@ -341,6 +342,46 @@ end
 
 function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
+---- BRC.set - Simple helper functions wrapping crawl.setopt() ----
+function BRC.set.autopickup_exception(pattern, add_pattern)
+  local op = add_pattern and "^=" or "-="
+  crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
+end
+
+function BRC.set.explore_stop(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("explore_stop %s %s", op, pattern))
+end
+
+function BRC.set.explore_stop_pickup_ignore(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("explore_stop_pickup_ignore %s %s", op, pattern))
+end
+
+function BRC.set.flash_screen_message(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
+end
+
+function BRC.set.force_more(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
+end
+
+function BRC.set.macro(key, function_name)
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+end
+
+function BRC.set.message_mute(pattern, mute_pattern)
+  local op = mute_pattern and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+function BRC.set.runrest_ignore_message(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
 end
 
 --- BRC.dump - Debugging utils called from in-game lua interpreter ---

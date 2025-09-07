@@ -14,12 +14,12 @@ ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
 -- Local functions
 local function add_exclusion(item_name)
   if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
-  crawl.setopt(string.format("autopickup_exceptions ^= %s", item_name))
+  BRC.set.autopickup_exception(item_name, true)
 end
 
 local function remove_exclusion(item_name)
   util.remove(ed_dropped_items, item_name)
-  crawl.setopt(string.format("autopickup_exceptions -= %s", item_name))
+  BRC.set.autopickup_exception(item_name, false)
 end
 
 local function has_enchantable_weap_in_inv()

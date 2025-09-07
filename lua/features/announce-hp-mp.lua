@@ -105,7 +105,7 @@ function f_announce_hp_mp.init()
   ad_prev.mmp = 0
 
   if BRC.Config.dmg_fm_threshold > 0 and BRC.Config.dmg_fm_threshold <= 0.5 then
-    crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
+    BRC.set.message_mute("Ouch! That really hurt!", true)
   end
 end
 

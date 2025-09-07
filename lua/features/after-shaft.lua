@@ -21,11 +21,7 @@ function f_after_shaft.init()
     as_shaft_branch = you.branch()
   end
 
-  if as_shaft_depth ~= 0 then
-    crawl.setopt("explore_stop += stairs")
-  else
-    crawl.setopt("explore_stop -= stairs")
-  end
+  BRC.set.explore_stop("stairs", as_shaft_depth ~= 0)
 end
 
 function f_after_shaft.c_message(text, channel)
@@ -38,14 +34,14 @@ function f_after_shaft.c_message(text, channel)
   if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
     as_shaft_depth = you.depth()
     as_shaft_branch = you.branch()
-    crawl.setopt("explore_stop += stairs")
+    BRC.set.explore_stop("stairs", true)
   end
 end
 
 function f_after_shaft.ready()
   if not BRC.Config.stop_on_stairs_after_shaft then return end
   if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
-    crawl.setopt("explore_stop -= stairs")
+    BRC.set.explore_stop("stairs", false)
     as_shaft_depth = 0
     as_shaft_branch = "NA"
   end

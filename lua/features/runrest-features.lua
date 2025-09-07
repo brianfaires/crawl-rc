@@ -50,20 +50,20 @@ end
 local function ready_ignore_altars()
   if stop_on_altars and religion_is_handled() then
     stop_on_altars = false
-    crawl.setopt("explore_stop -= altars")
+    BRC.set.explore_stop("altars", false)
   elseif not stop_on_altars and not religion_is_handled() then
     stop_on_altars = true
-    crawl.setopt("explore_stop += altars")
+    BRC.set.explore_stop("altars", true)
   end
 end
 
 local function ready_ignore_exits()
   if stop_on_portals and util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
-    crawl.setopt("explore_stop -= portals")
+    BRC.set.explore_stop("portals", false)
   elseif not stop_on_portals and not util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = true
-    crawl.setopt("explore_stop += portals")
+    BRC.set.explore_stop("portals", true)
   end
 end
 
@@ -71,20 +71,20 @@ local function ready_stop_on_pan_gates()
   local branch = you.branch()
   if stop_on_pan_gates and branch ~= "Pan" then
     stop_on_pan_gates = false
-    crawl.setopt("explore_stop -= stairs")
+    BRC.set.explore_stop("stairs", false)
   elseif not stop_on_pan_gates and branch == "Pan" then
     stop_on_pan_gates = true
-    crawl.setopt("explore_stop += stairs")
+    BRC.set.explore_stop("stairs", true)
   end
 end
 
 local function ready_stop_on_hell_stairs()
   if stop_on_hell_stairs and not BRC.you.in_hell() then
     stop_on_hell_stairs = false
-    crawl.setopt("explore_stop -= stairs")
+    BRC.set.explore_stop("stairs", false)
   elseif not stop_on_hell_stairs and BRC.you.in_hell() then
     stop_on_hell_stairs = true
-    crawl.setopt("explore_stop += stairs")
+    BRC.set.explore_stop("stairs", true)
   end
 end
 

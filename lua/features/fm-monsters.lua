@@ -215,15 +215,13 @@ local FM_PATTERNS = {
 
 -- Set mutators to either flash (if undead) or a conditional fm
 if BRC.you.mutation_immune() then
-  crawl.setopt("flash_screen_message += monster_warning:cacodemon|neqoxec|shining eye")
+  BRC.set.flash_screen_message("monster_warning:cacodemon|neqoxec|shining eye", true)
 else
   table.insert(
     FM_PATTERNS,
     -- Malmutate without rMut
     {
-      name = "malmutate",
-      cond = "mut",
-      cutoff = 1,
+      name = "malmutate", cond = "mut", cutoff = 1,
       pattern = { "cacodemon", "neqoxec", "shining eye" },
     }
   )
@@ -241,23 +239,23 @@ local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 
 -- Local functions
+local function set_monster_fm(monster_str, add_pattern)
+  BRC.set.force_more(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
+end
+
 local function get_three_pip_action(is_active, hp, dmg_threshold, resistance)
   -- Dmg taken is 1/2; 1/3; 1/5 (for 1,2,3 resistance)
   local divisor = resistance + 1
   if divisor == 4 then divisor = 5 end
 
   if is_active then
-    if hp >= dmg_threshold / divisor then return "-" end
+    if hp >= dmg_threshold / divisor then return false end
   else
-    if hp < dmg_threshold / divisor then return "+" end
+    if hp < dmg_threshold / divisor then return true end
   end
 end
 
-local function set_monster_option(sign, monster_str, option)
-  crawl.setopt(string.format("%s %s= %s", option, sign, table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX })))
-end
-
-local function set_monster_list(monster_list, option)
+local function monster_list_to_string(monster_list)
   local mon_str = nil
   for _, v in ipairs(monster_list) do
     if not mon_str then
@@ -266,17 +264,13 @@ local function set_monster_list(monster_list, option)
       mon_str = string.format("%s|%s", mon_str, v)
     end
   end
-  set_monster_option("+", mon_str, option)
-end
-
-local function set_monster_fm(sign, monster_str)
-  set_monster_option(sign, monster_str, "force_more_message")
+  return mon_str
 end
 
 local function do_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v) -- Mute the fm-alert by removing the fm
+    set_monster_fm(v, false) -- "Mute" the fm-alert by removing the fm (but active_fm[] is still true)
   end
   monsters_to_mute = {}
 
@@ -287,7 +281,7 @@ local function do_pack_mutes()
       if util.contains(FM_PACK_NO_CREATE, v) then
         active_fm[active_fm_index[v]] = false -- Set to false so the main logic can conditionally re-enable it
       else
-        set_monster_fm("+", v) -- Reenable the fm, which is always active
+        set_monster_fm(v, true) -- Reenable the fm, which is always active
       end
     end
   end
@@ -306,16 +300,16 @@ function f_fm_monsters.init()
     end
   end
 
-  if BRC.Config.fm_on_uniques then
-    crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
-  end
+  set_monster_fm(monster_list_to_string(ALWAYS_FORCE_MORE_MONSTERS), true)
+  BRC.set.flash_screen_message(monster_list_to_string(ALWAYS_FLASH_SCREEN_MONSTERS), true)
 
-  set_monster_list(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
-  set_monster_list(ALWAYS_FORCE_MORE_MONSTERS, "force_more_message")
+  if BRC.Config.fm_on_uniques then
+    BRC.set.force_more("monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view", true)
+  end
 
   -- Init packs
   for _, v in ipairs(FM_PACK) do
-    set_monster_fm("+", v)
+    set_monster_fm(v, true)
     last_fm_turn[v] = -1
   end
 
@@ -373,76 +367,76 @@ function f_fm_monsters.ready()
   local is_zig_condition = BRC.Config.disable_fm_monsters_in_zigs and you.branch() == "Zig"
 
   for i, v in ipairs(FM_PATTERNS) do
-    local action = nil
+    local add_fm = nil
 
     if is_zig_condition then
-      action = "-"
+      add_fm = false
     elseif not v.cond and not active_fm[i] then
-      action = "+"
+      add_fm = true
     elseif v.cond == "xl" then
       if active_fm[i] and you.xl() >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and you.xl() < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "hp" then
       if active_fm[i] and hp >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "int" then
       if active_fm[i] and int >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and int < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "will" then
       if active_fm[i] and willpower >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and willpower < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "mut" then
       if active_fm[i] and res_mut > 0 then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and res_mut == 0 then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "pois" then
       if active_fm[i] and (res_pois > 0 or hp >= v.cutoff) then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and res_pois == 0 and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "elec" then
       if active_fm[i] and (res_elec > 0 or hp >= v.cutoff) then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and res_elec == 0 and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "corr" then
       if active_fm[i] and (res_corr or hp >= v.cutoff) then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and not res_corr and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "fire" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
+      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
     elseif v.cond == "cold" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
+      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
     elseif v.cond == "drain" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
+      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
     end
 
-    if action then
-      set_monster_fm(action, v.pattern)
+    if add_fm ~= nil then
+      set_monster_fm(v.pattern, add_fm)
       active_fm[i] = not active_fm[i]
 
       if BRC.Config.debug_fm_monsters then
-        if action == "+" then
+        if add_fm then
           activated[#activated + 1] = v.name or v.pattern
-        elseif action == "-" then
+        else
           deactivated[#deactivated + 1] = v.name or v.pattern
         end
       end

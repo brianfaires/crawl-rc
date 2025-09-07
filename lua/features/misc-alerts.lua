@@ -76,7 +76,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    crawl.setopt(string.format("macros += M %s ===f_misc_alerts.macro_save_w_message", BRC.KEYS.save_game))
+    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_w_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil

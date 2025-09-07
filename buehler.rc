@@ -4025,6 +4025,7 @@ BRC.mpr = {}
 BRC.get = {}
 BRC.is = {}
 BRC.you = {}
+BRC.set = {}
 BRC.dump = {}
 
 -- Local variables
@@ -4354,6 +4355,46 @@ end
 
 function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
+---- BRC.set - Simple helper functions wrapping crawl.setopt() ----
+function BRC.set.autopickup_exception(pattern, add_pattern)
+  local op = add_pattern and "^=" or "-="
+  crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
+end
+
+function BRC.set.explore_stop(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("explore_stop %s %s", op, pattern))
+end
+
+function BRC.set.explore_stop_pickup_ignore(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("explore_stop_pickup_ignore %s %s", op, pattern))
+end
+
+function BRC.set.flash_screen_message(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
+end
+
+function BRC.set.force_more(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
+end
+
+function BRC.set.macro(key, function_name)
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+end
+
+function BRC.set.message_mute(pattern, mute_pattern)
+  local op = mute_pattern and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+function BRC.set.runrest_ignore_message(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
 end
 
 --- BRC.dump - Debugging utils called from in-game lua interpreter ---
@@ -5053,11 +5094,7 @@ function f_after_shaft.init()
     as_shaft_branch = you.branch()
   end
 
-  if as_shaft_depth ~= 0 then
-    crawl.setopt("explore_stop += stairs")
-  else
-    crawl.setopt("explore_stop -= stairs")
-  end
+  BRC.set.explore_stop("stairs", as_shaft_depth ~= 0)
 end
 
 function f_after_shaft.c_message(text, channel)
@@ -5070,14 +5107,14 @@ function f_after_shaft.c_message(text, channel)
   if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
     as_shaft_depth = you.depth()
     as_shaft_branch = you.branch()
-    crawl.setopt("explore_stop += stairs")
+    BRC.set.explore_stop("stairs", true)
   end
 end
 
 function f_after_shaft.ready()
   if not BRC.Config.stop_on_stairs_after_shaft then return end
   if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
-    crawl.setopt("explore_stop -= stairs")
+    BRC.set.explore_stop("stairs", false)
     as_shaft_depth = 0
     as_shaft_branch = "NA"
   end
@@ -5197,7 +5234,7 @@ function f_announce_hp_mp.init()
   ad_prev.mmp = 0
 
   if BRC.Config.dmg_fm_threshold > 0 and BRC.Config.dmg_fm_threshold <= 0.5 then
-    crawl.setopt("message_colour ^= mute:Ouch! That really hurt!")
+    BRC.set.message_mute("Ouch! That really hurt!", true)
   end
 end
 
@@ -5471,7 +5508,7 @@ local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.ALL_SPELLBOOKS, ", ")
 local SPELLCASTING_ITEMS_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 -- Local state
-local dynopt_cur_god
+local cur_god
 local ignoring_spellcasting
 local ignoring_spellbooks
 local early_xl_alerts_on
@@ -5481,11 +5518,7 @@ local late_xl_alerts_on
 -- Local functions
 local function set_dyn_fm(warnings, create)
   for _, v in ipairs(warnings) do
-    if create then
-      crawl.setopt(string.format("force_more_message += %s", v))
-    else
-      crawl.setopt(string.format("force_more_message -= %s", v))
-    end
+    BRC.set.force_more(v, create)
   end
 end
 
@@ -5493,44 +5526,44 @@ local function set_class_options()
   if you.class() == "Hunter" then
     crawl.setopt("view_delay = 30")
   elseif you.class() == "Shapeshifter" then
-    crawl.setopt("autopickup_exceptions ^= <flux bauble")
+    BRC.set.autopickup_exception("<flux bauble", true)
   end
 end
 
 local function set_god_options()
   local new_god = you.god()
-  if new_god ~= dynopt_cur_god then
-    if dynopt_cur_god == "No God" then
-      crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
-      crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
-      crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
+  if new_god ~= cur_god then
+    if cur_god == "No God" then
+      BRC.set.force_more("Found.*the Ecumenical Temple", false)
+      BRC.set.flash_screen_message("Found.*the Ecumenical Temple", true)
+      BRC.set.runrest_stop_message("Found.*the Ecumenical Temple", true)
     elseif new_god == "Beogh" then
-      crawl.setopt("runrest_ignore_message += no longer looks.*")
-      crawl.setopt("force_more_message += Your orc.*dies")
+      BRC.set.runrest_ignore_message("no longer looks.*", true)
+      BRC.set.force_more("Your orc.*dies", true)
     elseif new_god == "Jiyva" then
-      crawl.setopt("force_more_message += god:splits in two")
-      crawl.setopt("force_more_message += god:Your prayer is over.")
-      crawl.setopt("message_colour ^= mute:You hear a.*(slurping|squelching) noise")
+      BRC.set.force_more("god:splits in two", true)
+      BRC.set.force_more("god:Your prayer is over.", true)
+      BRC.set.message_mute("You hear a.*(slurping|squelching) noise", true)
     elseif new_god == "Qazlal" then
-      crawl.setopt("force_more_message -= god:You feel.*protected")
+      BRC.set.force_more("god:You feel.*protected", false)
     elseif new_god == "Xom" then
-      crawl.setopt("force_more_message += god:")
+      BRC.set.force_more("god:", true)
     end
 
-    dynopt_cur_god = new_god
+    cur_god = new_god
   end
 end
 
 local function set_race_options()
   if util.contains(BRC.ALL_UNDEAD_RACES, you.race()) then
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
+    BRC.set.force_more("monster_warning:wielding.*of holy wrath", true)
   end
 
   if not util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then
-    crawl.setopt("force_more_message += monster_warning:curare")
+    BRC.set.force_more("monster_warning:curare", true)
   end
 
-  if you.race() == "Gnoll" then crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level") end
+  if you.race() == "Gnoll" then BRC.set.message_mute("intrinsic_gain:skill increases to level", true) end
 end
 
 local function set_xl_options()
@@ -5562,12 +5595,10 @@ end
 local function set_skill_options()
   -- If zero spellcasting, don't stop on spellbook pickup
   local zero_spellcasting = you.skill("Spellcasting") == 0
-  if not ignoring_spellbooks and zero_spellcasting then
-    ignoring_spellbooks = true
-    crawl.setopt(string.format("explore_stop_pickup_ignore += %s", IGNORE_SPELLBOOKS_STRING))
-  elseif ignoring_spellbooks and not zero_spellcasting then
-    ignoring_spellbooks = false
-    crawl.setopt(string.format("explore_stop_pickup_ignore -= %s", IGNORE_SPELLBOOKS_STRING))
+  -- If current ignore behavior doesn't match desired behavior, update it
+  if ignoring_spellbooks ~= zero_spellcasting then
+    ignoring_spellbooks = zero_spellcasting
+    BRC.set.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, zero_spellcasting)
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
@@ -5575,19 +5606,17 @@ local function set_skill_options()
     local worn = items.equipped_at("armour")
     local heavy_arm = worn ~= nil and worn.encumbrance > 4 + you.skill("Armour") / 2
     local skip_items = zero_spellcasting and heavy_arm
-    if not ignoring_spellcasting and skip_items then
-      ignoring_spellcasting = true
-      crawl.setopt(string.format("autopickup_exceptions += %s", SPELLCASTING_ITEMS_STRING))
-    elseif ignoring_spellcasting and not skip_items then
-      ignoring_spellcasting = false
-      crawl.setopt(string.format("autopickup_exceptions -= %s", SPELLCASTING_ITEMS_STRING))
+    -- If current ignore behavior doesn't match desired behavior, update it
+    if ignoring_spellcasting ~= skip_items then
+      ignoring_spellcasting = skip_items
+      BRC.set.autopickup_exception(SPELLCASTING_ITEMS_STRING, skip_items)
     end
   end
 end
 
 -- Hook functions
 function f_dynamic_options.init()
-  dynopt_cur_god = "No God"
+  cur_god = "No God"
   ignoring_spellcasting = false
   ignoring_spellbooks = false
   early_xl_alerts_on = false
@@ -5628,12 +5657,12 @@ ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
 -- Local functions
 local function add_exclusion(item_name)
   if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
-  crawl.setopt(string.format("autopickup_exceptions ^= %s", item_name))
+  BRC.set.autopickup_exception(item_name, true)
 end
 
 local function remove_exclusion(item_name)
   util.remove(ed_dropped_items, item_name)
-  crawl.setopt(string.format("autopickup_exceptions -= %s", item_name))
+  BRC.set.autopickup_exception(item_name, false)
 end
 
 local function has_enchantable_weap_in_inv()
@@ -5759,12 +5788,13 @@ fr_explore_after = BRC.data.persist("fr_explore_after", false)
 
 -- Local constants / configuration
 local MAX_TURNS_TO_WAIT = 500
+local WAITING_MESSAGE = "You start waiting."
 
 -- Local functions
 local function abort_fully_recover()
   fr_start_turn = 0
   fr_explore_after = false
-  crawl.setopt("message_colour -= mute:You start waiting.")
+  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 end
 
@@ -5773,7 +5803,7 @@ local function finish_fully_recover()
   BRC.mpr.color(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
 
   fr_start_turn = 0
-  crawl.setopt("message_colour -= mute:You start waiting.")
+  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 
   if fr_explore_after then
@@ -5821,7 +5851,7 @@ end
 
 local function start_fully_recover()
   fr_start_turn = you.turns()
-  crawl.setopt("message_colour += mute:You start waiting.")
+  BRC.set.message_mute(WAITING_MESSAGE, true)
 end
 
 -- Attach full recovery to auto-explore
@@ -5840,14 +5870,14 @@ function f_fully_recover.init()
   fr_explore_after = false
   util.remove(BRC.Config.rest_off_statuses, "slowed") -- special case handled elsewhere
 
-  crawl.setopt("runrest_ignore_message += recovery:.*")
-  crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt(string.format("macros += M %s ===f_fully_recover.macro_explore", BRC.KEYS.explore))
+  BRC.set.runrest_ignore_message("recovery:.*", true)
+  BRC.set.runrest_ignore_message("duration:.*", true)
+  BRC.set.macro(BRC.KEYS.explore, "f_fully_recover.macro_explore")
 end
 
 function f_fully_recover.c_message(text, channel)
   if channel == "plain" then
-    if text:find("ou start waiting", 1, true) or text:find("ou start resting", 1, true) then
+    if text:find(WAITING_MESSAGE, 1, true) or text:find("ou start resting", 1, true) then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif fr_start_turn > 0 then
@@ -6140,15 +6170,13 @@ local FM_PATTERNS = {
 
 -- Set mutators to either flash (if undead) or a conditional fm
 if BRC.you.mutation_immune() then
-  crawl.setopt("flash_screen_message += monster_warning:cacodemon|neqoxec|shining eye")
+  BRC.set.flash_screen_message("monster_warning:cacodemon|neqoxec|shining eye", true)
 else
   table.insert(
     FM_PATTERNS,
     -- Malmutate without rMut
     {
-      name = "malmutate",
-      cond = "mut",
-      cutoff = 1,
+      name = "malmutate", cond = "mut", cutoff = 1,
       pattern = { "cacodemon", "neqoxec", "shining eye" },
     }
   )
@@ -6166,23 +6194,23 @@ local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 
 -- Local functions
+local function set_monster_fm(monster_str, add_pattern)
+  BRC.set.force_more(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
+end
+
 local function get_three_pip_action(is_active, hp, dmg_threshold, resistance)
   -- Dmg taken is 1/2; 1/3; 1/5 (for 1,2,3 resistance)
   local divisor = resistance + 1
   if divisor == 4 then divisor = 5 end
 
   if is_active then
-    if hp >= dmg_threshold / divisor then return "-" end
+    if hp >= dmg_threshold / divisor then return false end
   else
-    if hp < dmg_threshold / divisor then return "+" end
+    if hp < dmg_threshold / divisor then return true end
   end
 end
 
-local function set_monster_option(sign, monster_str, option)
-  crawl.setopt(string.format("%s %s= %s", option, sign, table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX })))
-end
-
-local function set_monster_list(monster_list, option)
+local function monster_list_to_string(monster_list)
   local mon_str = nil
   for _, v in ipairs(monster_list) do
     if not mon_str then
@@ -6191,17 +6219,13 @@ local function set_monster_list(monster_list, option)
       mon_str = string.format("%s|%s", mon_str, v)
     end
   end
-  set_monster_option("+", mon_str, option)
-end
-
-local function set_monster_fm(sign, monster_str)
-  set_monster_option(sign, monster_str, "force_more_message")
+  return mon_str
 end
 
 local function do_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm("-", v) -- Mute the fm-alert by removing the fm
+    set_monster_fm(v, false) -- "Mute" the fm-alert by removing the fm (but active_fm[] is still true)
   end
   monsters_to_mute = {}
 
@@ -6212,7 +6236,7 @@ local function do_pack_mutes()
       if util.contains(FM_PACK_NO_CREATE, v) then
         active_fm[active_fm_index[v]] = false -- Set to false so the main logic can conditionally re-enable it
       else
-        set_monster_fm("+", v) -- Reenable the fm, which is always active
+        set_monster_fm(v, true) -- Reenable the fm, which is always active
       end
     end
   end
@@ -6231,16 +6255,16 @@ function f_fm_monsters.init()
     end
   end
 
-  if BRC.Config.fm_on_uniques then
-    crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
-  end
+  set_monster_fm(monster_list_to_string(ALWAYS_FORCE_MORE_MONSTERS), true)
+  BRC.set.flash_screen_message(monster_list_to_string(ALWAYS_FLASH_SCREEN_MONSTERS), true)
 
-  set_monster_list(ALWAYS_FLASH_SCREEN_MONSTERS, "flash_screen_message")
-  set_monster_list(ALWAYS_FORCE_MORE_MONSTERS, "force_more_message")
+  if BRC.Config.fm_on_uniques then
+    BRC.set.force_more("monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view", true)
+  end
 
   -- Init packs
   for _, v in ipairs(FM_PACK) do
-    set_monster_fm("+", v)
+    set_monster_fm(v, true)
     last_fm_turn[v] = -1
   end
 
@@ -6298,76 +6322,76 @@ function f_fm_monsters.ready()
   local is_zig_condition = BRC.Config.disable_fm_monsters_in_zigs and you.branch() == "Zig"
 
   for i, v in ipairs(FM_PATTERNS) do
-    local action = nil
+    local add_fm = nil
 
     if is_zig_condition then
-      action = "-"
+      add_fm = false
     elseif not v.cond and not active_fm[i] then
-      action = "+"
+      add_fm = true
     elseif v.cond == "xl" then
       if active_fm[i] and you.xl() >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and you.xl() < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "hp" then
       if active_fm[i] and hp >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "int" then
       if active_fm[i] and int >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and int < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "will" then
       if active_fm[i] and willpower >= v.cutoff then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and willpower < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "mut" then
       if active_fm[i] and res_mut > 0 then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and res_mut == 0 then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "pois" then
       if active_fm[i] and (res_pois > 0 or hp >= v.cutoff) then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and res_pois == 0 and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "elec" then
       if active_fm[i] and (res_elec > 0 or hp >= v.cutoff) then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and res_elec == 0 and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "corr" then
       if active_fm[i] and (res_corr or hp >= v.cutoff) then
-        action = "-"
+        add_fm = false
       elseif not active_fm[i] and not res_corr and hp < v.cutoff then
-        action = "+"
+        add_fm = true
       end
     elseif v.cond == "fire" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
+      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
     elseif v.cond == "cold" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
+      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
     elseif v.cond == "drain" then
-      action = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
+      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
     end
 
-    if action then
-      set_monster_fm(action, v.pattern)
+    if add_fm ~= nil then
+      set_monster_fm(v.pattern, add_fm)
       active_fm[i] = not active_fm[i]
 
       if BRC.Config.debug_fm_monsters then
-        if action == "+" then
+        if add_fm then
           activated[#activated + 1] = v.name or v.pattern
-        elseif action == "-" then
+        else
           deactivated[#deactivated + 1] = v.name or v.pattern
         end
       end
@@ -6538,7 +6562,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    crawl.setopt(string.format("macros += M %s ===f_misc_alerts.macro_save_w_message", BRC.KEYS.save_game))
+    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_w_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
@@ -6738,20 +6762,20 @@ end
 local function ready_ignore_altars()
   if stop_on_altars and religion_is_handled() then
     stop_on_altars = false
-    crawl.setopt("explore_stop -= altars")
+    BRC.set.explore_stop("altars", false)
   elseif not stop_on_altars and not religion_is_handled() then
     stop_on_altars = true
-    crawl.setopt("explore_stop += altars")
+    BRC.set.explore_stop("altars", true)
   end
 end
 
 local function ready_ignore_exits()
   if stop_on_portals and util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
-    crawl.setopt("explore_stop -= portals")
+    BRC.set.explore_stop("portals", false)
   elseif not stop_on_portals and not util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = true
-    crawl.setopt("explore_stop += portals")
+    BRC.set.explore_stop("portals", true)
   end
 end
 
@@ -6759,20 +6783,20 @@ local function ready_stop_on_pan_gates()
   local branch = you.branch()
   if stop_on_pan_gates and branch ~= "Pan" then
     stop_on_pan_gates = false
-    crawl.setopt("explore_stop -= stairs")
+    BRC.set.explore_stop("stairs", false)
   elseif not stop_on_pan_gates and branch == "Pan" then
     stop_on_pan_gates = true
-    crawl.setopt("explore_stop += stairs")
+    BRC.set.explore_stop("stairs", true)
   end
 end
 
 local function ready_stop_on_hell_stairs()
   if stop_on_hell_stairs and not BRC.you.in_hell() then
     stop_on_hell_stairs = false
-    crawl.setopt("explore_stop -= stairs")
+    BRC.set.explore_stop("stairs", false)
   elseif not stop_on_hell_stairs and BRC.you.in_hell() then
     stop_on_hell_stairs = true
-    crawl.setopt("explore_stop += stairs")
+    BRC.set.explore_stop("stairs", true)
   end
 end
 
@@ -6960,8 +6984,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  crawl.setopt(string.format("macros += M %s ===f_safe_stairs.macro_downstairs", BRC.KEYS.go_downstairs))
-  crawl.setopt(string.format("macros += M %s ===f_safe_stairs.macro_upstairs", BRC.KEYS.go_upstairs))
+  BRC.set.macro(BRC.KEYS.go_downstairs, "f_safe_stairs.macro_downstairs")
+  BRC.set.macro(BRC.KEYS.go_upstairs, "f_safe_stairs.macro_upstairs")
 end
 
 function f_safe_stairs.ready()

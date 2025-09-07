@@ -14,12 +14,13 @@ fr_explore_after = BRC.data.persist("fr_explore_after", false)
 
 -- Local constants / configuration
 local MAX_TURNS_TO_WAIT = 500
+local WAITING_MESSAGE = "You start waiting."
 
 -- Local functions
 local function abort_fully_recover()
   fr_start_turn = 0
   fr_explore_after = false
-  crawl.setopt("message_colour -= mute:You start waiting.")
+  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 end
 
@@ -28,7 +29,7 @@ local function finish_fully_recover()
   BRC.mpr.color(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
 
   fr_start_turn = 0
-  crawl.setopt("message_colour -= mute:You start waiting.")
+  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 
   if fr_explore_after then
@@ -76,7 +77,7 @@ end
 
 local function start_fully_recover()
   fr_start_turn = you.turns()
-  crawl.setopt("message_colour += mute:You start waiting.")
+  BRC.set.message_mute(WAITING_MESSAGE, true)
 end
 
 -- Attach full recovery to auto-explore
@@ -95,14 +96,14 @@ function f_fully_recover.init()
   fr_explore_after = false
   util.remove(BRC.Config.rest_off_statuses, "slowed") -- special case handled elsewhere
 
-  crawl.setopt("runrest_ignore_message += recovery:.*")
-  crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt(string.format("macros += M %s ===f_fully_recover.macro_explore", BRC.KEYS.explore))
+  BRC.set.runrest_ignore_message("recovery:.*", true)
+  BRC.set.runrest_ignore_message("duration:.*", true)
+  BRC.set.macro(BRC.KEYS.explore, "f_fully_recover.macro_explore")
 end
 
 function f_fully_recover.c_message(text, channel)
   if channel == "plain" then
-    if text:find("ou start waiting", 1, true) or text:find("ou start resting", 1, true) then
+    if text:find(WAITING_MESSAGE, 1, true) or text:find("ou start resting", 1, true) then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif fr_start_turn > 0 then

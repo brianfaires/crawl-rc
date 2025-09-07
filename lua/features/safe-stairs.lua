@@ -68,8 +68,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  crawl.setopt(string.format("macros += M %s ===f_safe_stairs.macro_downstairs", BRC.KEYS.go_downstairs))
-  crawl.setopt(string.format("macros += M %s ===f_safe_stairs.macro_upstairs", BRC.KEYS.go_upstairs))
+  BRC.set.macro(BRC.KEYS.go_downstairs, "f_safe_stairs.macro_downstairs")
+  BRC.set.macro(BRC.KEYS.go_upstairs, "f_safe_stairs.macro_upstairs")
 end
 
 function f_safe_stairs.ready()
