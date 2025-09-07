@@ -162,7 +162,6 @@ function pa_pickup_weapon(it)
   end
 end
 
-
 local function alert_first_of_skill(it, silent)
   local skill = it.weap_skill
   if not lowest_num_hands_alerted[skill] then return false end
@@ -253,11 +252,13 @@ local function alert_interesting_weapon(it, cur)
       elseif score_ratio > BRC.Tuning.weap.alert.add_hand.not_using then
         return f_pickup_alert.do_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.upgrade_weap)
       end
-    elseif BRC.is.branded(it)
+    elseif
+      BRC.is.branded(it)
       and not BRC.is.branded(cur)
-      and score_ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh then
-        local msg = "2-handed weapon (Gain ego)"
-        return f_pickup_alert.do_alert(it, msg, BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.weap_ego)
+      and score_ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh
+    then
+      local msg = "2-handed weapon (Gain ego)"
+      return f_pickup_alert.do_alert(it, msg, BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.weap_ego)
     end
   else -- No extra hand required
     if cur.artefact then return false end

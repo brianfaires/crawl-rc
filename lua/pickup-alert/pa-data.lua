@@ -41,16 +41,13 @@ function f_pa_data.find(table_ref, it)
     end
   else
     local name, value = get_pa_keys(it)
-    if table_ref[name] ~= nil and tonumber(table_ref[name]) >= value then
-      return name
-    end
+    if table_ref[name] ~= nil and tonumber(table_ref[name]) >= value then return name end
   end
 end
 
-
 function f_pa_data.insert(table_ref, it)
   if table_ref == pa_recent_alerts then
-    pa_recent_alerts[#pa_recent_alerts+1] = f_pa_data.get_keyname(it)
+    pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
   elseif it.is_weapon or BRC.is.armour(it, true) or BRC.is.talisman(it) then
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
@@ -114,7 +111,6 @@ end
 
 -- Hook functions
 function f_pa_data.init()
-
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)

@@ -27,7 +27,8 @@ end
 local function get_max_stack_size(class, skip_slot)
   local max_stack_size = 0
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.quantity > max_stack_size
+    if
+      inv.quantity > max_stack_size
       and inv.class(true) == class
       and inv.slot ~= skip_slot
       and not inv.is_identified

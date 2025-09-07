@@ -286,7 +286,6 @@ BRC.BrandBonus = {
   }, -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
-
 -- Cosmetic settings
 BRC.AlertColor = {
   weapon = {

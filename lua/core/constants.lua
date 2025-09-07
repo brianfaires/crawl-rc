@@ -277,4 +277,3 @@ BRC.DMG_TYPE = {
   branded = 3, -- Include full brand dmg
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
-

@@ -103,7 +103,9 @@ function f_pickup_alert.init()
   end
 
   -- Hook to the autopickup function
-  add_autopickup_func(function(it, _) return f_pickup_alert.autopickup(it) end)
+  add_autopickup_func(function(it, _)
+    return f_pickup_alert.autopickup(it)
+  end)
 end
 
 function f_pickup_alert.c_assign_invletter(it)
@@ -112,9 +114,7 @@ function f_pickup_alert.c_assign_invletter(it)
   if it.is_weapon and you.race() == "Coglin" then
     -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
     -- ie, Reset the alert the first time you pick up.
-    if f_pa_data.find(pa_items_picked, it) then
-      f_pa_data.remove(pa_items_alerted, it)
-    end
+    if f_pa_data.find(pa_items_picked, it) then f_pa_data.remove(pa_items_alerted, it) end
   end
 
   f_pa_data.insert(pa_items_picked, it)

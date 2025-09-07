@@ -539,7 +539,6 @@ local function get_staff_bonus_dmg(it, dmg_type)
   return avg_dmg * chance
 end
 
-
 -- Formatting for stat inscriptions & alerts
 function BRC.get.armour_info(it)
   if not BRC.is.armour(it) then return "", "" end

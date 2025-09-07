@@ -330,7 +330,6 @@ local function alert_aux_armour(it, unworn_inv_item)
   end
 end
 
-
 -- Hook functions
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function f_pa_armour.pickup_armour(it)
