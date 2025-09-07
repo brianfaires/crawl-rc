@@ -96,53 +96,53 @@ local FM_PACK_NO_CREATE = {
 
 local FM_PATTERNS = {
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
-  { name = "30hp", cond = "hp", cutoff = 30, pattern = table.concat({"hound", "gnoll"}, "|") },
+  { name = "30hp", cond = "hp", cutoff = 30, pattern = {"hound", "gnoll"} },
 
   -- Monsters dangerous until a certain point
-  { name = "xl_7", cond = "xl", cutoff = 7, pattern = table.concat({"orc wizard"}, "|") },
-  { name = "xl_12", cond = "xl", cutoff = 12, pattern = table.concat({"hydra", "bloated husk"}, "|") },
+  { name = "xl_7", cond = "xl", cutoff = 7, pattern = {"orc wizard"} },
+  { name = "xl_12", cond = "xl", cutoff = 12, pattern = {"hydra", "bloated husk"} },
 
   -- Monsters that can hit for ~50% of hp from range with unbranded attacks
-  { name = "40hp", cond = "hp", cutoff = 40, pattern = table.concat({"orc priest"}, "|") },
+  { name = "40hp", cond = "hp", cutoff = 40, pattern = {"orc priest"} },
   { name = "50hp",
     cond = "hp",
     cutoff = 50,
-    pattern = table.concat({"orc high priest", "manticore"}, "|"),
+    pattern = {"orc high priest", "manticore"},
   },
   {
     name = "60hp",
     cond = "hp",
     cutoff = 60,
-    pattern = table.concat({"yaktaur(?! captain)", "cyclops", "centaur(?! warrior)"}, "|"),
+    pattern = {"yaktaur(?! captain)", "cyclops", "centaur(?! warrior)"},
   },
-  { name = "70hp_melai", cond = "hp", cutoff = 70, pattern = table.concat({"meliai"}, "|") },
-  { name = "80hp", cond = "hp", cutoff = 80, pattern = table.concat({"gargoyle"}, "|") },
+  { name = "70hp_melai", cond = "hp", cutoff = 70, pattern = {"meliai"} },
+  { name = "80hp", cond = "hp", cutoff = 80, pattern = {"gargoyle"} },
   { name = "90hp",
     cond = "hp",
     cutoff = 90,
-    pattern = table.concat({"deep elf archer", "tengu conjurer"}, "|"),
+    pattern = {"deep elf archer", "tengu conjurer"},
   },
   { name = "110hp",
     cond = "hp",
     cutoff = 110,
-    pattern = table.concat({"centaur warrior", "yaktaur captain", "hellion", "eye of devastation",
-    "sun moth", "deep elf high priest", "deep troll earth mage", "stone giant", "cacodemon"}, "|")
+    pattern = {"centaur warrior", "yaktaur captain", "hellion", "eye of devastation",
+    "sun moth", "deep elf high priest", "deep troll earth mage", "stone giant", "cacodemon"}
   },
   { name = "120hp",
     cond = "hp",
     cutoff = 120,
-    pattern = table.concat({"quicksilver (dragon|elemental)", "magenta draconian", "thorn hunter"}, "|"),
+    pattern = {"quicksilver (dragon|elemental)", "magenta draconian", "thorn hunter"},
   },
   { name = "160hp",
     cond = "hp",
     cutoff = 160,
-    pattern = table.concat({"brimstone fiend", "deep elf sorcererhell sentinal", "war gargoyle",
-    "draconian (knight|scorcher)"}, "|"),
+    pattern = {"brimstone fiend", "deep elf sorcererhell sentinal", "war gargoyle",
+    "draconian (knight|scorcher)"},
   },
   { name = "200hp",
     cond = "hp",
     cutoff = 200,
-    pattern = table.concat({"(draconian|deep elf) annihilator", "iron (dragon|elemental)"}, "|"),
+    pattern = {"(draconian|deep elf) annihilator", "iron (dragon|elemental)"},
   },
 
   -- Monsters that can crowd-control you without sufficient willpower
@@ -150,146 +150,146 @@ local FM_PATTERNS = {
   { name = "willpower2",
     cond = "will",
     cutoff = 2,
-    pattern = table.concat({"basilisk", "naga ritualist", "vampire(?! (bat|mage|mosquito))", "sphinx marauder"}, "|"),
+    pattern = {"basilisk", "naga ritualist", "vampire(?! (bat|mage|mosquito))", "sphinx marauder"},
   },
   { name = "willpower3",
     cond = "will",
     cutoff = 3,
-    pattern = table.concat({
+    pattern = {
       "deep elf (demonologist|sorcerer|archer)", "occultist", "merfolk siren", "fenstrider witch",
       "cacodemon", "imperial myrmidon", "guardian sphinx", "nagaraja", "draconian shifter", "glowing orange brain",
-      "orc sorcerer", "ogre mage", "satyr", "vault sentinel", "iron elemental", "death knight", "vampire knight"}, "|"),
+      "orc sorcerer", "ogre mage", "satyr", "vault sentinel", "iron elemental", "death knight", "vampire knight"},
   },
   { name = "willpower3_great_orb_of_eyes",
     cond = "will",
     cutoff = 3,
-    pattern = table.concat({"great orb of eyes"}, "|"),
+    pattern = {"great orb of eyes"},
   },
   { name = "willpower3_golden_eye",
     cond = "will",
     cutoff = 3,
-    pattern = table.concat({"golden eye"}, "|"),
+    pattern = {"golden eye"},
   },
   { name = "willpower4",
     cond = "will",
     cutoff = 4,
-    pattern = table.concat({"merfolk avatar", "tainted leviathan", "nargun"}, "|"),
+    pattern = {"merfolk avatar", "tainted leviathan", "nargun"},
   },
 
   -- Brain feed with low int
   { name = "brainfeed",
     cond = "int",
     cutoff = 6,
-    pattern = table.concat({"glowing orange brain", "neqoxec"}, "|"),
+    pattern = {"glowing orange brain", "neqoxec"},
   },
 
   -- Alert if no resist and HP below cutoff
-  { name = "pois_30", cond = "pois", cutoff = 30, pattern = table.concat({"adder"}, "|") },
+  { name = "pois_30", cond = "pois", cutoff = 30, pattern = {"adder"} },
   { name = "pois_80",
     cond = "pois",
     cutoff = 80,
-    pattern = table.concat({"golden dragon", "green draconian", "swamp dragon"}, "|"),
+    pattern = {"golden dragon", "green draconian", "swamp dragon"},
   },
   { name = "pois_120",
     cond = "pois",
     cutoff = 120,
-    pattern = table.concat({"green death", "naga mage", "nagaraja", "fenstrider witch"}, "|"),
+    pattern = {"green death", "naga mage", "nagaraja", "fenstrider witch"},
   },
-  { name = "pois_140", cond = "pois", cutoff = 140, pattern = table.concat({"tengu reaver"}, "|") },
+  { name = "pois_140", cond = "pois", cutoff = 140, pattern = {"tengu reaver"} },
 
-  { name = "elec_40", cond = "elec", cutoff = 40, pattern = table.concat({"electric eel"}, "|") },
+  { name = "elec_40", cond = "elec", cutoff = 40, pattern = {"electric eel"} },
   { name = "elec_80",
     cond = "elec",
     cutoff = 80,
-    pattern = table.concat({"shock serpent", "raiju", "spark wasp"}, "|"),
+    pattern = {"shock serpent", "raiju", "spark wasp"},
   },
   { name = "elec_120",
     cond = "elec",
     cutoff = 120,
-    pattern = table.concat({"black draconian", "blizzard demon", "deep elf zephyrmancer",
-    "storm dragon", "tengu conjurer"}, "|"),
+    pattern = {"black draconian", "blizzard demon", "deep elf zephyrmancer",
+    "storm dragon", "tengu conjurer"},
   },
   { name = "elec_140",
     cond = "elec",
     cutoff = 140,
-    pattern = table.concat({"electric golem", "titan", "servants? of whisper", "spriggan air mage",
-    "ball lightning", "tengu reaver"}, "|"),
+    pattern = {"electric golem", "titan", "servants? of whisper", "spriggan air mage",
+    "ball lightning", "tengu reaver"},
   },
 
-  { name = "corr_60", cond = "corr", cutoff = 60, pattern = table.concat({"acid dragon"}, "|") },
+  { name = "corr_60", cond = "corr", cutoff = 60, pattern = {"acid dragon"} },
   { name = "corr_140",
     cond = "corr",
     cutoff = 140,
-    pattern = table.concat({"tengu reaver", "entropy weaver", "demonspawn corrupter", "moon troll"}, "|"),
+    pattern = {"tengu reaver", "entropy weaver", "demonspawn corrupter", "moon troll"},
   },
 
   { name = "fire_60",
     cond = "fire",
     cutoff = 60,
-    pattern = table.concat({"steam dragon", "lindwurm", "fire crab", "lava snake"}, "|"),
+    pattern = {"steam dragon", "lindwurm", "fire crab", "lava snake"},
   },
   { name = "fire_100",
     cond = "fire",
     cutoff = 100,
-    pattern = table.concat({"efreet", "deep elf pyromancer", "smoke demon", "sun moth"}, "|"),
+    pattern = {"efreet", "deep elf pyromancer", "smoke demon", "sun moth"},
   },
   { name = "fire_120",
     cond = "fire",
     cutoff = 120,
-    pattern = table.concat({"orc sorcerer", "hell hound", "demonspawn blood saint", "red draconian", "ogre mage",
-    "molten gargoyle", "hell knight"}, "|"),
+    pattern = {"orc sorcerer", "hell hound", "demonspawn blood saint", "red draconian", "ogre mage",
+    "molten gargoyle", "hell knight"},
   },
-  { name = "fire_140", cond = "fire", cutoff = 140, pattern = table.concat({"balrug"}, "|") },
+  { name = "fire_140", cond = "fire", cutoff = 140, pattern = {"balrug"} },
   { name = "fire_160",
     cond = "fire",
     cutoff = 160,
-    pattern = table.concat({"will-o-the-wisp", "ophan", "fire giant", "golden dragon", "fire dragon",
-    "salamander tyrant", "tengu reaver"}, "|"),
+    pattern = {"will-o-the-wisp", "ophan", "fire giant", "golden dragon", "fire dragon",
+    "salamander tyrant", "tengu reaver"},
   },
   { name = "fire_240",
     cond = "fire",
     cutoff = 240,
-    pattern = table.concat({"hellephant", "crystal (guardian|echidna)", "draconian scorcher"}, "|"),
+    pattern = {"hellephant", "crystal (guardian|echidna)", "draconian scorcher"},
   },
 
-  { name = "cold_80", cond = "cold", cutoff = 80, pattern = table.concat({"rime drake"}, "|") },
+  { name = "cold_80", cond = "cold", cutoff = 80, pattern = {"rime drake"} },
   { name = "cold_120",
     cond = "cold",
     cutoff = 120,
-    pattern = table.concat({"blizzard demon", "bog body", "ironbound frostheart",
-    "demonspawn blood saint", "white draconian"}, "|"),
+    pattern = {"blizzard demon", "bog body", "ironbound frostheart",
+    "demonspawn blood saint", "white draconian"},
   },
   { name = "cold_160",
     cond = "cold",
     cutoff = 160,
-    pattern = table.concat({"golden dragon", "draconian knight", "frost giant", "ice dragon", "tengu reaver"}, "|"),
+    pattern = {"golden dragon", "draconian knight", "frost giant", "ice dragon", "tengu reaver"},
   },
   { name = "cold_180",
     cond = "cold",
     cutoff = 180,
-    pattern = table.concat({"(?<!dread)(?<!ancient) lich", "lich king"}, "|"),
+    pattern = {"(?<!dread)(?<!ancient) lich", "lich king"},
   },
   { name = "cold_240",
     cond = "cold",
     cutoff = 240,
-    pattern = table.concat({"crystal (guardian|echidna)"}, "|"),
+    pattern = {"crystal (guardian|echidna)"},
   },
 
   { name = "drain_100",
     cond = "drain",
     cutoff = 100,
-    pattern = table.concat({"orc sorcerer"}, "|"),
+    pattern = {"orc sorcerer"},
   },
-  { name = "drain_120", cond = "drain", cutoff = 120, pattern = table.concat({"necromancer"}, "|") },
+  { name = "drain_120", cond = "drain", cutoff = 120, pattern = {"necromancer"} },
   { name = "drain_150",
     cond = "drain",
     cutoff = 150,
-    pattern = table.concat({"revenant", "demonspawn blood saint"}, "|"),
+    pattern = {"revenant", "demonspawn blood saint"},
   },
   { name = "drain_190",
     cond = "drain",
     cutoff = 190,
-    pattern = table.concat({"shadow dragon"}, "|"),
+    pattern = {"shadow dragon"},
   },
 } -- end fm_patterns (do not remove this comment)
 
@@ -304,7 +304,7 @@ else
       name = "malmutate",
       cond = "mut",
       cutoff = 1,
-      pattern = table.concat({"cacodemon", "neqoxec", "shining eye"}, "|"),
+      pattern = {"cacodemon", "neqoxec", "shining eye"},
     }
   )
 end
@@ -381,6 +381,13 @@ function f_fm_monsters.init()
   active_fm_index = {}
   monsters_to_mute = {}
   last_fm_turn = {}
+
+  -- Convert table patterns to strings
+  for _, v in ipairs(FM_PATTERNS) do
+    if type(v.pattern) == "table" then
+      v.pattern = table.concat(v.pattern, "|")
+    end
+  end
 
   if BRC.Config.fm_on_uniques then
     crawl.setopt("force_more_message += monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view")
@@ -512,30 +519,14 @@ function f_fm_monsters.ready()
     end
 
     if action then
-      local fm_mon_str = nil
-      local fm_name = v.pattern
-      if v.name then fm_name = v.name end
-
-      if type(v.pattern) == "table" then
-        for _, p in ipairs(v.pattern) do
-          if not fm_mon_str then
-            fm_mon_str = p
-          else
-            fm_mon_str = string.format("%s|%s", fm_mon_str, p)
-          end
-        end
-      else
-        fm_mon_str = v.pattern
-      end
-
-      set_monster_fm(action, fm_mon_str)
+      set_monster_fm(action, v.pattern)
       active_fm[i] = not active_fm[i]
 
       if BRC.Config.debug_fm_monsters then
         if action == "+" then
-          activated[#activated + 1] = fm_name
+          activated[#activated + 1] = v.name or v.pattern
         elseif action == "-" then
-          deactivated[#deactivated + 1] = fm_name
+          deactivated[#deactivated + 1] = v.name or v.pattern
         end
       end
     end

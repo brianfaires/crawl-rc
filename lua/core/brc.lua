@@ -92,8 +92,8 @@ function BRC.init()
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
-  local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
-  crawl.mpr(table.concat({"\n", success_emoji, BRC.text.lightgreen(success_text), success_emoji}))
+  local success_text = string.format("Successfully initialized BRC system v%s!", BRC.VERSION)
+  crawl.mpr(string.format("\n%s %s %s", success_emoji, BRC.text.lightgreen(success_text), success_emoji))
 
   prev_turn = -1
   BRC.ready()

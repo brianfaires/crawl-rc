@@ -83,7 +83,7 @@ function BRC.data.persist(name, default_value)
   table.insert(chk_lua_save, function()
     local var_type = typeof(_G[name])
     if var_type == TYPES.unknown then return "" end
-    return table.concat({name, " = ", to_formatted_string(_G[name]), BRC.KEYS.LF})
+    return string.format("%s = %s%s", name, to_formatted_string(_G[name]), BRC.KEYS.LF)
   end)
 
   local var_type = typeof(_G[name])
