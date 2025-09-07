@@ -3822,6 +3822,17 @@ local TYPES = {
   unknown = "unknown",
 }
 
+-- Values to detect when character is changed
+local GAME_CHANGE_MONITORS = {
+  buehler_rc_version = BRC.VERSION,
+  buehler_name = you.name(),
+  buehler_race = you.race(), -- using 'race' without a prefix breaks RC parser
+  buehler_class = you.class(), -- using 'class' without a prefix breaks RC parser
+  buehler_turn = you.turns(),
+} -- GAME_CHANGE_MONITORS (do not remove this comment)
+
+-- Persistent variables defined in init(), so it comes after all other persistent data
+
 -- Private variables
 local _persistent_var_names = {}
 local _persistent_table_names = {}
@@ -3876,7 +3887,7 @@ end
 -- Public API
 
 --[[
-BRC.data.persist() creates a persistent global variable or table, initialized to the default value if it doesn't exist.
+BRC.data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.
 The variable/list/dict is automatically persisted across saves.
 Returns the current value.
 Usage: variable_name = BRC.data.persist("variable_name", default_value)
@@ -3934,26 +3945,11 @@ function BRC.data.clear(delete_globals)
 end
 
 --[[
-Verifies data reinitialization and game state consistency
+BRC.data.verify_reinit() Verifies data reinitialization and game state consistency
 This should be called after all features have run init() to declare their data
 --]]
 function BRC.data.verify_reinit()
   local failed_reinit = false
-  local GAME_CHANGE_MONITORS = {
-    buehler_rc_version = BRC.VERSION,
-    buehler_name = you.name(),
-    buehler_race = you.race(), -- this breaks RC parser without 'buehler_' prefix
-    buehler_class = you.class(), -- this breaks RC parser without 'buehler_' prefix
-    turn = you.turns(), -- this doesn't break it, and relies on ready's `prev_turn` variable
-  } -- GAME_CHANGE_MONITORS (do not remove this comment)
-
-  -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
-  -- Default successful_data_reload to false, to confirm the data reload set it to true
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
-    BRC.data.persist(string.format("prev_%s", k), v)
-  end
-  BRC.data.persist("successful_data_reload", false)
-
   if you.turns() > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do
       local prev = _G[string.format("prev_%s", k)]
@@ -3974,11 +3970,22 @@ function BRC.data.verify_reinit()
   end
 
   for k, v in pairs(GAME_CHANGE_MONITORS) do
-    _G[string.format("prev_%s", k)] = v
+    local var_name = string.format("prev_%s", k)
+    _G[var_name] = BRC.data.persist(var_name, v)
   end
   _G.successful_data_reload = true
 
   return true
+end
+
+function BRC.data.init()
+  for k, v in pairs(GAME_CHANGE_MONITORS) do
+    BRC.data.persist(string.format("prev_%s", k), v)
+  end
+
+  -- successful_data_reload comes last, defaults to false. If true, confirms all data reloaded.
+  BRC.data.persist("successful_data_reload", false)
+  return BRC.data.verify_reinit()
 end
 
 }
@@ -4876,13 +4883,19 @@ end
 
 -- Public API
 function BRC.init()
+  -- Handle stale data (switching characters on local instance)
   _features = {}
   _hooks = {}
+  BRC.data.clear(false)
+
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
     BRC.mpr.color("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
     return false
   end
+
+  local success = BRC.data.init()
+  if not success then return false end
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""

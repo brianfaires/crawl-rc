@@ -84,13 +84,19 @@ end
 
 -- Public API
 function BRC.init()
+  -- Handle stale data (switching characters on local instance)
   _features = {}
   _hooks = {}
+  BRC.data.clear(false)
+
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
     BRC.mpr.color("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
     return false
   end
+
+  local success = BRC.data.init()
+  if not success then return false end
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
