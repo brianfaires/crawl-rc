@@ -576,7 +576,8 @@ end
 
 function BRC.get.weapon_info(it, dmg_type)
   if not it.is_weapon then return end
-  local dmg = format_dmg(BRC.get.weap_damage(it, dmg_type or BRC.Config.inscribe_dps_type or BRC.DMG_TYPE.plain))
+  dmg_type = dmg_type or BRC.DMG_TYPE[BRC.Config.inscribe_dps_type] or BRC.DMG_TYPE.plain
+  local dmg = format_dmg(BRC.get.weap_damage(it, dmg_type))
   local delay = get_weap_delay(it)
   local delay_str = string.format("%.1f", delay)
   if delay < 1 then

@@ -32,7 +32,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.get.weapon_info(it, BRC.Config.inscribe_dps_type)
+  local dps_inscr = BRC.get.weapon_info(it, BRC.DMG_TYPE[BRC.Config.inscribe_dps_type])
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)

@@ -71,8 +71,7 @@ BRC.Config.rest_off_statuses = {
 -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
 BRC.Config.inscribe_weapons = true
 BRC.Config.inscribe_armour = true
-BRC.DMG_TYPE = BRC.DMG_TYPE or {} -- Forward declaration. See constants.lua
-BRC.Config.inscribe_dps_type = BRC.DMG_TYPE.plain -- How to calc dmg for weapon inscriptions
+BRC.Config.inscribe_dps_type = "plain" -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
 
 -- misc-alerts.lua
 BRC.Config.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
@@ -289,22 +288,21 @@ BRC.BrandBonus = {
 
 
 -- Cosmetic settings
-BRC.COLORS = BRC.COLORS or {} -- Forward declaration. See constants.lua
 BRC.AlertColor = {
   weapon = {
-    desc = BRC.COLORS.magenta,
-    item = BRC.COLORS.yellow,
-    stats = BRC.COLORS.lightgrey,
+    desc = "magenta",
+    item = "yellow",
+    stats = "lightgrey",
   },
   body_arm = {
-    desc = BRC.COLORS.lightblue,
-    item = BRC.COLORS.lightcyan,
-    stats = BRC.COLORS.lightgrey,
+    desc = "lightblue",
+    item = "lightcyan",
+    stats = "lightgrey",
   },
-  aux_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.yellow },
-  orb = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
-  talisman = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
-  misc = { desc = BRC.COLORS.brown, item = BRC.COLORS.white },
+  aux_arm = { desc = "lightblue", item = "yellow" },
+  orb = { desc = "green", item = "lightgreen" },
+  talisman = { desc = "green", item = "lightgreen" },
+  misc = { desc = "brown", item = "white" },
 } -- BRC.AlertColor (do not remove this comment)
 
 BRC.Emoji = {}
@@ -343,17 +341,17 @@ if BRC.Config.emojis then
 
   BRC.Emoji.SUCCESS = "✅"
 else
-  BRC.Emoji.REMIND_ID = BRC.text.color(BRC.COLORS.magenta, "?")
-  BRC.Emoji.EXCLAMATION = BRC.text.color(BRC.COLORS.magenta, "!")
-  BRC.Emoji.EXCLAMATION_2 = BRC.text.color(BRC.COLORS.lightmagenta, "!!")
+  BRC.Emoji.REMIND_ID = BRC.text.color("magenta", "?")
+  BRC.Emoji.EXCLAMATION = BRC.text.color("magenta", "!")
+  BRC.Emoji.EXCLAMATION_2 = BRC.text.color("lightmagenta", "!!")
 
-  BRC.Emoji.HP_BORDER = BRC.text.color(BRC.COLORS.white, "|")
-  BRC.Emoji.HP_FULL = BRC.text.color(BRC.COLORS.green, "+")
-  BRC.Emoji.HP_PART = BRC.text.color(BRC.COLORS.lightgrey, "+")
-  BRC.Emoji.HP_EMPTY = BRC.text.color(BRC.COLORS.darkgrey, "-")
+  BRC.Emoji.HP_BORDER = BRC.text.color("white", "|")
+  BRC.Emoji.HP_FULL = BRC.text.color("green", "+")
+  BRC.Emoji.HP_PART = BRC.text.color("lightgrey", "+")
+  BRC.Emoji.HP_EMPTY = BRC.text.color("darkgrey", "-")
 
-  BRC.Emoji.MP_BORDER = BRC.text.color(BRC.COLORS.white, "|")
-  BRC.Emoji.MP_FULL = BRC.text.color(BRC.COLORS.lightblue, "+")
-  BRC.Emoji.MP_PART = BRC.text.color(BRC.COLORS.lightgrey, "+")
-  BRC.Emoji.MP_EMPTY = BRC.text.color(BRC.COLORS.darkgrey, "-")
+  BRC.Emoji.MP_BORDER = BRC.text.color("white", "|")
+  BRC.Emoji.MP_FULL = BRC.text.color("lightblue", "+")
+  BRC.Emoji.MP_PART = BRC.text.color("lightgrey", "+")
+  BRC.Emoji.MP_EMPTY = BRC.text.color("darkgrey", "-")
 end
