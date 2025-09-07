@@ -14,14 +14,12 @@ ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
 -- Local functions
 local function add_exclusion(item_name)
   if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
-  local command = "autopickup_exceptions ^= " .. item_name
-  crawl.setopt(command)
+  crawl.setopt(string.format("autopickup_exceptions ^= %s", item_name))
 end
 
 local function remove_exclusion(item_name)
   util.remove(ed_dropped_items, item_name)
-  local command = "autopickup_exceptions -= " .. item_name
-  crawl.setopt(command)
+  crawl.setopt(string.format("autopickup_exceptions -= %s", item_name))
 end
 
 local function has_enchantable_weap_in_inv()
@@ -32,7 +30,6 @@ local function has_enchantable_weap_in_inv()
       and inv.plus < 9
       and (not inv.artefact or you.race() == "Mountain Dwarf")
     then
-      crawl.mpr(inv.name("qual"))
       return true
     end
   end
@@ -51,7 +48,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
+  local idx = text:find("(ring|amulet|wand) of", 1, true)
   if idx then return text:sub(idx, #text) end
 
   -- misc items
@@ -113,7 +110,7 @@ function f_exclude_dropped.c_message(text, channel)
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.name("qual"):find(item_name, 1, true) then
         if BRC.is.jewellery(inv) then break end
-        local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
+        local qty_str = string.format("ou drop %s %s", inv.quantity, item_name)
         if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
         return
       end

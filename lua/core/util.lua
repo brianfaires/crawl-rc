@@ -63,7 +63,7 @@ function BRC.text.clean_text(text, escape_chars)
   return cleaned
 end
 
--- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text[color]("Hello")
+-- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
   BRC.text[k] = function(text) return string.format("<%s>%s</%s>", v, text, v) end
 end
@@ -344,7 +344,7 @@ function BRC.dump.inv(char_dump, include_item_info)
     tokens[#tokens + 1] = "\n"
   end
 
-  BRC.dump.text(table.concat(tokens, ""), char_dump)
+  BRC.dump.text(table.concat(tokens), char_dump)
 end
 
 function BRC.dump.text(text, char_dump)
@@ -375,11 +375,11 @@ end
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
   if val < 0 then
-    return abbr .. stat_str
+    return string.format("%s%s", abbr, stat_str)
   elseif is_worn then
-    return abbr .. ":" .. stat_str
+    return string.format("%s:%s", abbr, stat_str)
   else
-    return abbr .. "+" .. stat_str
+    return string.format("%s+%s", abbr, stat_str)
   end
 end
 
@@ -586,11 +586,10 @@ function BRC.get.weapon_info(it, dmg_type)
 
   local dps = format_dmg(dmg / delay)
   local acc = it.accuracy + (it.plus or 0)
-  if acc >= 0 then acc = "+" .. acc end
+  if acc >= 0 then acc = string.format("+%s", acc) end
 
-  --This would be nice if it worked in all UIs
-  --local dps = "DPS:<w>" .. dps .. "</w> "
-  --return dps .. "(<red>" .. dmg .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
+  --TODO: This would be nice if it worked in all UIs
+  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
   return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
 end
 

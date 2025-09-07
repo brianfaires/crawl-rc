@@ -15,13 +15,14 @@ found_scroll_of_id = BRC.data.persist("found_scroll_of_id", false)
 
 -- Local constants / configuration
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
+if BRC.Emoji.REMIND_ID then IDENTIFY_MSG = BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .. BRC.Emoji.REMIND_ID end
 
 -- Local variables
 local do_remind_id_check
 
 -- Local functions
 local function alert_remind_identify()
-  BRC.mpr.stop(BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .. BRC.Emoji.REMIND_ID)
+  BRC.mpr.stop(IDENTIFY_MSG)
 end
 
 local function get_max_stack_size(class, skip_slot)

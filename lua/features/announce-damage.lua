@@ -15,30 +15,22 @@ ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 
 -- Local functions
-local function create_meter(perc, full, part, empty, border)
-  local decade = math.floor(perc / 10)
-  local full_count = math.floor(decade / 2)
-  local part_count = decade % 2
-  local empty_count = 5 - full_count - part_count
+local function create_meter(perc, emojis)
+  perc = math.max(0, math.min(1, perc))
+  local border = emojis.BORDER or ""
 
-  local tokens = {}
-  if border then tokens[1] = border end
-  for _ = 1, full_count do
-    tokens[#tokens + 1] = full
-  end
-  for _ = 1, part_count do
-    tokens[#tokens + 1] = part
-  end
-  for _ = 1, empty_count do
-    tokens[#tokens + 1] = empty
-  end
-  if border then tokens[#tokens + 1] = border end
-  return table.concat(tokens)
+  -- Calculate meter segments (5 segments total, each representing 20%)
+  local decade = math.floor(perc * 10)
+  local full_segments = string.rep(emojis.FULL, math.floor(decade / 2))
+  local part_segments = string.rep(emojis.PART, decade % 2)
+  local empty_segments = string.rep(emojis.EMPTY, 5 - full_segments - part_segments)
+
+  return table.concat({ border, full_segments, part_segments, empty_segments, border })
 end
 
 local function format_delta(delta)
   if delta > 0 then
-    return BRC.text.green("+" .. delta)
+    return BRC.text.green(string.format("+%s", delta))
   elseif delta < 0 then
     return BRC.text.red(delta)
   else
@@ -59,17 +51,17 @@ local function format_ratio(cur, max)
   else
     color = BRC.COLORS.green
   end
+
   return BRC.text.color(color, string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
-
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] =
-    create_meter(hp / mhp * 100, BRC.Emoji.HP_FULL, BRC.Emoji.HP_PART, BRC.Emoji.HP_EMPTY, BRC.Emoji.HP_BORDER)
+  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, BRC.Emoji.HP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.white(string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
+
   if mhp_delta ~= 0 then
     local text = string.format(" (%s max HP)", format_delta(mhp_delta))
     msg_tokens[#msg_tokens + 1] = BRC.text.lightgrey(text)
@@ -78,23 +70,26 @@ local function get_hp_message(hp_delta, mhp_delta)
   if not BRC.Config.announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)")
   end
+
   return table.concat(msg_tokens)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] =
-    create_meter(mp / mmp * 100, BRC.Emoji.MP_FULL, BRC.Emoji.MP_PART, BRC.Emoji.MP_EMPTY, BRC.Emoji.MP_BORDER)
+  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, BRC.Emoji.MP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
+
   if mmp_delta ~= 0 then
     local tok = string.format(" (%s max MP)", format_delta(mmp_delta))
     msg_tokens[#msg_tokens + 1] = BRC.text.cyan(tok)
   end
+
   if not BRC.Config.announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(" (Full MP)")
   end
+
   return table.concat(msg_tokens)
 end
 
@@ -117,7 +112,7 @@ function f_announce_damage.init()
 end
 
 function f_announce_damage.ready()
-  -- Update prev immediately, so we can return early below
+  -- Update prev state first, so we can safely return early below
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
   local is_startup = ad_prev.hp == 0
@@ -164,17 +159,15 @@ function f_announce_damage.ready()
   -- Add Damage-related warnings, when damage >= threshold
   if damage_taken >= mhp * BRC.Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    local summary_tokens = {}
     local is_force_more_msg = damage_taken >= (mhp * BRC.Config.dmg_fm_threshold)
+    local emoji, msg
     if is_force_more_msg then
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
-      summary_tokens[#summary_tokens + 1] = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
+      emoji = BRC.Emoji.EXCLAMATION_2
+      msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
     else
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
-      summary_tokens[#summary_tokens + 1] = BRC.text.magenta(" BIG DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
+      emoji = BRC.Emoji.EXCLAMATION
+      msg = BRC.text.magenta(" BIG DAMAGE ")
     end
-    BRC.mpr.que_optmore(is_force_more_msg, table.concat(summary_tokens))
+    BRC.mpr.que_optmore(is_force_more_msg, emoji .. msg .. emoji)
   end
 end

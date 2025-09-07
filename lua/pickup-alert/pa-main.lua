@@ -96,9 +96,11 @@ function f_pickup_alert.init()
 
   -- Check for duplicate autopickup creation (affects local only)
   if num_autopickup_funcs < #chk_force_autopickup then
-    crawl.mpr("Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)")
-    crawl.mpr("Expected: " .. num_autopickup_funcs .. " but got: " .. #chk_force_autopickup)
-    crawl.mpr("Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage.")
+    BRC.warn(table.concat({
+      "Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)\n",
+      "Expected: ", num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
+      "Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage."
+    }))
     return
   end
 
@@ -132,11 +134,11 @@ function f_pickup_alert.c_message(text, channel)
     if pause_pa_system and (text:find("ou stop ", 1, true) or text:find("ou finish ", 1, true)) then
       pause_pa_system = false
     elseif text:find("one exploring", 1, true) or text:find("artly explored", 1, true) then
-      local tokens = {}
+      local tokens = { "Recent alerts:" }
       for _, v in ipairs(pa_recent_alerts) do
-        tokens[#tokens + 1] = "\n  " .. v
+        tokens[#tokens + 1] = string.format("\n  %s", v)
       end
-      if #tokens > 0 then BRC.mpr.que("Recent alerts:" .. table.concat(tokens), BRC.COLORS.magenta) end
+      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COLORS.magenta) end
       pa_recent_alerts = {}
     end
   end
@@ -154,12 +156,14 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if it.is_weapon then
     alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, " (" .. BRC.get.weapon_info(it) .. ")")
+    local weapon_info = string.format(" (%s)", BRC.get.weapon_info(it))
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
   elseif BRC.is.body_armour(it) then
     alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
     local ac, ev = BRC.get.armour_info(it)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
+    local armour_info = string.format(" {%s, %s}", ac, ev)
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
   elseif BRC.is.armour(it) then
     alert_col = BRC.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
@@ -169,12 +173,12 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   else
     alert_col = BRC.AlertColor.misc
   end
+
   local tokens = {}
   tokens[1] = emoji and emoji or BRC.text.cyan("----")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, " " .. alert_type .. ": ")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.item, item_name .. " ")
+  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
+  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
   tokens[#tokens + 1] = tokens[1]
-
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
 
   f_pa_data.insert(pa_recent_alerts, it)

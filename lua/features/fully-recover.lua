@@ -25,7 +25,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - fr_start_turn
-  BRC.mpr.col("Fully recovered" .. string.format(" (%d turns)", turns), BRC.COLORS.lightgreen)
+  BRC.mpr.col(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
 
   fr_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
@@ -61,7 +61,7 @@ local function remove_statuses_from_config()
   end
   for _, s in ipairs(to_remove) do
     util.remove(BRC.Config.rest_off_statuses, s)
-    crawl.mpr("  Removed: " .. s)
+    crawl.error(string.format("  Removed: %s", s))
   end
 end
 
@@ -97,7 +97,7 @@ function f_fully_recover.init()
 
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt("macros += M " .. BRC.KEYS.explore .. " ===f_fully_recover.macro_explore")
+  crawl.setopt(string.format("macros += M %s ===f_fully_recover.macro_explore", BRC.KEYS.explore))
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -121,8 +121,8 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.mpr.col("Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", BRC.COLORS.lightred)
-      BRC.mpr.col("Adjusting BRC.Config.rest_off_statuses:", BRC.COLORS.lightred)
+      BRC.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
+      BRC.error("Adjusting BRC.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
     else

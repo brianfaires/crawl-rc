@@ -106,7 +106,7 @@ function WEAP_CACHE.serialize()
       if k ~= "basename" then tokens[#tokens + 1] = string.format("  %s: %s\n", k, tostring(v)) end
     end
   end
-  return table.concat(tokens, "")
+  return table.concat(tokens)
 end
 
 -- Local functions
@@ -174,9 +174,8 @@ local function alert_first_of_skill(it, silent)
 
     -- Update lowest # hands alerted, and alert
     lowest_num_hands_alerted[skill] = hands
-    local msg = "First " .. string.sub(skill, 1, -2) -- Trim the trailing "s"
-    if hands == 1 then msg = msg .. " (1-handed)" end
     if silent then return true end
+    local msg = string.format("First %s%s", string.sub(skill, 1, -2), hands == 1 and " (1-handed)" or "")
     return f_pickup_alert.do_alert(it, msg, BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
   end
   return false

@@ -26,15 +26,8 @@ local function alert_low_hp()
     below_hp_threshold = hp ~= mhp
   elseif hp <= BRC.Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = " Dropped below " .. (100 * BRC.Config.alert_low_hp_threshold) .. "% HP "
-    BRC.mpr.que_optmore(
-      true,
-      table.concat({
-        BRC.Emoji.EXCLAMATION,
-        BRC.text.magenta(low_hp_msg),
-        BRC.Emoji.EXCLAMATION,
-      })
-    )
+    local low_hp_msg = string.format(" Dropped below %s%% HP ", 100 * BRC.Config.alert_low_hp_threshold)
+    BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.Emoji.EXCLAMATION)
   end
 end
 
@@ -53,11 +46,11 @@ local function alert_spell_level_changes()
   local new_spell_levels = you.spell_levels()
   if new_spell_levels > ma_prev_spell_levels then
     local delta = new_spell_levels - ma_prev_spell_levels
-    local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
-    local avail = " (" .. new_spell_levels .. " available)"
+    local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
+    local avail = string.format(" (%s available)", new_spell_levels)
     crawl.mpr(BRC.text.lightcyan(msg) .. BRC.text.cyan(avail))
   elseif new_spell_levels < ma_prev_spell_levels then
-    BRC.mpr.col(new_spell_levels .. " spell levels remaining", BRC.COLORS.magenta)
+    BRC.mpr.col(string.format("%s spell levels remaining", new_spell_levels), BRC.COLORS.magenta)
   end
 
   ma_prev_spell_levels = new_spell_levels
@@ -83,9 +76,9 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    crawl.setopt("macros += M " .. BRC.KEYS.save_game .. " ===f_misc_alerts.macro_save_w_message")
+    crawl.setopt(string.format("macros += M %s ===f_misc_alerts.macro_save_w_message", BRC.KEYS.save_game))
     if ma_saved_msg and ma_saved_msg ~= "" then
-      crawl.mpr("MESSAGE: " .. ma_saved_msg)
+      crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
     end
   end

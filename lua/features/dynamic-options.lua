@@ -41,9 +41,9 @@ local late_xl_alerts_on
 local function set_dyn_fm(warnings, create)
   for _, v in ipairs(warnings) do
     if create then
-      crawl.setopt("force_more_message += " .. v)
+      crawl.setopt(string.format("force_more_message += %s", v))
     else
-      crawl.setopt("force_more_message -= " .. v)
+      crawl.setopt(string.format("force_more_message -= %s", v))
     end
   end
 end
@@ -123,10 +123,10 @@ local function set_skill_options()
   local zero_spellcasting = you.skill("Spellcasting") == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
-    crawl.setopt("explore_stop_pickup_ignore += " .. IGNORE_SPELLBOOKS_STRING)
+    crawl.setopt(string.format("explore_stop_pickup_ignore += %s", IGNORE_SPELLBOOKS_STRING))
   elseif ignoring_spellbooks and not zero_spellcasting then
     ignoring_spellbooks = false
-    crawl.setopt("explore_stop_pickup_ignore -= " .. IGNORE_SPELLBOOKS_STRING)
+    crawl.setopt(string.format("explore_stop_pickup_ignore -= %s", IGNORE_SPELLBOOKS_STRING))
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
@@ -136,10 +136,10 @@ local function set_skill_options()
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true
-      crawl.setopt("autopickup_exceptions += " .. SPELLCASTING_ITEMS_STRING)
+      crawl.setopt(string.format("autopickup_exceptions += %s", SPELLCASTING_ITEMS_STRING))
     elseif ignoring_spellcasting and not skip_items then
       ignoring_spellcasting = false
-      crawl.setopt("autopickup_exceptions -= " .. SPELLCASTING_ITEMS_STRING)
+      crawl.setopt(string.format("autopickup_exceptions -= %s", SPELLCASTING_ITEMS_STRING))
     end
   end
 end

@@ -330,13 +330,8 @@ if BRC.Config.emojis then
   BRC.Emoji.EXCLAMATION = "❗"
   BRC.Emoji.EXCLAMATION_2 = "‼️"
 
-  BRC.Emoji.HP_FULL = "❤️"
-  BRC.Emoji.HP_PART = "❤️‍🩹"
-  BRC.Emoji.HP_EMPTY = "🤍"
-
-  BRC.Emoji.MP_FULL = "🟦"
-  BRC.Emoji.MP_PART = "🔹"
-  BRC.Emoji.MP_EMPTY = "➖"
+  BRC.Emoji.HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" }
+  BRC.Emoji.MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" }
 
   BRC.Emoji.SUCCESS = "✅"
 else
@@ -344,13 +339,16 @@ else
   BRC.Emoji.EXCLAMATION = "<magenta>!</magenta>"
   BRC.Emoji.EXCLAMATION_2 = "<lightmagenta>!!</lightmagenta>"
 
-  BRC.Emoji.HP_BORDER = "<white>|</white>"
-  BRC.Emoji.HP_FULL = "<green>+</green>"
-  BRC.Emoji.HP_PART = "<lightgrey>+</lightgrey>"
-  BRC.Emoji.HP_EMPTY = "<darkgrey>-</darkgrey>"
-
-  BRC.Emoji.MP_BORDER = "<white>|</white>"
-  BRC.Emoji.MP_FULL = "<lightblue>+</lightblue>"
-  BRC.Emoji.MP_PART = "<lightgrey>+</lightgrey>"
-  BRC.Emoji.MP_EMPTY = "<darkgrey>-</darkgrey>"
+  BRC.Emoji.HP_METER = {
+    BORDER = "<white>|</white>",
+    FULL = "<green>+</green>",
+    PART = "<lightgrey>+</lightgrey>",
+    EMPTY = "<darkgrey>-</darkgrey>",
+  } -- BRC.Emoji.HP_METER (do not remove this comment)
+  BRC.Emoji.MP_METER = {
+    BORDER = "<white>|</white>",
+    FULL = "<lightblue>+</lightblue>",
+    PART = "<lightgrey>+</lightgrey>",
+    EMPTY = "<darkgrey>-</darkgrey>",
+  } -- BRC.Emoji.MP_METER (do not remove this comment)
 end

@@ -23,8 +23,8 @@ local function inscribe_armour_stats(it)
     if ev and ev ~= "" then new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev) end
   else
     new_insc = primary
-    if ev and ev ~= "" then new_insc = new_insc .. ", " .. ev end
-    if it.inscription and it.inscription ~= "" then new_insc = new_insc .. "; " .. it.inscription end
+    if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
+    if it.inscription and it.inscription ~= "" then new_insc = string.format("%s; %s", new_insc, it.inscription) end
   end
 
   it.inscribe(new_insc, false)

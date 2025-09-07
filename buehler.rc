@@ -335,13 +335,8 @@ if BRC.Config.emojis then
   BRC.Emoji.EXCLAMATION = "❗"
   BRC.Emoji.EXCLAMATION_2 = "‼️"
 
-  BRC.Emoji.HP_FULL = "❤️"
-  BRC.Emoji.HP_PART = "❤️‍🩹"
-  BRC.Emoji.HP_EMPTY = "🤍"
-
-  BRC.Emoji.MP_FULL = "🟦"
-  BRC.Emoji.MP_PART = "🔹"
-  BRC.Emoji.MP_EMPTY = "➖"
+  BRC.Emoji.HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" }
+  BRC.Emoji.MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" }
 
   BRC.Emoji.SUCCESS = "✅"
 else
@@ -349,15 +344,18 @@ else
   BRC.Emoji.EXCLAMATION = "<magenta>!</magenta>"
   BRC.Emoji.EXCLAMATION_2 = "<lightmagenta>!!</lightmagenta>"
 
-  BRC.Emoji.HP_BORDER = "<white>|</white>"
-  BRC.Emoji.HP_FULL = "<green>+</green>"
-  BRC.Emoji.HP_PART = "<lightgrey>+</lightgrey>"
-  BRC.Emoji.HP_EMPTY = "<darkgrey>-</darkgrey>"
-
-  BRC.Emoji.MP_BORDER = "<white>|</white>"
-  BRC.Emoji.MP_FULL = "<lightblue>+</lightblue>"
-  BRC.Emoji.MP_PART = "<lightgrey>+</lightgrey>"
-  BRC.Emoji.MP_EMPTY = "<darkgrey>-</darkgrey>"
+  BRC.Emoji.HP_METER = {
+    BORDER = "<white>|</white>",
+    FULL = "<green>+</green>",
+    PART = "<lightgrey>+</lightgrey>",
+    EMPTY = "<darkgrey>-</darkgrey>",
+  } -- BRC.Emoji.HP_METER (do not remove this comment)
+  BRC.Emoji.MP_METER = {
+    BORDER = "<white>|</white>",
+    FULL = "<lightblue>+</lightblue>",
+    PART = "<lightgrey>+</lightgrey>",
+    EMPTY = "<darkgrey>-</darkgrey>",
+  } -- BRC.Emoji.MP_METER (do not remove this comment)
 end
 
 }
@@ -1681,7 +1679,6 @@ msc += $boring:A root lunges up near you
 msc += $boring:Maurice looks sneaky
 msc += $boring:Suddenly you are surrounded with a pale green light
 msc += $boring:really hit the spot
-msc += $boring:Mmmm .. . Yummy
 msc += $boring:Grum bares his teeth
 msc += $boring:Grum sniffs the air and quickly glances around
 msc += $boring:The shadow imp grinds its teeth
@@ -1733,7 +1730,7 @@ msc += $boring:bristles in rage as it notices you
 msc += $boring:You feel forgetful for a moment
 msc += $boring:The briar patch crumbles away
 msc += $boring:You feel momentarily lethargic
-msc += $boring: .. .but nothing happens
+msc += $boring:but nothing happens
 msc += $boring:Wisps of smoke drift from your
 msc += $boring:You smell salt
 msc += $boring:tries to hide in the shadows
@@ -2248,7 +2245,7 @@ msc ^= $verypositive:rots away and dies
 msc ^= $verypositive:You.*and break free
 msc += $verypositive:The web tears apart
 msc += $verypositive:You disentangle yourself
-msc += $verypositive:Saving game .. . please wait
+msc += $verypositive:Saving game
 msc += $verypositive:You finish memorising
 msc += $verypositive:You may choose your destination
 msc += $verypositive:You feel yourself speed up
@@ -2743,7 +2740,7 @@ msc ^= $takesaction:begins absorbing vital energies
 msc ^= $takesaction:calls forth a grand avatar
 msc ^= $takesaction:exhales a fierce blast of wind
 msc ^= $takesaction:curls into a ball and starts rolling
-msc ^= $takesaction:You open the lid .. .
+msc ^= $takesaction:You open the lid
 msc ^= $takesaction:jumps down from its now dead mount
 msc ^= $takesaction:swoops through the air toward you
 msc ^= $takesaction:jumping spider pounces on
@@ -3849,10 +3846,10 @@ local function typeof(value)
   end
 end
 
-local function get_pretty_string(value)
+local function to_formatted_string(value)
   local type = typeof(value)
   if type == TYPES.string then
-    return '"' .. value.gsub('"', "") .. '"'
+    return string.format('"%s"', value.gsub('"', ""))
   elseif type == TYPES.number then
     return tostring(value)
   elseif type == TYPES.boolean then
@@ -3860,18 +3857,18 @@ local function get_pretty_string(value)
   elseif type == TYPES.list then
     local tokens = {}
     for _, v in ipairs(value) do
-      tokens[#tokens + 1] = get_pretty_string(v)
+      tokens[#tokens + 1] = to_formatted_string(v)
     end
-    return "{" .. table.concat(tokens, ", ") .. "}"
+    return string.format("{ %s }", table.concat(tokens, ", "))
   elseif type == TYPES.dict then
     local tokens = {}
     for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"] = %s', k, get_pretty_string(v))
+      tokens[#tokens + 1] = string.format('["%s"] = %s', k, to_formatted_string(v))
     end
-    return "{" .. table.concat(tokens, ", ") .. "}"
+    return string.format("{ %s }", table.concat(tokens, ", "))
   else
     local str = tostring(value) or "nil"
-    BRC.error("Unknown data type for value (" .. str .. "): " .. type)
+    BRC.error(string.format("Unknown data type for value (%s): %s", str, type))
     return nil
   end
 end
@@ -3890,7 +3887,7 @@ function BRC.data.persist(name, default_value)
   table.insert(chk_lua_save, function()
     local var_type = typeof(_G[name])
     if var_type == TYPES.unknown then return "" end
-    return name .. " = " .. get_pretty_string(_G[name]) .. BRC.KEYS.LF
+    return table.concat({name, " = ", to_formatted_string(_G[name]), BRC.KEYS.LF})
   end)
 
   local var_type = typeof(_G[name])
@@ -3906,31 +3903,12 @@ end
 function BRC.data.dump(char_dump)
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persistent_table_names) do
-    tokens[#tokens + 1] = name
-    tokens[#tokens + 1] = ":\n"
-    if typeof(_G[name]) == TYPES.list then
-      for _, item in ipairs(_G[name]) do
-        tokens[#tokens + 1] = "  "
-        tokens[#tokens + 1] = get_pretty_string(item)
-        tokens[#tokens + 1] = "\n"
-      end
-    else
-      for k, v in pairs(_G[name]) do
-        tokens[#tokens + 1] = "  "
-        tokens[#tokens + 1] = tostring(k)
-        tokens[#tokens + 1] = " = "
-        tokens[#tokens + 1] = get_pretty_string(v)
-        tokens[#tokens + 1] = "\n"
-      end
-    end
+    tokens[#tokens + 1] = string.format("%s:\n%s\n", name, to_formatted_string(_G[name]))
   end
 
   tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
   for _, name in ipairs(_persistent_var_names) do
-    tokens[#tokens + 1] = name
-    tokens[#tokens + 1] = " = "
-    tokens[#tokens + 1] = tostring(_G[name])
-    tokens[#tokens + 1] = "\n"
+    tokens[#tokens + 1] = string.format("%s = %s\n", name, to_formatted_string(_G[name]))
   end
 
   BRC.dump.text(table.concat(tokens), char_dump)
@@ -3972,13 +3950,13 @@ function BRC.data.verify_reinit()
   -- Track values that shouldn't change, the turn, and a flag to confirm all data reloaded
   -- Default successful_data_reload to false, to confirm the data reload set it to true
   for k, v in pairs(GAME_CHANGE_MONITORS) do
-    BRC.data.persist("prev_" .. k, v)
+    BRC.data.persist(string.format("prev_%s", k), v)
   end
   BRC.data.persist("successful_data_reload", false)
 
   if you.turns() > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do
-      local prev = _G["prev_" .. k]
+      local prev = _G[string.format("prev_%s", k)]
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
@@ -3988,8 +3966,7 @@ function BRC.data.verify_reinit()
 
     if not _G.successful_data_reload then
       failed_reinit = true
-      local fail_message = string.format("Failed to load persistent data for buehler.rc v%s!", BRC.VERSION)
-      BRC.mpr.col("\n" .. fail_message, BRC.COLORS.lightred)
+      BRC.error(string.format("\nFailed to load persistent data for buehler.rc v%s!", BRC.VERSION))
       BRC.mpr.col("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
     end
 
@@ -3997,7 +3974,7 @@ function BRC.data.verify_reinit()
   end
 
   for k, v in pairs(GAME_CHANGE_MONITORS) do
-    _G["prev_" .. k] = v
+    _G[string.format("prev_%s", k)] = v
   end
   _G.successful_data_reload = true
 
@@ -4076,7 +4053,7 @@ function BRC.text.clean_text(text, escape_chars)
   return cleaned
 end
 
--- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text[color]("Hello")
+-- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
   BRC.text[k] = function(text) return string.format("<%s>%s</%s>", v, text, v) end
 end
@@ -4357,7 +4334,7 @@ function BRC.dump.inv(char_dump, include_item_info)
     tokens[#tokens + 1] = "\n"
   end
 
-  BRC.dump.text(table.concat(tokens, ""), char_dump)
+  BRC.dump.text(table.concat(tokens), char_dump)
 end
 
 function BRC.dump.text(text, char_dump)
@@ -4388,11 +4365,11 @@ end
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
   if val < 0 then
-    return abbr .. stat_str
+    return string.format("%s%s", abbr, stat_str)
   elseif is_worn then
-    return abbr .. ":" .. stat_str
+    return string.format("%s:%s", abbr, stat_str)
   else
-    return abbr .. "+" .. stat_str
+    return string.format("%s+%s", abbr, stat_str)
   end
 end
 
@@ -4599,11 +4576,10 @@ function BRC.get.weapon_info(it, dmg_type)
 
   local dps = format_dmg(dmg / delay)
   local acc = it.accuracy + (it.plus or 0)
-  if acc >= 0 then acc = "+" .. acc end
+  if acc >= 0 then acc = string.format("+%s", acc) end
 
-  --This would be nice if it worked in all UIs
-  --local dps = "DPS:<w>" .. dps .. "</w> "
-  --return dps .. "(<red>" .. dmg .. "</red>/<blue>" .. delay_str .. "</blue>), Acc<w>" .. acc .. "</w>"
+  --TODO: This would be nice if it worked in all UIs
+  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
   return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
 end
 
@@ -4857,8 +4833,8 @@ local function log_message(message, context, color)
   message = message or "Unknown message"
   color = color or MSG_COLORS.info
   local msg = string.format("[BRC] %s", message)
-  if context then msg = msg .. string.format(" (Context: %s)", context) end
-  crawl.mpr(table.concat({ "<", color, ">", msg, "</", color, ">" }))
+  if context then msg = string.format("%s (Context: %s)", msg, context) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
 end
 
 -- Prevent feature errors from crashing the entire system
@@ -4866,7 +4842,7 @@ local function safe_call(feature_name, func, ...)
   if not func then return end
 
   local success, result = pcall(func, ...)
-  if not success then BRC.error("Function call failed for:" .. feature_name, result) end
+  if not success then BRC.error(string.format("Function call failed for: %s", feature_name), result) end
 end
 
 -- Hook management
@@ -4908,7 +4884,7 @@ function BRC.init()
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
   local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
-  crawl.mpr("\n" .. success_emoji .. BRC.text.lightgreen(success_text) .. success_emoji)
+  crawl.mpr(table.concat({"\n", success_emoji, BRC.text.lightgreen(success_text), success_emoji}))
 
   prev_turn = -1
   BRC.ready()
@@ -5097,30 +5073,22 @@ ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 
 -- Local functions
-local function create_meter(perc, full, part, empty, border)
-  local decade = math.floor(perc / 10)
-  local full_count = math.floor(decade / 2)
-  local part_count = decade % 2
-  local empty_count = 5 - full_count - part_count
+local function create_meter(perc, emojis)
+  perc = math.max(0, math.min(1, perc))
+  local border = emojis.BORDER or ""
 
-  local tokens = {}
-  if border then tokens[1] = border end
-  for _ = 1, full_count do
-    tokens[#tokens + 1] = full
-  end
-  for _ = 1, part_count do
-    tokens[#tokens + 1] = part
-  end
-  for _ = 1, empty_count do
-    tokens[#tokens + 1] = empty
-  end
-  if border then tokens[#tokens + 1] = border end
-  return table.concat(tokens)
+  -- Calculate meter segments (5 segments total, each representing 20%)
+  local decade = math.floor(perc * 10)
+  local full_segments = string.rep(emojis.FULL, math.floor(decade / 2))
+  local part_segments = string.rep(emojis.PART, decade % 2)
+  local empty_segments = string.rep(emojis.EMPTY, 5 - full_segments - part_segments)
+
+  return table.concat({ border, full_segments, part_segments, empty_segments, border })
 end
 
 local function format_delta(delta)
   if delta > 0 then
-    return BRC.text.green("+" .. delta)
+    return BRC.text.green(string.format("+%s", delta))
   elseif delta < 0 then
     return BRC.text.red(delta)
   else
@@ -5141,17 +5109,17 @@ local function format_ratio(cur, max)
   else
     color = BRC.COLORS.green
   end
+
   return BRC.text.color(color, string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
-
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] =
-    create_meter(hp / mhp * 100, BRC.Emoji.HP_FULL, BRC.Emoji.HP_PART, BRC.Emoji.HP_EMPTY, BRC.Emoji.HP_BORDER)
+  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, BRC.Emoji.HP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.white(string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
+
   if mhp_delta ~= 0 then
     local text = string.format(" (%s max HP)", format_delta(mhp_delta))
     msg_tokens[#msg_tokens + 1] = BRC.text.lightgrey(text)
@@ -5160,23 +5128,26 @@ local function get_hp_message(hp_delta, mhp_delta)
   if not BRC.Config.announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)")
   end
+
   return table.concat(msg_tokens)
 end
 
 local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] =
-    create_meter(mp / mmp * 100, BRC.Emoji.MP_FULL, BRC.Emoji.MP_PART, BRC.Emoji.MP_EMPTY, BRC.Emoji.MP_BORDER)
+  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, BRC.Emoji.MP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
+
   if mmp_delta ~= 0 then
     local tok = string.format(" (%s max MP)", format_delta(mmp_delta))
     msg_tokens[#msg_tokens + 1] = BRC.text.cyan(tok)
   end
+
   if not BRC.Config.announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(" (Full MP)")
   end
+
   return table.concat(msg_tokens)
 end
 
@@ -5199,7 +5170,7 @@ function f_announce_damage.init()
 end
 
 function f_announce_damage.ready()
-  -- Update prev immediately, so we can return early below
+  -- Update prev state first, so we can safely return early below
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
   local is_startup = ad_prev.hp == 0
@@ -5246,18 +5217,16 @@ function f_announce_damage.ready()
   -- Add Damage-related warnings, when damage >= threshold
   if damage_taken >= mhp * BRC.Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    local summary_tokens = {}
     local is_force_more_msg = damage_taken >= (mhp * BRC.Config.dmg_fm_threshold)
+    local emoji, msg
     if is_force_more_msg then
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
-      summary_tokens[#summary_tokens + 1] = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION_2
+      emoji = BRC.Emoji.EXCLAMATION_2
+      msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
     else
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
-      summary_tokens[#summary_tokens + 1] = BRC.text.magenta(" BIG DAMAGE ")
-      summary_tokens[#summary_tokens + 1] = BRC.Emoji.EXCLAMATION
+      emoji = BRC.Emoji.EXCLAMATION
+      msg = BRC.text.magenta(" BIG DAMAGE ")
     end
-    BRC.mpr.que_optmore(is_force_more_msg, table.concat(summary_tokens))
+    BRC.mpr.que_optmore(is_force_more_msg, emoji .. msg .. emoji)
   end
 end
 
@@ -5332,8 +5301,7 @@ local function colorize_subtext(text, s, tag)
     if prev == "!" or prev == ">" then return text end
   end
 
-  local retval = text:gsub("(" .. s .. ")", "<" .. tag .. ">%1</" .. tag .. ">")
-  return retval
+  return text:gsub(string.format("(%s)", s), string.format("<%s>%%1</%s>", tag, tag))
 end
 
 -- Hook functions
@@ -5395,15 +5363,14 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if BRC.Config.msg_on_inscribe then
-    local msg = "(You can drop " .. it.slot .. " - " .. it.name() .. ")"
-    BRC.mpr.col(msg, BRC.COLORS.cyan)
+    BRC.mpr.col(string.format("(You can drop %s - %s)", it.slot, it.name()), BRC.COLORS.cyan)
   end
 end
 
 -- Hook functions
 function f_drop_inferior.init()
   if not BRC.Config.drop_inferior then return end
-  crawl.setopt("drop_filter += " .. DROP_KEY)
+  crawl.setopt(string.format("drop_filter += %s", DROP_KEY))
 end
 
 function f_drop_inferior.c_assign_invletter(it)
@@ -5483,9 +5450,9 @@ local late_xl_alerts_on
 local function set_dyn_fm(warnings, create)
   for _, v in ipairs(warnings) do
     if create then
-      crawl.setopt("force_more_message += " .. v)
+      crawl.setopt(string.format("force_more_message += %s", v))
     else
-      crawl.setopt("force_more_message -= " .. v)
+      crawl.setopt(string.format("force_more_message -= %s", v))
     end
   end
 end
@@ -5565,10 +5532,10 @@ local function set_skill_options()
   local zero_spellcasting = you.skill("Spellcasting") == 0
   if not ignoring_spellbooks and zero_spellcasting then
     ignoring_spellbooks = true
-    crawl.setopt("explore_stop_pickup_ignore += " .. IGNORE_SPELLBOOKS_STRING)
+    crawl.setopt(string.format("explore_stop_pickup_ignore += %s", IGNORE_SPELLBOOKS_STRING))
   elseif ignoring_spellbooks and not zero_spellcasting then
     ignoring_spellbooks = false
-    crawl.setopt("explore_stop_pickup_ignore -= " .. IGNORE_SPELLBOOKS_STRING)
+    crawl.setopt(string.format("explore_stop_pickup_ignore -= %s", IGNORE_SPELLBOOKS_STRING))
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
@@ -5578,10 +5545,10 @@ local function set_skill_options()
     local skip_items = zero_spellcasting and heavy_arm
     if not ignoring_spellcasting and skip_items then
       ignoring_spellcasting = true
-      crawl.setopt("autopickup_exceptions += " .. SPELLCASTING_ITEMS_STRING)
+      crawl.setopt(string.format("autopickup_exceptions += %s", SPELLCASTING_ITEMS_STRING))
     elseif ignoring_spellcasting and not skip_items then
       ignoring_spellcasting = false
-      crawl.setopt("autopickup_exceptions -= " .. SPELLCASTING_ITEMS_STRING)
+      crawl.setopt(string.format("autopickup_exceptions -= %s", SPELLCASTING_ITEMS_STRING))
     end
   end
 end
@@ -5629,14 +5596,12 @@ ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
 -- Local functions
 local function add_exclusion(item_name)
   if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
-  local command = "autopickup_exceptions ^= " .. item_name
-  crawl.setopt(command)
+  crawl.setopt(string.format("autopickup_exceptions ^= %s", item_name))
 end
 
 local function remove_exclusion(item_name)
   util.remove(ed_dropped_items, item_name)
-  local command = "autopickup_exceptions -= " .. item_name
-  crawl.setopt(command)
+  crawl.setopt(string.format("autopickup_exceptions -= %s", item_name))
 end
 
 local function has_enchantable_weap_in_inv()
@@ -5647,7 +5612,6 @@ local function has_enchantable_weap_in_inv()
       and inv.plus < 9
       and (not inv.artefact or you.race() == "Mountain Dwarf")
     then
-      crawl.mpr(inv.name("qual"))
       return true
     end
   end
@@ -5666,7 +5630,7 @@ local function get_excludable_name(text, for_exclusion)
   text = util.trim(text)
 
   -- jewellery and wands
-  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
+  local idx = text:find("(ring|amulet|wand) of", 1, true)
   if idx then return text:sub(idx, #text) end
 
   -- misc items
@@ -5728,7 +5692,7 @@ function f_exclude_dropped.c_message(text, channel)
     for inv in iter.invent_iterator:new(items.inventory()) do
       if inv.name("qual"):find(item_name, 1, true) then
         if BRC.is.jewellery(inv) then break end
-        local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
+        local qty_str = string.format("ou drop %s %s", inv.quantity, item_name)
         if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
         return
       end
@@ -5774,7 +5738,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - fr_start_turn
-  BRC.mpr.col("Fully recovered" .. string.format(" (%d turns)", turns), BRC.COLORS.lightgreen)
+  BRC.mpr.col(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
 
   fr_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")
@@ -5810,7 +5774,7 @@ local function remove_statuses_from_config()
   end
   for _, s in ipairs(to_remove) do
     util.remove(BRC.Config.rest_off_statuses, s)
-    crawl.mpr("  Removed: " .. s)
+    crawl.error(string.format("  Removed: %s", s))
   end
 end
 
@@ -5846,7 +5810,7 @@ function f_fully_recover.init()
 
   crawl.setopt("runrest_ignore_message += recovery:.*")
   crawl.setopt("runrest_ignore_message += duration:.*")
-  crawl.setopt("macros += M " .. BRC.KEYS.explore .. " ===f_fully_recover.macro_explore")
+  crawl.setopt(string.format("macros += M %s ===f_fully_recover.macro_explore", BRC.KEYS.explore))
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -5870,8 +5834,8 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.mpr.col("Fully recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", BRC.COLORS.lightred)
-      BRC.mpr.col("Adjusting BRC.Config.rest_off_statuses:", BRC.COLORS.lightred)
+      BRC.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
+      BRC.error("Adjusting BRC.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
     else
@@ -6025,227 +5989,200 @@ local FM_PACK_NO_CREATE = {
 
 local FM_PATTERNS = {
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
-  { name = "30hp", cond = "hp", cutoff = 30, pattern = "hound|gnoll" },
+  { name = "30hp", cond = "hp", cutoff = 30, pattern = table.concat({"hound", "gnoll"}, "|") },
 
   -- Monsters dangerous until a certain point
-  { name = "xl_7", cond = "xl", cutoff = 7, pattern = "orc wizard" },
-  { name = "xl_12", cond = "xl", cutoff = 12, pattern = "hydra|bloated husk" },
+  { name = "xl_7", cond = "xl", cutoff = 7, pattern = table.concat({"orc wizard"}, "|") },
+  { name = "xl_12", cond = "xl", cutoff = 12, pattern = table.concat({"hydra", "bloated husk"}, "|") },
 
   -- Monsters that can hit for ~50% of hp from range with unbranded attacks
-  { name = "40hp", cond = "hp", cutoff = 40, pattern = "orc priest" },
-  {
-    name = "50hp",
+  { name = "40hp", cond = "hp", cutoff = 40, pattern = table.concat({"orc priest"}, "|") },
+  { name = "50hp",
     cond = "hp",
     cutoff = 50,
-    pattern = "orc high priest|manticore",
+    pattern = table.concat({"orc high priest", "manticore"}, "|"),
   },
   {
     name = "60hp",
     cond = "hp",
     cutoff = 60,
-    pattern = "yaktaur(?! captain)|cyclops|centaur(?! warrior)",
+    pattern = table.concat({"yaktaur(?! captain)", "cyclops", "centaur(?! warrior)"}, "|"),
   },
-  { name = "70hp_melai", cond = "hp", cutoff = 70, pattern = "meliai" },
-  { name = "80hp", cond = "hp", cutoff = 80, pattern = "gargoyle" },
-  {
-    name = "90hp",
+  { name = "70hp_melai", cond = "hp", cutoff = 70, pattern = table.concat({"meliai"}, "|") },
+  { name = "80hp", cond = "hp", cutoff = 80, pattern = table.concat({"gargoyle"}, "|") },
+  { name = "90hp",
     cond = "hp",
     cutoff = 90,
-    pattern = "deep elf archer|tengu conjurer",
+    pattern = table.concat({"deep elf archer", "tengu conjurer"}, "|"),
   },
-  {
-    name = "110hp",
+  { name = "110hp",
     cond = "hp",
     cutoff = 110,
-    pattern = "centaur warrior|yaktaur captain|hellion|eye of devastation|sun moth"
-      .. "deep elf high priest|deep troll earth mage|stone giant|cacodemon",
+    pattern = table.concat({"centaur warrior", "yaktaur captain", "hellion", "eye of devastation",
+    "sun moth", "deep elf high priest", "deep troll earth mage", "stone giant", "cacodemon"}, "|")
   },
-  {
-    name = "120hp",
+  { name = "120hp",
     cond = "hp",
     cutoff = 120,
-    pattern = "quicksilver (dragon|elemental)|magenta draconian|thorn hunter",
+    pattern = table.concat({"quicksilver (dragon|elemental)", "magenta draconian", "thorn hunter"}, "|"),
   },
-  {
-    name = "160hp",
+  { name = "160hp",
     cond = "hp",
     cutoff = 160,
-    pattern = "brimstone fiend|deep elf sorcerer" .. "hell sentinal|war gargoyle|draconian (knight|scorcher)",
+    pattern = table.concat({"brimstone fiend", "deep elf sorcererhell sentinal", "war gargoyle",
+    "draconian (knight|scorcher)"}, "|"),
   },
-  {
-    name = "200hp",
+  { name = "200hp",
     cond = "hp",
     cutoff = 200,
-    pattern = "(draconian|deep elf) annihilator|iron (dragon|elemental)",
+    pattern = table.concat({"(draconian|deep elf) annihilator", "iron (dragon|elemental)"}, "|"),
   },
 
   -- Monsters that can crowd-control you without sufficient willpower
   -- Cutoff ~10% for most spells; lower for more significant spells like banish
-  {
-    name = "willpower2",
+  { name = "willpower2",
     cond = "will",
     cutoff = 2,
-    pattern = "basilisk|naga ritualist|vampire(?! (bat|mage|mosquito))|sphinx marauder",
+    pattern = table.concat({"basilisk", "naga ritualist", "vampire(?! (bat|mage|mosquito))", "sphinx marauder"}, "|"),
   },
-  {
-    name = "willpower3",
+  { name = "willpower3",
     cond = "will",
     cutoff = 3,
-    pattern = "deep elf (demonologist|sorcerer|archer)|occultist|"
-      .. "merfolk siren|fenstrider witch|cacodemon|"
-      .. "imperial myrmidon|guardian sphinx|nagaraja|draconian shifter|"
-      .. "glowing orange brain|orc sorcerer|"
-      .. "ogre mage|satyr|vault sentinel|iron elemental|"
-      .. "death knight|vampire knight",
+    pattern = table.concat({
+      "deep elf (demonologist|sorcerer|archer)", "occultist", "merfolk siren", "fenstrider witch",
+      "cacodemon", "imperial myrmidon", "guardian sphinx", "nagaraja", "draconian shifter", "glowing orange brain",
+      "orc sorcerer", "ogre mage", "satyr", "vault sentinel", "iron elemental", "death knight", "vampire knight"}, "|"),
   },
-  {
-    name = "willpower3_great_orb_of_eyes",
+  { name = "willpower3_great_orb_of_eyes",
     cond = "will",
     cutoff = 3,
-    pattern = "great orb of eyes",
+    pattern = table.concat({"great orb of eyes"}, "|"),
   },
-  {
-    name = "willpower3_golden_eye",
+  { name = "willpower3_golden_eye",
     cond = "will",
     cutoff = 3,
-    pattern = "golden eye",
+    pattern = table.concat({"golden eye"}, "|"),
   },
-  {
-    name = "willpower4",
+  { name = "willpower4",
     cond = "will",
     cutoff = 4,
-    pattern = "merfolk avatar|tainted leviathan|nargun",
+    pattern = table.concat({"merfolk avatar", "tainted leviathan", "nargun"}, "|"),
   },
 
   -- Brain feed with low int
-  {
-    name = "brainfeed",
+  { name = "brainfeed",
     cond = "int",
     cutoff = 6,
-    pattern = "glowing orange brain|neqoxec",
+    pattern = table.concat({"glowing orange brain", "neqoxec"}, "|"),
   },
 
   -- Alert if no resist and HP below cutoff
-  { name = "pois_30", cond = "pois", cutoff = 30, pattern = "adder" },
-  {
-    name = "pois_80",
+  { name = "pois_30", cond = "pois", cutoff = 30, pattern = table.concat({"adder"}, "|") },
+  { name = "pois_80",
     cond = "pois",
     cutoff = 80,
-    pattern = "golden dragon|green draconian|swamp dragon",
+    pattern = table.concat({"golden dragon", "green draconian", "swamp dragon"}, "|"),
   },
-  {
-    name = "pois_120",
+  { name = "pois_120",
     cond = "pois",
     cutoff = 120,
-    pattern = "green death|naga mage|nagaraja|fenstrider witch",
+    pattern = table.concat({"green death", "naga mage", "nagaraja", "fenstrider witch"}, "|"),
   },
-  { name = "pois_140", cond = "pois", cutoff = 140, pattern = "tengu reaver" },
+  { name = "pois_140", cond = "pois", cutoff = 140, pattern = table.concat({"tengu reaver"}, "|") },
 
-  { name = "elec_40", cond = "elec", cutoff = 40, pattern = "electric eel" },
-  {
-    name = "elec_80",
+  { name = "elec_40", cond = "elec", cutoff = 40, pattern = table.concat({"electric eel"}, "|") },
+  { name = "elec_80",
     cond = "elec",
     cutoff = 80,
-    pattern = "shock serpent|raiju|spark wasp",
+    pattern = table.concat({"shock serpent", "raiju", "spark wasp"}, "|"),
   },
-  {
-    name = "elec_120",
+  { name = "elec_120",
     cond = "elec",
     cutoff = 120,
-    pattern = "black draconian|blizzard demon|deep elf zephyrmancer|" .. "storm dragon|tengu conjurer",
+    pattern = table.concat({"black draconian", "blizzard demon", "deep elf zephyrmancer",
+    "storm dragon", "tengu conjurer"}, "|"),
   },
-  {
-    name = "elec_140",
+  { name = "elec_140",
     cond = "elec",
     cutoff = 140,
-    pattern = "electric golem|titan|servants? of whisper|spriggan air mage|" .. "ball lightning|tengu reaver",
+    pattern = table.concat({"electric golem", "titan", "servants? of whisper", "spriggan air mage",
+    "ball lightning", "tengu reaver"}, "|"),
   },
 
-  { name = "corr_60", cond = "corr", cutoff = 60, pattern = "acid dragon" },
-  {
-    name = "corr_140",
+  { name = "corr_60", cond = "corr", cutoff = 60, pattern = table.concat({"acid dragon"}, "|") },
+  { name = "corr_140",
     cond = "corr",
     cutoff = 140,
-    pattern = "tengu reaver|entropy weaver|demonspawn corrupter|moon troll",
+    pattern = table.concat({"tengu reaver", "entropy weaver", "demonspawn corrupter", "moon troll"}, "|"),
   },
 
-  {
-    name = "fire_60",
+  { name = "fire_60",
     cond = "fire",
     cutoff = 60,
-    pattern = "steam dragon|lindwurm|fire crab|lava snake",
+    pattern = table.concat({"steam dragon", "lindwurm", "fire crab", "lava snake"}, "|"),
   },
-  {
-    name = "fire_100",
+  { name = "fire_100",
     cond = "fire",
     cutoff = 100,
-    pattern = "efreet|deep elf pyromancer|smoke demon|sun moth",
+    pattern = table.concat({"efreet", "deep elf pyromancer", "smoke demon", "sun moth"}, "|"),
   },
-  {
-    name = "fire_120",
+  { name = "fire_120",
     cond = "fire",
     cutoff = 120,
-    pattern = "orc sorcerer|hell hound|demonspawn blood saint|red draconian|"
-      .. "ogre mage|molten gargoyle|hell knight",
+    pattern = table.concat({"orc sorcerer", "hell hound", "demonspawn blood saint", "red draconian", "ogre mage",
+    "molten gargoyle", "hell knight"}, "|"),
   },
-  { name = "fire_140", cond = "fire", cutoff = 140, pattern = "balrug" },
-  {
-    name = "fire_160",
+  { name = "fire_140", cond = "fire", cutoff = 140, pattern = table.concat({"balrug"}, "|") },
+  { name = "fire_160",
     cond = "fire",
     cutoff = 160,
-    pattern = "will-o-the-wisp|ophan|fire giant|golden dragon|" .. "fire dragon|salamander tyrant|tengu reaver",
+    pattern = table.concat({"will-o-the-wisp", "ophan", "fire giant", "golden dragon", "fire dragon",
+    "salamander tyrant", "tengu reaver"}, "|"),
   },
-  {
-    name = "fire_240",
+  { name = "fire_240",
     cond = "fire",
     cutoff = 240,
-    pattern = "hellephant|crystal (guardian|echidna)|draconian scorcher",
+    pattern = table.concat({"hellephant", "crystal (guardian|echidna)", "draconian scorcher"}, "|"),
   },
 
-  { name = "cold_80", cond = "cold", cutoff = 80, pattern = "rime drake" },
-  {
-    name = "cold_120",
+  { name = "cold_80", cond = "cold", cutoff = 80, pattern = table.concat({"rime drake"}, "|") },
+  { name = "cold_120",
     cond = "cold",
     cutoff = 120,
-    pattern = "blizzard demon|bog body|ironbound frostheart|" .. "demonspawn blood saint|white draconian",
+    pattern = table.concat({"blizzard demon", "bog body", "ironbound frostheart",
+    "demonspawn blood saint", "white draconian"}, "|"),
   },
-  {
-    name = "cold_160",
+  { name = "cold_160",
     cond = "cold",
     cutoff = 160,
-    pattern = "golden dragon|draconian knight|frost giant|ice dragon|tengu reaver",
+    pattern = table.concat({"golden dragon", "draconian knight", "frost giant", "ice dragon", "tengu reaver"}, "|"),
   },
-  {
-    name = "cold_180",
+  { name = "cold_180",
     cond = "cold",
     cutoff = 180,
-    pattern = "(?<!dread)(?<!ancient) lich",
+    pattern = table.concat({"(?<!dread)(?<!ancient) lich", "lich king"}, "|"),
   },
-  {
-    name = "cold_240",
+  { name = "cold_240",
     cond = "cold",
     cutoff = 240,
-    pattern = "crystal (guardian|echidna)",
+    pattern = table.concat({"crystal (guardian|echidna)"}, "|"),
   },
 
-  {
-    name = "drain_100",
+  { name = "drain_100",
     cond = "drain",
     cutoff = 100,
-    pattern = "orc sorcerer",
+    pattern = table.concat({"orc sorcerer"}, "|"),
   },
-  { name = "drain_120", cond = "drain", cutoff = 120, pattern = "necromancer" },
-  {
-    name = "drain_150",
+  { name = "drain_120", cond = "drain", cutoff = 120, pattern = table.concat({"necromancer"}, "|") },
+  { name = "drain_150",
     cond = "drain",
     cutoff = 150,
-    pattern = "revenant|demonspawn blood saint",
+    pattern = table.concat({"revenant", "demonspawn blood saint"}, "|"),
   },
-  {
-    name = "drain_190",
+  { name = "drain_190",
     cond = "drain",
     cutoff = 190,
-    pattern = "shadow dragon",
+    pattern = table.concat({"shadow dragon"}, "|"),
   },
 } -- end fm_patterns (do not remove this comment)
 
@@ -6260,7 +6197,7 @@ else
       name = "malmutate",
       cond = "mut",
       cutoff = 1,
-      pattern = "cacodemon|neqoxec|shining eye",
+      pattern = table.concat({"cacodemon", "neqoxec", "shining eye"}, "|"),
     }
   )
 end
@@ -6293,7 +6230,7 @@ local MONSTER_OPTION_TOKENS = {
 local function set_monster_option(sign, monster_str, option)
   MONSTER_OPTION_TOKENS[2] = monster_str
   local fm_str = table.concat(MONSTER_OPTION_TOKENS)
-  crawl.setopt(option .. " " .. sign .. "= " .. fm_str)
+  crawl.setopt(string.format("%s %s= %s", option, sign, fm_str))
 end
 
 local function set_all(monster_list, option)
@@ -6302,7 +6239,7 @@ local function set_all(monster_list, option)
     if not mon_str then
       mon_str = v
     else
-      mon_str = mon_str .. "|" .. v
+      mon_str = string.format("%s|%s", mon_str, v)
     end
   end
   set_monster_option("+", mon_str, option)
@@ -6477,7 +6414,7 @@ function f_fm_monsters.ready()
           if not fm_mon_str then
             fm_mon_str = p
           else
-            fm_mon_str = fm_mon_str .. "|" .. p
+            fm_mon_str = string.format("%s|%s", fm_mon_str, p)
           end
         end
       else
@@ -6498,8 +6435,8 @@ function f_fm_monsters.ready()
   end
 
   if BRC.Config.debug_fm_monsters then
-    if #activated > 0 then crawl.mpr("Activating force_mores: " .. table.concat(activated, ", ")) end
-    if #deactivated > 0 then crawl.mpr("Deactivating force_mores: " .. table.concat(deactivated, ", ")) end
+    if #activated > 0 then BRC.debug(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
+    if #deactivated > 0 then BRC.debug(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
   end
 
   if BRC.Config.fm_pack_duration > 0 then do_pack_mutes() end
@@ -6537,8 +6474,8 @@ local function inscribe_armour_stats(it)
     if ev and ev ~= "" then new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev) end
   else
     new_insc = primary
-    if ev and ev ~= "" then new_insc = new_insc .. ", " .. ev end
-    if it.inscription and it.inscription ~= "" then new_insc = new_insc .. "; " .. it.inscription end
+    if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
+    if it.inscription and it.inscription ~= "" then new_insc = string.format("%s; %s", new_insc, it.inscription) end
   end
 
   it.inscribe(new_insc, false)
@@ -6611,15 +6548,8 @@ local function alert_low_hp()
     below_hp_threshold = hp ~= mhp
   elseif hp <= BRC.Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = " Dropped below " .. (100 * BRC.Config.alert_low_hp_threshold) .. "% HP "
-    BRC.mpr.que_optmore(
-      true,
-      table.concat({
-        BRC.Emoji.EXCLAMATION,
-        BRC.text.magenta(low_hp_msg),
-        BRC.Emoji.EXCLAMATION,
-      })
-    )
+    local low_hp_msg = string.format(" Dropped below %s%% HP ", 100 * BRC.Config.alert_low_hp_threshold)
+    BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.Emoji.EXCLAMATION)
   end
 end
 
@@ -6638,11 +6568,11 @@ local function alert_spell_level_changes()
   local new_spell_levels = you.spell_levels()
   if new_spell_levels > ma_prev_spell_levels then
     local delta = new_spell_levels - ma_prev_spell_levels
-    local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
-    local avail = " (" .. new_spell_levels .. " available)"
+    local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
+    local avail = string.format(" (%s available)", new_spell_levels)
     crawl.mpr(BRC.text.lightcyan(msg) .. BRC.text.cyan(avail))
   elseif new_spell_levels < ma_prev_spell_levels then
-    BRC.mpr.col(new_spell_levels .. " spell levels remaining", BRC.COLORS.magenta)
+    BRC.mpr.col(string.format("%s spell levels remaining", new_spell_levels), BRC.COLORS.magenta)
   end
 
   ma_prev_spell_levels = new_spell_levels
@@ -6668,9 +6598,9 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    crawl.setopt("macros += M " .. BRC.KEYS.save_game .. " ===f_misc_alerts.macro_save_w_message")
+    crawl.setopt(string.format("macros += M %s ===f_misc_alerts.macro_save_w_message", BRC.KEYS.save_game))
     if ma_saved_msg and ma_saved_msg ~= "" then
-      crawl.mpr("MESSAGE: " .. ma_saved_msg)
+      crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
     end
   end
@@ -6706,13 +6636,14 @@ found_scroll_of_id = BRC.data.persist("found_scroll_of_id", false)
 
 -- Local constants / configuration
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
+if BRC.Emoji.REMIND_ID then IDENTIFY_MSG = BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .. BRC.Emoji.REMIND_ID end
 
 -- Local variables
 local do_remind_id_check
 
 -- Local functions
 local function alert_remind_identify()
-  BRC.mpr.stop(BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .. BRC.Emoji.REMIND_ID)
+  BRC.mpr.stop(IDENTIFY_MSG)
 end
 
 local function get_max_stack_size(class, skip_slot)
@@ -7089,8 +7020,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  crawl.setopt("macros += M " .. BRC.KEYS.go_downstairs .. " ===f_safe_stairs.macro_downstairs")
-  crawl.setopt("macros += M " .. BRC.KEYS.go_upstairs .. " ===f_safe_stairs.macro_upstairs")
+  crawl.setopt(string.format("macros += M %s ===f_safe_stairs.macro_downstairs", BRC.KEYS.go_downstairs))
+  crawl.setopt(string.format("macros += M %s ===f_safe_stairs.macro_upstairs", BRC.KEYS.go_upstairs))
 end
 
 function f_safe_stairs.ready()
@@ -7400,9 +7331,11 @@ function f_pickup_alert.init()
 
   -- Check for duplicate autopickup creation (affects local only)
   if num_autopickup_funcs < #chk_force_autopickup then
-    crawl.mpr("Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)")
-    crawl.mpr("Expected: " .. num_autopickup_funcs .. " but got: " .. #chk_force_autopickup)
-    crawl.mpr("Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage.")
+    BRC.warn(table.concat({
+      "Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)\n",
+      "Expected: ", num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
+      "Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage."
+    }))
     return
   end
 
@@ -7436,11 +7369,11 @@ function f_pickup_alert.c_message(text, channel)
     if pause_pa_system and (text:find("ou stop ", 1, true) or text:find("ou finish ", 1, true)) then
       pause_pa_system = false
     elseif text:find("one exploring", 1, true) or text:find("artly explored", 1, true) then
-      local tokens = {}
+      local tokens = { "Recent alerts:" }
       for _, v in ipairs(pa_recent_alerts) do
-        tokens[#tokens + 1] = "\n  " .. v
+        tokens[#tokens + 1] = string.format("\n  %s", v)
       end
-      if #tokens > 0 then BRC.mpr.que("Recent alerts:" .. table.concat(tokens), BRC.COLORS.magenta) end
+      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COLORS.magenta) end
       pa_recent_alerts = {}
     end
   end
@@ -7458,12 +7391,14 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if it.is_weapon then
     alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, " (" .. BRC.get.weapon_info(it) .. ")")
+    local weapon_info = string.format(" (%s)", BRC.get.weapon_info(it))
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
   elseif BRC.is.body_armour(it) then
     alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
     local ac, ev = BRC.get.armour_info(it)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, " {" .. ac .. ", " .. ev .. "}")
+    local armour_info = string.format(" {%s, %s}", ac, ev)
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
   elseif BRC.is.armour(it) then
     alert_col = BRC.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
@@ -7473,12 +7408,12 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   else
     alert_col = BRC.AlertColor.misc
   end
+
   local tokens = {}
   tokens[1] = emoji and emoji or BRC.text.cyan("----")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, " " .. alert_type .. ": ")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.item, item_name .. " ")
+  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
+  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
   tokens[#tokens + 1] = tokens[1]
-
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
 
   f_pa_data.insert(pa_recent_alerts, it)
@@ -7570,8 +7505,8 @@ end
 function f_pa_data.get_keyname(it, plain_name)
   local name, value = get_pa_keys(it, plain_name)
   if BRC.is.talisman(it) or BRC.is.orb(it) or BRC.is.magic_staff(it) then return name end
-  if value >= 0 then value = "+" .. value end
-  return value .. " " .. name
+  if value >= 0 then value = string.format("+%s", value) end
+  return string.format("%s %s", value, name)
 end
 
 -- Returns a string of the high score type if item sets a new high score, else nil
@@ -8201,7 +8136,7 @@ function WEAP_CACHE.serialize()
       if k ~= "basename" then tokens[#tokens + 1] = string.format("  %s: %s\n", k, tostring(v)) end
     end
   end
-  return table.concat(tokens, "")
+  return table.concat(tokens)
 end
 
 -- Local functions
@@ -8269,9 +8204,8 @@ local function alert_first_of_skill(it, silent)
 
     -- Update lowest # hands alerted, and alert
     lowest_num_hands_alerted[skill] = hands
-    local msg = "First " .. string.sub(skill, 1, -2) -- Trim the trailing "s"
-    if hands == 1 then msg = msg .. " (1-handed)" end
     if silent then return true end
+    local msg = string.format("First %s%s", string.sub(skill, 1, -2), hands == 1 and " (1-handed)" or "")
     return f_pickup_alert.do_alert(it, msg, BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
   end
   return false

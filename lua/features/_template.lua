@@ -38,7 +38,7 @@ end
 
 function f_template.c_message(text, channel)
   -- React to incoming messages
-  crawl.mpr(my_name .. " got the message: " .. text, channel)
+  crawl.mpr(string.format("%s got the message: %s", my_name, text), channel)
 end
 
 function f_template.c_answer_prompt(prompt)

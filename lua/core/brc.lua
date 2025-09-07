@@ -42,8 +42,8 @@ local function log_message(message, context, color)
   message = message or "Unknown message"
   color = color or MSG_COLORS.info
   local msg = string.format("[BRC] %s", message)
-  if context then msg = msg .. string.format(" (Context: %s)", context) end
-  crawl.mpr(table.concat({ "<", color, ">", msg, "</", color, ">" }))
+  if context then msg = string.format("%s (Context: %s)", msg, context) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
 end
 
 -- Prevent feature errors from crashing the entire system
@@ -51,7 +51,7 @@ local function safe_call(feature_name, func, ...)
   if not func then return end
 
   local success, result = pcall(func, ...)
-  if not success then BRC.error("Function call failed for:" .. feature_name, result) end
+  if not success then BRC.error(string.format("Function call failed for: %s", feature_name), result) end
 end
 
 -- Hook management
@@ -93,7 +93,7 @@ function BRC.init()
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
   local success_text = string.format(" Successfully initialized BRC system v%s! ", BRC.VERSION)
-  crawl.mpr("\n" .. success_emoji .. BRC.text.lightgreen(success_text) .. success_emoji)
+  crawl.mpr(table.concat({"\n", success_emoji, BRC.text.lightgreen(success_text), success_emoji}))
 
   prev_turn = -1
   BRC.ready()

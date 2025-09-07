@@ -16,15 +16,14 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if BRC.Config.msg_on_inscribe then
-    local msg = "(You can drop " .. it.slot .. " - " .. it.name() .. ")"
-    BRC.mpr.col(msg, BRC.COLORS.cyan)
+    BRC.mpr.col(string.format("(You can drop %s - %s)", it.slot, it.name()), BRC.COLORS.cyan)
   end
 end
 
 -- Hook functions
 function f_drop_inferior.init()
   if not BRC.Config.drop_inferior then return end
-  crawl.setopt("drop_filter += " .. DROP_KEY)
+  crawl.setopt(string.format("drop_filter += %s", DROP_KEY))
 end
 
 function f_drop_inferior.c_assign_invletter(it)

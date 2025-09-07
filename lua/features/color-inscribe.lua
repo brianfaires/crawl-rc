@@ -62,8 +62,7 @@ local function colorize_subtext(text, s, tag)
     if prev == "!" or prev == ">" then return text end
   end
 
-  local retval = text:gsub("(" .. s .. ")", "<" .. tag .. ">%1</" .. tag .. ">")
-  return retval
+  return text:gsub(string.format("(%s)", s), string.format("<%s>%%1</%s>", tag, tag))
 end
 
 -- Hook functions

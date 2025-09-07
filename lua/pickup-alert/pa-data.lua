@@ -74,8 +74,8 @@ end
 function f_pa_data.get_keyname(it, plain_name)
   local name, value = get_pa_keys(it, plain_name)
   if BRC.is.talisman(it) or BRC.is.orb(it) or BRC.is.magic_staff(it) then return name end
-  if value >= 0 then value = "+" .. value end
-  return value .. " " .. name
+  if value >= 0 then value = string.format("+%s", value) end
+  return string.format("%s %s", value, name)
 end
 
 -- Returns a string of the high score type if item sets a new high score, else nil
