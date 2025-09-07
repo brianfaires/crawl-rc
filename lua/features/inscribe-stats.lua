@@ -47,7 +47,7 @@ local function inscribe_weapon_stats(it)
 end
 
 -- Hook functions
-function do_stat_inscription(it)
+function f_inscribe_stats.do_stat_inscription(it)
   if BRC.Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
   elseif BRC.Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
@@ -58,6 +58,6 @@ end
 -- Hook functions
 function f_inscribe_stats.ready()
   for inv in iter.invent_iterator:new(items.inventory()) do
-    do_stat_inscription(inv)
+    f_inscribe_stats.do_stat_inscription(inv)
   end
 end
