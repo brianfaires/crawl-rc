@@ -84,9 +84,11 @@ end
 
 -- Public API
 function BRC.init()
+  _features = {}
+  _hooks = {}
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
-    BRC.mpr.col("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
+    BRC.mpr.color("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
     return false
   end
 

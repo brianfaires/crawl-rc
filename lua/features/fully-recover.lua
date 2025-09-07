@@ -25,7 +25,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - fr_start_turn
-  BRC.mpr.col(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
+  BRC.mpr.color(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
 
   fr_start_turn = 0
   crawl.setopt("message_colour -= mute:You start waiting.")

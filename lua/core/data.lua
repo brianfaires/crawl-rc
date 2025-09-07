@@ -156,14 +156,14 @@ function BRC.data.verify_reinit()
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-        BRC.mpr.col(msg, BRC.COLORS.lightred)
+        BRC.mpr.color(msg, BRC.COLORS.lightred)
       end
     end
 
     if not _G.successful_data_reload then
       failed_reinit = true
       BRC.error(string.format("\nFailed to load persistent data for buehler.rc v%s!", BRC.VERSION))
-      BRC.mpr.col("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
+      BRC.mpr.color("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
     end
 
     if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end

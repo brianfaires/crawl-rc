@@ -81,19 +81,19 @@ end
 --- BRC.mpr - Wrappers around crawl.mpr ---
 
 -- Display a message, wrapped in a single color tag
-function BRC.mpr.col(text, color, channel)
+function BRC.mpr.color(text, color, channel)
   crawl.mpr(BRC.text.color(color, text), channel)
 end
 
 -- Message and stop travel/activity
 function BRC.mpr.stop(text, color, channel)
-  BRC.mpr.col(text, color, channel)
+  BRC.mpr.color(text, color, channel)
   you.stop_activity()
 end
 
 -- Message and a more prompt
 function BRC.mpr.more(text, color, channel)
-  BRC.mpr.col(text, color, channel)
+  BRC.mpr.color(text, color, channel)
   you.stop_activity()
   crawl.more()
   crawl.redraw_screen()
@@ -104,7 +104,7 @@ function BRC.mpr.optmore(show_more, text, color, channel)
   if show_more then
     BRC.mpr.more(text, color, channel)
   else
-    BRC.mpr.col(text, color, channel)
+    BRC.mpr.color(text, color, channel)
   end
 end
 
@@ -349,7 +349,7 @@ function BRC.dump.inv(char_dump, include_item_info)
 end
 
 function BRC.dump.text(text, char_dump)
-  BRC.mpr.col(text, BRC.COLORS.white)
+  BRC.mpr.color(text, BRC.COLORS.white)
 
   if char_dump then
     crawl.take_note(text)
