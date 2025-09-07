@@ -67,9 +67,7 @@ local function get_hp_message(hp_delta, mhp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.text.lightgrey(text)
   end
 
-  if not BRC.Config.announce.same_line and hp == mhp then
-    msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)")
-  end
+  if not BRC.Config.announce.same_line and hp == mhp then msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)") end
 
   return table.concat(msg_tokens)
 end

@@ -65,7 +65,9 @@ end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
-  BRC.text[k] = function(text) return string.format("<%s>%s</%s>", v, text, v) end
+  BRC.text[k] = function(text)
+    return string.format("<%s>%s</%s>", v, text, v)
+  end
 end
 function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
@@ -75,7 +77,6 @@ end
 function BRC.text.letter_to_ascii(key)
   return string.char(string.byte(key) - string.byte("a") + 1)
 end
-
 
 --- BRC.mpr - Wrappers around crawl.mpr ---
 
@@ -112,7 +113,7 @@ function BRC.mpr.que(text, color, channel)
   for _, msg in ipairs(_mpr_queue) do
     if msg.text == text and msg.channel == channel then return end
   end
-  _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color,text), channel = channel, show_more = false }
+  _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color, text), channel = channel, show_more = false }
 end
 
 -- Queue msg w/ conditional force-more prompt
