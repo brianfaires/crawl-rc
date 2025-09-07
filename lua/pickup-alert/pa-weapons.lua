@@ -65,8 +65,9 @@ function WEAP_CACHE.add_weapon(it)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
-  weap_data.ego = BRC.get.ego(it)
-  weap_data.branded = weap_data.ego ~= nil
+  weap_data._ego = BRC.get.ego(it)
+  weap_data.ego = function() return weap_data._ego end
+  weap_data.branded = weap_data._ego ~= nil
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -75,8 +76,8 @@ function WEAP_CACHE.add_weapon(it)
   weap_data.unbranded_score = BRC.get.weap_score(it, true)
 
   -- Track unique egos
-  if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data.ego) then
-    WEAP_CACHE.egos[#WEAP_CACHE.egos + 1] = weap_data.ego
+  if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data._ego) then
+    WEAP_CACHE.egos[#WEAP_CACHE.egos + 1] = weap_data._ego
   end
 
   -- Track max damage for applicable weapon categories
@@ -120,7 +121,7 @@ local function is_weapon_upgrade(it, cur)
     if BRC.is.branded(it) and it.is_identified and not BRC.is.branded(cur) then
       return BRC.get.weap_score(it) / cur.score > BRC.Tuning.weap.pickup.add_ego
     end
-    return BRC.get.ego(it) == cur.ego and BRC.get.weap_score(it) > cur.score
+    return BRC.get.ego(it) == cur.ego() and BRC.get.weap_score(it) > cur.score
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     -- Return false if no clear upgrade possible
     if BRC.get.hands(it) > cur.hands then return false end
@@ -225,7 +226,7 @@ local function alert_interesting_weapon(it, cur)
 
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
-    if not cur.artefact and BRC.is.branded(it, true) and BRC.get.ego(it) ~= cur.ego then
+    if not cur.artefact and BRC.is.branded(it, true) and BRC.get.ego(it) ~= cur.ego() then
       return f_pickup_alert.do_alert(it, "Diff ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
     elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
       return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)

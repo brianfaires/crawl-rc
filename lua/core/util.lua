@@ -662,14 +662,26 @@ function BRC.get.weapon_info(it, dmg_type)
   return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
 end
 
--- Egos
-function BRC.get.ego(it)
-  if BRC.is.usable_ego(it) then
-    return type(it.ego) == "string" and it.ego or it.ego(true)
-  elseif BRC.is.body_armour(it) then
-    local qualname = it.name("qual")
-    if qualname:find("dragon scales") or qualname:find("troll leather", 1, true) then return qualname end
+-- Egos, with customized definition:
+-- Excludes unusable egos. Includes: artefacts, and armours with innate egos (except steam dragon scales)
+function BRC.get.ego(it, exclude_stat_only_egos)
+  local ego = it.ego(true)
+  if ego then
+    if BRC.is.unusable_ego(ego) or (exclude_stat_only_egos and (ego == "speed" or ego == "heavy")) then
+      return it.artefact and "arte" or nil
+    end
+    return ego
   end
+
+  if BRC.is.body_armour(it) then
+    local qualname = it.name("qual")
+    if qualname:find("dragon scales", 1, true) and not qualname:find("steam", 1, true)
+      or qualname:find("troll leather", 1, true) then
+        return qualname
+    end
+  end
+
+  return it.artefact and "arte" or nil
 end
 
 function BRC.get.hands(it)
@@ -680,33 +692,16 @@ function BRC.get.hands(it)
 end
 
 --[[
-BRC.is.branded() - Checks if an item is branded, with a custom definition:
-Excludes unusable egos. Includes: artefacts, and armour with innate egos (except steam dragon scales)
+BRC.is.branded() - Literally just BRC.get.ego() ~= nil.
 --]]
 function BRC.is.branded(it, exclude_stat_only_egos)
-  if not it then return false end
-  if it.is_weapon then
-    if exclude_stat_only_egos then
-      local ego = BRC.get.ego(it)
-      if ego and (ego == "speed" or ego == "heavy") then return false end
-    end
-    return it.artefact or BRC.is.usable_ego(it) or BRC.is.magic_staff(it)
-  end
-
-  if it.artefact or BRC.is.usable_ego(it) then return true end
-  local basename = it.name("base")
-  if basename:find("troll leather", 1, true) then return true end
-  if basename:find("dragon scales", 1, true) and not basename:find("steam", 1, true) then return true end
-  return false
+  return BRC.get.ego(it, exclude_stat_only_egos) ~= nil
 end
 
-function BRC.is.usable_ego(it)
-  if not it.branded then return false end
-  -- ego may be a string if referencing a WEAP_CACHE entry
-  local ego = type(it.ego) == "string" and it.ego or it.ego(true)
-  if ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return false end
-  if ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return false end
-  return true
+function BRC.is.unusable_ego(ego)
+  if ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
+  if ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
+  return false
 end
 
 function BRC.is.risky_ego(it)
