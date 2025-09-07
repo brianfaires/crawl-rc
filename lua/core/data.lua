@@ -3,7 +3,8 @@ BRC.data - Persistent data management module
 Manages persistent data across games and saves
 --]]
 
--- Initialize BRC.data module
+-- Initialize
+BRC = BRC or {}
 BRC.data = {}
 
 -- Local constants

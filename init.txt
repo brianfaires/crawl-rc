@@ -1,5 +1,5 @@
 ## Config at start of file
-lua_file = crawl-rc/lua/core/BRC.Config.lua
+lua_file = crawl-rc/lua/core/config.lua
 
 ####### Main options #######
 easy_confirm = all
@@ -43,7 +43,6 @@ include = crawl-rc/rc/slot-defaults.rc
 
 ### buehler.rc core files ###
 lua_file = crawl-rc/lua/core/constants.lua
-lua_file = crawl-rc/lua/core/emojis.lua
 lua_file = crawl-rc/lua/core/data.lua
 lua_file = crawl-rc/lua/core/util.lua
 lua_file = crawl-rc/lua/core/brc.lua
@@ -70,7 +69,6 @@ lua_file = crawl-rc/lua/features/weapon-slots.lua
 ### Pickup and alert - Core files ###
 lua_file = crawl-rc/lua/pickup-alert/pa-main.lua
 lua_file = crawl-rc/lua/pickup-alert/pa-data.lua
-lua_file = crawl-rc/lua/pickup-alert/pa-util.lua
 
 ### Pickup and alert - Feature files ###
 lua_file = crawl-rc/lua/pickup-alert/pa-armour.lua

@@ -2,7 +2,8 @@
 BRC Utility Functions - All utility functions organized into logical tables
 --]]
 
--- Initialize submodules
+-- Initialize
+BRC = BRC or {}
 BRC.mpr = {}
 BRC.get = {}
 BRC.is = {}

@@ -1,3 +1,5 @@
+-- Initialize
+BRC = BRC or {}
 BRC.Config = {}
 
 BRC.Config.emojis = true -- Use emojis in alerts and announcements
@@ -69,6 +71,7 @@ BRC.Config.rest_off_statuses = {
 -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
 BRC.Config.inscribe_weapons = true
 BRC.Config.inscribe_armour = true
+BRC.DMG_TYPE = BRC.DMG_TYPE or {} -- Forward declaration. See constants.lua
 BRC.Config.inscribe_dps_type = BRC.DMG_TYPE.plain -- How to calc dmg for weapon inscriptions
 
 -- misc-alerts.lua
@@ -285,7 +288,8 @@ BRC.BrandBonus = {
 } -- BRC.BrandBonus (do not remove this comment)
 
 
--- Cosemtic settings
+-- Cosmetic settings
+BRC.COLORS = BRC.COLORS or {} -- Forward declaration. See constants.lua
 BRC.AlertColor = {
   weapon = {
     desc = BRC.COLORS.magenta,

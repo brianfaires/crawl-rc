@@ -1,4 +1,6 @@
--- Lists of things that may need to be updated with future changes
+-- Initialize
+BRC = BRC or {}
+
 ---- Items ----
 BRC.ALL_MISC_ITEMS = {
   "box of beasts",
@@ -217,25 +219,6 @@ BRC.ALL_RISKY_EGOS = {
 
 ---- Other ----
 -- Would prefer to use integer values, but they don't work in all menus
-BRC.COLORS = {
-  blue = "blue",
-  green = "green",
-  cyan = "cyan",
-  red = "red",
-  magenta = "magenta",
-  brown = "brown",
-  lightgrey = "lightgrey",
-  darkgrey = "darkgrey",
-  lightblue = "lightblue",
-  lightgreen = "lightgreen",
-  lightcyan = "lightcyan",
-  lightred = "lightred",
-  lightmagenta = "lightmagenta",
-  yellow = "yellow",
-  white = "w",
-  black = "black",
-} -- BRC.COLORS (do not remove this comment)
-
 BRC.KEYS = {
   LF = string.char(10),
   CR = string.char(13),
@@ -269,9 +252,29 @@ BRC.SIZE_PENALTY = {
   GIANT = 2,
 } -- BRC.SIZE_PENALTY (do not remove this comment)
 
+BRC.COLORS = {
+  blue = "blue",
+  green = "green",
+  cyan = "cyan",
+  red = "red",
+  magenta = "magenta",
+  brown = "brown",
+  lightgrey = "lightgrey",
+  darkgrey = "darkgrey",
+  lightblue = "lightblue",
+  lightgreen = "lightgreen",
+  lightcyan = "lightcyan",
+  lightred = "lightred",
+  lightmagenta = "lightmagenta",
+  yellow = "yellow",
+  white = "w",
+  black = "black",
+} -- BRC.COLORS (do not remove this comment)
+
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
   plain = 2, -- Include brand dmg with no associated damage type
   branded = 3, -- Include full brand dmg
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
+
