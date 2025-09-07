@@ -2,7 +2,7 @@
 Feature: runrest-features
 Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_runrest_features = {}

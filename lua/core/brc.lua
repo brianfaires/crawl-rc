@@ -11,9 +11,6 @@ Dependencies: core/data.lua, core/util.lua
 BRC = BRC or {}
 BRC.VERSION = "1.1.0"
 
--- Local configuration
-local SHOW_DEBUG_MESSAGES = true
-
 -- Local constants
 local HOOK_FUNCTIONS = {
   "init",
@@ -21,13 +18,6 @@ local HOOK_FUNCTIONS = {
   "c_assign_invletter",
   "c_message",
   "ready",
-}
-
-local MSG_COLORS = {
-  error = "lightred",
-  warning = "yellow",
-  info = "lightgrey",
-  debug = "lightblue",
 }
 
 -- Local variables
@@ -40,20 +30,12 @@ local function is_feature_module(module_table)
   return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
 end
 
-local function log_message(message, context, color)
-  message = message or "Unknown message"
-  color = color or MSG_COLORS.info
-  local msg = string.format("[BRC] %s", message)
-  if context then msg = string.format("%s (Context: %s)", msg, context) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
-end
-
 -- Prevent feature errors from crashing the entire system
 local function safe_call(feature_name, func, ...)
   if not func then return end
 
   local success, result = pcall(func, ...)
-  if not success then BRC.error(string.format("Function call failed for: %s", feature_name), result) end
+  if not success then BRC.log.error(string.format("Function call failed for: %s", feature_name), result) end
 end
 
 -- Hook management
@@ -112,12 +94,12 @@ end
 
 function BRC.register_feature(feature_name, feature_module)
   if not feature_name or not feature_module then
-    BRC.error("Invalid feature registration: missing name or module")
+    BRC.log.error("Invalid feature registration: missing name or module")
     return false
   end
 
   if _features[feature_name] then
-    BRC.error(string.format("Feature '%s' is already registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is already registered", feature_name))
     return false
   end
 
@@ -125,13 +107,13 @@ function BRC.register_feature(feature_name, feature_module)
   register_hooks(feature_name, feature_module)
   if feature_module.init then safe_call(feature_name, feature_module.init) end
 
-  BRC.debug(string.format("Feature '%s' registered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' registered", feature_name))
   return true
 end
 
 function BRC.unregister_feature(feature_name)
   if not _features[feature_name] then
-    BRC.error(string.format("Feature '%s' is not registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is not registered", feature_name))
     return false
   end
 
@@ -139,7 +121,7 @@ function BRC.unregister_feature(feature_name)
   _features[feature_name] = nil
   if _features[feature_name].cleanup then safe_call(feature_name, _features[feature_name].cleanup) end
 
-  BRC.debug(string.format("Feature '%s' unregistered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' unregistered", feature_name))
   return true
 end
 
@@ -155,12 +137,12 @@ function BRC.load_all_features()
       if success then
         loaded_count = loaded_count + 1
       else
-        BRC.error(string.format('Failed to register feature from: _G["%s"]', name))
+        BRC.log.error(string.format('Failed to register feature from: _G["%s"]', name))
       end
     end
   end
 
-  BRC.debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
+  BRC.log.debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
   return loaded_count
 end
 
@@ -184,22 +166,4 @@ end
 
 function BRC.c_assign_invletter(it)
   call_hook("c_assign_invletter", it)
-end
-
--- Logging methods
-function BRC.error(message, context)
-  log_message(message, context, MSG_COLORS.error)
-end
-
-function BRC.warn(message, context)
-  log_message(message, context, MSG_COLORS.warning)
-end
-
-function BRC.log(message, context)
-  log_message(message, context, MSG_COLORS.info)
-end
-
-function BRC.debug(message, context)
-  if not SHOW_DEBUG_MESSAGES then return end
-  log_message(message, context, MSG_COLORS.debug)
 end

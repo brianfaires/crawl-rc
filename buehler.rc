@@ -188,6 +188,8 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
+BRC.Config.show_debug_messages = true
+
 -- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
 
@@ -307,6 +309,13 @@ BRC.AlertColor = {
   talisman = { desc = "green", item = "lightgreen" },
   misc = { desc = "brown", item = "white" },
 } -- BRC.AlertColor (do not remove this comment)
+
+BRC.LogColor = {
+  error = "lightred",
+  warning = "yellow",
+  info = "lightgrey",
+  debug = "lightblue",
+}
 
 BRC.Emoji = {}
 if BRC.Config.emojis then
@@ -3886,7 +3895,7 @@ local function to_formatted_string(value)
     return string.format("{ %s }", table.concat(tokens, ", "))
   else
     local str = tostring(value) or "nil"
-    BRC.error(string.format("Unknown data type for value (%s): %s", str, type))
+    BRC.log.error(string.format("Unknown data type for value (%s): %s", str, type))
     return nil
   end
 end
@@ -3969,7 +3978,7 @@ function BRC.data.verify_reinit()
 
     if not _G.successful_data_reload then
       failed_reinit = true
-      BRC.error(string.format("\nFailed to load persistent data for buehler.rc v%s!", BRC.VERSION))
+      BRC.log.error(string.format("\nFailed to load persistent data for buehler.rc v%s!", BRC.VERSION))
       BRC.mpr.color("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
     end
 
@@ -4010,11 +4019,12 @@ Dependencies: (none)
 
 -- Initialize
 BRC = BRC or {}
+BRC.log = {}
+BRC.text = {}
 BRC.mpr = {}
 BRC.get = {}
 BRC.is = {}
 BRC.you = {}
-BRC.text = {}
 BRC.dump = {}
 
 -- Local variables
@@ -4022,6 +4032,33 @@ local _mpr_queue = {}
 
 -- Local constants
 local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
+
+-- Local functions
+local function log_message(message, context, color)
+  message = message or "Unknown message"
+  color = color or BRC.LogColor.info
+  local msg = string.format("[BRC] %s", message)
+  if context then msg = string.format("%s (Context: %s)", msg, context) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+end
+
+-- BRC.log - Logging methods
+function BRC.log.error(message, context)
+  log_message(message, context, BRC.LogColor.error)
+end
+
+function BRC.log.warn(message, context)
+  log_message(message, context, BRC.LogColor.warning)
+end
+
+function BRC.log.info(message, context)
+  log_message(message, context, BRC.LogColor.info)
+end
+
+function BRC.log.debug(message, context)
+  if not BRC.Config.show_debug_messages then return end
+  log_message(message, context, BRC.LogColor.debug)
+end
 
 ---- BRC.text - Utility functions ----
 
@@ -4369,8 +4406,8 @@ The functions below contain design choices or logic that are somewhat specific t
 Examples: Custom definition of `branded`, weapon DPS, or what a "risky ego" is.
 --]]
 
--- Local functions; Many duplicate calculations that live in crawl.
--- Each such function is commented with the last dcss version it was compared against.
+-- Local functions; Often mirroring calculations that live in crawl.
+-- Each mirrored function is commented with the last dcss version it was compared against.
 
 local function format_dmg(dmg)
   -- Always return a string of length 4
@@ -4823,9 +4860,6 @@ Dependencies: core/data.lua, core/util.lua
 BRC = BRC or {}
 BRC.VERSION = "1.1.0"
 
--- Local configuration
-local SHOW_DEBUG_MESSAGES = true
-
 -- Local constants
 local HOOK_FUNCTIONS = {
   "init",
@@ -4833,13 +4867,6 @@ local HOOK_FUNCTIONS = {
   "c_assign_invletter",
   "c_message",
   "ready",
-}
-
-local MSG_COLORS = {
-  error = "lightred",
-  warning = "yellow",
-  info = "lightgrey",
-  debug = "lightblue",
 }
 
 -- Local variables
@@ -4852,20 +4879,12 @@ local function is_feature_module(module_table)
   return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
 end
 
-local function log_message(message, context, color)
-  message = message or "Unknown message"
-  color = color or MSG_COLORS.info
-  local msg = string.format("[BRC] %s", message)
-  if context then msg = string.format("%s (Context: %s)", msg, context) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
-end
-
 -- Prevent feature errors from crashing the entire system
 local function safe_call(feature_name, func, ...)
   if not func then return end
 
   local success, result = pcall(func, ...)
-  if not success then BRC.error(string.format("Function call failed for: %s", feature_name), result) end
+  if not success then BRC.log.error(string.format("Function call failed for: %s", feature_name), result) end
 end
 
 -- Hook management
@@ -4924,12 +4943,12 @@ end
 
 function BRC.register_feature(feature_name, feature_module)
   if not feature_name or not feature_module then
-    BRC.error("Invalid feature registration: missing name or module")
+    BRC.log.error("Invalid feature registration: missing name or module")
     return false
   end
 
   if _features[feature_name] then
-    BRC.error(string.format("Feature '%s' is already registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is already registered", feature_name))
     return false
   end
 
@@ -4937,13 +4956,13 @@ function BRC.register_feature(feature_name, feature_module)
   register_hooks(feature_name, feature_module)
   if feature_module.init then safe_call(feature_name, feature_module.init) end
 
-  BRC.debug(string.format("Feature '%s' registered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' registered", feature_name))
   return true
 end
 
 function BRC.unregister_feature(feature_name)
   if not _features[feature_name] then
-    BRC.error(string.format("Feature '%s' is not registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is not registered", feature_name))
     return false
   end
 
@@ -4951,7 +4970,7 @@ function BRC.unregister_feature(feature_name)
   _features[feature_name] = nil
   if _features[feature_name].cleanup then safe_call(feature_name, _features[feature_name].cleanup) end
 
-  BRC.debug(string.format("Feature '%s' unregistered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' unregistered", feature_name))
   return true
 end
 
@@ -4967,12 +4986,12 @@ function BRC.load_all_features()
       if success then
         loaded_count = loaded_count + 1
       else
-        BRC.error(string.format('Failed to register feature from: _G["%s"]', name))
+        BRC.log.error(string.format('Failed to register feature from: _G["%s"]', name))
       end
     end
   end
 
-  BRC.debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
+  BRC.log.debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
   return loaded_count
 end
 
@@ -4998,24 +5017,6 @@ function BRC.c_assign_invletter(it)
   call_hook("c_assign_invletter", it)
 end
 
--- Logging methods
-function BRC.error(message, context)
-  log_message(message, context, MSG_COLORS.error)
-end
-
-function BRC.warn(message, context)
-  log_message(message, context, MSG_COLORS.warning)
-end
-
-function BRC.log(message, context)
-  log_message(message, context, MSG_COLORS.info)
-end
-
-function BRC.debug(message, context)
-  if not SHOW_DEBUG_MESSAGES then return end
-  log_message(message, context, MSG_COLORS.debug)
-end
-
 }
 ############################### End lua/core/brc.lua ###############################
 ##########################################################################################
@@ -5031,7 +5032,7 @@ end
 Feature: after-shaft
 Description: Automatically stops exploration on stairs after falling into a shaft
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_after_shaft = {}
@@ -5091,7 +5092,7 @@ end
 Feature: announce-hp-mp
 Description: Announces changes in HP/MP with visual meters and damage warnings
 Author: magus, buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_announce_hp_mp = {}
@@ -5863,8 +5864,8 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
-      BRC.error("Adjusting BRC.Config.rest_off_statuses:")
+      BRC.log.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
+      BRC.log.error("Adjusting BRC.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
     else
@@ -6372,8 +6373,8 @@ function f_fm_monsters.ready()
   end
 
   if BRC.Config.debug_fm_monsters then
-    if #activated > 0 then BRC.debug(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
-    if #deactivated > 0 then BRC.debug(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
+    if #activated > 0 then BRC.log.debug(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
+    if #deactivated > 0 then BRC.log.debug(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
   end
 
   if BRC.Config.fm_pack_duration > 0 then do_pack_mutes() end
@@ -6461,7 +6462,7 @@ end
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
 Author: buehler, gammafunk
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_misc_alerts = {}
@@ -6560,7 +6561,7 @@ end
 Feature: remind-id
 Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_remind_id = {}
@@ -6687,7 +6688,7 @@ end
 Feature: runrest-features
 Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_runrest_features = {}
@@ -6830,7 +6831,7 @@ end
 Feature: safe-consumables
 Description: Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
 Author: buehler
-Dependencies: core/config.lua
+Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_safe_consumables = {}
@@ -6977,7 +6978,7 @@ end
 Feature: startup
 Description: Handles startup features like skill menu display and auto-setting skill targets
 Author: rwbarton, buehler
-Dependencies: core/config.lua, core/constants.lua
+Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_startup = {}
@@ -7174,7 +7175,7 @@ end
 Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua,
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua,
   pickup-alert/pa-armour.lua, pickup-alert/pa-data.lua, pickup-alert/pa-misc.lua, pickup-alert/pa-weapons.lua
 --]]
 
@@ -7254,22 +7255,22 @@ function f_pickup_alert.init()
 
   if f_pa_armour then
     if f_pa_armour.init then f_pa_armour.init() end
-    BRC.debug("    pa-armour loaded")
+    BRC.log.debug("    pa-armour loaded")
   end
 
   if f_pa_weapons then
     if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC.debug("    pa-weapons loaded")
+    BRC.log.debug("    pa-weapons loaded")
   end
 
   if f_pa_misc then
     if f_pa_misc.init then f_pa_misc.init() end
-    BRC.debug("    pa-misc loaded")
+    BRC.log.debug("    pa-misc loaded")
   end
 
   -- Check for duplicate autopickup creation (affects local only)
   if num_autopickup_funcs < #chk_force_autopickup then
-    BRC.warn(table.concat({
+    BRC.log.warn(table.concat({
       "Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)\n",
       "Expected: ", num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
       "Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage."
@@ -7371,7 +7372,7 @@ end
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_data = {}

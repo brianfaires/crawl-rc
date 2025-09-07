@@ -183,6 +183,8 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
+BRC.Config.show_debug_messages = true
+
 -- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
 
@@ -302,6 +304,13 @@ BRC.AlertColor = {
   talisman = { desc = "green", item = "lightgreen" },
   misc = { desc = "brown", item = "white" },
 } -- BRC.AlertColor (do not remove this comment)
+
+BRC.LogColor = {
+  error = "lightred",
+  warning = "yellow",
+  info = "lightgrey",
+  debug = "lightblue",
+}
 
 BRC.Emoji = {}
 if BRC.Config.emojis then

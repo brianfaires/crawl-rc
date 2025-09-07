@@ -6,11 +6,12 @@ Dependencies: (none)
 
 -- Initialize
 BRC = BRC or {}
+BRC.log = {}
+BRC.text = {}
 BRC.mpr = {}
 BRC.get = {}
 BRC.is = {}
 BRC.you = {}
-BRC.text = {}
 BRC.dump = {}
 
 -- Local variables
@@ -18,6 +19,33 @@ local _mpr_queue = {}
 
 -- Local constants
 local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
+
+-- Local functions
+local function log_message(message, context, color)
+  message = message or "Unknown message"
+  color = color or BRC.LogColor.info
+  local msg = string.format("[BRC] %s", message)
+  if context then msg = string.format("%s (Context: %s)", msg, context) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+end
+
+-- BRC.log - Logging methods
+function BRC.log.error(message, context)
+  log_message(message, context, BRC.LogColor.error)
+end
+
+function BRC.log.warn(message, context)
+  log_message(message, context, BRC.LogColor.warning)
+end
+
+function BRC.log.info(message, context)
+  log_message(message, context, BRC.LogColor.info)
+end
+
+function BRC.log.debug(message, context)
+  if not BRC.Config.show_debug_messages then return end
+  log_message(message, context, BRC.LogColor.debug)
+end
 
 ---- BRC.text - Utility functions ----
 
@@ -365,8 +393,8 @@ The functions below contain design choices or logic that are somewhat specific t
 Examples: Custom definition of `branded`, weapon DPS, or what a "risky ego" is.
 --]]
 
--- Local functions; Many duplicate calculations that live in crawl.
--- Each such function is commented with the last dcss version it was compared against.
+-- Local functions; Often mirroring calculations that live in crawl.
+-- Each mirrored function is commented with the last dcss version it was compared against.
 
 local function format_dmg(dmg)
   -- Always return a string of length 4

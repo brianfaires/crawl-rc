@@ -2,7 +2,7 @@
 Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua,
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua,
   pickup-alert/pa-armour.lua, pickup-alert/pa-data.lua, pickup-alert/pa-misc.lua, pickup-alert/pa-weapons.lua
 --]]
 
@@ -82,22 +82,22 @@ function f_pickup_alert.init()
 
   if f_pa_armour then
     if f_pa_armour.init then f_pa_armour.init() end
-    BRC.debug("    pa-armour loaded")
+    BRC.log.debug("    pa-armour loaded")
   end
 
   if f_pa_weapons then
     if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC.debug("    pa-weapons loaded")
+    BRC.log.debug("    pa-weapons loaded")
   end
 
   if f_pa_misc then
     if f_pa_misc.init then f_pa_misc.init() end
-    BRC.debug("    pa-misc loaded")
+    BRC.log.debug("    pa-misc loaded")
   end
 
   -- Check for duplicate autopickup creation (affects local only)
   if num_autopickup_funcs < #chk_force_autopickup then
-    BRC.warn(table.concat({
+    BRC.log.warn(table.concat({
       "Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)\n",
       "Expected: ", num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
       "Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage."

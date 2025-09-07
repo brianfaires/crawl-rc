@@ -121,8 +121,8 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
-      BRC.error("Adjusting BRC.Config.rest_off_statuses:")
+      BRC.log.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
+      BRC.log.error("Adjusting BRC.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
     else

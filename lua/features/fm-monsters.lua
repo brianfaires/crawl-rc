@@ -450,8 +450,8 @@ function f_fm_monsters.ready()
   end
 
   if BRC.Config.debug_fm_monsters then
-    if #activated > 0 then BRC.debug(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
-    if #deactivated > 0 then BRC.debug(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
+    if #activated > 0 then BRC.log.debug(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
+    if #deactivated > 0 then BRC.log.debug(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
   end
 
   if BRC.Config.fm_pack_duration > 0 then do_pack_mutes() end

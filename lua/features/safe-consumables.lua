@@ -2,7 +2,7 @@
 Feature: safe-consumables
 Description: Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
 Author: buehler
-Dependencies: core/config.lua
+Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_safe_consumables = {}

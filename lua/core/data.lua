@@ -77,7 +77,7 @@ local function to_formatted_string(value)
     return string.format("{ %s }", table.concat(tokens, ", "))
   else
     local str = tostring(value) or "nil"
-    BRC.error(string.format("Unknown data type for value (%s): %s", str, type))
+    BRC.log.error(string.format("Unknown data type for value (%s): %s", str, type))
     return nil
   end
 end
@@ -160,7 +160,7 @@ function BRC.data.verify_reinit()
 
     if not _G.successful_data_reload then
       failed_reinit = true
-      BRC.error(string.format("\nFailed to load persistent data for buehler.rc v%s!", BRC.VERSION))
+      BRC.log.error(string.format("\nFailed to load persistent data for buehler.rc v%s!", BRC.VERSION))
       BRC.mpr.color("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
     end
 
