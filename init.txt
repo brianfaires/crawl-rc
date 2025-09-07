@@ -49,7 +49,7 @@ lua_file = crawl-rc/lua/core/brc.lua
 
 ### Lua feature files ###
 lua_file = crawl-rc/lua/features/after-shaft.lua
-lua_file = crawl-rc/lua/features/announce-damage.lua
+lua_file = crawl-rc/lua/features/announce-hp-mp.lua
 lua_file = crawl-rc/lua/features/color-inscribe.lua
 lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua

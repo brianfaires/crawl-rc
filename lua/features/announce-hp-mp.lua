@@ -1,12 +1,12 @@
 --[[
-Feature: announce-damage
+Feature: announce-hp-mp
 Description: Announces changes in HP/MP with visual meters and damage warnings
 Author: magus, buehler
 Dependencies: CONFIG
 --]]
 
-f_announce_damage = {}
-f_announce_damage.BRC_FEATURE_NAME = "announce-damage"
+f_announce_hp_mp = {}
+f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
 
 -- Persistent variables
 ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
@@ -98,7 +98,7 @@ local function last_msg_is_meter()
 end
 
 -- Hook functions
-function f_announce_damage.init()
+function f_announce_hp_mp.init()
   ad_prev.hp = 0
   ad_prev.mhp = 0
   ad_prev.mp = 0
@@ -109,7 +109,7 @@ function f_announce_damage.init()
   end
 end
 
-function f_announce_damage.ready()
+function f_announce_hp_mp.ready()
   -- Update prev state first, so we can safely return early below
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()

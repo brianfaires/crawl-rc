@@ -54,7 +54,7 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 ### [lua/features/after-shaft.lua](lua/features/after-shaft.lua)
 - After being shafted, travel stops on stairs until you get back to the original level.
 
-### [lua/features/announce-damage.lua](lua/features/announce-damage.lua)
+### [lua/features/announce-hp-mp.lua](lua/features/announce-hp-mp.lua)
 - Writes messages for HP and MP changes.
 - Includes HP and MP meters broken into 10% increments.  
   *(Meters have length 5, with each character being empty/partial/full)*
@@ -195,7 +195,7 @@ This will affect how weapons compare against each other, and DPS inscriptions (i
 
 #### Cosmetic only: BRC.AlertColor and BRC.Emoji
 - Adjust the text coloring for item alerts.
-- Define the emojis to use in announce-damage and alerts. Or, define text to replace the emojis.
+- Define the emojis to use in announce-hp-mp and alerts. Or, define text to replace the emojis.
 
 ### [lua/core/constants.lua](lua/core/constants.lua)
 In an attempt to future-proof, contains definitions for things like

@@ -7,7 +7,7 @@ BRC.Config.emojis = true -- Use emojis in alerts and announcements
 -- after-shaft.lua
 BRC.Config.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft, until back to original level
 
--- announce-damage.lua: Announce HP/MP changes
+-- announce-hp-mp.lua: Announce HP/MP changes
 BRC.Config.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
 BRC.Config.dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
 BRC.Config.announce = {
@@ -20,8 +20,9 @@ BRC.Config.announce = {
   always_both = true, -- If showing one, show both
   very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
 } -- BRC.Config.announce (do not remove this comment)
+
+-- An alternative announce setup: Displays meters after every turn. Uncomment the following block to try it.
 --[[
-  Alternative: To display meters every turn at bottom of msg window, use these settings
   BRC.Config.announce = {
     hp_loss_limit = 0,
     hp_gain_limit = 0,
@@ -45,7 +46,7 @@ BRC.Config.exclude_dropped = true -- Exclude items from auto-pickup when dropped
 BRC.Config.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
 
 -- fm-disable.lua: Disable built-in force_mores that can't be easily removed
-BRC.Config.fm_disable = true -- Skip more prompts for messages configured in fm-disable.lua
+BRC.Config.fm_disable = true -- Skip the 'more' prompt for messages configured in fm-disable.lua
 
 -- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
 BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
@@ -53,19 +54,11 @@ BRC.Config.fm_pack_duration = 15 -- Turns before alerting again for specific mon
 BRC.Config.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
 BRC.Config.debug_fm_monsters = false -- Get a message when a fm changes
 
--- fully-recover.lua: Rest off bad statuses during rest
+-- fully-recover.lua: Keep resting until these statuses are gone.
 -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
 BRC.Config.rest_off_statuses = {
-  "berserk",
-  "confused",
-  "corroded",
-  "marked",
-  "short of breath",
-  "slowed",
-  "sluggish",
-  "tree%-form",
-  "vulnerable",
-  "weakened",
+  "berserk", "confused", "corroded", "marked", "short of breath",
+  "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
 } -- BRC.Config.rest_off_statuses (do not remove this comment)
 
 -- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
@@ -79,7 +72,7 @@ BRC.Config.alert_remove_faith = true -- Reminder to remove amulet at max piety
 BRC.Config.alert_spell_level_changes = true -- Alert when you gain additional spell levels
 BRC.Config.save_with_msg = true -- Shift-S to save and leave yourself a message
 
--- remind-id.lua:Before finding scroll of ID, stop travel on new largest stack size, starting with:
+-- remind-id.lua: Before finding scroll of ID, stop travel when increasing largest stack size, starting at:
 BRC.Config.stop_on_scrolls_count = 2 -- Stop on a stack of this many un-ID'd scrolls
 BRC.Config.stop_on_pots_count = 3 -- Stop on a stack of this many un-ID'd potions
 
@@ -92,7 +85,7 @@ BRC.Config.temple_macros = true -- auto-search altars; run to exit after worship
 BRC.Config.gauntlet_macros = true -- auto-search with filters
 
 -- safe-consumables.lua
-BRC.Config.safe_consumables = true -- Maintain !r and !q on all consumables that need one
+BRC.Config.safe_consumables = true -- Maintain !r and !q on all consumables without a built-in prompt
 
 -- safe-stairs.lua: Detect/warn for accidental stair usage
 BRC.Config.warn_v5 = true -- Prompt before entering Vaults:5
@@ -111,7 +104,7 @@ BRC.Config.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
 --[[
   Pickup/Alert system
   This does not affect other autopickup settings; just the BRC Pickup/Alert system
-  Choose which items are auto-picked up
+  Choose which items are auto-picked up, alerted, and when force-more is applied.
 --]]
 BRC.Config.pickup = {
   armour = true,
@@ -184,7 +177,7 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
--- Heuristics for tuning the pickup/alert system
+-- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
 
 --[[
