@@ -5484,11 +5484,11 @@ f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
 
 -- Local constants / configuration
 local XL_FORCE_MORES = {
-  { pattern ="monster_warning:wielding.*of electrocution", xl = 5 },
-  { pattern ="You.*re more poisoned", xl = 7 },
-  { pattern ="^(?!.*Your?).*speeds? up", xl = 10 },
-  { pattern ="danger:goes berserk", xl = 18 },
-  { pattern ="monster_warning:carrying a wand of", xl = 15 },
+  { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
+  { pattern = "You.*re more poisoned", xl = 7 },
+  { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
+  { pattern = "danger:goes berserk", xl = 18 },
+  { pattern = "monster_warning:carrying a wand of", xl = 15 },
 }
 
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.ALL_SPELLBOOKS, ", ")
@@ -5705,9 +5705,13 @@ function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
 
   local picked_up
-  if text:find(" %- ") then picked_up = true
-  elseif text:find("ou drop ", 1, true) then picked_up = false
-  else return end
+  if text:find(" %- ") then
+    picked_up = true
+  elseif text:find("ou drop ", 1, true) then
+    picked_up = false
+  else
+    return
+  end
 
   local item_name = get_item_name(text)
   if not item_name then return end
@@ -6208,9 +6212,7 @@ function f_fm_monsters.init()
 
   -- Convert table patterns to strings
   for _, v in ipairs(FM_PATTERNS) do
-    if type(v.pattern) == "table" then
-      v.pattern = table.concat(v.pattern, "|")
-    end
+    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
   end
 
   set_monster_fm(monster_list_to_string(ALWAYS_FORCE_MORE_MONSTERS), true)
@@ -6772,9 +6774,7 @@ end
 local function c_message_temple(text, _)
   if you.branch() == "Temple" then
     -- Search again after explore
-    if text:find("explor", 1, true) then
-      search_altars()
-    end
+    if text:find("explor", 1, true) then search_altars() end
   end
 end
 

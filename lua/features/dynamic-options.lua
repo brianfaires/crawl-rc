@@ -10,11 +10,11 @@ f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
 
 -- Local constants / configuration
 local XL_FORCE_MORES = {
-  { pattern ="monster_warning:wielding.*of electrocution", xl = 5 },
-  { pattern ="You.*re more poisoned", xl = 7 },
-  { pattern ="^(?!.*Your?).*speeds? up", xl = 10 },
-  { pattern ="danger:goes berserk", xl = 18 },
-  { pattern ="monster_warning:carrying a wand of", xl = 15 },
+  { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
+  { pattern = "You.*re more poisoned", xl = 7 },
+  { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
+  { pattern = "danger:goes berserk", xl = 18 },
+  { pattern = "monster_warning:carrying a wand of", xl = 15 },
 }
 
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.ALL_SPELLBOOKS, ", ")

@@ -102,9 +102,7 @@ end
 local function c_message_temple(text, _)
   if you.branch() == "Temple" then
     -- Search again after explore
-    if text:find("explor", 1, true) then
-      search_altars()
-    end
+    if text:find("explor", 1, true) then search_altars() end
   end
 end
 

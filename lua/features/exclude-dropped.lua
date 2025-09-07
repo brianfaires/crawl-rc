@@ -101,9 +101,13 @@ function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
 
   local picked_up
-  if text:find(" %- ") then picked_up = true
-  elseif text:find("ou drop ", 1, true) then picked_up = false
-  else return end
+  if text:find(" %- ") then
+    picked_up = true
+  elseif text:find("ou drop ", 1, true) then
+    picked_up = false
+  else
+    return
+  end
 
   local item_name = get_item_name(text)
   if not item_name then return end

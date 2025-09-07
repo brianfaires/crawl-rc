@@ -295,9 +295,7 @@ function f_fm_monsters.init()
 
   -- Convert table patterns to strings
   for _, v in ipairs(FM_PATTERNS) do
-    if type(v.pattern) == "table" then
-      v.pattern = table.concat(v.pattern, "|")
-    end
+    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
   end
 
   set_monster_fm(monster_list_to_string(ALWAYS_FORCE_MORE_MONSTERS), true)
