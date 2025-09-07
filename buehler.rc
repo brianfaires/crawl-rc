@@ -3,6 +3,12 @@
 ################################### Begin lua/core/config.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
+--[[
+BRC Configuration - All user-configurable settings
+Author: buehler
+Dependencies: core/constants.lua
+--]]
+
 -- Initialize
 BRC = BRC or {}
 BRC.Config = {}
@@ -3508,6 +3514,12 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 ################################### Begin lua/core/constants.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
+--[[
+BRC Constants - All constant definitions
+Author: buehler
+Dependencies: (none, but indirectly references core/constants.lua)
+--]]
+
 -- Initialize
 BRC = BRC or {}
 
@@ -3798,6 +3810,8 @@ BRC.DMG_TYPE = {
 --[[
 BRC.data - Persistent data management module
 Manages persistent data across games and saves
+Author: buehler
+Dependencies: (none)
 --]]
 
 -- Initialize
@@ -3990,6 +4004,8 @@ end
 {
 --[[
 BRC Utility Functions - All utility functions organized into logical tables
+Author: buehler
+Dependencies: (none)
 --]]
 
 -- Initialize
@@ -4799,6 +4815,8 @@ BRC (Buehler RC) Core Module
 This module serves as the central coordinator for all feature modules
 It automatically loads any global table that contains `BRC_FEATURE_NAME`
 It then manages the feature's lifecycle and hook dispatching
+Author: buehler
+Dependencies: core/data.lua, core/util.lua
 --]]
 
 -- Initialize
@@ -5013,7 +5031,7 @@ end
 Feature: after-shaft
 Description: Automatically stops exploration on stairs after falling into a shaft
 Author: buehler
-Dependencies: CONFIG, in_hell
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_after_shaft = {}
@@ -5073,7 +5091,7 @@ end
 Feature: announce-hp-mp
 Description: Announces changes in HP/MP with visual meters and damage warnings
 Author: magus, buehler
-Dependencies: CONFIG
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_announce_hp_mp = {}
@@ -5252,7 +5270,7 @@ end
 Feature: color-inscribe
 Description: Colorizes inscriptions on items with appropriate colors for resistances, stats, and other properties
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, do_stat_inscription
+Dependencies: core/config.lua, core/constants.lua
 --]]
 
 f_color_inscribe = {}
@@ -5360,7 +5378,7 @@ end
 Feature: drop-inferior
 Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, BRC.text, iter
+Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_drop_inferior = {}
@@ -5422,7 +5440,7 @@ end
 Feature: dynamic-options
 Description: Changes options based on game state: xl, class, race, god, skills
 Author: buehler
-Dependencies: CONFIG, BRC.ALL_SPELLBOOKS, BRC.ALL_UNDEAD_RACES, BRC.ALL_POIS_RES_RACES, util.contains
+Dependencies: core/config.lua, core/constants.lua
 --]]
 
 f_dynamic_options = {}
@@ -5595,7 +5613,7 @@ end
 Feature: exclude-dropped
 Description: Automatically excludes dropped items from autopickup and removes exclusion when items are picked up
 Author: buehler
-Dependencies: CONFIG, CONSTANTS, iter, util
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_exclude_dropped = {}
@@ -5726,7 +5744,7 @@ end
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: CONFIG,
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_fully_recover = {}
@@ -5868,7 +5886,7 @@ end
 Feature: fm-disable
 Description: Disables force_more messages for specific game events to improve gameplay flow
 Author: buehler
-Dependencies: CONFIG
+Dependencies: core/config.lua
 --]]
 
 f_fm_disable = {}
@@ -5909,7 +5927,7 @@ Description: Dynamic force_more configuration for monsters based on player HP, x
     WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
     POSIX regex are required for this feature to use '|' in patterns.
 Author: gammafunk, buehler
-Dependencies: CONFIG, util.append, is_miasma_immune, you.torment_immune
+Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_fm_monsters = {}
@@ -6372,7 +6390,7 @@ end
 Feature: inscribe-stats
 Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
 Author: buehler
-Dependencies: CONFIG, iter, pa-util, util
+Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_inscribe_stats = {}
@@ -6443,7 +6461,7 @@ end
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
 Author: buehler, gammafunk
-Dependencies: CONFIG, BRC.COLORS, CONSTANTS, EMOJI, util, persistent_data
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_misc_alerts = {}
@@ -6542,7 +6560,7 @@ end
 Feature: remind-id
 Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
 Author: buehler
-Dependencies: CONFIG,
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_remind_id = {}
@@ -6669,7 +6687,7 @@ end
 Feature: runrest-features
 Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, util, BRC.ALL_PORTAL_NAMES
+Dependencies: core/config.lua, core/data.lua, core/constants.lua
 --]]
 
 f_runrest_features = {}
@@ -6812,7 +6830,7 @@ end
 Feature: safe-consumables
 Description: Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
 Author: buehler
-Dependencies: CONFIG, util.contains, iter.invent_iterator
+Dependencies: core/config.lua
 --]]
 
 f_safe_consumables = {}
@@ -6873,7 +6891,7 @@ end
 Feature: safe-stairs
 Description: Prevents accidental stairs use by warning about backtracking and dangerous locations like Vaults:5
 Author: buehler, rypofalem
-Dependencies: CONFIG, BRC.KEYS, view.feature_at, BRC.mpr.yesno
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_safe_stairs = {}
@@ -6959,7 +6977,7 @@ end
 Feature: startup
 Description: Handles startup features like skill menu display and auto-setting skill targets
 Author: rwbarton, buehler
-Dependencies: CONFIG
+Dependencies: core/config.lua, core/constants.lua
 --]]
 
 f_startup = {}
@@ -7001,7 +7019,7 @@ end
 Feature: weapon-slots
 Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
 Author: buehler
-Dependencies: CONFIG,
+Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_weapon_slots = {}
@@ -7156,7 +7174,8 @@ end
 Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, ALERT_BRC.COLORS, iter, util, pa-util
+Dependencies: core/config.lua, core/data.lua, core/util.lua,
+  pickup-alert/pa-armour.lua, pickup-alert/pa-data.lua, pickup-alert/pa-misc.lua, pickup-alert/pa-weapons.lua
 --]]
 
 f_pickup_alert = {}
@@ -7352,7 +7371,7 @@ end
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, iter
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_pa_data = {}
@@ -7483,7 +7502,7 @@ end
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_armour = {}
@@ -7851,7 +7870,7 @@ end
 Feature: pickup-alert-misc
 Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, util, iter
+Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_misc = {}
@@ -7951,7 +7970,7 @@ end
 Feature: pickup-alert-weapons
 Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_pa_weapons = {}

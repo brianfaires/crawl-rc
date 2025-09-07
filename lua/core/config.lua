@@ -1,3 +1,9 @@
+--[[
+BRC Configuration - All user-configurable settings
+Author: buehler
+Dependencies: core/constants.lua
+--]]
+
 -- Initialize
 BRC = BRC or {}
 BRC.Config = {}

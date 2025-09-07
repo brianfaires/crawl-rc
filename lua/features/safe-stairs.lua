@@ -2,7 +2,7 @@
 Feature: safe-stairs
 Description: Prevents accidental stairs use by warning about backtracking and dangerous locations like Vaults:5
 Author: buehler, rypofalem
-Dependencies: CONFIG, BRC.KEYS, view.feature_at, BRC.mpr.yesno
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_safe_stairs = {}

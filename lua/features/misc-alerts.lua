@@ -2,7 +2,7 @@
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
 Author: buehler, gammafunk
-Dependencies: CONFIG, BRC.COLORS, CONSTANTS, EMOJI, util, persistent_data
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_misc_alerts = {}

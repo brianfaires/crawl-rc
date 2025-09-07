@@ -2,7 +2,7 @@
 Feature: fm-disable
 Description: Disables force_more messages for specific game events to improve gameplay flow
 Author: buehler
-Dependencies: CONFIG
+Dependencies: core/config.lua
 --]]
 
 f_fm_disable = {}

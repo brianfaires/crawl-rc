@@ -2,7 +2,7 @@
 Feature: dynamic-options
 Description: Changes options based on game state: xl, class, race, god, skills
 Author: buehler
-Dependencies: CONFIG, BRC.ALL_SPELLBOOKS, BRC.ALL_UNDEAD_RACES, BRC.ALL_POIS_RES_RACES, util.contains
+Dependencies: core/config.lua, core/constants.lua
 --]]
 
 f_dynamic_options = {}

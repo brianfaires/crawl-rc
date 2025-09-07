@@ -5,7 +5,7 @@ Description: Dynamic force_more configuration for monsters based on player HP, x
     WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
     POSIX regex are required for this feature to use '|' in patterns.
 Author: gammafunk, buehler
-Dependencies: CONFIG, util.append, is_miasma_immune, you.torment_immune
+Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_fm_monsters = {}

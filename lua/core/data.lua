@@ -1,6 +1,8 @@
 --[[
 BRC.data - Persistent data management module
 Manages persistent data across games and saves
+Author: buehler
+Dependencies: (none)
 --]]
 
 -- Initialize

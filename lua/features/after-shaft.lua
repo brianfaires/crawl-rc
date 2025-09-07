@@ -2,7 +2,7 @@
 Feature: after-shaft
 Description: Automatically stops exploration on stairs after falling into a shaft
 Author: buehler
-Dependencies: CONFIG, in_hell
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_after_shaft = {}

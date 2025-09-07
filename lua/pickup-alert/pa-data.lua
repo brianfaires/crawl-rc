@@ -2,7 +2,7 @@
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, iter
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_pa_data = {}

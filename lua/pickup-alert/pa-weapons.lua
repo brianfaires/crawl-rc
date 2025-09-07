@@ -2,7 +2,7 @@
 Feature: pickup-alert-weapons
 Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_pa_weapons = {}

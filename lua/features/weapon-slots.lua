@@ -2,7 +2,7 @@
 Feature: weapon-slots
 Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
 Author: buehler
-Dependencies: CONFIG,
+Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_weapon_slots = {}

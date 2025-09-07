@@ -2,7 +2,7 @@
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, iter, util, pa-util
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_armour = {}

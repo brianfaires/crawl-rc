@@ -2,7 +2,7 @@
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: CONFIG,
+Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_fully_recover = {}

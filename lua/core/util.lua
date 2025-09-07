@@ -1,5 +1,7 @@
 --[[
 BRC Utility Functions - All utility functions organized into logical tables
+Author: buehler
+Dependencies: (none)
 --]]
 
 -- Initialize

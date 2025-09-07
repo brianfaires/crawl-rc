@@ -2,7 +2,8 @@
 Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, ALERT_BRC.COLORS, iter, util, pa-util
+Dependencies: core/config.lua, core/data.lua, core/util.lua,
+  pickup-alert/pa-armour.lua, pickup-alert/pa-data.lua, pickup-alert/pa-misc.lua, pickup-alert/pa-weapons.lua
 --]]
 
 f_pickup_alert = {}

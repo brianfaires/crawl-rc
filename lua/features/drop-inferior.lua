@@ -2,7 +2,7 @@
 Feature: drop-inferior
 Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, BRC.text, iter
+Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_drop_inferior = {}

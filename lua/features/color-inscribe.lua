@@ -2,7 +2,7 @@
 Feature: color-inscribe
 Description: Colorizes inscriptions on items with appropriate colors for resistances, stats, and other properties
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, do_stat_inscription
+Dependencies: core/config.lua, core/constants.lua
 --]]
 
 f_color_inscribe = {}

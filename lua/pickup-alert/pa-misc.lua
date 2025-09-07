@@ -2,7 +2,7 @@
 Feature: pickup-alert-misc
 Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: CONFIG, BRC.COLORS, EMOJI, util, iter
+Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_misc = {}

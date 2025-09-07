@@ -3,6 +3,8 @@ BRC (Buehler RC) Core Module
 This module serves as the central coordinator for all feature modules
 It automatically loads any global table that contains `BRC_FEATURE_NAME`
 It then manages the feature's lifecycle and hook dispatching
+Author: buehler
+Dependencies: core/data.lua, core/util.lua
 --]]
 
 -- Initialize
