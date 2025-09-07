@@ -81,17 +81,17 @@ function f_pickup_alert.init()
 
   if f_pa_armour then
     if f_pa_armour.init then f_pa_armour.init() end
-    BRC:debug("    pa-armour loaded")
+    BRC.debug("    pa-armour loaded")
   end
 
   if f_pa_weapons then
     if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC:debug("    pa-weapons loaded")
+    BRC.debug("    pa-weapons loaded")
   end
 
   if f_pa_misc then
     if f_pa_misc.init then f_pa_misc.init() end
-    BRC:debug("    pa-misc loaded")
+    BRC.debug("    pa-misc loaded")
   end
 
   -- Check for duplicate autopickup creation (affects local only)
