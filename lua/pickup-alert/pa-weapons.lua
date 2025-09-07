@@ -29,7 +29,7 @@ function WEAP_CACHE.get_primary_key(it)
   tokens[1] = it.is_ranged and "range_" or "melee_"
   tokens[2] = tostring(it.hands)
   if it.branded then tokens[3] = "b" end
-  return table.concat({ tokens })
+  return table.concat(tokens)
 end
 
 -- Get all categories this weapon fits into

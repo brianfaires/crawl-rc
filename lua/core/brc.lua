@@ -83,9 +83,7 @@ local function call_hook(hook_name, ...)
 end
 
 -- Public API
-function BRC.init(reset_persistent_data)
-  BRC.data.init(reset_persistent_data)
-
+function BRC.init()
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
     BRC.mpr.col("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)

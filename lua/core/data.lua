@@ -19,8 +19,8 @@ local TYPES = {
 }
 
 -- Private variables
-local _persistent_var_names
-local _persistent_table_names
+local _persistent_var_names = {}
+local _persistent_table_names = {}
 
 -- Local functions
 local function typeof(value)
@@ -129,9 +129,8 @@ function BRC.data.dump(char_dump)
   BRC.dump.text(table.concat(tokens), char_dump)
 end
 
-function BRC.data.init(full_reset)
-  -- Clear persistent data (data is created via BRC.data.persist)
-  if full_reset then
+function BRC.data.clear(delete_globals)
+  if delete_globals then
     if _persistent_var_names then
       for _, name in ipairs(_persistent_var_names) do
         _G[name] = nil

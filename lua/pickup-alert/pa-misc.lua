@@ -14,7 +14,7 @@ function f_pa_misc.alert_orb(it)
 end
 
 function f_pa_misc.alert_OTA(it)
-  local ota_item = f_pa_data.find(f_pa_data.pa_OTA_items, it)
+  local ota_item = f_pa_data.find(pa_OTA_items, it)
   if not ota_item then return end
 
   local do_alert = true
