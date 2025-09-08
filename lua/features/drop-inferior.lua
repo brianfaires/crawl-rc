@@ -34,12 +34,10 @@ function f_drop_inferior.c_assign_invletter(it)
   if not (it.is_weapon or BRC.is.armour(it)) then return end
   if BRC.is.risky_ego(it) then return end
 
+  local it_ego = BRC.get.ego(it)
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if
-      not inv.artefact
-      and inv.subtype() == it.subtype()
-      and (not BRC.is.branded(inv) or BRC.get.ego(inv) == BRC.get.ego(it))
-    then
+    local inv_ego = BRC.get.ego(inv)
+    if not inv.artefact and inv.subtype() == it.subtype() and (not inv_ego or inv_ego == it_ego) then
       if it.is_weapon then
         if you.race() == "Coglin" then return end -- More trouble than it's worth
         if inv.plus <= it.plus then inscribe_drop(inv) end

@@ -33,20 +33,20 @@ function WEAP_CACHE.get_primary_key(it)
 end
 
 -- Get all categories this weapon fits into
-function WEAP_CACHE.get_keys(is_ranged, hands, branded)
+function WEAP_CACHE.get_keys(is_ranged, hands, is_branded)
   local base_types = { is_ranged and "range_" or "melee_" }
-  local hand_types = { tostring(hands) }
-  local brand_types = { branded and "b" or "" }
+  local handed_types = { tostring(hands) }
+  local branded_types = { is_branded and "b" or "" }
 
   -- Add variations for the less restrictive versions
-  if hands == 1 then hand_types[2] = "2" end
-  if branded then brand_types[2] = "" end
+  if hands == 1 then handed_types[2] = "2" end
+  if is_branded then branded_types[2] = "" end
 
   -- Generate all combinations
   local keys = {}
   for _, base in ipairs(base_types) do
-    for _, hand in ipairs(hand_types) do
-      for _, brand in ipairs(brand_types) do
+    for _, hand in ipairs(handed_types) do
+      for _, brand in ipairs(branded_types) do
         keys[#keys + 1] = table.concat({ base, hand, brand })
       end
     end
@@ -67,7 +67,6 @@ function WEAP_CACHE.add_weapon(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
   weap_data.ego = function() return weap_data._ego end
-  weap_data.branded = weap_data._ego ~= nil
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -76,12 +75,12 @@ function WEAP_CACHE.add_weapon(it)
   weap_data.unbranded_score = BRC.get.weap_score(it, true)
 
   -- Track unique egos
-  if weap_data.branded and not util.contains(WEAP_CACHE.egos, weap_data._ego) then
+  if weap_data._ego and not util.contains(WEAP_CACHE.egos, weap_data._ego) then
     WEAP_CACHE.egos[#WEAP_CACHE.egos + 1] = weap_data._ego
   end
 
   -- Track max damage for applicable weapon categories
-  local keys = WEAP_CACHE.get_keys(weap_data.is_ranged, weap_data.hands, weap_data.branded)
+  local keys = WEAP_CACHE.get_keys(weap_data.is_ranged, weap_data.hands, weap_data._ego ~= nil)
 
   -- Update the max DPS for each category
   for _, key in ipairs(keys) do
@@ -111,17 +110,19 @@ function WEAP_CACHE.serialize()
 end
 
 -- Local functions
+-- is_weapon_upgrade(it, cur) -> boolean : For pickup; Check if a weapon is an upgrade to one currently in inventory.
+-- `cur` comes from WEAP_CACHE - it has some pre-computed values
 local function is_weapon_upgrade(it, cur)
-  -- `cur` comes from WEAP_CACHE
   if it.subtype() == cur.subtype then
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
-    if BRC.is.branded(cur) and not BRC.is.branded(it) then return false end
-    if BRC.is.branded(it) and it.is_identified and not BRC.is.branded(cur) then
+    local it_ego = BRC.get.ego(it)
+    if cur.ego and not it_ego then return false end
+    if it_ego and it.is_identified and not cur.ego then
       return BRC.get.weap_score(it) / cur.score > BRC.Tuning.weap.pickup.add_ego
     end
-    return BRC.get.ego(it) == cur.ego() and BRC.get.weap_score(it) > cur.score
+    return it_ego == cur.ego and BRC.get.weap_score(it) > cur.score
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     -- Return false if no clear upgrade possible
     if BRC.get.hands(it) > cur.hands then return false end
@@ -187,14 +188,11 @@ local function alert_early_weapons(it)
   if you.xl() <= BRC.Tuning.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
       if
-        it.plus >= BRC.Tuning.weap.alert.early_ranged.min_plus and BRC.is.branded(it)
+        it.plus >= BRC.Tuning.weap.alert.early_ranged.min_plus and BRC.get_ego(it)
         or it.plus >= BRC.Tuning.weap.alert.early_ranged.branded_min_plus
       then
-        if
-          BRC.get.hands(it) == 1
-          or not BRC.you.have_shield()
-          or you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields
-        then
+        local low_shield_training = you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields
+        if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
           return f_pickup_alert.do_alert(it, "Ranged weapon", BRC.Emoji.RANGED, BRC.Config.fm_alert.early_weap)
         end
       end
@@ -207,7 +205,7 @@ local function alert_early_weapons(it)
     local skill_diff = BRC.get.skill(top_attack_skill) - BRC.get.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
-    if BRC.is.branded(it) or it.plus and it.plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
+    if BRC.get.ego(it) or it.plus and it.plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
       return f_pickup_alert.do_alert(it, "Early weapon", BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
     end
   end
@@ -215,8 +213,10 @@ local function alert_early_weapons(it)
   return false
 end
 
--- Check if weapon is worth alerting for, informed by a weapon currently in inventory
--- `cur` comes from WEAP_CACHE
+--[[
+alert_interesting_weapon() -> boolean : `cur` comes from WEAP_CACHE - it has some pre-computed values
+Check if weapon is worth alerting for, compared against one weapon currently in inventory
+--]]
 local function alert_interesting_weapon(it, cur)
   if it.artefact and it.is_identified then return f_pickup_alert.do_alert(it, "Artefact weapon", BRC.Emoji.ARTEFACT) end
 
@@ -226,7 +226,8 @@ local function alert_interesting_weapon(it, cur)
 
   if cur.subtype == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
-    if not cur.artefact and BRC.is.branded(it, true) and BRC.get.ego(it) ~= cur.ego() then
+    local it_ego = BRC.get.ego(it, true) -- Don't overvalue Speed/Heavy egos (only look at their DPS)
+    if not cur.artefact and it_ego and (it_ego ~= cur.ego) then
       return f_pickup_alert.do_alert(it, "Diff ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
     elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
       return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
@@ -241,38 +242,34 @@ local function alert_interesting_weapon(it, cur)
   -- Penalize lower-trained skills
   local damp = BRC.Tuning.weap.alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
-  local score_ratio = penalty * BRC.get.weap_score(it) / best_score
+  local ratio = penalty * BRC.get.weap_score(it) / best_score
 
   if BRC.get.hands(it) > cur.hands then
     if BRC.you.free_offhand() or (you.skill("Shields") < BRC.Tuning.weap.alert.add_hand.ignore_sh_lvl) then
       local it_ego = BRC.get.ego(it)
       local unique_ego = it_ego and not util.contains(WEAP_CACHE.egos, it_ego)
-      if unique_ego and score_ratio > BRC.Tuning.weap.alert.new_ego then
+      if unique_ego and ratio > BRC.Tuning.weap.alert.new_ego then
         return f_pickup_alert.do_alert(it, "New ego (2-handed)", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
-      elseif score_ratio > BRC.Tuning.weap.alert.add_hand.not_using then
+      elseif ratio > BRC.Tuning.weap.alert.add_hand.not_using then
         return f_pickup_alert.do_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.upgrade_weap)
       end
-    elseif
-      BRC.is.branded(it)
-      and not BRC.is.branded(cur)
-      and score_ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh
-    then
+    elseif BRC.get.ego(it) and not cur.ego and ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh then
       local msg = "2-handed weapon (Gain ego)"
       return f_pickup_alert.do_alert(it, msg, BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.weap_ego)
     end
   else -- No extra hand required
     if cur.artefact then return false end
-    if BRC.is.branded(it, true) then
+    if BRC.get.ego(it, true) then -- Don't overvalue Speed/Heavy egos (only look at their DPS)
       local it_ego = BRC.get.ego(it)
-      if not BRC.is.branded(cur) then
-        if score_ratio > BRC.Tuning.weap.alert.gain_ego then
+      if not cur.ego then
+        if ratio > BRC.Tuning.weap.alert.gain_ego then
           return f_pickup_alert.do_alert(it, "Gain ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
         end
-      elseif not util.contains(WEAP_CACHE.egos, it_ego) and score_ratio > BRC.Tuning.weap.alert.new_ego then
+      elseif not util.contains(WEAP_CACHE.egos, it_ego) and ratio > BRC.Tuning.weap.alert.new_ego then
         return f_pickup_alert.do_alert(it, "New ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
       end
     end
-    if score_ratio > BRC.Tuning.weap.alert.pure_dps then
+    if ratio > BRC.Tuning.weap.alert.pure_dps then
       return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
     end
   end

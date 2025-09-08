@@ -428,7 +428,7 @@ end
 --[[
 The functions above are general purpose: They should apply to any crawl RC file.
 The functions below contain design choices or logic that are somewhat specific to BRC.
-Examples: Custom definition of `branded`, weapon DPS, or what a "risky ego" is.
+Examples: Weapon DPS calculation, treating dragon scales as branded, or defining what a "risky ego" is.
 --]]
 
 -- Local functions; Often mirroring calculations that live in crawl.
@@ -668,7 +668,7 @@ function BRC.get.ego(it, exclude_stat_only_egos)
   local ego = it.ego(true)
   if ego then
     if BRC.is.unusable_ego(ego) or (exclude_stat_only_egos and (ego == "speed" or ego == "heavy")) then
-      return it.artefact and "arte" or nil
+      return it.artefact and it.name() or nil
     end
     return ego
   end
@@ -681,7 +681,7 @@ function BRC.get.ego(it, exclude_stat_only_egos)
     end
   end
 
-  return it.artefact and "arte" or nil
+  return it.artefact and it.name() or nil
 end
 
 function BRC.get.hands(it)
@@ -689,13 +689,6 @@ function BRC.get.hands(it)
   local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
-end
-
---[[
-BRC.is.branded() - Literally just BRC.get.ego() ~= nil.
---]]
-function BRC.is.branded(it, exclude_stat_only_egos)
-  return BRC.get.ego(it, exclude_stat_only_egos) ~= nil
 end
 
 function BRC.is.unusable_ego(ego)
