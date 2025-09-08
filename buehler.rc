@@ -7952,6 +7952,8 @@ lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
 -- Local constants / configuration
 local FIRST_WEAPON_XL_CUTOFF = 4 -- Stop looking for first weapon after this XL
 local RANGED_XL_THRESHOLD = 3 -- At this skill level, don't bother alerting for polearms
+local RANGED = "range_"
+local MELEE = "melee_"
 
 -- Local variables
 local top_attack_skill
@@ -7961,28 +7963,24 @@ WEAP_CACHE = {}
 
 function WEAP_CACHE.get_primary_key(it)
   local tokens = {}
-  tokens[1] = it.is_ranged and "range_" or "melee_"
+  tokens[1] = it.is_ranged and RANGED or MELEE
   tokens[2] = tostring(it.hands)
-  if it.branded then tokens[3] = "b" end
+  if BRC.get.ego(it) then tokens[3] = "b" end
   return table.concat(tokens)
 end
 
--- Get all categories this weapon fits into
+-- Get all categories this weapon fits into (both its real category and any more-restrictive categories)
 function WEAP_CACHE.get_keys(is_ranged, hands, is_branded)
-  local base_types = { is_ranged and "range_" or "melee_" }
-  local handed_types = { tostring(hands) }
-  local branded_types = { is_branded and "b" or "" }
-
-  -- Add variations for the less restrictive versions
-  if hands == 1 then handed_types[2] = "2" end
-  if is_branded then branded_types[2] = "" end
+  local ranged_types = { is_ranged and { RANGED, MELEE } or { MELEE } }
+  local handed_types = { hands == 1 and { "1", "2" } or { "2" } }
+  local branded_types = { is_branded and { "b", "" } or { "" } }
 
   -- Generate all combinations
   local keys = {}
-  for _, base in ipairs(base_types) do
-    for _, hand in ipairs(handed_types) do
-      for _, brand in ipairs(branded_types) do
-        keys[#keys + 1] = table.concat({ base, hand, brand })
+  for _, r in ipairs(ranged_types) do
+    for _, h in ipairs(handed_types) do
+      for _, b in ipairs(branded_types) do
+        keys[#keys + 1] = table.concat({ r, h, b })
       end
     end
   end
