@@ -5903,101 +5903,65 @@ end
 --[[
 Feature: fm-monsters
 Description: Dynamic force_more configuration for monsters based on player HP, xl, willpower, resistances, etc.
-    hp-specific force_mores() by gammafunk, extended by buehler
-    WARNING: Never put a '}' on a line by itself. This breaks crawl's RC parser.
-    POSIX regex are required for this feature to use '|' in patterns.
-Author: gammafunk, buehler
+    WARNINGS:
+      - Never put a '}' on a line by itself. This breaks crawl's RC parser.
+      - POSIX regex are required for this feature to use '|' in patterns.
+Author: original by gammafunk, extended by buehler
 Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_fm_monsters = {}
 f_fm_monsters.BRC_FEATURE_NAME = "fm-monsters"
 
--- Local configuration
-local ALWAYS_FLASH_SCREEN_MONSTERS = {
-  -- Noteworthy abilities
-  "air elemental",
-  "elemental wellspring",
-  "ghost crab",
-  "ironbound convoker",
-  "vault guardian",
-  "vault warden",
-  "wendingo",
-  -- Displacement
-  "deep elf knight",
-  "swamp worm",
-  -- Summoning
-  "deep elf elementalist",
-} -- always_flash_screen_monsters (do not remove this comment)
-
-local ALWAYS_FORCE_MORE_MONSTERS = {
-  -- High damage/speed
-  "juggernaut",
-  "orbs? of fire",
-  "flayed ghost",
-  --Summoning
-  "shadow demon",
-  "guardian serpent",
-  "draconian stormcaller",
-  "spriggan druid",
-  "dryad",
-  "worldbinder",
-  "halazid warlock",
-  "demonspawn corrupter",
-  --Dangerous abilities
-  "wyrmhole",
-  "torpor snail",
-  "water nymph",
-  "shambling mangrove",
-  "iron giant",
-  "starflower",
-  "merfolk aquamancer",
-  "wretched star",
-  --Dangerous clouds
-  "catoblepas",
-  "apocalypse crab",
-} -- always_force_more_monsters (do not remove this comment)
-
--- Conditional adds to ALWAYS_FORCE_MORE_MONSTERS
-if not BRC.you.miasma_immune() then
-  util.append(ALWAYS_FORCE_MORE_MONSTERS, {
-    "death drake",
-    "tainted leviathan",
-    "putrid mouth",
-  })
-end
-
-if not you.torment_immune() then
-  util.append(ALWAYS_FORCE_MORE_MONSTERS, {
-    "tormentor",
-    "curse (toe|skull)",
-    "Fiend",
-    "tzitzimi",
-    "royal mummy",
-    "mummy priest",
-    "(dread|ancient) lich",
-    "lurking horror",
-  })
-end
-
-local FM_PACK = {
-  -- Only alert once per pack
-  "boggart",
-  "dream sheep",
-  "floating eye",
-  "shrike",
-} -- fm_pack (do not remove this comment)
-
-local FM_PACK_NO_CREATE = {
-  -- Once per pack, but alerts are created through dynamic-fms below.
-  -- NOTE: The correesponding dynamic-fm must be on an alert by itself (not part of a multi-monster pattern)
-  "electric eel",
-  "golden eye",
-  "great orb of eyes",
-  "meliai",
-} -- FM_PACK_NO_CREATE (do not remove this comment)
-
+--[[
+FM_PATTERNS configures all alerts. Each table within it creates one alert, using the following fields:
+    - `name` is for debugging.
+    - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
+    - `is_pack` (optional) indicates the alert is for a pack of monsters.
+      Packs only fire once every few turns - as defined in BRC.Config.fm_pack_duration (default 15).
+    - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
+    - `cutoff` sets the point when the alert is active (usually how much HP you have)
+    - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
+        Ex:
+          `always` alerts are always on.
+          `hp` alerts are active when you have < `cutoff` HP.
+          `will` alerts are active when you have <= `cutoff` pips of willpower.
+          `int` alerts are active when you have < `cutoff` Int.
+          `xl` alerts are active when your XL is < `cutoff`.
+          `elec` alerts are active when you have no rElec and < `cutoff` HP.
+          `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
+--]]
 local FM_PATTERNS = {
+  { name = "always_fm", cond = "always", cutoff = 0,
+    pattern = {
+      -- High damage/speed
+      "juggernaut", "orbs? of fire", "orbs? of winter", "flayed ghost",
+      --Summoning
+      "shadow demon", "guardian serpent", "draconian stormcaller", "spriggan druid", "dryad",
+      "worldbinder", "halazid warlock", "demonspawn corrupter",
+      --Dangerous abilities
+      "wyrmhole", "torpor snail", "water nymph", "shambling mangrove", "iron giant",
+      "starflower", "merfolk aquamancer", "wretched star",
+      --Dangerous clouds
+      "catoblepas", "apocalypse crab",
+    } },
+
+  { name = "always_flash", cond = "always", cutoff = 0,
+    flash_screen = true,
+    pattern = {
+      -- Noteworthy abilities
+      "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
+      "vault guardian", "vault warden", "wendingo",
+      -- Displacement
+      "deep elf knight", "swamp worm",
+      -- Summoning
+      "deep elf elementalist",
+    } },
+
+  { name = "always_fm_pack", cond = "always", cutoff = 0,
+    is_pack = true,
+    pattern = { "boggart", "dream sheep", "floating eye", "shrike", } },
+
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
   { name = "30hp", cond = "hp", cutoff = 30,
     pattern = { "hound", "gnoll" } },
@@ -6016,7 +5980,8 @@ local FM_PATTERNS = {
   { name = "60hp", cond = "hp", cutoff = 60,
     pattern = { "yaktaur(?! captain)", "cyclops", "centaur(?! warrior)" } },
   { name = "70hp_melai", cond = "hp", cutoff = 70,
-    pattern = { "meliai" } },
+    is_pack = true,
+    pattern = "meliai" },
   { name = "80hp", cond = "hp", cutoff = 80,
     pattern = { "gargoyle" } },
   { name = "90hp", cond = "hp", cutoff = 90,
@@ -6043,9 +6008,11 @@ local FM_PATTERNS = {
                 "glowing orange brain", "orc sorcerer", "ogre mage", "satyr", "vault sentinel", "iron elemental",
                 "death knight", "vampire knight" } },
   { name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3,
-    pattern = { "great orb of eyes" } },
+    is_pack = true,
+    pattern = "great orb of eyes" },
   { name = "willpower3_golden_eye", cond = "will", cutoff = 3,
-    pattern = { "golden eye" } },
+    is_pack = true,
+    pattern = "golden eye" },
   { name = "willpower4", cond = "will", cutoff = 4,
     pattern = { "merfolk avatar", "tainted leviathan", "nargun" } },
 
@@ -6063,8 +6030,8 @@ local FM_PATTERNS = {
   { name = "pois_140", cond = "pois", cutoff = 140,
     pattern = { "tengu reaver" } },
 
-  { name = "elec_40", cond = "elec", cutoff = 40,
-    pattern = { "electric eel" } },
+  { name = "elec_40", cond = "elec", cutoff = 40, is_pack = true,
+    pattern = "electric eel" },
   { name = "elec_80", cond = "elec", cutoff = 80,
     pattern = { "shock serpent", "raiju", "spark wasp" } },
   { name = "elec_120", cond = "elec", cutoff = 120,
@@ -6115,131 +6082,115 @@ local FM_PATTERNS = {
     pattern = { "shadow dragon" } },
 } -- end fm_patterns (do not remove this comment)
 
--- Set mutators to either flash (if undead) or a conditional fm
-if BRC.you.mutation_immune() then
-  BRC.set.flash_screen_message("monster_warning:cacodemon|neqoxec|shining eye", true)
-else
-  table.insert(
-    FM_PATTERNS,
-    -- Malmutate without rMut
-    {
-      name = "malmutate", cond = "mut", cutoff = 1,
-      pattern = { "cacodemon", "neqoxec", "shining eye" },
-    }
-  )
+local function init_conditional_alerts()
+  -- Conditionally add miasma monsters
+  if not BRC.you.miasma_immune() then
+    util.append(FM_PATTERNS, {
+      name = "miasma", cond = "always", cutoff = 0,
+      pattern = { "death drake", "tainted leviathan", "putrid mouth", }
+    })
+  end
+
+  -- Conditionally add tormentors
+  if not you.torment_immune() then
+    util.append(FM_PATTERNS, {
+      name = "torment", cond = "always", cutoff = 0,
+      pattern = { "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
+                  "mummy priest", "(dread|ancient) lich", "lurking horror", }
+    })
+  end
+
+  -- Set mutators to either flash (if undead) or a conditional fm
+  local mutator_str = "cacodemon|neqoxec|shining eye"
+  if BRC.you.mutation_immune() then
+    BRC.set.flash_screen_message("monster_warning:"..mutator_str, true)
+  else
+    util.append(FM_PATTERNS, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str, })
+  end
+
+  -- If configured, add fm for all uniques and pan lords
+  if BRC.Config.fm_on_uniques then
+    BRC.set.force_more("monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view", true)
+  end
 end
 ------------------- End config section -------------------
 
 -- Local state
-local active_fm -- which ones are on
-local active_fm_index -- lookup table for speed
-local monsters_to_mute -- which packs are muted
+local active_alert -- which ones are on
+local monsters_to_mute -- which packs to mute at next ready()
 local last_fm_turn -- when the mute started
 
 -- Local constants
 local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+local YOU_ARE_VINE_STALKER = you.race() == "Vine Stalker"
 
 -- Local functions
-local function set_monster_fm(monster_str, add_pattern)
-  BRC.set.force_more(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
-end
-
-local function get_three_pip_action(is_active, hp, dmg_threshold, resistance)
-  -- Dmg taken is 1/2; 1/3; 1/5 (for 1,2,3 resistance)
-  local divisor = resistance + 1
-  if divisor == 4 then divisor = 5 end
-
-  if is_active then
-    if hp >= dmg_threshold / divisor then return false end
+local function set_monster_alert(monster_str, add_pattern, do_flash_screen)
+  if do_flash_screen then
+    BRC.set.flash_screen_message(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
   else
-    if hp < dmg_threshold / divisor then return true end
+    BRC.set.force_more(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
   end
 end
 
-local function monster_list_to_string(monster_list)
-  local mon_str = nil
-  for _, v in ipairs(monster_list) do
-    if not mon_str then
-      mon_str = v
-    else
-      mon_str = string.format("%s|%s", mon_str, v)
-    end
-  end
-  return mon_str
+local function check_alert_three_pip(hp, dmg_threshold, resistance)
+  -- Dmg taken is 1/1; 1/2; 1/3; 1/5 (for 0; 1; 2; 3 resistance)
+  if resistance >= 3 then return hp < dmg_threshold / 5 end
+  return hp < dmg_threshold / (resistance + 1)
 end
 
-local function do_pack_mutes()
+local function update_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(monsters_to_mute) do
-    set_monster_fm(v, false) -- "Mute" the fm-alert by removing the fm (but active_fm[] is still true)
+    set_monster_alert(v, false) -- "Mute" the alert by removing the fm (but active_alert[] is still true)
   end
   monsters_to_mute = {}
 
-  -- Remove mutes that have expired (FM_PACK includes FM_PACK_NO_CREATE)
-  for _, v in ipairs(FM_PACK) do
-    if last_fm_turn[v] ~= -1 and you.turns() >= last_fm_turn[v] + BRC.Config.fm_pack_duration then
-      last_fm_turn[v] = -1
-      if util.contains(FM_PACK_NO_CREATE, v) then
-        active_fm[active_fm_index[v]] = false -- Set to false so the main logic can conditionally re-enable it
+  -- Remove expired mutes
+  for i, v in ipairs(FM_PATTERNS) do
+    if v.is_pack and last_fm_turn[i] ~= -1 and you.turns() >= last_fm_turn[i] + BRC.Config.fm_pack_duration then
+      last_fm_turn[i] = -1
+      if v.cond == "always" then
+        set_monster_alert(v, true, v.flash_screen) -- Alert is aleady active. Just turn it back on
       else
-        set_monster_fm(v, true) -- Reenable the fm, which is always active
+        active_alert[i] = false -- Set to false and let the main logic decide if it should reactivate it.
       end
     end
   end
 end
 
+------------------- Hooks -------------------
 function f_fm_monsters.init()
-  active_fm = {}
-  active_fm_index = {}
+  active_alert = {}
   monsters_to_mute = {}
   last_fm_turn = {}
+  init_conditional_alerts()
 
   -- Convert table patterns to strings
   for _, v in ipairs(FM_PATTERNS) do
     if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
   end
 
-  set_monster_fm(monster_list_to_string(ALWAYS_FORCE_MORE_MONSTERS), true)
-  BRC.set.flash_screen_message(monster_list_to_string(ALWAYS_FLASH_SCREEN_MONSTERS), true)
-
-  if BRC.Config.fm_on_uniques then
-    BRC.set.force_more("monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view", true)
-  end
-
-  -- Init packs
-  for _, v in ipairs(FM_PACK) do
-    set_monster_fm(v, true)
-    last_fm_turn[v] = -1
-  end
-
-  for _, v in ipairs(FM_PACK_NO_CREATE) do
-    FM_PACK[#FM_PACK + 1] = v
-    last_fm_turn[v] = -1
-  end
-
-  -- Build table of indexes, used for fm_pack logic
   for i, v in ipairs(FM_PATTERNS) do
-    if not v.pattern:find("|") then active_fm_index[v.pattern] = i end
-  end
-
-  -- Init all active_fm to false
-  for _, _ in ipairs(FM_PATTERNS) do
-    active_fm[#active_fm + 1] = false
+    last_fm_turn[i] = -1
+    active_alert[i] = v.cond == "always"
+    if active_alert[i] then set_monster_alert(v.pattern, true, v.flash_screen) end
   end
 end
 
-------------------- Hooks -------------------
 function f_fm_monsters.c_message(text, channel)
   if channel ~= "monster_warning" then return end
-  if BRC.Config.fm_pack_duration == 0 then return end
+  if BRC.Config.fm_pack_duration <= 0 then return end
 
-  -- Identifies when a mute should be turned on
+  -- Identify when a mute should be turned on
   if not text:find("comes? into view") then return end
-  for _, v in ipairs(FM_PACK) do
-    if text:find(v) and last_fm_turn[v] == -1 then
-      last_fm_turn[v] = you.turns()
-      monsters_to_mute[#monsters_to_mute + 1] = v
+  for i, v in ipairs(FM_PATTERNS) do
+    if v.is_pack then
+      if text:find(v.pattern) and last_fm_turn[i] == -1 then
+        last_fm_turn[i] = you.turns()
+        monsters_to_mute[#monsters_to_mute + 1] = v.pattern
+      end
     end
   end
 end
@@ -6248,12 +6199,15 @@ function f_fm_monsters.ready()
   local activated = {}
   local deactivated = {}
 
+  -- Load all stats before loop. Most of them are used multiple times.
   local hp, _ = you.hp()
   local amulet = items.equipped_at("amulet")
-  if amulet and amulet.name() == "amulet of guardian spirit" or you.race() == "Vine Stalker" then
+  if YOU_ARE_VINE_STALKER or (amulet and amulet.name() == "amulet of guardian spirit") then
     local mp, _ = you.mp()
     hp = hp + mp
   end
+  local xl = you.xl()
+  local int = you.intelligence()
   local willpower = you.willpower()
   local res_mut = you.res_mutation()
   local res_pois = you.res_poison()
@@ -6262,79 +6216,46 @@ function f_fm_monsters.ready()
   local res_fire = you.res_fire()
   local res_cold = you.res_cold()
   local res_drain = you.res_draining()
-  local int = you.intelligence()
-
-  local is_zig_condition = BRC.Config.disable_fm_monsters_in_zigs and you.branch() == "Zig"
 
   for i, v in ipairs(FM_PATTERNS) do
-    local add_fm = nil
+    local should_be_active = nil
 
-    if is_zig_condition then
-      add_fm = false
-    elseif not v.cond and not active_fm[i] then
-      add_fm = true
+    if BRC.Config.disable_fm_monsters_in_zigs and you.branch() == "Zig" then
+      should_be_active = false
+    elseif v.cond == "always" then
+      should_be_active = true
+    elseif not v.cond and not active_alert[i] then
+      should_be_active = true
     elseif v.cond == "xl" then
-      if active_fm[i] and you.xl() >= v.cutoff then
-        add_fm = false
-      elseif not active_fm[i] and you.xl() < v.cutoff then
-        add_fm = true
-      end
+      should_be_active = xl < v.cutoff
     elseif v.cond == "hp" then
-      if active_fm[i] and hp >= v.cutoff then
-        add_fm = false
-      elseif not active_fm[i] and hp < v.cutoff then
-        add_fm = true
-      end
+      should_be_active = hp < v.cutoff
     elseif v.cond == "int" then
-      if active_fm[i] and int >= v.cutoff then
-        add_fm = false
-      elseif not active_fm[i] and int < v.cutoff then
-        add_fm = true
-      end
+      should_be_active = int < v.cutoff
     elseif v.cond == "will" then
-      if active_fm[i] and willpower >= v.cutoff then
-        add_fm = false
-      elseif not active_fm[i] and willpower < v.cutoff then
-        add_fm = true
-      end
+      should_be_active = willpower < v.cutoff
     elseif v.cond == "mut" then
-      if active_fm[i] and res_mut > 0 then
-        add_fm = false
-      elseif not active_fm[i] and res_mut == 0 then
-        add_fm = true
-      end
+      should_be_active = res_mut == 0
     elseif v.cond == "pois" then
-      if active_fm[i] and (res_pois > 0 or hp >= v.cutoff) then
-        add_fm = false
-      elseif not active_fm[i] and res_pois == 0 and hp < v.cutoff then
-        add_fm = true
-      end
+      should_be_active = res_pois == 0 and hp < v.cutoff
     elseif v.cond == "elec" then
-      if active_fm[i] and (res_elec > 0 or hp >= v.cutoff) then
-        add_fm = false
-      elseif not active_fm[i] and res_elec == 0 and hp < v.cutoff then
-        add_fm = true
-      end
+      should_be_active = res_elec == 0 and hp < v.cutoff
     elseif v.cond == "corr" then
-      if active_fm[i] and (res_corr or hp >= v.cutoff) then
-        add_fm = false
-      elseif not active_fm[i] and not res_corr and hp < v.cutoff then
-        add_fm = true
-      end
+      should_be_active = not res_corr and hp < v.cutoff
     elseif v.cond == "fire" then
-      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_fire)
+      should_be_active = check_alert_three_pip(hp, v.cutoff, res_fire)
     elseif v.cond == "cold" then
-      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_cold)
+      should_be_active = check_alert_three_pip(hp, v.cutoff, res_cold)
     elseif v.cond == "drain" then
-      add_fm = get_three_pip_action(active_fm[i], hp, v.cutoff, res_drain)
+      should_be_active = check_alert_three_pip(hp, v.cutoff, res_drain)
     end
 
-    if add_fm ~= nil then
-      set_monster_fm(v.pattern, add_fm)
-      active_fm[i] = not active_fm[i]
+    if should_be_active ~= active_alert[i] then
+      active_alert[i] = should_be_active
+      set_monster_alert(v.pattern, should_be_active, v.flash_screen)
 
       if BRC.Config.debug_fm_monsters then
-        if add_fm then
+        if should_be_active then
           activated[#activated + 1] = v.name or v.pattern
         else
           deactivated[#deactivated + 1] = v.name or v.pattern
@@ -6348,7 +6269,7 @@ function f_fm_monsters.ready()
     if #deactivated > 0 then BRC.log.debug(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
   end
 
-  if BRC.Config.fm_pack_duration > 0 then do_pack_mutes() end
+  if BRC.Config.fm_pack_duration > 0 then update_pack_mutes() end
 end
 
 }
