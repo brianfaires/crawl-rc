@@ -32,12 +32,12 @@ function f_drop_inferior.c_assign_invletter(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if not (it.is_weapon or BRC.is.armour(it)) then return end
-  if BRC.is.risky_ego(it) then return end
 
   local it_ego = BRC.get.ego(it)
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_ego = BRC.get.ego(inv)
-    if not inv.artefact and inv.subtype() == it.subtype() and (not inv_ego or inv_ego == it_ego) then
+    -- To be an upgrade: subtypes must match, and either the egos match or we upgraded no ego to a non-risky ego
+    if inv.subtype() == it.subtype() and (inv_ego == it_ego or not (inv_ego or BRC.is.risky_ego(it_ego))) then
       if it.is_weapon then
         if you.race() == "Coglin" then return end -- More trouble than it's worth
         if inv.plus <= it.plus then inscribe_drop(inv) end

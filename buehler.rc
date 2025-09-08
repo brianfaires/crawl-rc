@@ -4711,11 +4711,10 @@ function BRC.is.unusable_ego(ego)
   return false
 end
 
-function BRC.is.risky_ego(it)
-  local text = it.artefact and it.name() or BRC.get.ego(it)
-  if not text then return false end
+function BRC.is.risky_ego(ego_name)
+  if not ego_name then return false end
   for _, v in ipairs(BRC.ALL_RISKY_EGOS) do
-    if text:find(v) then return true end
+    if ego_name:find(v) then return true end
   end
   return false
 end
@@ -5432,12 +5431,12 @@ function f_drop_inferior.c_assign_invletter(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if not (it.is_weapon or BRC.is.armour(it)) then return end
-  if BRC.is.risky_ego(it) then return end
 
   local it_ego = BRC.get.ego(it)
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_ego = BRC.get.ego(inv)
-    if not inv.artefact and inv.subtype() == it.subtype() and (not inv_ego or inv_ego == it_ego) then
+    -- To be an upgrade: subtypes must match, and either the egos match or we upgraded no ego to a non-risky ego
+    if inv.subtype() == it.subtype() and (inv_ego == it_ego or not (inv_ego or BRC.is.risky_ego(it_ego))) then
       if it.is_weapon then
         if you.race() == "Coglin" then return end -- More trouble than it's worth
         if inv.plus <= it.plus then inscribe_drop(inv) end
@@ -7800,7 +7799,7 @@ end
 -- Hook functions
 -- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
 function f_pa_armour.pickup_armour(it)
-  if BRC.is.risky_ego(it) then return false end
+  if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
 
   if BRC.is.body_armour(it) then
     return pickup_body_armour(it)
@@ -8090,7 +8089,7 @@ function pa_pickup_weapon(it)
     return true
   end
 
-  if BRC.is.risky_ego(it) then return false end
+  if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
   if f_pa_data.find(pa_items_picked, it) then return false end
   for _, inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end

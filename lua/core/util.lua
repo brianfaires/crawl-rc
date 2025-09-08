@@ -697,11 +697,10 @@ function BRC.is.unusable_ego(ego)
   return false
 end
 
-function BRC.is.risky_ego(it)
-  local text = it.artefact and it.name() or BRC.get.ego(it)
-  if not text then return false end
+function BRC.is.risky_ego(ego_name)
+  if not ego_name then return false end
   for _, v in ipairs(BRC.ALL_RISKY_EGOS) do
-    if text:find(v) then return true end
+    if ego_name:find(v) then return true end
   end
   return false
 end

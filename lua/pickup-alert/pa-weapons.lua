@@ -155,7 +155,7 @@ function pa_pickup_weapon(it)
     return true
   end
 
-  if BRC.is.risky_ego(it) then return false end
+  if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
   if f_pa_data.find(pa_items_picked, it) then return false end
   for _, inv in ipairs(WEAP_CACHE.weapons) do
     if is_weapon_upgrade(it, inv) then return true end
