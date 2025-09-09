@@ -54,6 +54,15 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 ### [lua/features/after-shaft.lua](lua/features/after-shaft.lua)
 - After being shafted, travel stops on stairs until you get back to the original level.
 
+### [lua/features/alert-monsters.lua](lua/features/alert-monsters.lua)
+*(Configuration needs a cleanup for v0.33)*
+- Generates force_more prompts when monsters come into view. Includes:
+  - All uniques and Pan Lords
+  - A list of 'always alert' monsters
+  - Dynamic force_mores that trigger based on: HP, Resistances, XL, Willpower, Int
+  *(Roughly configured to fire when a monster can take 50% HP in one hit)*
+  - Avoids triggering on zombies, skeleton, etc.
+
 ### [lua/features/announce-hp-mp.lua](lua/features/announce-hp-mp.lua)
 - Writes messages for HP and MP changes.
 - Includes HP and MP meters broken into 10% increments.  
@@ -77,15 +86,6 @@ Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/cr
 
 ### [lua/features/fm-disable.lua](lua/features/fm-disable.lua)
 - Disables more() prompt for some crawl messages that cause a more() without using `force_more_message`.
-
-### [lua/features/fm-monsters.lua](lua/features/fm-monsters.lua)
-*(Configuration needs a cleanup for v0.33)*
-- Generates force_more prompts when monsters come into view. Includes:
-  - All uniques and Pan Lords
-  - A list of 'always alert' monsters
-  - Dynamic force_mores that trigger based on: HP, Resistances, XL, Willpower, Int
-  *(Roughly configured to fire when a monster can take 50% HP in one hit)*
-  - Avoids triggering on zombies, skeleton, etc.
 
 ### [lua/features/fully-recover.lua](lua/features/fully-recover.lua)
 - Updates resting to fully recover from temporary negative statuses.

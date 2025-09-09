@@ -11,7 +11,7 @@ BRC.Config = {}
 BRC.Config.emojis = true -- Use emojis in alerts and announcements
 
 -- after-shaft.lua
-BRC.Config.stop_on_stairs_after_shaft = true -- Stop on stairs after shaft, until back to original level
+BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after shaft, until back to original level
 
 -- announce-hp-mp.lua: Announce HP/MP changes
 BRC.Config.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
@@ -29,36 +29,36 @@ BRC.Config.announce = {
 
 -- An alternative announce setup: Displays meters after every turn. Uncomment the following block to try it.
 --[[
-  BRC.Config.announce = {
-    hp_loss_limit = 0,
-    hp_gain_limit = 0,
-    mp_loss_limit = 0,
-    mp_gain_limit = 0,
-    hp_first = true,
-    same_line = true,
-    always_both = true
-  } -- BRC.Config.announce (do not remove this comment)
+BRC.Config.announce = {
+  hp_loss_limit = 0,
+  hp_gain_limit = 0,
+  mp_loss_limit = 0,
+  mp_gain_limit = 0,
+  hp_first = true,
+  same_line = true,
+  always_both = true
+} -- BRC.Config.announce (do not remove this comment)
 --]]
 
 -- color-inscribe.lua
-BRC.Config.colorize_inscriptions = true -- Colorize inscriptions on pickup
+BRC.Config.colorize_inscriptions = true -- Add color to any inscription on pickup (e.g. resistance, stat changes, etc)
 
 -- drop-inferior.lua
-BRC.Config.drop_inferior = true -- Mark items for drop when better item picked up
+BRC.Config.drop_inferior = true -- Mark items for drop when a strictly better item is picked up
 BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for drop
 
 -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
-BRC.Config.exclude_dropped = true -- Exclude items from auto-pickup when dropped
-BRC.Config.ignore_stashed_weapon_scrolls = true -- Keep picking up enchant/brand scrolls if holding enchantable weapon
+BRC.Config.exclude_dropped = true -- Exclude items from future autopickup when dropped
+BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
 
 -- fm-disable.lua: Disable built-in force_mores that can't be easily removed
-BRC.Config.fm_disable = true -- Skip the 'more' prompt for messages configured in fm-disable.lua
+BRC.Config.fm_disable = true -- Skip the 'more' prompt for all messages configured in fm-disable.lua
 
--- fm-monsters.lua: Dynamically set force mores based on hp/resistances/etc
+-- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
 BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
-BRC.Config.fm_pack_duration = 15 -- Turns before alerting again for specific monster types; 0 to disable
-BRC.Config.disable_fm_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
-BRC.Config.debug_fm_monsters = false -- Get a message when a fm changes
+BRC.Config.pack_monster_turns = 15 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
+BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
+BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
 
 -- fully-recover.lua: Keep resting until these statuses are gone.
 -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
@@ -132,32 +132,12 @@ BRC.Config.alert = {
 
   -- Each non-useless item is alerted once.
   one_time = {
-    "broad axe",
-    "executioner's axe",
-    "eveningstar",
-    "demon whip",
-    "giant spiked club",
-    "sacred scourge",
-    "lajatang",
-    "bardiche",
-    "demon trident",
-    "trishula",
-    "quick blade",
-    "eudemon blade",
-    "demon blade",
-    "double sword",
-    "triple sword",
-    "crystal plate armour",
-    "gold dragon scales",
-    "pearl dragon scales",
-    "storm dragon scales",
-    "shadow dragon scales",
-    "wand of digging",
-    "triple crossbow",
-    "hand cannon",
-    "buckler",
-    "kite shield",
-    "tower shield",
+    "wand of digging", "buckler", "kite shield", "tower shield",
+    "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+    "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
+    "broad axe", "executioner's axe", "demon whip", "eveningstar", "giant spiked club", "sacred scourge",
+    "lajatang", "bardiche", "demon trident", "trishula", "hand cannon", "triple crossbow",
+
   }, -- BRC.Config.alert.one_time (do not remove this comment)
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
