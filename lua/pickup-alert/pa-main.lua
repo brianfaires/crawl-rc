@@ -77,22 +77,25 @@ function f_pickup_alert.autopickup(it)
 end
 
 function f_pickup_alert.init()
+  BRC.log.debug("Initializing pickup-alert submodules...")
+  local indent = "  "
   pause_pa_system = false
   f_pa_data.init()
+  BRC.log.debug(indent .. "pa-data loaded")
 
   if f_pa_armour then
     if f_pa_armour.init then f_pa_armour.init() end
-    BRC.log.debug("    pa-armour loaded")
+    BRC.log.debug(indent .. "pa-armour loaded")
   end
 
   if f_pa_weapons then
     if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC.log.debug("    pa-weapons loaded")
+    BRC.log.debug(indent .. "pa-weapons loaded")
   end
 
   if f_pa_misc then
     if f_pa_misc.init then f_pa_misc.init() end
-    BRC.log.debug("    pa-misc loaded")
+    BRC.log.debug(indent .. "pa-misc loaded")
   end
 
   -- Check for duplicate autopickup creation (affects local only)
