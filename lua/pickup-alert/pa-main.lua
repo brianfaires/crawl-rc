@@ -10,7 +10,7 @@ f_pickup_alert = {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
 -- Persistent variables
-num_autopickup_funcs = BRC.data.persist("num_autopickup_funcs", #chk_force_autopickup + 1)
+pa_num_autopickup_funcs = BRC.data.persist("pa_num_autopickup_funcs", #chk_force_autopickup + 1)
 
 -- Local variables
 local pause_pa_system
@@ -96,19 +96,24 @@ function f_pickup_alert.init()
   end
 
   -- Check for duplicate autopickup creation (affects local only)
-  if num_autopickup_funcs < #chk_force_autopickup then
+  if pa_num_autopickup_funcs < #chk_force_autopickup then
     BRC.log.warn(table.concat({
-      "Warning: Duplicate autopickup funcs loaded. (Commonly from reloading a local game.)\n",
-      "Expected: ", num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
-      "Will skip reloading buehler autopickup. Reload the game to fix crawl's memory usage."
+      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)\n",
+      "Expected: ", pa_num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
+      "If this is not expected, restart crawl to clear its memory."
     }))
-    return
+    if not BRC.mpr.yesno("Continue adding BRC autopickup function?") then
+      BRC.log.info("Skipping BRC autopickup function.")
+      return
+    end
   end
 
   -- Hook to the autopickup function
   add_autopickup_func(function(it, _)
     return f_pickup_alert.autopickup(it)
   end)
+
+  pa_num_autopickup_funcs = #chk_force_autopickup
 end
 
 function f_pickup_alert.c_assign_invletter(it)

@@ -71,7 +71,6 @@ function BRC.init()
   -- Handle stale data (switching characters on local instance)
   _features = {}
   _hooks = {}
-  BRC.data.clear(false)
 
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then

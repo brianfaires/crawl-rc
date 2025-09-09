@@ -28,7 +28,7 @@ local function log_message(message, context, color)
   local msg = string.format("[BRC] %s", message)
   if context then
     -- Remove folder name from context. Just the file name and context message
-    msg = string.format("%s (%s)", msg, context:match((".*/([^/]*%.*)")))
+    msg = string.format("%s (%s)", msg, context:match(".*/([^/]*%.*)") or context)
   end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
 end

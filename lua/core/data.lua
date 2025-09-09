@@ -10,6 +10,7 @@ BRC = BRC or {}
 BRC.data = {}
 
 -- Local constants
+local BRC_PREFIX = "brc_data_"
 local TYPES = {
   string = "string",
   number = "number",
@@ -26,17 +27,16 @@ local GAME_CHANGE_MONITORS = {
   buehler_name = you.name(),
   buehler_race = you.race(), -- using 'race' without a prefix breaks RC parser
   buehler_class = you.class(), -- using 'class' without a prefix breaks RC parser
-  buehler_turn = you.turns(),
 } -- GAME_CHANGE_MONITORS (do not remove this comment)
 
--- Persistent variables defined in init(), so it comes after all other persistent data
+-- Persistent variables - BRC.data defines these in init(), to come after all other persistent data
 
 -- Private variables
 local _persistent_var_names = {}
 local _persistent_table_names = {}
 
--- Local functions
-local function typeof(value)
+-- Private functions (defined globally to allow access from chk_lua_save)
+function BRC.data._brc_type_of(value)
   local t = type(value)
   if t == "table" then
     if #value > 0 then
@@ -55,10 +55,15 @@ local function typeof(value)
   end
 end
 
-local function to_formatted_string(value)
-  local type = typeof(value)
+function BRC.data._brc_val2str(value, indent_count)
+  if not value then return "nil" end
+  indent_count = indent_count or 1
+  local indent = string.rep("  ", indent_count)
+  local list_separator = ",\n" .. indent
+
+  local type = BRC.data._brc_type_of(value)
   if type == TYPES.string then
-    return string.format('"%s"', value.gsub('"', ""))
+    return string.format('"%s"', value:gsub('"', ""))
   elseif type == TYPES.number then
     return tostring(value)
   elseif type == TYPES.boolean then
@@ -66,19 +71,21 @@ local function to_formatted_string(value)
   elseif type == TYPES.list then
     local tokens = {}
     for _, v in ipairs(value) do
-      tokens[#tokens + 1] = to_formatted_string(v)
+      tokens[#tokens + 1] = BRC.data._brc_val2str(v, indent_count + 1)
     end
-    return string.format("{ %s }", table.concat(tokens, ", "))
+    if #tokens == 0 then return "{}" end
+    return string.format("{\n%s%s\n}", indent, table.concat(tokens, list_separator))
   elseif type == TYPES.dict then
     local tokens = {}
     for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"] = %s', k, to_formatted_string(v))
+      tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.data._brc_val2str(v, indent_count + 1))
     end
-    return string.format("{ %s }", table.concat(tokens, ", "))
+    if #tokens == 0 then return "{}" end
+    return string.format("{\n%s%s\n}", indent, table.concat(tokens, list_separator))
   else
     local str = tostring(value) or "nil"
     BRC.log.error(string.format("Unknown data type for value (%s): %s", str, type))
-    return nil
+    return "nil"
   end
 end
 
@@ -94,12 +101,12 @@ function BRC.data.persist(name, default_value)
   if _G[name] == nil then _G[name] = default_value end
 
   table.insert(chk_lua_save, function()
-    local var_type = typeof(_G[name])
+    local var_type = BRC.data._brc_type_of(_G[name])
     if var_type == TYPES.unknown then return "" end
-    return string.format("%s = %s%s", name, to_formatted_string(_G[name]), BRC.KEYS.LF)
+    return string.format("%s = %s%s", name, BRC.data._brc_val2str(_G[name]), BRC.KEYS.LF)
   end)
 
-  local var_type = typeof(_G[name])
+  local var_type = BRC.data._brc_type_of(_G[name])
   if var_type == TYPES.list or var_type == TYPES.dict then
     _persistent_table_names[#_persistent_table_names + 1] = name
   else
@@ -112,29 +119,27 @@ end
 function BRC.data.dump(char_dump)
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persistent_table_names) do
-    tokens[#tokens + 1] = string.format("%s:\n%s\n", name, to_formatted_string(_G[name]))
+    tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.data._brc_val2str(_G[name]))
   end
 
   tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
   for _, name in ipairs(_persistent_var_names) do
-    tokens[#tokens + 1] = string.format("%s = %s\n", name, to_formatted_string(_G[name]))
+    tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.data._brc_val2str(_G[name]))
   end
 
   BRC.dump.text(table.concat(tokens), char_dump)
 end
 
-function BRC.data.clear(delete_globals)
-  if delete_globals then
-    if _persistent_var_names then
-      for _, name in ipairs(_persistent_var_names) do
-        _G[name] = nil
-      end
+function BRC.data.erase()
+  if _persistent_var_names then
+    for _, name in ipairs(_persistent_var_names) do
+      _G[name] = nil
     end
+  end
 
-    if _persistent_table_names then
-      for _, name in ipairs(_persistent_table_names) do
-        _G[name] = nil
-      end
+  if _persistent_table_names then
+    for _, name in ipairs(_persistent_table_names) do
+      _G[name] = nil
     end
   end
 
@@ -150,7 +155,7 @@ function BRC.data.verify_reinit()
   local failed_reinit = false
   if you.turns() > 0 then
     for k, v in pairs(GAME_CHANGE_MONITORS) do
-      local prev = _G[string.format("prev_%s", k)]
+      local prev = _G[BRC_PREFIX .. k]
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
@@ -158,9 +163,9 @@ function BRC.data.verify_reinit()
       end
     end
 
-    if not _G.successful_data_reload then
+    if not _G[BRC_PREFIX .. "successful_reload"] then
       failed_reinit = true
-      BRC.log.error(string.format("\nFailed to load persistent data for buehler.rc v%s!", BRC.VERSION))
+      BRC.log.error(string.format("Failed to load persistent data for buehler.rc v%s!", BRC.VERSION))
       BRC.mpr.color("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
     end
 
@@ -168,20 +173,20 @@ function BRC.data.verify_reinit()
   end
 
   for k, v in pairs(GAME_CHANGE_MONITORS) do
-    local var_name = string.format("prev_%s", k)
+    local var_name = BRC_PREFIX .. k
     _G[var_name] = BRC.data.persist(var_name, v)
   end
-  _G.successful_data_reload = true
+  _G[BRC_PREFIX .. "successful_reload"] = true
 
   return true
 end
 
 function BRC.data.init()
   for k, v in pairs(GAME_CHANGE_MONITORS) do
-    BRC.data.persist(string.format("prev_%s", k), v)
+    BRC.data.persist(BRC_PREFIX .. k, v)
   end
 
-  -- successful_data_reload comes last, defaults to false. If true, confirms all data reloaded.
-  BRC.data.persist("successful_data_reload", false)
+  -- brc_data_successful_reload comes last, defaults to false. If true, confirms all data reloaded.
+  BRC.data.persist(BRC_PREFIX .. "successful_reload", false)
   return BRC.data.verify_reinit()
 end

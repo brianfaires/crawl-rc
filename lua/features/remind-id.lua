@@ -92,7 +92,7 @@ function f_remind_id.c_message(text, channel)
     local slot = items.letter_to_index(text:sub(idx - 1, idx - 1))
     local it = items.inslot(slot)
 
-    if it.is_identified then return end
+    if not it or it.is_identified then return end
     -- Picking up known items still returns identified == false
     -- Doing some hacky checks below instead
 
