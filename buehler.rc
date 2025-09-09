@@ -4026,8 +4026,7 @@ local function log_message(message, context, color)
   color = color or BRC.LogColor.info
   local msg = string.format("[BRC] %s", message)
   if context then
-    -- Remove folder name from context. Just the file name and context message
-    msg = string.format("%s (%s)", msg, context:match(".*/([^/]*%.*)") or context)
+    msg = string.format("%s (%s)", msg, context)
   end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
 end
@@ -4898,7 +4897,9 @@ local function safe_call(feature_name, func, ...)
   if not func then return end
 
   local success, result = pcall(func, ...)
-  if not success then BRC.log.error(string.format("Function call failed for: %s", feature_name), result) end
+  if not success then
+    BRC.log.error(string.format("Failure in %s", feature_name), result)
+  end
 end
 
 -- Hook management
@@ -4925,7 +4926,7 @@ end
 local function call_hook(hook_name, ...)
   if not _hooks[hook_name] then return end
   for _, hook_info in ipairs(_hooks[hook_name]) do
-    safe_call(hook_info.name, hook_info.func, ...)
+    safe_call(hook_info.name .. "." .. hook_name, hook_info.func, ...)
   end
 end
 
@@ -4967,7 +4968,7 @@ function BRC.register_feature(feature_name, feature_module)
 
   _features[feature_name] = feature_module
   register_hooks(feature_name, feature_module)
-  if feature_module.init then safe_call(feature_name, feature_module.init) end
+  if feature_module.init then safe_call(feature_name .. ".init", feature_module.init) end
 
   BRC.log.debug(string.format("Feature '%s' registered", feature_name))
   return true
@@ -4981,7 +4982,7 @@ function BRC.unregister_feature(feature_name)
 
   unregister_hooks(feature_name)
   _features[feature_name] = nil
-  if _features[feature_name].cleanup then safe_call(feature_name, _features[feature_name].cleanup) end
+  if _features[feature_name].cleanup then safe_call(feature_name .. ".cleanup", _features[feature_name].cleanup) end
 
   BRC.log.debug(string.format("Feature '%s' unregistered", feature_name))
   return true
@@ -7288,7 +7289,7 @@ function f_pa_data.find(table_ref, it)
   if table_ref == pa_OTA_items then
     local qualname = it.name("qual")
     for _, v in ipairs(pa_OTA_items) do
-      if v ~= "" and qualname:find(v) then return v end
+      if v and qualname:find(v) then return v end
     end
   else
     local name, value = get_pa_keys(it)
@@ -7785,7 +7786,7 @@ function f_pa_misc.alert_OTA(it)
     if you.skill(it.weap_skill) < BRC.Config.alert.OTA_require_skill.weapon then return end
   end
 
-  f_pa_data.remove(f_pa_data.pa_OTA_items, it)
+  f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
   return f_pickup_alert.do_alert(it, "Rare item", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
 end

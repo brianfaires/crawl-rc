@@ -35,7 +35,7 @@ function f_pa_misc.alert_OTA(it)
     if you.skill(it.weap_skill) < BRC.Config.alert.OTA_require_skill.weapon then return end
   end
 
-  f_pa_data.remove(f_pa_data.pa_OTA_items, it)
+  f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
   return f_pickup_alert.do_alert(it, "Rare item", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
 end

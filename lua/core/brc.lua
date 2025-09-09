@@ -35,7 +35,9 @@ local function safe_call(feature_name, func, ...)
   if not func then return end
 
   local success, result = pcall(func, ...)
-  if not success then BRC.log.error(string.format("Function call failed for: %s", feature_name), result) end
+  if not success then
+    BRC.log.error(string.format("Failure in %s", feature_name), result)
+  end
 end
 
 -- Hook management
@@ -62,7 +64,7 @@ end
 local function call_hook(hook_name, ...)
   if not _hooks[hook_name] then return end
   for _, hook_info in ipairs(_hooks[hook_name]) do
-    safe_call(hook_info.name, hook_info.func, ...)
+    safe_call(hook_info.name .. "." .. hook_name, hook_info.func, ...)
   end
 end
 
@@ -104,7 +106,7 @@ function BRC.register_feature(feature_name, feature_module)
 
   _features[feature_name] = feature_module
   register_hooks(feature_name, feature_module)
-  if feature_module.init then safe_call(feature_name, feature_module.init) end
+  if feature_module.init then safe_call(feature_name .. ".init", feature_module.init) end
 
   BRC.log.debug(string.format("Feature '%s' registered", feature_name))
   return true
@@ -118,7 +120,7 @@ function BRC.unregister_feature(feature_name)
 
   unregister_hooks(feature_name)
   _features[feature_name] = nil
-  if _features[feature_name].cleanup then safe_call(feature_name, _features[feature_name].cleanup) end
+  if _features[feature_name].cleanup then safe_call(feature_name .. ".cleanup", _features[feature_name].cleanup) end
 
   BRC.log.debug(string.format("Feature '%s' unregistered", feature_name))
   return true

@@ -37,7 +37,7 @@ function f_pa_data.find(table_ref, it)
   if table_ref == pa_OTA_items then
     local qualname = it.name("qual")
     for _, v in ipairs(pa_OTA_items) do
-      if v ~= "" and qualname:find(v) then return v end
+      if v and qualname:find(v) then return v end
     end
   else
     local name, value = get_pa_keys(it)
