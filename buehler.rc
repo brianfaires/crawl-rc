@@ -4020,7 +4020,10 @@ local function log_message(message, context, color)
   message = message or "Unknown message"
   color = color or BRC.LogColor.info
   local msg = string.format("[BRC] %s", message)
-  if context then msg = string.format("%s (Context: %s)", msg, context) end
+  if context then
+    -- Remove folder name from context. Just the file name and context message
+    msg = string.format("%s (%s)", msg, context:match((".*/([^/]*%.*)")))
+  end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
 end
 
@@ -7069,7 +7072,7 @@ function f_pickup_alert.autopickup(it)
   local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
   if pause_pa_system then return end
   if you.have_orb() then return end
-  if BRC.get_ego(it) and not it.is_identified then return false end
+  if BRC.get.ego(it) and not it.is_identified then return false end
   if not it.is_useless then
     if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
       if f_pa_armour.pickup_armour(it) then return true end
@@ -7871,9 +7874,9 @@ end
 
 -- Get all categories this weapon fits into (both its real category and any more-restrictive categories)
 function WEAP_CACHE.get_keys(is_ranged, hands, is_branded)
-  local ranged_types = { is_ranged and { RANGED, MELEE } or { MELEE } }
-  local handed_types = { hands == 1 and { "1", "2" } or { "2" } }
-  local branded_types = { is_branded and { "b", "" } or { "" } }
+  local ranged_types = is_ranged and { RANGED, MELEE } or { MELEE }
+  local handed_types = hands == 1 and { "1", "2" } or { "2" }
+  local branded_types = is_branded and { "b", "" } or { "" }
 
   -- Generate all combinations
   local keys = {}
@@ -8021,7 +8024,7 @@ local function alert_early_weapons(it)
   if you.xl() <= BRC.Tuning.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
       if
-        it.plus >= BRC.Tuning.weap.alert.early_ranged.min_plus and BRC.get_ego(it)
+        it.plus >= BRC.Tuning.weap.alert.early_ranged.min_plus and BRC.get.ego(it)
         or it.plus >= BRC.Tuning.weap.alert.early_ranged.branded_min_plus
       then
         local low_shield_training = you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields

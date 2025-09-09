@@ -30,7 +30,7 @@ function f_pickup_alert.autopickup(it)
   local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
   if pause_pa_system then return end
   if you.have_orb() then return end
-  if BRC.get_ego(it) and not it.is_identified then return false end
+  if BRC.get.ego(it) and not it.is_identified then return false end
   if not it.is_useless then
     if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
       if f_pa_armour.pickup_armour(it) then return true end

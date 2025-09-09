@@ -36,9 +36,9 @@ end
 
 -- Get all categories this weapon fits into (both its real category and any more-restrictive categories)
 function WEAP_CACHE.get_keys(is_ranged, hands, is_branded)
-  local ranged_types = { is_ranged and { RANGED, MELEE } or { MELEE } }
-  local handed_types = { hands == 1 and { "1", "2" } or { "2" } }
-  local branded_types = { is_branded and { "b", "" } or { "" } }
+  local ranged_types = is_ranged and { RANGED, MELEE } or { MELEE }
+  local handed_types = hands == 1 and { "1", "2" } or { "2" }
+  local branded_types = is_branded and { "b", "" } or { "" }
 
   -- Generate all combinations
   local keys = {}
@@ -186,7 +186,7 @@ local function alert_early_weapons(it)
   if you.xl() <= BRC.Tuning.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
       if
-        it.plus >= BRC.Tuning.weap.alert.early_ranged.min_plus and BRC.get_ego(it)
+        it.plus >= BRC.Tuning.weap.alert.early_ranged.min_plus and BRC.get.ego(it)
         or it.plus >= BRC.Tuning.weap.alert.early_ranged.branded_min_plus
       then
         local low_shield_training = you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields
