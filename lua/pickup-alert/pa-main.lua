@@ -37,7 +37,7 @@ function f_pickup_alert.autopickup(it)
     elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
       if f_pa_misc.pickup_staff(it) then return true end
     elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
-      if pa_pickup_weapon(it) then return true end
+      if f_pa_weapons.pickup_weapon(it) then return true end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
     end
@@ -72,7 +72,7 @@ function f_pickup_alert.autopickup(it)
   elseif f_pa_armour and BRC.Config.alert.armour and BRC.is.armour(it) then
     if f_pa_armour.alert_armour(it, unworn_aux_item) then return end
   elseif f_pa_weapons and BRC.Config.alert.weapons and it.is_weapon then
-    if pa_alert_weapon(it) then return end
+    if f_pa_weapons.alert_weapon(it) then return end
   end
 end
 

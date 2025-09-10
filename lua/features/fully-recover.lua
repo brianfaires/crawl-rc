@@ -38,6 +38,15 @@ local function finish_fully_recover()
   end
 end
 
+local function should_ignore_status(s)
+  if s == "corroded" then
+    return BRC.you.by_slimy_wall() or you.branch() == "Dis"
+  elseif s == "slowed" then
+    return BRC.you.zero_stat()
+  end
+  return false
+end
+
 local function fully_recovered()
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
@@ -64,15 +73,6 @@ local function remove_statuses_from_config()
     util.remove(BRC.Config.rest_off_statuses, s)
     crawl.error(string.format("  Removed: %s", s))
   end
-end
-
-function should_ignore_status(s)
-  if s == "corroded" then
-    return BRC.you.by_slimy_wall() or you.branch() == "Dis"
-  elseif s == "slowed" then
-    return BRC.you.zero_stat()
-  end
-  return false
 end
 
 local function start_fully_recover()

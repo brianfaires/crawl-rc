@@ -258,7 +258,7 @@ local function update_pack_mutes()
   end
 end
 
-------------------- Hooks -------------------
+-- Hook functions
 function f_alert_monsters.init()
   active_alert = {}
   monsters_to_mute = {}

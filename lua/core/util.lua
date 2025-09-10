@@ -423,7 +423,7 @@ function BRC.dump.all(verbose, skip_mpr)
   tokens[#tokens + 1] = BRC.data.serialize()
   if verbose then
     tokens[#tokens + 1] = serialize_inventory()
-    tokens[#tokens + 1] = WEAP_CACHE.serialize()
+    tokens[#tokens + 1] = _weapon_cache.serialize()
     tokens[#tokens + 1] = serialize_chk_lua_save()
   end
 
@@ -861,7 +861,7 @@ end
 
 function BRC.get.weap_score(it, no_brand_bonus)
   if it.dps and it.acc then
-    -- Handle cached /  high-score tuples in WEAP_CACHE
+    -- Handle cached /  high-score tuples in _weapon_cache
     return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
   end
   local it_plus = it.plus or 0

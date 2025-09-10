@@ -1,83 +1,102 @@
 -- luacheck configuration file for crawl-rc project
 
--- Suppress "unused global variable" warnings
+-- Allow reading these globals without defining them
 read_globals = {
-    -- Crawl game engine globals
-    "crawl",
-    "add_autopickup_func",
-    "you",
-    "items",
-    "view",
-    "iter",
-    "util",
-    -- BRC macro functions
-    "macro_brc_dump_character",
-    "macro_f_fully_recover_explore",
-    "macro_f_misc_alerts_save_with_message",
-    "macro_f_safe_stairs_down",
-    "macro_f_safe_stairs_up",
+  -- Crawl game engine globals
+  "crawl",
+  "add_autopickup_func",
+  "you",
+  "items",
+  "view",
+  "iter",
+  "util",
 }
 
+-- Suppress "unused global variable" warnings
 globals = {
-    -- Crawl hooks
-    "ready",
-    "c_message",
-    "c_assign_invletter",
-    "c_answer_prompt",
-    "chk_force_autopickup",
-    "chk_lua_save",
-    -- BRC macro functions
-    "macro_brc_dump_character",
-    "macro_f_fully_recover_explore",
-    "macro_f_misc_alerts_save_with_message",
-    "macro_f_safe_stairs_down",
-    "macro_f_safe_stairs_up",
+  -- Crawl hooks
+  "c_answer_prompt",
+  "c_assign_invletter",
+  "c_message",
+  "chk_force_autopickup",
+  "chk_lua_save",
+  "ready",
 
-    
-    -- BRC module globals
-    "BRC",
+  -- BRC macro functions
+  "macro_brc_dump_character",
+  "macro_f_fully_recover_explore",
+  "macro_f_misc_alerts_save_with_message",
+  "macro_f_safe_stairs_down",
+  "macro_f_safe_stairs_up",
 
-    -- Configuration and constants
-    "CONFIG",
-    "TUNING",
-    "WEAP_CACHE",
+  
+  -- BRC modules
+  "BRC",
+  "CONFIG",
+  "TUNING",
+  "_weapon_cache",
+  
+  -- Feature modules
+  "f_after_shaft",
+  "f_alert_monsters",
+  "f_announce_hp_mp",
+  "f_color_inscribe",
+  "f_drop_inferior",
+  "f_dynamic_options",
+  "f_exclude_dropped",
+  "f_fm_disable",
+  "f_fully_recover",
+  "f_inscribe_stats",
+  "f_misc_alerts",
+  "f_pa_armour",
+  "f_pa_data",
+  "f_pa_misc",
+  "f_pa_weapons",
+  "f_pickup_alert",
+  "f_remind_id",
+  "f_runrest_features",
+  "f_safe_consumables",
+  "f_safe_stairs",
+  "f_startup",
+  "f_template",
+  "f_weapon_slots",
+  
+  -- Persistent variables from BRC.data.persist()
+  "ad_prev",
+  "as_shaft_branch",
+  "as_shaft_depth",
+  "ed_dropped_items",
+  "fr_explore_after",
+  "fr_start_turn",
+  "lowest_num_hands_alerted",
+  "ma_alerted_max_piety",
+  "ma_prev_spell_levels",
+  "ma_saved_msg",
+  "pa_high_score",
+  "pa_items_alerted",
+  "pa_items_picked",
+  "pa_num_autopickup_funcs",
+  "pa_OTA_items",
+  "pa_recent_alerts",
+  "ri_found_scroll_of_id",
+  "ri_max_potion_stack",
+  "ri_max_scroll_stack",
+  "rr_autosearched_gauntlet",
+  "rr_autosearched_temple",
+  "ss_cur_location",
+  "ss_last_stair_turn",
+  "ss_prev_location",
+  "ss_v5_unwarned",
+  "template_counter",
+  "template_dict",
+  "template_flag",
+  "template_list",
 
 }
+
 
 -- Suppress specific warning types
-ignore = {
-    "unused global variable macro_brc_dump_character",
-    "unused global variable macro_f_fully_recover_explore", 
-    "unused global variable macro_f_misc_alerts_save_with_message",
-    "unused global variable macro_f_safe_stairs_down",
-    "unused global variable macro_f_safe_stairs_up",
-}
-
--- Suppress "unused function argument" warnings for callback functions
-unused_args = false
-
--- Suppress "unused loop variable" warnings for iterator loops
-unused_loop_vars = false
-
--- Allow unused variables in specific contexts
-allow_defined_top = true
+ignore = {}
 
 -- Set reasonable line length limit
 max_line_length = 120
-
--- Suppress "indentation" warnings (crawl code style)
-no_trailing_spaces = false
-no_tabs = false
-
--- Suppress "empty block" warnings (some functions are intentionally empty)
-no_empty_blocks = false
-
--- Suppress "redundant whitespace" warnings
-no_spaces = false
-no_semicolons = false
-
--- Suppress "unbalanced assignments" warnings
-no_balanced_assignments = false
-
--- Suppress "global variable written" warnings for intentionally global variables
-no_global = false

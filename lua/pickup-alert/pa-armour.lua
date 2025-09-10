@@ -1,7 +1,7 @@
 --[[
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
-Author: buehler
+Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
 Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
@@ -330,8 +330,7 @@ local function alert_aux_armour(it, unworn_inv_item)
   end
 end
 
--- Hook functions
--- Equipment autopickup (by Medar, gammafunk, buehler, and various others)
+-- Public API
 function f_pa_armour.pickup_armour(it)
   if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
 
