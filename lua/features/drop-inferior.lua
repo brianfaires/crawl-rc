@@ -16,7 +16,7 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if BRC.Config.msg_on_inscribe then
-    BRC.mpr.color(string.format("(You can drop %s - %s)", it.slot, it.name()), BRC.COLORS.cyan)
+    BRC.mpr.cyan(string.format("(You can drop %s - %s)", it.slot, it.name()))
   end
 end
 

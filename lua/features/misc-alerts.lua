@@ -50,7 +50,7 @@ local function alert_spell_level_changes()
     local avail = string.format(" (%s available)", new_spell_levels)
     crawl.mpr(BRC.text.lightcyan(msg) .. BRC.text.cyan(avail))
   elseif new_spell_levels < ma_prev_spell_levels then
-    BRC.mpr.color(string.format("%s spell levels remaining", new_spell_levels), BRC.COLORS.magenta)
+    BRC.mpr.magenta(string.format("%s spell levels remaining", new_spell_levels))
   end
 
   ma_prev_spell_levels = new_spell_levels

@@ -78,7 +78,7 @@ function BRC.init()
 
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
-    BRC.mpr.color("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
+    BRC.mpr.lightred("No features loaded. BRC system is inactive.")
     return false
   end
 

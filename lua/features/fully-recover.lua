@@ -26,7 +26,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - fr_start_turn
-  BRC.mpr.color(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
+  BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
 
   fr_start_turn = 0
   BRC.set.message_mute(WAITING_MESSAGE, false)

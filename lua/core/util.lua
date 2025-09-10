@@ -124,15 +124,19 @@ for k, v in pairs(BRC.COLORS) do
     return string.format("<%s>%s</%s>", v, text, v)
   end
 end
+
 function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
 end
 
 --- BRC.mpr - Wrappers around crawl.mpr ---
+-- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
+for k, v in pairs(BRC.COLORS) do
+  BRC.mpr[k] = function(text, channel) return crawl.mpr(BRC.text.color(v, text), channel) end
+end
 
--- Display a message, wrapped in a single color tag
 function BRC.mpr.color(text, color, channel)
-  crawl.mpr(BRC.text.color(color, text), channel)
+  return BRC.mpr[color](text, channel)
 end
 
 -- Message and stop travel/activity
@@ -429,7 +433,7 @@ function BRC.dump.all(verbose, skip_mpr)
 
   local text = table.concat(tokens, "\n")
   if not skip_mpr then
-    BRC.mpr.color(text, BRC.COLORS.white)
+    BRC.mpr.white(text)
   end
 
   return text
@@ -438,8 +442,11 @@ end
 function macro_brc_dump_character()
   if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
     crawl.take_note(BRC.dump.all(true, true))
+    BRC.mpr.lightgray("BRC debug info added to character dump.")
+  else
+    BRC.mpr.lightgray("Okay, then.")
   end
-  crawl.dump_char()
+  crawl.do_commands({ "CMD_CHARACTER_DUMP" }) -- Includes the message w/ file path to console
 end
 
 --[[

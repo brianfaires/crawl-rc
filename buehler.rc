@@ -3954,14 +3954,14 @@ function BRC.data.verify_reinit()
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-        BRC.mpr.color(msg, BRC.COLORS.lightred)
+        BRC.mpr.lightred(msg)
       end
     end
 
     if not _G[BRC_PREFIX .. "successful_reload"] then
       failed_reinit = true
       BRC.log.error(string.format("Failed to load persistent data for buehler.rc v%s!", BRC.VERSION))
-      BRC.mpr.color("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.", BRC.COLORS.darkgrey)
+      BRC.mpr.darkgrey("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.")
     end
 
     if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
@@ -4119,15 +4119,19 @@ for k, v in pairs(BRC.COLORS) do
     return string.format("<%s>%s</%s>", v, text, v)
   end
 end
+
 function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
 end
 
 --- BRC.mpr - Wrappers around crawl.mpr ---
+-- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
+for k, v in pairs(BRC.COLORS) do
+  BRC.mpr[k] = function(text, channel) return crawl.mpr(BRC.text.color(v, text), channel) end
+end
 
--- Display a message, wrapped in a single color tag
 function BRC.mpr.color(text, color, channel)
-  crawl.mpr(BRC.text.color(color, text), channel)
+  return BRC.mpr[color](text, channel)
 end
 
 -- Message and stop travel/activity
@@ -4424,7 +4428,7 @@ function BRC.dump.all(verbose, skip_mpr)
 
   local text = table.concat(tokens, "\n")
   if not skip_mpr then
-    BRC.mpr.color(text, BRC.COLORS.white)
+    BRC.mpr.white(text)
   end
 
   return text
@@ -4433,8 +4437,11 @@ end
 function macro_brc_dump_character()
   if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
     crawl.take_note(BRC.dump.all(true, true))
+    BRC.mpr.lightgray("BRC debug info added to character dump.")
+  else
+    BRC.mpr.lightgray("Okay, then.")
   end
-  crawl.dump_char()
+  crawl.do_commands({ "CMD_CHARACTER_DUMP" }) -- Includes the message w/ file path to console
 end
 
 --[[
@@ -4951,7 +4958,7 @@ function BRC.init()
 
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
-    BRC.mpr.color("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
+    BRC.mpr.lightred("No features loaded. BRC system is inactive.")
     return false
   end
 
@@ -5795,7 +5802,7 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if BRC.Config.msg_on_inscribe then
-    BRC.mpr.color(string.format("(You can drop %s - %s)", it.slot, it.name()), BRC.COLORS.cyan)
+    BRC.mpr.cyan(string.format("(You can drop %s - %s)", it.slot, it.name()))
   end
 end
 
@@ -6134,7 +6141,7 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - fr_start_turn
-  BRC.mpr.color(string.format("Fully recovered (%d turns)", turns), BRC.COLORS.lightgreen)
+  BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
 
   fr_start_turn = 0
   BRC.set.message_mute(WAITING_MESSAGE, false)
@@ -6413,7 +6420,7 @@ local function alert_spell_level_changes()
     local avail = string.format(" (%s available)", new_spell_levels)
     crawl.mpr(BRC.text.lightcyan(msg) .. BRC.text.cyan(avail))
   elseif new_spell_levels < ma_prev_spell_levels then
-    BRC.mpr.color(string.format("%s spell levels remaining", new_spell_levels), BRC.COLORS.magenta)
+    BRC.mpr.magenta(string.format("%s spell levels remaining", new_spell_levels))
   end
 
   ma_prev_spell_levels = new_spell_levels
@@ -7055,7 +7062,7 @@ function f_weapon_slots.ready()
     cleanup_weapon_slots()
     do_cleanup_weapon_slots = false
     if slots_changed then
-      BRC.mpr.color("Weapon slots updated (ab+w).", BRC.COLORS.darkgrey)
+      BRC.mpr.darkgrey("Weapon slots updated (ab+w).")
       crawl.redraw_screen()
       slots_changed = false
     end
