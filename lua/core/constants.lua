@@ -227,11 +227,6 @@ BRC.ALL_RISKY_EGOS = {
 BRC.KEYS = {
   LF = string.char(10),
   CR = string.char(13),
-  explore = crawl.get_command("CMD_EXPLORE") or "o",
-  save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
-  go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
-  go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">",
-  search = crawl.get_command("CMD_SEARCH_STASHES") or BRC.util.control_key("f"),
 } -- BRC.KEYS (do not remove this comment)
 
 BRC.MUTATIONS = {

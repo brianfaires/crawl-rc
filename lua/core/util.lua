@@ -32,6 +32,28 @@ local function log_message(message, context, color)
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
 end
 
+local function serialize_chk_lua_save()
+  local tokens = { "\n---CHK_LUA_SAVE---" }
+  for _, func in ipairs(chk_lua_save) do
+    tokens[#tokens + 1] = util.trim(func())
+  end
+
+  return table.concat(tokens, "\n")
+end
+
+local function serialize_inventory()
+  local tokens = { "\n---INVENTORY---\n" }
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
+    local base = inv.name("base") or "N/A"
+    local cls = inv.class(true) or "N/A"
+    local st = inv.subtype() or "N/A"
+    tokens[#tokens + 1] = string.format("  Base: %s Class: %s, Subtype: %s\n", base, cls, st)
+  end
+
+  return table.concat(tokens)
+end
+
 -- BRC.log - Logging methods
 function BRC.log.error(message, context)
   log_message(message, context, BRC.LogColor.error)
@@ -189,6 +211,12 @@ BRC.get.equipped_aux() - Returns 2 values:
   Poltergeists will get all worn aux armours and num_slots=6.
 The length of the list <= num_slots.
 --]]
+function BRC.get.command_key(cmd, fallback)
+  local key = crawl.get_command(cmd) or fallback
+  if not key then return nil end
+  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
+end
+
 function BRC.get.equipped_aux(aux_type)
   local all_aux = {}
   local num_slots = you.race() == "Poltergeist" and 6 or 1
@@ -367,7 +395,13 @@ function BRC.set.force_more(pattern, add_pattern)
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
 end
 
+-- Sets a macro. Function must be global and not a member of a module.
 function BRC.set.macro(key, function_name)
+  BRC.log.debug(string.format(
+    "Assigning macro: %s to %s",
+    BRC.text.magenta(function_name.."()"),
+    BRC.text.lightred("< '" .. key .. "' >")
+  ))
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
@@ -383,48 +417,29 @@ end
 
 --- BRC.dump - Debugging utils called from in-game lua interpreter ---
 
-function BRC.dump.all(verbose, skip_char_dump)
-  local char_dump = not skip_char_dump
-  BRC.data.dump(char_dump)
+function BRC.dump.all(verbose, skip_mpr)
+  local tokens = {}
+
+  tokens[#tokens + 1] = BRC.data.serialize()
   if verbose then
-    BRC.dump.inv(char_dump)
-    BRC.dump.text(WEAP_CACHE.serialize(), char_dump)
-    BRC.dump.data(char_dump)
+    tokens[#tokens + 1] = serialize_inventory()
+    tokens[#tokens + 1] = WEAP_CACHE.serialize()
+    tokens[#tokens + 1] = serialize_chk_lua_save()
   end
+
+  local text = table.concat(tokens, "\n")
+  if not skip_mpr then
+    BRC.mpr.color(text, BRC.COLORS.white)
+  end
+
+  return text
 end
 
-function BRC.dump.data(char_dump)
-  local tokens = { "\n---CHK_LUA_SAVE---" }
-  for _, func in ipairs(chk_lua_save) do
-    tokens[#tokens + 1] = util.trim(func())
+function macro_brc_dump_character()
+  if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
+    crawl.take_note(BRC.dump.all(true, true))
   end
-
-  BRC.dump.text(table.concat(tokens, "\n"), char_dump)
-end
-
-function BRC.dump.inv(char_dump, include_item_info)
-  local tokens = { "\n---INVENTORY---\n" }
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
-    if include_item_info then
-      local base = inv.name("base") or "N/A"
-      local cls = inv.class(true) or "N/A"
-      local st = inv.subtype() or "N/A"
-      tokens[#tokens + 1] = string.format("    Base: %s Class: %s, Subtype: %s", base, cls, st)
-    end
-    tokens[#tokens + 1] = "\n"
-  end
-
-  BRC.dump.text(table.concat(tokens), char_dump)
-end
-
-function BRC.dump.text(text, char_dump)
-  BRC.mpr.color(text, BRC.COLORS.white)
-
-  if char_dump then
-    crawl.take_note(text)
-    crawl.dump_char()
-  end
+  crawl.dump_char()
 end
 
 --[[

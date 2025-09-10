@@ -1487,6 +1487,7 @@ msc += $warning:The sheep \"Baaaas\" balefully
 msc += $warning:is blown backwards by the freezing wind
 
 
+msc += $boring:Okay\, then\.
 msc += $boring:Your tentacles glow momentarily
 msc += $boring:You feel a little dazed
 msc += $boring:You feel mildly nauseous
@@ -3732,11 +3733,6 @@ BRC.ALL_RISKY_EGOS = {
 BRC.KEYS = {
   LF = string.char(10),
   CR = string.char(13),
-  explore = crawl.get_command("CMD_EXPLORE") or "o",
-  save_game = crawl.get_command("CMD_SAVE_GAME") or "S",
-  go_upstairs = crawl.get_command("CMD_GO_UPSTAIRS") or "<",
-  go_downstairs = crawl.get_command("CMD_GO_DOWNSTAIRS") or ">",
-  search = crawl.get_command("CMD_SEARCH_STASHES") or BRC.util.control_key("f"),
 } -- BRC.KEYS (do not remove this comment)
 
 BRC.MUTATIONS = {
@@ -3915,7 +3911,7 @@ function BRC.data.persist(name, default_value)
   return _G[name]
 end
 
-function BRC.data.dump(char_dump)
+function BRC.data.serialize()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persistent_table_names) do
     tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.data._brc_val2str(_G[name]))
@@ -3926,7 +3922,7 @@ function BRC.data.dump(char_dump)
     tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.data._brc_val2str(_G[name]))
   end
 
-  BRC.dump.text(table.concat(tokens), char_dump)
+  return table.concat(tokens)
 end
 
 function BRC.data.erase()
@@ -4029,6 +4025,28 @@ local function log_message(message, context, color)
     msg = string.format("%s (%s)", msg, context)
   end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+end
+
+local function serialize_chk_lua_save()
+  local tokens = { "\n---CHK_LUA_SAVE---" }
+  for _, func in ipairs(chk_lua_save) do
+    tokens[#tokens + 1] = util.trim(func())
+  end
+
+  return table.concat(tokens, "\n")
+end
+
+local function serialize_inventory()
+  local tokens = { "\n---INVENTORY---\n" }
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
+    local base = inv.name("base") or "N/A"
+    local cls = inv.class(true) or "N/A"
+    local st = inv.subtype() or "N/A"
+    tokens[#tokens + 1] = string.format("  Base: %s Class: %s, Subtype: %s\n", base, cls, st)
+  end
+
+  return table.concat(tokens)
 end
 
 -- BRC.log - Logging methods
@@ -4188,6 +4206,12 @@ BRC.get.equipped_aux() - Returns 2 values:
   Poltergeists will get all worn aux armours and num_slots=6.
 The length of the list <= num_slots.
 --]]
+function BRC.get.command_key(cmd, fallback)
+  local key = crawl.get_command(cmd) or fallback
+  if not key then return nil end
+  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
+end
+
 function BRC.get.equipped_aux(aux_type)
   local all_aux = {}
   local num_slots = you.race() == "Poltergeist" and 6 or 1
@@ -4366,7 +4390,13 @@ function BRC.set.force_more(pattern, add_pattern)
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
 end
 
+-- Sets a macro. Function must be global and not a member of a module.
 function BRC.set.macro(key, function_name)
+  BRC.log.debug(string.format(
+    "Assigning macro: %s to %s",
+    BRC.text.magenta(function_name.."()"),
+    BRC.text.lightred("< '" .. key .. "' >")
+  ))
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
@@ -4382,48 +4412,29 @@ end
 
 --- BRC.dump - Debugging utils called from in-game lua interpreter ---
 
-function BRC.dump.all(verbose, skip_char_dump)
-  local char_dump = not skip_char_dump
-  BRC.data.dump(char_dump)
+function BRC.dump.all(verbose, skip_mpr)
+  local tokens = {}
+
+  tokens[#tokens + 1] = BRC.data.serialize()
   if verbose then
-    BRC.dump.inv(char_dump)
-    BRC.dump.text(WEAP_CACHE.serialize(), char_dump)
-    BRC.dump.data(char_dump)
+    tokens[#tokens + 1] = serialize_inventory()
+    tokens[#tokens + 1] = WEAP_CACHE.serialize()
+    tokens[#tokens + 1] = serialize_chk_lua_save()
   end
+
+  local text = table.concat(tokens, "\n")
+  if not skip_mpr then
+    BRC.mpr.color(text, BRC.COLORS.white)
+  end
+
+  return text
 end
 
-function BRC.dump.data(char_dump)
-  local tokens = { "\n---CHK_LUA_SAVE---" }
-  for _, func in ipairs(chk_lua_save) do
-    tokens[#tokens + 1] = util.trim(func())
+function macro_brc_dump_character()
+  if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
+    crawl.take_note(BRC.dump.all(true, true))
   end
-
-  BRC.dump.text(table.concat(tokens, "\n"), char_dump)
-end
-
-function BRC.dump.inv(char_dump, include_item_info)
-  local tokens = { "\n---INVENTORY---\n" }
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
-    if include_item_info then
-      local base = inv.name("base") or "N/A"
-      local cls = inv.class(true) or "N/A"
-      local st = inv.subtype() or "N/A"
-      tokens[#tokens + 1] = string.format("    Base: %s Class: %s, Subtype: %s", base, cls, st)
-    end
-    tokens[#tokens + 1] = "\n"
-  end
-
-  BRC.dump.text(table.concat(tokens), char_dump)
-end
-
-function BRC.dump.text(text, char_dump)
-  BRC.mpr.color(text, BRC.COLORS.white)
-
-  if char_dump then
-    crawl.take_note(text)
-    crawl.dump_char()
-  end
+  crawl.dump_char()
 end
 
 --[[
@@ -4936,14 +4947,15 @@ function BRC.init()
   _features = {}
   _hooks = {}
 
+  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
+
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
     BRC.mpr.color("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
     return false
   end
 
-  local success = BRC.data.init()
-  if not success then return false end
+  if not BRC.data.init() then return false end
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
@@ -4962,7 +4974,7 @@ function BRC.register_feature(feature_name, feature_module)
   end
 
   if _features[feature_name] then
-    BRC.log.error(string.format("Feature '%s' is already registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is already registered", BRC.text.yellow(feature_name)))
     return false
   end
 
@@ -4970,13 +4982,13 @@ function BRC.register_feature(feature_name, feature_module)
   register_hooks(feature_name, feature_module)
   if feature_module.init then safe_call(feature_name .. ".init", feature_module.init) end
 
-  BRC.log.debug(string.format("Feature '%s' registered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
   return true
 end
 
 function BRC.unregister_feature(feature_name)
   if not _features[feature_name] then
-    BRC.log.error(string.format("Feature '%s' is not registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is not registered", BRC.text.yellow(feature_name)))
     return false
   end
 
@@ -4984,7 +4996,7 @@ function BRC.unregister_feature(feature_name)
   _features[feature_name] = nil
   if _features[feature_name].cleanup then safe_call(feature_name .. ".cleanup", _features[feature_name].cleanup) end
 
-  BRC.log.debug(string.format("Feature '%s' unregistered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
   return true
 end
 
@@ -6164,20 +6176,6 @@ local function start_fully_recover()
   BRC.set.message_mute(WAITING_MESSAGE, true)
 end
 
--- Attach full recovery to auto-explore
-function f_fully_recover.macro_explore()
-  if fully_recovered() then
-    if fr_start_turn > 0 then
-      finish_fully_recover()
-    else
-      crawl.do_commands({ "CMD_EXPLORE" })
-    end
-  else
-    fr_explore_after = true
-    crawl.do_commands({ "CMD_REST" })
-  end
-end
-
 -- Hook functions
 function f_fully_recover.init()
   fr_start_turn = 0
@@ -6186,7 +6184,7 @@ function f_fully_recover.init()
 
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)
-  BRC.set.macro(BRC.KEYS.explore, "f_fully_recover.macro_explore")
+  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE", "o"), "macro_f_fully_recover_explore")
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -6219,6 +6217,20 @@ function f_fully_recover.ready()
     end
   else
     fr_explore_after = false
+  end
+end
+
+-- Attach full recovery to auto-explore
+function macro_f_fully_recover_explore()
+  if fully_recovered() then
+    if fr_start_turn > 0 then
+      finish_fully_recover()
+    else
+      crawl.do_commands({ "CMD_EXPLORE" })
+    end
+  else
+    fr_explore_after = true
+    crawl.do_commands({ "CMD_REST" })
   end
 end
 
@@ -6341,7 +6353,7 @@ end
 --[[
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
-Author: buehler, gammafunk
+Author: orig save w/msg by gammafunk, buehler
 Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
@@ -6397,14 +6409,12 @@ local function alert_spell_level_changes()
 end
 
 -- Save with message functionality
--- by gammafunk, edits by buehler
-function f_misc_alerts.macro_save_with_message()
-  crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
-  local res = crawl.getch()
-  if not (string.char(res) == "y" or string.char(res) == "Y") then
+function macro_f_misc_alerts_save_with_message()
+  if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
     crawl.mpr("Okay, then.")
     return
   end
+
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
   crawl.do_commands({ "CMD_SAVE_GAME_NOW" })
@@ -6416,7 +6426,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_with_message")
+    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME", "S"), "macro_f_misc_alerts_save_with_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
@@ -6589,7 +6599,8 @@ local stop_on_hell_stairs
 
 -- Local functions
 local function search_gauntlet()
-  crawl.sendkeys({ BRC.KEYS.search, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
 end
 
 local function ready_gauntlet_macro()
@@ -6655,7 +6666,8 @@ local function ready_stop_on_hell_stairs()
 end
 
 local function search_altars()
-  crawl.sendkeys({ BRC.KEYS.search, "altar", BRC.KEYS.CR })
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
 end
 
 local function ready_temple_macro()
@@ -6817,11 +6829,11 @@ local function check_new_location(cmd)
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
-function f_safe_stairs.macro_downstairs()
+function macro_f_safe_stairs_down()
   check_new_location("CMD_GO_DOWNSTAIRS")
 end
 
-function f_safe_stairs.macro_upstairs()
+function macro_f_safe_stairs_up()
   check_new_location("CMD_GO_UPSTAIRS")
 end
 
@@ -6832,8 +6844,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  BRC.set.macro(BRC.KEYS.go_downstairs, "f_safe_stairs.macro_downstairs")
-  BRC.set.macro(BRC.KEYS.go_upstairs, "f_safe_stairs.macro_upstairs")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS", ">"), "macro_f_safe_stairs_down")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS", "<"), "macro_f_safe_stairs_up")
 end
 
 function f_safe_stairs.ready()

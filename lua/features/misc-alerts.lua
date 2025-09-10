@@ -1,7 +1,7 @@
 --[[
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
-Author: buehler, gammafunk
+Author: orig save w/msg by gammafunk, buehler
 Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
@@ -57,14 +57,12 @@ local function alert_spell_level_changes()
 end
 
 -- Save with message functionality
--- by gammafunk, edits by buehler
-function f_misc_alerts.macro_save_with_message()
-  crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
-  local res = crawl.getch()
-  if not (string.char(res) == "y" or string.char(res) == "Y") then
+function macro_f_misc_alerts_save_with_message()
+  if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
     crawl.mpr("Okay, then.")
     return
   end
+
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
   crawl.do_commands({ "CMD_SAVE_GAME_NOW" })
@@ -76,7 +74,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    BRC.set.macro(BRC.KEYS.save_game, "f_misc_alerts.macro_save_with_message")
+    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME", "S"), "macro_f_misc_alerts_save_with_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil

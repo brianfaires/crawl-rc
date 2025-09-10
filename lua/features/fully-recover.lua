@@ -80,20 +80,6 @@ local function start_fully_recover()
   BRC.set.message_mute(WAITING_MESSAGE, true)
 end
 
--- Attach full recovery to auto-explore
-function f_fully_recover.macro_explore()
-  if fully_recovered() then
-    if fr_start_turn > 0 then
-      finish_fully_recover()
-    else
-      crawl.do_commands({ "CMD_EXPLORE" })
-    end
-  else
-    fr_explore_after = true
-    crawl.do_commands({ "CMD_REST" })
-  end
-end
-
 -- Hook functions
 function f_fully_recover.init()
   fr_start_turn = 0
@@ -102,7 +88,7 @@ function f_fully_recover.init()
 
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)
-  BRC.set.macro(BRC.KEYS.explore, "f_fully_recover.macro_explore")
+  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE", "o"), "macro_f_fully_recover_explore")
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -135,5 +121,19 @@ function f_fully_recover.ready()
     end
   else
     fr_explore_after = false
+  end
+end
+
+-- Attach full recovery to auto-explore
+function macro_f_fully_recover_explore()
+  if fully_recovered() then
+    if fr_start_turn > 0 then
+      finish_fully_recover()
+    else
+      crawl.do_commands({ "CMD_EXPLORE" })
+    end
+  else
+    fr_explore_after = true
+    crawl.do_commands({ "CMD_REST" })
   end
 end

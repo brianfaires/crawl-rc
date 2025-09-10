@@ -116,7 +116,7 @@ function BRC.data.persist(name, default_value)
   return _G[name]
 end
 
-function BRC.data.dump(char_dump)
+function BRC.data.serialize()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persistent_table_names) do
     tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.data._brc_val2str(_G[name]))
@@ -127,7 +127,7 @@ function BRC.data.dump(char_dump)
     tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.data._brc_val2str(_G[name]))
   end
 
-  BRC.dump.text(table.concat(tokens), char_dump)
+  return table.concat(tokens)
 end
 
 function BRC.data.erase()

@@ -1032,6 +1032,7 @@ msc += $warning:The sheep \"Baaaas\" balefully
 msc += $warning:is blown backwards by the freezing wind
 
 
+msc += $boring:Okay\, then\.
 msc += $boring:Your tentacles glow momentarily
 msc += $boring:You feel a little dazed
 msc += $boring:You feel mildly nauseous

@@ -74,14 +74,15 @@ function BRC.init()
   _features = {}
   _hooks = {}
 
+  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
+
   local loaded_count = BRC.load_all_features()
   if loaded_count == 0 then
     BRC.mpr.color("No features loaded. BRC system is inactive.", BRC.COLORS.lightred)
     return false
   end
 
-  local success = BRC.data.init()
-  if not success then return false end
+  if not BRC.data.init() then return false end
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
@@ -100,7 +101,7 @@ function BRC.register_feature(feature_name, feature_module)
   end
 
   if _features[feature_name] then
-    BRC.log.error(string.format("Feature '%s' is already registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is already registered", BRC.text.yellow(feature_name)))
     return false
   end
 
@@ -108,13 +109,13 @@ function BRC.register_feature(feature_name, feature_module)
   register_hooks(feature_name, feature_module)
   if feature_module.init then safe_call(feature_name .. ".init", feature_module.init) end
 
-  BRC.log.debug(string.format("Feature '%s' registered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
   return true
 end
 
 function BRC.unregister_feature(feature_name)
   if not _features[feature_name] then
-    BRC.log.error(string.format("Feature '%s' is not registered", feature_name))
+    BRC.log.error(string.format("Feature '%s' is not registered", BRC.text.yellow(feature_name)))
     return false
   end
 
@@ -122,7 +123,7 @@ function BRC.unregister_feature(feature_name)
   _features[feature_name] = nil
   if _features[feature_name].cleanup then safe_call(feature_name .. ".cleanup", _features[feature_name].cleanup) end
 
-  BRC.log.debug(string.format("Feature '%s' unregistered", feature_name))
+  BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
   return true
 end
 

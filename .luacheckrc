@@ -10,6 +10,12 @@ read_globals = {
     "view",
     "iter",
     "util",
+    -- BRC macro functions
+    "macro_brc_dump_character",
+    "macro_f_fully_recover_explore",
+    "macro_f_misc_alerts_save_with_message",
+    "macro_f_safe_stairs_down",
+    "macro_f_safe_stairs_up",
 }
 
 globals = {
@@ -20,6 +26,13 @@ globals = {
     "c_answer_prompt",
     "chk_force_autopickup",
     "chk_lua_save",
+    -- BRC macro functions
+    "macro_brc_dump_character",
+    "macro_f_fully_recover_explore",
+    "macro_f_misc_alerts_save_with_message",
+    "macro_f_safe_stairs_down",
+    "macro_f_safe_stairs_up",
+
     
     -- BRC module globals
     "BRC",
@@ -33,6 +46,11 @@ globals = {
 
 -- Suppress specific warning types
 ignore = {
+    "unused global variable macro_brc_dump_character",
+    "unused global variable macro_f_fully_recover_explore", 
+    "unused global variable macro_f_misc_alerts_save_with_message",
+    "unused global variable macro_f_safe_stairs_down",
+    "unused global variable macro_f_safe_stairs_up",
 }
 
 -- Suppress "unused function argument" warnings for callback functions

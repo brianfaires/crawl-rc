@@ -23,7 +23,8 @@ local stop_on_hell_stairs
 
 -- Local functions
 local function search_gauntlet()
-  crawl.sendkeys({ BRC.KEYS.search, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
 end
 
 local function ready_gauntlet_macro()
@@ -89,7 +90,8 @@ local function ready_stop_on_hell_stairs()
 end
 
 local function search_altars()
-  crawl.sendkeys({ BRC.KEYS.search, "altar", BRC.KEYS.CR })
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
 end
 
 local function ready_temple_macro()

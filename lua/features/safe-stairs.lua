@@ -53,11 +53,11 @@ local function check_new_location(cmd)
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
-function f_safe_stairs.macro_downstairs()
+function macro_f_safe_stairs_down()
   check_new_location("CMD_GO_DOWNSTAIRS")
 end
 
-function f_safe_stairs.macro_upstairs()
+function macro_f_safe_stairs_up()
   check_new_location("CMD_GO_UPSTAIRS")
 end
 
@@ -68,8 +68,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  BRC.set.macro(BRC.KEYS.go_downstairs, "f_safe_stairs.macro_downstairs")
-  BRC.set.macro(BRC.KEYS.go_upstairs, "f_safe_stairs.macro_upstairs")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS", ">"), "macro_f_safe_stairs_down")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS", "<"), "macro_f_safe_stairs_up")
 end
 
 function f_safe_stairs.ready()
