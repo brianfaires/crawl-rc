@@ -25,7 +25,7 @@ local function has_configured_force_more(it)
   return false
 end
 
--- Hook functions
+-- Public API
 function f_pickup_alert.autopickup(it)
   local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
   if pause_pa_system then return end
@@ -76,6 +76,44 @@ function f_pickup_alert.autopickup(it)
   end
 end
 
+function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
+  local item_name = f_pa_data.get_keyname(it, true)
+  local alert_col
+  if it.is_weapon then
+    alert_col = BRC.AlertColor.weapon
+    f_pa_data.update_high_scores(it)
+    local weapon_info = string.format(" (%s)", BRC.get.weapon_info(it))
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
+  elseif BRC.is.body_armour(it) then
+    alert_col = BRC.AlertColor.body_arm
+    f_pa_data.update_high_scores(it)
+    local ac, ev = BRC.get.armour_info(it)
+    local armour_info = string.format(" {%s, %s}", ac, ev)
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
+  elseif BRC.is.armour(it) then
+    alert_col = BRC.AlertColor.aux_arm
+  elseif BRC.is.orb(it) then
+    alert_col = BRC.AlertColor.orb
+  elseif BRC.is.talisman(it) then
+    alert_col = BRC.AlertColor.talisman
+  else
+    alert_col = BRC.AlertColor.misc
+  end
+
+  local tokens = {}
+  tokens[1] = emoji and emoji or BRC.text.cyan("----")
+  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
+  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
+  tokens[#tokens + 1] = tokens[1]
+  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
+
+  f_pa_data.insert(pa_recent_alerts, it)
+  f_pa_data.insert(pa_items_alerted, it)
+  you.stop_activity()
+  return true
+end
+
+-- Hook functions
 function f_pickup_alert.init()
   BRC.log.debug("Initializing pickup-alert submodules...")
   local indent = "  "
@@ -111,7 +149,7 @@ function f_pickup_alert.init()
     end
   end
 
-  -- Hook to the autopickup function
+  -- Add the autopickup function
   add_autopickup_func(function(it, _)
     return f_pickup_alert.autopickup(it)
   end)
@@ -157,41 +195,4 @@ function f_pickup_alert.ready()
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
-end
-
-function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
-  local item_name = f_pa_data.get_keyname(it, true)
-  local alert_col
-  if it.is_weapon then
-    alert_col = BRC.AlertColor.weapon
-    f_pa_data.update_high_scores(it)
-    local weapon_info = string.format(" (%s)", BRC.get.weapon_info(it))
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
-  elseif BRC.is.body_armour(it) then
-    alert_col = BRC.AlertColor.body_arm
-    f_pa_data.update_high_scores(it)
-    local ac, ev = BRC.get.armour_info(it)
-    local armour_info = string.format(" {%s, %s}", ac, ev)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
-  elseif BRC.is.armour(it) then
-    alert_col = BRC.AlertColor.aux_arm
-  elseif BRC.is.orb(it) then
-    alert_col = BRC.AlertColor.orb
-  elseif BRC.is.talisman(it) then
-    alert_col = BRC.AlertColor.talisman
-  else
-    alert_col = BRC.AlertColor.misc
-  end
-
-  local tokens = {}
-  tokens[1] = emoji and emoji or BRC.text.cyan("----")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
-  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
-  tokens[#tokens + 1] = tokens[1]
-  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
-
-  f_pa_data.insert(pa_recent_alerts, it)
-  f_pa_data.insert(pa_items_alerted, it)
-  you.stop_activity()
-  return true
 end

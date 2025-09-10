@@ -36,38 +36,49 @@ local function enchantable_weap_in_inv()
   return false
 end
 
---[[
-  get_item_name() - Pulls item name from text, and determines if it
-  Returns name of item to exclude, or nil if not an item that should be excluded
---]]
-local function get_item_name(text)
+local function clean_item_text(text)
   text = BRC.text.clean_text(text, false) -- remove tags
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")
-  text = util.trim(text)
+  return util.trim(text)
+end
 
-  -- jewellery and wands
+local function extract_jewellery_or_evoker(text)
   local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
-  -- misc items
   for _, item_name in ipairs(BRC.ALL_MISC_ITEMS) do
     if text:find(item_name) then return item_name end
   end
+end
 
-  -- Missiles; add regex to hit specific missiles
+local function extract_missile(text)
   for _, item_name in ipairs(BRC.ALL_MISSILES) do
     if text:find(item_name) then return item_name end
   end
+end
 
-  -- Potions
-  idx = text:find("potions? of")
+local function extract_potion(text)
+  local idx = text:find("potions? of")
   if idx then return "potions? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
 
-  -- Scrolls
-  idx = text:find("scrolls? of")
+local function extract_scroll(text)
+  local idx = text:find("scrolls? of")
   if idx then return "scrolls? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
+
+--[[
+  get_item_name() - Tries to extract item name from text.
+  Returns name of item, or nil if not recognized as an excludable item.
+--]]
+local function get_item_name(text)
+  text = clean_item_text(text)
+  return extract_jewellery_or_evoker(text) or
+         extract_missile(text) or
+         extract_potion(text) or
+         extract_scroll(text)
 end
 
 local function should_exclude(item_name)

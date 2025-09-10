@@ -22,6 +22,46 @@ local stop_on_pan_gates
 local stop_on_hell_stairs
 
 -- Local functions
+
+-- Altar and religion functions
+local function religion_is_handled()
+  if you.race() == "Demigod" then return true end
+  if you.god() == "No God" then return false end
+  if you.good_god() then return you.xl() > 9 end
+  return true
+end
+
+local function ready_ignore_altars()
+  if stop_on_altars and religion_is_handled() then
+    stop_on_altars = false
+    BRC.set.explore_stop("altars", false)
+  elseif not stop_on_altars and not religion_is_handled() then
+    stop_on_altars = true
+    BRC.set.explore_stop("altars", true)
+  end
+end
+
+-- Temple-related functions
+local function search_altars()
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
+end
+
+local function ready_temple_macro()
+  if you.branch() == "Temple" and not rr_autosearched_temple then
+    search_altars()
+    rr_autosearched_temple = true
+  end
+end
+
+local function c_message_temple(text, _)
+  if you.branch() == "Temple" then
+    -- Search again after explore
+    if text:find("explor", 1, true) then search_altars() end
+  end
+end
+
+-- Gauntlet-related functions
 local function search_gauntlet()
   local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
   crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
@@ -41,23 +81,9 @@ local function c_message_gauntlet(text, _)
   end
 end
 
-local function religion_is_handled()
-  if you.race() == "Demigod" then return true end
-  if you.god() == "No God" then return false end
-  if you.good_god() then return you.xl() > 9 end
-  return true
-end
 
-local function ready_ignore_altars()
-  if stop_on_altars and religion_is_handled() then
-    stop_on_altars = false
-    BRC.set.explore_stop("altars", false)
-  elseif not stop_on_altars and not religion_is_handled() then
-    stop_on_altars = true
-    BRC.set.explore_stop("altars", true)
-  end
-end
 
+-- Stairs and branch-specific functions
 local function ready_ignore_exits()
   if stop_on_portals and util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
@@ -86,25 +112,6 @@ local function ready_stop_on_hell_stairs()
   elseif not stop_on_hell_stairs and BRC.you.in_hell() then
     stop_on_hell_stairs = true
     BRC.set.explore_stop("stairs", true)
-  end
-end
-
-local function search_altars()
-  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
-  crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
-end
-
-local function ready_temple_macro()
-  if you.branch() == "Temple" and not rr_autosearched_temple then
-    search_altars()
-    rr_autosearched_temple = true
-  end
-end
-
-local function c_message_temple(text, _)
-  if you.branch() == "Temple" then
-    -- Search again after explore
-    if text:find("explor", 1, true) then search_altars() end
   end
 end
 

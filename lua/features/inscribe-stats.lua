@@ -55,7 +55,6 @@ function f_inscribe_stats.do_stat_inscription(it)
   end
 end
 
--- Hook functions
 function f_inscribe_stats.ready()
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_inscribe_stats.do_stat_inscription(inv)

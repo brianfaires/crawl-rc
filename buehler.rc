@@ -6005,38 +6005,49 @@ local function enchantable_weap_in_inv()
   return false
 end
 
---[[
-  get_item_name() - Pulls item name from text, and determines if it
-  Returns name of item to exclude, or nil if not an item that should be excluded
---]]
-local function get_item_name(text)
+local function clean_item_text(text)
   text = BRC.text.clean_text(text, false) -- remove tags
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")
-  text = util.trim(text)
+  return util.trim(text)
+end
 
-  -- jewellery and wands
+local function extract_jewellery_or_evoker(text)
   local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
-  -- misc items
   for _, item_name in ipairs(BRC.ALL_MISC_ITEMS) do
     if text:find(item_name) then return item_name end
   end
+end
 
-  -- Missiles; add regex to hit specific missiles
+local function extract_missile(text)
   for _, item_name in ipairs(BRC.ALL_MISSILES) do
     if text:find(item_name) then return item_name end
   end
+end
 
-  -- Potions
-  idx = text:find("potions? of")
+local function extract_potion(text)
+  local idx = text:find("potions? of")
   if idx then return "potions? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
 
-  -- Scrolls
-  idx = text:find("scrolls? of")
+local function extract_scroll(text)
+  local idx = text:find("scrolls? of")
   if idx then return "scrolls? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
+
+--[[
+  get_item_name() - Tries to extract item name from text.
+  Returns name of item, or nil if not recognized as an excludable item.
+--]]
+local function get_item_name(text)
+  text = clean_item_text(text)
+  return extract_jewellery_or_evoker(text) or
+         extract_missile(text) or
+         extract_potion(text) or
+         extract_scroll(text)
 end
 
 local function should_exclude(item_name)
@@ -6337,7 +6348,6 @@ function f_inscribe_stats.do_stat_inscription(it)
   end
 end
 
--- Hook functions
 function f_inscribe_stats.ready()
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_inscribe_stats.do_stat_inscription(inv)
@@ -6599,6 +6609,46 @@ local stop_on_pan_gates
 local stop_on_hell_stairs
 
 -- Local functions
+
+-- Altar and religion functions
+local function religion_is_handled()
+  if you.race() == "Demigod" then return true end
+  if you.god() == "No God" then return false end
+  if you.good_god() then return you.xl() > 9 end
+  return true
+end
+
+local function ready_ignore_altars()
+  if stop_on_altars and religion_is_handled() then
+    stop_on_altars = false
+    BRC.set.explore_stop("altars", false)
+  elseif not stop_on_altars and not religion_is_handled() then
+    stop_on_altars = true
+    BRC.set.explore_stop("altars", true)
+  end
+end
+
+-- Temple-related functions
+local function search_altars()
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
+end
+
+local function ready_temple_macro()
+  if you.branch() == "Temple" and not rr_autosearched_temple then
+    search_altars()
+    rr_autosearched_temple = true
+  end
+end
+
+local function c_message_temple(text, _)
+  if you.branch() == "Temple" then
+    -- Search again after explore
+    if text:find("explor", 1, true) then search_altars() end
+  end
+end
+
+-- Gauntlet-related functions
 local function search_gauntlet()
   local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
   crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
@@ -6618,23 +6668,9 @@ local function c_message_gauntlet(text, _)
   end
 end
 
-local function religion_is_handled()
-  if you.race() == "Demigod" then return true end
-  if you.god() == "No God" then return false end
-  if you.good_god() then return you.xl() > 9 end
-  return true
-end
 
-local function ready_ignore_altars()
-  if stop_on_altars and religion_is_handled() then
-    stop_on_altars = false
-    BRC.set.explore_stop("altars", false)
-  elseif not stop_on_altars and not religion_is_handled() then
-    stop_on_altars = true
-    BRC.set.explore_stop("altars", true)
-  end
-end
 
+-- Stairs and branch-specific functions
 local function ready_ignore_exits()
   if stop_on_portals and util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
@@ -6663,25 +6699,6 @@ local function ready_stop_on_hell_stairs()
   elseif not stop_on_hell_stairs and BRC.you.in_hell() then
     stop_on_hell_stairs = true
     BRC.set.explore_stop("stairs", true)
-  end
-end
-
-local function search_altars()
-  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
-  crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
-end
-
-local function ready_temple_macro()
-  if you.branch() == "Temple" and not rr_autosearched_temple then
-    search_altars()
-    rr_autosearched_temple = true
-  end
-end
-
-local function c_message_temple(text, _)
-  if you.branch() == "Temple" then
-    -- Search again after explore
-    if text:find("explor", 1, true) then search_altars() end
   end
 end
 
@@ -6919,31 +6936,9 @@ local priorities_w
 local slots_changed
 
 -- Local functions
-local function cleanup_ab(slot)
-  local inv = items.inslot(slot)
-  if inv and inv.is_weapon then return end
-
-  for p = 1, #priorities_ab do
-    if priorities_ab[p] > slot then -- Not from earlier slot
-      items.swap_slots(priorities_ab[p], slot)
-      slots_changed = true
-      priorities_ab[p] = -1
-      return
-    end
-  end
-end
-
-local function cleanup_w()
-  local slot_w = items.letter_to_index("w")
-  local inv = items.inslot(slot_w)
-  if inv and inv.is_weapon then return end
-
-  for p = 1, #priorities_w do
-    if priorities_w[p] > 1 then -- Not from slots a or b
-      items.swap_slots(priorities_w[p], slot_w)
-      slots_changed = true
-      return
-    end
+local function get_first_empty_slot()
+  for slot = 1, 52 do
+    if not items.inslot(slot) then return slot end
   end
 end
 
@@ -6990,17 +6985,39 @@ local function generate_priorities()
   end
 end
 
+local function cleanup_ab(slot)
+  local inv = items.inslot(slot)
+  if inv and inv.is_weapon then return end
+
+  for p = 1, #priorities_ab do
+    if priorities_ab[p] > slot then -- Not from earlier slot
+      items.swap_slots(priorities_ab[p], slot)
+      slots_changed = true
+      priorities_ab[p] = -1
+      return
+    end
+  end
+end
+
+local function cleanup_w()
+  local slot_w = items.letter_to_index("w")
+  local inv = items.inslot(slot_w)
+  if inv and inv.is_weapon then return end
+
+  for p = 1, #priorities_w do
+    if priorities_w[p] > 1 then -- Not from slots a or b
+      items.swap_slots(priorities_w[p], slot_w)
+      slots_changed = true
+      return
+    end
+  end
+end
+
 local function cleanup_weapon_slots()
   generate_priorities()
   cleanup_ab(0)
   cleanup_ab(1)
   cleanup_w()
-end
-
-local function get_first_empty_slot()
-  for slot = 1, 52 do
-    if not items.inslot(slot) then return slot end
-  end
 end
 
 -- Hook functions
@@ -7028,7 +7045,6 @@ function f_weapon_slots.c_assign_invletter(it)
   end
 end
 
--- Hook functions
 function f_weapon_slots.c_message(text, channel)
   if not BRC.Config.do_auto_weapon_slots_abw then return end
   do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
@@ -7084,7 +7100,7 @@ local function has_configured_force_more(it)
   return false
 end
 
--- Hook functions
+-- Public API
 function f_pickup_alert.autopickup(it)
   local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
   if pause_pa_system then return end
@@ -7135,6 +7151,44 @@ function f_pickup_alert.autopickup(it)
   end
 end
 
+function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
+  local item_name = f_pa_data.get_keyname(it, true)
+  local alert_col
+  if it.is_weapon then
+    alert_col = BRC.AlertColor.weapon
+    f_pa_data.update_high_scores(it)
+    local weapon_info = string.format(" (%s)", BRC.get.weapon_info(it))
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
+  elseif BRC.is.body_armour(it) then
+    alert_col = BRC.AlertColor.body_arm
+    f_pa_data.update_high_scores(it)
+    local ac, ev = BRC.get.armour_info(it)
+    local armour_info = string.format(" {%s, %s}", ac, ev)
+    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
+  elseif BRC.is.armour(it) then
+    alert_col = BRC.AlertColor.aux_arm
+  elseif BRC.is.orb(it) then
+    alert_col = BRC.AlertColor.orb
+  elseif BRC.is.talisman(it) then
+    alert_col = BRC.AlertColor.talisman
+  else
+    alert_col = BRC.AlertColor.misc
+  end
+
+  local tokens = {}
+  tokens[1] = emoji and emoji or BRC.text.cyan("----")
+  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
+  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
+  tokens[#tokens + 1] = tokens[1]
+  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
+
+  f_pa_data.insert(pa_recent_alerts, it)
+  f_pa_data.insert(pa_items_alerted, it)
+  you.stop_activity()
+  return true
+end
+
+-- Hook functions
 function f_pickup_alert.init()
   BRC.log.debug("Initializing pickup-alert submodules...")
   local indent = "  "
@@ -7170,7 +7224,7 @@ function f_pickup_alert.init()
     end
   end
 
-  -- Hook to the autopickup function
+  -- Add the autopickup function
   add_autopickup_func(function(it, _)
     return f_pickup_alert.autopickup(it)
   end)
@@ -7216,43 +7270,6 @@ function f_pickup_alert.ready()
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
-end
-
-function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
-  local item_name = f_pa_data.get_keyname(it, true)
-  local alert_col
-  if it.is_weapon then
-    alert_col = BRC.AlertColor.weapon
-    f_pa_data.update_high_scores(it)
-    local weapon_info = string.format(" (%s)", BRC.get.weapon_info(it))
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
-  elseif BRC.is.body_armour(it) then
-    alert_col = BRC.AlertColor.body_arm
-    f_pa_data.update_high_scores(it)
-    local ac, ev = BRC.get.armour_info(it)
-    local armour_info = string.format(" {%s, %s}", ac, ev)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
-  elseif BRC.is.armour(it) then
-    alert_col = BRC.AlertColor.aux_arm
-  elseif BRC.is.orb(it) then
-    alert_col = BRC.AlertColor.orb
-  elseif BRC.is.talisman(it) then
-    alert_col = BRC.AlertColor.talisman
-  else
-    alert_col = BRC.AlertColor.misc
-  end
-
-  local tokens = {}
-  tokens[1] = emoji and emoji or BRC.text.cyan("----")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
-  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
-  tokens[#tokens + 1] = tokens[1]
-  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
-
-  f_pa_data.insert(pa_recent_alerts, it)
-  f_pa_data.insert(pa_items_alerted, it)
-  you.stop_activity()
-  return true
 end
 
 }

@@ -15,31 +15,9 @@ local priorities_w
 local slots_changed
 
 -- Local functions
-local function cleanup_ab(slot)
-  local inv = items.inslot(slot)
-  if inv and inv.is_weapon then return end
-
-  for p = 1, #priorities_ab do
-    if priorities_ab[p] > slot then -- Not from earlier slot
-      items.swap_slots(priorities_ab[p], slot)
-      slots_changed = true
-      priorities_ab[p] = -1
-      return
-    end
-  end
-end
-
-local function cleanup_w()
-  local slot_w = items.letter_to_index("w")
-  local inv = items.inslot(slot_w)
-  if inv and inv.is_weapon then return end
-
-  for p = 1, #priorities_w do
-    if priorities_w[p] > 1 then -- Not from slots a or b
-      items.swap_slots(priorities_w[p], slot_w)
-      slots_changed = true
-      return
-    end
+local function get_first_empty_slot()
+  for slot = 1, 52 do
+    if not items.inslot(slot) then return slot end
   end
 end
 
@@ -86,17 +64,39 @@ local function generate_priorities()
   end
 end
 
+local function cleanup_ab(slot)
+  local inv = items.inslot(slot)
+  if inv and inv.is_weapon then return end
+
+  for p = 1, #priorities_ab do
+    if priorities_ab[p] > slot then -- Not from earlier slot
+      items.swap_slots(priorities_ab[p], slot)
+      slots_changed = true
+      priorities_ab[p] = -1
+      return
+    end
+  end
+end
+
+local function cleanup_w()
+  local slot_w = items.letter_to_index("w")
+  local inv = items.inslot(slot_w)
+  if inv and inv.is_weapon then return end
+
+  for p = 1, #priorities_w do
+    if priorities_w[p] > 1 then -- Not from slots a or b
+      items.swap_slots(priorities_w[p], slot_w)
+      slots_changed = true
+      return
+    end
+  end
+end
+
 local function cleanup_weapon_slots()
   generate_priorities()
   cleanup_ab(0)
   cleanup_ab(1)
   cleanup_w()
-end
-
-local function get_first_empty_slot()
-  for slot = 1, 52 do
-    if not items.inslot(slot) then return slot end
-  end
 end
 
 -- Hook functions
@@ -124,7 +124,6 @@ function f_weapon_slots.c_assign_invletter(it)
   end
 end
 
--- Hook functions
 function f_weapon_slots.c_message(text, channel)
   if not BRC.Config.do_auto_weapon_slots_abw then return end
   do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
