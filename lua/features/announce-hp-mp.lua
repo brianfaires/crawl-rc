@@ -11,7 +11,7 @@ f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
 -- Persistent variables
 ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local constants
+-- Local constants / configuration
 local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 
 -- Local functions

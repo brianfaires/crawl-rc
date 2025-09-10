@@ -14,8 +14,6 @@ ss_cur_location = BRC.data.persist("ss_cur_location", "")
 ss_last_stair_turn = BRC.data.persist("ss_last_stair_turn", 0)
 ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
 
--- Local constants
-
 -- Local functions
 local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
@@ -53,6 +51,7 @@ local function check_new_location(cmd)
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
+-- Macro functions
 function macro_f_safe_stairs_down()
   check_new_location("CMD_GO_DOWNSTAIRS")
 end

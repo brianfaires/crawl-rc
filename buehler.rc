@@ -5123,23 +5123,24 @@ Dependencies: core/config.lua, core/util.lua
 f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 
+-- Local constants / configuration
 --[[
 FM_PATTERNS configures all alerts. Each table within it creates one alert, using the following fields:
-    - `name` is for debugging.
-    - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
-    - `is_pack` (optional) indicates the alert is for a pack of monsters.
-      Packs only fire once every few turns - as defined in BRC.Config.pack_monster_turns (default 15).
-    - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
-    - `cutoff` sets the point when the alert is active (usually how much HP you have)
-    - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
-        Ex:
-          `always` alerts are always on.
-          `hp` alerts are active when you have < `cutoff` HP.
-          `will` alerts are active when you have <= `cutoff` pips of willpower.
-          `int` alerts are active when you have < `cutoff` Int.
-          `xl` alerts are active when your XL is < `cutoff`.
-          `elec` alerts are active when you have no rElec and < `cutoff` HP.
-          `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
+  - `name` is for debugging.
+  - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
+  - `is_pack` (optional) indicates the alert is for a pack of monsters.
+    Packs only fire once every few turns - as defined in BRC.Config.pack_monster_turns (default 15).
+  - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
+  - `cutoff` sets the point when the alert is active (usually how much HP you have)
+  - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
+      Ex:
+        `always` alerts are always on.
+        `hp` alerts are active when you have < `cutoff` HP.
+        `will` alerts are active when you have <= `cutoff` pips of willpower.
+        `int` alerts are active when you have < `cutoff` Int.
+        `xl` alerts are active when your XL is < `cutoff`.
+        `elec` alerts are active when you have no rElec and < `cutoff` HP.
+        `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
 --]]
 local FM_PATTERNS = {
   { name = "always_fm", cond = "always", cutoff = 0,
@@ -5325,7 +5326,7 @@ local function init_conditional_alerts()
 end
 ------------------- End config section -------------------
 
--- Local state
+-- Local variables
 local active_alert -- which ones are on
 local monsters_to_mute -- which packs to mute at next ready()
 local last_fm_turn -- when the mute started
@@ -5502,7 +5503,7 @@ f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
 -- Persistent variables
 ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local constants
+-- Local constants / configuration
 local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 
 -- Local functions
@@ -6176,6 +6177,20 @@ local function start_fully_recover()
   BRC.set.message_mute(WAITING_MESSAGE, true)
 end
 
+-- Macro function: Attach full recovery to auto-explore
+function macro_f_fully_recover_explore()
+  if fully_recovered() then
+    if fr_start_turn > 0 then
+      finish_fully_recover()
+    else
+      crawl.do_commands({ "CMD_EXPLORE" })
+    end
+  else
+    fr_explore_after = true
+    crawl.do_commands({ "CMD_REST" })
+  end
+end
+
 -- Hook functions
 function f_fully_recover.init()
   fr_start_turn = 0
@@ -6217,20 +6232,6 @@ function f_fully_recover.ready()
     end
   else
     fr_explore_after = false
-  end
-end
-
--- Attach full recovery to auto-explore
-function macro_f_fully_recover_explore()
-  if fully_recovered() then
-    if fr_start_turn > 0 then
-      finish_fully_recover()
-    else
-      crawl.do_commands({ "CMD_EXPLORE" })
-    end
-  else
-    fr_explore_after = true
-    crawl.do_commands({ "CMD_REST" })
   end
 end
 
@@ -6408,7 +6409,7 @@ local function alert_spell_level_changes()
   ma_prev_spell_levels = new_spell_levels
 end
 
--- Save with message functionality
+-- Macro function: Save with message feature
 function macro_f_misc_alerts_save_with_message()
   if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
     crawl.mpr("Okay, then.")
@@ -6790,8 +6791,6 @@ ss_cur_location = BRC.data.persist("ss_cur_location", "")
 ss_last_stair_turn = BRC.data.persist("ss_last_stair_turn", 0)
 ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
 
--- Local constants
-
 -- Local functions
 local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
@@ -6829,6 +6828,7 @@ local function check_new_location(cmd)
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
+-- Macro functions
 function macro_f_safe_stairs_down()
   check_new_location("CMD_GO_DOWNSTAIRS")
 end

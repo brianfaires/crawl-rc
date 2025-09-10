@@ -11,23 +11,24 @@ Dependencies: core/config.lua, core/util.lua
 f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 
+-- Local constants / configuration
 --[[
 FM_PATTERNS configures all alerts. Each table within it creates one alert, using the following fields:
-    - `name` is for debugging.
-    - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
-    - `is_pack` (optional) indicates the alert is for a pack of monsters.
-      Packs only fire once every few turns - as defined in BRC.Config.pack_monster_turns (default 15).
-    - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
-    - `cutoff` sets the point when the alert is active (usually how much HP you have)
-    - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
-        Ex:
-          `always` alerts are always on.
-          `hp` alerts are active when you have < `cutoff` HP.
-          `will` alerts are active when you have <= `cutoff` pips of willpower.
-          `int` alerts are active when you have < `cutoff` Int.
-          `xl` alerts are active when your XL is < `cutoff`.
-          `elec` alerts are active when you have no rElec and < `cutoff` HP.
-          `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
+  - `name` is for debugging.
+  - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
+  - `is_pack` (optional) indicates the alert is for a pack of monsters.
+    Packs only fire once every few turns - as defined in BRC.Config.pack_monster_turns (default 15).
+  - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
+  - `cutoff` sets the point when the alert is active (usually how much HP you have)
+  - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
+      Ex:
+        `always` alerts are always on.
+        `hp` alerts are active when you have < `cutoff` HP.
+        `will` alerts are active when you have <= `cutoff` pips of willpower.
+        `int` alerts are active when you have < `cutoff` Int.
+        `xl` alerts are active when your XL is < `cutoff`.
+        `elec` alerts are active when you have no rElec and < `cutoff` HP.
+        `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
 --]]
 local FM_PATTERNS = {
   { name = "always_fm", cond = "always", cutoff = 0,
@@ -213,7 +214,7 @@ local function init_conditional_alerts()
 end
 ------------------- End config section -------------------
 
--- Local state
+-- Local variables
 local active_alert -- which ones are on
 local monsters_to_mute -- which packs to mute at next ready()
 local last_fm_turn -- when the mute started
