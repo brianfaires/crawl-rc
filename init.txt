@@ -80,23 +80,23 @@ lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
 {
 -- Hook functions that delegate to BRC
 function ready()
-    if BRC then BRC.ready() end
+    if BRC and BRC.ready then BRC.ready() end
 end
 
 function c_message(text, channel)
-    if BRC then BRC.c_message(text, channel) end
+    if BRC and BRC.c_message then BRC.c_message(text, channel) end
 end
 
 function c_answer_prompt(prompt)
-    if BRC then BRC.c_answer_prompt(prompt) end
+    if BRC and BRC.c_answer_prompt then return BRC.c_answer_prompt(prompt) end
 end
 
 function c_assign_invletter(it)
-  if BRC then BRC.c_assign_invletter(it) end
+  if BRC and BRC.c_assign_invletter then return BRC.c_assign_invletter(it) end
 end
 
 
 -- This is the only line of top-level code, aside from declaring variables (without values)
 -- Done to give confidence in simple re-inits
-if BRC then BRC.init(you.turns() == 0) end
+if BRC and BRC.init then BRC.init() end
 }

@@ -52,8 +52,3 @@ function f_template.c_assign_invletter(it)
   if it.name() == "Item headed for slot b" then return 3 end
   return nil
 end
-
-function f_template.cleanup()
-  -- Do stuff when feature is unregistered
-  template_dict = nil
-end

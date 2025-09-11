@@ -10,14 +10,15 @@ Dependencies: core/data.lua, core/util.lua
 -- Initialize
 BRC = BRC or {}
 BRC.VERSION = "1.1.0"
+BRC.active = false
 
 -- Local constants
 local HOOK_FUNCTIONS = {
-  "init",
-  "c_answer_prompt",
-  "c_assign_invletter",
-  "c_message",
-  "ready",
+  init = "init",
+  c_answer_prompt = "c_answer_prompt",
+  c_assign_invletter = "c_assign_invletter",
+  c_message = "c_message",
+  ready = "ready",
 }
 
 -- Local variables
@@ -26,27 +27,27 @@ local _hooks = {}
 local prev_turn
 
 -- Local functions
-local function is_feature_module(module_table)
-  return module_table and module_table.BRC_FEATURE_NAME and type(module_table.BRC_FEATURE_NAME) == "string"
+local function is_feature_module(maybe_feature_module)
+  return maybe_feature_module and type(maybe_feature_module) == "table"
+    and maybe_feature_module.BRC_FEATURE_NAME and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
 end
 
--- Prevent feature errors from crashing the entire system
-local function safe_call(feature_name, func, ...)
-  if not func then return end
-
-  local success, result = pcall(func, ...)
-  if not success then
-    BRC.log.error(string.format("Failure in %s", feature_name), result)
+local function ask_to_deactivate(feature_name)
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLORS.yellow) then
+    BRC.unregister_feature(feature_name)
+  else
+    crawl.mpr("Okay, then.")
   end
 end
 
 -- Hook management
 local function register_hooks(feature_name, feature_module)
-  for _, hook_name in ipairs(HOOK_FUNCTIONS) do
+  for _, hook_name in pairs(HOOK_FUNCTIONS) do
     if feature_module[hook_name] then
       if not _hooks[hook_name] then _hooks[hook_name] = {} end
       table.insert(_hooks[hook_name], {
-        name = feature_name,
+        feature_name = feature_name,
+        hook_name = hook_name,
         func = feature_module[hook_name],
       })
     end
@@ -56,33 +57,78 @@ end
 local function unregister_hooks(feature_name)
   for _, hook_list in pairs(_hooks) do
     for i = #hook_list, 1, -1 do
-      if hook_list[i].name == feature_name then table.remove(hook_list, i) end
+      if hook_list[i].feature_name == feature_name then table.remove(hook_list, i) end
     end
   end
 end
 
-local function call_hook(hook_name, ...)
+local function call_all_hooks(hook_name, ...)
   if not _hooks[hook_name] then return end
-  for _, hook_info in ipairs(_hooks[hook_name]) do
-    safe_call(hook_info.name .. "." .. hook_name, hook_info.func, ...)
+
+  local last_return_value = nil
+  for i = #_hooks[hook_name], 1, -1 do
+    local hook_info = _hooks[hook_name][i]
+    local success, result = pcall(hook_info.func, ...)
+    if not success then
+      BRC.log.error(string.format("Failure in %s.%s", hook_info.feature_name, hook_name), result)
+      ask_to_deactivate(hook_info.feature_name, hook_name)
+    else
+      last_return_value = result
+    end
   end
+
+  return last_return_value
+end
+
+local function register_all_features(parent_module)
+  parent_module = parent_module or _G
+  local loaded_count = 0
+
+  -- Scan the namespace for feature modules and load them
+  for name, value in pairs(parent_module) do
+    if is_feature_module(value) then
+      local feature_name = value.BRC_FEATURE_NAME
+      local success = BRC.register_feature(feature_name, value)
+
+      if success then
+        loaded_count = loaded_count + 1
+      else
+        BRC.log.error(string.format('Failed to register feature: %s. Aborting bulk registration.', name))
+        return loaded_count
+      end
+    end
+  end
+
+  return loaded_count
 end
 
 -- Public API
-function BRC.init()
-  -- Handle stale data (switching characters on local instance)
+function BRC.init(parent_module)
+  -- Default to scanning the global namespace for modules
+  parent_module = parent_module or _G
+
+  -- Handle stale data (ie switching characters on a local instance)
   _features = {}
   _hooks = {}
 
-  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
-
-  local loaded_count = BRC.load_all_features()
+  -- Load all features, then the data module last
+  local loaded_count = register_all_features(parent_module)
   if loaded_count == 0 then
-    BRC.mpr.lightred("No features loaded. BRC system is inactive.")
+    BRC.mpr.lightred("No features loaded. BRC is inactive.")
+    return false
+  end
+  BRC.log.debug(string.format("Loaded %d features.", loaded_count, parent_module))
+
+  -- Init features
+  BRC.log.debug(BRC.text.green("Initializing features..."))
+  call_all_hooks(HOOK_FUNCTIONS.init)
+  if not BRC.data.init() then
+    BRC.log.error("Failed to initialize data module. BRC is inactive.")
     return false
   end
 
-  if not BRC.data.init() then return false end
+  -- Register the char_dump macro
+  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
@@ -90,6 +136,7 @@ function BRC.init()
   crawl.mpr(string.format("\n%s %s %s", success_emoji, BRC.text.lightgreen(success_text), success_emoji))
 
   prev_turn = -1
+  BRC.active = true
   BRC.ready()
   return true
 end
@@ -107,7 +154,6 @@ function BRC.register_feature(feature_name, feature_module)
 
   _features[feature_name] = feature_module
   register_hooks(feature_name, feature_module)
-  if feature_module.init then safe_call(feature_name .. ".init", feature_module.init) end
 
   BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
   return true
@@ -121,51 +167,34 @@ function BRC.unregister_feature(feature_name)
 
   unregister_hooks(feature_name)
   _features[feature_name] = nil
-  if _features[feature_name].cleanup then safe_call(feature_name .. ".cleanup", _features[feature_name].cleanup) end
 
   BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
   return true
 end
 
-function BRC.load_all_features()
-  local loaded_count = 0
-
-  -- Scan the global namespace for feature modules and load them
-  for name, value in pairs(_G) do
-    if type(value) == "table" and is_feature_module(value) then
-      local feature_name = value.BRC_FEATURE_NAME
-      local success = BRC.register_feature(feature_name, value)
-
-      if success then
-        loaded_count = loaded_count + 1
-      else
-        BRC.log.error(string.format('Failed to register feature from: _G["%s"]', name))
-      end
-    end
-  end
-
-  BRC.log.debug(string.format("Feature loading complete. Loaded %d features.", loaded_count))
-  return loaded_count
-end
-
 -- Hook methods
 function BRC.ready()
+  if not BRC.active then return end
+
   crawl.redraw_screen()
   if you.turns() == prev_turn then return end
   prev_turn = you.turns()
 
-  call_hook("ready")
+  call_all_hooks(HOOK_FUNCTIONS.ready)
   BRC.mpr.consume_queue()
 end
 
 function BRC.c_message(text, channel)
-  call_hook("c_message", text, channel)
+  if not BRC.active then return end
+  call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
-  call_hook("c_answer_prompt", prompt)
+  if not BRC.active then return end
+  return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
 function BRC.c_assign_invletter(it)
-  call_hook("c_assign_invletter", it)
+  if not BRC.active then return end
+  return call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
 end
