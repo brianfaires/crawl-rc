@@ -4030,6 +4030,7 @@ local function log_message(message, context, color)
     msg = string.format("%s (%s)", msg, context)
   end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
 end
 
 local function serialize_chk_lua_save()
@@ -4059,7 +4060,7 @@ function BRC.log.error(message, context)
   log_message(message, context, BRC.LogColor.error)
 end
 
-function BRC.log.warn(message, context)
+function BRC.log.warning(message, context)
   log_message(message, context, BRC.LogColor.warning)
 end
 
@@ -4132,7 +4133,10 @@ end
 --- BRC.mpr - Wrappers around crawl.mpr ---
 -- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
-  BRC.mpr[k] = function(text, channel) return crawl.mpr(BRC.text.color(v, text), channel) end
+  BRC.mpr[k] = function(text, channel)
+    crawl.mpr(BRC.text.color(v, text), channel)
+    crawl.flush_prev_message()
+  end
 end
 
 function BRC.mpr.color(text, color, channel)
@@ -4183,6 +4187,7 @@ function BRC.mpr.consume_queue()
   local do_more = false
   for _, msg in ipairs(_mpr_queue) do
     crawl.mpr(msg.text, msg.channel)
+    crawl.flush_prev_message()
     if msg.show_more then do_more = true end
   end
 
@@ -4963,7 +4968,7 @@ local function unregister_hooks(feature_name)
   for _, hook_list in pairs(_hooks) do
     for i = #hook_list, 1, -1 do
       if hook_list[i].feature_name == feature_name then
-        crawl.mpr(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
+        BRC.log.error(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
         table.remove(hook_list, i)
       end
     end
@@ -5059,7 +5064,7 @@ function BRC.init(parent_module)
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
   local success_text = string.format("Successfully initialized BRC system v%s!", BRC.VERSION)
-  crawl.mpr(string.format("\n%s %s %s", success_emoji, BRC.text.lightgreen(success_text), success_emoji))
+  BRC.mpr.lightgreen(string.format("\n%s %s %s", success_emoji, success_text, success_emoji))
 
   prev_turn = -1
   BRC.active = true
@@ -6532,7 +6537,7 @@ function f_misc_alerts.init()
   if BRC.Config.save_with_msg then
     BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_f_misc_alerts_save_with_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
-      crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
+      BRC.mpr.white(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
     end
   end
@@ -7306,7 +7311,7 @@ function f_pickup_alert.init()
 
   -- Check for duplicate autopickup creation (affects local only)
   if pa_num_autopickup_funcs < #chk_force_autopickup then
-    BRC.log.warn(table.concat({
+    BRC.log.warning(table.concat({
       "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)\n",
       "Expected: ", pa_num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
       "If this is not expected, restart crawl to clear its memory."

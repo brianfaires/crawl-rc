@@ -138,7 +138,7 @@ function f_pickup_alert.init()
 
   -- Check for duplicate autopickup creation (affects local only)
   if pa_num_autopickup_funcs < #chk_force_autopickup then
-    BRC.log.warn(table.concat({
+    BRC.log.warning(table.concat({
       "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)\n",
       "Expected: ", pa_num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
       "If this is not expected, restart crawl to clear its memory."

@@ -31,6 +31,7 @@ local function log_message(message, context, color)
     msg = string.format("%s (%s)", msg, context)
   end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
 end
 
 local function serialize_chk_lua_save()
@@ -60,7 +61,7 @@ function BRC.log.error(message, context)
   log_message(message, context, BRC.LogColor.error)
 end
 
-function BRC.log.warn(message, context)
+function BRC.log.warning(message, context)
   log_message(message, context, BRC.LogColor.warning)
 end
 
@@ -133,7 +134,10 @@ end
 --- BRC.mpr - Wrappers around crawl.mpr ---
 -- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
-  BRC.mpr[k] = function(text, channel) return crawl.mpr(BRC.text.color(v, text), channel) end
+  BRC.mpr[k] = function(text, channel)
+    crawl.mpr(BRC.text.color(v, text), channel)
+    crawl.flush_prev_message()
+  end
 end
 
 function BRC.mpr.color(text, color, channel)
@@ -184,6 +188,7 @@ function BRC.mpr.consume_queue()
   local do_more = false
   for _, msg in ipairs(_mpr_queue) do
     crawl.mpr(msg.text, msg.channel)
+    crawl.flush_prev_message()
     if msg.show_more then do_more = true end
   end
 
