@@ -199,11 +199,18 @@ end
 
 -- Get a yes/no response
 function BRC.mpr.yesno(text, color, capital_only)
-  local suffix = capital_only and " (Y/n)" or " (y/n)"
-  crawl.formatted_mpr(BRC.text.color(color, text .. suffix), "prompt")
-  local res = crawl.getch()
-  if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
-  crawl.mpr("Okay, then.")
+  local msg = string.format("%s (%s)", text, capital_only and "Y/N" or "y/n")
+  local MAX_TRIES = 10
+
+  for i = 1, MAX_TRIES do
+    crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
+    local res = crawl.getch()
+    if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
+    if string.char(res) == "N" or string.char(res) == "n" and not capital_only then return false end
+    if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
+  end
+
+  BRC.mpr.lightmagenta("Feels like a no.")
   return false
 end
 
