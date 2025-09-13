@@ -432,6 +432,11 @@ function BRC.set.runrest_ignore_message(pattern, add_pattern)
   crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
 end
 
+function BRC.set.runrest_stop_message(pattern, add_pattern)
+  local op = add_pattern and "+=" or "-="
+  crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
+end
+
 --- BRC.dump - Debugging utils called from in-game lua interpreter ---
 
 function BRC.dump.all(verbose, skip_mpr)
