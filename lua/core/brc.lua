@@ -26,6 +26,7 @@ local HOOK_FUNCTIONS = {
 local _features = {}
 local _hooks = {}
 local prev_turn
+local last_autopickup_turn
 
 -- Local functions
 local function is_feature_module(maybe_feature_module)
@@ -59,7 +60,7 @@ local function unregister_hooks(feature_name)
   for _, hook_list in pairs(_hooks) do
     for i = #hook_list, 1, -1 do
       if hook_list[i].feature_name == feature_name then
-        BRC.log.error(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
+        BRC.log.info(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
         table.remove(hook_list, i)
       end
     end
@@ -197,7 +198,10 @@ end
 -- Hook methods
 function BRC.autopickup(it, _)
   if not BRC.active then return end
-  return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
+  if you.turns() == last_autopickup_turn then return end -- else gets called 2x per turn
+  local return_value = call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
+  last_autopickup_turn = you.turns()
+  return return_value
 end
 
 function BRC.ready()
