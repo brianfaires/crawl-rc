@@ -14,6 +14,7 @@ BRC.active = false
 
 -- Local constants
 local HOOK_FUNCTIONS = {
+  autopickup = "autopickup",
   init = "init",
   c_answer_prompt = "c_answer_prompt",
   c_assign_invletter = "c_assign_invletter",
@@ -127,6 +128,9 @@ function BRC.init(parent_module)
     return false
   end
 
+  -- Add the autopickup function
+  add_autopickup_func(function(it, _) return BRC.autopickup(it) end)
+
   -- Register the char_dump macro
   if BRC.Config.debug_notes_on_char_dump then
     BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
@@ -175,6 +179,11 @@ function BRC.unregister_feature(feature_name)
 end
 
 -- Hook methods
+function BRC.autopickup(it, _)
+  if not BRC.active then return end
+  return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
+end
+
 function BRC.ready()
   if not BRC.active then return end
 

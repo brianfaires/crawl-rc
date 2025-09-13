@@ -26,7 +26,7 @@ local function has_configured_force_more(it)
 end
 
 -- Public API
-function f_pickup_alert.autopickup(it)
+function f_pickup_alert.autopickup(it, _)
   local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
   if pause_pa_system then return end
   if you.have_orb() then return end
@@ -148,11 +148,6 @@ function f_pickup_alert.init()
       return
     end
   end
-
-  -- Add the autopickup function
-  add_autopickup_func(function(it, _)
-    return f_pickup_alert.autopickup(it)
-  end)
 
   pa_num_autopickup_funcs = #chk_force_autopickup
 end
