@@ -218,10 +218,9 @@ Required a lot of places. Nothing in here is necessarily specific to this repo.
   They protect the line from confusing the parser.
 - Execute lua commands by opening the lua interpreter with `~`, then entering the command.
   Some useful ones are:
-    - `init_buehler()` will reinitialize everything as if crawl was closed and reopened.
-    - `init_buehler(1)` will also reset all persistent data.
-    - `debug_dump()` whenever something seems weird, I do this. `debug_dump(1)` for verbose export.
-    - `buehler_rc_active = false` will disable everything
+    - `BRC.data.erase()` will reset all persistent data.
+    - `BRC.dump.all()` whenever something seems weird, I do this. `debug_dump(1)` for verbose export.
+    - `BRC.active = false` will disable everything
     - `BRC.Config.<setting_name> = <value>` will work mid game if you really want to.
 - The RC prioritizes webtiles. It works locally, but here are some issues I've seen previously:
   - Running locally, switching between characters does some weird things with RC/lua files and autopickup functions.

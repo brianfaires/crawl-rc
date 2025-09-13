@@ -58,7 +58,10 @@ end
 local function unregister_hooks(feature_name)
   for _, hook_list in pairs(_hooks) do
     for i = #hook_list, 1, -1 do
-      if hook_list[i].feature_name == feature_name then table.remove(hook_list, i) end
+      if hook_list[i].feature_name == feature_name then
+        crawl.mpr(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
+        table.remove(hook_list, i)
+      end
     end
   end
 end
@@ -67,6 +70,8 @@ local function call_all_hooks(hook_name, ...)
   if not _hooks[hook_name] then return end
 
   local last_return_value = nil
+  local returning_feature = nil
+
   for i = #_hooks[hook_name], 1, -1 do
     local hook_info = _hooks[hook_name][i]
     local success, result = pcall(hook_info.func, ...)
@@ -74,7 +79,15 @@ local function call_all_hooks(hook_name, ...)
       BRC.log.error(string.format("Failure in %s.%s", hook_info.feature_name, hook_name), result)
       ask_to_deactivate(hook_info.feature_name, hook_name)
     else
+      if last_return_value and result and last_return_value ~= result then
+        BRC.log.warning(string.format("Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+          hook_name, returning_feature, BRC.data.BRC.data._brc_val2str(last_return_value),
+          hook_info.feature_name, BRC.data.BRC.data._brc_val2str(result))
+        )
+      end
+
       last_return_value = result
+      returning_feature = hook_info.feature_name
     end
   end
 
@@ -82,7 +95,6 @@ local function call_all_hooks(hook_name, ...)
 end
 
 local function register_all_features(parent_module)
-  parent_module = parent_module or _G
   local loaded_count = 0
 
   -- Scan the namespace for feature modules and load them
@@ -107,6 +119,10 @@ end
 function BRC.init(parent_module)
   -- Default to scanning the global namespace for modules
   parent_module = parent_module or _G
+  if type(parent_module) ~= "table" then
+    BRC.log.warning("Invalid parent module (must be a table). Using global namespace instead.")
+    parent_module = _G
+  end
 
   -- Handle stale data (ie switching characters on a local instance)
   _features = {}
@@ -202,6 +218,7 @@ end
 
 function BRC.c_answer_prompt(prompt)
   if not BRC.active then return end
+  if prompt == "Die?" then return false end
   return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 

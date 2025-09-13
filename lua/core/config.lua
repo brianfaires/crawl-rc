@@ -163,9 +163,11 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
+-- Debugging
+BRC.Config.debug_notes_on_char_dump = true
 BRC.Config.show_debug_messages = true
 
--- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
+---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
 
 --[[
@@ -243,7 +245,8 @@ BRC.Tuning.weap.alert = {
   }, -- BRC.Tuning.weap.alert.early_ranged (do not remove this comment)
 } -- BRC.Tuning.weap.alert (do not remove this comment)
 
--- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
+---- BRC.BrandBonus: Tune the impact of brands on DPS calculations
+-- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
 -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
 BRC.BrandBonus = {
   chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
@@ -267,7 +270,7 @@ BRC.BrandBonus = {
   }, -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
--- Cosmetic settings
+---- Cosmetic settings
 BRC.AlertColor = {
   weapon = {
     desc = "magenta",
@@ -333,6 +336,7 @@ else
     PART = "<lightgrey>+</lightgrey>",
     EMPTY = "<darkgrey>-</darkgrey>",
   } -- BRC.Emoji.HP_METER (do not remove this comment)
+
   BRC.Emoji.MP_METER = {
     BORDER = "<white>|</white>",
     FULL = "<lightblue>+</lightblue>",
