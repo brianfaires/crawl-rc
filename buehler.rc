@@ -6235,7 +6235,7 @@ local function finish_fully_recover()
 
   if fr_explore_after then
     fr_explore_after = false
-    BRC.util.do_cmd("CMD_EXPLORE", "o")
+    BRC.util.do_cmd("CMD_EXPLORE")
   end
 end
 
@@ -6287,11 +6287,11 @@ function macro_f_fully_recover_explore()
     if fr_start_turn > 0 then
       finish_fully_recover()
     else
-      BRC.util.do_cmd("CMD_EXPLORE", "o")
+      BRC.util.do_cmd("CMD_EXPLORE")
     end
   else
     fr_explore_after = true
-    BRC.util.do_cmd("CMD_REST", "5")
+    BRC.util.do_cmd("CMD_REST")
   end
 end
 
@@ -6332,7 +6332,7 @@ function f_fully_recover.ready()
       remove_statuses_from_config()
       abort_fully_recover()
     else
-      BRC.util.do_cmd("CMD_SAFE_WAIT", "5")
+      BRC.util.do_cmd("CMD_SAFE_WAIT")
     end
   else
     fr_explore_after = false
@@ -6521,7 +6521,7 @@ function macro_f_misc_alerts_save_with_message()
 
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
-  BRC.util.do_cmd("CMD_SAVE_GAME_NOW", "S")
+  BRC.util.do_cmd("CMD_SAVE_GAME_NOW")
 end
 
 -- Hook functions
@@ -6910,12 +6910,12 @@ local function check_new_location(cmd)
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
-        BRC.util.do_cmd("CMD_GO_DOWNSTAIRS", ">")
+        BRC.util.do_cmd(cmd)
         return
       end
     else
       if not feature:find("up", 1, true) then
-        BRC.util.do_cmd("CMD_GO_UPSTAIRS", "<")
+        BRC.util.do_cmd(cmd)
         return
       end
     end
@@ -6934,7 +6934,7 @@ local function check_new_location(cmd)
     end
   end
 
-  BRC.util.do_cmd("CMD_GO_DOWNSTAIRS", ">")
+  BRC.util.do_cmd(cmd)
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
@@ -6985,7 +6985,7 @@ function f_startup.ready()
   if you.turns() == 0 then
     if BRC.Config.show_skills_on_startup then
       local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
-      if show_skills_on_startup then BRC.util.do_cmd("CMD_DISPLAY_SKILLS", "m") end
+      if show_skills_on_startup then BRC.util.do_cmd("CMD_DISPLAY_SKILLS") end
     end
 
     ---- Auto-set default skill targets ----

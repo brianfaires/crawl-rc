@@ -23,12 +23,12 @@ local function check_new_location(cmd)
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
-        crawl.do_commands({ cmd })
+        BRC.util.do_cmd(cmd)
         return
       end
     else
       if not feature:find("up", 1, true) then
-        crawl.do_commands({ cmd })
+        BRC.util.do_cmd(cmd)
         return
       end
     end
@@ -47,7 +47,7 @@ local function check_new_location(cmd)
     end
   end
 
-  crawl.do_commands({ cmd })
+  BRC.util.do_cmd(cmd)
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 

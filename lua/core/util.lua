@@ -13,6 +13,7 @@ BRC.get = {}
 BRC.is = {}
 BRC.you = {}
 BRC.set = {}
+BRC.util = {}
 BRC.dump = {}
 
 -- Local variables
@@ -446,7 +447,19 @@ function macro_brc_dump_character()
   else
     BRC.mpr.lightgray("Okay, then.")
   end
-  crawl.do_commands({ "CMD_CHARACTER_DUMP" }) -- Includes the message w/ file path to console
+  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#") -- Includes the message w/ file path to console
+end
+
+--- BRC.util - Utility functions ----
+-- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
+-- crawl.do_commands() sometimes waits for a keypress before doing the command
+function BRC.util.do_cmd(cmd, fallback_key)
+  local key = BRC.get.command_key(cmd, fallback_key)
+  if key then
+    crawl.sendkeys({key})
+  else
+    crawl.do_commands({cmd})
+  end
 end
 
 --[[

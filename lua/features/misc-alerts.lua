@@ -65,7 +65,7 @@ function macro_f_misc_alerts_save_with_message()
 
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
-  crawl.do_commands({ "CMD_SAVE_GAME_NOW" })
+  BRC.util.do_cmd("CMD_SAVE_GAME_NOW")
 end
 
 -- Hook functions

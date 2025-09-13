@@ -34,7 +34,7 @@ local function finish_fully_recover()
 
   if fr_explore_after then
     fr_explore_after = false
-    crawl.do_commands({ "CMD_EXPLORE" })
+    BRC.util.do_cmd("CMD_EXPLORE")
   end
 end
 
@@ -86,11 +86,11 @@ function macro_f_fully_recover_explore()
     if fr_start_turn > 0 then
       finish_fully_recover()
     else
-      crawl.do_commands({ "CMD_EXPLORE" })
+      BRC.util.do_cmd("CMD_EXPLORE")
     end
   else
     fr_explore_after = true
-    crawl.do_commands({ "CMD_REST" })
+    BRC.util.do_cmd("CMD_REST")
   end
 end
 
@@ -131,7 +131,7 @@ function f_fully_recover.ready()
       remove_statuses_from_config()
       abort_fully_recover()
     else
-      crawl.do_commands({ "CMD_SAFE_WAIT" })
+      BRC.util.do_cmd("CMD_SAFE_WAIT")
     end
   else
     fr_explore_after = false
