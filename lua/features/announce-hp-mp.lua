@@ -12,20 +12,25 @@ f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
 ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
 -- Local constants / configuration
-local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
+local NUM_PIPS_PER_METER = 5
+local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 
 -- Local functions
 local function create_meter(perc, emojis)
-  perc = math.max(0, math.min(1, perc))
-  local border = emojis.BORDER or ""
+  perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  -- Calculate meter segments (5 segments total, each representing 20%)
-  local decade = math.floor(perc * 10)
-  local full_segments = string.rep(emojis.FULL, math.floor(decade / 2))
-  local part_segments = string.rep(emojis.PART, decade % 2)
-  local empty_segments = string.rep(emojis.EMPTY, 5 - full_segments - part_segments)
+  local num_halfpips = math.floor(perc * NUM_PIPS_PER_METER / 100)
+  local num_full_emojis = math.floor(num_halfpips / 2)
+  local num_part_emojis = num_halfpips % 2
+  local num_empty_emojis = NUM_PIPS_PER_METER - num_full_emojis - num_part_emojis
 
-  return table.concat({ border, full_segments, part_segments, empty_segments, border })
+  return table.concat({
+    emojis.BORDER or "",
+    string.rep(emojis.FULL, num_full_emojis),
+    string.rep(emojis.PART, num_part_emojis),
+    string.rep(emojis.EMPTY, num_empty_emojis),
+    emojis.BORDER or "",
+  })
 end
 
 local function format_delta(delta)

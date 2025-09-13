@@ -168,9 +168,11 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
+-- Debugging
+BRC.Config.debug_notes_on_char_dump = true
 BRC.Config.show_debug_messages = true
 
--- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
+---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
 
 --[[
@@ -248,7 +250,8 @@ BRC.Tuning.weap.alert = {
   }, -- BRC.Tuning.weap.alert.early_ranged (do not remove this comment)
 } -- BRC.Tuning.weap.alert (do not remove this comment)
 
--- Tune the impact of brands on DPS calc; used to compare weapons and in inscribe-stats.lua
+---- BRC.BrandBonus: Tune the impact of brands on DPS calculations
+-- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
 -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
 BRC.BrandBonus = {
   chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
@@ -272,7 +275,7 @@ BRC.BrandBonus = {
   }, -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
--- Cosmetic settings
+---- Cosmetic settings
 BRC.AlertColor = {
   weapon = {
     desc = "magenta",
@@ -338,6 +341,7 @@ else
     PART = "<lightgrey>+</lightgrey>",
     EMPTY = "<darkgrey>-</darkgrey>",
   } -- BRC.Emoji.HP_METER (do not remove this comment)
+
   BRC.Emoji.MP_METER = {
     BORDER = "<white>|</white>",
     FULL = "<lightblue>+</lightblue>",
@@ -4008,6 +4012,7 @@ BRC.get = {}
 BRC.is = {}
 BRC.you = {}
 BRC.set = {}
+BRC.util = {}
 BRC.dump = {}
 
 -- Local variables
@@ -4193,11 +4198,18 @@ end
 
 -- Get a yes/no response
 function BRC.mpr.yesno(text, color, capital_only)
-  local suffix = capital_only and " (Y/n)" or " (y/n)"
-  crawl.formatted_mpr(BRC.text.color(color, text .. suffix), "prompt")
-  local res = crawl.getch()
-  if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
-  crawl.mpr("Okay, then.")
+  local msg = string.format("%s (%s)", text, capital_only and "Y/N" or "y/n")
+  local MAX_TRIES = 10
+
+  for i = 1, MAX_TRIES do
+    crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
+    local res = crawl.getch()
+    if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
+    if string.char(res) == "N" or string.char(res) == "n" and not capital_only then return false end
+    if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
+  end
+
+  BRC.mpr.lightmagenta("Feels like a no.")
   return false
 end
 
@@ -4441,7 +4453,19 @@ function macro_brc_dump_character()
   else
     BRC.mpr.lightgray("Okay, then.")
   end
-  crawl.do_commands({ "CMD_CHARACTER_DUMP" }) -- Includes the message w/ file path to console
+  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#") -- Includes the message w/ file path to console
+end
+
+--- BRC.util - Utility functions ----
+-- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
+-- crawl.do_commands() sometimes waits for a keypress before doing the command
+function BRC.util.do_cmd(cmd, fallback_key)
+  local key = BRC.get.command_key(cmd, fallback_key)
+  if key then
+    crawl.sendkeys({key})
+  else
+    crawl.do_commands({cmd})
+  end
 end
 
 --[[
@@ -4894,6 +4918,7 @@ BRC.active = false
 
 -- Local constants
 local HOOK_FUNCTIONS = {
+  autopickup = "autopickup",
   init = "init",
   c_answer_prompt = "c_answer_prompt",
   c_assign_invletter = "c_assign_invletter",
@@ -4937,7 +4962,10 @@ end
 local function unregister_hooks(feature_name)
   for _, hook_list in pairs(_hooks) do
     for i = #hook_list, 1, -1 do
-      if hook_list[i].feature_name == feature_name then table.remove(hook_list, i) end
+      if hook_list[i].feature_name == feature_name then
+        crawl.mpr(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
+        table.remove(hook_list, i)
+      end
     end
   end
 end
@@ -4946,6 +4974,8 @@ local function call_all_hooks(hook_name, ...)
   if not _hooks[hook_name] then return end
 
   local last_return_value = nil
+  local returning_feature = nil
+
   for i = #_hooks[hook_name], 1, -1 do
     local hook_info = _hooks[hook_name][i]
     local success, result = pcall(hook_info.func, ...)
@@ -4953,7 +4983,15 @@ local function call_all_hooks(hook_name, ...)
       BRC.log.error(string.format("Failure in %s.%s", hook_info.feature_name, hook_name), result)
       ask_to_deactivate(hook_info.feature_name, hook_name)
     else
+      if last_return_value and result and last_return_value ~= result then
+        BRC.log.warning(string.format("Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+          hook_name, returning_feature, BRC.data.BRC.data._brc_val2str(last_return_value),
+          hook_info.feature_name, BRC.data.BRC.data._brc_val2str(result))
+        )
+      end
+
       last_return_value = result
+      returning_feature = hook_info.feature_name
     end
   end
 
@@ -4961,7 +4999,6 @@ local function call_all_hooks(hook_name, ...)
 end
 
 local function register_all_features(parent_module)
-  parent_module = parent_module or _G
   local loaded_count = 0
 
   -- Scan the namespace for feature modules and load them
@@ -4986,6 +5023,10 @@ end
 function BRC.init(parent_module)
   -- Default to scanning the global namespace for modules
   parent_module = parent_module or _G
+  if type(parent_module) ~= "table" then
+    BRC.log.warning("Invalid parent module (must be a table). Using global namespace instead.")
+    parent_module = _G
+  end
 
   -- Handle stale data (ie switching characters on a local instance)
   _features = {}
@@ -5007,8 +5048,13 @@ function BRC.init(parent_module)
     return false
   end
 
+  -- Add the autopickup function
+  add_autopickup_func(function(it, _) return BRC.autopickup(it) end)
+
   -- Register the char_dump macro
-  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
+  if BRC.Config.debug_notes_on_char_dump then
+    BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
+  end
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
@@ -5053,6 +5099,11 @@ function BRC.unregister_feature(feature_name)
 end
 
 -- Hook methods
+function BRC.autopickup(it, _)
+  if not BRC.active then return end
+  return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
+end
+
 function BRC.ready()
   if not BRC.active then return end
 
@@ -5071,6 +5122,7 @@ end
 
 function BRC.c_answer_prompt(prompt)
   if not BRC.active then return end
+  if prompt == "Die?" then return false end
   return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
@@ -5540,20 +5592,25 @@ f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
 ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
 -- Local constants / configuration
-local METER_LENGTH = 7 + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
+local NUM_PIPS_PER_METER = 5
+local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 
 -- Local functions
 local function create_meter(perc, emojis)
-  perc = math.max(0, math.min(1, perc))
-  local border = emojis.BORDER or ""
+  perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  -- Calculate meter segments (5 segments total, each representing 20%)
-  local decade = math.floor(perc * 10)
-  local full_segments = string.rep(emojis.FULL, math.floor(decade / 2))
-  local part_segments = string.rep(emojis.PART, decade % 2)
-  local empty_segments = string.rep(emojis.EMPTY, 5 - full_segments - part_segments)
+  local num_halfpips = math.floor(perc * NUM_PIPS_PER_METER / 100)
+  local num_full_emojis = math.floor(num_halfpips / 2)
+  local num_part_emojis = num_halfpips % 2
+  local num_empty_emojis = NUM_PIPS_PER_METER - num_full_emojis - num_part_emojis
 
-  return table.concat({ border, full_segments, part_segments, empty_segments, border })
+  return table.concat({
+    emojis.BORDER or "",
+    string.rep(emojis.FULL, num_full_emojis),
+    string.rep(emojis.PART, num_part_emojis),
+    string.rep(emojis.EMPTY, num_empty_emojis),
+    emojis.BORDER or "",
+  })
 end
 
 local function format_delta(delta)
@@ -6178,7 +6235,7 @@ local function finish_fully_recover()
 
   if fr_explore_after then
     fr_explore_after = false
-    crawl.do_commands({ "CMD_EXPLORE" })
+    BRC.util.do_cmd("CMD_EXPLORE", "o")
   end
 end
 
@@ -6230,11 +6287,11 @@ function macro_f_fully_recover_explore()
     if fr_start_turn > 0 then
       finish_fully_recover()
     else
-      crawl.do_commands({ "CMD_EXPLORE" })
+      BRC.util.do_cmd("CMD_EXPLORE", "o")
     end
   else
     fr_explore_after = true
-    crawl.do_commands({ "CMD_REST" })
+    BRC.util.do_cmd("CMD_REST", "5")
   end
 end
 
@@ -6275,7 +6332,7 @@ function f_fully_recover.ready()
       remove_statuses_from_config()
       abort_fully_recover()
     else
-      crawl.do_commands({ "CMD_SAFE_WAIT" })
+      BRC.util.do_cmd("CMD_SAFE_WAIT", "5")
     end
   else
     fr_explore_after = false
@@ -6464,7 +6521,7 @@ function macro_f_misc_alerts_save_with_message()
 
   crawl.formatted_mpr("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
-  crawl.do_commands({ "CMD_SAVE_GAME_NOW" })
+  BRC.util.do_cmd("CMD_SAVE_GAME_NOW", "S")
 end
 
 -- Hook functions
@@ -6853,12 +6910,12 @@ local function check_new_location(cmd)
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
-        crawl.do_commands({ cmd })
+        BRC.util.do_cmd("CMD_GO_DOWNSTAIRS", ">")
         return
       end
     else
       if not feature:find("up", 1, true) then
-        crawl.do_commands({ cmd })
+        BRC.util.do_cmd("CMD_GO_UPSTAIRS", "<")
         return
       end
     end
@@ -6877,7 +6934,7 @@ local function check_new_location(cmd)
     end
   end
 
-  crawl.do_commands({ cmd })
+  BRC.util.do_cmd("CMD_GO_DOWNSTAIRS", ">")
   if not one_way_stair then ss_last_stair_turn = you.turns() end
 end
 
@@ -6928,7 +6985,7 @@ function f_startup.ready()
   if you.turns() == 0 then
     if BRC.Config.show_skills_on_startup then
       local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
-      if show_skills_on_startup then crawl.do_commands({ "CMD_DISPLAY_SKILLS" }) end
+      if show_skills_on_startup then BRC.util.do_cmd("CMD_DISPLAY_SKILLS", "m") end
     end
 
     ---- Auto-set default skill targets ----
@@ -7137,7 +7194,7 @@ local function has_configured_force_more(it)
 end
 
 -- Public API
-function f_pickup_alert.autopickup(it)
+function f_pickup_alert.autopickup(it, _)
   local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
   if pause_pa_system then return end
   if you.have_orb() then return end
@@ -7259,11 +7316,6 @@ function f_pickup_alert.init()
       return
     end
   end
-
-  -- Add the autopickup function
-  add_autopickup_func(function(it, _)
-    return f_pickup_alert.autopickup(it)
-  end)
 
   pa_num_autopickup_funcs = #chk_force_autopickup
 end
