@@ -1,7 +1,7 @@
 --[[
 BRC Configuration - All user-configurable settings
 Author: buehler
-Dependencies: core/constants.lua
+Dependencies: (None)
 --]]
 
 -- Initialize

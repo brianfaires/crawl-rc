@@ -1,21 +1,24 @@
 import re
+import os
 
 
 INIT_FILE_NAME = "init.txt"
-OUT_FILE_NAME = "buehler.rc"
+OUT_SUBDIR = "bin/"
+OUT_FILE_NAME = OUT_SUBDIR +"buehler.rc"
+CORE_FILE_NAME = OUT_SUBDIR +"core.rc"
 REPO_ROOT = "crawl-rc/"
 RC_PREFIX =  f"include = {REPO_ROOT}"
 LUA_PREFX = f"lua_file = {REPO_ROOT}"
 LOAD_LUA_PREFIX = "loadfile("
 
 def write_header(cur_file, file_name, outfile):
-  is_lua = cur_file.name.endswith(".lua")
+  is_lua = cur_file and cur_file.name.endswith(".lua")
   comment_char = "-" if is_lua else "#"
   outfile.write(f"\n{comment_char * 35} Begin {file_name} {comment_char * 35}\n")
   outfile.write(f"{comment_char * 15} https://github.com/brianfaires/crawl-rc/ {comment_char * 15}\n")
 
 def write_footer(cur_file, file_name, outfile):
-  is_lua = cur_file.name.endswith(".lua")
+  is_lua = cur_file and cur_file.name.endswith(".lua")
   comment_char = "-" if is_lua else "#"
   outfile.write(f"\n{comment_char * 31} End {file_name} {comment_char * 31}\n")
   outfile.write(f"{comment_char * 90}\n")
@@ -80,7 +83,20 @@ def recurse_write_lines(infile, outfile, prev_files):
 
 files_opened = [INIT_FILE_NAME]
 with open(INIT_FILE_NAME, 'r') as readfile:
+    os.makedirs(os.path.dirname(OUT_FILE_NAME), exist_ok=True)
     with open(OUT_FILE_NAME, 'w') as outfile:
         recurse_write_lines(readfile, outfile, files_opened)
 
 print(f"\nDone writing to {OUT_FILE_NAME}")
+
+
+print(f"\nWriting to {OUT_FILE_NAME}\n")
+os.makedirs(os.path.dirname(CORE_FILE_NAME), exist_ok=True)
+with open(CORE_FILE_NAME, 'w') as outfile:
+  for filename in [ "config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua" ]:
+    with open(f"lua/core/{filename}", 'r') as readfile:
+      write_header(None, filename, outfile)
+      outfile.write("{\n")
+      recurse_write_lines(readfile, outfile, [])
+      outfile.write("\n}")
+      write_footer(None, filename, outfile)
