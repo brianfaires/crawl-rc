@@ -4215,6 +4215,12 @@ end
 
 ---- BRC.get - Functions to get non-boolean data ----
 
+function BRC.get.command_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key then return nil end
+  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
+end
+
 --[[
 BRC.get.equipped_aux() - Returns 2 values:
   1. A list of equipped items of the type
@@ -4222,12 +4228,6 @@ BRC.get.equipped_aux() - Returns 2 values:
   Poltergeists will get all worn aux armours and num_slots=6.
 The length of the list <= num_slots.
 --]]
-function BRC.get.command_key(cmd, fallback)
-  local key = crawl.get_command(cmd) or fallback
-  if not key then return nil end
-  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
-end
-
 function BRC.get.equipped_aux(aux_type)
   local all_aux = {}
   local num_slots = you.race() == "Poltergeist" and 6 or 1
@@ -4458,9 +4458,9 @@ end
 
 --- BRC.util - Utility functions ----
 -- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
--- crawl.do_commands() sometimes waits for a keypress before doing the command
-function BRC.util.do_cmd(cmd, fallback_key)
-  local key = BRC.get.command_key(cmd, fallback_key)
+-- crawl.do_commands() isn't always immediate; might wait for a keypress before doing the command
+function BRC.util.do_cmd(cmd)
+  local key = BRC.get.command_key(cmd)
   if key then
     crawl.sendkeys({key})
   else
@@ -5053,7 +5053,7 @@ function BRC.init(parent_module)
 
   -- Register the char_dump macro
   if BRC.Config.debug_notes_on_char_dump then
-    BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
+    BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
   end
 
   -- Success!
@@ -6303,7 +6303,7 @@ function f_fully_recover.init()
 
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)
-  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE", "o"), "macro_f_fully_recover_explore")
+  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE") or "o", "macro_f_fully_recover_explore")
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -6530,7 +6530,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if BRC.Config.save_with_msg then
-    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME", "S"), "macro_f_misc_alerts_save_with_message")
+    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_f_misc_alerts_save_with_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       crawl.mpr(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
@@ -6723,7 +6723,7 @@ end
 
 -- Temple-related functions
 local function search_altars()
-  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES") or BRC.util.control_key("f")
   crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
 end
 
@@ -6743,7 +6743,7 @@ end
 
 -- Gauntlet-related functions
 local function search_gauntlet()
-  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES", BRC.util.control_key("f"))
+  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES") or BRC.util.control_key("f")
   crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
 end
 
@@ -6954,8 +6954,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS", ">"), "macro_f_safe_stairs_down")
-  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS", "<"), "macro_f_safe_stairs_up")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_f_safe_stairs_down")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_f_safe_stairs_up")
 end
 
 function f_safe_stairs.ready()

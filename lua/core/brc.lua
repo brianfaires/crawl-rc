@@ -128,7 +128,9 @@ function BRC.init(parent_module)
   end
 
   -- Register the char_dump macro
-  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP", "#"), "macro_brc_dump_character")
+  if BRC.Config.debug_notes_on_char_dump then
+    BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  end
 
   -- Success!
   local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""

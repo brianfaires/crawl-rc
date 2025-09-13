@@ -209,6 +209,12 @@ end
 
 ---- BRC.get - Functions to get non-boolean data ----
 
+function BRC.get.command_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key then return nil end
+  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
+end
+
 --[[
 BRC.get.equipped_aux() - Returns 2 values:
   1. A list of equipped items of the type
@@ -216,12 +222,6 @@ BRC.get.equipped_aux() - Returns 2 values:
   Poltergeists will get all worn aux armours and num_slots=6.
 The length of the list <= num_slots.
 --]]
-function BRC.get.command_key(cmd, fallback)
-  local key = crawl.get_command(cmd) or fallback
-  if not key then return nil end
-  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
-end
-
 function BRC.get.equipped_aux(aux_type)
   local all_aux = {}
   local num_slots = you.race() == "Poltergeist" and 6 or 1
@@ -452,9 +452,9 @@ end
 
 --- BRC.util - Utility functions ----
 -- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
--- crawl.do_commands() sometimes waits for a keypress before doing the command
-function BRC.util.do_cmd(cmd, fallback_key)
-  local key = BRC.get.command_key(cmd, fallback_key)
+-- crawl.do_commands() isn't always immediate; might wait for a keypress before doing the command
+function BRC.util.do_cmd(cmd)
+  local key = BRC.get.command_key(cmd)
   if key then
     crawl.sendkeys({key})
   else

@@ -67,8 +67,8 @@ function f_safe_stairs.init()
   ss_last_stair_turn = 0
   ss_v5_unwarned = true
 
-  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS", ">"), "macro_f_safe_stairs_down")
-  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS", "<"), "macro_f_safe_stairs_up")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_f_safe_stairs_down")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_f_safe_stairs_up")
 end
 
 function f_safe_stairs.ready()
