@@ -40,6 +40,7 @@ globals = {
   "f_after_shaft",
   "f_alert_monsters",
   "f_announce_hp_mp",
+  "f_answer_prompts",
   "f_color_inscribe",
   "f_drop_inferior",
   "f_dynamic_options",

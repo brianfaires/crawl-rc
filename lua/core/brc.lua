@@ -222,8 +222,7 @@ end
 
 function BRC.c_answer_prompt(prompt)
   if not BRC.active then return end
-  if prompt == "Die?" then return false end
-  return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
+  call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
 function BRC.c_assign_invletter(it)
