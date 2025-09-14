@@ -67,36 +67,34 @@ lua_file = crawl-rc/lua/features/startup.lua
 lua_file = crawl-rc/lua/features/weapon-slots.lua
 
 ### Pickup and alert - Core files ###
-lua_file = crawl-rc/lua/pickup-alert/pa-main.lua
-lua_file = crawl-rc/lua/pickup-alert/pa-data.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-main.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-data.lua
 
 ### Pickup and alert - Feature files ###
-lua_file = crawl-rc/lua/pickup-alert/pa-armour.lua
-lua_file = crawl-rc/lua/pickup-alert/pa-misc.lua
-lua_file = crawl-rc/lua/pickup-alert/pa-weapons.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-armour.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-misc.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-weapons.lua
 
 
 ############## Lua Hook Functions ##############
 {
 -- Hook functions that delegate to BRC
 function ready()
-    if BRC and BRC.ready then BRC.ready() end
+    BRC.ready()
 end
 
 function c_message(text, channel)
-    if BRC and BRC.c_message then BRC.c_message(text, channel) end
+    BRC.c_message(text, channel)
 end
 
 function c_answer_prompt(prompt)
-    if BRC and BRC.c_answer_prompt then return BRC.c_answer_prompt(prompt) end
+    return BRC.c_answer_prompt(prompt)
 end
 
 function c_assign_invletter(it)
-  if BRC and BRC.c_assign_invletter then return BRC.c_assign_invletter(it) end
+  return BRC.c_assign_invletter(it)
 end
 
 
--- This is the only line of top-level code, aside from declaring variables (without values)
--- Done to give confidence in simple re-inits
-if BRC and BRC.init then BRC.init() end
+BRC.init()
 }

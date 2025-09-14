@@ -7176,7 +7176,7 @@ end
 
 ### Pickup and alert - Core files ###
 
-################################### Begin lua/pickup-alert/pa-main.lua ###################################
+################################### Begin lua/features/pickup-alert/pa-main.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
@@ -7184,7 +7184,7 @@ Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
 Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua,
-  pickup-alert/pa-armour.lua, pickup-alert/pa-data.lua, pickup-alert/pa-misc.lua, pickup-alert/pa-weapons.lua
+  pa-armour.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
 --]]
 
 f_pickup_alert = {}
@@ -7374,10 +7374,10 @@ function f_pickup_alert.ready()
 end
 
 }
-############################### End lua/pickup-alert/pa-main.lua ###############################
+############################### End lua/features/pickup-alert/pa-main.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/pickup-alert/pa-data.lua ###################################
+################################### Begin lua/features/pickup-alert/pa-data.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
@@ -7501,14 +7501,14 @@ function f_pa_data.init()
 end
 
 }
-############################### End lua/pickup-alert/pa-data.lua ###############################
+############################### End lua/features/pickup-alert/pa-data.lua ###############################
 ##########################################################################################
 
 ## (Resuming rc/init.txt) ##
 
 ### Pickup and alert - Feature files ###
 
-################################### Begin lua/pickup-alert/pa-armour.lua ###################################
+################################### Begin lua/features/pickup-alert/pa-armour.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
@@ -7872,10 +7872,10 @@ function f_pa_armour.alert_armour(it, unworn_inv_item)
 end
 
 }
-############################### End lua/pickup-alert/pa-armour.lua ###############################
+############################### End lua/features/pickup-alert/pa-armour.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/pickup-alert/pa-misc.lua ###################################
+################################### Begin lua/features/pickup-alert/pa-misc.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
@@ -7972,10 +7972,10 @@ function f_pa_misc.pickup_staff(it)
 end
 
 }
-############################### End lua/pickup-alert/pa-misc.lua ###############################
+############################### End lua/features/pickup-alert/pa-misc.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/pickup-alert/pa-weapons.lua ###################################
+################################### Begin lua/features/pickup-alert/pa-weapons.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
@@ -8322,7 +8322,7 @@ function f_pa_weapons.ready()
 end
 
 }
-############################### End lua/pickup-alert/pa-weapons.lua ###############################
+############################### End lua/features/pickup-alert/pa-weapons.lua ###############################
 ##########################################################################################
 
 ## (Resuming rc/init.txt) ##
@@ -8332,23 +8332,21 @@ end
 {
 -- Hook functions that delegate to BRC
 function ready()
-    if BRC and BRC.ready then BRC.ready() end
+    BRC.ready()
 end
 
 function c_message(text, channel)
-    if BRC and BRC.c_message then BRC.c_message(text, channel) end
+    BRC.c_message(text, channel)
 end
 
 function c_answer_prompt(prompt)
-    if BRC and BRC.c_answer_prompt then return BRC.c_answer_prompt(prompt) end
+    return BRC.c_answer_prompt(prompt)
 end
 
 function c_assign_invletter(it)
-  if BRC and BRC.c_assign_invletter then return BRC.c_assign_invletter(it) end
+  return BRC.c_assign_invletter(it)
 end
 
 
--- This is the only line of top-level code, aside from declaring variables (without values)
--- Done to give confidence in simple re-inits
-if BRC and BRC.init then BRC.init() end
+BRC.init()
 }

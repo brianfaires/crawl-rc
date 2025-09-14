@@ -3,7 +3,7 @@ Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
 Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua,
-  pickup-alert/pa-armour.lua, pickup-alert/pa-data.lua, pickup-alert/pa-misc.lua, pickup-alert/pa-weapons.lua
+  pa-armour.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
 --]]
 
 f_pickup_alert = {}
