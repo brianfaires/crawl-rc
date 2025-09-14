@@ -5772,6 +5772,25 @@ end
 ############################### End lua/features/announce-hp-mp.lua ###############################
 ##########################################################################################
 
+################################### Begin lua/features/answer-prompts.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+f_answer_prompts = {}
+f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"
+
+
+function f_answer_prompts.c_answer_prompt(prompt)
+  if prompt == "Die?" then return false end
+  if prompt:find("cheaper one?", 1, true) and you.branch() ~= "Bazaar" then
+    BRC.mpr.yellow("Replacing shopping list items")
+    return true
+  end
+end
+
+}
+############################### End lua/features/answer-prompts.lua ###############################
+##########################################################################################
+
 ################################### Begin lua/features/color-inscribe.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
