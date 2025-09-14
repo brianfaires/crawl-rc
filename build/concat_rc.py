@@ -1,104 +1,104 @@
-import os
+from pathlib import Path
 
+base_dir = Path(__file__).parent.parent
+processed_files = set()
 
-INIT_FILE_NAME = "../rc/init.txt"
-OUT_SUBDIR = "../bin/"
-CORE_SUBDIR = "../lua/core/"
-OUT_FILE_NAME = OUT_SUBDIR +"buehler.rc"
-CORE_FILE_NAME = OUT_SUBDIR +"core.rc"
-REPO_ROOT = "crawl-rc/"
-RC_PREFIX =  f"include = {REPO_ROOT}"
-LUA_PREFX = f"lua_file = {REPO_ROOT}"
-LOAD_LUA_PREFIX = "loadfile("
+# Paths
+init_file = base_dir / "rc" / "init.txt"
+core_dir = base_dir / "lua" / "core"
+output_dir = base_dir / "bin"
+output_dir.mkdir(parents=True, exist_ok=True)
 
-def write_header(cur_file, file_name, outfile):
-  file_name = file_name.replace("../", "")
-  is_lua = cur_file and cur_file.name.endswith(".lua")
-  comment_char = "-" if is_lua else "#"
-  outfile.write(f"\n{comment_char * 35} Begin {file_name} {comment_char * 35}\n")
-  outfile.write(f"{comment_char * 15} https://github.com/brianfaires/crawl-rc/ {comment_char * 15}\n")
+# Patterns
+rc_prefix = "include = crawl-rc/"
+lua_prefix = "lua_file = crawl-rc/"
 
-def write_footer(cur_file, file_name, outfile):
-  file_name = file_name.replace("../", "")
-  is_lua = cur_file and cur_file.name.endswith(".lua")
-  comment_char = "-" if is_lua else "#"
-  outfile.write(f"\n{comment_char * 31} End {file_name} {comment_char * 31}\n")
-  outfile.write(f"{comment_char * 90}\n")
- 
-def write_resume(cur_file, outfile):
-  is_lua = cur_file.name.endswith(".lua")
-  comment_char = "-" if is_lua else "#"
-  outfile.write(f"\n{comment_char * 2} (Resuming {cur_file.name.replace('../', '')}) {comment_char*2}\n")
+def get_comment_char(file_path):
+    return "#" if file_path and file_path.suffix == ".lua" else "#"
 
-def is_new_file(line, prev_files):
-  # this is an artefact from when I used loadfile() for dependency tracking
-  if line.startswith(LOAD_LUA_PREFIX):
-    line = line.split('"')[1]
-  file_name = line.replace(RC_PREFIX, "../").strip()
-  file_name = file_name.replace(LUA_PREFX, "../").strip()
-  file_name = file_name.replace(REPO_ROOT, "../").strip()
+def write_header(file_path, outfile):
+    comment = get_comment_char(file_path)
+    name = str(file_path).replace(str(base_dir) + "/", "")
+    outfile.write(f"\n{comment * 35} Begin {name} {comment * 35}\n")
+    outfile.write(f"{comment * 15} https://github.com/brianfaires/crawl-rc/ {comment * 15}\n")
 
-  if file_name not in prev_files:
-    prev_files.append(file_name)
-    return file_name
-  return None
+def write_footer(file_path, outfile):
+    comment = get_comment_char(file_path)
+    name = str(file_path).replace(str(base_dir) + "/", "")
+    outfile.write(f"\n{comment * 31} End {name} {comment * 31}\n{comment * 90}\n")
 
-def recurse_write_lines(infile, outfile, prev_files):
-  print(f"Processing {infile.name}")
-  resume = False
-  for line in infile.readlines():
-    if (line.startswith(RC_PREFIX)):
-      # RC to RC
-      file_name = is_new_file(line, prev_files)
-      if file_name:
-        with open(file_name, 'r') as inc_file:
-          write_header(infile, file_name, outfile)
-          recurse_write_lines(inc_file, outfile, prev_files)
-          write_footer(infile, file_name, outfile)
-          resume = True
-    elif (line.startswith(LUA_PREFX)):
-      # RC to Lua
-      file_name = is_new_file(line, prev_files)
-      if file_name:
-        with open(file_name, 'r') as inc_file:
-          write_header(infile, file_name, outfile)
-          outfile.write("{\n")
-          recurse_write_lines(inc_file, outfile, prev_files)
-          outfile.write("\n}")
-          write_footer(infile, file_name, outfile)
-          resume = True
-    elif line.startswith(LOAD_LUA_PREFIX):
-      # Lua to Lua
-      file_name = is_new_file(line, prev_files)
-      if file_name:
-        with open(file_name, 'r') as inc_file:
-          write_header(infile, file_name, outfile)
-          recurse_write_lines(inc_file, outfile, prev_files)
-          write_footer(infile, file_name, outfile)
-          resume = True
-    else:
-      if resume:
-        write_resume(infile, outfile)
-        resume = False
-      outfile.writelines(line)
+def write_resume(file_path, outfile):
+    comment = get_comment_char(file_path)
+    name = str(file_path).replace(str(base_dir) + "/", "")
+    outfile.write(f"\n{comment * 2} (Resuming {name}) {comment * 2}\n")
 
+def parse_include(line):
+    if line.startswith(rc_prefix):
+        return base_dir / line[len(rc_prefix):]
+    elif line.startswith(lua_prefix):
+        return base_dir / line[len(lua_prefix):]
+    return None
 
-files_opened = [INIT_FILE_NAME]
-with open(INIT_FILE_NAME, 'r') as readfile:
-    os.makedirs(os.path.dirname(OUT_FILE_NAME), exist_ok=True)
-    with open(OUT_FILE_NAME, 'w') as outfile:
-        recurse_write_lines(readfile, outfile, files_opened)
+def process_file(file_path, outfile):
+    if file_path in processed_files:
+        return
+    processed_files.add(file_path)
+    print(f"Processing: {file_path.name}")
+    is_lua = file_path.suffix == ".lua"
+    
+    with open(file_path, 'r', encoding='utf-8') as infile:
+        write_header(file_path, outfile)
+        if is_lua:
+            outfile.write("{\n")
+        
+        for line in infile:
+            if line.startswith(rc_prefix) or line.startswith(lua_prefix):
+                include_path = parse_include(line.strip())
+                if include_path and include_path.exists() and include_path not in processed_files:
+                    process_file(include_path, outfile)
+                else:
+                    outfile.write(line)
+            else:
+                outfile.write(line)
+        
+        if is_lua:
+            outfile.write("\n}")
+        write_footer(file_path, outfile)
 
-print(f"\nDone writing to {OUT_FILE_NAME}")
+def process_init_file(infile, outfile):
+    resume = False
+    for line in infile:
+        if line.startswith(lua_prefix):
+            include_path = parse_include(line.strip())
+            if include_path and include_path.exists():
+                process_file(include_path, outfile)
+                resume = True
+            else:
+                outfile.write(line)
+        elif line.startswith(rc_prefix):
+            include_path = parse_include(line.strip())
+            if include_path and include_path.exists():
+                process_file(include_path, outfile)
+                resume = True
+            else:
+                outfile.write(line)
+        else:
+            if resume:
+                write_resume(init_file, outfile)
+                resume = False
+            outfile.write(line)
 
+print("Building buehler.rc...")
+with open(init_file, 'r') as infile:
+    with open(output_dir / "buehler.rc", 'w') as outfile:
+        process_init_file(infile, outfile)
 
-print(f"\nWriting to {OUT_FILE_NAME}\n")
-os.makedirs(os.path.dirname(CORE_FILE_NAME), exist_ok=True)
-with open(CORE_FILE_NAME, 'w') as outfile:
-  for filename in [ "config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua" ]:
-    with open(f"{CORE_SUBDIR}{filename}", 'r') as readfile:
-      write_header(None, filename, outfile)
-      outfile.write("{\n")
-      recurse_write_lines(readfile, outfile, [])
-      outfile.write("\n}")
-      write_footer(None, filename, outfile)
+print("Building core.rc...")
+processed_files.clear()
+with open(output_dir / "core.rc", 'w') as outfile:
+    for filename in ["config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua"]:
+        file_path = core_dir / filename
+        if file_path.exists():
+            process_file(file_path, outfile)
+
+print(f"Done! processed_files {len(processed_files)} files.")
