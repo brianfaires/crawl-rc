@@ -1,280 +1,162 @@
 # crawl-rc
 Settings files for use in [Dungeon Crawl Stone Soup](https://github.com/crawl/crawl) v0.33.1
 
-## Usage
-- All features are enabled and included via [init.txt](init.txt).
-  [buehler.rc](buehler.rc) contains [init.txt](init.txt) and all the files it references.
-- To merge with an existing RC file, make sure any Lua hook functions (such as `ready()`) are only defined
-  once. If duplicate functions exist, combine them.
-- Most features can be toggled on/off or configured to your tastes in [core/BRC.Config.lua](core/BRC.Config.lua).
-  See [BRC.Config.lua section](#luacoreconfiglua) for details.
-- Features can also be excluded by just removing or commenting out the one line in [init.txt](init.txt) where it is included.
-- If you copy-paste individual files into another RC, be sure to include:
-  1. The hook functions from [init.txt](init.txt).
-  1. Necessary files from the `lua/core/` folder. The files in `core` won't do anything by themselves, so it's safe to just include them all.
-- You can rebuild [buehler.rc](buehler.rc) by running the python script [concat_rc.py](concat_rc.py):
-    1. In [init.txt](init.txt), exclude files by commenting out `include =` and `lua_file =` statements by adding a `#` at the start of the line.
-    1. Run `python concat_rc.py` to regenerate [buehler.rc](buehler.rc) without the features included.
-  - Alternatively, just remove everything between the `Begin <filename>` and `<End filename>` markers in [buehler.rc](buehler.rc).
+## What is BRC?
+BRC (buehler.rc) is a modular system for DCSS RC files, designed to be easily customizable and extensible. Features are defined as standalone modules, and the BRC core system handles crawl hooks, data persistence, etc.
 
+## Quick Start
+Consider simply adding `bin/buehler.rc` to your current RC file. If there are any features you don't like, just delete the module or configure it to your tastes in `BRC.Config`.
 
-## Standard(-ish) Settings
-### [init.txt](init.txt)
-- My preferred main/explore options.
-- References all other files.
-- Ends with all hook functions, connecting features to crawl.
+To add BRC piece-by-piece:
+1. Copy `bin/core.rc` into your RC file.
+1. Copy any feature modules from `lua/features/` into your RC file.
+    - Wrap the copied lua code in `{` curly braces `}`.
+1. Connect BRC to crawl's hooks (See "Lua Hook Functions" at the end of `rc/init.txt`)
+    - In each crawl hook function, add `BRC.hook_name()`.
+1. Add `BRC.init()` to the end of your RC file.
 
-### [rc/autoinscribe.rc](rc/autoinscribe.rc)
-- Automatically inscribe items.
+### How Features Work
+See `features/_template.lua` for an example.
+- Any global table containing `BRC_FEATURE_NAME` will be automatically loaded as a feature module.
+- Each module's `init()` function is called when the game starts.
+  (This has better error handling than just writing top-level lua code).
+- Defining any of these functions in a feature module will automatically hook to crawl:
+  - `ready()`
+  - `autopickup(item, name)`
+  - `c_answer_prompt(prompt)`
+  - `c_assign_invletter(item)`
+  - `c_message(text, channel)`
 
-### [rc/autopickup.rc](rc/autopickup.rc)
-- Standard autopickup settings.
+- `<var_name> = BRC.data.persist("<var_name>", <initial_value>)` creates vars/tables that persist across game saves.
 
-### [rc/display.rc](rc/display.rc)
-- Various display related settings, including customized colors for 1000's of messages.
-  Some are a bit dated, but a good starting point to build on.  
-  *(If anyone knows who meticulously hand-wrote all of these, LMK so I can attribute.)*
+### Modify Features
+- **Add new**: Define a feature module anywhere in your RC file.
+  - Or, add a file to `lua/features/`, add `lua_file = <file_name>` in `rc/init.txt`, and rebuild.
+- **Remove completely**: Delete the feature module, or just comment out `BRC_FEATURE_NAME`.
+  - Or, comment out the `lua_file = <file_name>` line in `rc/init.txt` and rebuild.
+- **Configure**: Most features have settings in `lua/core/config.lua`, at the top of `buehler.rc`.
+  - Some features with large config sections include the config with the feature module code.
 
-### [rc/fm-messages.rc](rc/fm-messages.rc)
-- Settings for force_more and flash_screen events.
+## Feature Modules
 
-### [rc/macros.rc](rc/macros.rc)
-- Numpad has a handful of common actions.
-- Number keys perform spellcasting, and also confirm targeting so you can double-tap to fire a targeted spell.
+### Exploration & Travel
+- **`after-shaft.lua`** - Stops travel on stairs after being shafted until returning to original level
+- **`fully-recover.lua`** - Rests until temporary negative statuses are removed
+- **`runrest-features.lua`** - Smart exploration behavior (ignores altars when you have a god, stops on Pan gates, etc.)
+- **`safe-stairs.lua`** - Prevents accidental stair usage and warns before entering Vaults:5
 
-### [rc/runrest.rc](rc/runrest.rc)
-- Settings for exploration/resting stop messages.
+### Item Management
+- **`color-inscribe.lua`** - Adds color to item inscriptions for resistances and stat modifiers
+- **`drop-inferior.lua`** - Marks items with `~~DROP_ME` when you pick up better versions, adding them to the drop list
+- **`exclude-dropped.lua`** - Disables autopickup for items you drop (resumes if picked back up)
+- **`inscribe-stats.lua`** - Auto-inscribes weapon DPS and armour AC/EV stats on items
+- **`safe-consumables.lua`** - Maintains `!r` and `!q` inscriptions on consumables
+- **`weapon-slots.lua`** - Keeps weapons in slots a/b/w automatically
 
-### [rc/slot-defaults.rc](rc/slot-defaults.rc)
-- item_slot assignments: Rings on P/p, etc.
-- spell_slot assignments for one-click spells on capital letters. 
+### Alerts & Notifications
+- **`alert-monsters.lua`** - Dynamic force_more prompts for dangerous monsters based on your HP, resistances, will, etc
+- **`announce-hp-mp.lua`** - Visual HP/MP meters and damage announcements
+- **`misc-alerts.lua`** - Low HP warnings, piety reminders, spell level changes
+- **`remind-id.lua`** - Stops travel and sends reminder when you can identify an item
 
+### Quality of Life
+- **`answer-prompts.lua`** - Auto-answers common prompts (refuses death, shopping list)
+- **`dynamic-options.lua`** - Adjusts game options based on xl, god, class, etc.
+- **`fm-disable.lua`** - Disables certain force_more prompts built into crawl
+- **`startup.lua`** - Opens skills menu and sets initial skill targets on new games
 
-## Lua files - usually one per feature
-### [lua/features/after-shaft.lua](lua/features/after-shaft.lua)
-- After being shafted, travel stops on stairs until you get back to the original level.
+## Intelligent Pickup & Alert System
 
-### [lua/features/alert-monsters.lua](lua/features/alert-monsters.lua)
-*(Configuration needs a cleanup for v0.33)*
-- Generates force_more prompts when monsters come into view. Includes:
-  - All uniques and Pan Lords
-  - A list of 'always alert' monsters
-  - Dynamic force_mores that trigger based on: HP, Resistances, XL, Willpower, Int
-  *(Roughly configured to fire when a monster can take 50% HP in one hit)*
-  - Avoids triggering on zombies, skeleton, etc.
+The pickup-alert system provides smart autopickup that grabs items you definitely want,
+  and generates alerts for noteworthy items you might want to consider.
+  The goal of this feature is to allow confident o-tabbing without inspecting every dropped item,
+  or searching the entire floor to check for overlooked items.
 
-### [lua/features/announce-hp-mp.lua](lua/features/announce-hp-mp.lua)
-- Writes messages for HP and MP changes.
-- Includes HP and MP meters broken into 10% increments.  
-  *(Meters have length 5, with each character being empty/partial/full)*
+### How It Works
+- **Alerts** are one-line messages that stop travel and stand out visually
+- **No spam** - alerts won't fire for identical/inferior items after you've seen them
+- **Smart** - adjusts behavior to your inventory and character progression
+- **Configurable** - lots of config values for which alerts are active, when they fire, and which trigger a force_more.
+  (Advanced: See `BRC.Tuning` in the config section to adjust heuristics that define when alerts fire.
+  These can be used to adjust the frequency of different alerts to your preferences.)
 
-### [lua/features/color-inscribe.lua](lua/features/color-inscribe.lua)
-- Adds color to item inscriptions for resistances, stat modifiers, etc.
+### Pickup Categories
+- **`pa-armour.lua`** - Picks up armour upgrades, alerts for new egos and high AC items
+- **`pa-weapons.lua`** - Picks up weapon upgrades. Alerts for artefacts, new egos, strong early weapons, first ranged/polearm, ...
+- **`pa-misc.lua`** - Picks up relevant staves, alerts for orbs and relevant talismans.
+  A list of "one-time alerts" will fire the first time you encounter a specific item (e.g. Wand of Digging)
 
-### [lua/features/drop-inferior.lua](lua/features/drop-inferior.lua)
-- Marks items with `~~DROP_ME` when you pick up a strictly better one.
-- This adds items to the drop_list, so press `,` in the drop menu to select them all.
+### Core Files
+- **`pa-main.lua`** - Main controller and autopickup function
+- **`pa-data.lua`** - Persistent data storage per character
 
-### [lua/features/dynamic-options.lua](lua/features/dynamic-options.lua)
-- Any options that should change mid-game based on XL, God, Class, etc.
+## Core System Files
 
-### [lua/features/exclude-dropped.lua](lua/features/exclude-dropped.lua)
-- Excludes autopickup for items when you drop your entire stack.
-  Resumes if you pick it back up.
-- Doesn't apply to enchant/brand weapon scrolls, if carrying an enchantable weapon.
-- *(Crawl has `drop_disables_autopickup`, but I prefer this behavior instead)*
+### `lua/core/config.lua`
+Main configuration file with all user settings:
+- **BRC.Config** - Feature toggles and basic settings
+- **BRC.Tuning** - Pickup/alert system heuristics (adjust if too many/few alerts)
+- **BRC.BrandBonus** - Weapon brand damage calculations
+- **BRC.AlertColor** - Alert text colors
+- **BRC.Emoji** - Emojis or text substitutes for alerts
 
-### [lua/features/fm-disable.lua](lua/features/fm-disable.lua)
-- Disables more() prompt for some crawl messages that cause a more() without using `force_more_message`.
+### `lua/core/brc.lua`
+Core system coordinator that:
+- Auto-loads any table containing `BRC_FEATURE_NAME`. (Searches global environment by default.)
+- Manages feature lifecycle and hook dispatching
+- Handles error recovery and feature deactivation
 
-### [lua/features/fully-recover.lua](lua/features/fully-recover.lua)
-- Updates resting to fully recover from temporary negative statuses.
-- Configure which statuses in `BRC.Config.rest_off_statuses`.
+### `lua/core/data.lua`
+Tools for easy data persistence across saves (per-character):
+- Saves/loads data between game sessions
+- Warns if data fails to load (usually from crashes or breaking RC changes)
 
-### [lua/features/inscribe-stats.lua](lua/features/inscribe-stats.lua)
-- Weapons in inventory are inscribed with their stats and an ideal DPS (max damage per 10 aut).
-- Configured by default to ignore brand damage. Can be changed in BRC.Config.
-- Unworn armour is inscribed with stats relative to what you're wearing.
-- Updates in real time with skill/stats/etc.
+### `lua/core/util.lua`
+Common utility functions organized into modules:
+- **BRC.log** / **BRC.mpr** - Useful wrappers for crawl.mpr()
+- **BRC.text** - Text manipulation and color formatting
+- **BRC.get** - Data retrieval functions (skills, mutations, equipment info)
+- **BRC.is** - Boolean type checks for items (weapons, armour, jewelry, etc.)
+- **BRC.you** - Character state checks (mutations, resistances, location)
+- **BRC.set** - Game option setters (macros, autopickup, explore settings)
+- **BRC.util** - General utilities (command execution, etc.)
+- **BRC.dump** - Debugging and data export functions 
 
-### [lua/features/misc-alerts.lua](lua/features/misc-alerts.lua)
-- A force-more when dropping below 35% HP (configurable).
-- A msg when you hit 6* piety while wearing an amulet of faith
-- A msg when your number of available spell levels changes
-- A prompt to leave yourself a message when saving with Shift-S 
+### `lua/core/constants.lua`
+A bunch of constants and lists, many of which should be kept up-to-date when crawl changes roll out.
 
-### [lua/features/remind-id.lua](lua/features/remind-id.lua)
-- When you pick up a scroll of ID or an unidentified item, it'll stop travel and alert if you can ID something.
-- Before finding scroll of ID, stops travel when you increase your largest stack of un-ID'd scrolls/pots.
+## Usage Tips
 
-### [lua/features/runrest-features.lua](lua/features/runrest-features.lua)
-- No altar stops if you have a god
-- Don't stop exploration on portals leading out of baileys/sewers/etc
-- Stop travel on gates in Pan
-- Auto-search items/altars after enter/explore gauntlet/temple. Run to temple exit after worship.
+### Important Notes
+- Report bugs with a character dump (`#` key by default). By default, this will write BRC debugging info to the char dump.
+- Never put `}` on a line by itself in lua code - this breaks crawl's RC parser.
+  (Adding a comment after `}` prevents the parser confusion)
 
-### [lua/features/safe-consumables.lua](lua/features/safe-consumables.lua)
-- Adds and maintains `!r` and `!q` inscriptions on consumables.
+### In-game lua commands
+- Use `~` to open the Lua interpreter in-game
+- `BRC.data.erase()` - Reset all persistent data
+- `BRC.dump.all()` or verbose: `BRC.dump.all(1)` - Prints debugging info of the curent BRC state
+- `BRC.active = false` - Disable BRC system
+- `BRC.Config.<setting> = <value>` - Change settings mid-game
+- `BRC.unregister_feature(<feature_name>)` - Turn off a feature
 
-### [lua/features/safe-stairs.lua](lua/features/safe-stairs.lua)
-- Protects against fat-fingering `<>` or `><`, by prompting before immediately returning to the previous floor.
-- Prompts before entering Vaults:5.
-
-### [lua/features/startup.lua](lua/features/startup.lua)
-- One-time actions on new games:
-  - Open the skills menu
-  - Exclusively train the first skill in BRC.Config.auto_set_skill_targets below its target
-
-### [lua/features/weapon-slots.lua](lua/features/weapon-slots.lua)
-- Keeps weapons in slots a/b/w. Reassignments happen whenever you pickup or drop an item.
-  It'll only kick non-weapons out of these slots. Favors putting ranged and polearms in w.
-
-## Pickup and Alert system
-Intelligent autopickup based on your character and items in your inventory. Tries to only pickup
-  items you *definitely* want, so there is an alert system to flag noteworthy items.
-
-Alerts are one-line messages that stop travel and are formatted to stand out.
-To avoid spam, alerts won't fire on later items that are identical/inferior.
-Diff alert types can be configured to cause a more() prompt.
-
-> e.g. If you're alerted to a +1 broad axe or pick one up, no more alerts are generated
-> for +1 or +0 broad axes, unless they're branded.
-
-### [lua/pickup-alert/pa-armour.lua](lua/pickup-alert/pa-armour.lua) (Armour)
-Picks up armour that is a pure upgrade to what you currently have.
-  This can be ambiguous for artefacts, so body armour artefacts are NOT auto picked-up, and will only send alerts.
-
-Alerts generated for:
-- Items with new egos or increased AC.
-- Early ego armour, even if not training armour
-- The highest AC body armour seen so far (if training armour).
-- Other armour, depending on a number of factors and the thresholds in `BRC.Tuning.armour`  .
-  In general, 1 AC is valued ~1.2EV,
-- Will alert "useless" items if you have one of the same type in inventory.
-  This is to avoid skipping items due to temporary mutations.
-
-###  [lua/pickup-alert/pa-weapons.lua](lua/pickup-alert/pa-weapons.lua) (Weapons)
-Picks up upgrades and artefacts of the same weapon type you have. Alerts generated for:
-- Early strong weapons, with little regard for what skills are already trained.
-- First ranged and 1-handed ranged weapons.
-- First polearm and 1-handed polearm.
-- Other weapons, using a score that is primarily the weapon's DPS. Tune the thresholds in `BRC.Tuning.weap`.
-- High scores: items that set a new record for:
-  - Overall damage
-  - Damage w/o brand
-
-
-### [lua/pickup-alert/pa-misc.lua](lua/pickup-alert/pa-misc.lua) (Misc)
-Picks up staves when you are training the relevant spell school. Alerts are generated for:
-- The first instance of anything in the `BRC.Config.alert.one_time` list.
-- First orb of each type.
-- First talisman of each type, if the min skill is within `BRC.Config.alert.talisman_lvl_diff` levels.
-- Staves that provide you a needed resistance.
-
-### Other files for pickup-alert system
-These are auto-included as necessary. Just listing for reference.
-- [lua/pickup-alert/pa-data.lua](lua/pickup-alert/pa-data.lua):
-  Handles persistent data, saved with your character.
-- [lua/pickup-alert/pa-main.lua](lua/pickup-alert/pa-main.lua):
-  Controls all the features, and defines/hooks an autopickup function.
-
-## Core files
-### [lua/core/BRC.Config.lua](lua/core/BRC.Config.lua)
-This comes first in [buehler.rc](buehler.rc), so you can adjust behavior without digging into the code or rebuilding [buehler.rc](buehler.rc).
-#### BRC.Config: Feature configuration
-Most features are entirely configured here. The ones that aren't here typically are configured with 
-  a bunch of messages, which are set in the feature file instead.
-
-#### BRC.Tuning:
-Heuristics to adjust the behavior of the pickup + alert system.
-If you find it's alerting too often or not enough for something, this is what should be adjusted.
-
-#### BRC.BrandBonus
-Adjust the impact that each brand has on damage & DPS calculations.
-This will affect how weapons compare against each other, and DPS inscriptions (if configured to inscribe branded damage).
-
-#### Cosmetic only: BRC.AlertColor and BRC.Emoji
-- Adjust the text coloring for item alerts.
-- Define the emojis to use in announce-hp-mp and alerts. Or, define text to replace the emojis.
-
-### [lua/core/constants.lua](lua/core/constants.lua)
-In an attempt to future-proof, contains definitions for things like
-  `BRC.ALL_WEAP_SCHOOLS` and `BRC.ALL_PORTAL_NAMES`. Update as needed.
-
-### [lua/core/data.lua](lua/core/data.lua)
-- Handles saving and loading of persistent data between game sessions. Data is specific to one game/character.
-- If any data from the previous save fails to load, you'll get a warning on startup.
-  This can happen after a crash, or if changes to the RC cause errors.
-  The impact is low - it just forgets things like which items it's already alerted.
-
-### [lua/core/util.lua](lua/core/util.lua)
-Required a lot of places. Nothing in here is necessarily specific to this repo.
-
-## Notes
-- LMK if you find any bugs! It'd be helpful if you include your RC or Config, and a character dump after
-  executing `debug_dump()`.
-  This outputs the RC & character state, writes it as a note, and creates a character dump.
-- Avoid putting  `}` on a line by itself. This breaks crawl's RC parser. Don't remove the comments that follow a `}`.
-  They protect the line from confusing the parser.
-- Execute lua commands by opening the lua interpreter with `~`, then entering the command.
-  Some useful ones are:
-    - `BRC.data.erase()` will reset all persistent data.
-    - `BRC.dump.all()` whenever something seems weird, I do this. `debug_dump(1)` for verbose export.
-    - `BRC.active = false` will disable everything
-    - `BRC.Config.<setting_name> = <value>` will work mid game if you really want to.
-- The RC prioritizes webtiles. It works locally, but here are some issues I've seen previously:
-  - Running locally, switching between characters does some weird things with RC/lua files and autopickup functions.
-    I think all the issues are mitigated. If you get warnings when switching characters, just close+reopen crawl.
-  - Sometimes player stats don't draw on game open (open/close inventory to refresh)
-  - Some of the regex's use negative lookahead/lookbehind, which require crawl to be built with
-  POSIX regexes. If you built crawl locally and used PCRE (defaul on MacOS), some patterns won't match.
-  I used: `make -j4 TILES=y BUILD_PCRE=YesPlease`. I couldn't get emojis to work.
-  
-## Dev Notes
-### 0.34 changes needed
-1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
-
-### To do list
-1. Add macro to save skill targets & CONFIG values (by race or race+class)
-1. Write persistent data to c_persist after each level (to recover from crashes)
-1. cleanup/reduce # of display.rc messages
-1. On alert, prompt/offer to pickup item
-1. On pickup, if safe(), offer to wear/wield item
-1. On drop_inferior inscribe, offer to drop item
-1. Armour ego alerts: identify new egos or missing resistances (not just compared to cur inventory)
-
-### TODO - requiring crawl PR?
-1. Wait for allies to fully heal
-1. Better colorizing of rF+, rC+, etc (needs to intercept msgs)
-1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
-1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
-
-### Won't do - random ideas
-1. autorest starts w/autopickup (if inv not full)
-1. level-specific fm ignores (eg vault warden on v:5)
-1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription` afaict)
-1. disable jewellery pickup after configurable xl
-1. disable pickup/alert of basic items after artefact of same type
-
-### Design choices / simplifications
-1. DPS calcs (for non-wielded weapons) on Coglin: evaluates as if swapping out primary weap (for stat changes from artefacts)
-1. AC/EV delta inscriptions on Poltergeist: compare against the last (6th) worn item
-
+### If building crawl locally
+I've run into some weird issues on my local MacOS crawl build. (These don't apply to webtiles.)
+- **Character switching issues**: Lua doesn't reload. BRC checks for this - Close and reopen crawl if you get warnings.
+- **Stats not displaying on startup**: Open/close inventory to refresh screen.
+- **Regex issues**: Some patterns require POSIX regex (not PCRE) - build with `BUILD_PCRE=YesPlease`
 
 ## Resources
-### How to learn RC file options
-http://crawl.akrasiac.org/docs/options_guide.txt
 
-### How to include Lua in your RC
-https://github.com/gammafunk/dcss-rc#1-include-the-rc-or-lua-file-in-your-rc  
-https://doc.dcss.io/index.html
+### DCSS Documentation
+- [RC Options Guide](http://crawl.akrasiac.org/docs/options_guide.txt)
+- [Lua Integration Guide](https://github.com/gammafunk/dcss-rc#1-include-the-rc-or-lua-file-in-your-rc)
+- [DCSS Lua API](https://doc.dcss.io/index.html)
 
-### How to lookup a players RC file?
-http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc
-
-### Great RC Examples & sources used in this repo
-https://github.com/magus/dcss  
-https://github.com/gammafunk/dcss-rc
-https://github.com/linewriter1024/crawl-rc
-https://underhound.eu/crawl/rcfiles/crawl-0.30/Elmgren.rc
-https://tavern.dcss.io/t/whats-in-your-rc-file/160/4  
+### References and cool RC files
+- Use this syntax to lookup a player's RC file:
+  [http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc)  
+- [gammafunk/dcss-rc](https://github.com/gammafunk/dcss-rc)
+- [magus/dcss](https://github.com/magus/dcss)
+- [linewriter1024/crawl-rc](https://github.com/linewriter1024/crawl-rc)
+- [Other RC Examples](https://tavern.dcss.io/t/whats-in-your-rc-file/160/4)
