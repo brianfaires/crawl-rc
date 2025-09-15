@@ -3,8 +3,8 @@
 ai := autoinscribe
 
 # General
-ai += of fire resistance:rF+
 ai += of cold resistance:rC+
+ai += of fire resistance:rF+
 ai += of poison resistance:rPois
 ai += of preservation:rCorr
 ai += of invulnerability:rInv

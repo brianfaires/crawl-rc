@@ -396,8 +396,8 @@ explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang
 ai := autoinscribe
 
 # General
-ai += of fire resistance:rF+
 ai += of cold resistance:rC+
+ai += of fire resistance:rF+
 ai += of poison resistance:rPois
 ai += of preservation:rCorr
 ai += of invulnerability:rInv
@@ -7193,7 +7193,7 @@ end
 
 ## (Resuming rc/init.txt) ##
 
-### Pickup and alert - Core files ###
+### Pickup and alert ###
 
 ################################### Begin lua/features/pickup-alert/pa-main.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
@@ -7202,7 +7202,7 @@ end
 Feature: pickup-alert
 Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua,
+Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua,
   pa-armour.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
 --]]
 
@@ -7522,10 +7522,6 @@ end
 }
 ############################### End lua/features/pickup-alert/pa-data.lua ###############################
 ##########################################################################################
-
-## (Resuming rc/init.txt) ##
-
-### Pickup and alert - Feature files ###
 
 ################################### Begin lua/features/pickup-alert/pa-armour.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############

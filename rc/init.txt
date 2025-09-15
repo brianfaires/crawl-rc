@@ -67,11 +67,9 @@ lua_file = crawl-rc/lua/features/safe-stairs.lua
 lua_file = crawl-rc/lua/features/startup.lua
 lua_file = crawl-rc/lua/features/weapon-slots.lua
 
-### Pickup and alert - Core files ###
+### Pickup and alert ###
 lua_file = crawl-rc/lua/features/pickup-alert/pa-main.lua
 lua_file = crawl-rc/lua/features/pickup-alert/pa-data.lua
-
-### Pickup and alert - Feature files ###
 lua_file = crawl-rc/lua/features/pickup-alert/pa-armour.lua
 lua_file = crawl-rc/lua/features/pickup-alert/pa-misc.lua
 lua_file = crawl-rc/lua/features/pickup-alert/pa-weapons.lua
