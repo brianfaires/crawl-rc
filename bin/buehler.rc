@@ -4147,7 +4147,12 @@ for k, v in pairs(BRC.COLORS) do
 end
 
 function BRC.mpr.color(text, color, channel)
-  return BRC.mpr[color](text, channel)
+  if color then
+    BRC.mpr[color](text, channel)
+  else
+    crawl.mpr(text, channel)
+    crawl.flush_prev_message()
+  end
 end
 
 -- Message and stop travel/activity
@@ -6402,7 +6407,6 @@ local FM_DISABLES = {
   "ou kneel at the altar",
   "need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
-  "Okawaru offers you a choice",
 } -- FM_DISABLES (do not remove this comment)
 
 -- Hook functions
@@ -6631,6 +6635,8 @@ local function get_max_stack_size(class, skip_slot)
       max_stack_size = inv.quantity
     end
   end
+  BRC.log.debug("max_stack_size, " .. class .. ", " .. skip_slot .. ", " .. max_stack_size)
+  crawl.more()
   return max_stack_size
 end
 
@@ -7226,13 +7232,17 @@ function f_pickup_alert.autopickup(it, _)
   if pause_pa_system then return end
   if you.have_orb() then return end
   if BRC.get.ego(it) and not it.is_identified then return false end
+  BRC.log.debug("autopickup: " .. it.name())
   if not it.is_useless then
     if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
       if f_pa_armour.pickup_armour(it) then return true end
     elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
       if f_pa_misc.pickup_staff(it) then return true end
     elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
-      if f_pa_weapons.pickup_weapon(it) then return true end
+      BRC.log.debug("autopickup: " .. it.name() .. " weapons")
+      if f_pa_weapons.pickup_weapon(it) then
+        BRC.log.debug("autopickup: " .. it.name() .. " true")
+        return true end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
     end
@@ -7854,7 +7864,7 @@ local function alert_aux_armour(it, unworn_inv_item)
 end
 
 -- Public API
-function f_pa_armour.pickup_armour(it)
+function f_pa_armour.pickup(it)
   if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
 
   if BRC.is.body_armour(it) then
@@ -8053,8 +8063,7 @@ function _weapon_cache.add_weapon(it)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
-  weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end
+  weap_data.ego = BRC.get.ego(it)
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -8063,12 +8072,12 @@ function _weapon_cache.add_weapon(it)
   weap_data.unbranded_score = BRC.get.weap_score(it, true)
 
   -- Track unique egos
-  if weap_data._ego and not util.contains(_weapon_cache.egos, weap_data._ego) then
-    _weapon_cache.egos[#_weapon_cache.egos + 1] = weap_data._ego
+  if weap_data.ego and not util.contains(_weapon_cache.egos, weap_data.ego) then
+    _weapon_cache.egos[#_weapon_cache.egos + 1] = weap_data.ego
   end
 
   -- Track max damage for applicable weapon categories
-  local keys = _weapon_cache.get_keys(weap_data.is_ranged, weap_data.hands, weap_data._ego ~= nil)
+  local keys = _weapon_cache.get_keys(weap_data.is_ranged, weap_data.hands, weap_data.ego ~= nil)
 
   -- Update the max DPS for each category
   for _, key in ipairs(keys) do
@@ -8273,10 +8282,14 @@ function f_pa_weapons.pickup_weapon(it)
   end
 
   if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
+  BRC.log.debug("AAA")
   if f_pa_data.find(pa_items_picked, it) then return false end
+  BRC.log.debug("BBB")
   for _, inv in ipairs(_weapon_cache.weapons) do
+    BRC.log.debug("CCC")
     if is_weapon_upgrade(it, inv) then return true end
   end
+  BRC.log.debug("DDD")
 end
 
 function f_pa_weapons.alert_weapon(it)

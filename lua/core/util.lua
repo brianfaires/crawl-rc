@@ -141,7 +141,12 @@ for k, v in pairs(BRC.COLORS) do
 end
 
 function BRC.mpr.color(text, color, channel)
-  return BRC.mpr[color](text, channel)
+  if color then
+    BRC.mpr[color](text, channel)
+  else
+    crawl.mpr(text, channel)
+    crawl.flush_prev_message()
+  end
 end
 
 -- Message and stop travel/activity
