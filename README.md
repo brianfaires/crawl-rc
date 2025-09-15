@@ -141,10 +141,14 @@ A bunch of constants and lists, many of which should be kept up-to-date when cra
 - `BRC.unregister_feature(<feature_name>)` - Turn off a feature
 
 ### If building crawl locally
-I've run into some weird issues on my local MacOS crawl build. (These don't apply to webtiles.)
-- **Character switching issues**: Lua doesn't reload. BRC checks for this - Close and reopen crawl if you get warnings.
-- **Stats not displaying on startup**: Open/close inventory to refresh screen.
-- **Regex issues**: Some patterns require POSIX regex (not PCRE) - build with `BUILD_PCRE=YesPlease`
+I've run into some weird behavior+workarounds on my local MacOS crawl build. (These don't apply to webtiles.)
+- **Character switching**: When switching between games, the RC reloads without unloading the previous one.
+  Things get duplicated, including crawl's own autopickup functions.
+  BRC checks for this and warns you to close and reopen crawl. It appears to be harmless but I usually restart anyway.
+- **Stats not displaying on startup**: Sometimes happens, I think it's from inscribing a wielded weapon.
+  Open/close inventory to refresh screen.
+- **Regex issues**: Some regular expression patterns require PCRE (not POSIX) - build with `BUILD_PCRE=y`.
+
 
 ## Resources
 
