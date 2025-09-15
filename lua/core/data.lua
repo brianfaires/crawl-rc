@@ -55,7 +55,7 @@ function BRC.data._brc_type_of(value)
   end
 end
 
-function BRC.data._brc_val2str(value, indent_count)
+function BRC.data.val2str(value, indent_count)
   if not value then return "nil" end
   indent_count = indent_count or 1
   local indent = string.rep("  ", indent_count)
@@ -71,14 +71,14 @@ function BRC.data._brc_val2str(value, indent_count)
   elseif type == TYPES.list then
     local tokens = {}
     for _, v in ipairs(value) do
-      tokens[#tokens + 1] = BRC.data._brc_val2str(v, indent_count + 1)
+      tokens[#tokens + 1] = BRC.data.val2str(v, indent_count + 1)
     end
     if #tokens == 0 then return "{}" end
     return string.format("{\n%s%s\n}", indent, table.concat(tokens, list_separator))
   elseif type == TYPES.dict then
     local tokens = {}
     for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.data._brc_val2str(v, indent_count + 1))
+      tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.data.val2str(v, indent_count + 1))
     end
     if #tokens == 0 then return "{}" end
     return string.format("{\n%s%s\n}", indent, table.concat(tokens, list_separator))
@@ -103,7 +103,7 @@ function BRC.data.persist(name, default_value)
   table.insert(chk_lua_save, function()
     local var_type = BRC.data._brc_type_of(_G[name])
     if var_type == TYPES.unknown then return "" end
-    return string.format("%s = %s%s", name, BRC.data._brc_val2str(_G[name]), BRC.KEYS.LF)
+    return string.format("%s = %s%s", name, BRC.data.val2str(_G[name]), BRC.KEYS.LF)
   end)
 
   local var_type = BRC.data._brc_type_of(_G[name])
@@ -119,12 +119,12 @@ end
 function BRC.data.serialize()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persistent_table_names) do
-    tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.data._brc_val2str(_G[name]))
+    tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.data.val2str(_G[name]))
   end
 
   tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
   for _, name in ipairs(_persistent_var_names) do
-    tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.data._brc_val2str(_G[name]))
+    tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.data.val2str(_G[name]))
   end
 
   return table.concat(tokens)

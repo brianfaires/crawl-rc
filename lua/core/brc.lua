@@ -82,8 +82,8 @@ local function call_all_hooks(hook_name, ...)
     else
       if last_return_value and result and last_return_value ~= result then
         BRC.log.warning(string.format("Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
-          hook_name, returning_feature, BRC.data.BRC.data._brc_val2str(last_return_value),
-          hook_info.feature_name, BRC.data.BRC.data._brc_val2str(result))
+          hook_name, returning_feature, BRC.data.BRC.data.val2str(last_return_value),
+          hook_info.feature_name, BRC.data.BRC.data.val2str(result))
         )
       end
 
