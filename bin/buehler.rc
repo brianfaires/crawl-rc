@@ -464,11 +464,18 @@ stat_colour = 3:red, 7:lightred
 hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
 mp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
 
-tile_font_crt_family  = Lucida Console
-tile_font_stat_family = Lucida Console
-tile_font_msg_family  = Lucida Console
-tile_font_lbl_family  = Lucida Console
+$webtiles_font := Lucida Console
+tile_font_crt_family  = $webtiles_font
+tile_font_stat_family = $webtiles_font
+tile_font_msg_family  = $webtiles_font
+tile_font_lbl_family  = $webtiles_font
 
+#$tiles_font := <.ttf file in /dat/tiles/>
+#tile_font_crt_file  = $tiles_font
+#tile_font_stat_file = $tiles_font
+#tile_font_msg_file  = $tiles_font
+#tile_font_tip_file  = $tiles_font
+#tile_font_lbl_file  = $tiles_font
 
 ####### Menu Colors #######
 # Set Alias & clear defaults
