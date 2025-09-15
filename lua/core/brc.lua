@@ -222,7 +222,7 @@ end
 
 function BRC.c_answer_prompt(prompt)
   if not BRC.active then return end
-  call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
+  return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
 function BRC.c_assign_invletter(it)
