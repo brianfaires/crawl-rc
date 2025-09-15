@@ -142,6 +142,8 @@ A bunch of constants and lists, many of which should be kept up-to-date when cra
 
 ### If building crawl locally
 I've run into some weird behavior+workarounds on my local MacOS crawl build. (These don't apply to webtiles.)
+- **Emojis**: Webtiles has a good font with solid emoji support. AFAICT MacOS doesn't.
+  Choose your font in `rc/display.rc`,or edit/remove emojis in `core/config.lua`.
 - **Character switching**: When switching between games, the RC reloads without unloading the previous one.
   Things get duplicated, including crawl's own autopickup functions.
   BRC checks for this and warns you to close and reopen crawl. It appears to be harmless but I usually restart anyway.
