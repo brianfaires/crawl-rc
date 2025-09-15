@@ -13,7 +13,6 @@ local FM_DISABLES = {
   "ou kneel at the altar",
   "need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
-  "Okawaru offers you a choice",
 } -- FM_DISABLES (do not remove this comment)
 
 -- Hook functions
