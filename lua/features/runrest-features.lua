@@ -18,8 +18,7 @@ local GAUNTLET_SEARCH_STRING = "gauntlet && !!leading && !!transporter && !!piec
 -- Local variables
 local stop_on_altars
 local stop_on_portals
-local stop_on_pan_gates
-local stop_on_hell_stairs
+local stop_on_stairs
 
 -- Local functions
 
@@ -81,10 +80,8 @@ local function c_message_gauntlet(text, _)
   end
 end
 
-
-
 -- Stairs and branch-specific functions
-local function ready_ignore_exits()
+local function ready_ignore_portals()
   if stop_on_portals and util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
     BRC.set.explore_stop("portals", false)
@@ -94,23 +91,14 @@ local function ready_ignore_exits()
   end
 end
 
-local function ready_stop_on_pan_gates()
-  local branch = you.branch()
-  if stop_on_pan_gates and branch ~= "Pan" then
-    stop_on_pan_gates = false
+local function ready_stop_on_stairs_in_pan_or_hell()
+  local should_be_active = BRC.Config.stop_on_pan_gates and you.branch() == "Pan"
+    or BRC.Config.stop_on_hell_stairs and BRC.you.in_hell(true)
+  if stop_on_stairs and not should_be_active then
+    stop_on_stairs = false
     BRC.set.explore_stop("stairs", false)
-  elseif not stop_on_pan_gates and branch == "Pan" then
-    stop_on_pan_gates = true
-    BRC.set.explore_stop("stairs", true)
-  end
-end
-
-local function ready_stop_on_hell_stairs()
-  if stop_on_hell_stairs and not BRC.you.in_hell() then
-    stop_on_hell_stairs = false
-    BRC.set.explore_stop("stairs", false)
-  elseif not stop_on_hell_stairs and BRC.you.in_hell() then
-    stop_on_hell_stairs = true
+  elseif not stop_on_stairs and should_be_active then
+    stop_on_stairs = true
     BRC.set.explore_stop("stairs", true)
   end
 end
@@ -119,8 +107,7 @@ end
 function f_runrest_features.init()
   stop_on_altars = true
   stop_on_portals = true
-  stop_on_pan_gates = false
-  stop_on_hell_stairs = false
+  stop_on_stairs = false
 end
 
 function f_runrest_features.c_message(text, _)
@@ -130,9 +117,8 @@ end
 
 function f_runrest_features.ready()
   if BRC.Config.ignore_altars then ready_ignore_altars() end
-  if BRC.Config.ignore_portal_exits then ready_ignore_exits() end
-  if BRC.Config.stop_on_pan_gates then ready_stop_on_pan_gates() end
-  if BRC.Config.stop_on_hell_stairs then ready_stop_on_hell_stairs() end
+  if BRC.Config.ignore_portal_exits then ready_ignore_portals() end
   if BRC.Config.temple_macros then ready_temple_macro() end
   if BRC.Config.gauntlet_macros then ready_gauntlet_macro() end
+  ready_stop_on_stairs_in_pan_or_hell()
 end

@@ -1006,8 +1006,10 @@ function BRC.you.have_shield()
   return BRC.is.shield(items.equipped_at("offhand"))
 end
 
-function BRC.you.in_hell()
-  return util.contains(BRC.ALL_HELL_BRANCHES, you.branch())
+function BRC.you.in_hell(exclude_vestibule)
+  local branch = you.branch()
+  if exclude_vestibule and branch == "Hell" then return false end
+  return util.contains(BRC.ALL_HELL_BRANCHES, branch)
 end
 
 function BRC.you.by_slimy_wall()
