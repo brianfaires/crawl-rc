@@ -56,6 +56,17 @@ local function serialize_inventory()
   return table.concat(tokens)
 end
 
+local function serialize_config()
+  local tokens = { "\n---CONFIG---\n" }
+  tokens[#tokens + 1] = "\nConfig = " .. BRC.data.val2str(BRC.Config)
+  tokens[#tokens + 1] = "\n\nTuning = " .. BRC.data.val2str(BRC.Tuning)
+  tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.data.val2str(BRC.BrandBonus)
+  tokens[#tokens + 1] = "\n\nAlertColor = " .. BRC.data.val2str(BRC.AlertColor)
+  tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.data.val2str(BRC.LogColor)
+  tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.data.val2str(BRC.Emoji)
+  return table.concat(tokens)
+end
+
 -- BRC.log - Logging methods
 function BRC.log.error(message, context)
   log_message(message, context, BRC.LogColor.error)
@@ -451,6 +462,7 @@ function BRC.dump.all(verbose, skip_mpr)
 
   tokens[#tokens + 1] = BRC.data.serialize()
   if verbose then
+    tokens[#tokens + 1] = serialize_config()
     tokens[#tokens + 1] = serialize_inventory()
     tokens[#tokens + 1] = _weapon_cache.serialize()
     tokens[#tokens + 1] = serialize_chk_lua_save()
@@ -467,9 +479,9 @@ end
 function macro_brc_dump_character()
   if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
     crawl.take_note(BRC.dump.all(true, true))
-    BRC.mpr.lightgray("BRC debug info added to character dump.")
+    BRC.mpr.lightgrey("BRC debug info added to character dump.")
   else
-    BRC.mpr.lightgray("Okay, then.")
+    BRC.mpr.lightgrey("Okay, then.")
   end
   BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#") -- Includes the message w/ file path to console
 end

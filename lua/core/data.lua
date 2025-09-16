@@ -59,6 +59,7 @@ function BRC.data.val2str(value, indent_count)
   if not value then return "nil" end
   indent_count = indent_count or 1
   local indent = string.rep("  ", indent_count)
+  local parent_indent = string.rep("  ", indent_count - 1)
   local list_separator = ",\n" .. indent
 
   local type = BRC.data._brc_type_of(value)
@@ -74,14 +75,15 @@ function BRC.data.val2str(value, indent_count)
       tokens[#tokens + 1] = BRC.data.val2str(v, indent_count + 1)
     end
     if #tokens == 0 then return "{}" end
-    return string.format("{\n%s%s\n}", indent, table.concat(tokens, list_separator))
+    if #tokens < 4 then return string.format("{ %s }", table.concat(tokens, ", ")) end
+    return string.format("{\n%s%s\n%s}", indent, table.concat(tokens, list_separator), parent_indent)
   elseif type == TYPES.dict then
     local tokens = {}
     for k, v in pairs(value) do
       tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.data.val2str(v, indent_count + 1))
     end
     if #tokens == 0 then return "{}" end
-    return string.format("{\n%s%s\n}", indent, table.concat(tokens, list_separator))
+    return string.format("{\n%s%s\n%s}", indent, table.concat(tokens, list_separator), parent_indent)
   else
     local str = tostring(value) or "nil"
     BRC.log.error(string.format("Unknown data type for value (%s): %s", str, type))
