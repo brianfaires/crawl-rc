@@ -57,14 +57,15 @@ function _weapon_cache.add_weapon(it)
   local weap_data = {}
   weap_data.is_weapon = it.is_weapon
   weap_data.basename = it.name("base")
-  weap_data.subtype = it.subtype()
+  weap_data._subtype = it.subtype()
+  weap_data.subtype = function() return weap_data._subtype end -- For consistency in other code
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end
+  weap_data.ego = function() return weap_data._ego end -- For consistency in other code
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -111,16 +112,17 @@ end
 -- is_weapon_upgrade(it, cur) -> boolean : For pickup; Check if a weapon is an upgrade to one currently in inventory.
 -- `cur` comes from _weapon_cache - it has some pre-computed values
 local function is_weapon_upgrade(it, cur)
-  if it.subtype() == cur.subtype then
+  if it.subtype() == cur.subtype() then
     -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
     local it_ego = BRC.get.ego(it)
-    if cur.ego and not it_ego then return false end
-    if it_ego and it.is_identified and not cur.ego then
+    local cur_ego = BRC.get.ego(cur)
+    if cur_ego and not it_ego then return false end
+    if it_ego and it.is_identified and not cur_ego then
       return BRC.get.weap_score(it) / cur.score > BRC.Tuning.weap.pickup.add_ego
     end
-    return it_ego == cur.ego and BRC.get.weap_score(it) > cur.score
+    return it_ego == cur_ego and BRC.get.weap_score(it) > cur.score
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     -- Return false if no clear upgrade possible
     if BRC.get.hands(it) > cur.hands then return false end
@@ -205,10 +207,10 @@ local function alert_interesting_weapon(it, cur)
   local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
   local best_score = math.max(cur.score, inv_best and BRC.get.weap_score(inv_best) or 0)
 
-  if cur.subtype == it.subtype() then
+  if cur.subtype() == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     local it_ego = BRC.get.ego(it, true) -- Don't overvalue Speed/Heavy egos (only look at their DPS)
-    if not cur.artefact and it_ego and (it_ego ~= cur.ego) then
+    if not cur.artefact and it_ego and it_ego ~= BRC.get.ego(cur) then
       return f_pickup_alert.do_alert(it, "Diff ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
     elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
       return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
@@ -234,7 +236,7 @@ local function alert_interesting_weapon(it, cur)
       elseif ratio > BRC.Tuning.weap.alert.add_hand.not_using then
         return f_pickup_alert.do_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.upgrade_weap)
       end
-    elseif BRC.get.ego(it) and not cur.ego and ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh then
+    elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh then
       local msg = "2-handed weapon (Gain ego)"
       return f_pickup_alert.do_alert(it, msg, BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.weap_ego)
     end
@@ -242,7 +244,7 @@ local function alert_interesting_weapon(it, cur)
     if cur.artefact then return false end
     if BRC.get.ego(it, true) then -- Don't overvalue Speed/Heavy egos (only look at their DPS)
       local it_ego = BRC.get.ego(it)
-      if not cur.ego then
+      if not BRC.get.ego(cur) then
         if ratio > BRC.Tuning.weap.alert.gain_ego then
           return f_pickup_alert.do_alert(it, "Gain ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
         end

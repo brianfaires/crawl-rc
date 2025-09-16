@@ -8068,14 +8068,14 @@ function _weapon_cache.add_weapon(it)
   weap_data.is_weapon = it.is_weapon
   weap_data.basename = it.name("base")
   weap_data._subtype = it.subtype()
-  weap_data.subtype = function() return weap_data._subtype end
+  weap_data.subtype = function() return weap_data._subtype end -- For consistency in other code
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end
+  weap_data.ego = function() return weap_data._ego end -- For consistency in other code
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
