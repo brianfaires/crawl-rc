@@ -34,15 +34,15 @@ local FM_PATTERNS = {
   { name = "always_fm", cond = "always", cutoff = 0,
     pattern = {
       -- High damage/speed
-      "juggernaut", "orbs? of fire", "orbs? of winter", "flayed ghost",
+      "flayed ghost", "juggernaut", "orbs? of (entropy|fire|winter)",
       --Summoning
-      "shadow demon", "guardian serpent", "draconian stormcaller", "spriggan druid", "dryad",
-      "worldbinder", "halazid warlock", "demonspawn corrupter",
+      "boundless tesseract", "demonspawn corrupter", "draconian stormcaller", "dryad",
+      "guardian serpent", "halazid warlock", "shadow demon", "spriggan druid", "worldbinder",
       --Dangerous abilities
-      "wyrmhole", "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-      "starflower", "merfolk aquamancer", "wretched star",
+      "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
+      "torpor snail", "water nymph", "wretched star", "wyrmhole",
       --Dangerous clouds
-      "catoblepas", "apocalypse crab",
+      "apocalypse crab","catoblepas",
     } },
 
   { name = "always_flash", cond = "always", cutoff = 0,

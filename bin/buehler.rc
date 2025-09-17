@@ -399,7 +399,7 @@ ai := autoinscribe
 ai += of cold resistance:rC+
 ai += of fire resistance:rF+
 ai += of poison resistance:rPois
-ai += of preservation:rCorr
+ai += of corrosion resistance:rCorr
 ai += of invulnerability:rInv
 ai += of magic regeneration:MRegen+
 ai += of positive energy:rN+
@@ -3435,7 +3435,6 @@ spell_slot ^= Confusing Touch:CTF
 spell_slot ^= Conjure Ball Lightning:BLCTN
 spell_slot ^= Construct Spike Launcher:CSLPKNRAUE
 spell_slot ^= Corpse Rot:CRPS
-spell_slot ^= Dazzling Flash:DZFLSHNG
 spell_slot ^= Death Channel:DCNL
 spell_slot ^= Death's Door:DROTHEA
 spell_slot ^= Detonation Catalyst:DCTNYTSAEO
@@ -3450,6 +3449,7 @@ spell_slot ^= Fortress Blast:FBRTSLA
 spell_slot ^= Foxfire:FXOIRE
 spell_slot ^= Fugue of the Fallen:FUGALNE
 spell_slot ^= Fulsome Fusillade:FLSOMADE
+spell_slot ^= Gloom:GLOM
 spell_slot ^= Hoarfrost Cannonade:HCORFND
 spell_slot ^= Ice Form:IFORM
 spell_slot ^= Ignite Poison:IPOSN
@@ -5291,15 +5291,15 @@ local FM_PATTERNS = {
   { name = "always_fm", cond = "always", cutoff = 0,
     pattern = {
       -- High damage/speed
-      "juggernaut", "orbs? of fire", "orbs? of winter", "flayed ghost",
+      "flayed ghost", "juggernaut", "orbs? of (entropy|fire|winter)",
       --Summoning
-      "shadow demon", "guardian serpent", "draconian stormcaller", "spriggan druid", "dryad",
-      "worldbinder", "halazid warlock", "demonspawn corrupter",
+      "boundless tesseract", "demonspawn corrupter", "draconian stormcaller", "dryad",
+      "guardian serpent", "halazid warlock", "shadow demon", "spriggan druid", "worldbinder",
       --Dangerous abilities
-      "wyrmhole", "torpor snail", "water nymph", "shambling mangrove", "iron giant",
-      "starflower", "merfolk aquamancer", "wretched star",
+      "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
+      "torpor snail", "water nymph", "wretched star", "wyrmhole",
       --Dangerous clouds
-      "catoblepas", "apocalypse crab",
+      "apocalypse crab","catoblepas",
     } },
 
   { name = "always_flash", cond = "always", cutoff = 0,
