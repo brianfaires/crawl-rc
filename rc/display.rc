@@ -1,6 +1,6 @@
 ## Mutes are at end of file, so they override the rest
 
-stat_colour = 3:red, 7:lightred
+stat_colour = 3:red, 6:yellow
 
 hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
 mp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
@@ -33,7 +33,7 @@ $useful := lightblue
 $warning := red
 
 
-# First, highlight uselessness
+# First, color uselessness everywhere
 menu += $boring:(melded|useless_item)
 menu += $warning:forbidden
 
@@ -54,10 +54,9 @@ menu += inventory:lightgreen:.*equipped.*(weapon|armour|jewellery)
 menu += inventory:$boring:inert
 menu += inventory:lightmagenta:artefact.*amulet
 menu += inventory:magenta:amulet
-menu += inventory:white:artefact
-menu += inventory:lightgrey:ego
-menu += inventory:$boring:(weapon|armour)
-menu += inventory:$normal:jewellery
+menu += inventory:cyan:artefact
+menu += inventory:white:ego
+menu += inventory:$normal:(weapon|armour|jewellery)
 
 # Overrides: use_item menu
 menu += use_item:lightgreen:.*equipped.*(weapon|armour|jewellery)
