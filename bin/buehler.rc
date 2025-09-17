@@ -3021,55 +3021,50 @@ channel.orb = $awesome
 
 
 #### MUTES Be careful with these! Last, so they override the rest
-#msc ^= mute:plain:No target in view!
-msc ^= mute:There is a.*door here
 
 # Unnecessary
-msc ^= mute:HP restored
-msc ^= mute:Magic restored
-msc ^= mute:A chill wind blows around you
-msc ^= mute:The.*dissolves into shadows
+msc ^= mute:(Ancestor ?)HP restored\.$
+msc ^= mute:Magic restored\.$
+msc ^= mute:A chill wind blows around you\.$
+msc ^= mute:evades? a web
+msc ^= mute:An electric hum fills the air
+
+# Monsters /Allies / Neutrals
+msc ^= mute:is (lightly|moderately|heavily|severely) (damaged|wounded)
+msc ^= mute:is almost (dead|destroyed)
+msc ^= mute:The (bush|fungus|plant) looks sick
 msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
-#msc ^= mute:Cast which spell
-msc ^= mute:Use which ability
-msc ^= mute:Evoke which item
-#msc ^= mute:Confirm with
-#msc ^= mute:You can\'t see any susceptible monsters within range
-msc ^= mute:for a list of commands and other information
+msc ^= mute:The.*dissolves into shadows
 msc ^= mute:You swap places
 msc ^= mute:Your.*spectral.*disappears
 
-
-msc ^= mute:Moving in this stuff is going to be slow
-msc ^= mute:You enter the shallow water
-msc ^= mute:There is a.*(staircase).*here
-
-msc ^= mute:is lightly (damaged|wounded)
-msc ^= mute:is moderately (damaged|wounded)
-msc ^= mute:is heavily (damaged|wounded)
-msc ^= mute:is severely (damaged|wounded)
-msc ^= mute:is almost (dead|destroyed)
-
-msc ^= mute:Was it this warm in here before
-msc ^= mute:The flames dance
-msc ^= mute:Your shadow attacks
+# Interface
+msc ^= mute:Use which ability
+msc ^= mute:Evoke which item
+msc ^= mute:for a list of commands and other information
 msc ^= mute:Marking area around
-msc ^= mute:Placed new exclusion
-msc ^= mute:Reduced exclusion size to a single square
-msc ^= mute:Removed exclusion
-msc ^= mute:You can access your shopping list by pressing
-msc ^= mute:As you enter the labyrinth
-msc ^= mute:previously moving walls settle noisily into place
-msc ^= mute:The plant looks sick
+msc ^= mute:(Reduced|Removed|Placed new) exclusion
 msc ^= mute:Shift\-Dir \- straight line
-msc ^= mute:Your foxfire dissipates
-msc ^= mute:evades? a web
-msc ^= mute:An electric hum fills the air
-msc ^= mute:You pick up a book of
+msc ^= mute:You can access your shopping list by pressing
+
+# Books
+msc ^= mute:You pick up (?!a manual).*and begin reading
+msc ^= mute:Unfortunately\, you learn nothing new
+
+# Spells
+msc ^= mute:^Your foxfire dissipates\.$
+
+# Religion
 msc ^= mute:accepts your kill
 msc ^= mute:Okawaru is honoured by your kill
-msc ^= mute:you see here a.*corpse
-msc ^= mute:you now have .* gold pieces
+msc ^= mute:Your shadow attacks
+
+# Ground items / features
+msc ^= mute:There is a.*(door|staircase).*here
+msc ^= mute:You see here a.*corpse
+msc ^= mute:You now have .* gold pieces
+msc ^= mute:You enter the shallow water
+msc ^= mute:Moving in this stuff is going to be slow
 
 ############################### End rc/display.rc ###############################
 ##########################################################################################
@@ -3828,12 +3823,7 @@ local TYPES = {
 }
 
 -- Values to detect when character is changed
-local GAME_CHANGE_MONITORS = {
-  buehler_rc_version = BRC.VERSION,
-  buehler_name = you.name(),
-  buehler_race = you.race(), -- using 'race' without a prefix breaks RC parser
-  buehler_class = you.class(), -- using 'class' without a prefix breaks RC parser
-} -- GAME_CHANGE_MONITORS (do not remove this comment)
+local GAME_CHANGE_MONITORS = {}
 
 -- Persistent variables - BRC.data defines these in init(), to come after all other persistent data
 
@@ -3906,7 +3896,8 @@ Returns the current value.
 Usage: variable_name = BRC.data.persist("variable_name", default_value)
 --]]
 function BRC.data.persist(name, default_value)
-  if _G[name] == nil then _G[name] = default_value end
+  -- Reset persistent data on new game, or if not created yet
+  if you.turns() == 0 or _G[name] == nil then _G[name] = default_value end
 
   table.insert(chk_lua_save, function()
     local var_type = BRC.data._brc_type_of(_G[name])
@@ -3916,9 +3907,13 @@ function BRC.data.persist(name, default_value)
 
   local var_type = BRC.data._brc_type_of(_G[name])
   if var_type == TYPES.list or var_type == TYPES.dict then
-    _persistent_table_names[#_persistent_table_names + 1] = name
+    if not util.contains(util.keys(_persistent_table_names), name) then
+      _persistent_table_names[#_persistent_table_names + 1] = name
+    end
   else
-    _persistent_var_names[#_persistent_var_names + 1] = name
+    if not util.contains(_persistent_var_names, name) then
+      _persistent_var_names[#_persistent_var_names + 1] = name
+    end
   end
 
   return _G[name]
@@ -3967,6 +3962,7 @@ function BRC.data.verify_reinit()
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+        _G[BRC_PREFIX .. k] = v
         BRC.mpr.lightred(msg)
       end
     end
@@ -3990,6 +3986,12 @@ function BRC.data.verify_reinit()
 end
 
 function BRC.data.init()
+  GAME_CHANGE_MONITORS.buehler_rc_version = BRC.VERSION
+  GAME_CHANGE_MONITORS.buehler_name = you.name()
+  GAME_CHANGE_MONITORS.buehler_race = you.race()
+  GAME_CHANGE_MONITORS.buehler_class = you.class()
+
+  -- If monitors already are defined, they will keep their values
   for k, v in pairs(GAME_CHANGE_MONITORS) do
     BRC.data.persist(BRC_PREFIX .. k, v)
   end

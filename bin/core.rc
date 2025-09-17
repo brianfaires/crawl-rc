@@ -1603,12 +1603,7 @@ local TYPES = {
 }
 
 -- Values to detect when character is changed
-local GAME_CHANGE_MONITORS = {
-  buehler_rc_version = BRC.VERSION,
-  buehler_name = you.name(),
-  buehler_race = you.race(), -- using 'race' without a prefix breaks RC parser
-  buehler_class = you.class(), -- using 'class' without a prefix breaks RC parser
-} -- GAME_CHANGE_MONITORS (do not remove this comment)
+local GAME_CHANGE_MONITORS = {}
 
 -- Persistent variables - BRC.data defines these in init(), to come after all other persistent data
 
@@ -1681,7 +1676,8 @@ Returns the current value.
 Usage: variable_name = BRC.data.persist("variable_name", default_value)
 --]]
 function BRC.data.persist(name, default_value)
-  if _G[name] == nil then _G[name] = default_value end
+  -- Reset persistent data on new game, or if not created yet
+  if you.turns() == 0 or _G[name] == nil then _G[name] = default_value end
 
   table.insert(chk_lua_save, function()
     local var_type = BRC.data._brc_type_of(_G[name])
@@ -1691,9 +1687,13 @@ function BRC.data.persist(name, default_value)
 
   local var_type = BRC.data._brc_type_of(_G[name])
   if var_type == TYPES.list or var_type == TYPES.dict then
-    _persistent_table_names[#_persistent_table_names + 1] = name
+    if not util.contains(util.keys(_persistent_table_names), name) then
+      _persistent_table_names[#_persistent_table_names + 1] = name
+    end
   else
-    _persistent_var_names[#_persistent_var_names + 1] = name
+    if not util.contains(_persistent_var_names, name) then
+      _persistent_var_names[#_persistent_var_names + 1] = name
+    end
   end
 
   return _G[name]
@@ -1742,6 +1742,7 @@ function BRC.data.verify_reinit()
       if prev ~= v then
         failed_reinit = true
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+        _G[BRC_PREFIX .. k] = v
         BRC.mpr.lightred(msg)
       end
     end
@@ -1765,6 +1766,12 @@ function BRC.data.verify_reinit()
 end
 
 function BRC.data.init()
+  GAME_CHANGE_MONITORS.buehler_rc_version = BRC.VERSION
+  GAME_CHANGE_MONITORS.buehler_name = you.name()
+  GAME_CHANGE_MONITORS.buehler_race = you.race()
+  GAME_CHANGE_MONITORS.buehler_class = you.class()
+
+  -- If monitors already are defined, they will keep their values
   for k, v in pairs(GAME_CHANGE_MONITORS) do
     BRC.data.persist(BRC_PREFIX .. k, v)
   end
