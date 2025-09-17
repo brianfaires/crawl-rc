@@ -6048,12 +6048,14 @@ end
 
 local function set_god_options()
   local new_god = you.god()
-  if new_god ~= cur_god then
+  if cur_god and cur_god ~= new_god then
     if cur_god == "No God" then
       BRC.set.force_more("Found.*the Ecumenical Temple", false)
       BRC.set.flash_screen_message("Found.*the Ecumenical Temple", true)
       BRC.set.runrest_stop_message("Found.*the Ecumenical Temple", true)
-    elseif new_god == "Beogh" then
+    end
+
+    if new_god == "Beogh" then
       BRC.set.runrest_ignore_message("no longer looks.*", true)
       BRC.set.force_more("Your orc.*dies", true)
     elseif new_god == "Jiyva" then
