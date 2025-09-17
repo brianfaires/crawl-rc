@@ -82,6 +82,8 @@ end
 
 -- Macro function: Attach full recovery to auto-explore
 function macro_f_fully_recover_explore()
+  if not BRC.active then return BRC.util.do_cmd("CMD_EXPLORE") end
+
   if fully_recovered() then
     if fr_start_turn > 0 then
       finish_fully_recover()

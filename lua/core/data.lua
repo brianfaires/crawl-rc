@@ -147,6 +147,8 @@ function BRC.data.erase()
 
   _persistent_var_names = {}
   _persistent_table_names = {}
+  BRC.active = false
+  BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
 --[[

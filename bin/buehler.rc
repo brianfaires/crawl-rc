@@ -3947,6 +3947,8 @@ function BRC.data.erase()
 
   _persistent_var_names = {}
   _persistent_table_names = {}
+  BRC.active = false
+  BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
 --[[
@@ -4253,7 +4255,10 @@ end
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
   if not key then return nil end
-  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  if key:find("Ctrl", 1, true) then return BRC.util.control_key(char_key) end
+  return char_key
 end
 
 --[[
@@ -4490,18 +4495,24 @@ function BRC.dump.all(verbose, skip_mpr)
 end
 
 function macro_brc_dump_character()
+  if not BRC.active then return BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
+
   if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
     crawl.take_note(BRC.dump.all(true, true))
     BRC.mpr.lightgrey("BRC debug info added to character dump.")
   else
     BRC.mpr.lightgrey("Okay, then.")
   end
-  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#") -- Includes the message w/ file path to console
+  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#")
 end
 
 --- BRC.util - Utility functions ----
 -- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
 -- crawl.do_commands() isn't always immediate; might wait for a keypress before doing the command
+function BRC.util.control_key(c)
+  return string.byte(c:upper()) - 64
+end
+
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
   if key then
@@ -6351,6 +6362,8 @@ end
 
 -- Macro function: Attach full recovery to auto-explore
 function macro_f_fully_recover_explore()
+  if not BRC.active then return BRC.util.do_cmd("CMD_EXPLORE") end
+
   if fully_recovered() then
     if fr_start_turn > 0 then
       finish_fully_recover()
@@ -6581,6 +6594,8 @@ end
 
 -- Macro function: Save with message feature
 function macro_f_misc_alerts_save_with_message()
+  if not BRC.active then return BRC.util.do_cmd("CMD_SAVE_GAME_NOW") end
+
   if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
     crawl.mpr("Okay, then.")
     return
@@ -6958,6 +6973,8 @@ ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
 
 -- Local functions
 local function check_new_location(cmd)
+  if not BRC.active then return BRC.util.do_cmd(cmd) end
+
   local feature = view.feature_at(0, 0)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 

@@ -16,6 +16,8 @@ ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
 
 -- Local functions
 local function check_new_location(cmd)
+  if not BRC.active then return BRC.util.do_cmd(cmd) end
+
   local feature = view.feature_at(0, 0)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 

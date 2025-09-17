@@ -891,7 +891,10 @@ end
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
   if not key then return nil end
-  return key:sub(-1) -- get_command returns things like "Uppercase S"; we just want 'S'
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  if key:find("Ctrl", 1, true) then return BRC.util.control_key(char_key) end
+  return char_key
 end
 
 --[[
@@ -1128,18 +1131,24 @@ function BRC.dump.all(verbose, skip_mpr)
 end
 
 function macro_brc_dump_character()
+  if not BRC.active then return BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
+
   if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
     crawl.take_note(BRC.dump.all(true, true))
     BRC.mpr.lightgrey("BRC debug info added to character dump.")
   else
     BRC.mpr.lightgrey("Okay, then.")
   end
-  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#") -- Includes the message w/ file path to console
+  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#")
 end
 
 --- BRC.util - Utility functions ----
 -- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
 -- crawl.do_commands() isn't always immediate; might wait for a keypress before doing the command
+function BRC.util.control_key(c)
+  return string.byte(c:upper()) - 64
+end
+
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
   if key then
@@ -1732,6 +1741,8 @@ function BRC.data.erase()
 
   _persistent_var_names = {}
   _persistent_table_names = {}
+  BRC.active = false
+  BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
 --[[
