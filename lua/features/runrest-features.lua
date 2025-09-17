@@ -13,7 +13,7 @@ rr_autosearched_temple = BRC.data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
 
 -- Local constants / configuration
-local GAUNTLET_SEARCH_STRING = "gauntlet && !!leading && !!transporter && !!pieces && !!trap"
+local GAUNTLET_SEARCH_STRING = "gauntlet && !!gate leading && !!a transporter && !!gold piece && !!trap"
 
 -- Local variables
 local stop_on_altars
