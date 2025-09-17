@@ -4151,6 +4151,10 @@ function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
 end
 
+function BRC.util.int2char(num)
+  return string.char(string.byte('a') + num)
+end
+
 --- BRC.mpr - Wrappers around crawl.mpr ---
 -- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
@@ -5949,7 +5953,10 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if BRC.Config.msg_on_inscribe then
-    BRC.mpr.cyan(string.format("(You can drop %s - %s)", it.slot, it.name()))
+    local emoji = BRC.Emoji.CAUTION or ""
+    local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
+    local msg = util.trim(string.format("%s You can drop: %s %s", emoji, item_name, emoji))
+    BRC.mpr.cyan(msg)
   end
 end
 

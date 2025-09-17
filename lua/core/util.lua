@@ -142,6 +142,10 @@ function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
 end
 
+function BRC.util.int2char(num)
+  return string.char(string.byte('a') + num)
+end
+
 --- BRC.mpr - Wrappers around crawl.mpr ---
 -- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
