@@ -3020,51 +3020,51 @@ channel.orb = $awesome
 #channel.hell_effect = -either danger/warning/boring
 
 
-#### MUTES Be careful with these! Last, so they override the rest
+#### MUTES Be careful with these! They come last, to override everything else
 
 # Unnecessary
-msc ^= mute:(Ancestor ?)HP restored\.$
-msc ^= mute:Magic restored\.$
-msc ^= mute:A chill wind blows around you\.$
-msc ^= mute:evades? a web
-msc ^= mute:An electric hum fills the air
+msc ^= mute:^(Ancestor ?)HP restored\.$
+msc ^= mute:^Magic restored\.$
+msc ^= mute:^A chill wind blows around you\.$
+msc ^= mute:^An electric hum fills the air.\$
 
 # Monsters /Allies / Neutrals
+msc ^= mute:evades? a web\.$
 msc ^= mute:is (lightly|moderately|heavily|severely) (damaged|wounded)
 msc ^= mute:is almost (dead|destroyed)
 msc ^= mute:The (bush|fungus|plant) looks sick
 msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
-msc ^= mute:The.*dissolves into shadows
-msc ^= mute:You swap places
-msc ^= mute:Your.*spectral.*disappears
+msc ^= mute:dissolves into shadows
+msc ^= mute:^You swap places
+msc ^= mute:^Your spectral weapon disappears\.$
 
 # Interface
-msc ^= mute:Use which ability
-msc ^= mute:Evoke which item
+msc ^= mute:^Use which ability\?
+msc ^= mute:^Evoke which item\?$
 msc ^= mute:for a list of commands and other information
-msc ^= mute:Marking area around
-msc ^= mute:(Reduced|Removed|Placed new) exclusion
+msc ^= mute:^Marking area around
+msc ^= mute:^(Reduced|Removed|Placed new) exclusion
 msc ^= mute:Shift\-Dir \- straight line
-msc ^= mute:You can access your shopping list by pressing
+msc ^= mute:You can access your shopping list by pressing '\$'\.$
 
 # Books
 msc ^= mute:You pick up (?!a manual).*and begin reading
-msc ^= mute:Unfortunately\, you learn nothing new
+msc ^= mute:^Unfortunately\, you learn nothing new\.$
 
 # Spells
 msc ^= mute:^Your foxfire dissipates\.$
 
 # Religion
-msc ^= mute:accepts your kill
-msc ^= mute:Okawaru is honoured by your kill
-msc ^= mute:Your shadow attacks
+msc ^= mute:accepts your kill\.$
+msc ^= mute: is honoured by your kill\.$
+msc ^= mute:^Your shadow attacks
 
 # Ground items / features
-msc ^= mute:There is a.*(door|staircase).*here
-msc ^= mute:You see here a.*corpse
-msc ^= mute:You now have .* gold pieces
-msc ^= mute:You enter the shallow water
-msc ^= mute:Moving in this stuff is going to be slow
+msc ^= mute:^There is a.*(door|staircase).*here\.$
+msc ^= mute:^You see here a.*corpse\.$
+msc ^= mute:^You now have .* gold pieces?\.$
+msc ^= mute:^You enter the shallow water\.$
+msc ^= mute:^Moving in this stuff is going to be slow\.$
 
 ############################### End rc/display.rc ###############################
 ##########################################################################################
