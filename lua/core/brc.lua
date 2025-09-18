@@ -199,9 +199,8 @@ end
 function BRC.autopickup(it, _)
   if not BRC.active then return end
   if you.turns() == last_autopickup_turn then return end -- else gets called 2x per turn
-  local return_value = call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
   last_autopickup_turn = you.turns()
-  return return_value
+  return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
 function BRC.ready()

@@ -31,7 +31,7 @@ FM_PATTERNS configures all alerts. Each table within it creates one alert, using
         `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
 --]]
 local FM_PATTERNS = {
-  { name = "always_fm", cond = "always", cutoff = 0,
+  { name = "always_fm",
     pattern = {
       -- High damage/speed
       "flayed ghost", "juggernaut", "orbs? of (entropy|fire|winter)",
@@ -45,7 +45,7 @@ local FM_PATTERNS = {
       "apocalypse crab","catoblepas",
     } },
 
-  { name = "always_flash", cond = "always", cutoff = 0,
+  { name = "always_flash",
     flash_screen = true,
     pattern = {
       -- Noteworthy abilities
@@ -57,7 +57,7 @@ local FM_PATTERNS = {
       "deep elf elementalist",
     } },
 
-  { name = "always_fm_pack", cond = "always", cutoff = 0,
+  { name = "always_fm_pack",
     is_pack = true,
     pattern = { "boggart", "dream sheep", "floating eye", "shrike", } },
 
@@ -181,7 +181,7 @@ local FM_PATTERNS = {
     pattern = { "shadow dragon" } },
 } -- end fm_patterns (do not remove this comment)
 
-local function init_conditional_alerts()
+local function append_conditional_alerts()
   -- Conditionally add miasma monsters
   if not BRC.you.miasma_immune() then
     util.append(FM_PATTERNS, {
@@ -209,7 +209,7 @@ local function init_conditional_alerts()
 
   -- If configured, add fm for all uniques and pan lords
   if BRC.Config.fm_on_uniques then
-    BRC.set.force_more("monster_warning:(?-i:[A-Z].*(?<!rb Guardian) comes? into view", true)
+    BRC.set.force_more("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
   end
 end
 ------------------- End config section -------------------
@@ -250,11 +250,7 @@ local function update_pack_mutes()
   for i, v in ipairs(FM_PATTERNS) do
     if v.is_pack and last_fm_turn[i] ~= -1 and you.turns() >= last_fm_turn[i] + BRC.Config.pack_monster_turns then
       last_fm_turn[i] = -1
-      if v.cond == "always" then
-        set_monster_alert(v, true, v.flash_screen) -- Alert is aleady active. Just turn it back on
-      else
-        active_alert[i] = false -- Set to false and let the main logic decide if it should reactivate it.
-      end
+      active_alert[i] = false -- Set to false and let the main logic decide if it should reactivate it.
     end
   end
 end
@@ -262,19 +258,15 @@ end
 -- Hook functions
 function f_alert_monsters.init()
   active_alert = {}
-  monsters_to_mute = {}
   last_fm_turn = {}
-  init_conditional_alerts()
+  monsters_to_mute = {}
+  append_conditional_alerts()
 
   -- Convert table patterns to strings
-  for _, v in ipairs(FM_PATTERNS) do
-    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
-  end
-
   for i, v in ipairs(FM_PATTERNS) do
+    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
+    active_alert[i] = false
     last_fm_turn[i] = -1
-    active_alert[i] = v.cond == "always"
-    if active_alert[i] then set_monster_alert(v.pattern, true, v.flash_screen) end
   end
 end
 
@@ -321,9 +313,7 @@ function f_alert_monsters.ready()
 
     if BRC.Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
       should_be_active = false
-    elseif v.cond == "always" then
-      should_be_active = true
-    elseif not v.cond and not active_alert[i] then
+    elseif not v.cond then
       should_be_active = true
     elseif v.cond == "xl" then
       should_be_active = xl < v.cutoff

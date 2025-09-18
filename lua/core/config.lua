@@ -13,6 +13,12 @@ BRC.Config.emojis = true -- Use emojis in alerts and announcements
 -- after-shaft.lua
 BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after shaft, until back to original level
 
+-- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
+BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
+BRC.Config.pack_monster_turns = 15 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
+BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
+BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
+
 -- announce-hp-mp.lua: Announce HP/MP changes
 BRC.Config.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
 BRC.Config.dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
@@ -53,12 +59,6 @@ BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand s
 
 -- fm-disable.lua: Disable built-in force_mores that can't be easily removed
 BRC.Config.fm_disable = true -- Skip the 'more' prompt for all messages configured in fm-disable.lua
-
--- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
-BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
-BRC.Config.pack_monster_turns = 15 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
-BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
-BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
 
 -- fully-recover.lua: Keep resting until these statuses are gone.
 -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
@@ -166,6 +166,7 @@ BRC.Config.fm_alert = {
 -- Debugging
 BRC.Config.debug_notes_on_char_dump = true
 BRC.Config.show_debug_messages = true
+BRC.Config.debug_alert_monsters = BRC.Config.debug_alert_monsters or false -- 2nd place to turn this on
 
 ---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
