@@ -26,7 +26,6 @@ local HOOK_FUNCTIONS = {
 local _features = {}
 local _hooks = {}
 local prev_turn
-local last_autopickup_turn
 
 -- Local functions
 local function is_feature_module(maybe_feature_module)
@@ -197,9 +196,6 @@ end
 
 -- Hook methods
 function BRC.autopickup(it, _)
-  if not BRC.active then return end
-  if you.turns() == last_autopickup_turn then return end -- else gets called 2x per turn
-  last_autopickup_turn = you.turns()
   return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
