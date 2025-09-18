@@ -14,15 +14,15 @@ local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 -- Local functions
 local function inscribe_armour_stats(it)
   local abbr = BRC.is.shield(it) and "SH" or "AC"
-  local primary, ev = BRC.get.armour_info(it)
+  local ac_or_sh, ev = BRC.get.armour_stats(it)
 
   local new_insc
   if it.inscription:find(abbr .. NUM_PATTERN) then
     -- Replace each stat individually, to avoid overwriting <color> tags
-    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, primary)
+    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, ac_or_sh)
     if ev and ev ~= "" then new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev) end
   else
-    new_insc = primary
+    new_insc = ac_or_sh
     if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
     if it.inscription and it.inscription ~= "" then new_insc = string.format("%s; %s", new_insc, it.inscription) end
   end
@@ -32,7 +32,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.get.weapon_info(it, BRC.DMG_TYPE[BRC.Config.inscribe_dps_type])
+  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[BRC.Config.inscribe_dps_type])
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)

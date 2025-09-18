@@ -1343,17 +1343,16 @@ local function get_staff_bonus_dmg(it, dmg_type)
 end
 
 -- Formatting for stat inscriptions & alerts
-function BRC.get.armour_info(it)
+function BRC.get.armour_stats(it)
   if not BRC.is.armour(it) then return "", "" end
 
-  -- Compare against last slot if poltergeist
-  local slot_num = you.race() == "Poltergeist" and 6 or 1
-  local cur = items.equipped_at(it.equip_type, slot_num)
+  local cur = items.equipped_at(it.equip_type)
   local is_worn = it.equipped or (it.ininventory and cur and cur.slot == it.slot)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  if cur and not is_worn then
+  -- Never show deltas for poltergeist
+  if cur and not is_worn and you.race() ~= "Poltergeist"then
     -- Show deltas if not worn, else compare against 0
     if BRC.is.shield(cur) then
       cur_sh = BRC.get.shield_sh(cur)
@@ -1376,7 +1375,7 @@ function BRC.get.armour_info(it)
   end
 end
 
-function BRC.get.weapon_info(it, dmg_type)
+function BRC.get.weapon_stats(it, dmg_type)
   if not it.is_weapon then return end
   dmg_type = dmg_type or BRC.DMG_TYPE[BRC.Config.inscribe_dps_type] or BRC.DMG_TYPE.plain
   local dmg = format_dmg(BRC.get.weap_damage(it, dmg_type))
