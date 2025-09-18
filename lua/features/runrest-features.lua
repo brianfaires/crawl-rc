@@ -13,7 +13,10 @@ rr_autosearched_temple = BRC.data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
 
 -- Local constants / configuration
-local GAUNTLET_SEARCH_STRING = "gauntlet && !!gate leading && !!a transporter && !!gold piece && !!trap"
+local GAUNTLET_CONCAT_STRING = " && !!"
+local GAUNTLET_SEARCH_STRING = table.concat({ "gauntlet", "gate leading", "a transporter", "gold piece",
+                                              " trap", "translucent door", "translucent gate" },
+                                              GAUNTLET_CONCAT_STRING)
 
 -- Local variables
 local stop_on_altars
@@ -21,6 +24,11 @@ local stop_on_portals
 local stop_on_stairs
 
 -- Local functions
+local function is_explore_done_msg(text)
+  local cleaned = BRC.text.clean_text(text)
+  return cleaned:sub(1, 17) == "Partly explored, "
+      or cleaned == "Done exploring."
+end
 
 -- Altar and religion functions
 local function religion_is_handled()
@@ -56,7 +64,7 @@ end
 local function c_message_temple(text, _)
   if you.branch() == "Temple" then
     -- Search again after explore
-    if text:find("explor", 1, true) then search_altars() end
+    if is_explore_done_msg(text) then search_altars() end
   end
 end
 
@@ -76,7 +84,7 @@ end
 local function c_message_gauntlet(text, _)
   -- Search again after explore
   if you.branch() == "Gauntlet" then
-    if text:find("explor", 1, true) then search_gauntlet() end
+    if is_explore_done_msg(text) then search_gauntlet() end
   end
 end
 
@@ -111,8 +119,8 @@ function f_runrest_features.init()
 end
 
 function f_runrest_features.c_message(text, _)
-  if BRC.Config.temple_macros then c_message_temple(text, _) end
-  if BRC.Config.gauntlet_macros then c_message_gauntlet(text, _) end
+  if BRC.Config.temple_macros then c_message_temple(text) end
+  if BRC.Config.gauntlet_macros then c_message_gauntlet(text) end
 end
 
 function f_runrest_features.ready()
