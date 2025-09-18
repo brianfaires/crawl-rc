@@ -1692,20 +1692,24 @@ Usage: variable_name = BRC.data.persist("variable_name", default_value)
 function BRC.data.persist(name, default_value)
   -- Reset persistent data on new game, or if not created yet
   if you.turns() == 0 or _G[name] == nil then _G[name] = default_value end
+  local is_in_tables = util.contains(util.keys(_persistent_table_names), name)
+  local is_in_vars = util.contains(_persistent_var_names, name)
 
-  table.insert(chk_lua_save, function()
-    local var_type = BRC.data._brc_type_of(_G[name])
-    if var_type == TYPES.unknown then return "" end
-    return string.format("%s = %s%s", name, BRC.data.val2str(_G[name]), BRC.KEYS.LF)
-  end)
+  if not is_in_tables and not is_in_vars then
+    table.insert(chk_lua_save, function()
+      local var_type = BRC.data._brc_type_of(_G[name])
+      if var_type == TYPES.unknown then return "" end
+      return string.format("%s = %s%s", name, BRC.data.val2str(_G[name]), BRC.KEYS.LF)
+    end)
+  end
 
   local var_type = BRC.data._brc_type_of(_G[name])
   if var_type == TYPES.list or var_type == TYPES.dict then
-    if not util.contains(util.keys(_persistent_table_names), name) then
+    if not is_in_tables then
       _persistent_table_names[#_persistent_table_names + 1] = name
     end
   else
-    if not util.contains(_persistent_var_names, name) then
+    if not is_in_vars then
       _persistent_var_names[#_persistent_var_names + 1] = name
     end
   end
