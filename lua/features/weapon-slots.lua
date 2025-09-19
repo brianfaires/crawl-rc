@@ -17,7 +17,7 @@ local slots_changed
 -- Local functions
 local function get_first_empty_slot()
   for slot = 1, 52 do
-    if not items.inslot(slot) then return slot end
+    if #BRC.get.items_in_slot(slot) == 0 then return slot end
   end
 end
 
@@ -65,8 +65,10 @@ local function generate_priorities()
 end
 
 local function cleanup_ab(slot)
-  local inv = items.inslot(slot)
-  if inv and inv.is_weapon then return end
+  local inv_items = BRC.get.items_in_slot(slot)
+  for _, inv in ipairs(inv_items) do
+    if inv.is_weapon then return end
+  end
 
   for p = 1, #priorities_ab do
     if priorities_ab[p] > slot then -- Not from earlier slot
@@ -80,8 +82,10 @@ end
 
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
-  local inv = items.inslot(slot_w)
-  if inv and inv.is_weapon then return end
+  local inv_items = BRC.get.items_in_slot(slot_w)
+  for _, inv in ipairs(inv_items) do
+    if inv.is_weapon then return end
+  end
 
   for p = 1, #priorities_w do
     if priorities_w[p] > 1 then -- Not from slots a or b
@@ -111,12 +115,16 @@ function f_weapon_slots.c_assign_invletter(it)
   if not BRC.Config.do_auto_weapon_slots_abw then return end
   if not it.is_weapon then return end
 
-  for i = 0, 2 do
-    local slot = i == 2 and items.letter_to_index("w") or i
+  for _, i in ipairs({ "a", "b", "w" }) do
+    local slot = items.letter_to_index(i)
+    local inv_items = BRC.get.items_in_slot(slot)
+    if #inv_items == 0 then return slot end
 
-    local inv = items.inslot(slot)
-    if not inv then return slot end
-    if not inv.is_weapon then
+    local any_are_weapon = false
+    for _, inv in ipairs(inv_items) do
+      if inv.is_weapon then any_are_weapon = true break end
+    end
+    if not any_are_weapon then
       items.swap_slots(slot, get_first_empty_slot())
       slots_changed = true
       return slot

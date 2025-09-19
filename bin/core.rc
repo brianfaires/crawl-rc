@@ -668,7 +668,7 @@ BRC.dump = {}
 local _mpr_queue = {}
 
 -- Local constants
-local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
+local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", ".", "[", "]", "*", "+", "-", "?", ")" })
 
 -- Local functions
 local function log_message(message, context, color)
@@ -737,46 +737,9 @@ end
 
 -- Remove tags from text, and optionally escape special characters
 function BRC.text.clean_text(text, escape_chars)
-  -- Fast path: if no tags, just handle newlines and escaping
-  if not text:find("<", 1, true) then
-    local one_line = text:gsub("\n", "")
-    if escape_chars then return one_line:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
-    return one_line
-  end
-
-  local tokens = {}
-  local pos = 1
-  local len = #text
-
-  while pos <= len do
-    local tag_start = text:find("<", pos, true)
-    if not tag_start then
-      -- No more tags, append remaining text
-      tokens[#tokens + 1] = text:sub(pos)
-      break
-    end
-
-    -- Append text before tag
-    if tag_start > pos then tokens[#tokens + 1] = text:sub(pos, tag_start - 1) end
-
-    -- Find end of tag
-    local tag_end = text:find(">", tag_start, true)
-    if not tag_end then
-      -- Malformed tag, append remaining text
-      tokens[#tokens + 1] = text:sub(pos)
-      break
-    end
-
-    pos = tag_end + 1
-  end
-
-  -- Join all parts and remove newlines
-  local cleaned = table.concat(tokens):gsub("\n", "")
-
-  -- Handle escaping if needed
-  if escape_chars then return cleaned:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
-
-  return cleaned
+  text = text:gsub("\n", "")
+  if escape_chars then text = text:gsub(SPECIAL_CHARS, "%%%1") end
+  return text:gsub("<[^>]*>", "")
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["red"]("Hello")
@@ -790,8 +753,10 @@ function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
 end
 
-function BRC.util.int2char(num)
-  return string.char(string.byte('a') + num)
+function BRC.text.get_pickup_info(text)
+  local cleaned = BRC.text.clean_text(text, false)
+  if cleaned:sub(2, 4) ~= " - " then return nil end
+  return { slot = items.letter_to_index(cleaned:sub(1, 1)), item = cleaned:sub(5, #cleaned) }
 end
 
 --- BRC.mpr - Wrappers around crawl.mpr ---
@@ -1159,6 +1124,10 @@ function BRC.util.do_cmd(cmd)
   end
 end
 
+function BRC.util.int2char(num)
+  return string.char(string.byte('a') + num)
+end
+
 --[[
 The functions above are general purpose: They should apply to any crawl RC file.
 The functions below contain design choices or logic that are somewhat specific to BRC.
@@ -1422,6 +1391,14 @@ function BRC.get.hands(it)
   local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
+end
+
+function BRC.get.items_in_slot(slot)
+  local inv_items = {}
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.slot == slot then inv_items[#inv_items + 1] = inv end
+  end
+  return inv_items
 end
 
 function BRC.is.unusable_ego(ego)

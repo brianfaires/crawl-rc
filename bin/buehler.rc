@@ -4036,7 +4036,7 @@ BRC.dump = {}
 local _mpr_queue = {}
 
 -- Local constants
-local CLEANUP_TEXT_CHARS = "([%^%$%(%)%%%.%[%]%*%+%-%?])"
+local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", ".", "[", "]", "*", "+", "-", "?", ")" })
 
 -- Local functions
 local function log_message(message, context, color)
@@ -4105,46 +4105,9 @@ end
 
 -- Remove tags from text, and optionally escape special characters
 function BRC.text.clean_text(text, escape_chars)
-  -- Fast path: if no tags, just handle newlines and escaping
-  if not text:find("<", 1, true) then
-    local one_line = text:gsub("\n", "")
-    if escape_chars then return one_line:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
-    return one_line
-  end
-
-  local tokens = {}
-  local pos = 1
-  local len = #text
-
-  while pos <= len do
-    local tag_start = text:find("<", pos, true)
-    if not tag_start then
-      -- No more tags, append remaining text
-      tokens[#tokens + 1] = text:sub(pos)
-      break
-    end
-
-    -- Append text before tag
-    if tag_start > pos then tokens[#tokens + 1] = text:sub(pos, tag_start - 1) end
-
-    -- Find end of tag
-    local tag_end = text:find(">", tag_start, true)
-    if not tag_end then
-      -- Malformed tag, append remaining text
-      tokens[#tokens + 1] = text:sub(pos)
-      break
-    end
-
-    pos = tag_end + 1
-  end
-
-  -- Join all parts and remove newlines
-  local cleaned = table.concat(tokens):gsub("\n", "")
-
-  -- Handle escaping if needed
-  if escape_chars then return cleaned:gsub(CLEANUP_TEXT_CHARS, "%%%1") end
-
-  return cleaned
+  text = text:gsub("\n", "")
+  if escape_chars then text = text:gsub(SPECIAL_CHARS, "%%%1") end
+  return text:gsub("<[^>]*>", "")
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["red"]("Hello")
@@ -4158,8 +4121,10 @@ function BRC.text.color(color, text)
   return color and BRC.text[color](text) or text
 end
 
-function BRC.util.int2char(num)
-  return string.char(string.byte('a') + num)
+function BRC.text.get_pickup_info(text)
+  local cleaned = BRC.text.clean_text(text, false)
+  if cleaned:sub(2, 4) ~= " - " then return nil end
+  return { slot = items.letter_to_index(cleaned:sub(1, 1)), item = cleaned:sub(5, #cleaned) }
 end
 
 --- BRC.mpr - Wrappers around crawl.mpr ---
@@ -4527,6 +4492,10 @@ function BRC.util.do_cmd(cmd)
   end
 end
 
+function BRC.util.int2char(num)
+  return string.char(string.byte('a') + num)
+end
+
 --[[
 The functions above are general purpose: They should apply to any crawl RC file.
 The functions below contain design choices or logic that are somewhat specific to BRC.
@@ -4790,6 +4759,14 @@ function BRC.get.hands(it)
   local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
+end
+
+function BRC.get.items_in_slot(slot)
+  local inv_items = {}
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if inv.slot == slot then inv_items[#inv_items + 1] = inv end
+  end
+  return inv_items
 end
 
 function BRC.is.unusable_ego(ego)
@@ -6243,14 +6220,8 @@ function f_exclude_dropped.c_message(text, channel)
   if not BRC.Config.exclude_dropped then return end
   if channel ~= "plain" then return end
 
-  local picked_up
-  if text:find(" %- ") then
-    picked_up = true
-  elseif text:find("ou drop ", 1, true) then
-    picked_up = false
-  else
-    return
-  end
+  local picked_up = BRC.text.get_pickup_info(text)
+  if not picked_up and not text:find("ou drop ", 1, true) then return end
 
   local item_name = get_item_name(text)
   if not item_name then return end
@@ -6714,24 +6685,43 @@ function f_remind_id.c_message(text, channel)
     end
   elseif not ri_found_scroll_of_id then
     -- Pre-ID: Stop when largest stack of pots/scrolls increases
-    local idx = text:find(" %- ")
-    if not idx then return end
+    local pickup_info = BRC.text.get_pickup_info(text)
+    if not pickup_info then return end
+    local inv_items = BRC.get.items_in_slot(pickup_info.slot)
+    local all_identified = true
+    for _, inv in ipairs(inv_items) do
+      if not inv.is_identified then all_identified = false break end
+    end
+    if all_identified then
+      BRC.log.debug("All items in slot " .. pickup_info.slot .. " are identified")
+      return
+    end
 
-    local slot = items.letter_to_index(text:sub(idx - 1, idx - 1))
-    local it = items.inslot(slot)
+    BRC.log.debug("Some items in slot " .. pickup_info.slot .. " are unidentified")
+    -- Try to figure out what we just picked up (Take first 4-5 chars)
+    local pickup_name = pickup_info.item:sub(2, math.min(6, #pickup_info.item))
+    local it
+    for _, inv in ipairs(inv_items) do
+      if inv.name("plain"):find(pickup_name, 1, true) then
+        it = inv
+        break
+      end
+    end
+    if not it then
+      BRC.log.warning("Could not find item in slot " .. pickup_info.slot .. " with partial name '" .. pickup_name.."'")
+      it = inv_items[1]
+    end
 
-    if not it or it.is_identified then return end
-    -- Picking up known items still returns identified == false
+    -- Picking up known items may still return identified == false
     -- Doing some hacky checks below instead
-
     local it_class = it.class(true)
     if it_class == "scroll" then
-      if it.quantity > math.max(ri_max_scroll_stack, get_max_stack_size("scroll", slot)) then
+      if it.quantity > math.max(ri_max_scroll_stack, get_max_stack_size("scroll", pickup_info.slot)) then
         you.stop_activity()
         ri_max_scroll_stack = it.quantity
       end
     elseif it_class == "potion" then
-      if it.quantity > math.max(ri_max_potion_stack, get_max_stack_size("potion", slot)) then
+      if it.quantity > math.max(ri_max_potion_stack, get_max_stack_size("potion", pickup_info.slot)) then
         you.stop_activity()
         ri_max_potion_stack = it.quantity
       end
@@ -7102,7 +7092,7 @@ local slots_changed
 -- Local functions
 local function get_first_empty_slot()
   for slot = 1, 52 do
-    if not items.inslot(slot) then return slot end
+    if #BRC.get.items_in_slot(slot) == 0 then return slot end
   end
 end
 
@@ -7150,8 +7140,10 @@ local function generate_priorities()
 end
 
 local function cleanup_ab(slot)
-  local inv = items.inslot(slot)
-  if inv and inv.is_weapon then return end
+  local inv_items = BRC.get.items_in_slot(slot)
+  for _, inv in ipairs(inv_items) do
+    if inv.is_weapon then return end
+  end
 
   for p = 1, #priorities_ab do
     if priorities_ab[p] > slot then -- Not from earlier slot
@@ -7165,8 +7157,10 @@ end
 
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
-  local inv = items.inslot(slot_w)
-  if inv and inv.is_weapon then return end
+  local inv_items = BRC.get.items_in_slot(slot_w)
+  for _, inv in ipairs(inv_items) do
+    if inv.is_weapon then return end
+  end
 
   for p = 1, #priorities_w do
     if priorities_w[p] > 1 then -- Not from slots a or b
@@ -7196,12 +7190,16 @@ function f_weapon_slots.c_assign_invletter(it)
   if not BRC.Config.do_auto_weapon_slots_abw then return end
   if not it.is_weapon then return end
 
-  for i = 0, 2 do
-    local slot = i == 2 and items.letter_to_index("w") or i
+  for _, i in ipairs({ "a", "b", "w" }) do
+    local slot = items.letter_to_index(i)
+    local inv_items = BRC.get.items_in_slot(slot)
+    if #inv_items == 0 then return slot end
 
-    local inv = items.inslot(slot)
-    if not inv then return slot end
-    if not inv.is_weapon then
+    local any_are_weapon = false
+    for _, inv in ipairs(inv_items) do
+      if inv.is_weapon then any_are_weapon = true break end
+    end
+    if not any_are_weapon then
       items.swap_slots(slot, get_first_empty_slot())
       slots_changed = true
       return slot
