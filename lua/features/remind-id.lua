@@ -9,8 +9,6 @@ f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
 
 -- Persistent variables
-ri_max_scroll_stack = BRC.data.persist("ri_max_scroll_stack", BRC.Config.stop_on_scrolls_count - 1)
-ri_max_potion_stack = BRC.data.persist("ri_max_potion_stack", BRC.Config.stop_on_pots_count - 1)
 ri_found_scroll_of_id = BRC.data.persist("ri_found_scroll_of_id", false)
 
 -- Local constants / configuration
@@ -21,23 +19,20 @@ if BRC.Emoji.REMIND_ID then IDENTIFY_MSG = BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .
 local do_remind_id_check
 
 -- Local functions
-local function alert_remind_identify()
-  BRC.mpr.stop(IDENTIFY_MSG)
-end
-
-local function get_max_stack_size(class, skip_slot)
+local function get_max_stack(class)
   local max_stack_size = 0
+  local slot = nil
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if
-      inv.quantity > max_stack_size
-      and inv.class(true) == class
-      and inv.slot ~= skip_slot
-      and not inv.is_identified
-    then
-      max_stack_size = inv.quantity
+    if inv.class(true) == class and not inv.is_identified then
+      if inv.quantity > max_stack_size then
+        max_stack_size = inv.quantity
+        slot = inv.slot
+      elseif inv.quantity == max_stack_size then
+        slot = nil -- If tied for max, no slot set a new max
+      end
     end
   end
-  return max_stack_size
+  return max_stack_size, slot
 end
 
 local function have_scroll_of_id()
@@ -60,18 +55,10 @@ function f_remind_id.init()
 end
 
 function f_remind_id.c_assign_invletter(it)
-  if not it.is_identified then
-    if have_scroll_of_id() then
-      you.stop_activity()
-      do_remind_id_check = true
-      return
-    end
-  elseif it.name("qual") == "scroll of identify" then
-    if have_unid_item() then
-      you.stop_activity()
-      do_remind_id_check = true
-      return
-    end
+  if not it.is_identified and have_scroll_of_id()
+    or it.name("qual") == "scroll of identify" and have_unid_item() then
+    you.stop_activity()
+    do_remind_id_check = true
   end
 end
 
@@ -85,28 +72,18 @@ function f_remind_id.c_message(text, channel)
       do_remind_id_check = true
     end
   elseif not ri_found_scroll_of_id then
-    -- Pre-ID: Stop when largest stack of pots/scrolls increases
-    local idx = text:find(" %- ")
-    if not idx then return end
+    local pickup_info = BRC.text.get_pickup_info(text)
+    if not pickup_info then return end
+    local is_scroll = pickup_info.item:find("scroll")
+    local is_potion = pickup_info.item:find("potion")
+    if not (is_scroll or is_potion) then return end
 
-    local slot = items.letter_to_index(text:sub(idx - 1, idx - 1))
-    local it = items.inslot(slot)
-
-    if not it or it.is_identified then return end
-    -- Picking up known items still returns identified == false
-    -- Doing some hacky checks below instead
-
-    local it_class = it.class(true)
-    if it_class == "scroll" then
-      if it.quantity > math.max(ri_max_scroll_stack, get_max_stack_size("scroll", slot)) then
-        you.stop_activity()
-        ri_max_scroll_stack = it.quantity
-      end
-    elseif it_class == "potion" then
-      if it.quantity > math.max(ri_max_potion_stack, get_max_stack_size("potion", slot)) then
-        you.stop_activity()
-        ri_max_potion_stack = it.quantity
-      end
+    local num_scrolls, slot_scrolls = get_max_stack("scroll")
+    local num_pots, slot_pots = get_max_stack("potion")
+    if is_scroll and num_scrolls >= BRC.Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
+    or is_potion and num_pots >= BRC.Config.stop_on_pots_count and slot_pots == pickup_info.slot then
+      you.stop_activity()
+      crawl.mpr("Stopping on scrolls=" .. num_scrolls .. ", pots=" .. num_pots)
     end
   end
 end
@@ -114,6 +91,8 @@ end
 function f_remind_id.ready()
   if do_remind_id_check then
     do_remind_id_check = false
-    if have_unid_item() and have_scroll_of_id() then alert_remind_identify() end
+    if have_unid_item() and have_scroll_of_id() then
+      BRC.mpr.stop(IDENTIFY_MSG)
+    end
   end
 end
