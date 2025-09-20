@@ -82,9 +82,11 @@ The pickup-alert system provides smart autopickup that grabs items you definitel
 
 ### Pickup Categories
 - **`pa-armour.lua`** - Picks up armour upgrades, alerts for new egos and high AC items
-- **`pa-weapons.lua`** - Picks up weapon upgrades. Alerts for artefacts, new egos, strong early weapons, first ranged/polearm, ...
-- **`pa-misc.lua`** - Picks up relevant staves, alerts for orbs and relevant talismans.
-  A list of "one-time alerts" will fire the first time you encounter a specific item (e.g. Wand of Digging)
+- **`pa-weapons.lua`** - Picks up upgrades to any weapon in inventory, **ignoring any inscribed with `!u` or `!brc`.**
+  (i.e. inscribe `!u` on any weapon you don't want upgrades for.)
+  Alerts fire for artefacts, new egos, strong early weapons, first ranged/polearm, highest flat damage, ...
+- **`pa-misc.lua`** - Picks up relevant staves. Alerts fire for orbs, relevant talismans, and a list of
+  "one-time alerts" that fire the first time you encounter a specific item (e.g. Wand of Digging)
 
 ### Core Files
 - **`pa-main.lua`** - Main controller and autopickup function

@@ -73,6 +73,10 @@ function _weapon_cache.add_weapon(it)
   weap_data.score = BRC.get.weap_score(it)
   weap_data.unbranded_score = BRC.get.weap_score(it, true)
 
+  -- Check for exclusion tags
+  local lower_insc = it.inscription:lower()
+  weap_data.allow_upgrade = not (lower_insc:find("!u") or lower_insc:find("!brc"))
+
   -- Track unique egos
   if weap_data._ego and not util.contains(_weapon_cache.egos, weap_data._ego) then
     _weapon_cache.egos[#_weapon_cache.egos + 1] = weap_data._ego
@@ -288,7 +292,7 @@ function f_pa_weapons.pickup_weapon(it)
   if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
   if f_pa_data.find(pa_items_picked, it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if is_weapon_upgrade(it, inv) then return true end
+    if inv.allow_upgrade and is_weapon_upgrade(it, inv) then return true end
   end
 end
 

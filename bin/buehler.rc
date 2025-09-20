@@ -652,10 +652,13 @@ msc ^= $m_danger: delaying your translocation
 
 #############################################################################################################
 ####### MUTES Be careful with these! They come last and use ^= (prepend), to override everything else #######
-
-# Unnecessary
+# Replaced by fully-rest.lua
 msc ^= mute:(Ancestor )?HP restored
 msc ^= mute:Magic restored
+
+# Unnecessary
+msc ^= mute:You now have .* runes
+msc ^= mute:to see all the runes you have collected
 msc ^= mute:A chill wind blows around you
 msc ^= mute:An electric hum fills the air
 
@@ -772,6 +775,7 @@ flash += Your body shudders with the violent release
 flash += power of Zot
 
 # Found something important
+flash += You pick up the .* (gem|rune) and feel its 
 more += Found.*the Ecumenical Temple
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
@@ -2771,6 +2775,7 @@ end
 
 -- Hook methods
 function BRC.autopickup(it, _)
+  if not BRC.active then return end
   return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
@@ -5101,6 +5106,7 @@ function f_pa_data.remove(table_ref, it)
   else
     local name, _ = get_pa_keys(it)
     util.remove(table_ref, name)
+    BRC.log.debug("Removed " .. name)
   end
 end
 
@@ -5478,16 +5484,16 @@ local function alert_aux_armour(it, unworn_inv_item)
       -- Catch dangerous brands or items blocked by non-innate mutations
       return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, BRC.Config.fm_alert.aux_armour)
     end
+  end
 
-    local it_ego = BRC.get.ego(it)
-    for _, cur in ipairs(all_equipped) do
-      local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
-      if is_new_ego(ego_change) then
-        local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-        return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.aux_armour)
-      elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
-        return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, BRC.Config.fm_alert.aux_armour)
-      end
+  local it_ego = BRC.get.ego(it)
+  for _, cur in ipairs(all_equipped) do
+    local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
+    if is_new_ego(ego_change) then
+      local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.aux_armour)
+    elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
+      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, BRC.Config.fm_alert.aux_armour)
     end
   end
 end
@@ -5701,6 +5707,10 @@ function _weapon_cache.add_weapon(it)
   weap_data.dps = BRC.get.weap_dps(it)
   weap_data.score = BRC.get.weap_score(it)
   weap_data.unbranded_score = BRC.get.weap_score(it, true)
+
+  -- Check for exclusion tags
+  local lower_insc = it.inscription:lower()
+  weap_data.allow_upgrade = not (lower_insc:find("!u") or lower_insc:find("!brc"))
 
   -- Track unique egos
   if weap_data._ego and not util.contains(_weapon_cache.egos, weap_data._ego) then
@@ -5917,7 +5927,7 @@ function f_pa_weapons.pickup_weapon(it)
   if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
   if f_pa_data.find(pa_items_picked, it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if is_weapon_upgrade(it, inv) then return true end
+    if inv.allow_upgrade and is_weapon_upgrade(it, inv) then return true end
   end
 end
 
