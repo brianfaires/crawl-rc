@@ -616,10 +616,21 @@ channel.orb = $m_attention
 channel.hell_effect = $m_warning
 channel.dgl_message = $m_attention
 
+####### Message-specific colors
+msc := message_colour
+
+# Travel / Exploring
+msc ^= $m_boring:You (open|close) the door
+msc ^= $m_interesting:Found a faded altar
+
+# Combat
+msc ^= $m_boring:does no damage
+msc ^= $m_boring:No target in view
+msc ^= $m_boring:strugges against the net
+
 
 #############################################################################################################
 ####### MUTES Be careful with these! They come last and use ^= (prepend), to override everything else #######
-msc := message_colour
 
 # Unnecessary
 msc ^= mute:(Ancestor ?)HP restored
@@ -2754,6 +2765,7 @@ function BRC.c_message(text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
+  if not prompt then return end
   if not BRC.active then return end
   return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end

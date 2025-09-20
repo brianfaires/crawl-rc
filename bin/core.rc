@@ -2002,6 +2002,7 @@ function BRC.c_message(text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
+  if not prompt then return end
   if not BRC.active then return end
   return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
