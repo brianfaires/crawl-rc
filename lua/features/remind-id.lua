@@ -81,9 +81,8 @@ function f_remind_id.c_message(text, channel)
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
     local num_pots, slot_pots = get_max_stack("potion")
     if is_scroll and num_scrolls >= BRC.Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
-    or is_potion and num_pots >= BRC.Config.stop_on_pots_count and slot_pots == pickup_info.slot then
-      you.stop_activity()
-      crawl.mpr("Stopping on scrolls=" .. num_scrolls .. ", pots=" .. num_pots)
+      or is_potion and num_pots >= BRC.Config.stop_on_pots_count and slot_pots == pickup_info.slot then
+        you.stop_activity()
     end
   end
 end
