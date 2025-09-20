@@ -43,7 +43,7 @@ function f_drop_inferior.c_assign_invletter(it)
     if inv.subtype() == it.subtype() and (inv_ego == it_ego or not (inv_ego or BRC.is.risky_ego(it_ego))) then
       if it.is_weapon then
         if you.race() == "Coglin" then return end -- More trouble than it's worth
-        if inv.plus <= it.plus then inscribe_drop(inv) end
+        if inv.plus <= (it.plus or 0) then inscribe_drop(inv) end
       else
         if BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it) and inv.encumbrance >= it.encumbrance then
           if you.race() == "Poltergeist" then return end -- More trouble than it's worth

@@ -1255,11 +1255,11 @@ local function get_slay_bonuses()
 
   -- Slots can go as high as 18 afaict
   for i = 0, 20 do
-    local it = items.equipped_at(i)
-    if it then
-      if BRC.is.ring(it) then
-        if it.artefact then
-          local name = it.name()
+    local inv = items.equipped_at(i)
+    if inv then
+      if BRC.is.ring(inv) then
+        if inv.artefact then
+          local name = inv.name()
           local idx = name:find("Slay", 1, true)
           if idx then
             local slay = tonumber(name:sub(idx + 5, idx + 5))
@@ -1274,11 +1274,11 @@ local function get_slay_bonuses()
               sum = sum - slay
             end
           end
-        elseif BRC.get.ego(it) == "Slay" then
-          sum = sum + it.plus
+        elseif BRC.get.ego(inv) == "Slay" then
+          sum = sum + inv.plus
         end
-      elseif it.artefact and (BRC.is.armour(it, true) or BRC.is.amulet(it)) then
-        local slay = it.artprops["Slay"]
+      elseif inv.artefact and (BRC.is.armour(inv, true) or BRC.is.amulet(inv)) then
+        local slay = inv.artprops["Slay"]
         if slay then sum = sum + slay end
       end
     end

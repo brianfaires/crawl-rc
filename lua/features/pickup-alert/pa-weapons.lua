@@ -188,7 +188,8 @@ local function alert_early_weapons(it)
     local skill_diff = BRC.get.skill(top_attack_skill) - BRC.get.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
-    if BRC.get.ego(it) or it.plus and it.plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
+    local it_plus = it.plus or 0
+    if BRC.get.ego(it) or it_plus and it_plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
       return f_pickup_alert.do_alert(it, "Early weapon", BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
     end
   end

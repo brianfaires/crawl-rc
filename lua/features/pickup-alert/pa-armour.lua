@@ -127,13 +127,14 @@ local function pickup_shield(it)
   if it.artefact then return true end
 
   -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
+  local it_plus = it.plus or 0
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
   if cur_ego then
-    if it_ego == cur_ego then return it.plus > cur.plus end
-    return it_ego and it.plus >= cur.plus
+    if it_ego == cur_ego then return it_plus > cur.plus end
+    return it_ego and it_plus >= cur.plus
   end
-  return it_ego or it.plus > cur.plus
+  return it_ego or it_plus > cur.plus
 end
 
 local function pickup_aux_armour(it)

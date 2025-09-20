@@ -590,9 +590,9 @@ channel.danger = $m_danger
 channel.warning = $m_warning
 channel.recovery = $m_gain
 channel.talk = mute
-channel.talk_visual = $m_normal
+channel.talk_visual = mute
 channel.timed_portal = $m_alert
-channel.sound = $m_interesting
+channel.sound = $m_normal
 channel.intrinsic_gain = $m_gain
 channel.mutation = $m_attention
 channel.monster_spell = $m_interesting
@@ -624,9 +624,10 @@ msc ^= $m_alert:You now have enough gold to buy
 msc ^= $m_alert:You have identified the last 
 msc ^= $m_boring:You .*(open|close) the door
 msc ^= $m_boring:You climb (upwards|downwards)
+msc ^= $m_interesting:Done exploring
 msc ^= $m_interesting:Found a faded altar
 msc ^= $m_interesting:You disentangle yourself
-msc ^= $m_warning:You are caught in the web
+msc ^= $m_warning:You are caught in .* web
 
 # Combat
 msc ^= $m_boring:does no damage
@@ -640,15 +641,19 @@ msc ^= $m_interesting:Your unstable footing causes you to
 msc ^= $m_interesting:You become entangled in the net
 msc ^= $m_interesting:You feel a bit more experienced
 msc ^= $m_interesting:You .*miss something
+msc ^= $m_interesting:You are blasted
 
 # Equipment
 msc ^= $m_boring:You unwield your 
+
+# Bad things
+msc ^= $m_danger: delaying your translocation
 
 #############################################################################################################
 ####### MUTES Be careful with these! They come last and use ^= (prepend), to override everything else #######
 
 # Unnecessary
-msc ^= mute:(Ancestor ?)HP restored
+msc ^= mute:(Ancestor )?HP restored
 msc ^= mute:Magic restored
 msc ^= mute:A chill wind blows around you
 msc ^= mute:An electric hum fills the air
@@ -688,7 +693,7 @@ msc ^= mute:is honoured by your kill
 msc ^= mute:Your shadow attacks
 
 # Ground items / features
-msc ^= mute:There is a.*(door|staircase|web).*here
+msc ^= mute:There is a.*(door|gate|staircase|web).*here
 msc ^= mute:You see here .*(corpse|skeleton)
 msc ^= mute:You now have .* gold piece
 msc ^= mute:You enter the shallow water
@@ -779,7 +784,7 @@ more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
 flash += You blink
 flash += danger:You feel strangely .*stable
-flash += delayed
+flash += delaying your translocation
 
 # Big damage
 more += your body is wracked
@@ -2253,11 +2258,11 @@ local function get_slay_bonuses()
 
   -- Slots can go as high as 18 afaict
   for i = 0, 20 do
-    local it = items.equipped_at(i)
-    if it then
-      if BRC.is.ring(it) then
-        if it.artefact then
-          local name = it.name()
+    local inv = items.equipped_at(i)
+    if inv then
+      if BRC.is.ring(inv) then
+        if inv.artefact then
+          local name = inv.name()
           local idx = name:find("Slay", 1, true)
           if idx then
             local slay = tonumber(name:sub(idx + 5, idx + 5))
@@ -2272,11 +2277,11 @@ local function get_slay_bonuses()
               sum = sum - slay
             end
           end
-        elseif BRC.get.ego(it) == "Slay" then
-          sum = sum + it.plus
+        elseif BRC.get.ego(inv) == "Slay" then
+          sum = sum + inv.plus
         end
-      elseif it.artefact and (BRC.is.armour(it, true) or BRC.is.amulet(it)) then
-        local slay = it.artprops["Slay"]
+      elseif inv.artefact and (BRC.is.armour(inv, true) or BRC.is.amulet(inv)) then
+        local slay = inv.artprops["Slay"]
         if slay then sum = sum + slay end
       end
     end
@@ -3590,7 +3595,7 @@ function f_drop_inferior.c_assign_invletter(it)
     if inv.subtype() == it.subtype() and (inv_ego == it_ego or not (inv_ego or BRC.is.risky_ego(it_ego))) then
       if it.is_weapon then
         if you.race() == "Coglin" then return end -- More trouble than it's worth
-        if inv.plus <= it.plus then inscribe_drop(inv) end
+        if inv.plus <= (it.plus or 0) then inscribe_drop(inv) end
       else
         if BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it) and inv.encumbrance >= it.encumbrance then
           if you.race() == "Poltergeist" then return end -- More trouble than it's worth
@@ -5282,13 +5287,14 @@ local function pickup_shield(it)
   if it.artefact then return true end
 
   -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
+  local it_plus = it.plus or 0
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
   if cur_ego then
-    if it_ego == cur_ego then return it.plus > cur.plus end
-    return it_ego and it.plus >= cur.plus
+    if it_ego == cur_ego then return it_plus > cur.plus end
+    return it_ego and it_plus >= cur.plus
   end
-  return it_ego or it.plus > cur.plus
+  return it_ego or it_plus > cur.plus
 end
 
 local function pickup_aux_armour(it)
@@ -5810,7 +5816,8 @@ local function alert_early_weapons(it)
     local skill_diff = BRC.get.skill(top_attack_skill) - BRC.get.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
-    if BRC.get.ego(it) or it.plus and it.plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
+    local it_plus = it.plus or 0
+    if BRC.get.ego(it) or it_plus and it_plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
       return f_pickup_alert.do_alert(it, "Early weapon", BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
     end
   end
