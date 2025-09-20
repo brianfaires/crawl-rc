@@ -16,7 +16,7 @@ pa_OTA_items = BRC.data.persist("pa_OTA_items", BRC.Config.alert.one_time)
 pa_high_score = BRC.data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
 
 -- Local functions
-local function get_pa_keys(it, plain_name)
+local function get_pa_keys(it, use_plain_name)
   if it.class(true) == "bauble" then
     return it.name("qual"):gsub('"', ""), 0
   elseif BRC.is.talisman(it) or BRC.is.orb(it) then
@@ -24,7 +24,7 @@ local function get_pa_keys(it, plain_name)
   elseif BRC.is.magic_staff(it) then
     return it.name("base"):gsub('"', ""), 0
   else
-    local name = it.name(plain_name and "plain" or "base"):gsub('"', "")
+    local name = it.name(use_plain_name and "plain" or "base"):gsub('"', "")
     local value = tonumber(name:sub(1, 3))
     if not value then return name, 0 end
     return util.trim(name:sub(4)), value
@@ -71,8 +71,8 @@ function f_pa_data.remove(table_ref, it)
 end
 
 -- Get name with plus included and quotes removed; stored in pa_recent_alerts table
-function f_pa_data.get_keyname(it, plain_name)
-  local name, value = get_pa_keys(it, plain_name)
+function f_pa_data.get_keyname(it, use_plain_name)
+  local name, value = get_pa_keys(it, use_plain_name)
   if BRC.is.talisman(it) or BRC.is.orb(it) or BRC.is.magic_staff(it) then return name end
   if value >= 0 then value = string.format("+%s", value) end
   return string.format("%s %s", value, name)
