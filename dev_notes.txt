@@ -17,6 +17,8 @@
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription`)
+1. 0.34: Make use of explore_auto_rest_status to replace fully-recover.lua.
+    (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
 
 ### Won't do - random ideas
 1. autorest starts w/autopickup (if inv not full)

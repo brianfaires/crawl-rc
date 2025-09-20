@@ -11,7 +11,6 @@ default_manual_training = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
-explore_auto_rest_status = all_negative, all_cooldown, contam, transformation
 
 autofight_stop = 40
 hp_warning = 20

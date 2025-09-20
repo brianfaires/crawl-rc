@@ -1985,11 +1985,11 @@ function BRC.autopickup(it, _)
   return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
-function BRC.ready(ignore_turn_check)
+function BRC.ready()
   if not BRC.active then return end
 
   crawl.redraw_screen()
-  if you.turns() == prev_turn and not ignore_turn_check then return end
+  if you.turns() == prev_turn then return end
   prev_turn = you.turns()
 
   call_all_hooks(HOOK_FUNCTIONS.ready)
