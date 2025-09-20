@@ -218,6 +218,7 @@ end
 local active_alert -- which ones are on
 local monsters_to_mute -- which packs to mute at next ready()
 local last_fm_turn -- when the mute started
+local prev_hp
 
 -- Local constants
 local WARN_PREFIX = "monster_warning:(?<!spectral )("
@@ -260,6 +261,7 @@ function f_alert_monsters.init()
   active_alert = {}
   last_fm_turn = {}
   monsters_to_mute = {}
+  prev_hp = you.hp()
   append_conditional_alerts()
 
   -- Convert table patterns to strings
@@ -271,6 +273,9 @@ function f_alert_monsters.init()
 end
 
 function f_alert_monsters.c_message(text, channel)
+  -- Check for HP changes between ready() calls (mainly for rest before autoexplore)
+  if prev_hp ~= you.hp() then f_alert_monsters.ready() end
+
   if channel ~= "monster_warning" then return end
   if BRC.Config.pack_monster_turns <= 0 then return end
 
@@ -359,4 +364,6 @@ function f_alert_monsters.ready()
   end
 
   if BRC.Config.pack_monster_turns > 0 then update_pack_mutes() end
+
+  prev_hp = hp
 end

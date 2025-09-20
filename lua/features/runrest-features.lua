@@ -22,6 +22,7 @@ local GAUNTLET_SEARCH_STRING = table.concat({ "gauntlet", "gate leading", "a tra
 local stop_on_altars
 local stop_on_portals
 local stop_on_stairs
+local explore_next_turn
 
 -- Local functions
 local function is_explore_done_msg(text)
@@ -111,11 +112,22 @@ local function ready_stop_on_stairs_in_pan_or_hell()
   end
 end
 
+function macro_f_runrest_explore_with_ready()
+  local hp, max_hp = you.hp()
+  local mp, max_mp = you.mp()
+  if hp < max_hp or mp < max_mp then
+    BRC.util.do_cmd("CMD_REST")
+  end
+  explore_next_turn = true
+end
+
 -- Hook functions
 function f_runrest_features.init()
   stop_on_altars = true
   stop_on_portals = true
   stop_on_stairs = false
+  explore_next_turn = false
+  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE") or "o", "macro_f_runrest_explore_with_ready")
 end
 
 function f_runrest_features.c_message(text, _)
@@ -129,4 +141,9 @@ function f_runrest_features.ready()
   if BRC.Config.temple_macros then ready_temple_macro() end
   if BRC.Config.gauntlet_macros then ready_gauntlet_macro() end
   ready_stop_on_stairs_in_pan_or_hell()
+
+  if explore_next_turn then
+    explore_next_turn = false
+    BRC.util.do_cmd("CMD_EXPLORE")
+  end
 end
