@@ -317,16 +317,16 @@ local function alert_aux_armour(it, unworn_inv_item)
       -- Catch dangerous brands or items blocked by non-innate mutations
       return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, BRC.Config.fm_alert.aux_armour)
     end
+  end
 
-    local it_ego = BRC.get.ego(it)
-    for _, cur in ipairs(all_equipped) do
-      local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
-      if is_new_ego(ego_change) then
-        local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-        return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.aux_armour)
-      elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
-        return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, BRC.Config.fm_alert.aux_armour)
-      end
+  local it_ego = BRC.get.ego(it)
+  for _, cur in ipairs(all_equipped) do
+    local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
+    if is_new_ego(ego_change) then
+      local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.aux_armour)
+    elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
+      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, BRC.Config.fm_alert.aux_armour)
     end
   end
 end
