@@ -6,6 +6,7 @@ easy_confirm = all
 show_more = false
 small_more = true
 mouse_input = false
+tile_web_mouse_control = false
 default_manual_training = true
 autofight_caught = true
 rest_wait_both = true

@@ -6,6 +6,8 @@ ignore := runrest_ignore_message
 interrupt_travel -= sense_monster
 interrupt_travel -= mimic
 ignore ^= "sense a monster nearby"
+ignore ^= recovery:.*
+ignore ^= duration:.*
 
 # Monsters to ignore at a distance
 runrest_ignore_monster += fire vortex:1

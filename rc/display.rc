@@ -63,8 +63,7 @@ menu += use_item:lightmagenta:artefact.*amulet
 menu += use_item:magenta:amulet
 menu += use_item:white:artefact
 menu += use_item:lightgrey:ego
-menu += use_item:$i_boring:(weapon|armour)
-menu += use_item:$i_normal:jewellery
+menu += use_item:$i_normal:(weapon|armour|jewellery)
 
 ## General settings; used for whatever isn't explicitly set above
 # Artefact / Ego / Vanilla (For equipment)
@@ -114,17 +113,18 @@ $m_boring := darkgrey
 $m_normal := lightgrey
 $m_interesting := white
 $m_interface := cyan
-$m_info := lightblue
+$m_info := blue
 $m_attention := lightmagenta
 $m_danger  := red
 $m_warning := lightred
 $m_alert := yellow
 $m_gain := green
+$m_restore := lightblue
 
 channel.plain = $m_normal
 channel.prompt = $m_interface
 channel.god = $m_alert
-channel.duration = $m_info
+channel.duration = $m_restore
 channel.danger = $m_danger
 channel.warning = $m_warning
 channel.recovery = $m_gain
@@ -155,10 +155,36 @@ channel.orb = $m_attention
 channel.hell_effect = $m_warning
 channel.dgl_message = $m_attention
 
+####### Message-specific colors
+msc := message_colour
+
+# Travel / Exploring
+msc ^= $m_alert:You now have enough gold to buy 
+msc ^= $m_alert:You have identified the last 
+msc ^= $m_boring:You .*(open|close) the door
+msc ^= $m_boring:You climb (upwards|downwards)
+msc ^= $m_interesting:Found a faded altar
+msc ^= $m_interesting:You disentangle yourself
+msc ^= $m_warning:You are caught in the web
+
+# Combat
+msc ^= $m_boring:does no damage
+msc ^= $m_boring:No (reachable )?target in view
+msc ^= $m_boring:struggles against the net
+msc ^= $m_boring:You furiously retaliate
+msc ^= $m_boring:You swing at nothing
+msc ^= $m_interesting:flickers and vanishes
+msc ^= $m_interesting:seems to slow down
+msc ^= $m_interesting:Your unstable footing causes you to 
+msc ^= $m_interesting:You become entangled in the net
+msc ^= $m_interesting:You feel a bit more experienced
+msc ^= $m_interesting:You .*miss something
+
+# Equipment
+msc ^= $m_boring:You unwield your 
 
 #############################################################################################################
 ####### MUTES Be careful with these! They come last and use ^= (prepend), to override everything else #######
-msc := message_colour
 
 # Unnecessary
 msc ^= mute:(Ancestor ?)HP restored
@@ -166,12 +192,15 @@ msc ^= mute:Magic restored
 msc ^= mute:A chill wind blows around you
 msc ^= mute:An electric hum fills the air
 
+# Wielding weapons
+msc ^= mute:Your .* exudes an aura of protection
+msc ^= mute:Your .* glows with a cold blue light
+
 # Monsters /Allies / Neutrals
 msc ^= mute:evades? a web
 msc ^= mute:is (lightly|moderately|heavily|severely) (damaged|wounded)
 msc ^= mute:is almost (dead|destroyed)
-msc ^= mute:The (bush|fungus|plant) looks sick
-msc ^= mute:The (bush|fungus|plant) is (engulfed|struck)
+msc ^= mute:The (bush|fungus|plant) (looks sick|begins to die|is engulfed|is struck)
 msc ^= mute:dissolves into shadows
 msc ^= mute:You swap places
 msc ^= mute:Your spectral weapon disappears
@@ -198,8 +227,8 @@ msc ^= mute:is honoured by your kill
 msc ^= mute:Your shadow attacks
 
 # Ground items / features
-msc ^= mute:There is a.*(door|staircase).*here
-msc ^= mute:You see here .*corpse
+msc ^= mute:There is a.*(door|staircase|web).*here
+msc ^= mute:You see here .*(corpse|skeleton)
 msc ^= mute:You now have .* gold piece
 msc ^= mute:You enter the shallow water
 msc ^= mute:Moving in this stuff is going to be slow

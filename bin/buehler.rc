@@ -620,9 +620,6 @@ channel.dgl_message = $m_attention
 ####### Message-specific colors
 msc := message_colour
 
-msc ^= $m_gain:(Ancestor )?HP restored
-msc ^= $m_restore:Magic restored
-
 # Travel / Exploring
 msc ^= $m_alert:You now have enough gold to buy 
 msc ^= $m_alert:You have identified the last 
@@ -651,7 +648,9 @@ msc ^= $m_boring:You unwield your
 #############################################################################################################
 ####### MUTES Be careful with these! They come last and use ^= (prepend), to override everything else #######
 
-# Environment
+# Unnecessary
+msc ^= mute:(Ancestor ?)HP restored
+msc ^= mute:Magic restored
 msc ^= mute:A chill wind blows around you
 msc ^= mute:An electric hum fills the air
 
@@ -4314,11 +4313,9 @@ function macro_f_runrest_explore_with_ready()
   local hp, max_hp = you.hp()
   local mp, max_mp = you.mp()
   if hp < max_hp or mp < max_mp then
-    local turn_before_rest = you.turns()
     BRC.util.do_cmd("CMD_REST")
-    BRC.mpr.green("Fully recovered (%s turns)", you.turns() - turn_before_rest)
-    explore_next_turn = true
   end
+  explore_next_turn = true
 end
 
 -- Hook functions
