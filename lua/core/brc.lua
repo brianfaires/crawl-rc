@@ -196,6 +196,7 @@ end
 
 -- Hook methods
 function BRC.autopickup(it, _)
+  if not BRC.active then return end
   return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
