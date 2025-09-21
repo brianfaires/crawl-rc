@@ -62,7 +62,6 @@ See `features/_template.lua` for an example.
 ### Quality of Life
 - **`answer-prompts.lua`** - Auto-answers common prompts (refuses death, shopping list)
 - **`dynamic-options.lua`** - Adjusts game options based on xl, god, class, etc.
-- **`fm-disable.lua`** - Disables certain force_more prompts built into crawl
 - **`startup.lua`** - Opens skills menu and sets initial skill targets on new games
 
 ## Intelligent Pickup & Alert System

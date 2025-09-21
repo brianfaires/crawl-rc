@@ -61,9 +61,6 @@ BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for d
 BRC.Config.exclude_dropped = true -- Exclude items from future autopickup when dropped
 BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
 
--- fm-disable.lua: Disable built-in force_mores that can't be easily removed
-BRC.Config.fm_disable = true -- Skip the 'more' prompt for all messages configured in fm-disable.lua
-
 -- fully-recover.lua: Keep resting until these statuses are gone.
 -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
 BRC.Config.rest_off_statuses = {

@@ -62,9 +62,6 @@ BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for d
 BRC.Config.exclude_dropped = true -- Exclude items from future autopickup when dropped
 BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
 
--- fm-disable.lua: Disable built-in force_mores that can't be easily removed
-BRC.Config.fm_disable = true -- Skip the 'more' prompt for all messages configured in fm-disable.lua
-
 -- fully-recover.lua: Keep resting until these statuses are gone.
 -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
 BRC.Config.rest_off_statuses = {
@@ -713,13 +710,23 @@ flash := flash_screen_message
 
 # Remove annoying defaults
 more -= You have reached level
+more -= Marking area around .* as unsafe
+more -= welcomes you( back)?!
+more -= upon you is lifted
+more -= You pick up the .* gem and feel its .* weight
+more -= You pick up the .* rune and feel its power
 more -= The lock glows eerily
 more -= Heavy smoke blows from the lock
 more -= The gate opens wide
 more -= With a soft hiss the gate opens wide
-more -= You pick up the .* gem and feel its .* weight
-more -= You pick up the .* rune and feel its power
-more -= welcomes you( back)?!
+more -= grants you (a gift|throwing weapons|a weapon)
+more += grants you (a gift|a weapon)
+more -= You finish merging with the rock
+
+# Almost worth removing
+#force_more_message -= You bow before the missionary of Beogh
+#force_more_message -= You .* the altar of
+
 
 # Significant spells/effects ending
 flash += You feel stable
@@ -932,7 +939,7 @@ stop -= it creaks loudly
 stop -= flies open with a bang
 stop += You hear
 
-# Re-enable stops for all ally actions then ignore some
+# Ignore some stops for ally actions, then stop on the rest
 ignore -= friend_action:
 ignore -= friend_spell:
 ignore -= friend_enchant:
@@ -3513,11 +3520,6 @@ local function set_god_options()
     BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "distort"
   end
 
-  if new_god == "Qazlal" or prev_god == "Qazlal" then
-    -- Remove built-in force_more
-    BRC.set.force_more_message("god:You feel.*protected", prev_god == "Qazlal")
-  end
-
   if new_god == "Trog" then
     util.remove(BRC.BAD_ART_PROPS, "-Cast")
     util.remove(BRC.RISKY_EGOS, "antimagic")
@@ -3878,43 +3880,6 @@ end
 
 }
 ############################### End lua/features/fully-recover.lua ###############################
-##########################################################################################
-
-################################### Begin lua/features/fm-disable.lua ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-{
---[[
-Feature: fm-disable
-Description: Disables force_more messages for specific game events to improve gameplay flow
-Author: buehler
-Dependencies: core/config.lua
---]]
-
-f_fm_disable = {}
-f_fm_disable.BRC_FEATURE_NAME = "fm-disable"
-
--- Local constants / configuration
-local FM_DISABLES = {
-  "You kneel at the altar",
-  "You need to enable at least one skill for training",
-  "Okawaru grants you throwing weapons",
-} -- FM_DISABLES (do not remove this comment)
-
--- Hook functions
-function f_fm_disable.c_message(text, _)
-  if not BRC.Config.fm_disable then return end
-  for _, v in ipairs(FM_DISABLES) do
-    if text:find(v, 1, true) then
-      crawl.enable_more(false)
-      return
-    end
-  end
-
-  crawl.enable_more(true)
-end
-
-}
-############################### End lua/features/fm-disable.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/features/inscribe-stats.lua ###################################

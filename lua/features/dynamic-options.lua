@@ -72,11 +72,6 @@ local function set_god_options()
     BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "distort"
   end
 
-  if new_god == "Qazlal" or prev_god == "Qazlal" then
-    -- Remove built-in force_more
-    BRC.set.force_more_message("god:You feel.*protected", prev_god == "Qazlal")
-  end
-
   if new_god == "Trog" then
     util.remove(BRC.BAD_ART_PROPS, "-Cast")
     util.remove(BRC.RISKY_EGOS, "antimagic")

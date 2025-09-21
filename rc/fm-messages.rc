@@ -3,13 +3,23 @@ flash := flash_screen_message
 
 # Remove annoying defaults
 more -= You have reached level
+more -= Marking area around .* as unsafe
+more -= welcomes you( back)?!
+more -= upon you is lifted
+more -= You pick up the .* gem and feel its .* weight
+more -= You pick up the .* rune and feel its power
 more -= The lock glows eerily
 more -= Heavy smoke blows from the lock
 more -= The gate opens wide
 more -= With a soft hiss the gate opens wide
-more -= You pick up the .* gem and feel its .* weight
-more -= You pick up the .* rune and feel its power
-more -= welcomes you( back)?!
+more -= grants you (a gift|throwing weapons|a weapon)
+more += grants you (a gift|a weapon)
+more -= You finish merging with the rock
+
+# Almost worth removing
+#force_more_message -= You bow before the missionary of Beogh
+#force_more_message -= You .* the altar of
+
 
 # Significant spells/effects ending
 flash += You feel stable

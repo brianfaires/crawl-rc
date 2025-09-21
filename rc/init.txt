@@ -58,7 +58,6 @@ lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
 lua_file = crawl-rc/lua/features/fully-recover.lua
-lua_file = crawl-rc/lua/features/fm-disable.lua
 lua_file = crawl-rc/lua/features/inscribe-stats.lua
 lua_file = crawl-rc/lua/features/misc-alerts.lua
 lua_file = crawl-rc/lua/features/remind-id.lua

@@ -21,7 +21,7 @@ stop -= it creaks loudly
 stop -= flies open with a bang
 stop += You hear
 
-# Re-enable stops for all ally actions then ignore some
+# Ignore some stops for ally actions, then stop on the rest
 ignore -= friend_action:
 ignore -= friend_spell:
 ignore -= friend_enchant:
