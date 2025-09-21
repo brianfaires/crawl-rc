@@ -207,7 +207,20 @@ BRC.ALL_HELL_BRANCHES = {
   "Tar",
 } -- BRC.ALL_HELL_BRANCHES (do not remove this comment)
 
----- Egos ----
+---- Egos + artefact properties ----
+BRC.BAD_ART_PROPS = {
+  "Bane",
+  "*Corrode",
+  "*Noise",
+  "*Rage",
+  "*Silence",
+  "*Slow",
+  "*Tele",
+  "-Cast",
+  "-Move",
+  "-Tele",
+} -- BRC.BAD_ART_PROPS (do not remove this comment)
+
 BRC.PLAIN_DMG_EGOS = { -- Extra guaranteed damage with no elemental damage type
   "distort",
   "heavy",

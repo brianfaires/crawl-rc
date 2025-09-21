@@ -483,7 +483,7 @@ end
 --[[
 The functions above are general purpose: They should apply to any crawl RC file.
 The functions below contain design choices or logic that are somewhat specific to BRC.
-Examples: Weapon DPS calculation, treating dragon scales as branded, or defining what a "risky ego" is.
+Examples: Weapon DPS calculation, treating dragon scales as branded, or defining what a "risky item" is.
 --]]
 
 -- Local functions; Often mirroring calculations that live in crawl.
@@ -716,11 +716,14 @@ function BRC.get.weapon_stats(it, dmg_type)
   return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
 end
 
--- Egos, with customized definition:
--- Excludes unusable egos. Includes: artefacts, and armours with innate egos (except steam dragon scales)
+-- BRC.get.ego() - Weapon + Armour egos, with custom logic:
+-- Treats unusable egos as no ego. Consistently lowercases non-artefacts.
+-- Includes: artefacts, armours with innate egos (except steam dragon scales)
+-- If an artefact has a normal brand, it returns just that. (ie a return value of "flame" could be an artefact or not)
 function BRC.get.ego(it, exclude_stat_only_egos)
   local ego = it.ego(true)
   if ego then
+    ego = ego:lower()
     if BRC.is.unusable_ego(ego) or (exclude_stat_only_egos and (ego == "speed" or ego == "heavy")) then
       return it.artefact and it.name() or nil
     end
@@ -731,7 +734,7 @@ function BRC.get.ego(it, exclude_stat_only_egos)
     local qualname = it.name("qual")
     if qualname:find("dragon scales", 1, true) and not qualname:find("steam", 1, true)
       or qualname:find("troll leather", 1, true) then
-        return qualname
+        return qualname:lower()
     end
   end
 
@@ -753,18 +756,21 @@ function BRC.get.items_in_slot(slot)
   return inv_items
 end
 
-function BRC.is.unusable_ego(ego)
-  if ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
-  if ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
-  return false
+function BRC.is.risky_item(it)
+  if it.artefact then
+    for k, v in pairs(it.artprops) do
+      if util.contains(BRC.BAD_ART_PROPS, k) or v < 0 then return true end
+    end
+  end
+
+  local ego_name = BRC.get.ego(it)
+  return ego_name and util.contains(BRC.ALL_RISKY_EGOS, ego_name)
 end
 
-function BRC.is.risky_ego(ego_name)
-  if not ego_name then return false end
-  for _, v in ipairs(BRC.ALL_RISKY_EGOS) do
-    if ego_name:find(v) then return true end
-  end
-  return false
+function BRC.is.unusable_ego(ego)
+  return ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race())
+    or ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race())
+    or ego == "pain" and you.skill("Necromancy") == 0
 end
 
 -- Armour stats

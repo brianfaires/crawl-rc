@@ -333,7 +333,7 @@ end
 
 -- Public API
 function f_pa_armour.pickup_armour(it)
-  if BRC.is.risky_ego(BRC.get.ego(it)) then return false end
+  if BRC.is.risky_item(it) then return false end
 
   if BRC.is.body_armour(it) then
     return pickup_body_armour(it)
