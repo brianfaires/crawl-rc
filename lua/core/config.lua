@@ -135,9 +135,9 @@ BRC.Config.alert = {
     "wand of digging", "buckler", "kite shield", "tower shield",
     "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
     "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
-    "broad axe", "executioner's axe", "demon whip", "eveningstar", "giant spiked club", "sacred scourge",
-    "lajatang", "bardiche", "demon trident", "trishula", "hand cannon", "triple crossbow",
-
+    "broad axe", "executioner's axe",
+    "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+    "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
   }, -- BRC.Config.alert.one_time (do not remove this comment)
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield

@@ -65,6 +65,7 @@ flash += Your body shudders with the violent release
 flash += power of Zot
 
 # Found something important
+flash += You pick up the .* (gem|rune) and feel its 
 more += Found.*the Ecumenical Temple
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
@@ -78,7 +79,7 @@ more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
 flash += You blink
 flash += danger:You feel strangely .*stable
-flash += delayed
+flash += delaying your translocation
 
 # Big damage
 more += your body is wracked

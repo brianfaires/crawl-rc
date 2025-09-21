@@ -19,6 +19,7 @@
 1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription`)
 1. 0.34: Make use of explore_auto_rest_status to replace fully-recover.lua.
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
+1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
 
 ### Won't do - random ideas
 1. autorest starts w/autopickup (if inv not full)
