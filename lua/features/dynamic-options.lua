@@ -18,12 +18,12 @@ local XL_FORCE_MORES = {
 }
 
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.ALL_SPELLBOOKS, ", ")
-local SPELLCASTING_ITEMS_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
+local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 -- Local state
 local cur_god
-local ignoring_spellcasting
-local ignoring_spellbooks
+local ignore_all_magic
+local ignore_advanced_magic
 local xl_force_mores_active
 
 -- Local functions
@@ -36,28 +36,57 @@ local function set_class_options()
 end
 
 local function set_god_options()
+  if cur_god == you.god() then return end
+  local prev_god = cur_god
   local new_god = you.god()
-  if cur_god and cur_god ~= new_god then
-    if cur_god == "No God" then
-      BRC.set.force_more("Found.*the Ecumenical Temple", false)
-      BRC.set.flash_screen_message("Found.*the Ecumenical Temple", true)
-      BRC.set.runrest_stop_message("Found.*the Ecumenical Temple", true)
-    end
+  cur_god = new_god
 
-    if new_god == "Beogh" then
-      BRC.set.runrest_ignore_message("no longer looks.*", true)
-      BRC.set.force_more("Your orc.*dies", true)
-    elseif new_god == "Jiyva" then
-      BRC.set.force_more("god:splits in two", true)
-      BRC.set.force_more("god:Your prayer is over.", true)
-      BRC.set.message_mute("You hear a.*(slurping|squelching) noise", true)
-    elseif new_god == "Qazlal" then
-      BRC.set.force_more("god:You feel.*protected", false)
-    elseif new_god == "Xom" then
-      BRC.set.force_more("god:", true)
-    end
+  if prev_god == "No God" or new_god == "No God" then
+    local abandoned_god = new_god == "No God"
+    BRC.set.force_more("Found.*the Ecumenical Temple", abandoned_god)
+    BRC.set.flash_screen_message("Found.*the Ecumenical Temple", not abandoned_god)
+    BRC.set.runrest_stop_message("Found.*the Ecumenical Temple", not abandoned_god)
+  end
 
-    cur_god = new_god
+  if new_god == "Beogh" or prev_god == "Beogh" then
+    local joined_beogh = new_god == "Beogh"
+    BRC.set.runrest_ignore_message("no longer looks.*", joined_beogh)
+    BRC.set.force_more("Your orc.*dies", joined_beogh)
+  end
+
+  if new_god == "Cheibriados" then
+    util.remove(BRC.ALL_RISKY_EGOS, "ponderous")
+  elseif prev_god == "Cheibriados" then
+    BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "ponderous"
+  end
+
+  if new_god == "Jiyva" or prev_god == "Jiyva" then
+    local joined_jiyva = new_god == "Jiyva"
+    BRC.set.flash_screen_message("god:splits in two", joined_jiyva)
+    BRC.set.message_mute("You hear a.*(slurping|squelching) noise", joined_jiyva)
+  end
+
+  if new_god == "Lugonu" then
+    util.remove(BRC.ALL_RISKY_EGOS, "distort")
+  elseif prev_god == "Lugonu" then
+    BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "distort"
+  end
+
+  if new_god == "Qazlal" or prev_god == "Qazlal" then
+    -- Remove built-in force_more
+    BRC.set.force_more("god:You feel.*protected", prev_god == "Qazlal")
+  end
+
+  if new_god == "Trog" then
+    util.remove(BRC.BAD_ART_PROPS, "-Cast")
+    util.remove(BRC.ALL_RISKY_EGOS, "antimagic")
+  elseif prev_god == "Trog" then
+    BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
+    BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "antimagic"
+  end
+
+  if new_god == "Xom" or prev_god == "Xom" then
+    BRC.set.force_more("god:", new_god == "Xom")
   end
 end
 
@@ -84,23 +113,27 @@ local function set_xl_options()
 end
 
 local function set_skill_options()
-  -- If zero spellcasting, don't stop on spellbook pickup
-  local zero_spellcasting = you.skill("Spellcasting") == 0
-  -- If current ignore behavior doesn't match desired behavior, update it
-  if ignoring_spellbooks ~= zero_spellcasting then
-    ignoring_spellbooks = zero_spellcasting
-    BRC.set.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, zero_spellcasting)
+  -- If zero spellcasting, don't stop on spellbook pickup, and allow -Cast / antimagic
+  local no_spells = #you.spells() == 0
+  if ignore_all_magic ~= no_spells then
+    ignore_all_magic = no_spells
+    BRC.set.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)
+    if no_spells then
+      util.remove(BRC.BAD_ART_PROPS, "-Cast")
+      util.remove(BRC.ALL_RISKY_EGOS, "antimagic")
+    else
+      BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
+      BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "antimagic"
+    end
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
-  if you.race() ~= "Mountain Dwarf" then
+  if ignore_all_magic and (you.race() ~= "Mountain Dwarf") then
     local worn = items.equipped_at("armour")
-    local heavy_arm = worn ~= nil and worn.encumbrance > 4 + you.skill("Armour") / 2
-    local skip_items = zero_spellcasting and heavy_arm
-    -- If current ignore behavior doesn't match desired behavior, update it
-    if ignoring_spellcasting ~= skip_items then
-      ignoring_spellcasting = skip_items
-      BRC.set.autopickup_exception(SPELLCASTING_ITEMS_STRING, skip_items)
+    local encumbered_magic = worn and worn.encumbrance > (4 + you.skill("Armour") / 2)
+    if ignore_advanced_magic ~= encumbered_magic then
+      ignore_advanced_magic = encumbered_magic
+      BRC.set.autopickup_exception(HIGH_LVL_MAGIC_STRING, encumbered_magic)
     end
   end
 end
@@ -108,8 +141,8 @@ end
 -- Hook functions
 function f_dynamic_options.init()
   cur_god = "No God"
-  ignoring_spellcasting = false
-  ignoring_spellbooks = false
+  ignore_advanced_magic = false
+  ignore_all_magic = false
   xl_force_mores_active = {}
 
   set_race_options()
