@@ -27,9 +27,7 @@ local function log_message(message, context, color)
   message = message or "Unknown message"
   color = color or BRC.LogColor.info
   local msg = string.format("[BRC] %s", message)
-  if context then
-    msg = string.format("%s (%s)", msg, context)
-  end
+  if context then msg = string.format("%s (%s)", msg, context) end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
   crawl.flush_prev_message()
 end
@@ -441,9 +439,7 @@ function BRC.dump.all(verbose, skip_mpr)
   end
 
   local text = table.concat(tokens, "\n")
-  if not skip_mpr then
-    BRC.mpr.white(text)
-  end
+  if not skip_mpr then BRC.mpr.white(text) end
 
   return text
 end
@@ -470,14 +466,14 @@ end
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
   if key then
-    crawl.sendkeys({key})
+    crawl.sendkeys({ key })
   else
-    crawl.do_commands({cmd})
+    crawl.do_commands({ cmd })
   end
 end
 
 function BRC.util.int2char(num)
-  return string.char(string.byte('a') + num)
+  return string.char(string.byte("a") + num)
 end
 
 --[[
@@ -673,7 +669,7 @@ function BRC.get.armour_stats(it)
   local cur_sh = 0
   local cur_ev = 0
   -- Never show deltas for poltergeist
-  if cur and not is_worn and you.race() ~= "Poltergeist"then
+  if cur and not is_worn and you.race() ~= "Poltergeist" then
     -- Show deltas if not worn, else compare against 0
     if BRC.is.shield(cur) then
       cur_sh = BRC.get.shield_sh(cur)

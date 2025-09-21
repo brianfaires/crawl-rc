@@ -493,9 +493,7 @@ local function log_message(message, context, color)
   message = message or "Unknown message"
   color = color or BRC.LogColor.info
   local msg = string.format("[BRC] %s", message)
-  if context then
-    msg = string.format("%s (%s)", msg, context)
-  end
+  if context then msg = string.format("%s (%s)", msg, context) end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
   crawl.flush_prev_message()
 end
@@ -907,9 +905,7 @@ function BRC.dump.all(verbose, skip_mpr)
   end
 
   local text = table.concat(tokens, "\n")
-  if not skip_mpr then
-    BRC.mpr.white(text)
-  end
+  if not skip_mpr then BRC.mpr.white(text) end
 
   return text
 end
@@ -936,14 +932,14 @@ end
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
   if key then
-    crawl.sendkeys({key})
+    crawl.sendkeys({ key })
   else
-    crawl.do_commands({cmd})
+    crawl.do_commands({ cmd })
   end
 end
 
 function BRC.util.int2char(num)
-  return string.char(string.byte('a') + num)
+  return string.char(string.byte("a") + num)
 end
 
 --[[
@@ -1139,7 +1135,7 @@ function BRC.get.armour_stats(it)
   local cur_sh = 0
   local cur_ev = 0
   -- Never show deltas for poltergeist
-  if cur and not is_worn and you.race() ~= "Poltergeist"then
+  if cur and not is_worn and you.race() ~= "Poltergeist" then
     -- Show deltas if not worn, else compare against 0
     if BRC.is.shield(cur) then
       cur_sh = BRC.get.shield_sh(cur)
@@ -1505,13 +1501,9 @@ function BRC.data.persist(name, default_value)
 
   local var_type = BRC.data._brc_type_of(_G[name])
   if var_type == TYPES.list or var_type == TYPES.dict then
-    if not is_in_tables then
-      _persistent_table_names[#_persistent_table_names + 1] = name
-    end
+    if not is_in_tables then _persistent_table_names[#_persistent_table_names + 1] = name end
   else
-    if not is_in_vars then
-      _persistent_var_names[#_persistent_var_names + 1] = name
-    end
+    if not is_in_vars then _persistent_var_names[#_persistent_var_names + 1] = name end
   end
 
   return _G[name]
@@ -1639,8 +1631,10 @@ local prev_turn
 
 -- Local functions
 local function is_feature_module(maybe_feature_module)
-  return maybe_feature_module and type(maybe_feature_module) == "table"
-    and maybe_feature_module.BRC_FEATURE_NAME and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
+  return maybe_feature_module
+    and type(maybe_feature_module) == "table"
+    and maybe_feature_module.BRC_FEATURE_NAME
+    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
 end
 
 local function ask_to_deactivate(feature_name)
@@ -1690,10 +1684,12 @@ local function call_all_hooks(hook_name, ...)
       ask_to_deactivate(hook_info.feature_name, hook_name)
     else
       if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(string.format("Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
-          hook_name, returning_feature, BRC.data.BRC.data.val2str(last_return_value),
-          hook_info.feature_name, BRC.data.BRC.data.val2str(result))
-        )
+        BRC.log.warning(string.format(
+            "Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+            hook_name,
+            returning_feature, BRC.data.BRC.data.val2str(last_return_value),
+            hook_info.feature_name, BRC.data.BRC.data.val2str(result)
+          ))
       end
 
       last_return_value = result
@@ -1716,7 +1712,7 @@ local function register_all_features(parent_module)
       if success then
         loaded_count = loaded_count + 1
       else
-        BRC.log.error(string.format('Failed to register feature: %s. Aborting bulk registration.', name))
+        BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
         return loaded_count
       end
     end

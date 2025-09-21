@@ -202,9 +202,9 @@ local function append_conditional_alerts()
   -- Set mutators to either flash (if undead) or a conditional fm
   local mutator_str = "cacodemon|neqoxec|shining eye"
   if BRC.you.mutation_immune() then
-    BRC.set.flash_screen_message("monster_warning:"..mutator_str, true)
+    BRC.set.flash_screen_message("monster_warning:" .. mutator_str, true)
   else
-    util.append(FM_PATTERNS, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str, })
+    util.append(FM_PATTERNS, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
   end
 
   -- If configured, add fm for all uniques and pan lords

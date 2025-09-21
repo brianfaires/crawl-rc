@@ -55,8 +55,7 @@ function f_remind_id.init()
 end
 
 function f_remind_id.c_assign_invletter(it)
-  if not it.is_identified and have_scroll_of_id()
-    or it.name("qual") == "scroll of identify" and have_unid_item() then
+  if not it.is_identified and have_scroll_of_id() or it.name("qual") == "scroll of identify" and have_unid_item() then
     you.stop_activity()
     do_remind_id_check = true
   end
@@ -74,8 +73,8 @@ function f_remind_id.c_message(text, channel)
   elseif not ri_found_scroll_of_id then
     local pickup_info = BRC.text.get_pickup_info(text)
     if not pickup_info then return end
-    local is_scroll = pickup_info.item:find("scroll")
-    local is_potion = pickup_info.item:find("potion")
+    local is_scroll = pickup_info.item:find("scroll", 1, true)
+    local is_potion = pickup_info.item:find("potion", 1, true)
     if not (is_scroll or is_potion) then return end
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
@@ -90,8 +89,6 @@ end
 function f_remind_id.ready()
   if do_remind_id_check then
     do_remind_id_check = false
-    if have_unid_item() and have_scroll_of_id() then
-      BRC.mpr.stop(IDENTIFY_MSG)
-    end
+    if have_unid_item() and have_scroll_of_id() then BRC.mpr.stop(IDENTIFY_MSG) end
   end
 end

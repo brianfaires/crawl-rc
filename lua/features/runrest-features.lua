@@ -14,9 +14,10 @@ rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
 
 -- Local constants / configuration
 local GAUNTLET_CONCAT_STRING = " && !!"
-local GAUNTLET_SEARCH_STRING = table.concat({ "gauntlet", "gate leading", "a transporter", "gold piece",
-                                              " trap", "translucent door", "translucent gate" },
-                                              GAUNTLET_CONCAT_STRING)
+local GAUNTLET_SEARCH_STRING = table.concat(
+  { "gauntlet", "gate leading", "a transporter", "gold piece", " trap", "translucent door", "translucent gate" },
+  GAUNTLET_CONCAT_STRING
+)
 
 -- Local variables
 local stop_on_altars
@@ -26,8 +27,7 @@ local stop_on_stairs
 -- Local functions
 local function is_explore_done_msg(text)
   local cleaned = BRC.text.clean_text(text)
-  return cleaned:sub(1, 17) == "Partly explored, "
-      or cleaned == "Done exploring."
+  return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
 end
 
 -- Altar and religion functions

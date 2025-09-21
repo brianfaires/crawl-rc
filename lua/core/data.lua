@@ -110,13 +110,9 @@ function BRC.data.persist(name, default_value)
 
   local var_type = BRC.data._brc_type_of(_G[name])
   if var_type == TYPES.list or var_type == TYPES.dict then
-    if not is_in_tables then
-      _persistent_table_names[#_persistent_table_names + 1] = name
-    end
+    if not is_in_tables then _persistent_table_names[#_persistent_table_names + 1] = name end
   else
-    if not is_in_vars then
-      _persistent_var_names[#_persistent_var_names + 1] = name
-    end
+    if not is_in_vars then _persistent_var_names[#_persistent_var_names + 1] = name end
   end
 
   return _G[name]

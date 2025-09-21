@@ -75,10 +75,7 @@ end
 --]]
 local function get_item_name(text)
   text = clean_item_text(text)
-  return extract_jewellery_or_evoker(text) or
-         extract_missile(text) or
-         extract_potion(text) or
-         extract_scroll(text)
+  return extract_jewellery_or_evoker(text) or extract_missile(text) or extract_potion(text) or extract_scroll(text)
 end
 
 local function should_exclude(item_name)

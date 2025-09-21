@@ -1369,13 +1369,9 @@ function BRC.data.persist(name, default_value)
 
   local var_type = BRC.data._brc_type_of(_G[name])
   if var_type == TYPES.list or var_type == TYPES.dict then
-    if not is_in_tables then
-      _persistent_table_names[#_persistent_table_names + 1] = name
-    end
+    if not is_in_tables then _persistent_table_names[#_persistent_table_names + 1] = name end
   else
-    if not is_in_vars then
-      _persistent_var_names[#_persistent_var_names + 1] = name
-    end
+    if not is_in_vars then _persistent_var_names[#_persistent_var_names + 1] = name end
   end
 
   return _G[name]
@@ -1501,9 +1497,7 @@ local function log_message(message, context, color)
   message = message or "Unknown message"
   color = color or BRC.LogColor.info
   local msg = string.format("[BRC] %s", message)
-  if context then
-    msg = string.format("%s (%s)", msg, context)
-  end
+  if context then msg = string.format("%s (%s)", msg, context) end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
   crawl.flush_prev_message()
 end
@@ -1915,9 +1909,7 @@ function BRC.dump.all(verbose, skip_mpr)
   end
 
   local text = table.concat(tokens, "\n")
-  if not skip_mpr then
-    BRC.mpr.white(text)
-  end
+  if not skip_mpr then BRC.mpr.white(text) end
 
   return text
 end
@@ -1944,14 +1936,14 @@ end
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
   if key then
-    crawl.sendkeys({key})
+    crawl.sendkeys({ key })
   else
-    crawl.do_commands({cmd})
+    crawl.do_commands({ cmd })
   end
 end
 
 function BRC.util.int2char(num)
-  return string.char(string.byte('a') + num)
+  return string.char(string.byte("a") + num)
 end
 
 --[[
@@ -2147,7 +2139,7 @@ function BRC.get.armour_stats(it)
   local cur_sh = 0
   local cur_ev = 0
   -- Never show deltas for poltergeist
-  if cur and not is_worn and you.race() ~= "Poltergeist"then
+  if cur and not is_worn and you.race() ~= "Poltergeist" then
     -- Show deltas if not worn, else compare against 0
     if BRC.is.shield(cur) then
       cur_sh = BRC.get.shield_sh(cur)
@@ -2432,8 +2424,10 @@ local prev_turn
 
 -- Local functions
 local function is_feature_module(maybe_feature_module)
-  return maybe_feature_module and type(maybe_feature_module) == "table"
-    and maybe_feature_module.BRC_FEATURE_NAME and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
+  return maybe_feature_module
+    and type(maybe_feature_module) == "table"
+    and maybe_feature_module.BRC_FEATURE_NAME
+    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
 end
 
 local function ask_to_deactivate(feature_name)
@@ -2483,10 +2477,12 @@ local function call_all_hooks(hook_name, ...)
       ask_to_deactivate(hook_info.feature_name, hook_name)
     else
       if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(string.format("Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
-          hook_name, returning_feature, BRC.data.BRC.data.val2str(last_return_value),
-          hook_info.feature_name, BRC.data.BRC.data.val2str(result))
-        )
+        BRC.log.warning(string.format(
+            "Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+            hook_name,
+            returning_feature, BRC.data.BRC.data.val2str(last_return_value),
+            hook_info.feature_name, BRC.data.BRC.data.val2str(result)
+          ))
       end
 
       last_return_value = result
@@ -2509,7 +2505,7 @@ local function register_all_features(parent_module)
       if success then
         loaded_count = loaded_count + 1
       else
-        BRC.log.error(string.format('Failed to register feature: %s. Aborting bulk registration.', name))
+        BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
         return loaded_count
       end
     end
@@ -2901,9 +2897,9 @@ local function append_conditional_alerts()
   -- Set mutators to either flash (if undead) or a conditional fm
   local mutator_str = "cacodemon|neqoxec|shining eye"
   if BRC.you.mutation_immune() then
-    BRC.set.flash_screen_message("monster_warning:"..mutator_str, true)
+    BRC.set.flash_screen_message("monster_warning:" .. mutator_str, true)
   else
-    util.append(FM_PATTERNS, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str, })
+    util.append(FM_PATTERNS, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
   end
 
   -- If configured, add fm for all uniques and pan lords
@@ -3253,7 +3249,6 @@ end
 {
 f_answer_prompts = {}
 f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"
-
 
 function f_answer_prompts.c_answer_prompt(prompt)
   if prompt == "Die?" then return false end
@@ -3686,10 +3681,7 @@ end
 --]]
 local function get_item_name(text)
   text = clean_item_text(text)
-  return extract_jewellery_or_evoker(text) or
-         extract_missile(text) or
-         extract_potion(text) or
-         extract_scroll(text)
+  return extract_jewellery_or_evoker(text) or extract_missile(text) or extract_potion(text) or extract_scroll(text)
 end
 
 local function should_exclude(item_name)
@@ -3912,7 +3904,7 @@ local FM_DISABLES = {
 function f_fm_disable.c_message(text, _)
   if not BRC.Config.fm_disable then return end
   for _, v in ipairs(FM_DISABLES) do
-    if text:find(v) then
+    if text:find(v, 1, true) then
       crawl.enable_more(false)
       return
     end
@@ -4154,8 +4146,7 @@ function f_remind_id.init()
 end
 
 function f_remind_id.c_assign_invletter(it)
-  if not it.is_identified and have_scroll_of_id()
-    or it.name("qual") == "scroll of identify" and have_unid_item() then
+  if not it.is_identified and have_scroll_of_id() or it.name("qual") == "scroll of identify" and have_unid_item() then
     you.stop_activity()
     do_remind_id_check = true
   end
@@ -4173,8 +4164,8 @@ function f_remind_id.c_message(text, channel)
   elseif not ri_found_scroll_of_id then
     local pickup_info = BRC.text.get_pickup_info(text)
     if not pickup_info then return end
-    local is_scroll = pickup_info.item:find("scroll")
-    local is_potion = pickup_info.item:find("potion")
+    local is_scroll = pickup_info.item:find("scroll", 1, true)
+    local is_potion = pickup_info.item:find("potion", 1, true)
     if not (is_scroll or is_potion) then return end
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
@@ -4189,9 +4180,7 @@ end
 function f_remind_id.ready()
   if do_remind_id_check then
     do_remind_id_check = false
-    if have_unid_item() and have_scroll_of_id() then
-      BRC.mpr.stop(IDENTIFY_MSG)
-    end
+    if have_unid_item() and have_scroll_of_id() then BRC.mpr.stop(IDENTIFY_MSG) end
   end
 end
 
@@ -4218,9 +4207,10 @@ rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
 
 -- Local constants / configuration
 local GAUNTLET_CONCAT_STRING = " && !!"
-local GAUNTLET_SEARCH_STRING = table.concat({ "gauntlet", "gate leading", "a transporter", "gold piece",
-                                              " trap", "translucent door", "translucent gate" },
-                                              GAUNTLET_CONCAT_STRING)
+local GAUNTLET_SEARCH_STRING = table.concat(
+  { "gauntlet", "gate leading", "a transporter", "gold piece", " trap", "translucent door", "translucent gate" },
+  GAUNTLET_CONCAT_STRING
+)
 
 -- Local variables
 local stop_on_altars
@@ -4230,8 +4220,7 @@ local stop_on_stairs
 -- Local functions
 local function is_explore_done_msg(text)
   local cleaned = BRC.text.clean_text(text)
-  return cleaned:sub(1, 17) == "Partly explored, "
-      or cleaned == "Done exploring."
+  return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
 end
 
 -- Altar and religion functions
@@ -5794,7 +5783,7 @@ function f_pa_weapons.init()
 
   -- Track max DPS by weapon category
   _weapon_cache.max_dps = {}
-  local keys = { "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b", }
+  local keys = { "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b" }
   for _, key in ipairs(keys) do
     _weapon_cache.max_dps[key] = { dps = 0, acc = 0 }
   end

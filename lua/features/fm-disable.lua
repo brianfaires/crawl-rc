@@ -19,7 +19,7 @@ local FM_DISABLES = {
 function f_fm_disable.c_message(text, _)
   if not BRC.Config.fm_disable then return end
   for _, v in ipairs(FM_DISABLES) do
-    if text:find(v) then
+    if text:find(v, 1, true) then
       crawl.enable_more(false)
       return
     end

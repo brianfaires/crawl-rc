@@ -313,7 +313,7 @@ function f_pa_weapons.init()
 
   -- Track max DPS by weapon category
   _weapon_cache.max_dps = {}
-  local keys = { "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b", }
+  local keys = { "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b" }
   for _, key in ipairs(keys) do
     _weapon_cache.max_dps[key] = { dps = 0, acc = 0 }
   end

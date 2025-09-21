@@ -29,8 +29,10 @@ local prev_turn
 
 -- Local functions
 local function is_feature_module(maybe_feature_module)
-  return maybe_feature_module and type(maybe_feature_module) == "table"
-    and maybe_feature_module.BRC_FEATURE_NAME and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
+  return maybe_feature_module
+    and type(maybe_feature_module) == "table"
+    and maybe_feature_module.BRC_FEATURE_NAME
+    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
 end
 
 local function ask_to_deactivate(feature_name)
@@ -80,10 +82,12 @@ local function call_all_hooks(hook_name, ...)
       ask_to_deactivate(hook_info.feature_name, hook_name)
     else
       if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(string.format("Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
-          hook_name, returning_feature, BRC.data.BRC.data.val2str(last_return_value),
-          hook_info.feature_name, BRC.data.BRC.data.val2str(result))
-        )
+        BRC.log.warning(string.format(
+            "Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+            hook_name,
+            returning_feature, BRC.data.BRC.data.val2str(last_return_value),
+            hook_info.feature_name, BRC.data.BRC.data.val2str(result)
+          ))
       end
 
       last_return_value = result
@@ -106,7 +110,7 @@ local function register_all_features(parent_module)
       if success then
         loaded_count = loaded_count + 1
       else
-        BRC.log.error(string.format('Failed to register feature: %s. Aborting bulk registration.', name))
+        BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
         return loaded_count
       end
     end
