@@ -894,7 +894,7 @@ function BRC.get.weap_damage(it, dmg_type)
 
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)
-    if ego and util.contains(BRC.PLAIN_DMG_EGOS, ego) then
+    if ego and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego) then
       local bonus = BRC.BrandBonus[ego] or BRC.BrandBonus.subtle[ego]
       return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
     end

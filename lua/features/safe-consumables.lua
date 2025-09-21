@@ -10,19 +10,8 @@ f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
 
 -- Local constants
 local NO_INSCRIPTION_NEEDED = {
-  "acquirement",
-  "amnesia",
-  "blinking",
-  "brand weapon",
-  "enchant armour",
-  "enchant weapon",
-  "identify",
-  "immolation",
-  "noise",
-  "vulnerability",
-  "attraction",
-  "lignification",
-  "mutation",
+  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", "identify",
+  "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
 -- Hook functions

@@ -368,282 +368,76 @@ BRC = BRC or {}
 
 ---- Items ----
 BRC.MISC_ITEMS = {
-  "box of beasts",
-  "condenser vane",
-  "figurine of a ziggurat",
-  "Gell's gravitambourine",
-  "horn of Geryon",
-  "lightning rod",
-  "phantom mirror",
-  "phial of floods",
-  "sack of spiders",
-  "tin of tremorstones",
+  "box of beasts", "condenser vane", "figurine of a ziggurat", "Gell's gravitambourine", "horn of Geryon",
+  "lightning rod", "phantom mirror", "phial of floods", "sack of spiders", "tin of tremorstones",
 } -- BRC.MISC_ITEMS (do not remove this comment)
 
 -- This is checked against the full text of the pickup message, so use patterns to match
 BRC.MISSILES = {
-  "poisoned dart",
-  "atropa-tipped dart",
-  "curare-tipped dart",
-  "datura-tipped dart",
-  "darts? of disjunction",
-  "darts? of dispersal",
-  " stone",
-  "boomerang",
-  "silver javelin",
-  "javelin",
-  "large rock",
-  "throwing net",
+  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart",
+  "darts? of disjunction", "darts? of dispersal", " stone", "boomerang",
+  "silver javelin", "javelin", "large rock", "throwing net",
 } -- BRC.MISSILES (do not remove this comment)
 
 -- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed
 BRC.SPELLBOOKS = {
-  "parchment of",
-  "book of",
-  "Necronomicon",
-  "Grand Grimoire",
-  "tome of obsoleteness",
-  "Everburning Encyclopedia",
-  "Ozocubu's Autobiography",
-  "Maxwell's Memoranda",
-  "Young Poisoner's Handbook",
-  "Fen Folio",
-  "Inescapable Atlas",
-  "There-And-Back Book",
-  "Great Wizards, Vol. II",
-  "Great Wizards, Vol. VII",
-  "Trismegistus Codex",
-  "the Unrestrained Analects",
-  "Compendium of Siegecraft",
-  "Codex of Conductivity",
-  "Handbook of Applied Construction",
-  "Treatise on Traps",
-  "My Sojourn through Swampland",
+  "parchment of", "book of", "Necronomicon", "Grand Grimoire", "tome of obsoleteness",
+  "Everburning Encyclopedia", "Ozocubu's Autobiography", "Maxwell's Memoranda",
+  "Young Poisoner's Handbook", "Fen Folio", "Inescapable Atlas", "There-And-Back Book",
+  "Great Wizards, Vol. II", "Great Wizards, Vol. VII", "Trismegistus Codex",
+  "the Unrestrained Analects", "Compendium of Siegecraft", "Codex of Conductivity",
+  "Handbook of Applied Construction", "Treatise on Traps", "My Sojourn through Swampland",
   "Akashic Record",
   -- Include prefixes for randart books
-  "Almanac",
-  "Anthology",
-  "Atlas",
-  "Book",
-  "Catalogue",
-  "Codex",
-  "Compendium",
-  "Compilation",
-  "Cyclopedia",
-  "Directory",
-  "Elucidation",
-  "Encyclopedia",
-  "Folio",
-  "Grimoire",
-  "Handbook",
-  "Incunable",
-  "Incunabulum",
-  "Octavo",
-  "Omnibus",
-  "Papyrus",
-  "Parchment",
-  "Precepts",
-  "Quarto",
-  "Secrets",
-  "Spellbook",
-  "Tome",
-  "Vellum",
-  "Volume",
+  "Almanac", "Anthology", "Atlas", "Book", "Catalogue", "Codex", "Compendium",
+  "Compilation", "Cyclopedia", "Directory", "Elucidation", "Encyclopedia", "Folio",
+  "Grimoire", "Handbook", "Incunable", "Incunabulum", "Octavo", "Omnibus", "Papyrus",
+  "Parchment", "Precepts", "Quarto", "Secrets", "Spellbook", "Tome", "Vellum", "Volume",
 } -- BRC.SPELLBOOKS (do not remove this comment)
 
 ---- Races ----
-BRC.UNDEAD_RACES = {
-  "Demonspawn",
-  "Mummy",
-  "Poltergeist",
-  "Revenant",
-} -- BRC.UNDEAD_RACES (do not remove this comment)
-
-BRC.NONLIVING_RACES = {
-  "Djinni",
-  "Gargoyle",
-} -- BRC.NONLIVING_RACES (do not remove this comment)
-
-BRC.POIS_RES_RACES = {
-  "Djinni",
-  "Gargoyle",
-  "Mummy",
-  "Naga",
-  "Poltergeist",
-  "Revenant",
-} -- BRC.POIS_RES_RACES (do not remove this comment)
-
-BRC.LITTLE_RACES = {
-  "Spriggan",
-} -- BRC.LITTLE_RACES (do not remove this comment)
-
-BRC.SMALL_RACES = {
-  "Kobold",
-} -- BRC.SMALL_RACES (do not remove this comment)
-
-BRC.LARGE_RACES = {
-  "Armataur",
-  "Naga",
-  "Oni",
-  "Troll",
-} -- BRC.LARGE_RACES (do not remove this comment)
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant", }
+BRC.NONLIVING_RACES = { "Djinni", "Gargoyle", }
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant", }
+BRC.LITTLE_RACES = { "Spriggan", }
+BRC.SMALL_RACES = { "Kobold", }
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll", }
 
 ---- Skills ----
 BRC.STAFF_SCHOOLS = {
-  air = "Air Magic",
-  alchemy = "Alchemy",
-  cold = "Ice Magic",
-  death = "Necromancy",
-  earth = "Earth Magic",
-  fire = "Fire Magic",
-  conjuration = "Conjurations",
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", death = "Necromancy",
+  earth = "Earth Magic", fire = "Fire Magic", conjuration = "Conjurations",
 } -- BRC.STAFF_SCHOOLS (do not remove this comment)
 
 BRC.TRAINING_SKILLS = {
-  "Air Magic",
-  "Alchemy",
-  "Armour",
-  "Axes",
-  "Conjurations",
-  "Dodging",
-  "Earth Magic",
-  "Evocations",
-  "Fighting",
-  "Fire Magic",
-  "Forgecraft",
-  "Hexes",
-  "Ice Magic",
-  "Invocations",
-  "Long Blades",
-  "Maces & Flails",
-  "Necromancy",
-  "Polearms",
-  "Ranged Weapons",
-  "Shapeshifting",
-  "Shields",
-  "Short Blades",
-  "Spellcasting",
-  "Staves",
-  "Stealth",
-  "Summonings",
-  "Translocations",
-  "Unarmed Combat",
-  "Throwing",
+  "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic", "Evocations", "Fighting",
+  "Fire Magic", "Forgecraft", "Hexes", "Ice Magic", "Invocations", "Long Blades", "Maces & Flails", "Necromancy",
+  "Polearms", "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting", "Staves", "Stealth",
+  "Summonings", "Translocations", "Unarmed Combat", "Throwing",
 } -- BRC.TRAINING_SKILLS (do not remove this comment)
 
 BRC.WEAP_SCHOOLS = {
-  "axes",
-  "maces & flails",
-  "polearms",
-  "long blades",
-  "short blades",
-  "staves",
-  "unarmed combat",
-  "ranged weapons",
+  "axes", "maces & flails", "polearms", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons",
 } -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 ---- Branches ----
+BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar", }
 BRC.PORTAL_NAMES = {
-  "Bailey",
-  "Bazaar",
-  "Desolation",
-  "Gauntlet",
-  "Ice Cave",
-  "Necropolis",
-  "Ossuary",
-  "Sewer",
-  "Trove",
-  "Volcano",
-  "Wizlab",
-  "Zig",
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
+  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
-BRC.HELL_BRANCHES = {
-  "Coc",
-  "Dis",
-  "Geh",
-  "Hell",
-  "Tar",
-} -- BRC.HELL_BRANCHES (do not remove this comment)
-
 ---- Egos + artefact properties ----
-BRC.BAD_ART_PROPS = {
-  "Bane",
-  "*Corrode",
-  "*Noise",
-  "*Rage",
-  "*Silence",
-  "*Slow",
-  "*Tele",
-  "-Cast",
-  "-Move",
-  "-Tele",
-} -- BRC.BAD_ART_PROPS (do not remove this comment)
-
-BRC.PLAIN_DMG_EGOS = { -- Extra guaranteed damage with no elemental damage type
-  "distort",
-  "heavy",
-  "spect",
-} -- BRC.PLAIN_DMG_EGOS (do not remove this comment)
-
-BRC.RISKY_EGOS = {
-  "antimagic",
-  "chaos",
-  "distort",
-  "harm",
-  "heavy",
-  "infuse",
-  "ponderous",
-} -- BRC.RISKY_EGOS (do not remove this comment)
+BRC.BAD_ART_PROPS = { "Bane", "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele", "-Cast", "-Move", "-Tele", }
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "infuse", "ponderous", }
+BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 
 ---- Other ----
-BRC.KEYS = {
-  LF = string.char(10),
-  CR = string.char(13),
-} -- BRC.KEYS (do not remove this comment)
-
-BRC.MUTATIONS = {
-  antennae = "antennae",
-  augmentation = "augmentation",
-  beak = "beak",
-  claws = "claws",
-  deformed = "deformed body",
-  demonic_touch = "demonic touch",
-  hooves = "hooves",
-  horns = "horns",
-  missing_hand = "missing a hand",
-  pseudopods = "pseudopods",
-  sharp_scales = "sharp scales",
-  sturdy_frame = "sturdy frame",
-  talons = "talons",
-} -- BRC.MUTATIONS (do not remove this comment)
-
-BRC.SIZE_PENALTY = {
-  LITTLE = -2,
-  SMALL = -1,
-  NORMAL = 0,
-  LARGE = 1,
-  GIANT = 2,
-} -- BRC.SIZE_PENALTY (do not remove this comment)
-
--- Would prefer to use integer values, but they don't work in all menus
+-- BRC.COLORS:Would prefer to use integer values, but they don't work in all menus
 BRC.COLORS = {
-  blue = "blue",
-  green = "green",
-  cyan = "cyan",
-  red = "red",
-  magenta = "magenta",
-  brown = "brown",
-  lightgrey = "lightgrey",
-  darkgrey = "darkgrey",
-  lightblue = "lightblue",
-  lightgreen = "lightgreen",
-  lightcyan = "lightcyan",
-  lightred = "lightred",
-  lightmagenta = "lightmagenta",
-  yellow = "yellow",
-  white = "white",
-  black = "black",
+  black = "black", blue = "blue", green = "green", cyan = "cyan", red = "red", magenta = "magenta", brown = "brown",
+  lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue", lightgreen = "lightgreen",
+  lightcyan = "lightcyan", lightred = "lightred", lightmagenta = "lightmagenta", yellow = "yellow", white = "white",
 } -- BRC.COLORS (do not remove this comment)
 
 BRC.DMG_TYPE = {
@@ -652,6 +446,16 @@ BRC.DMG_TYPE = {
   branded = 3, -- Include full brand dmg
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
+
+BRC.KEYS = { LF = string.char(10), CR = string.char(13), }
+
+BRC.MUTATIONS = {
+  antennae = "antennae", augmentation = "augmentation", beak = "beak", claws = "claws", deformed = "deformed body",
+  demonic_touch = "demonic touch", hooves = "hooves", horns = "horns", missing_hand = "missing a hand",
+  pseudopods = "pseudopods", sharp_scales = "sharp scales", sturdy_frame = "sturdy frame", talons = "talons",
+} -- BRC.MUTATIONS (do not remove this comment)
+
+BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2, }
 
 }
 ############################### End lua/core/constants.lua ###############################
@@ -1556,7 +1360,7 @@ function BRC.get.weap_damage(it, dmg_type)
 
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)
-    if ego and util.contains(BRC.PLAIN_DMG_EGOS, ego) then
+    if ego and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego) then
       local bonus = BRC.BrandBonus[ego] or BRC.BrandBonus.subtle[ego]
       return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
     end
