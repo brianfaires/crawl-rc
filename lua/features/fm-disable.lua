@@ -10,8 +10,8 @@ f_fm_disable.BRC_FEATURE_NAME = "fm-disable"
 
 -- Local constants / configuration
 local FM_DISABLES = {
-  "ou kneel at the altar",
-  "need to enable at least one skill for training",
+  "You kneel at the altar",
+  "You need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
 } -- FM_DISABLES (do not remove this comment)
 

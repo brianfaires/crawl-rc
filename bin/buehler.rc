@@ -4099,8 +4099,8 @@ f_fm_disable.BRC_FEATURE_NAME = "fm-disable"
 
 -- Local constants / configuration
 local FM_DISABLES = {
-  "ou kneel at the altar",
-  "need to enable at least one skill for training",
+  "You kneel at the altar",
+  "You need to enable at least one skill for training",
   "Okawaru grants you throwing weapons",
 } -- FM_DISABLES (do not remove this comment)
 
@@ -4550,19 +4550,8 @@ f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
 
 -- Local constants
 local NO_INSCRIPTION_NEEDED = {
-  "acquirement",
-  "amnesia",
-  "blinking",
-  "brand weapon",
-  "enchant armour",
-  "enchant weapon",
-  "identify",
-  "immolation",
-  "noise",
-  "vulnerability",
-  "attraction",
-  "lignification",
-  "mutation",
+  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", "identify",
+  "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
 -- Hook functions
@@ -6001,16 +5990,7 @@ function f_pa_weapons.init()
 
   -- Track max DPS by weapon category
   _weapon_cache.max_dps = {}
-  local keys = {
-    "melee_1",
-    "melee_1b",
-    "melee_2",
-    "melee_2b",
-    "range_1",
-    "range_1b",
-    "range_2",
-    "range_2b",
-  } -- _weapon_cache.max_dps (do not remove this comment)
+  local keys = { "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b", }
   for _, key in ipairs(keys) do
     _weapon_cache.max_dps[key] = { dps = 0, acc = 0 }
   end
