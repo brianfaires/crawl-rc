@@ -140,9 +140,9 @@ BRC.Config.alert = {
     "wand of digging", "buckler", "kite shield", "tower shield",
     "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
     "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
-    "broad axe", "executioner's axe", "demon whip", "eveningstar", "giant spiked club", "sacred scourge",
-    "lajatang", "bardiche", "demon trident", "trishula", "hand cannon", "triple crossbow",
-
+    "broad axe", "executioner's axe",
+    "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+    "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
   }, -- BRC.Config.alert.one_time (do not remove this comment)
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
@@ -1360,18 +1360,19 @@ BRC.ALL_HELL_BRANCHES = {
 } -- BRC.ALL_HELL_BRANCHES (do not remove this comment)
 
 ---- Egos ----
-BRC.PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
-  "distortion",
+BRC.PLAIN_DMG_EGOS = { -- Extra guaranteed damage with no elemental damage type
+  "distort",
   "heavy",
-  "spectralizing",
+  "spect",
 } -- BRC.PLAIN_DMG_EGOS (do not remove this comment)
 
 BRC.ALL_RISKY_EGOS = {
+  "antimagic",
   "chaos",
-  "distortion",
+  "distort",
   "harm",
   "heavy",
-  "infusion",
+  "infuse",
   "ponderous",
 } -- BRC.ALL_RISKY_EGOS (do not remove this comment)
 
@@ -2139,7 +2140,7 @@ end
 --[[
 The functions above are general purpose: They should apply to any crawl RC file.
 The functions below contain design choices or logic that are somewhat specific to BRC.
-Examples: Weapon DPS calculation, treating dragon scales as branded, or defining what a "risky ego" is.
+Examples: Weapon DPS calculation, treating dragon scales as branded, or defining what a "risky item" is.
 --]]
 
 -- Local functions; Often mirroring calculations that live in crawl.
@@ -2409,17 +2410,31 @@ function BRC.get.items_in_slot(slot)
   return inv_items
 end
 
-function BRC.is.unusable_ego(ego)
-  if ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
-  if ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
-  return false
-end
-
 function BRC.is.risky_ego(ego_name)
   if not ego_name then return false end
   for _, v in ipairs(BRC.ALL_RISKY_EGOS) do
     if ego_name:find(v) then return true end
   end
+  return false
+end
+
+function BRC.is.risky_item(it)
+  if it.artefact then
+    error("Not implemented")
+  else
+    local ego_name = BRC.get.ego(it)
+    if not ego_name then return false end
+    for _, v in ipairs(BRC.ALL_RISKY_EGOS) do
+      if ego_name:find(v) then return true end
+    end
+  end
+
+  return false
+end
+
+function BRC.is.unusable_ego(ego)
+  if ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
+  if ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then return true end
   return false
 end
 
@@ -3592,7 +3607,7 @@ function f_drop_inferior.c_assign_invletter(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if not (it.is_weapon or BRC.is.armour(it)) then return end
+  if not (it.is_weapon or BRC.is.armour(it)) or BRC.is.risky_ego(BRC.get.ego(it)) then return end
 
   local it_ego = BRC.get.ego(it)
   for inv in iter.invent_iterator:new(items.inventory()) do

@@ -208,18 +208,19 @@ BRC.ALL_HELL_BRANCHES = {
 } -- BRC.ALL_HELL_BRANCHES (do not remove this comment)
 
 ---- Egos ----
-BRC.PLAIN_DMG_EGOS = { -- Cause extra damage without a damage type
-  "distortion",
+BRC.PLAIN_DMG_EGOS = { -- Extra guaranteed damage with no elemental damage type
+  "distort",
   "heavy",
-  "spectralizing",
+  "spect",
 } -- BRC.PLAIN_DMG_EGOS (do not remove this comment)
 
 BRC.ALL_RISKY_EGOS = {
+  "antimagic",
   "chaos",
-  "distortion",
+  "distort",
   "harm",
   "heavy",
-  "infusion",
+  "infuse",
   "ponderous",
 } -- BRC.ALL_RISKY_EGOS (do not remove this comment)
 
