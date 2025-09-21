@@ -31,7 +31,7 @@ local function set_class_options()
   if you.class() == "Hunter" then
     crawl.setopt("view_delay = 30")
   elseif you.class() == "Shapeshifter" then
-    BRC.set.autopickup_exception("<flux bauble", true)
+    BRC.set.autopickup_exceptions("<flux bauble", true)
   end
 end
 
@@ -43,7 +43,7 @@ local function set_god_options()
 
   if prev_god == "No God" or new_god == "No God" then
     local abandoned_god = new_god == "No God"
-    BRC.set.force_more("Found.*the Ecumenical Temple", abandoned_god)
+    BRC.set.force_more_message("Found.*the Ecumenical Temple", abandoned_god)
     BRC.set.flash_screen_message("Found.*the Ecumenical Temple", not abandoned_god)
     BRC.set.runrest_stop_message("Found.*the Ecumenical Temple", not abandoned_god)
   end
@@ -51,7 +51,7 @@ local function set_god_options()
   if new_god == "Beogh" or prev_god == "Beogh" then
     local joined_beogh = new_god == "Beogh"
     BRC.set.runrest_ignore_message("no longer looks.*", joined_beogh)
-    BRC.set.force_more("Your orc.*dies", joined_beogh)
+    BRC.set.force_more_message("Your orc.*dies", joined_beogh)
   end
 
   if new_god == "Cheibriados" then
@@ -74,7 +74,7 @@ local function set_god_options()
 
   if new_god == "Qazlal" or prev_god == "Qazlal" then
     -- Remove built-in force_more
-    BRC.set.force_more("god:You feel.*protected", prev_god == "Qazlal")
+    BRC.set.force_more_message("god:You feel.*protected", prev_god == "Qazlal")
   end
 
   if new_god == "Trog" then
@@ -86,17 +86,17 @@ local function set_god_options()
   end
 
   if new_god == "Xom" or prev_god == "Xom" then
-    BRC.set.force_more("god:", new_god == "Xom")
+    BRC.set.force_more_message("god:", new_god == "Xom")
   end
 end
 
 local function set_race_options()
   if util.contains(BRC.UNDEAD_RACES, you.race()) then
-    BRC.set.force_more("monster_warning:wielding.*of holy wrath", true)
+    BRC.set.force_more_message("monster_warning:wielding.*of holy wrath", true)
   end
 
   if not util.contains(BRC.POIS_RES_RACES, you.race()) then
-    BRC.set.force_more("monster_warning:curare", true)
+    BRC.set.force_more_message("monster_warning:curare", true)
   end
 
   if you.race() == "Gnoll" then BRC.set.message_mute("intrinsic_gain:skill increases to level", true) end
@@ -107,7 +107,7 @@ local function set_xl_options()
     local should_be_active = you.xl() <= v.xl
     if xl_force_mores_active[i] ~= should_be_active then
       xl_force_mores_active[i] = should_be_active
-      BRC.set.force_more(v.pattern, should_be_active)
+      BRC.set.force_more_message(v.pattern, should_be_active)
     end
   end
 end
@@ -133,7 +133,7 @@ local function set_skill_options()
     local encumbered_magic = worn and worn.encumbrance > (4 + you.skill("Armour") / 2)
     if ignore_advanced_magic ~= encumbered_magic then
       ignore_advanced_magic = encumbered_magic
-      BRC.set.autopickup_exception(HIGH_LVL_MAGIC_STRING, encumbered_magic)
+      BRC.set.autopickup_exceptions(HIGH_LVL_MAGIC_STRING, encumbered_magic)
     end
   end
 end

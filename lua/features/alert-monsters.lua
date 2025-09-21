@@ -209,7 +209,7 @@ local function append_conditional_alerts()
 
   -- If configured, add fm for all uniques and pan lords
   if BRC.Config.fm_on_uniques then
-    BRC.set.force_more("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
+    BRC.set.force_more_message("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
   end
 end
 ------------------- End config section -------------------
@@ -229,7 +229,7 @@ local function set_monster_alert(monster_str, add_pattern, do_flash_screen)
   if do_flash_screen then
     BRC.set.flash_screen_message(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
   else
-    BRC.set.force_more(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
+    BRC.set.force_more_message(table.concat({ WARN_PREFIX, monster_str, WARN_SUFFIX }), add_pattern)
   end
 end
 

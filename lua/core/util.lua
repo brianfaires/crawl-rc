@@ -377,7 +377,7 @@ function BRC.you.zero_stat()
 end
 
 ---- BRC.set - Simple helper functions wrapping crawl.setopt() ----
-function BRC.set.autopickup_exception(pattern, add_pattern)
+function BRC.set.autopickup_exceptions(pattern, add_pattern)
   local op = add_pattern and "^=" or "-="
   crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
 end
@@ -397,7 +397,7 @@ function BRC.set.flash_screen_message(pattern, add_pattern)
   crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
 end
 
-function BRC.set.force_more(pattern, add_pattern)
+function BRC.set.force_more_message(pattern, add_pattern)
   local op = add_pattern and "+=" or "-="
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
 end
