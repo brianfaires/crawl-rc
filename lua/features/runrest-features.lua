@@ -90,10 +90,10 @@ end
 
 -- Stairs and branch-specific functions
 local function ready_ignore_portals()
-  if stop_on_portals and util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
+  if stop_on_portals and util.contains(BRC.PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
     BRC.set.explore_stop("portals", false)
-  elseif not stop_on_portals and not util.contains(BRC.ALL_PORTAL_NAMES, you.branch()) then
+  elseif not stop_on_portals and not util.contains(BRC.PORTAL_NAMES, you.branch()) then
     stop_on_portals = true
     BRC.set.explore_stop("portals", true)
   end

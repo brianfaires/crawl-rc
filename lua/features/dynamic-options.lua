@@ -17,7 +17,7 @@ local XL_FORCE_MORES = {
   { pattern = "monster_warning:carrying a wand of", xl = 15 },
 }
 
-local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.ALL_SPELLBOOKS, ", ")
+local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 -- Local state
@@ -55,9 +55,9 @@ local function set_god_options()
   end
 
   if new_god == "Cheibriados" then
-    util.remove(BRC.ALL_RISKY_EGOS, "ponderous")
+    util.remove(BRC.RISKY_EGOS, "ponderous")
   elseif prev_god == "Cheibriados" then
-    BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "ponderous"
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "ponderous"
   end
 
   if new_god == "Jiyva" or prev_god == "Jiyva" then
@@ -67,9 +67,9 @@ local function set_god_options()
   end
 
   if new_god == "Lugonu" then
-    util.remove(BRC.ALL_RISKY_EGOS, "distort")
+    util.remove(BRC.RISKY_EGOS, "distort")
   elseif prev_god == "Lugonu" then
-    BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "distort"
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "distort"
   end
 
   if new_god == "Qazlal" or prev_god == "Qazlal" then
@@ -79,10 +79,10 @@ local function set_god_options()
 
   if new_god == "Trog" then
     util.remove(BRC.BAD_ART_PROPS, "-Cast")
-    util.remove(BRC.ALL_RISKY_EGOS, "antimagic")
+    util.remove(BRC.RISKY_EGOS, "antimagic")
   elseif prev_god == "Trog" then
     BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
-    BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "antimagic"
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
   end
 
   if new_god == "Xom" or prev_god == "Xom" then
@@ -91,11 +91,11 @@ local function set_god_options()
 end
 
 local function set_race_options()
-  if util.contains(BRC.ALL_UNDEAD_RACES, you.race()) then
+  if util.contains(BRC.UNDEAD_RACES, you.race()) then
     BRC.set.force_more("monster_warning:wielding.*of holy wrath", true)
   end
 
-  if not util.contains(BRC.ALL_POIS_RES_RACES, you.race()) then
+  if not util.contains(BRC.POIS_RES_RACES, you.race()) then
     BRC.set.force_more("monster_warning:curare", true)
   end
 
@@ -120,10 +120,10 @@ local function set_skill_options()
     BRC.set.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)
     if no_spells then
       util.remove(BRC.BAD_ART_PROPS, "-Cast")
-      util.remove(BRC.ALL_RISKY_EGOS, "antimagic")
+      util.remove(BRC.RISKY_EGOS, "antimagic")
     else
       BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
-      BRC.ALL_RISKY_EGOS[#BRC.ALL_RISKY_EGOS + 1] = "antimagic"
+      BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
     end
   end
 

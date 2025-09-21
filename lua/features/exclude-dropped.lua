@@ -48,13 +48,13 @@ local function extract_jewellery_or_evoker(text)
   local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
-  for _, item_name in ipairs(BRC.ALL_MISC_ITEMS) do
+  for _, item_name in ipairs(BRC.MISC_ITEMS) do
     if text:find(item_name) then return item_name end
   end
 end
 
 local function extract_missile(text)
-  for _, item_name in ipairs(BRC.ALL_MISSILES) do
+  for _, item_name in ipairs(BRC.MISSILES) do
     if text:find(item_name) then return item_name end
   end
 end

@@ -260,7 +260,7 @@ function BRC.get.skill_with(it)
 end
 
 function BRC.get.staff_school(it)
-  for k, v in pairs(BRC.ALL_STAFF_SCHOOLS) do
+  for k, v in pairs(BRC.STAFF_SCHOOLS) do
     if it.subtype() == k then return v end
   end
 end
@@ -350,7 +350,7 @@ end
 function BRC.you.in_hell(exclude_vestibule)
   local branch = you.branch()
   if exclude_vestibule and branch == "Hell" then return false end
-  return util.contains(BRC.ALL_HELL_BRANCHES, branch)
+  return util.contains(BRC.HELL_BRANCHES, branch)
 end
 
 function BRC.you.by_slimy_wall()
@@ -363,13 +363,13 @@ function BRC.you.by_slimy_wall()
 end
 
 function BRC.you.miasma_immune()
-  if util.contains(BRC.ALL_UNDEAD_RACES, you.race()) then return true end
-  if util.contains(BRC.ALL_NONLIVING_RACES, you.race()) then return true end
+  if util.contains(BRC.UNDEAD_RACES, you.race()) then return true end
+  if util.contains(BRC.NONLIVING_RACES, you.race()) then return true end
   return false
 end
 
 function BRC.you.mutation_immune()
-  return util.contains(BRC.ALL_UNDEAD_RACES, you.race())
+  return util.contains(BRC.UNDEAD_RACES, you.race())
 end
 
 function BRC.you.zero_stat()
@@ -508,11 +508,11 @@ local function format_stat(abbr, val, is_worn)
 end
 
 local function get_size_penalty()
-  if util.contains(BRC.ALL_LITTLE_RACES, you.race()) then
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
     return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.ALL_SMALL_RACES, you.race()) then
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
     return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.ALL_LARGE_RACES, you.race()) then
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
     return BRC.SIZE_PENALTY.LARGE
   end
   return BRC.SIZE_PENALTY.NORMAL
@@ -764,12 +764,12 @@ function BRC.is.risky_item(it)
   end
 
   local ego_name = BRC.get.ego(it)
-  return ego_name and util.contains(BRC.ALL_RISKY_EGOS, ego_name)
+  return ego_name and util.contains(BRC.RISKY_EGOS, ego_name)
 end
 
 function BRC.is.unusable_ego(ego)
-  return ego == "holy" and util.contains(BRC.ALL_POIS_RES_RACES, you.race())
-    or ego == "rPois" and util.contains(BRC.ALL_POIS_RES_RACES, you.race())
+  return ego == "holy" and util.contains(BRC.POIS_RES_RACES, you.race())
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, you.race())
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 

@@ -8,7 +8,7 @@ Dependencies: (none, but indirectly references core/constants.lua)
 BRC = BRC or {}
 
 ---- Items ----
-BRC.ALL_MISC_ITEMS = {
+BRC.MISC_ITEMS = {
   "box of beasts",
   "condenser vane",
   "figurine of a ziggurat",
@@ -19,10 +19,10 @@ BRC.ALL_MISC_ITEMS = {
   "phial of floods",
   "sack of spiders",
   "tin of tremorstones",
-} -- BRC.ALL_MISC_ITEMS (do not remove this comment)
+} -- BRC.MISC_ITEMS (do not remove this comment)
 
 -- This is checked against the full text of the pickup message, so use patterns to match
-BRC.ALL_MISSILES = {
+BRC.MISSILES = {
   "poisoned dart",
   "atropa-tipped dart",
   "curare-tipped dart",
@@ -35,10 +35,10 @@ BRC.ALL_MISSILES = {
   "javelin",
   "large rock",
   "throwing net",
-} -- BRC.ALL_MISSILES (do not remove this comment)
+} -- BRC.MISSILES (do not remove this comment)
 
 -- Could be removed after https://github.com/crawl/crawl/issues/4606 is addressed
-BRC.ALL_SPELLBOOKS = {
+BRC.SPELLBOOKS = {
   "parchment of",
   "book of",
   "Necronomicon",
@@ -90,47 +90,47 @@ BRC.ALL_SPELLBOOKS = {
   "Tome",
   "Vellum",
   "Volume",
-} -- BRC.ALL_SPELLBOOKS (do not remove this comment)
+} -- BRC.SPELLBOOKS (do not remove this comment)
 
 ---- Races ----
-BRC.ALL_UNDEAD_RACES = {
+BRC.UNDEAD_RACES = {
   "Demonspawn",
   "Mummy",
   "Poltergeist",
   "Revenant",
-} -- BRC.ALL_UNDEAD_RACES (do not remove this comment)
+} -- BRC.UNDEAD_RACES (do not remove this comment)
 
-BRC.ALL_NONLIVING_RACES = {
+BRC.NONLIVING_RACES = {
   "Djinni",
   "Gargoyle",
-} -- BRC.ALL_NONLIVING_RACES (do not remove this comment)
+} -- BRC.NONLIVING_RACES (do not remove this comment)
 
-BRC.ALL_POIS_RES_RACES = {
+BRC.POIS_RES_RACES = {
   "Djinni",
   "Gargoyle",
   "Mummy",
   "Naga",
   "Poltergeist",
   "Revenant",
-} -- BRC.ALL_POIS_RES_RACES (do not remove this comment)
+} -- BRC.POIS_RES_RACES (do not remove this comment)
 
-BRC.ALL_LITTLE_RACES = {
+BRC.LITTLE_RACES = {
   "Spriggan",
-} -- BRC.ALL_LITTLE_RACES (do not remove this comment)
+} -- BRC.LITTLE_RACES (do not remove this comment)
 
-BRC.ALL_SMALL_RACES = {
+BRC.SMALL_RACES = {
   "Kobold",
-} -- BRC.ALL_SMALL_RACES (do not remove this comment)
+} -- BRC.SMALL_RACES (do not remove this comment)
 
-BRC.ALL_LARGE_RACES = {
+BRC.LARGE_RACES = {
   "Armataur",
   "Naga",
   "Oni",
   "Troll",
-} -- BRC.ALL_LARGE_RACES (do not remove this comment)
+} -- BRC.LARGE_RACES (do not remove this comment)
 
 ---- Skills ----
-BRC.ALL_STAFF_SCHOOLS = {
+BRC.STAFF_SCHOOLS = {
   air = "Air Magic",
   alchemy = "Alchemy",
   cold = "Ice Magic",
@@ -138,9 +138,9 @@ BRC.ALL_STAFF_SCHOOLS = {
   earth = "Earth Magic",
   fire = "Fire Magic",
   conjuration = "Conjurations",
-} -- BRC.ALL_STAFF_SCHOOLS (do not remove this comment)
+} -- BRC.STAFF_SCHOOLS (do not remove this comment)
 
-BRC.ALL_TRAINING_SKILLS = {
+BRC.TRAINING_SKILLS = {
   "Air Magic",
   "Alchemy",
   "Armour",
@@ -170,9 +170,9 @@ BRC.ALL_TRAINING_SKILLS = {
   "Translocations",
   "Unarmed Combat",
   "Throwing",
-} -- BRC.ALL_TRAINING_SKILLS (do not remove this comment)
+} -- BRC.TRAINING_SKILLS (do not remove this comment)
 
-BRC.ALL_WEAP_SCHOOLS = {
+BRC.WEAP_SCHOOLS = {
   "axes",
   "maces & flails",
   "polearms",
@@ -181,10 +181,10 @@ BRC.ALL_WEAP_SCHOOLS = {
   "staves",
   "unarmed combat",
   "ranged weapons",
-} -- BRC.ALL_WEAP_SCHOOLS (do not remove this comment)
+} -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 ---- Branches ----
-BRC.ALL_PORTAL_NAMES = {
+BRC.PORTAL_NAMES = {
   "Bailey",
   "Bazaar",
   "Desolation",
@@ -197,15 +197,15 @@ BRC.ALL_PORTAL_NAMES = {
   "Volcano",
   "Wizlab",
   "Zig",
-} -- BRC.ALL_PORTAL_NAMES (do not remove this comment)
+} -- BRC.PORTAL_NAMES (do not remove this comment)
 
-BRC.ALL_HELL_BRANCHES = {
+BRC.HELL_BRANCHES = {
   "Coc",
   "Dis",
   "Geh",
   "Hell",
   "Tar",
-} -- BRC.ALL_HELL_BRANCHES (do not remove this comment)
+} -- BRC.HELL_BRANCHES (do not remove this comment)
 
 ---- Egos + artefact properties ----
 BRC.BAD_ART_PROPS = {
@@ -227,7 +227,7 @@ BRC.PLAIN_DMG_EGOS = { -- Extra guaranteed damage with no elemental damage type
   "spect",
 } -- BRC.PLAIN_DMG_EGOS (do not remove this comment)
 
-BRC.ALL_RISKY_EGOS = {
+BRC.RISKY_EGOS = {
   "antimagic",
   "chaos",
   "distort",
@@ -235,7 +235,7 @@ BRC.ALL_RISKY_EGOS = {
   "heavy",
   "infuse",
   "ponderous",
-} -- BRC.ALL_RISKY_EGOS (do not remove this comment)
+} -- BRC.RISKY_EGOS (do not remove this comment)
 
 ---- Other ----
 BRC.KEYS = {
