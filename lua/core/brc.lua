@@ -1,7 +1,7 @@
 --[[
 BRC (Buehler RC) Core Module
 This module serves as the central coordinator for all feature modules
-It automatically loads any global table that contains `BRC_FEATURE_NAME`
+It automatically loads any global module/table that defines `BRC_FEATURE_NAME`
 It then manages the feature's lifecycle and hook dispatching
 Author: buehler
 Dependencies: core/data.lua, core/util.lua
@@ -15,10 +15,10 @@ BRC.active = false
 -- Local constants
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
-  init = "init",
   c_answer_prompt = "c_answer_prompt",
   c_assign_invletter = "c_assign_invletter",
   c_message = "c_message",
+  init = "init",
   ready = "ready",
 }
 
@@ -28,7 +28,16 @@ local _hooks = {}
 local prev_turn
 
 -- Local functions
-local function ask_to_unregister(feature_name)
+local function is_feature_module(maybe_feature_module)
+  return maybe_feature_module
+    and type(maybe_feature_module) == "table"
+    and maybe_feature_module.BRC_FEATURE_NAME
+    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
+    and #maybe_feature_module.BRC_FEATURE_NAME > 0
+end
+
+local function handle_feature_error(feature_name, hook_name, result)
+  BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
   if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLORS.yellow) then
     BRC.unregister_feature(feature_name)
   else
@@ -36,41 +45,8 @@ local function ask_to_unregister(feature_name)
   end
 end
 
-local function is_feature_module(maybe_feature_module)
-  return maybe_feature_module
-    and type(maybe_feature_module) == "table"
-    and maybe_feature_module.BRC_FEATURE_NAME
-    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
-end
-
--- Hook management
-local function register_hooks(feature_name, feature_module)
-  for _, hook_name in pairs(HOOK_FUNCTIONS) do
-    if feature_module[hook_name] then
-      if not _hooks[hook_name] then _hooks[hook_name] = {} end
-      table.insert(_hooks[hook_name], {
-        feature_name = feature_name,
-        hook_name = hook_name,
-        func = feature_module[hook_name],
-      })
-    end
-  end
-end
-
-local function unregister_hooks(feature_name)
-  for _, hook_list in pairs(_hooks) do
-    for i = #hook_list, 1, -1 do
-      if hook_list[i].feature_name == feature_name then
-        BRC.log.info(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
-        table.remove(hook_list, i)
-      end
-    end
-  end
-end
-
-local function subcall_all_hooks(hook_name, ...)
-  if not _hooks[hook_name] then return end
-
+-- Hook dispatching
+local function call_all_hooks(hook_name, ...)
   local last_return_value = nil
   local returning_feature = nil
 
@@ -78,8 +54,7 @@ local function subcall_all_hooks(hook_name, ...)
     local hook_info = _hooks[hook_name][i]
     local success, result = pcall(hook_info.func, ...)
     if not success then
-      BRC.log.error(string.format("Failure in %s.%s", hook_info.feature_name, hook_name), result)
-      ask_to_unregister(hook_info.feature_name, hook_name)
+      handle_feature_error(hook_info.feature_name, hook_name, result)
     else
       if last_return_value and result and last_return_value ~= result then
         BRC.log.warning(string.format(
@@ -98,32 +73,60 @@ local function subcall_all_hooks(hook_name, ...)
   return last_return_value
 end
 
-local function call_all_hooks(hook_name, ...)
-  local success, result = pcall(subcall_all_hooks, hook_name, ...)
-  if success then return result end
-
-  -- Error handling; build param string then offer to deactivate the offending hook
+local function handle_core_error(hook_name, result, ...)
   local params = {}
   for i = 1, select("#", ...) do
     local param = select(i, ...)
     if param and param.name and type(param.name) == "function" then
       params[#params + 1] = param.name()
     else
-      params[#params + 1] = BRC.data.val2str(param)
+      params[#params + 1] = BRC.data.val2str(param):gsub("<", "<_")
     end
   end
   local param_str = table.concat(params, ", ")
 
-  BRC.log.error("BRC failure in call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
+  BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
   if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLORS.yellow) then
     _hooks[hook_name] = nil
+    BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
     BRC.mpr.darkgrey("Okay, then. Returning nil to " .. hook_name .. ".")
   end
 end
 
+-- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it is kept very simple + protected.
+-- Errors in call_all_hooks() or handle_core_error() are caught by this function.
+local function safe_call_all_hooks(hook_name, ...)
+  if not BRC.active and hook_name ~= HOOK_FUNCTIONS.init then return end
+  if not _hooks or not _hooks[hook_name] then return end
+
+  local success, result = pcall(call_all_hooks, hook_name, ...)
+  if success then return result end
+
+  success, result = pcall(handle_core_error, hook_name, result, ...)
+  if success then return end
+
+  -- This is a serious error. Failed in the hook, and when we tried to report it.
+  BRC.log.error("Failed to report BRC core error!", result)
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLORS.yellow) then
+    BRC.active = false
+    BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
+    pcall(BRC.dump.char, true)
+  else
+    BRC.mpr.darkgrey("Okay, then.")
+  end
+end
+
+-- Hook management
 local function register_all_features(parent_module)
   local loaded_count = 0
+
+  -- Default to scanning the global namespace for modules
+  parent_module = parent_module or _G
+  if type(parent_module) ~= "table" then
+    BRC.log.warning("Invalid parent module (must be a table). Using global namespace instead.")
+    parent_module = _G
+  end
 
   -- Scan the namespace for feature modules and load them
   for name, value in pairs(parent_module) do
@@ -144,15 +147,53 @@ local function register_all_features(parent_module)
 end
 
 -- Public API
-function BRC.init(parent_module)
-  -- Default to scanning the global namespace for modules
-  parent_module = parent_module or _G
-  if type(parent_module) ~= "table" then
-    BRC.log.warning("Invalid parent module (must be a table). Using global namespace instead.")
-    parent_module = _G
+function BRC.register_feature(feature_name, feature_module)
+  if not feature_name or not feature_module then
+    BRC.log.error("Invalid feature registration: missing name or module")
+    return false
+  end
+  if _features[feature_name] then
+    BRC.log.error(BRC.text.yellow(feature_name) .. " is already registered")
+    return false
   end
 
-  -- Handle stale data (ie switching characters on a local instance)
+  _features[feature_name] = feature_module
+  for _, hook_name in pairs(HOOK_FUNCTIONS) do
+    if feature_module[hook_name] then
+      if not _hooks[hook_name] then _hooks[hook_name] = {} end
+      table.insert(_hooks[hook_name], {
+        feature_name = feature_name,
+        hook_name = hook_name,
+        func = feature_module[hook_name],
+      })
+    end
+  end
+
+  BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
+  return true
+end
+
+function BRC.unregister_feature(feature_name)
+  if not _features[feature_name] then
+    BRC.log.error(string.format("Feature '%s' is not registered", BRC.text.yellow(feature_name)))
+    return false
+  end
+
+  _features[feature_name] = nil
+  for _, hook_list in pairs(_hooks) do
+    for i = #hook_list, 1, -1 do
+      if hook_list[i].feature_name == feature_name then
+        BRC.log.info(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
+        table.remove(hook_list, i)
+      end
+    end
+  end
+
+  BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
+  return true
+end
+
+function BRC.init(parent_module)
   _features = {}
   _hooks = {}
 
@@ -166,17 +207,17 @@ function BRC.init(parent_module)
 
   -- Init features
   BRC.log.debug(BRC.text.green("Initializing features..."))
-  call_all_hooks(HOOK_FUNCTIONS.init)
+  safe_call_all_hooks(HOOK_FUNCTIONS.init)
   if not BRC.data.init() then
     BRC.log.error("Failed to initialize data module. BRC is inactive.")
     return false
   end
 
-  -- Add the autopickup function
+  -- Add the autopickup hook
   add_autopickup_func(function(it, _) return BRC.autopickup(it) end)
 
   -- Register the char_dump macro
-  if BRC.Config.debug_notes_on_char_dump then
+  if BRC.Config.offer_debug_notes_on_char_dump then
     BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
   end
 
@@ -191,66 +232,29 @@ function BRC.init(parent_module)
   return true
 end
 
-function BRC.register_feature(feature_name, feature_module)
-  if not feature_name or not feature_module then
-    BRC.log.error("Invalid feature registration: missing name or module")
-    return false
-  end
-
-  if _features[feature_name] then
-    BRC.log.error(string.format("Feature '%s' is already registered", BRC.text.yellow(feature_name)))
-    return false
-  end
-
-  _features[feature_name] = feature_module
-  register_hooks(feature_name, feature_module)
-
-  BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
-  return true
-end
-
-function BRC.unregister_feature(feature_name)
-  if not _features[feature_name] then
-    BRC.log.error(string.format("Feature '%s' is not registered", BRC.text.yellow(feature_name)))
-    return false
-  end
-
-  unregister_hooks(feature_name)
-  _features[feature_name] = nil
-
-  BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
-  return true
-end
 
 -- Hook methods
 function BRC.autopickup(it, _)
-  if not BRC.active then return end
-  return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
+  return safe_call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
 function BRC.ready()
-  if not BRC.active then return end
-
   crawl.redraw_screen()
   if you.turns() == prev_turn then return end
   prev_turn = you.turns()
-
-  call_all_hooks(HOOK_FUNCTIONS.ready)
+  safe_call_all_hooks(HOOK_FUNCTIONS.ready)
   BRC.mpr.consume_queue()
 end
 
 function BRC.c_message(text, channel)
-  if not BRC.active then return end
-  call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
+  safe_call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
-  if not prompt then return end
-  if not BRC.active then return end
-  return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
+  if not prompt then return end -- This fires from crawl, e.g. Shop purchase confirmation
+  return safe_call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
 function BRC.c_assign_invletter(it)
-  if not BRC.active then return end
-  return call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
+  return safe_call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
 end

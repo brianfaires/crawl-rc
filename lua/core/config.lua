@@ -161,9 +161,9 @@ BRC.Config.fm_alert = {
 } -- BRC.Config.fm_alert (do not remove this comment)
 
 -- Debugging
-BRC.Config.debug_notes_on_char_dump = true
-BRC.Config.show_debug_messages = true
-BRC.Config.debug_alert_monsters = BRC.Config.debug_alert_monsters or false -- 2nd place to turn this on
+BRC.Config.show_debug_messages = false
+BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unless told to
+BRC.Config.debug_alert_monsters = BRC.Config.debug_alert_monsters or false -- Can also be turned on in feature config
 
 ---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
