@@ -193,8 +193,10 @@ function BRC.mpr.yesno(text, color, capital_only)
   for i = 1, MAX_TRIES do
     crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
     local res = crawl.getch()
-    if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
-    if string.char(res) == "N" or string.char(res) == "n" and not capital_only then return false end
+    if res and res >= 0 and res <= 255 then
+      if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
+      if string.char(res) == "N" or string.char(res) == "n" and not capital_only then return false end
+    end
     if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
   end
 
@@ -444,16 +446,19 @@ function BRC.dump.all(verbose, skip_mpr)
   return text
 end
 
-function macro_brc_dump_character()
-  if not BRC.active then return BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-
-  if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
+function BRC.dump.char(add_debug_info)
+  if add_debug_info then
     crawl.take_note(BRC.dump.all(true, true))
     BRC.mpr.lightgrey("BRC debug info added to character dump.")
   else
-    BRC.mpr.darkgrey("Okay, then.")
+    BRC.mpr.darkgrey("No debug info added.")
   end
-  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#")
+  BRC.util.do_cmd("CMD_CHARACTER_DUMP")
+end
+
+function macro_brc_dump_character()
+  if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan))
 end
 
 --- BRC.util - Utility functions ----
