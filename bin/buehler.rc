@@ -1928,7 +1928,7 @@ function macro_brc_dump_character()
     crawl.take_note(BRC.dump.all(true, true))
     BRC.mpr.lightgrey("BRC debug info added to character dump.")
   else
-    BRC.mpr.lightgrey("Okay, then.")
+    BRC.mpr.darkgrey("Okay, then.")
   end
   BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#")
 end
@@ -2430,19 +2430,19 @@ local _hooks = {}
 local prev_turn
 
 -- Local functions
+local function ask_to_unregister(feature_name)
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLORS.yellow) then
+    BRC.unregister_feature(feature_name)
+  else
+    crawl.mpr.darkgrey("Okay, then.")
+  end
+end
+
 local function is_feature_module(maybe_feature_module)
   return maybe_feature_module
     and type(maybe_feature_module) == "table"
     and maybe_feature_module.BRC_FEATURE_NAME
     and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
-end
-
-local function ask_to_deactivate(feature_name)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLORS.yellow) then
-    BRC.unregister_feature(feature_name)
-  else
-    crawl.mpr("Okay, then.")
-  end
 end
 
 -- Hook management
@@ -2470,7 +2470,7 @@ local function unregister_hooks(feature_name)
   end
 end
 
-local function call_all_hooks(hook_name, ...)
+local function subcall_all_hooks(hook_name, ...)
   if not _hooks[hook_name] then return end
 
   local last_return_value = nil
@@ -2481,11 +2481,11 @@ local function call_all_hooks(hook_name, ...)
     local success, result = pcall(hook_info.func, ...)
     if not success then
       BRC.log.error(string.format("Failure in %s.%s", hook_info.feature_name, hook_name), result)
-      ask_to_deactivate(hook_info.feature_name, hook_name)
+      ask_to_unregister(hook_info.feature_name, hook_name)
     else
       if last_return_value and result and last_return_value ~= result then
         BRC.log.warning(string.format(
-            "Return value mismatch in hook %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+            "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
             hook_name,
             returning_feature, BRC.data.BRC.data.val2str(last_return_value),
             hook_info.feature_name, BRC.data.BRC.data.val2str(result)
@@ -2498,6 +2498,30 @@ local function call_all_hooks(hook_name, ...)
   end
 
   return last_return_value
+end
+
+local function call_all_hooks(hook_name, ...)
+  local success, result = pcall(subcall_all_hooks, hook_name, ...)
+  if success then return result end
+
+  -- Error handling; build param string then offer to deactivate the offending hook
+  local params = {}
+  for i = 1, select("#", ...) do
+    local param = select(i, ...)
+    if param and param.name and type(param.name) == "function" then
+      params[#params + 1] = param.name()
+    else
+      params[#params + 1] = BRC.data.val2str(param)
+    end
+  end
+  local param_str = table.concat(params, ", ")
+
+  BRC.log.error("BRC failure in call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLORS.yellow) then
+    _hooks[hook_name] = nil
+  else
+    BRC.mpr.darkgrey("Okay, then. Returning nil to " .. hook_name .. ".")
+  end
 end
 
 local function register_all_features(parent_module)
@@ -4018,7 +4042,7 @@ function macro_f_misc_alerts_save_with_message()
   if not BRC.active then return BRC.util.do_cmd("CMD_SAVE_GAME_NOW") end
 
   if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
-    crawl.mpr("Okay, then.")
+    crawl.mpr.darkgrey("Okay, then.")
     return
   end
 
@@ -4384,13 +4408,13 @@ local function check_new_location(cmd)
     end
 
     if not BRC.mpr.yesno("Really go right back?") then
-      crawl.mpr("Okay, then.")
+      crawl.mpr.darkgrey("Okay, then.")
       return
     end
   elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
-        crawl.mpr("Okay, then.")
+        crawl.mpr.darkgrey("Okay, then.")
         return
       end
       ss_v5_unwarned = false

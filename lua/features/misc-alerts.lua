@@ -61,7 +61,7 @@ function macro_f_misc_alerts_save_with_message()
   if not BRC.active then return BRC.util.do_cmd("CMD_SAVE_GAME_NOW") end
 
   if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
-    crawl.mpr("Okay, then.")
+    crawl.mpr.darkgrey("Okay, then.")
     return
   end
 

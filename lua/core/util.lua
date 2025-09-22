@@ -451,7 +451,7 @@ function macro_brc_dump_character()
     crawl.take_note(BRC.dump.all(true, true))
     BRC.mpr.lightgrey("BRC debug info added to character dump.")
   else
-    BRC.mpr.lightgrey("Okay, then.")
+    BRC.mpr.darkgrey("Okay, then.")
   end
   BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#")
 end
