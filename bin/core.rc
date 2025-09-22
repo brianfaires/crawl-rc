@@ -656,8 +656,10 @@ function BRC.mpr.yesno(text, color, capital_only)
   for i = 1, MAX_TRIES do
     crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
     local res = crawl.getch()
-    if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
-    if string.char(res) == "N" or string.char(res) == "n" and not capital_only then return false end
+    if res and res >= 0 and res <= 255 then
+      if string.char(res) == "Y" or string.char(res) == "y" and not capital_only then return true end
+      if string.char(res) == "N" or string.char(res) == "n" and not capital_only then return false end
+    end
     if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
   end
 
@@ -907,16 +909,19 @@ function BRC.dump.all(verbose, skip_mpr)
   return text
 end
 
-function macro_brc_dump_character()
-  if not BRC.active then return BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-
-  if BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan) then
+function BRC.dump.char(add_debug_info)
+  if add_debug_info then
     crawl.take_note(BRC.dump.all(true, true))
     BRC.mpr.lightgrey("BRC debug info added to character dump.")
   else
-    BRC.mpr.darkgrey("Okay, then.")
+    BRC.mpr.darkgrey("No debug info added.")
   end
-  BRC.util.do_cmd("CMD_CHARACTER_DUMP", "#")
+  BRC.util.do_cmd("CMD_CHARACTER_DUMP")
+end
+
+function macro_brc_dump_character()
+  if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan))
 end
 
 --- BRC.util - Utility functions ----
@@ -1558,11 +1563,9 @@ function BRC.data.verify_reinit()
 
     if not _G[BRC_PREFIX .. "successful_reload"] then
       failed_reinit = true
-      BRC.log.error(string.format("Failed to load persistent data for buehler.rc v%s!", BRC.VERSION))
-      BRC.mpr.darkgrey("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.")
+      BRC.log.error(string.format("Persistent data not loaded for buehler.rc v%s!", BRC.VERSION))
+      BRC.mpr.darkgrey("Try restarting, or set BRC.Config.show_debug_messages=True for more info.")
     end
-
-    if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
   end
 
   for k, v in pairs(GAME_CHANGE_MONITORS) do
@@ -1571,6 +1574,7 @@ function BRC.data.verify_reinit()
   end
   _G[BRC_PREFIX .. "successful_reload"] = true
 
+  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
   return true
 end
 
@@ -1643,32 +1647,9 @@ local function is_feature_module(maybe_feature_module)
 end
 
 -- Hook management
-local function register_hooks(feature_name, feature_module)
-  for _, hook_name in pairs(HOOK_FUNCTIONS) do
-    if feature_module[hook_name] then
-      if not _hooks[hook_name] then _hooks[hook_name] = {} end
-      table.insert(_hooks[hook_name], {
-        feature_name = feature_name,
-        hook_name = hook_name,
-        func = feature_module[hook_name],
-      })
-    end
-  end
-end
-
-local function unregister_hooks(feature_name)
-  for _, hook_list in pairs(_hooks) do
-    for i = #hook_list, 1, -1 do
-      if hook_list[i].feature_name == feature_name then
-        BRC.log.info(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
-        table.remove(hook_list, i)
-      end
-    end
-  end
-end
-
 local function subcall_all_hooks(hook_name, ...)
-  if not _hooks[hook_name] then return end
+  if not _hooks or not _hooks[hook_name] then return end
+  --if hook_name == "c_message" then error("test") end
 
   local last_return_value = nil
   local returning_feature = nil
@@ -1697,18 +1678,16 @@ local function subcall_all_hooks(hook_name, ...)
   return last_return_value
 end
 
-local function call_all_hooks(hook_name, ...)
-  local success, result = pcall(subcall_all_hooks, hook_name, ...)
-  if success then return result end
+local function report_core_error(hook_name, result, ...)
+  --error("test2")
 
-  -- Error handling; build param string then offer to deactivate the offending hook
   local params = {}
   for i = 1, select("#", ...) do
     local param = select(i, ...)
     if param and param.name and type(param.name) == "function" then
       params[#params + 1] = param.name()
     else
-      params[#params + 1] = BRC.data.val2str(param)
+      params[#params + 1] = BRC.data.val2str(param):gsub("<", "<_")
     end
   end
   local param_str = table.concat(params, ", ")
@@ -1716,8 +1695,31 @@ local function call_all_hooks(hook_name, ...)
   BRC.log.error("BRC failure in call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
   if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLORS.yellow) then
     _hooks[hook_name] = nil
+    BRC.log.info("Unregistered hook. ", hook_name)
   else
     BRC.mpr.darkgrey("Okay, then. Returning nil to " .. hook_name .. ".")
+  end
+end
+
+-- call_all_hooks() - Errors in this function won't show up in crawl, so it is kept very simple + protected.
+-- Errors in subcall_all_hooks() or report_core_error() will be caught and reported in game.
+local function call_all_hooks(hook_name, ...)
+  if not BRC.active and hook_name ~= HOOK_FUNCTIONS.init then return end
+
+  local success, result = pcall(subcall_all_hooks, hook_name, ...)
+  if success then return result end
+
+  success, result = pcall(report_core_error, hook_name, result, ...)
+  if success then return end
+
+  -- This is a serious error. Not just failing the hook, but our ability to report it.
+  BRC.log.error("Failed to report BRC core error!", result)
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLORS.yellow) then
+    BRC.active = false
+    BRC.log.info("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
+    pcall(BRC.dump.char, true)
+  else
+    BRC.mpr.darkgrey("Okay, then.")
   end
 end
 
@@ -1802,55 +1804,61 @@ function BRC.register_feature(feature_name, feature_module)
   end
 
   _features[feature_name] = feature_module
-  register_hooks(feature_name, feature_module)
+  for _, hook_name in pairs(HOOK_FUNCTIONS) do
+    if feature_module[hook_name] then
+      if not _hooks[hook_name] then _hooks[hook_name] = {} end
+      table.insert(_hooks[hook_name], {
+        feature_name = feature_name,
+        hook_name = hook_name,
+        func = feature_module[hook_name],
+      })
+    end
+  end
 
   BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
   return true
 end
 
 function BRC.unregister_feature(feature_name)
-  if not _features[feature_name] then
+  if _features[feature_name] then
+    _features[feature_name] = nil
+    for _, hook_list in pairs(_hooks) do
+      for i = #hook_list, 1, -1 do
+        if hook_list[i].feature_name == feature_name then
+          BRC.log.info(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
+          table.remove(hook_list, i)
+        end
+      end
+    end
+    BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
+  else
     BRC.log.error(string.format("Feature '%s' is not registered", BRC.text.yellow(feature_name)))
-    return false
   end
-
-  unregister_hooks(feature_name)
-  _features[feature_name] = nil
-
-  BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
-  return true
 end
 
 -- Hook methods
 function BRC.autopickup(it, _)
-  if not BRC.active then return end
   return call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
 function BRC.ready()
-  if not BRC.active then return end
-
   crawl.redraw_screen()
   if you.turns() == prev_turn then return end
   prev_turn = you.turns()
-
   call_all_hooks(HOOK_FUNCTIONS.ready)
   BRC.mpr.consume_queue()
 end
 
 function BRC.c_message(text, channel)
-  if not BRC.active then return end
   call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
   if not prompt then return end
-  if not BRC.active then return end
   return call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
 function BRC.c_assign_invletter(it)
-  if not BRC.active then return end
   return call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
 end
 

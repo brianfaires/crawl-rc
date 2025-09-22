@@ -170,11 +170,9 @@ function BRC.data.verify_reinit()
 
     if not _G[BRC_PREFIX .. "successful_reload"] then
       failed_reinit = true
-      BRC.log.error(string.format("Failed to load persistent data for buehler.rc v%s!", BRC.VERSION))
-      BRC.mpr.darkgrey("Try restarting, or set BRC.DEBUG_MESSAGES=True for more info.")
+      BRC.log.error(string.format("Persistent data not loaded for buehler.rc v%s!", BRC.VERSION))
+      BRC.mpr.darkgrey("Try restarting, or set BRC.Config.show_debug_messages=True for more info.")
     end
-
-    if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
   end
 
   for k, v in pairs(GAME_CHANGE_MONITORS) do
@@ -183,6 +181,7 @@ function BRC.data.verify_reinit()
   end
   _G[BRC_PREFIX .. "successful_reload"] = true
 
+  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
   return true
 end
 
