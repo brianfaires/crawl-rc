@@ -17,7 +17,7 @@ BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after sha
 BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
 BRC.Config.pack_timeout = 10 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
 BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
-BRC.Config.debug_alert_monsters = true -- Get a message when alerts toggle off/on
+BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
 
 -- announce-hp-mp.lua: Announce HP/MP changes
 BRC.Config.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
