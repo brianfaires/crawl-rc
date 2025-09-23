@@ -20,9 +20,9 @@ BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after sha
 
 -- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
 BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
-BRC.Config.pack_monster_turns = 15 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
+BRC.Config.pack_timeout = 10 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
 BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
-BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
+BRC.Config.debug_alert_monsters = true -- Get a message when alerts toggle off/on
 
 -- announce-hp-mp.lua: Announce HP/MP changes
 BRC.Config.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
@@ -2751,7 +2751,7 @@ FM_PATTERNS configures all alerts. Each table within it creates one alert, using
   - `name` is for debugging.
   - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
   - `is_pack` (optional) indicates the alert is for a pack of monsters.
-    Packs only fire once every few turns - as defined in BRC.Config.pack_monster_turns (default 15).
+    Packs only fire once every few turns - as defined in BRC.Config.pack_timeout (default 15).
   - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
   - `cutoff` sets the point when the alert is active (usually how much HP you have)
   - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
@@ -2977,14 +2977,16 @@ local function update_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(monsters_to_mute) do
     set_monster_alert(v, false) -- "Mute" the alert by removing the fm (but active_alert[] is still true)
+    BRC.mpr.blue(string.format("  Muted: %s", v))
   end
   monsters_to_mute = {}
 
   -- Remove expired mutes
   for i, v in ipairs(FM_PATTERNS) do
-    if v.is_pack and last_fm_turn[i] ~= -1 and you.turns() >= last_fm_turn[i] + BRC.Config.pack_monster_turns then
+    if v.is_pack and last_fm_turn[i] ~= -1 and you.turns() >= last_fm_turn[i] + BRC.Config.pack_timeout then
       last_fm_turn[i] = -1
       active_alert[i] = false -- Set to false and let the main logic decide if it should reactivate it.
+      BRC.mpr.blue(string.format("  Unmuted: %s", v.pattern))
     end
   end
 end
@@ -2996,7 +2998,7 @@ function f_alert_monsters.init()
   monsters_to_mute = {}
   append_conditional_alerts()
 
-  -- Convert table patterns to strings
+  -- Convert table patterns to strings, and init
   for i, v in ipairs(FM_PATTERNS) do
     if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
     active_alert[i] = false
@@ -3005,17 +3007,14 @@ function f_alert_monsters.init()
 end
 
 function f_alert_monsters.c_message(text, channel)
-  if channel ~= "monster_warning" then return end
-  if BRC.Config.pack_monster_turns <= 0 then return end
+  if channel ~= "monster_warning" or not text:find("comes? into view") or BRC.Config.pack_timeout <= 0 then return end
 
   -- Identify when a mute should be turned on
-  if not text:find("comes? into view") then return end
   for i, v in ipairs(FM_PATTERNS) do
-    if v.is_pack then
-      if text:find(v.pattern) and last_fm_turn[i] == -1 then
-        last_fm_turn[i] = you.turns()
-        monsters_to_mute[#monsters_to_mute + 1] = v.pattern
-      end
+    if v.is_pack and text:find(v.pattern) and last_fm_turn[i] == -1 then
+      last_fm_turn[i] = you.turns()
+      monsters_to_mute[#monsters_to_mute + 1] = v.pattern
+      BRC.mpr.blue(string.format("To mute: %s", v.pattern))
     end
   end
 end
@@ -3078,7 +3077,7 @@ function f_alert_monsters.ready()
       set_monster_alert(v.pattern, should_be_active, v.flash_screen)
 
       if BRC.Config.debug_alert_monsters then
-        if should_be_active then
+        if active_alert[i] then
           activated[#activated + 1] = v.name or v.pattern
         else
           deactivated[#deactivated + 1] = v.name or v.pattern
@@ -3088,11 +3087,11 @@ function f_alert_monsters.ready()
   end
 
   if BRC.Config.debug_alert_monsters then
-    if #activated > 0 then BRC.log.debug(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
-    if #deactivated > 0 then BRC.log.debug(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
+    if #activated > 0 then BRC.mpr.blue(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
+    if #deactivated > 0 then BRC.mpr.blue(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
   end
 
-  if BRC.Config.pack_monster_turns > 0 then update_pack_mutes() end
+  if BRC.Config.pack_timeout > 0 then update_pack_mutes() end
 end
 
 }
