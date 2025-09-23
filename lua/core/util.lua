@@ -24,9 +24,8 @@ local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", "."
 
 -- Local functions
 local function log_message(message, context, color)
-  message = message or "Unknown message"
   color = color or BRC.LogColor.info
-  local msg = string.format("[BRC] %s", message)
+  local msg = string.format("[BRC] %s", tostring(message))
   if context then msg = string.format("%s (%s)", msg, context) end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
   crawl.flush_prev_message()
@@ -95,12 +94,12 @@ end
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["red"]("Hello")
 for k, v in pairs(BRC.COLORS) do
   BRC.text[k] = function(text)
-    return string.format("<%s>%s</%s>", v, text, v)
+    return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
 end
 
 function BRC.text.color(color, text)
-  return color and BRC.text[color](text) or text
+  return color and BRC.text[color](text) or tostring(text)
 end
 
 function BRC.text.get_pickup_info(text)
@@ -122,9 +121,13 @@ function BRC.mpr.color(text, color, channel)
   if color then
     BRC.mpr[color](text, channel)
   else
-    crawl.mpr(text, channel)
+    crawl.mpr(tostring(text), channel)
     crawl.flush_prev_message()
   end
+end
+
+function BRC.mpr.okay(suffix)
+  BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
 end
 
 -- Message and stop travel/activity
@@ -170,7 +173,7 @@ end
 function BRC.mpr.consume_queue()
   local do_more = false
   for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(msg.text, msg.channel)
+    crawl.mpr(tostring(msg.text), msg.channel)
     crawl.flush_prev_message()
     if msg.show_more then do_more = true end
   end

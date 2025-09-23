@@ -41,7 +41,7 @@ local function handle_feature_error(feature_name, hook_name, result)
   if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLORS.yellow) then
     BRC.unregister_feature(feature_name)
   else
-    crawl.mpr.darkgrey("Okay, then.")
+    BRC.mpr.okay()
   end
 end
 
@@ -90,7 +90,7 @@ local function handle_core_error(hook_name, result, ...)
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
-    BRC.mpr.darkgrey("Okay, then. Returning nil to " .. hook_name .. ".")
+    BRC.mpr.okay("Returning nil to " .. hook_name .. ".")
   end
 end
 
@@ -113,7 +113,7 @@ local function safe_call_all_hooks(hook_name, ...)
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)
   else
-    BRC.mpr.darkgrey("Okay, then.")
+    BRC.mpr.okay()
   end
 end
 

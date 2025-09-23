@@ -36,13 +36,13 @@ local function check_new_location(cmd)
     end
 
     if not BRC.mpr.yesno("Really go right back?") then
-      crawl.mpr.darkgrey("Okay, then.")
+      BRC.mpr.okay()
       return
     end
   elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
-        crawl.mpr.darkgrey("Okay, then.")
+        BRC.mpr.okay()
         return
       end
       ss_v5_unwarned = false

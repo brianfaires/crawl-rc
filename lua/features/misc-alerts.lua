@@ -48,7 +48,7 @@ local function alert_spell_level_changes()
     local delta = new_spell_levels - ma_prev_spell_levels
     local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
     local avail = string.format(" (%s available)", new_spell_levels)
-    crawl.mpr(BRC.text.lightcyan(msg) .. BRC.text.cyan(avail))
+    BRC.mpr.lightcyan(msg .. BRC.text.cyan(avail))
   elseif new_spell_levels < ma_prev_spell_levels then
     BRC.mpr.magenta(string.format("%s spell levels remaining", new_spell_levels))
   end
@@ -61,7 +61,7 @@ function macro_f_misc_alerts_save_with_message()
   if not BRC.active then return BRC.util.do_cmd("CMD_SAVE_GAME_NOW") end
 
   if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
-    crawl.mpr.darkgrey("Okay, then.")
+    BRC.mpr.okay()
     return
   end
 
