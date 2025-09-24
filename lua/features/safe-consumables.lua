@@ -27,14 +27,14 @@ function f_safe_consumables.ready()
         or (st == "torment" and you.torment_immune())
         or util.contains(NO_INSCRIPTION_NEEDED, st)
       then
-        if inv.inscription:find("%!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
-      elseif not inv.inscription:find("%!r") then
+        if inv.inscription:find("!r", 1, true) then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
+      elseif not inv.inscription:find("!r", 1, true) then
         inv.inscribe("!r")
       end
     elseif inv_class == "potion" then
       if util.contains(NO_INSCRIPTION_NEEDED, st) then
-        if inv.inscription:find("%!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
-      elseif not inv.inscription:find("%!q") then
+        if inv.inscription:find("!q", 1, true) then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+      elseif not inv.inscription:find("!q", 1, true) then
         inv.inscribe("!q")
       end
     end
