@@ -15,7 +15,7 @@ local XL_FORCE_MORES = {
   { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
   { pattern = "danger:goes berserk", xl = 18 },
   { pattern = "monster_warning:carrying a wand of", xl = 15 },
-}
+} -- XL_FORCE_MORES (do not remove this comment)
 
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"

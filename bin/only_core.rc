@@ -296,7 +296,7 @@ BRC.LogColor = {
   warning = "yellow",
   info = "lightgrey",
   debug = "lightblue",
-}
+} -- BRC.LogColor (do not remove this comment)
 
 BRC.Emoji = {}
 if BRC.Config.emojis then
@@ -1416,7 +1416,7 @@ local TYPES = {
   dict = "dict",
   table = "table",
   unknown = "unknown",
-}
+} -- TYPES (do not remove this comment)
 
 -- Values to detect when character is changed
 local GAME_CHANGE_MONITORS = {}
@@ -1627,7 +1627,7 @@ local HOOK_FUNCTIONS = {
   c_message = "c_message",
   init = "init",
   ready = "ready",
-}
+} -- HOOK_FUNCTIONS (do not remove this comment)
 
 -- Local variables
 local _features = {}

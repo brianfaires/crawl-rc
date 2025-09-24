@@ -19,7 +19,7 @@ local TYPES = {
   dict = "dict",
   table = "table",
   unknown = "unknown",
-}
+} -- TYPES (do not remove this comment)
 
 -- Values to detect when character is changed
 local GAME_CHANGE_MONITORS = {}

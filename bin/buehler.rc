@@ -296,7 +296,7 @@ BRC.LogColor = {
   warning = "yellow",
   info = "lightgrey",
   debug = "lightblue",
-}
+} -- BRC.LogColor (do not remove this comment)
 
 BRC.Emoji = {}
 if BRC.Config.emojis then
@@ -1285,7 +1285,7 @@ local TYPES = {
   dict = "dict",
   table = "table",
   unknown = "unknown",
-}
+} -- TYPES (do not remove this comment)
 
 -- Values to detect when character is changed
 local GAME_CHANGE_MONITORS = {}
@@ -2429,7 +2429,7 @@ local HOOK_FUNCTIONS = {
   c_message = "c_message",
   init = "init",
   ready = "ready",
-}
+} -- HOOK_FUNCTIONS (do not remove this comment)
 
 -- Local variables
 local _features = {}
@@ -3381,7 +3381,7 @@ local COLORIZE_TAGS = {
   { "HP" .. NEG_NUM, BRC.COLORS.darkgrey },
   { "MP" .. POS_NUM, BRC.COLORS.white },
   { "MP" .. NEG_NUM, BRC.COLORS.darkgrey },
-}
+} -- COLORIZE_TAGS (do not remove this comment)
 
 -- Local functions
 local function colorize_subtext(text, s, tag)
@@ -3518,7 +3518,7 @@ local XL_FORCE_MORES = {
   { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
   { pattern = "danger:goes berserk", xl = 18 },
   { pattern = "monster_warning:carrying a wand of", xl = 15 },
-}
+} -- XL_FORCE_MORES (do not remove this comment)
 
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"

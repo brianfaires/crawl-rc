@@ -52,7 +52,7 @@ local COLORIZE_TAGS = {
   { "HP" .. NEG_NUM, BRC.COLORS.darkgrey },
   { "MP" .. POS_NUM, BRC.COLORS.white },
   { "MP" .. NEG_NUM, BRC.COLORS.darkgrey },
-}
+} -- COLORIZE_TAGS (do not remove this comment)
 
 -- Local functions
 local function colorize_subtext(text, s, tag)

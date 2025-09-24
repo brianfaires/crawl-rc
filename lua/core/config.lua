@@ -291,7 +291,7 @@ BRC.LogColor = {
   warning = "yellow",
   info = "lightgrey",
   debug = "lightblue",
-}
+} -- BRC.LogColor (do not remove this comment)
 
 BRC.Emoji = {}
 if BRC.Config.emojis then

@@ -20,7 +20,7 @@ local HOOK_FUNCTIONS = {
   c_message = "c_message",
   init = "init",
   ready = "ready",
-}
+} -- HOOK_FUNCTIONS (do not remove this comment)
 
 -- Local variables
 local _features = {}
