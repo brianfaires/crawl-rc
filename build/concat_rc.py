@@ -6,6 +6,7 @@ processed_files = set()
 # Paths
 init_file = base_dir / "rc" / "init.txt"
 core_dir = base_dir / "lua" / "core"
+pickup_alert_dir = base_dir / "lua" / "features" / "pickup-alert"
 output_dir = base_dir / "bin"
 output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -95,9 +96,19 @@ with open(init_file, 'r') as infile:
 
 print("Building core.rc...")
 processed_files.clear()
-with open(output_dir / "core.rc", 'w') as outfile:
-    for filename in ["config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua"]:
+with open(output_dir / "only_core.rc", 'w') as outfile:
+    outfile.write("## BRC Core files - Copy/paste any features above this line.\n")
+    for filename in [ "config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua" ]:
         file_path = core_dir / filename
+        if file_path.exists():
+            process_file(file_path, outfile)
+
+print("Building pickup-alert.rc...")
+processed_files.clear()
+with open(output_dir / "only_pickup_alert.rc", 'w') as outfile:
+    outfile.write("## BRC Pickup-alert feature - Copy/paste this file above only_core.rc.\n")
+    for filename in [ "pa-armour.lua", "pa-weapons.lua", "pa-misc.lua", "pa-data.lua", "pa-main.lua" ]:
+        file_path = pickup_alert_dir / filename
         if file_path.exists():
             process_file(file_path, outfile)
 
