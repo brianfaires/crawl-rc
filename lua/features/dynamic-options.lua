@@ -55,9 +55,9 @@ local function set_god_options()
   end
 
   if new_god == "Cheibriados" then
-    util.remove(BRC.RISKY_EGOS, "ponderous")
+    util.remove(BRC.RISKY_EGOS, "Ponderous")
   elseif prev_god == "Cheibriados" then
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "ponderous"
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "Ponderous"
   end
 
   if new_god == "Jiyva" or prev_god == "Jiyva" then

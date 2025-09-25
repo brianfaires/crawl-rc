@@ -70,7 +70,7 @@ BRC.PORTAL_NAMES = {
 
 ---- Egos + artefact properties ----
 BRC.BAD_ART_PROPS = { "Bane", "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele", "-Cast", "-Move", "-Tele", }
-BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "infuse", "ponderous", }
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous", }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 
 ---- Other ----

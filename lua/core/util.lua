@@ -727,7 +727,6 @@ end
 function BRC.get.ego(it, exclude_stat_only_egos)
   local ego = it.ego(true)
   if ego then
-    ego = ego:lower()
     if BRC.is.unusable_ego(ego) or (exclude_stat_only_egos and (ego == "speed" or ego == "heavy")) then
       return it.artefact and it.name() or nil
     end
@@ -738,7 +737,7 @@ function BRC.get.ego(it, exclude_stat_only_egos)
     local qualname = it.name("qual")
     if qualname:find("dragon scales", 1, true) and not qualname:find("steam", 1, true)
       or qualname:find("troll leather", 1, true) then
-        return qualname:lower()
+        return qualname
     end
   end
 
@@ -772,8 +771,9 @@ function BRC.is.risky_item(it)
 end
 
 function BRC.is.unusable_ego(ego)
-  return ego == "holy" and util.contains(BRC.POIS_RES_RACES, you.race())
-    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, you.race())
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 

@@ -1214,7 +1214,7 @@ BRC.PORTAL_NAMES = {
 
 ---- Egos + artefact properties ----
 BRC.BAD_ART_PROPS = { "Bane", "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele", "-Cast", "-Move", "-Tele", }
-BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "infuse", "ponderous", }
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous", }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 
 ---- Other ----
@@ -2188,7 +2188,6 @@ end
 function BRC.get.ego(it, exclude_stat_only_egos)
   local ego = it.ego(true)
   if ego then
-    ego = ego:lower()
     if BRC.is.unusable_ego(ego) or (exclude_stat_only_egos and (ego == "speed" or ego == "heavy")) then
       return it.artefact and it.name() or nil
     end
@@ -2199,7 +2198,7 @@ function BRC.get.ego(it, exclude_stat_only_egos)
     local qualname = it.name("qual")
     if qualname:find("dragon scales", 1, true) and not qualname:find("steam", 1, true)
       or qualname:find("troll leather", 1, true) then
-        return qualname:lower()
+        return qualname
     end
   end
 
@@ -2233,8 +2232,9 @@ function BRC.is.risky_item(it)
 end
 
 function BRC.is.unusable_ego(ego)
-  return ego == "holy" and util.contains(BRC.POIS_RES_RACES, you.race())
-    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, you.race())
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 
@@ -3543,9 +3543,9 @@ local function set_god_options()
   end
 
   if new_god == "Cheibriados" then
-    util.remove(BRC.RISKY_EGOS, "ponderous")
+    util.remove(BRC.RISKY_EGOS, "Ponderous")
   elseif prev_god == "Cheibriados" then
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "ponderous"
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "Ponderous"
   end
 
   if new_god == "Jiyva" or prev_god == "Jiyva" then
@@ -5689,7 +5689,7 @@ local function alert_interesting_weapon(it, cur)
 
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
-    local it_ego = BRC.get.ego(it, true) -- Don't overvalue Speed/Heavy egos (only look at their DPS)
+    local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only look at their DPS)
     if not cur.artefact and it_ego and it_ego ~= BRC.get.ego(cur) then
       return f_pickup_alert.do_alert(it, "Diff ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
     elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
