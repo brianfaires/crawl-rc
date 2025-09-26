@@ -318,7 +318,7 @@ function BRC.is.ring(it)
 end
 
 function BRC.is.scarf(it)
-  return it and it.class(true) == "armour" and it.subtype() == "scarf"
+  return it and it.class(true) == "armour" and it.subtype() == "cloak" and it.name():find("scarf", 1, true)
 end
 
 function BRC.is.shield(it)

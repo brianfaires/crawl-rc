@@ -434,7 +434,7 @@ BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 -- BRC.COLORS:Would prefer to use integer values, but they don't work in all menus
 BRC.COLORS = {
   black = "black", blue = "blue", green = "green", cyan = "cyan", red = "red", magenta = "magenta", brown = "brown",
-  lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue", lightgreen = "10",
+  lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue", lightgreen = "lightgreen",
   lightcyan = "lightcyan", lightred = "lightred", lightmagenta = "lightmagenta", yellow = "yellow", white = "white",
 } -- BRC.COLORS (do not remove this comment)
 

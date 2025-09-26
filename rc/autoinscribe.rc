@@ -11,7 +11,7 @@ ai += of invulnerability:rInv
 ai += of magic regeneration:MRegen+
 ai += of positive energy:rN+
 ai += of regeneration:Regen+
-ai += of resistance:rRes
+ai += of resistance:rF+, rC+
 ai += of willpower:Will+
 
 # Armour
