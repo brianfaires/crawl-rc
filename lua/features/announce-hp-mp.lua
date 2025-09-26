@@ -19,7 +19,7 @@ local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  local num_halfpips = math.floor(perc * NUM_PIPS_PER_METER / 100)
+  local num_halfpips = math.floor(perc * NUM_PIPS_PER_METER * 2)
   local num_full_emojis = math.floor(num_halfpips / 2)
   local num_part_emojis = num_halfpips % 2
   local num_empty_emojis = NUM_PIPS_PER_METER - num_full_emojis - num_part_emojis

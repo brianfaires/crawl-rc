@@ -13,7 +13,7 @@ Dependencies: (None)
 BRC = BRC or {}
 BRC.Config = {}
 
-BRC.Config.emojis = true -- Use emojis in alerts and announcements
+BRC.Config.emojis = false -- Use emojis in alerts and announcements
 
 -- after-shaft.lua
 BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after shaft, until back to original level
@@ -335,7 +335,7 @@ else
 
   BRC.Emoji.HP_METER = {
     BORDER = "<white>|</white>",
-    FULL = "<green>+</green>",
+    FULL = "<lightgreen>+</lightgreen>",
     PART = "<lightgrey>+</lightgrey>",
     EMPTY = "<darkgrey>-</darkgrey>",
   } -- BRC.Emoji.HP_METER (do not remove this comment)
@@ -403,7 +403,7 @@ ai += of invulnerability:rInv
 ai += of magic regeneration:MRegen+
 ai += of positive energy:rN+
 ai += of regeneration:Regen+
-ai += of resistance:rRes
+ai += of resistance:rF+, rC+
 ai += of willpower:Will+
 
 # Armour
@@ -1221,7 +1221,7 @@ BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 -- BRC.COLORS:Would prefer to use integer values, but they don't work in all menus
 BRC.COLORS = {
   black = "black", blue = "blue", green = "green", cyan = "cyan", red = "red", magenta = "magenta", brown = "brown",
-  lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue", lightgreen = "lightgreen",
+  lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue", lightgreen = "10",
   lightcyan = "lightcyan", lightred = "lightred", lightmagenta = "lightmagenta", yellow = "yellow", white = "white",
 } -- BRC.COLORS (do not remove this comment)
 
@@ -1779,7 +1779,7 @@ function BRC.is.ring(it)
 end
 
 function BRC.is.scarf(it)
-  return it and it.class(true) == "armour" and it.subtype() == "scarf"
+  return it and it.class(true) == "armour" and it.subtype() == "cloak" and it.name():find("scarf", 1, true)
 end
 
 function BRC.is.shield(it)
@@ -3131,7 +3131,7 @@ local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  local num_halfpips = math.floor(perc * NUM_PIPS_PER_METER / 100)
+  local num_halfpips = math.floor(perc * NUM_PIPS_PER_METER * 2)
   local num_full_emojis = math.floor(num_halfpips / 2)
   local num_part_emojis = num_halfpips % 2
   local num_empty_emojis = NUM_PIPS_PER_METER - num_full_emojis - num_part_emojis
@@ -3388,6 +3388,7 @@ function f_color_inscribe.c_assign_invletter(it)
   -- If enabled, call out to inscribe stats before coloring
   if f_inscribe_stats.do_stat_inscription then f_inscribe_stats.do_stat_inscription(it) end
 
+  crawl.mpr("Colorizing inscriptions for " .. it.name() .. " - " .. it.inscription)
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do
     text = colorize_subtext(text, tag[1], tag[2])

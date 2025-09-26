@@ -13,7 +13,7 @@ Dependencies: (None)
 BRC = BRC or {}
 BRC.Config = {}
 
-BRC.Config.emojis = true -- Use emojis in alerts and announcements
+BRC.Config.emojis = false -- Use emojis in alerts and announcements
 
 -- after-shaft.lua
 BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after shaft, until back to original level
@@ -335,7 +335,7 @@ else
 
   BRC.Emoji.HP_METER = {
     BORDER = "<white>|</white>",
-    FULL = "<green>+</green>",
+    FULL = "<lightgreen>+</lightgreen>",
     PART = "<lightgrey>+</lightgrey>",
     EMPTY = "<darkgrey>-</darkgrey>",
   } -- BRC.Emoji.HP_METER (do not remove this comment)
@@ -434,7 +434,7 @@ BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 -- BRC.COLORS:Would prefer to use integer values, but they don't work in all menus
 BRC.COLORS = {
   black = "black", blue = "blue", green = "green", cyan = "cyan", red = "red", magenta = "magenta", brown = "brown",
-  lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue", lightgreen = "lightgreen",
+  lightgrey = "lightgrey", darkgrey = "darkgrey", lightblue = "lightblue", lightgreen = "10",
   lightcyan = "lightcyan", lightred = "lightred", lightmagenta = "lightmagenta", yellow = "yellow", white = "white",
 } -- BRC.COLORS (do not remove this comment)
 
@@ -782,7 +782,7 @@ function BRC.is.ring(it)
 end
 
 function BRC.is.scarf(it)
-  return it and it.class(true) == "armour" and it.subtype() == "scarf"
+  return it and it.class(true) == "armour" and it.subtype() == "cloak" and it.name():find("scarf", 1, true)
 end
 
 function BRC.is.shield(it)
