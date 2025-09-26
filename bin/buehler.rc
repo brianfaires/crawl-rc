@@ -3340,7 +3340,7 @@ local COLORIZE_TAGS = {
   { "rMut", BRC.COLORS.brown },
   { "sInv", BRC.COLORS.brown },
   { "MRegen" .. MULTI_PLUS, BRC.COLORS.cyan },
-  { "Regen" .. MULTI_PLUS, BRC.COLORS.green },
+  { "([^M]|^)Regen" .. MULTI_PLUS, BRC.COLORS.green },
   { "Stlth" .. MULTI_PLUS, BRC.COLORS.white },
   { "+Fly", BRC.COLORS.brown },
   { "RMsl", BRC.COLORS.brown },
