@@ -8,13 +8,13 @@ Dependencies: core/config.lua, core/data.lua, core/util.lua
 f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
 
--- Persistent variables
-fr_start_turn = BRC.data.persist("fr_start_turn", 0)
-fr_explore_after = BRC.data.persist("fr_explore_after", false)
-
 -- Local constants / configuration
 local MAX_TURNS_TO_WAIT = 500
 local WAITING_MESSAGE = "You start waiting."
+
+-- Local variables
+local fr_start_turn
+local fr_explore_after
 
 -- Local functions
 local function abort_fully_recover()
@@ -34,6 +34,7 @@ local function finish_fully_recover()
 
   if fr_explore_after then
     fr_explore_after = false
+    crawl.mpr("Exploring after fully recovering")
     BRC.util.do_cmd("CMD_EXPLORE")
   end
 end
