@@ -692,6 +692,7 @@ The length of the list <= num_slots.
 function BRC.get.equipped_aux(aux_type)
   local all_aux = {}
   local num_slots = you.race() == "Poltergeist" and 6 or 1
+  if aux_type == "gloves" and you.race() == "Formicid" then num_slots = 2 end
   for i = 1, num_slots do
     local it = items.equipped_at(aux_type, i)
     all_aux[#all_aux + 1] = it

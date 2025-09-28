@@ -35,6 +35,8 @@ function f_drop_inferior.c_assign_invletter(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if not (it.is_weapon or BRC.is.armour(it)) or BRC.is.risky_item(it) then return end
+  if you.race() == "Poltergeist" and BRC.is.armour(it) then return end
+  if you.race() == "Formicid" and it.subtype() == "gloves" then return end
 
   local it_ego = BRC.get.ego(it)
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -47,7 +49,6 @@ function f_drop_inferior.c_assign_invletter(it)
         if inv.plus <= (it.plus or 0) then inscribe_drop(inv) end
       else
         if BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it) and inv.encumbrance >= it.encumbrance then
-          if you.race() == "Poltergeist" then return end -- More trouble than it's worth
           inscribe_drop(inv)
         end
       end
