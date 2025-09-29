@@ -79,6 +79,15 @@ function f_color_inscribe.c_assign_invletter(it)
     text = colorize_subtext(text, tag[1], tag[2])
   end
 
+  -- Limit length for % menu: = 80 total width - 25/32 other text - #name - #" {}"
+  it.inscribe("", false)
+  local max_length = 80 - (it.is_melded and 32 or 25) - #it.name("plain", true) - 3
+  if max_length < 0 then return end
+  -- Try removing darkgrey and white, then just remove all
+  if #text > max_length then text = text:gsub("</*" .. BRC.COLORS.darkgrey .. ">", "") end
+  if #text > max_length then text = text:gsub("</*" .. BRC.COLORS.white .. ">", "") end
+  if #text > max_length then text = text:gsub("<.->", "") end
+
   it.inscribe(text, false)
 end
 

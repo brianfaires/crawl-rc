@@ -48,6 +48,7 @@ end
 
 -- Hook functions
 function f_inscribe_stats.do_stat_inscription(it)
+  -- NOTE: It is important that other features do not meddle with the inscription; e.g. adding color tags
   if BRC.Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
   elseif BRC.Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
