@@ -3345,9 +3345,10 @@ local COLORIZE_TAGS = {
   { "rMut", BRC.COLORS.yellow },
   { "sInv", BRC.COLORS.magenta },
   { "MRegen" .. MULTI_PLUS, BRC.COLORS.cyan },
-  { "([^M]|^)Regen" .. MULTI_PLUS, BRC.COLORS.green },
+  { "^Regen" .. MULTI_PLUS, BRC.COLORS.green }, -- Avoiding "MRegen"
+  { " Regen" .. MULTI_PLUS, BRC.COLORS.green }, -- Avoiding "MRegen"
   { "Stlth" .. MULTI_PLUS, positive_color },
-  { "+Fly", positive_color },
+  { "%+Fly", positive_color },
   { "RMsl", BRC.COLORS.yellow },
   { "Will" .. MULTI_PLUS, BRC.COLORS.blue },
   { "Will" .. MULTI_MINUS, negative_color },
@@ -3383,7 +3384,7 @@ local function colorize_subtext(text, s, tag)
     if prev == "!" or prev == ">" then return text end
   end
 
-  return text:gsub(string.format("(%s)", s), string.format("<%s>%%1</%s>", tag, tag))
+  return text:gsub(s, string.format("<%s>%%1</%s>", tag, tag))
 end
 
 -- Hook functions
