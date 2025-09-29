@@ -8,7 +8,7 @@ Dependencies: (None)
 BRC = BRC or {}
 BRC.Config = {}
 
-BRC.Config.emojis = true -- Use emojis in alerts and announcements
+BRC.Config.emojis = false -- Use emojis in alerts and announcements
 
 -- after-shaft.lua
 BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after shaft, until back to original level
@@ -330,7 +330,7 @@ else
 
   BRC.Emoji.HP_METER = {
     BORDER = "<white>|</white>",
-    FULL = "<green>+</green>",
+    FULL = "<lightgreen>+</lightgreen>",
     PART = "<lightgrey>+</lightgrey>",
     EMPTY = "<darkgrey>-</darkgrey>",
   } -- BRC.Emoji.HP_METER (do not remove this comment)

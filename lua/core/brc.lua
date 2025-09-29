@@ -222,9 +222,9 @@ function BRC.init(parent_module)
   end
 
   -- Success!
-  local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS or ""
+  local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS.." " or ""
   local success_text = string.format("Successfully initialized BRC system v%s!", BRC.VERSION)
-  BRC.mpr.lightgreen(string.format("\n%s %s %s", success_emoji, success_text, success_emoji))
+  BRC.mpr.lightgreen(string.format("\n%s%s %s", success_emoji, success_text, success_emoji))
 
   prev_turn = -1
   BRC.active = true

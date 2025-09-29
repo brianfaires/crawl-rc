@@ -1,3 +1,4 @@
+show_resist_percent = false
 stat_colour = 3:red, 6:yellow
 
 hp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
