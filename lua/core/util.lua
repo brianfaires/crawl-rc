@@ -91,11 +91,12 @@ function BRC.text.clean_text(text, escape_chars)
   return text:gsub("<[^>]*>", "")
 end
 
--- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["red"]("Hello")
+-- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
 for k, v in pairs(BRC.COLORS) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
+  BRC.text[v] = BRC.text[k]
 end
 
 function BRC.text.color(color, text)
