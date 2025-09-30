@@ -3828,7 +3828,6 @@ local function finish_fully_recover()
 
   if fr_explore_after then
     fr_explore_after = false
-    crawl.mpr("Exploring after fully recovering")
     BRC.util.do_cmd("CMD_EXPLORE")
   end
 end
