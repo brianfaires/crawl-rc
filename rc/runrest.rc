@@ -28,6 +28,7 @@ ignore -= friend_enchant:
 ignore ^= butterfly disappears
 ignore ^= friend_action:(a|the) web
 ignore ^= friend_action:(seems|blinks)
+ignore ^= clockwork bee (falls|winds down)
 stop += friend_action:
 stop += friend_spell:
 stop += friend_enchant:
