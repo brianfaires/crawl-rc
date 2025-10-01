@@ -660,7 +660,6 @@ function f_pa_weapons.pickup_weapon(it)
   end
 
   if BRC.is.risky_item(it) then return false end
-  if f_pa_data.find(pa_items_picked, it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
     if inv.allow_upgrade and is_weapon_upgrade(it, inv) then return true end
   end
@@ -804,9 +803,7 @@ function f_pa_misc.is_unneeded_ring(it)
 end
 
 function f_pa_misc.pickup_staff(it)
-  if not it.is_identified then return false end
-  if BRC.get.skill(BRC.get.staff_school(it)) == 0 then return false end
-  return not f_pa_data.find(pa_items_picked, it)
+  return it.is_identified and BRC.get.skill(BRC.get.staff_school(it)) > 0
 end
 
 }
@@ -827,7 +824,6 @@ f_pa_data = {}
 --f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
 
 -- Persistent variables
-pa_items_picked = BRC.data.persist("pa_items_picked", {})
 pa_items_alerted = BRC.data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.data.persist("pa_recent_alerts", {})
 pa_OTA_items = BRC.data.persist("pa_OTA_items", BRC.Config.alert.one_time)
@@ -941,7 +937,7 @@ function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
-    f_pa_data.insert(pa_items_picked, inv)
+    f_pa_data.insert(pa_items_alerted, inv)
   end
 end
 
@@ -1112,13 +1108,7 @@ end
 function f_pickup_alert.c_assign_invletter(it)
   f_pa_misc.alert_OTA(it)
   f_pa_data.remove(pa_recent_alerts, it)
-  if it.is_weapon and you.race() == "Coglin" then
-    -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
-    -- ie, Reset the alert the first time you pick up.
-    if f_pa_data.find(pa_items_picked, it) then f_pa_data.remove(pa_items_alerted, it) end
-  end
-
-  f_pa_data.insert(pa_items_picked, it)
+  f_pa_data.remove(pa_items_alerted, it)
 
   if it.is_weapon or BRC.is.armour(it) then
     f_pa_data.update_high_scores(it)

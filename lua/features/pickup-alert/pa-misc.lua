@@ -86,7 +86,5 @@ function f_pa_misc.is_unneeded_ring(it)
 end
 
 function f_pa_misc.pickup_staff(it)
-  if not it.is_identified then return false end
-  if BRC.get.skill(BRC.get.staff_school(it)) == 0 then return false end
-  return not f_pa_data.find(pa_items_picked, it)
+  return it.is_identified and BRC.get.skill(BRC.get.staff_school(it)) > 0
 end

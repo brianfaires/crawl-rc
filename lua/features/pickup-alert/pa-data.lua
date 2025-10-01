@@ -9,7 +9,6 @@ f_pa_data = {}
 --f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
 
 -- Persistent variables
-pa_items_picked = BRC.data.persist("pa_items_picked", {})
 pa_items_alerted = BRC.data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.data.persist("pa_recent_alerts", {})
 pa_OTA_items = BRC.data.persist("pa_OTA_items", BRC.Config.alert.one_time)
@@ -123,6 +122,6 @@ function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
-    f_pa_data.insert(pa_items_picked, inv)
+    f_pa_data.insert(pa_items_alerted, inv)
   end
 end

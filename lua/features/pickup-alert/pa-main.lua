@@ -158,13 +158,7 @@ end
 function f_pickup_alert.c_assign_invletter(it)
   f_pa_misc.alert_OTA(it)
   f_pa_data.remove(pa_recent_alerts, it)
-  if it.is_weapon and you.race() == "Coglin" then
-    -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
-    -- ie, Reset the alert the first time you pick up.
-    if f_pa_data.find(pa_items_picked, it) then f_pa_data.remove(pa_items_alerted, it) end
-  end
-
-  f_pa_data.insert(pa_items_picked, it)
+  f_pa_data.remove(pa_items_alerted, it)
 
   if it.is_weapon or BRC.is.armour(it) then
     f_pa_data.update_high_scores(it)
