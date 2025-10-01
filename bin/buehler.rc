@@ -4874,11 +4874,16 @@ end
 function f_pickup_alert.c_assign_invletter(it)
   f_pa_misc.alert_OTA(it)
   f_pa_data.remove(pa_recent_alerts, it)
-  f_pa_data.remove(pa_items_alerted, it)
 
+  -- Re-enable the alert, iff we are able to use another one
+  if BRC.get.available_slots(it) > 1 then
+    f_pa_data.remove(pa_items_alerted, it)
+  end
+
+  -- Ensure we always stop for these autopickup types
   if it.is_weapon or BRC.is.armour(it) then
     f_pa_data.update_high_scores(it)
-    you.stop_activity() -- crawl misses this sometimes
+    you.stop_activity()
   end
 end
 
