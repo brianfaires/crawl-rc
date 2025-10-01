@@ -1672,6 +1672,16 @@ function BRC.mpr.yesno(text, color, capital_only)
 end
 
 ---- BRC.get - Functions to get non-boolean data ----
+function BRC.get.available_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.is.aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
+end
 
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
@@ -1683,19 +1693,18 @@ function BRC.get.command_key(cmd)
 end
 
 --[[
-BRC.get.equipped_aux() - Returns 2 values:
-  1. A list of equipped items of the type
+BRC.get.equipped_at() - Returns 2 values:
+  1. A list of equipped items at the same slot as the item
   2. the num_slots (ie maximum size the list can ever be). This is usually a list of length 1, with num_slots==1.
-  Poltergeists will get all worn aux armours and num_slots=6.
-The length of the list <= num_slots.
+  Poltergeists, Coglin, and Formicid may have more
 --]]
-function BRC.get.equipped_aux(aux_type)
+function BRC.get.equipped_at(it)
   local all_aux = {}
-  local num_slots = you.race() == "Poltergeist" and 6 or 1
-  if aux_type == "gloves" and you.race() == "Formicid" then num_slots = 2 end
+  local num_slots = BRC.get.available_slots(it)
+  local slot_name = it.is_weapon and "weapon" or BRC.is.body_armour(it) and "armour" or it.subtype()
   for i = 1, num_slots do
-    local it = items.equipped_at(aux_type, i)
-    all_aux[#all_aux + 1] = it
+    local eq = items.equipped_at(slot_name, i)
+    all_aux[#all_aux + 1] = eq
   end
   return all_aux, num_slots
 end
@@ -5179,11 +5188,11 @@ end
 local function pickup_aux_armour(it)
   -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  local st = it.subtype()
-  local all_equipped, num_slots = BRC.get.equipped_aux(st)
+  local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
     if #all_equipped == 0 and num_slots == 1 then
+      local st = it.subtype()
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.subtype() == st then return false end
       end
@@ -5346,7 +5355,7 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 
-  local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
+  local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     if unworn_inv_item then
       all_equipped[#all_equipped + 1] = unworn_inv_item
