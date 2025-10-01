@@ -215,8 +215,10 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only look at their DPS)
-    if not cur.artefact and it_ego and it_ego ~= BRC.get.ego(cur) then
-      return f_pickup_alert.do_alert(it, "Diff ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+    local cur_ego = BRC.get.ego(cur)
+    if not cur.artefact and it_ego and it_ego ~= cur_ego then
+      local alert_msg = cur_ego and "Diff ego" or "Gain ego"
+      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
     elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
       return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
     end

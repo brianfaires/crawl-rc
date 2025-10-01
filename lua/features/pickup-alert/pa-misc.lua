@@ -37,7 +37,7 @@ function f_pa_misc.alert_OTA(it)
 
   f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Rare item", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
 end
 
 function f_pa_misc.alert_staff(it)

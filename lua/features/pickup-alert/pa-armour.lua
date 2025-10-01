@@ -94,25 +94,20 @@ local function pickup_body_armour(it)
   local cur = items.equipped_at("armour")
   if not cur then return false end -- surely am naked for a reason
 
-  -- No pickup if either item is an artefact
-  if cur.artefact or it.artefact then return false end
+  -- No pickup if wearing an artefact
+  if cur.artefact then return false end
 
   -- No pickup if adding encumbrance or losing AC
   local encumb_delta = it.encumbrance - cur.encumbrance
   if encumb_delta > 0 then return false end
-
   local ac_delta = BRC.get.armour_ac(it) - BRC.get.armour_ac(cur)
   if ac_delta < 0 then return false end
 
-  -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
+  -- Pickup: Pure upgrades
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if cur_ego then
-    if not it_ego then return false end
-    return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
-  else
-    return it_ego or ac_delta > 0 or encumb_delta < 0
-  end
+  if not cur_ego then return it_ego or ac_delta > 0 or encumb_delta < 0 end
+  return it_ego == cur_ego and (ac_delta > 0 or encumb_delta < 0)
 end
 
 local function pickup_shield(it)
@@ -125,15 +120,12 @@ local function pickup_shield(it)
   -- Pickup: artefact
   if it.artefact then return true end
 
-  -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
+  -- Pickup: Pure upgrades
   local it_plus = it.plus or 0
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if cur_ego then
-    if it_ego == cur_ego then return it_plus > cur.plus end
-    return it_ego and it_plus >= cur.plus
-  end
-  return it_ego or it_plus > cur.plus
+  if not cur_ego then return it_ego and it_plus >= cur.plus end
+  return it_ego == cur_ego and it_plus > cur.plus
 end
 
 local function pickup_aux_armour(it)
@@ -148,7 +140,6 @@ local function pickup_aux_armour(it)
         if inv.subtype() == st then return false end
       end
     end
-
     return true
   end
 
@@ -159,21 +150,19 @@ local function pickup_aux_armour(it)
   end
   if it.is_identified and it.artefact then return true end
 
-  -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
+  -- Pickup: Pure upgrades
   local it_ac = BRC.get.armour_ac(it)
   local it_ego = BRC.get.ego(it)
   for _, cur in ipairs(all_equipped) do
     local cur_ac = BRC.get.armour_ac(cur)
     local cur_ego = BRC.get.ego(cur)
-    if cur_ego then
-      if it_ego then
-        if it_ac > cur_ac then return true end
-        if it_ac == cur_ac and it_ego ~= cur_ego then return true end
-      end
-    else
-      if it_ego or it_ac > cur_ac then return true end
+    if not cur_ego then
+      if it_ego and it_ac >= cur_ac then return true end
+    elseif it_ego == cur_ego and it_ac > cur_ac then
+      return true
     end
   end
+  return false
 end
 
 -- Local functions: Alerting
