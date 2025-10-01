@@ -27,24 +27,16 @@ end
 
 -- Public API
 function f_pickup_alert.autopickup(it, _)
-  local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
-  if pause_pa_system then return end
-  if you.have_orb() then return end
-  if BRC.get.ego(it) and not it.is_identified then return false end
-  if not it.is_useless then
-    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
-      if f_pa_armour.pickup_armour(it) then return true end
-    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
-      if f_pa_misc.pickup_staff(it) then return true end
-    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
-      if f_pa_weapons.pickup_weapon(it) then return true end
-    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
-      return false
-    end
-  else
-    -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-    if BRC.is.aux_armour(it) then return end
+  if (
+    pause_pa_system or
+    you.have_orb() or
+    BRC.get.ego(it) and not it.is_identified
+  ) then return end
 
+  local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
+  if it.is_useless then
+    -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
+    if not BRC.is.aux_armour(it) then return end
     local st = it.subtype()
     for inv in iter.invent_iterator:new(items.inventory()) do
       local inv_st = inv.subtype()
@@ -54,6 +46,17 @@ function f_pickup_alert.autopickup(it, _)
       end
     end
     if not unworn_aux_item then return end
+  else
+    -- Pickup main
+    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
+      if f_pa_armour.pickup_armour(it) then return true end
+    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
+      if f_pa_misc.pickup_staff(it) then return true end
+    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
+      if f_pa_weapons.pickup_weapon(it) then return true end
+    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
+      return false
+    end
   end
 
   -- Not picking up this item. Now check for alerts.

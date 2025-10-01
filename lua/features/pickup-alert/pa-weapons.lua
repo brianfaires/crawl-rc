@@ -282,9 +282,9 @@ end
 function f_pa_weapons.pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if need_first_weapon() then
-    -- Staves don't go into _weapon_cache; check if we're carrying just a staff
+    -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
     for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.is_weapon then return false end -- fastest way to check if it's a staff
+      if inv.is_weapon then return false end
     end
     return true
   end

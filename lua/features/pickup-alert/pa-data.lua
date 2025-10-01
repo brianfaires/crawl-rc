@@ -48,10 +48,19 @@ end
 function f_pa_data.insert(table_ref, it)
   if table_ref == pa_recent_alerts then
     pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
-  elseif it.is_weapon or BRC.is.armour(it, true) or BRC.is.talisman(it) then
+  else
+    local is_armour = BRC.is.armour(it, true)
+    if not (it.is_weapon or is_armour or BRC.is.talisman(it)) then return end
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then table_ref[name] = value end
+
+    -- For armour with good brand, also add the unbranded version to the table
+    if is_armour and it.branded and not (it.artefact or BRC.is.risky_item(it)) then
+      name = it.name("qual")
+      cur_val = tonumber(table_ref[name])
+      if not cur_val or value > cur_val then table_ref[name] = value end
+    end
   end
 end
 

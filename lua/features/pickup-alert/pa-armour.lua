@@ -116,9 +116,8 @@ local function pickup_body_armour(it)
 end
 
 local function pickup_shield(it)
-  local cur = items.equipped_at("offhand")
-
   -- Don't replace these
+  local cur = items.equipped_at("offhand")
   if not BRC.is.shield(cur) then return false end
   if cur.encumbrance ~= it.encumbrance then return false end
   if cur.artefact then return false end
@@ -138,9 +137,8 @@ local function pickup_shield(it)
 end
 
 local function pickup_aux_armour(it)
-  -- Pickup: Anything if the slot is empty
+  -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  -- Use a list to support Poltergeists; for most races it's a 1-item list
   local st = it.subtype()
   local all_equipped, num_slots = BRC.get.equipped_aux(st)
   if #all_equipped < num_slots then
@@ -308,7 +306,6 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 
-  -- Use a list to support Poltergeists; for other races it's a 1-item list
   local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
   if #all_equipped < num_slots then
     if unworn_inv_item then
