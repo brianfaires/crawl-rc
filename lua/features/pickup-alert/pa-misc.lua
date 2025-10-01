@@ -67,7 +67,7 @@ function f_pa_misc.alert_talisman(it)
     return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
   end
   local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
-  if required_skill > you.skill("Shapeshifting") then return false end
+  if required_skill > BRC.you.shapeshifting_skill() then return false end
   return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
 end
 

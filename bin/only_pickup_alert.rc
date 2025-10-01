@@ -121,9 +121,8 @@ local function pickup_body_armour(it)
 end
 
 local function pickup_shield(it)
-  local cur = items.equipped_at("offhand")
-
   -- Don't replace these
+  local cur = items.equipped_at("offhand")
   if not BRC.is.shield(cur) then return false end
   if cur.encumbrance ~= it.encumbrance then return false end
   if cur.artefact then return false end
@@ -143,9 +142,8 @@ local function pickup_shield(it)
 end
 
 local function pickup_aux_armour(it)
-  -- Pickup: Anything if the slot is empty
+  -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  -- Use a list to support Poltergeists; for most races it's a 1-item list
   local st = it.subtype()
   local all_equipped, num_slots = BRC.get.equipped_aux(st)
   if #all_equipped < num_slots then
@@ -313,7 +311,6 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 
-  -- Use a list to support Poltergeists; for other races it's a 1-item list
   local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
   if #all_equipped < num_slots then
     if unworn_inv_item then
@@ -655,9 +652,9 @@ end
 function f_pa_weapons.pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if need_first_weapon() then
-    -- Staves don't go into _weapon_cache; check if we're carrying just a staff
+    -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
     for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.is_weapon then return false end -- fastest way to check if it's a staff
+      if inv.is_weapon then return false end
     end
     return true
   end
@@ -788,7 +785,7 @@ function f_pa_misc.alert_talisman(it)
     return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
   end
   local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
-  if required_skill > you.skill("Shapeshifting") then return false end
+  if required_skill > BRC.you.shapeshifting_skill() then return false end
   return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
 end
 
@@ -869,10 +866,19 @@ end
 function f_pa_data.insert(table_ref, it)
   if table_ref == pa_recent_alerts then
     pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
-  elseif it.is_weapon or BRC.is.armour(it, true) or BRC.is.talisman(it) then
+  else
+    local is_armour = BRC.is.armour(it, true)
+    if not (it.is_weapon or is_armour or BRC.is.talisman(it)) then return end
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then table_ref[name] = value end
+
+    -- For armour with good brand, also add the unbranded version to the table
+    if is_armour and it.branded and not (it.artefact or BRC.is.risky_item(it)) then
+      name = it.name("qual")
+      cur_val = tonumber(table_ref[name])
+      if not cur_val or value > cur_val then table_ref[name] = value end
+    end
   end
 end
 
@@ -975,24 +981,16 @@ end
 
 -- Public API
 function f_pickup_alert.autopickup(it, _)
-  local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
-  if pause_pa_system then return end
-  if you.have_orb() then return end
-  if BRC.get.ego(it) and not it.is_identified then return false end
-  if not it.is_useless then
-    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
-      if f_pa_armour.pickup_armour(it) then return true end
-    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
-      if f_pa_misc.pickup_staff(it) then return true end
-    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
-      if f_pa_weapons.pickup_weapon(it) then return true end
-    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
-      return false
-    end
-  else
-    -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-    if BRC.is.aux_armour(it) then return end
+  if (
+    pause_pa_system or
+    you.have_orb() or
+    BRC.get.ego(it) and not it.is_identified
+  ) then return end
 
+  local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
+  if it.is_useless then
+    -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
+    if not BRC.is.aux_armour(it) then return end
     local st = it.subtype()
     for inv in iter.invent_iterator:new(items.inventory()) do
       local inv_st = inv.subtype()
@@ -1002,6 +1000,17 @@ function f_pickup_alert.autopickup(it, _)
       end
     end
     if not unworn_aux_item then return end
+  else
+    -- Pickup main
+    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
+      if f_pa_armour.pickup_armour(it) then return true end
+    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
+      if f_pa_misc.pickup_staff(it) then return true end
+    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
+      if f_pa_weapons.pickup_weapon(it) then return true end
+    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
+      return false
+    end
   end
 
   -- Not picking up this item. Now check for alerts.

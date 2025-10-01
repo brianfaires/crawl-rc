@@ -60,7 +60,7 @@ BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand s
 -- fully-recover.lua: Keep resting until these statuses are gone.
 -- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
 BRC.Config.rest_off_statuses = {
-  "berserk", "confused", "corroded", "marked", "short of breath",
+  "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
   "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
 } -- BRC.Config.rest_off_statuses (do not remove this comment)
 

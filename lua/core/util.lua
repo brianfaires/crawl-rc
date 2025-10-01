@@ -259,7 +259,7 @@ function BRC.get.skill_with(it)
   if it.is_weapon then return BRC.get.skill(it.weap_skill) end
   if BRC.is.body_armour(it) then return BRC.get.skill("Armour") end
   if BRC.is.shield(it) then return BRC.get.skill("Shields") end
-  if BRC.is.talisman(it) then return BRC.get.skill("Shapeshifting") end
+  if BRC.is.talisman(it) then return BRC.you.shapeshifting_skill() end
 
   return 1 -- Fallback to 1
 end
@@ -375,6 +375,16 @@ end
 
 function BRC.you.mutation_immune()
   return util.contains(BRC.UNDEAD_RACES, you.race())
+end
+
+function BRC.you.shapeshifting_skill()
+  local skill = you.skill("Shapeshifting")
+  for inv in iter.invent_iterator:new(items.inventory()) do
+    if BRC.is.amulet(inv) and inv.name() == "amulet of wildshape" then
+      return skill + 5
+    end
+  end
+  return skill
 end
 
 function BRC.you.zero_stat()
