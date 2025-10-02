@@ -28,6 +28,7 @@ end
 -- Public API
 function f_pickup_alert.autopickup(it, _)
   if (
+    not BRC.active or
     pause_pa_system or
     you.have_orb() or
     BRC.get.ego(it) and not it.is_identified
@@ -172,6 +173,7 @@ function f_pickup_alert.c_assign_invletter(it)
 end
 
 function f_pickup_alert.c_message(text, channel)
+  -- Avoid firing alerts when changing armour/weapons
   if channel == "multiturn" then
     if not pause_pa_system and text:find("ou start ", 1, true) then pause_pa_system = true end
   elseif channel == "plain" then

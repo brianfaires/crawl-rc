@@ -183,7 +183,8 @@ end
 -- Alert the highest AC armour, unless training spells/ranged and NOT armour
 local function alert_highest_ac(it)
   if you.xl() > 12 then return false end
-  if you.skill("Spellcasting") > 0 + you.skill("Ranged Weapons") > 0 and you.skill("Armour") == 0 then return false end
+  local total_skill = you.skill("Spellcasting") + you.skill("Ranged Weapons")
+  if total_skill > 0 and you.skill("Armour") == 0 then return false end
 
   if pa_high_score.ac == 0 then
     local worn = items.equipped_at("armour")
