@@ -5230,27 +5230,6 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
   end
 
   return true
-  -- local function should_alert_lighter_armour(ac_delta, ev_delta, ego_change)
-  --     local meets_ratio = ac_delta >= 0 or (ev_delta / -ac_delta > BRC.Tuning.armour.lighter[ego_change])
-  --     if not meets_ratio then return false end
-
-  --     -- Apply ego-specific restrictions
-  --     if ego_change == LOST and ev_delta < BRC.Tuning.armour.lighter.min_gain then return false end
-  --     if ego_change ~= SAME and -ac_delta > BRC.Tuning.armour.lighter.max_loss then return false end
-
-  --     return true
-  -- end
-
-  -- local function should_alert_heavier_armour(ac_delta, ev_delta, ego_change)
-  --     local meets_ratio = ev_delta >= 0 or (ac_delta / -ev_delta > BRC.Tuning.armour.heavier[ego_change])
-  --     if not meets_ratio then return false end
-
-  --     -- Apply ego-specific restrictions
-  --     if ego_change == LOST and ac_delta < BRC.Tuning.armour.heavier.min_gain then return false end
-  --     if ego_change ~= SAME and -ev_delta > BRC.Tuning.armour.heavier.max_loss then return false end
-
-  --     return true
-  -- end
 end
 
 -- Alert the highest AC armour, unless training spells/ranged and NOT armour
