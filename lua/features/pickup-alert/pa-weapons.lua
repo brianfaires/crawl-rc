@@ -17,6 +17,7 @@ lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
 -- Local constants / configuration
 local FIRST_WEAPON_XL_CUTOFF = 4 -- Stop looking for first weapon after this XL
 local RANGED_XL_THRESHOLD = 3 -- At this skill level, don't bother alerting for polearms
+local UPGRADE_SKILL_FACTOR = 0.5 -- Don't alert for upgrades if weap skill is this much worse
 local RANGED = "range_"
 local MELEE = "melee_"
 
@@ -113,22 +114,41 @@ function _weapon_cache.serialize()
 end
 
 -- Local functions
--- is_weapon_upgrade(it, cur) -> boolean : For pickup; Check if a weapon is an upgrade to one currently in inventory.
+local function is_valid_upgrade(it, cur)
+  return (
+    cur.is_ranged == it.is_ranged and
+    BRC.is.polearm(cur) == BRC.is.polearm(it) and
+    (you.race() == "Gnoll" or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
+  )
+end
+
+-- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
 -- `cur` comes from _weapon_cache - it has some pre-computed values
-local function is_weapon_upgrade(it, cur)
+local function is_weapon_upgrade(it, cur, strict)
+  if not cur.allow_upgrade then return false end
+  if strict then
+    -- Pure upgrades only
+    if cur.artefact or it.subtype() ~= cur.subtype() then return false end
+    if it.artefact then return true end
+    local it_plus = it.plus or 0
+    local cur_ego = BRC.get.ego(cur)
+    if BRC.get.ego(it) == cur_ego then return it_plus > cur.plus end
+    return not cur_ego and it_plus >= cur.plus
+  end
+
+  -- Check if it's a very likely upgrade
   if it.subtype() == cur.subtype() then
-    -- Exact weapon type match
     if it.artefact then return true end
     if cur.artefact then return false end
+
     local it_ego = BRC.get.ego(it)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
     if it_ego and it.is_identified and not cur_ego then
       return BRC.get.weap_score(it) / cur.score > BRC.Tuning.weap.pickup.add_ego
     end
-    return it_ego == cur_ego and BRC.get.weap_score(it) > cur.score
+    return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
-    -- Return false if no clear upgrade possible
     if BRC.get.hands(it) > cur.hands then return false end
     if cur.is_ranged ~= it.is_ranged then return false end
     if BRC.is.polearm(cur) ~= BRC.is.polearm(it) then return false end
@@ -143,6 +163,10 @@ local function is_weapon_upgrade(it, cur)
   return false
 end
 
+local function make_alert(it, msg, emoji, fm_option)
+  return { it = it, msg = msg, emoji = emoji, fm_option = fm_option }
+end
+
 local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
     and _weapon_cache.is_empty()
@@ -151,26 +175,25 @@ local function need_first_weapon()
 end
 
 -- Local functions: Alerting
-local function alert_first_of_skill(it, silent)
+local function get_first_of_skill_alert(it, silent)
   local skill = it.weap_skill
-  if not lowest_num_hands_alerted[skill] then return false end
+  if not lowest_num_hands_alerted[skill] then return end
 
   local hands = BRC.get.hands(it)
   if lowest_num_hands_alerted[skill] > hands then
     -- Some early checks to skip alerts
-    if hands == 2 and BRC.you.have_shield() then return false end
-    if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return false end
+    if hands == 2 and BRC.you.have_shield() then return end
+    if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return end
 
     -- Update lowest # hands alerted, and alert
     lowest_num_hands_alerted[skill] = hands
-    if silent then return true end
+    if silent then return end
     local msg = string.format("First %s%s", string.sub(skill, 1, -2), hands == 1 and " (1-handed)" or "")
-    return f_pickup_alert.do_alert(it, msg, BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
+    return make_alert(it, msg, BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
   end
-  return false
 end
 
-local function alert_early_weapons(it)
+local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
   if you.xl() <= BRC.Tuning.weap.alert.early_ranged.xl then
     if it.is_identified and it.is_ranged then
@@ -180,7 +203,7 @@ local function alert_early_weapons(it)
       then
         local low_shield_training = you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields
         if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
-          return f_pickup_alert.do_alert(it, "Ranged weapon", BRC.Emoji.RANGED, BRC.Config.fm_alert.early_weap)
+          return make_alert(it, "Ranged weapon", BRC.Emoji.RANGED, BRC.Config.fm_alert.early_weap)
         end
       end
     end
@@ -194,90 +217,101 @@ local function alert_early_weapons(it)
 
     local it_plus = it.plus or 0
     if BRC.get.ego(it) or it_plus and it_plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
-      return f_pickup_alert.do_alert(it, "Early weapon", BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
+      return make_alert(it, "Early weapon", BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
     end
   end
 
   return false
 end
 
+local function get_weap_high_score_alert(it)
+  if _weapon_cache.is_empty() then return end -- Skip if not using weapons
+  local category = f_pa_data.update_high_scores(it)
+  if not category then return end
+  return make_alert(it, category, BRC.Emoji.WEAPON, BRC.Config.fm_alert.high_score_weap)
+end
+
+local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
+  -- Alert: new egos, highest DPS or highest weap_score
+  local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only consider their DPS)
+  local cur_ego = BRC.get.ego(cur)
+  if not cur.artefact and it_ego and it_ego ~= cur_ego then
+    return make_alert(it, cur_ego and "Diff ego" or "Gain ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+  elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
+    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
+  end
+end
+
 --[[
-alert_interesting_weapon() -> boolean : `cur` comes from _weapon_cache - it has some pre-computed values
+get_inventory_upgrade_alert_sub() -> boolean : `cur` comes from _weapon_cache - it has some pre-computed values
 Check if weapon is worth alerting for, compared against one weapon currently in inventory
 --]]
-local function alert_interesting_weapon(it, cur)
-  if it.artefact and it.is_identified then return f_pickup_alert.do_alert(it, "Artefact weapon", BRC.Emoji.ARTEFACT) end
-
-  local inv_best = _weapon_cache.max_dps[_weapon_cache.get_primary_key(it)]
-  local best_dps = math.max(cur.dps, inv_best and inv_best.dps or 0)
-  local best_score = math.max(cur.score, inv_best and BRC.get.weap_score(inv_best) or 0)
-
-  if cur.subtype() == it.subtype() then
-    -- Exact weapon type match; alert new egos or higher DPS/weap_score
-    local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only look at their DPS)
-    local cur_ego = BRC.get.ego(cur)
-    if not cur.artefact and it_ego and it_ego ~= cur_ego then
-      local alert_msg = cur_ego and "Diff ego" or "Gain ego"
-      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
-    elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
-      return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
-    end
-    return false
+local function get_upgrade_alert(it, cur, best_dps, best_score)
+  -- Ensure the non-strict upgrade is checked, if not already done in pickup_weapon()
+  if BRC.Config.pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
+    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
   end
 
-  if cur.is_ranged ~= it.is_ranged then return false end
-  if BRC.is.polearm(cur) ~= BRC.is.polearm(it) then return false end
-  if 2 * BRC.get.skill(it.weap_skill) < BRC.get.skill(cur.weap_skill) then return false end
+  if it.artefact and it.is_identified then return make_alert(it, "Artefact weapon", BRC.Emoji.ARTEFACT) end
+  if cur.subtype() == it.subtype() then return get_upgrade_alert_same_type(it, cur, best_dps, best_score) end
+  if not is_valid_upgrade(it, cur) then return end
 
-  -- Penalize lower-trained skills
+  -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = BRC.Tuning.weap.alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
   local ratio = penalty * BRC.get.weap_score(it) / best_score
 
-  if BRC.get.hands(it) > cur.hands then
-    if BRC.you.free_offhand() or (you.skill("Shields") < BRC.Tuning.weap.alert.add_hand.ignore_sh_lvl) then
-      local it_ego = BRC.get.ego(it)
-      local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
-      if unique_ego and ratio > BRC.Tuning.weap.alert.new_ego then
-        return f_pickup_alert.do_alert(it, "New ego (2-handed)", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
-      elseif ratio > BRC.Tuning.weap.alert.add_hand.not_using then
-        return f_pickup_alert.do_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.upgrade_weap)
-      end
-    elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh then
-      local msg = "2-handed weapon (Gain ego)"
-      return f_pickup_alert.do_alert(it, msg, BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.weap_ego)
-    end
-  else -- No extra hand required
+  if BRC.get.hands(it) <= cur.hands then
     if cur.artefact then return false end
-    if BRC.get.ego(it, true) then -- Don't overvalue Speed/Heavy egos (only look at their DPS)
+    if BRC.get.ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
       local it_ego = BRC.get.ego(it)
       if not BRC.get.ego(cur) then
         if ratio > BRC.Tuning.weap.alert.gain_ego then
-          return f_pickup_alert.do_alert(it, "Gain ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+          return make_alert(it, "Gain ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
         end
       elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > BRC.Tuning.weap.alert.new_ego then
-        return f_pickup_alert.do_alert(it, "New ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+        return make_alert(it, "New ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
       end
     end
     if ratio > BRC.Tuning.weap.alert.pure_dps then
-      return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
+      return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
     end
+  elseif BRC.you.free_offhand() or (you.skill("Shields") < BRC.Tuning.weap.alert.add_hand.ignore_sh_lvl) then
+      local it_ego = BRC.get.ego(it)
+      local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
+      if unique_ego and ratio > BRC.Tuning.weap.alert.new_ego then
+        return make_alert(it, "New ego (2-handed)", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+      elseif ratio > BRC.Tuning.weap.alert.add_hand.not_using then
+        return make_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.upgrade_weap)
+      end
+  elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh then
+    local msg = "2-handed weapon (Gain ego)"
+    return make_alert(it, msg, BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.weap_ego)
   end
-
-  return false
 end
 
-local function alert_interesting_weapons(it)
+local function get_inventory_upgrade_alert(it)
+  -- Once, find the top dps & score for inventory weapons of the same category
+  local inv_best = _weapon_cache.max_dps[_weapon_cache.get_primary_key(it)]
+  local top_dps = inv_best and inv_best.dps or 0
+  local top_score = inv_best and BRC.get.weap_score(inv_best) or 0
+
+  -- Compare against all inventory weapons, even from other categories
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if alert_interesting_weapon(it, inv) then return true end
+    local best_dps = math.max(inv.dps, top_dps)
+    local best_score = math.max(inv.score, top_score)
+    local a = get_upgrade_alert(it, inv, best_dps, best_score)
+    if a then return a end
   end
-  return false
 end
 
-local function alert_weap_high_scores(it)
-  local category = f_pa_data.update_high_scores(it)
-  if not category then return false end
-  return f_pickup_alert.do_alert(it, category, BRC.Emoji.WEAPON, BRC.Config.fm_alert.high_score_weap)
+local function get_weapon_alert(it)
+  return (
+    get_inventory_upgrade_alert(it) or
+    get_first_of_skill_alert(it) or
+    get_early_weapon_alert(it) or
+    get_weap_high_score_alert(it)
+  )
 end
 
 -- Public API
@@ -293,18 +327,22 @@ function f_pa_weapons.pickup_weapon(it)
 
   if BRC.is.risky_item(it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if inv.allow_upgrade and is_weapon_upgrade(it, inv) then return true end
+    if is_weapon_upgrade(it, inv, BRC.Config.pickup.weapons_pure_upgrades_only) then
+      -- Confirm after updating cache, to avoid spurious alerts from XP gain.
+      f_pa_weapons.ready()
+      if is_weapon_upgrade(it, inv, BRC.Config.pickup.weapons_pure_upgrades_only) then return true end
+    end
   end
 end
 
 function f_pa_weapons.alert_weapon(it)
-  if alert_interesting_weapons(it) then return true end
-  if alert_first_of_skill(it) then return true end
-  if alert_early_weapons(it) then return true end
-
-  -- Skip high score alerts if not using weapons
-  if _weapon_cache.is_empty() then return false end
-  return alert_weap_high_scores(it)
+  if get_weapon_alert(it) then
+    -- Confirm after updating cache, to avoid spurious alerts from XP gain.
+    f_pa_weapons.ready()
+    local a = get_weapon_alert(it)
+    if a then return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option) end
+  end
+  return false
 end
 
 -- Hook functions

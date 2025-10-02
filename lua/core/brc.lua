@@ -9,7 +9,7 @@ Dependencies: core/data.lua, core/util.lua
 
 -- Initialize
 BRC = BRC or {}
-BRC.VERSION = "1.1.0"
+BRC.VERSION = "1.2.0"
 BRC.active = false
 
 -- Local constants

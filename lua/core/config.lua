@@ -112,6 +112,7 @@ BRC.Config.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
 BRC.Config.pickup = {
   armour = true,
   weapons = true,
+  weapons_pure_upgrades_only = true,
   staves = true,
 } -- BRC.Config.pickup (do not remove this comment)
 
@@ -138,7 +139,7 @@ BRC.Config.alert = {
   }, -- BRC.Config.alert.one_time (do not remove this comment)
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-  OTA_require_skill = { weapon = 3, armour = 2.5, shield = 0 },
+  OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
 } -- BRC.Config.alert (do not remove this comment)
 
 -- Which alerts generate a force_more
