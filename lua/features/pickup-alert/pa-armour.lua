@@ -148,7 +148,7 @@ local function pickup_aux_armour(it)
     if not cur.artefact then break end
     if i == num_slots then return false end
   end
-  if it.is_identified and it.artefact then return true end
+  if it.artefact then return true end
 
   -- Pickup: Pure upgrades
   local it_ac = BRC.get.armour_ac(it)
@@ -206,10 +206,7 @@ local function alert_body_armour(it)
   if not cur then return false end
 
   -- Always alert artefacts once identified
-  if it.artefact then
-    if not it.is_identified then return false end
-    return send_armour_alert(it, ARMOUR_ALERT.artefact)
-  end
+  if it.artefact then return send_armour_alert(it, ARMOUR_ALERT.artefact) end
 
   -- Get changes to ego, AC, EV, encumbrance
   local it_ego = BRC.get.ego(it)
@@ -250,7 +247,6 @@ end
 
 local function alert_shield(it)
   if it.artefact then
-    if not it.is_identified then return false end
     return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.shields)
   end
 
@@ -270,7 +266,6 @@ end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    if not it.is_identified then return false end
     return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 

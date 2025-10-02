@@ -1227,7 +1227,7 @@ function BRC.get.ego(it, exclude_stat_only_egos)
     end
   end
 
-  return it.artefact and it.name() or nil
+  if it.artefact then return it.name() end
 end
 
 function BRC.get.hands(it)

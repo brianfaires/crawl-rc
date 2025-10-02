@@ -9,7 +9,6 @@ f_pa_misc = {}
 --f_pa_misc.BRC_FEATURE_NAME = "pickup-alert-misc"
 
 function f_pa_misc.alert_orb(it)
-  if not it.is_identified then return false end
   return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, BRC.Config.fm_alert.orbs)
 end
 
@@ -41,7 +40,6 @@ function f_pa_misc.alert_OTA(it)
 end
 
 function f_pa_misc.alert_staff(it)
-  if not it.is_identified then return false end
   local needRes = false
   local basename = it.name("base")
 
@@ -63,7 +61,6 @@ end
 
 function f_pa_misc.alert_talisman(it)
   if it.artefact then
-    if not it.is_identified then return false end
     return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
   end
   local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
@@ -86,5 +83,5 @@ function f_pa_misc.is_unneeded_ring(it)
 end
 
 function f_pa_misc.pickup_staff(it)
-  return it.is_identified and BRC.get.skill(BRC.get.staff_school(it)) > 0
+  return BRC.get.skill(BRC.get.staff_school(it)) > 0
 end

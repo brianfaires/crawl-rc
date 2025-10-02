@@ -2226,7 +2226,7 @@ function BRC.get.ego(it, exclude_stat_only_egos)
     end
   end
 
-  return it.artefact and it.name() or nil
+  if it.artefact then return it.name() end
 end
 
 function BRC.get.hands(it)
@@ -4747,7 +4747,7 @@ function f_pickup_alert.autopickup(it, _)
     not BRC.active or
     pause_pa_system or
     you.have_orb() or
-    BRC.get.ego(it) and not it.is_identified
+    not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
   ) then return end
 
   local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
@@ -5203,7 +5203,7 @@ local function pickup_aux_armour(it)
     if not cur.artefact then break end
     if i == num_slots then return false end
   end
-  if it.is_identified and it.artefact then return true end
+  if it.artefact then return true end
 
   -- Pickup: Pure upgrades
   local it_ac = BRC.get.armour_ac(it)
@@ -5261,10 +5261,7 @@ local function alert_body_armour(it)
   if not cur then return false end
 
   -- Always alert artefacts once identified
-  if it.artefact then
-    if not it.is_identified then return false end
-    return send_armour_alert(it, ARMOUR_ALERT.artefact)
-  end
+  if it.artefact then return send_armour_alert(it, ARMOUR_ALERT.artefact) end
 
   -- Get changes to ego, AC, EV, encumbrance
   local it_ego = BRC.get.ego(it)
@@ -5305,7 +5302,6 @@ end
 
 local function alert_shield(it)
   if it.artefact then
-    if not it.is_identified then return false end
     return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.shields)
   end
 
@@ -5325,7 +5321,6 @@ end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    if not it.is_identified then return false end
     return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 
@@ -5397,7 +5392,6 @@ f_pa_misc = {}
 --f_pa_misc.BRC_FEATURE_NAME = "pickup-alert-misc"
 
 function f_pa_misc.alert_orb(it)
-  if not it.is_identified then return false end
   return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, BRC.Config.fm_alert.orbs)
 end
 
@@ -5429,7 +5423,6 @@ function f_pa_misc.alert_OTA(it)
 end
 
 function f_pa_misc.alert_staff(it)
-  if not it.is_identified then return false end
   local needRes = false
   local basename = it.name("base")
 
@@ -5451,7 +5444,6 @@ end
 
 function f_pa_misc.alert_talisman(it)
   if it.artefact then
-    if not it.is_identified then return false end
     return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
   end
   local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
@@ -5474,7 +5466,7 @@ function f_pa_misc.is_unneeded_ring(it)
 end
 
 function f_pa_misc.pickup_staff(it)
-  return it.is_identified and BRC.get.skill(BRC.get.staff_school(it)) > 0
+  return BRC.get.skill(BRC.get.staff_school(it)) > 0
 end
 
 }
@@ -5630,7 +5622,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local it_ego = BRC.get.ego(it)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
-    if it_ego and it.is_identified and not cur_ego then
+    if it_ego and not cur_ego then
       return BRC.get.weap_score(it) / cur.score > BRC.Tuning.weap.pickup.add_ego
     end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
@@ -5681,16 +5673,11 @@ end
 
 local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
-  if you.xl() <= BRC.Tuning.weap.alert.early_ranged.xl then
-    if it.is_identified and it.is_ranged then
-      if
-        it.plus >= BRC.Tuning.weap.alert.early_ranged.min_plus and BRC.get.ego(it)
-        or it.plus >= BRC.Tuning.weap.alert.early_ranged.branded_min_plus
-      then
-        local low_shield_training = you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields
-        if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
-          return make_alert(it, "Ranged weapon", BRC.Emoji.RANGED, BRC.Config.fm_alert.early_weap)
-        end
+  if it.is_ranged and you.xl() <= BRC.Tuning.weap.alert.early_ranged.xl then
+    if it.plus >= BRC.Tuning.weap.alert.early_ranged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"] then
+      local low_shield_training = you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields
+      if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
+        return make_alert(it, "Ranged weapon", BRC.Emoji.RANGED, BRC.Config.fm_alert.early_weap)
       end
     end
   end
@@ -5738,7 +5725,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
     return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
   end
 
-  if it.artefact and it.is_identified then return make_alert(it, "Artefact weapon", BRC.Emoji.ARTEFACT) end
+  if it.artefact then return make_alert(it, "Artefact weapon", BRC.Emoji.ARTEFACT) end
   if cur.subtype() == it.subtype() then return get_upgrade_alert_same_type(it, cur, best_dps, best_score) end
   if not is_valid_upgrade(it, cur) then return end
 
