@@ -81,12 +81,13 @@ The pickup-alert system provides smart autopickup that grabs items you definitel
   These can be used to adjust the frequency of different alerts to your preferences.)
 
 ### Pickup Categories
-- **`pa-armour.lua`** - Picks up armour upgrades, alerts for new egos and high AC items
-- **`pa-weapons.lua`** - Picks up upgrades to any weapon in inventory, **ignoring any inscribed with `!u` or `!brc`.**
-  (i.e. inscribe `!u` on any weapon you don't want upgrades for.)
+- **`pa-armour.lua`** - Picks up armour upgrades, alerts for new egos, or anything with a plausible tradeoff of AC/encumbrance/ego
+- **`pa-weapons.lua`** - Checks every weapon in inventory for upgrades/alerts. **ignores any weapon inscribed with `!u` or `!brc`.**
+  i.e. inscribe `!u` if you want to carry a weapon but don't want upgrades. (This is because pickup is based on current damage.
+  You may want to carry a +0 broad axe, but not pick up every enchanted war axe you find.)
   Alerts fire for artefacts, new egos, strong early weapons, first ranged/polearm, highest flat damage, ...
 - **`pa-misc.lua`** - Picks up relevant staves. Alerts fire for orbs, relevant talismans, and a list of
-  "one-time alerts" that fire the first time you encounter a specific item (e.g. Wand of Digging)
+  "one-time alerts" that fire the first time you encounter a specific item (e.g. Broad axe, or Wand of Digging)
 
 ### Core Files
 - **`pa-main.lua`** - Main controller and autopickup function

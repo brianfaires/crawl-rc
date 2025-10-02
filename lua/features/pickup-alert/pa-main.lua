@@ -83,13 +83,13 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local item_name = f_pa_data.get_keyname(it, true)
   local alert_col
   if it.is_weapon then
-    alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
+    alert_col = BRC.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
     item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
   elseif BRC.is.body_armour(it) then
-    alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
+    alert_col = BRC.AlertColor.body_arm
     local ac, ev = BRC.get.armour_stats(it)
     local armour_info = string.format(" {%s, %s}", ac, ev)
     item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)

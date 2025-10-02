@@ -201,11 +201,10 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
   -- end
 end
 
--- If training armour in early/mid game, alert user to any armour that is the strongest found so far
-local function alert_pa_high_score_ac(it)
-  if not BRC.is.body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
+-- Alert the highest AC armour, unless training spells/ranged and NOT armour
+local function alert_highest_ac(it)
   if you.xl() > 12 then return false end
+  if you.skill("Spellcasting") > 0 + you.skill("Ranged Weapons") > 0 and you.skill("Armour") == 0 then return false end
 
   if pa_high_score.ac == 0 then
     local worn = items.equipped_at("armour")
@@ -263,7 +262,7 @@ local function alert_body_armour(it)
   end
 
   -- Alert for highest AC found so far, or early armour with any ego
-  if alert_pa_high_score_ac(it) then return true end
+  if alert_highest_ac(it) then return true end
   if it_ego and you.xl() <= BRC.Tuning.armour.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
   end
