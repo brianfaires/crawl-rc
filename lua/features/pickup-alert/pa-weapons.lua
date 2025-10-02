@@ -215,8 +215,10 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only look at their DPS)
-    if not cur.artefact and it_ego and it_ego ~= BRC.get.ego(cur) then
-      return f_pickup_alert.do_alert(it, "Diff ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+    local cur_ego = BRC.get.ego(cur)
+    if not cur.artefact and it_ego and it_ego ~= cur_ego then
+      local alert_msg = cur_ego and "Diff ego" or "Gain ego"
+      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
     elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
       return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
     end
@@ -282,15 +284,14 @@ end
 function f_pa_weapons.pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if need_first_weapon() then
-    -- Staves don't go into _weapon_cache; check if we're carrying just a staff
+    -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
     for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.is_weapon then return false end -- fastest way to check if it's a staff
+      if inv.is_weapon then return false end
     end
     return true
   end
 
   if BRC.is.risky_item(it) then return false end
-  if f_pa_data.find(pa_items_picked, it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
     if inv.allow_upgrade and is_weapon_upgrade(it, inv) then return true end
   end

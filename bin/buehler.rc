@@ -1672,6 +1672,16 @@ function BRC.mpr.yesno(text, color, capital_only)
 end
 
 ---- BRC.get - Functions to get non-boolean data ----
+function BRC.get.num_equip_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.is.aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
+end
 
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
@@ -1683,19 +1693,18 @@ function BRC.get.command_key(cmd)
 end
 
 --[[
-BRC.get.equipped_aux() - Returns 2 values:
-  1. A list of equipped items of the type
+BRC.get.equipped_at() - Returns 2 values:
+  1. A list of equipped items at the same slot as the item
   2. the num_slots (ie maximum size the list can ever be). This is usually a list of length 1, with num_slots==1.
-  Poltergeists will get all worn aux armours and num_slots=6.
-The length of the list <= num_slots.
+  Poltergeists, Coglin, and Formicid may have more
 --]]
-function BRC.get.equipped_aux(aux_type)
+function BRC.get.equipped_at(it)
   local all_aux = {}
-  local num_slots = you.race() == "Poltergeist" and 6 or 1
-  if aux_type == "gloves" and you.race() == "Formicid" then num_slots = 2 end
+  local num_slots = BRC.get.num_equip_slots(it)
+  local slot_name = it.is_weapon and "weapon" or BRC.is.body_armour(it) and "armour" or it.subtype()
   for i = 1, num_slots do
-    local it = items.equipped_at(aux_type, i)
-    all_aux[#all_aux + 1] = it
+    local eq = items.equipped_at(slot_name, i)
+    all_aux[#all_aux + 1] = eq
   end
   return all_aux, num_slots
 end
@@ -3485,8 +3494,7 @@ function f_drop_inferior.c_assign_invletter(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if not (it.is_weapon or BRC.is.armour(it)) or BRC.is.risky_item(it) then return end
-  if you.race() == "Poltergeist" and BRC.is.armour(it) then return end
-  if you.race() == "Formicid" and it.subtype() == "gloves" then return end
+  if BRC.get.num_equip_slots(it) > 1 then return end
 
   local it_ego = BRC.get.ego(it)
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -3876,7 +3884,7 @@ local function remove_statuses_from_config()
   end
   for _, s in ipairs(to_remove) do
     util.remove(BRC.Config.rest_off_statuses, s)
-    crawl.error(string.format("  Removed: %s", s))
+    BRC.log.error(string.format("  Removed: %s", s))
   end
 end
 
@@ -4734,24 +4742,16 @@ end
 
 -- Public API
 function f_pickup_alert.autopickup(it, _)
-  local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
-  if pause_pa_system then return end
-  if you.have_orb() then return end
-  if BRC.get.ego(it) and not it.is_identified then return false end
-  if not it.is_useless then
-    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
-      if f_pa_armour.pickup_armour(it) then return true end
-    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
-      if f_pa_misc.pickup_staff(it) then return true end
-    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
-      if f_pa_weapons.pickup_weapon(it) then return true end
-    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
-      return false
-    end
-  else
-    -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-    if BRC.is.aux_armour(it) then return end
+  if (
+    pause_pa_system or
+    you.have_orb() or
+    BRC.get.ego(it) and not it.is_identified
+  ) then return end
 
+  local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
+  if it.is_useless then
+    -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
+    if not BRC.is.aux_armour(it) then return end
     local st = it.subtype()
     for inv in iter.invent_iterator:new(items.inventory()) do
       local inv_st = inv.subtype()
@@ -4761,6 +4761,17 @@ function f_pickup_alert.autopickup(it, _)
       end
     end
     if not unworn_aux_item then return end
+  else
+    -- Pickup main
+    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
+      if f_pa_armour.pickup_armour(it) then return true end
+    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
+      if f_pa_misc.pickup_staff(it) then return true end
+    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
+      if f_pa_weapons.pickup_weapon(it) then return true end
+    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
+      return false
+    end
   end
 
   -- Not picking up this item. Now check for alerts.
@@ -4787,13 +4798,13 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local item_name = f_pa_data.get_keyname(it, true)
   local alert_col
   if it.is_weapon then
-    alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
+    alert_col = BRC.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
     item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
   elseif BRC.is.body_armour(it) then
-    alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
+    alert_col = BRC.AlertColor.body_arm
     local ac, ev = BRC.get.armour_stats(it)
     local armour_info = string.format(" {%s, %s}", ac, ev)
     item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
@@ -4862,17 +4873,16 @@ end
 function f_pickup_alert.c_assign_invletter(it)
   f_pa_misc.alert_OTA(it)
   f_pa_data.remove(pa_recent_alerts, it)
-  if it.is_weapon and you.race() == "Coglin" then
-    -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
-    -- ie, Reset the alert the first time you pick up.
-    if f_pa_data.find(pa_items_picked, it) then f_pa_data.remove(pa_items_alerted, it) end
+
+  -- Re-enable the alert, iff we are able to use another one
+  if BRC.get.num_equip_slots(it) > 1 then
+    f_pa_data.remove(pa_items_alerted, it)
   end
 
-  f_pa_data.insert(pa_items_picked, it)
-
+  -- Ensure we always stop for these autopickup types
   if it.is_weapon or BRC.is.armour(it) then
     f_pa_data.update_high_scores(it)
-    you.stop_activity() -- crawl misses this sometimes
+    you.stop_activity()
   end
 end
 
@@ -4917,7 +4927,6 @@ f_pa_data = {}
 --f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
 
 -- Persistent variables
-pa_items_picked = BRC.data.persist("pa_items_picked", {})
 pa_items_alerted = BRC.data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.data.persist("pa_recent_alerts", {})
 pa_OTA_items = BRC.data.persist("pa_OTA_items", BRC.Config.alert.one_time)
@@ -4983,7 +4992,7 @@ function f_pa_data.remove(table_ref, it)
     util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
   else
     local name, _ = get_pa_keys(it)
-    util.remove(table_ref, name)
+    table_ref[name] = nil
   end
 end
 
@@ -5031,7 +5040,6 @@ function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
-    f_pa_data.insert(pa_items_picked, inv)
   end
 end
 
@@ -5135,35 +5143,26 @@ end
 
 -- Local functions: Pickup
 local function pickup_body_armour(it)
-  if f_pa_data.find(pa_items_picked, it) then return false end
-
   local cur = items.equipped_at("armour")
   if not cur then return false end -- surely am naked for a reason
 
-  -- No pickup if either item is an artefact
-  if cur.artefact or it.artefact then return false end
+  -- No pickup if wearing an artefact
+  if cur.artefact then return false end
 
   -- No pickup if adding encumbrance or losing AC
   local encumb_delta = it.encumbrance - cur.encumbrance
   if encumb_delta > 0 then return false end
-
   local ac_delta = BRC.get.armour_ac(it) - BRC.get.armour_ac(cur)
   if ac_delta < 0 then return false end
 
-  -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
+  -- Pickup: Pure upgrades
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if cur_ego then
-    if not it_ego then return false end
-    return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
-  else
-    return it_ego or ac_delta > 0 or encumb_delta < 0
-  end
+  if it_ego == cur_ego then return (ac_delta > 0 or encumb_delta < 0) end
+  return not cur_ego and (ac_delta >= 0 or encumb_delta <= 0)
 end
 
 local function pickup_shield(it)
-  if f_pa_data.find(pa_items_picked, it) then return false end
-
   -- Don't replace these
   local cur = items.equipped_at("offhand")
   if not BRC.is.shield(cur) then return false end
@@ -5173,37 +5172,28 @@ local function pickup_shield(it)
   -- Pickup: artefact
   if it.artefact then return true end
 
-  -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
+  -- Pickup: Pure upgrades
   local it_plus = it.plus or 0
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if cur_ego then
-    if it_ego == cur_ego then return it_plus > cur.plus end
-    return it_ego and it_plus >= cur.plus
-  end
-  return it_ego or it_plus > cur.plus
+  if it_ego == cur_ego then return it_plus > cur.plus end
+  return not cur_ego and it_plus >= cur.plus
 end
 
 local function pickup_aux_armour(it)
   -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  local st = it.subtype()
-  local all_equipped, num_slots = BRC.get.equipped_aux(st)
-
-  if num_slots == #all_equipped then
-    -- Block duplicate pickup iff all slots full
-    if f_pa_data.find(pa_items_picked, it) then return false end
-  elseif #all_equipped < num_slots then
+  local all_equipped, num_slots = BRC.get.equipped_at(it)
+  if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
     if #all_equipped == 0 and num_slots == 1 then
+      local st = it.subtype()
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.subtype() == st then return false end
       end
     end
-
     return true
   end
-
 
   -- Pickup: artefact, unless slot(s) already full of artefact(s)
   for i, cur in ipairs(all_equipped) do
@@ -5212,21 +5202,19 @@ local function pickup_aux_armour(it)
   end
   if it.is_identified and it.artefact then return true end
 
-  -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
+  -- Pickup: Pure upgrades
   local it_ac = BRC.get.armour_ac(it)
   local it_ego = BRC.get.ego(it)
   for _, cur in ipairs(all_equipped) do
     local cur_ac = BRC.get.armour_ac(cur)
     local cur_ego = BRC.get.ego(cur)
-    if cur_ego then
-      if it_ego then
-        if it_ac > cur_ac then return true end
-        if it_ac == cur_ac and it_ego ~= cur_ego then return true end
-      end
-    else
-      if it_ego or it_ac > cur_ac then return true end
+    if it_ego == cur_ego then
+      if it_ac > cur_ac then return true end
+    elseif not cur_ego then
+      if it_ac >= cur_ac then return true end
     end
   end
+  return false
 end
 
 -- Local functions: Alerting
@@ -5242,34 +5230,12 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
   end
 
   return true
-  -- local function should_alert_lighter_armour(ac_delta, ev_delta, ego_change)
-  --     local meets_ratio = ac_delta >= 0 or (ev_delta / -ac_delta > BRC.Tuning.armour.lighter[ego_change])
-  --     if not meets_ratio then return false end
-
-  --     -- Apply ego-specific restrictions
-  --     if ego_change == LOST and ev_delta < BRC.Tuning.armour.lighter.min_gain then return false end
-  --     if ego_change ~= SAME and -ac_delta > BRC.Tuning.armour.lighter.max_loss then return false end
-
-  --     return true
-  -- end
-
-  -- local function should_alert_heavier_armour(ac_delta, ev_delta, ego_change)
-  --     local meets_ratio = ev_delta >= 0 or (ac_delta / -ev_delta > BRC.Tuning.armour.heavier[ego_change])
-  --     if not meets_ratio then return false end
-
-  --     -- Apply ego-specific restrictions
-  --     if ego_change == LOST and ac_delta < BRC.Tuning.armour.heavier.min_gain then return false end
-  --     if ego_change ~= SAME and -ev_delta > BRC.Tuning.armour.heavier.max_loss then return false end
-
-  --     return true
-  -- end
 end
 
--- If training armour in early/mid game, alert user to any armour that is the strongest found so far
-local function alert_pa_high_score_ac(it)
-  if not BRC.is.body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
+-- Alert the highest AC armour, unless training spells/ranged and NOT armour
+local function alert_highest_ac(it)
   if you.xl() > 12 then return false end
+  if you.skill("Spellcasting") > 0 + you.skill("Ranged Weapons") > 0 and you.skill("Armour") == 0 then return false end
 
   if pa_high_score.ac == 0 then
     local worn = items.equipped_at("armour")
@@ -5327,7 +5293,7 @@ local function alert_body_armour(it)
   end
 
   -- Alert for highest AC found so far, or early armour with any ego
-  if alert_pa_high_score_ac(it) then return true end
+  if alert_highest_ac(it) then return true end
   if it_ego and you.xl() <= BRC.Tuning.armour.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
   end
@@ -5359,7 +5325,7 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 
-  local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
+  local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     if unworn_inv_item then
       all_equipped[#all_equipped + 1] = unworn_inv_item
@@ -5455,7 +5421,7 @@ function f_pa_misc.alert_OTA(it)
 
   f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Rare item", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
 end
 
 function f_pa_misc.alert_staff(it)
@@ -5504,9 +5470,7 @@ function f_pa_misc.is_unneeded_ring(it)
 end
 
 function f_pa_misc.pickup_staff(it)
-  if not it.is_identified then return false end
-  if BRC.get.skill(BRC.get.staff_school(it)) == 0 then return false end
-  return not f_pa_data.find(pa_items_picked, it)
+  return it.is_identified and BRC.get.skill(BRC.get.staff_school(it)) > 0
 end
 
 }
@@ -5733,8 +5697,10 @@ local function alert_interesting_weapon(it, cur)
   if cur.subtype() == it.subtype() then
     -- Exact weapon type match; alert new egos or higher DPS/weap_score
     local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only look at their DPS)
-    if not cur.artefact and it_ego and it_ego ~= BRC.get.ego(cur) then
-      return f_pickup_alert.do_alert(it, "Diff ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+    local cur_ego = BRC.get.ego(cur)
+    if not cur.artefact and it_ego and it_ego ~= cur_ego then
+      local alert_msg = cur_ego and "Diff ego" or "Gain ego"
+      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
     elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
       return f_pickup_alert.do_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
     end
@@ -5798,8 +5764,6 @@ end
 
 -- Public API
 function f_pa_weapons.pickup_weapon(it)
-  if f_pa_data.find(pa_items_picked, it) then return false end
-
   -- Check if we need the first weapon of the game
   if need_first_weapon() then
     -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)

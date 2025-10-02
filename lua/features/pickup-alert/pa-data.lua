@@ -9,7 +9,6 @@ f_pa_data = {}
 --f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
 
 -- Persistent variables
-pa_items_picked = BRC.data.persist("pa_items_picked", {})
 pa_items_alerted = BRC.data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.data.persist("pa_recent_alerts", {})
 pa_OTA_items = BRC.data.persist("pa_OTA_items", BRC.Config.alert.one_time)
@@ -48,10 +47,19 @@ end
 function f_pa_data.insert(table_ref, it)
   if table_ref == pa_recent_alerts then
     pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
-  elseif it.is_weapon or BRC.is.armour(it, true) or BRC.is.talisman(it) then
+  else
+    local is_armour = BRC.is.armour(it, true)
+    if not (it.is_weapon or is_armour or BRC.is.talisman(it)) then return end
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then table_ref[name] = value end
+
+    -- For armour with good brand, also add the unbranded version to the table
+    if is_armour and it.branded and not (it.artefact or BRC.is.risky_item(it)) then
+      name = it.name("qual")
+      cur_val = tonumber(table_ref[name])
+      if not cur_val or value > cur_val then table_ref[name] = value end
+    end
   end
 end
 
@@ -66,7 +74,7 @@ function f_pa_data.remove(table_ref, it)
     util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
   else
     local name, _ = get_pa_keys(it)
-    util.remove(table_ref, name)
+    table_ref[name] = nil
   end
 end
 
@@ -114,6 +122,5 @@ function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
-    f_pa_data.insert(pa_items_picked, inv)
   end
 end

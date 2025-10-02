@@ -94,31 +94,25 @@ local function pickup_body_armour(it)
   local cur = items.equipped_at("armour")
   if not cur then return false end -- surely am naked for a reason
 
-  -- No pickup if either item is an artefact
-  if cur.artefact or it.artefact then return false end
+  -- No pickup if wearing an artefact
+  if cur.artefact then return false end
 
   -- No pickup if adding encumbrance or losing AC
   local encumb_delta = it.encumbrance - cur.encumbrance
   if encumb_delta > 0 then return false end
-
   local ac_delta = BRC.get.armour_ac(it) - BRC.get.armour_ac(cur)
   if ac_delta < 0 then return false end
 
-  -- Pickup: Diff ego, Gain AC (w/o losing ego), Lower encumbrance (w/o losing ego)
+  -- Pickup: Pure upgrades
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if cur_ego then
-    if not it_ego then return false end
-    return it_ego ~= cur_ego or ac_delta > 0 or encumb_delta < 0
-  else
-    return it_ego or ac_delta > 0 or encumb_delta < 0
-  end
+  if it_ego == cur_ego then return (ac_delta > 0 or encumb_delta < 0) end
+  return not cur_ego and (ac_delta >= 0 or encumb_delta <= 0)
 end
 
 local function pickup_shield(it)
-  local cur = items.equipped_at("offhand")
-
   -- Don't replace these
+  local cur = items.equipped_at("offhand")
   if not BRC.is.shield(cur) then return false end
   if cur.encumbrance ~= it.encumbrance then return false end
   if cur.artefact then return false end
@@ -126,31 +120,26 @@ local function pickup_shield(it)
   -- Pickup: artefact
   if it.artefact then return true end
 
-  -- Pickup: diff ego (w/o losing SH), gain ego, gain SH (w/o losing ego)
+  -- Pickup: Pure upgrades
   local it_plus = it.plus or 0
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if cur_ego then
-    if it_ego == cur_ego then return it_plus > cur.plus end
-    return it_ego and it_plus >= cur.plus
-  end
-  return it_ego or it_plus > cur.plus
+  if it_ego == cur_ego then return it_plus > cur.plus end
+  return not cur_ego and it_plus >= cur.plus
 end
 
 local function pickup_aux_armour(it)
-  -- Pickup: Anything if the slot is empty
+  -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  -- Use a list to support Poltergeists; for most races it's a 1-item list
-  local st = it.subtype()
-  local all_equipped, num_slots = BRC.get.equipped_aux(st)
+  local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
     if #all_equipped == 0 and num_slots == 1 then
+      local st = it.subtype()
       for inv in iter.invent_iterator:new(items.inventory()) do
         if inv.subtype() == st then return false end
       end
     end
-
     return true
   end
 
@@ -161,21 +150,19 @@ local function pickup_aux_armour(it)
   end
   if it.is_identified and it.artefact then return true end
 
-  -- Pickup: gain ego, gain AC (w/o losing ego), diff ego (w/o losing AC)
+  -- Pickup: Pure upgrades
   local it_ac = BRC.get.armour_ac(it)
   local it_ego = BRC.get.ego(it)
   for _, cur in ipairs(all_equipped) do
     local cur_ac = BRC.get.armour_ac(cur)
     local cur_ego = BRC.get.ego(cur)
-    if cur_ego then
-      if it_ego then
-        if it_ac > cur_ac then return true end
-        if it_ac == cur_ac and it_ego ~= cur_ego then return true end
-      end
-    else
-      if it_ego or it_ac > cur_ac then return true end
+    if it_ego == cur_ego then
+      if it_ac > cur_ac then return true end
+    elseif not cur_ego then
+      if it_ac >= cur_ac then return true end
     end
   end
+  return false
 end
 
 -- Local functions: Alerting
@@ -191,34 +178,12 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
   end
 
   return true
-  -- local function should_alert_lighter_armour(ac_delta, ev_delta, ego_change)
-  --     local meets_ratio = ac_delta >= 0 or (ev_delta / -ac_delta > BRC.Tuning.armour.lighter[ego_change])
-  --     if not meets_ratio then return false end
-
-  --     -- Apply ego-specific restrictions
-  --     if ego_change == LOST and ev_delta < BRC.Tuning.armour.lighter.min_gain then return false end
-  --     if ego_change ~= SAME and -ac_delta > BRC.Tuning.armour.lighter.max_loss then return false end
-
-  --     return true
-  -- end
-
-  -- local function should_alert_heavier_armour(ac_delta, ev_delta, ego_change)
-  --     local meets_ratio = ev_delta >= 0 or (ac_delta / -ev_delta > BRC.Tuning.armour.heavier[ego_change])
-  --     if not meets_ratio then return false end
-
-  --     -- Apply ego-specific restrictions
-  --     if ego_change == LOST and ac_delta < BRC.Tuning.armour.heavier.min_gain then return false end
-  --     if ego_change ~= SAME and -ev_delta > BRC.Tuning.armour.heavier.max_loss then return false end
-
-  --     return true
-  -- end
 end
 
--- If training armour in early/mid game, alert user to any armour that is the strongest found so far
-local function alert_pa_high_score_ac(it)
-  if not BRC.is.body_armour(it) then return false end
-  if you.skill("Armour") == 0 then return false end
+-- Alert the highest AC armour, unless training spells/ranged and NOT armour
+local function alert_highest_ac(it)
   if you.xl() > 12 then return false end
+  if you.skill("Spellcasting") > 0 + you.skill("Ranged Weapons") > 0 and you.skill("Armour") == 0 then return false end
 
   if pa_high_score.ac == 0 then
     local worn = items.equipped_at("armour")
@@ -276,7 +241,7 @@ local function alert_body_armour(it)
   end
 
   -- Alert for highest AC found so far, or early armour with any ego
-  if alert_pa_high_score_ac(it) then return true end
+  if alert_highest_ac(it) then return true end
   if it_ego and you.xl() <= BRC.Tuning.armour.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
   end
@@ -308,8 +273,7 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
   end
 
-  -- Use a list to support Poltergeists; for other races it's a 1-item list
-  local all_equipped, num_slots = BRC.get.equipped_aux(it.subtype())
+  local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     if unworn_inv_item then
       all_equipped[#all_equipped + 1] = unworn_inv_item

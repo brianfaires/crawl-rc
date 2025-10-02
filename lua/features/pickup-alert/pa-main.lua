@@ -27,24 +27,16 @@ end
 
 -- Public API
 function f_pickup_alert.autopickup(it, _)
-  local unworn_aux_item = nil -- Conditionally set below for pa-alert-armour
-  if pause_pa_system then return end
-  if you.have_orb() then return end
-  if BRC.get.ego(it) and not it.is_identified then return false end
-  if not it.is_useless then
-    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
-      if f_pa_armour.pickup_armour(it) then return true end
-    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
-      if f_pa_misc.pickup_staff(it) then return true end
-    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
-      if f_pa_weapons.pickup_weapon(it) then return true end
-    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
-      return false
-    end
-  else
-    -- Useless item; allow alerts for aux armour if you're carrying one (implies a temporary mutation)
-    if BRC.is.aux_armour(it) then return end
+  if (
+    pause_pa_system or
+    you.have_orb() or
+    BRC.get.ego(it) and not it.is_identified
+  ) then return end
 
+  local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
+  if it.is_useless then
+    -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
+    if not BRC.is.aux_armour(it) then return end
     local st = it.subtype()
     for inv in iter.invent_iterator:new(items.inventory()) do
       local inv_st = inv.subtype()
@@ -54,6 +46,17 @@ function f_pickup_alert.autopickup(it, _)
       end
     end
     if not unworn_aux_item then return end
+  else
+    -- Pickup main
+    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
+      if f_pa_armour.pickup_armour(it) then return true end
+    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
+      if f_pa_misc.pickup_staff(it) then return true end
+    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
+      if f_pa_weapons.pickup_weapon(it) then return true end
+    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
+      return false
+    end
   end
 
   -- Not picking up this item. Now check for alerts.
@@ -80,13 +83,13 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local item_name = f_pa_data.get_keyname(it, true)
   local alert_col
   if it.is_weapon then
-    alert_col = BRC.AlertColor.weapon
     f_pa_data.update_high_scores(it)
+    alert_col = BRC.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
     item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
   elseif BRC.is.body_armour(it) then
-    alert_col = BRC.AlertColor.body_arm
     f_pa_data.update_high_scores(it)
+    alert_col = BRC.AlertColor.body_arm
     local ac, ev = BRC.get.armour_stats(it)
     local armour_info = string.format(" {%s, %s}", ac, ev)
     item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
@@ -155,17 +158,16 @@ end
 function f_pickup_alert.c_assign_invletter(it)
   f_pa_misc.alert_OTA(it)
   f_pa_data.remove(pa_recent_alerts, it)
-  if it.is_weapon and you.race() == "Coglin" then
-    -- Allow 1 more alert for an identical weapon, if dual-wielding possible.
-    -- ie, Reset the alert the first time you pick up.
-    if f_pa_data.find(pa_items_picked, it) then f_pa_data.remove(pa_items_alerted, it) end
+
+  -- Re-enable the alert, iff we are able to use another one
+  if BRC.get.num_equip_slots(it) > 1 then
+    f_pa_data.remove(pa_items_alerted, it)
   end
 
-  f_pa_data.insert(pa_items_picked, it)
-
+  -- Ensure we always stop for these autopickup types
   if it.is_weapon or BRC.is.armour(it) then
     f_pa_data.update_high_scores(it)
-    you.stop_activity() -- crawl misses this sometimes
+    you.stop_activity()
   end
 end
 

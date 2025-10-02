@@ -76,7 +76,6 @@ globals = {
   "ma_saved_msg",
   "pa_high_score",
   "pa_items_alerted",
-  "pa_items_picked",
   "pa_num_autopickup_funcs",
   "pa_OTA_items",
   "pa_recent_alerts",
