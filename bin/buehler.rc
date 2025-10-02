@@ -15,9 +15,6 @@ BRC.Config = {}
 
 BRC.Config.emojis = false -- Use emojis in alerts and announcements
 
--- after-shaft.lua
-BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after shaft, until back to original level
-
 -- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
 BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
 BRC.Config.pack_timeout = 10 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
@@ -51,15 +48,10 @@ BRC.Config.announce = {
 } -- BRC.Config.announce (do not remove this comment)
 --]]
 
--- color-inscribe.lua
-BRC.Config.colorize_inscriptions = true -- Add color to any inscription on pickup (e.g. resistance, stat changes, etc)
-
 -- drop-inferior.lua
-BRC.Config.drop_inferior = true -- Mark items for drop when a strictly better item is picked up
 BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for drop
 
 -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
-BRC.Config.exclude_dropped = true -- Exclude items from future autopickup when dropped
 BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
 
 -- fully-recover.lua: Keep resting until these statuses are gone.
@@ -92,9 +84,6 @@ BRC.Config.stop_on_pan_gates = true -- stop explore on pan gates
 BRC.Config.temple_macros = true -- auto-search altars; run to exit after worship
 BRC.Config.gauntlet_macros = true -- auto-search with filters
 
--- safe-consumables.lua
-BRC.Config.safe_consumables = true -- Maintain !r and !q on all consumables without a built-in prompt
-
 -- safe-stairs.lua: Detect/warn for accidental stair usage
 BRC.Config.warn_v5 = true -- Prompt before entering Vaults:5
 BRC.Config.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
@@ -105,9 +94,6 @@ BRC.Config.auto_set_skill_targets = {
   { "Stealth", 2.0 }, -- First, focus stealth to 2.0
   { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
 } -- auto_set_skill_targets (do not remove this comment)
-
--- weapon-slots.lua: Always use a/b/w slots for weapons
-BRC.Config.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
 
 --[[
   Pickup/Alert system
@@ -2704,8 +2690,6 @@ as_shaft_branch = BRC.data.persist("as_shaft_branch", "NA")
 
 -- Hook functions
 function f_after_shaft.init()
-  if not BRC.Config.stop_on_stairs_after_shaft then return end
-
   if you.turns() == 0 and you.class() == "Delver" then
     as_shaft_depth = 1
     as_shaft_branch = you.branch()
@@ -2715,7 +2699,6 @@ function f_after_shaft.init()
 end
 
 function f_after_shaft.c_message(text, channel)
-  if not BRC.Config.stop_on_stairs_after_shaft then return end
   if channel ~= "plain" or BRC.you.in_hell() then return end
   if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
 
@@ -2729,7 +2712,6 @@ function f_after_shaft.c_message(text, channel)
 end
 
 function f_after_shaft.ready()
-  if not BRC.Config.stop_on_stairs_after_shaft then return end
   if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
     BRC.set.explore_stop("stairs", false)
     as_shaft_depth = 0
@@ -3410,7 +3392,6 @@ end
 
 -- Hook functions
 function f_color_inscribe.c_assign_invletter(it)
-  if not BRC.Config.colorize_inscriptions then return end
   if it.artefact then return end
   -- If enabled, call out to inscribe stats before coloring
   if f_inscribe_stats.do_stat_inscription then f_inscribe_stats.do_stat_inscription(it) end
@@ -3485,12 +3466,10 @@ end
 
 -- Hook functions
 function f_drop_inferior.init()
-  if not BRC.Config.drop_inferior then return end
   crawl.setopt(string.format("drop_filter += %s", DROP_KEY))
 end
 
 function f_drop_inferior.c_assign_invletter(it)
-  if not BRC.Config.drop_inferior then return end
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
@@ -3781,15 +3760,12 @@ end
 
 -- Hook functions
 function f_exclude_dropped.init()
-  if not BRC.Config.exclude_dropped then return end
-
   for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)
   end
 end
 
 function f_exclude_dropped.c_message(text, channel)
-  if not BRC.Config.exclude_dropped then return end
   if channel ~= "plain" then return end
 
   local picked_up = BRC.text.get_pickup_info(text)
@@ -4391,7 +4367,6 @@ local NO_INSCRIPTION_NEEDED = {
 
 -- Hook functions
 function f_safe_consumables.ready()
-  if not BRC.Config.safe_consumables then return end
   -- Remove the default "!r" and "!q" inscriptions after identify
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_class = inv.class(true)
@@ -4666,7 +4641,6 @@ function f_weapon_slots.init()
 end
 
 function f_weapon_slots.c_assign_invletter(it)
-  if not BRC.Config.do_auto_weapon_slots_abw then return end
   if not it.is_weapon then return end
 
   for _, i in ipairs({ "a", "b", "w" }) do
@@ -4687,7 +4661,6 @@ function f_weapon_slots.c_assign_invletter(it)
 end
 
 function f_weapon_slots.c_message(text, channel)
-  if not BRC.Config.do_auto_weapon_slots_abw then return end
   do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
 end
 

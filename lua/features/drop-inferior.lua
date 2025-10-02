@@ -25,12 +25,10 @@ end
 
 -- Hook functions
 function f_drop_inferior.init()
-  if not BRC.Config.drop_inferior then return end
   crawl.setopt(string.format("drop_filter += %s", DROP_KEY))
 end
 
 function f_drop_inferior.c_assign_invletter(it)
-  if not BRC.Config.drop_inferior then return end
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 

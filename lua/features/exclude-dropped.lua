@@ -97,15 +97,12 @@ end
 
 -- Hook functions
 function f_exclude_dropped.init()
-  if not BRC.Config.exclude_dropped then return end
-
   for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)
   end
 end
 
 function f_exclude_dropped.c_message(text, channel)
-  if not BRC.Config.exclude_dropped then return end
   if channel ~= "plain" then return end
 
   local picked_up = BRC.text.get_pickup_info(text)

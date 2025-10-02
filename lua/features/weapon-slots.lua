@@ -112,7 +112,6 @@ function f_weapon_slots.init()
 end
 
 function f_weapon_slots.c_assign_invletter(it)
-  if not BRC.Config.do_auto_weapon_slots_abw then return end
   if not it.is_weapon then return end
 
   for _, i in ipairs({ "a", "b", "w" }) do
@@ -133,7 +132,6 @@ function f_weapon_slots.c_assign_invletter(it)
 end
 
 function f_weapon_slots.c_message(text, channel)
-  if not BRC.Config.do_auto_weapon_slots_abw then return end
   do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
 end
 

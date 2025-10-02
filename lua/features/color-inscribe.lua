@@ -72,7 +72,6 @@ end
 
 -- Hook functions
 function f_color_inscribe.c_assign_invletter(it)
-  if not BRC.Config.colorize_inscriptions then return end
   if it.artefact then return end
   -- If enabled, call out to inscribe stats before coloring
   if f_inscribe_stats.do_stat_inscription then f_inscribe_stats.do_stat_inscription(it) end

@@ -10,9 +10,6 @@ BRC.Config = {}
 
 BRC.Config.emojis = false -- Use emojis in alerts and announcements
 
--- after-shaft.lua
-BRC.Config.stop_on_stairs_after_shaft = true -- Stop explore on stairs after shaft, until back to original level
-
 -- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
 BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
 BRC.Config.pack_timeout = 10 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
@@ -46,15 +43,10 @@ BRC.Config.announce = {
 } -- BRC.Config.announce (do not remove this comment)
 --]]
 
--- color-inscribe.lua
-BRC.Config.colorize_inscriptions = true -- Add color to any inscription on pickup (e.g. resistance, stat changes, etc)
-
 -- drop-inferior.lua
-BRC.Config.drop_inferior = true -- Mark items for drop when a strictly better item is picked up
 BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for drop
 
 -- exclude-dropped.lua: Disables auto-pickup for whatever you drop
-BRC.Config.exclude_dropped = true -- Exclude items from future autopickup when dropped
 BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
 
 -- fully-recover.lua: Keep resting until these statuses are gone.
@@ -87,9 +79,6 @@ BRC.Config.stop_on_pan_gates = true -- stop explore on pan gates
 BRC.Config.temple_macros = true -- auto-search altars; run to exit after worship
 BRC.Config.gauntlet_macros = true -- auto-search with filters
 
--- safe-consumables.lua
-BRC.Config.safe_consumables = true -- Maintain !r and !q on all consumables without a built-in prompt
-
 -- safe-stairs.lua: Detect/warn for accidental stair usage
 BRC.Config.warn_v5 = true -- Prompt before entering Vaults:5
 BRC.Config.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
@@ -100,9 +89,6 @@ BRC.Config.auto_set_skill_targets = {
   { "Stealth", 2.0 }, -- First, focus stealth to 2.0
   { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
 } -- auto_set_skill_targets (do not remove this comment)
-
--- weapon-slots.lua: Always use a/b/w slots for weapons
-BRC.Config.do_auto_weapon_slots_abw = true -- Auto-move weapons to a/b/w slots
 
 --[[
   Pickup/Alert system
