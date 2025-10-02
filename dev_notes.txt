@@ -10,6 +10,7 @@
 1. On drop_inferior inscribe, if safe(), offer to drop item
 1. Armour ego alerts: identify new egos or missing resistances (not just compared to cur inventory)
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
+1. fully-rest: wait for ancestor to reappear before exploring
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal

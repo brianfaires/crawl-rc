@@ -18,6 +18,7 @@ $i_heal := green
 $i_emergency := lightcyan
 $i_rare := yellow
 
+
 # First, color uselessness everywhere
 menu += $i_boring:(melded|useless_item)
 menu += $i_warning:forbidden
@@ -29,7 +30,7 @@ menu += pickup:lightgreen:artefact.*weapon
 menu += pickup:lightcyan:artefact.*armour
 menu += pickup:yellow:artefact
 menu += pickup:magenta:jewellery
-menu += pickup:lightblue:(ego|(unidentified.*(glowing|runed|shiny|embroidered)))
+menu += pickup:lightblue:(ego|(unidentified.*(glowing|runed|shiny|embroidered)|troll leather|dragon scales))
 menu += pickup:magenta:(wand|cui_rare|disjunction|throwing net)
 menu += pickup:$i_normal:(missile|weapon|armour)
 menu += brown:spellbook
@@ -67,7 +68,7 @@ menu += blue:(talisman|bauble)
 menu += lightmagenta:evoker
 
 # Missiles
-menu += $i_emergency:(cui_rare|disjunction|throwing net)
+menu += $i_emergency:(curare|disjunction|throwing net)
 menu += $i_normal:missile
 
 # Potions
