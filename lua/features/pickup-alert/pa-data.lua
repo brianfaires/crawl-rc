@@ -74,7 +74,7 @@ function f_pa_data.remove(table_ref, it)
     util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
   else
     local name, _ = get_pa_keys(it)
-    util.remove(table_ref, name)
+    table_ref[name] = nil
   end
 end
 
@@ -122,6 +122,5 @@ function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
-    f_pa_data.insert(pa_items_alerted, inv)
   end
 end

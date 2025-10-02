@@ -106,8 +106,8 @@ local function pickup_body_armour(it)
   -- Pickup: Pure upgrades
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if not cur_ego then return it_ego or ac_delta > 0 or encumb_delta < 0 end
-  return it_ego == cur_ego and (ac_delta > 0 or encumb_delta < 0)
+  if it_ego == cur_ego then return (ac_delta > 0 or encumb_delta < 0) end
+  return not cur_ego and (ac_delta >= 0 or encumb_delta <= 0)
 end
 
 local function pickup_shield(it)
@@ -124,8 +124,8 @@ local function pickup_shield(it)
   local it_plus = it.plus or 0
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if not cur_ego then return it_ego and it_plus >= cur.plus end
-  return it_ego == cur_ego and it_plus > cur.plus
+  if it_ego == cur_ego then return it_plus > cur.plus end
+  return not cur_ego and it_plus >= cur.plus
 end
 
 local function pickup_aux_armour(it)
@@ -156,10 +156,10 @@ local function pickup_aux_armour(it)
   for _, cur in ipairs(all_equipped) do
     local cur_ac = BRC.get.armour_ac(cur)
     local cur_ego = BRC.get.ego(cur)
-    if not cur_ego then
-      if it_ego and it_ac >= cur_ac then return true end
-    elseif it_ego == cur_ego and it_ac > cur_ac then
-      return true
+    if it_ego == cur_ego then
+      if it_ac > cur_ac then return true end
+    elseif not cur_ego then
+      if it_ac >= cur_ac then return true end
     end
   end
   return false
