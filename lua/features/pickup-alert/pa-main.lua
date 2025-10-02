@@ -160,7 +160,7 @@ function f_pickup_alert.c_assign_invletter(it)
   f_pa_data.remove(pa_recent_alerts, it)
 
   -- Re-enable the alert, iff we are able to use another one
-  if BRC.get.available_slots(it) > 1 then
+  if BRC.get.num_equip_slots(it) > 1 then
     f_pa_data.remove(pa_items_alerted, it)
   end
 

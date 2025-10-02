@@ -1672,7 +1672,7 @@ function BRC.mpr.yesno(text, color, capital_only)
 end
 
 ---- BRC.get - Functions to get non-boolean data ----
-function BRC.get.available_slots(it)
+function BRC.get.num_equip_slots(it)
   local player_race = you.race()
   if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
   if BRC.is.aux_armour(it) then
@@ -1700,7 +1700,7 @@ BRC.get.equipped_at() - Returns 2 values:
 --]]
 function BRC.get.equipped_at(it)
   local all_aux = {}
-  local num_slots = BRC.get.available_slots(it)
+  local num_slots = BRC.get.num_equip_slots(it)
   local slot_name = it.is_weapon and "weapon" or BRC.is.body_armour(it) and "armour" or it.subtype()
   for i = 1, num_slots do
     local eq = items.equipped_at(slot_name, i)
@@ -3494,8 +3494,7 @@ function f_drop_inferior.c_assign_invletter(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if not (it.is_weapon or BRC.is.armour(it)) or BRC.is.risky_item(it) then return end
-  if you.race() == "Poltergeist" and BRC.is.armour(it) then return end
-  if you.race() == "Formicid" and it.subtype() == "gloves" then return end
+  if BRC.get.num_equip_slots(it) > 1 then return end
 
   local it_ego = BRC.get.ego(it)
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -3885,7 +3884,7 @@ local function remove_statuses_from_config()
   end
   for _, s in ipairs(to_remove) do
     util.remove(BRC.Config.rest_off_statuses, s)
-    crawl.error(string.format("  Removed: %s", s))
+    BRC.log.error(string.format("  Removed: %s", s))
   end
 end
 
@@ -4876,7 +4875,7 @@ function f_pickup_alert.c_assign_invletter(it)
   f_pa_data.remove(pa_recent_alerts, it)
 
   -- Re-enable the alert, iff we are able to use another one
-  if BRC.get.available_slots(it) > 1 then
+  if BRC.get.num_equip_slots(it) > 1 then
     f_pa_data.remove(pa_items_alerted, it)
   end
 
@@ -4993,7 +4992,7 @@ function f_pa_data.remove(table_ref, it)
     util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
   else
     local name, _ = get_pa_keys(it)
-    util.remove(table_ref, name)
+    table_ref[name] = nil
   end
 end
 
@@ -5041,7 +5040,6 @@ function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
-    f_pa_data.insert(pa_items_alerted, inv)
   end
 end
 
@@ -5160,8 +5158,8 @@ local function pickup_body_armour(it)
   -- Pickup: Pure upgrades
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if not cur_ego then return it_ego or ac_delta > 0 or encumb_delta < 0 end
-  return it_ego == cur_ego and (ac_delta > 0 or encumb_delta < 0)
+  if it_ego == cur_ego then return (ac_delta > 0 or encumb_delta < 0) end
+  return not cur_ego and (ac_delta >= 0 or encumb_delta <= 0)
 end
 
 local function pickup_shield(it)
@@ -5178,8 +5176,8 @@ local function pickup_shield(it)
   local it_plus = it.plus or 0
   local it_ego = BRC.get.ego(it)
   local cur_ego = BRC.get.ego(cur)
-  if not cur_ego then return it_ego and it_plus >= cur.plus end
-  return it_ego == cur_ego and it_plus > cur.plus
+  if it_ego == cur_ego then return it_plus > cur.plus end
+  return not cur_ego and it_plus >= cur.plus
 end
 
 local function pickup_aux_armour(it)
@@ -5210,10 +5208,10 @@ local function pickup_aux_armour(it)
   for _, cur in ipairs(all_equipped) do
     local cur_ac = BRC.get.armour_ac(cur)
     local cur_ego = BRC.get.ego(cur)
-    if not cur_ego then
-      if it_ego and it_ac >= cur_ac then return true end
-    elseif it_ego == cur_ego and it_ac > cur_ac then
-      return true
+    if it_ego == cur_ego then
+      if it_ac > cur_ac then return true end
+    elseif not cur_ego then
+      if it_ac >= cur_ac then return true end
     end
   end
   return false

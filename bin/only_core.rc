@@ -673,7 +673,7 @@ function BRC.mpr.yesno(text, color, capital_only)
 end
 
 ---- BRC.get - Functions to get non-boolean data ----
-function BRC.get.available_slots(it)
+function BRC.get.num_equip_slots(it)
   local player_race = you.race()
   if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
   if BRC.is.aux_armour(it) then
@@ -701,7 +701,7 @@ BRC.get.equipped_at() - Returns 2 values:
 --]]
 function BRC.get.equipped_at(it)
   local all_aux = {}
-  local num_slots = BRC.get.available_slots(it)
+  local num_slots = BRC.get.num_equip_slots(it)
   local slot_name = it.is_weapon and "weapon" or BRC.is.body_armour(it) and "armour" or it.subtype()
   for i = 1, num_slots do
     local eq = items.equipped_at(slot_name, i)

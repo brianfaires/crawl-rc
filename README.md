@@ -47,7 +47,8 @@ See `features/_template.lua` for an example.
 
 ### Item Management
 - **`color-inscribe.lua`** - Adds color to item inscriptions for resistances and stat modifiers
-- **`drop-inferior.lua`** - Marks items with `~~DROP_ME` when you pick up better versions, adding them to the drop list
+- **`drop-inferior.lua`** - Marks items with `~~DROP_ME` when you pick up better versions, adding them to the drop list.
+  (disabled for equipment with multiple slots of the same type, like Poltergeist armour or Coglin weapon)
 - **`exclude-dropped.lua`** - Disables autopickup for items you drop (resumes if picked back up)
 - **`inscribe-stats.lua`** - Auto-inscribes weapon DPS and armour AC/EV stats on items
 - **`safe-consumables.lua`** - Maintains `!r` and `!q` inscriptions on consumables
