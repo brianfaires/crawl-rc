@@ -1,25 +1,26 @@
 ### 0.34 changes needed
-1. Inventory slots changed: Can no longer use l-item.inslot() to reliably get an item?
+1. Confirm damage / AC calcs haven't changed
+1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Write persistent data to c_persist after each level (to recover from crashes)
-1. cleanup/reduce # of display.rc messages
 1. On alert, prompt/offer to pickup item
 1. On pickup, if safe(), offer to wear/wield item
 1. On drop_inferior inscribe, if safe(), offer to drop item
 1. Armour ego alerts: identify new egos or missing resistances (not just compared to cur inventory)
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. fully-rest: wait for ancestor to reappear before exploring
+1. In-game guided menu (change config, save settings, etc...)
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal
-1. Better colorizing of rF+, rC+, etc (needs to intercept msgs)
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription`)
 1. 0.34: Make use of explore_auto_rest_status to replace fully-recover.lua.
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
+    (Try macro'ing: { WAIT, READY, EXPLORE })
 1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
 
 ### Won't do - random ideas
