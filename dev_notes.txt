@@ -29,4 +29,3 @@
 
 ### Design choices / simplifications
 1. Coglin DPS calcs for non-wielded weapons evaluate as if swapping out primary weapon (for artefact stat changes)
-1. Poltergeist do not inscribe AC/EV deltas

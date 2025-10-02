@@ -697,8 +697,8 @@ function BRC.get.armour_stats(it)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  -- Never show deltas for poltergeist
-  if cur and not is_worn and you.race() ~= "Poltergeist" then
+  -- Never show deltas if multiple equip slots
+  if cur and not is_worn and BRC.get.num_equip_slots(it) == 1 then
     -- Show deltas if not worn, else compare against 0
     if BRC.is.shield(cur) then
       cur_sh = BRC.get.shield_sh(cur)
