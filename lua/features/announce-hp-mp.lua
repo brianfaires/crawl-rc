@@ -2,18 +2,39 @@
 Feature: announce-hp-mp
 Description: Announces changes in HP/MP with visual meters and damage warnings
 Author: magus, buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_announce_hp_mp = {}
 f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
+f_announce_hp_mp.Config = {
+  dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+  dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
+  every_turn = false, -- Announce every turn, not just when HP/MP changes
+
+  announce = {
+    hp_loss_limit = 1, -- Announce when HP loss >= this
+    hp_gain_limit = 4, -- Announce when HP gain >= this
+    mp_loss_limit = 1, -- Announce when MP loss >= this
+    mp_gain_limit = 2, -- Announce when MP gain >= this
+    hp_first = true, -- Show HP first in the message
+    same_line = true, -- Show HP/MP on the same line
+    always_both = true, -- If showing one, show both
+    very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
+  } -- f_announce_hp_mp.Config.announce (do not remove this comment)
+} -- f_announce_hp_mp.Config (do not remove this comment)
 
 -- Persistent variables
 ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local constants / configuration
+-- Local config + constants
+local Config = f_announce_hp_mp.Config
 local NUM_PIPS_PER_METER = 5
 local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
+local EVERY_TURN_ANNOUNCE = {
+  hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
+  hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
+} -- EVERY_TURN_ANNOUNCE (do not remove this comment)
 
 -- Local functions
 local function create_meter(perc, emojis)
@@ -72,7 +93,9 @@ local function get_hp_message(hp_delta, mhp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.text.lightgrey(text)
   end
 
-  if not BRC.Config.announce.same_line and hp == mhp then msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)") end
+  if not Config.announce.same_line and hp == mhp then
+    msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)")
+  end
 
   return table.concat(msg_tokens)
 end
@@ -89,7 +112,7 @@ local function get_mp_message(mp_delta, mmp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.text.cyan(tok)
   end
 
-  if not BRC.Config.announce.same_line and mp == mmp then
+  if not Config.announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(" (Full MP)")
   end
 
@@ -109,7 +132,9 @@ function f_announce_hp_mp.init()
   ad_prev.mp = 0
   ad_prev.mmp = 0
 
-  if BRC.Config.dmg_fm_threshold > 0 and BRC.Config.dmg_fm_threshold <= 0.5 then
+  if Config.every_turn then Config.announce = EVERY_TURN_ANNOUNCE end
+
+  if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
     BRC.set.message_mute("Ouch! That really hurt!", true)
   end
 end
@@ -131,19 +156,19 @@ function f_announce_hp_mp.ready()
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = hp <= BRC.Config.announce.very_low_hp * mhp
+  local is_very_low_hp = hp <= Config.announce.very_low_hp * mhp
 
   -- Determine which messages to show
   local do_hp = true
   local do_mp = true
-  if hp_delta <= 0 and hp_delta > -BRC.Config.announce.hp_loss_limit then do_hp = false end
-  if hp_delta >= 0 and hp_delta < BRC.Config.announce.hp_gain_limit then do_hp = false end
-  if mp_delta <= 0 and mp_delta > -BRC.Config.announce.mp_loss_limit then do_mp = false end
-  if mp_delta >= 0 and mp_delta < BRC.Config.announce.mp_gain_limit then do_mp = false end
+  if hp_delta <= 0 and hp_delta > -Config.announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta < Config.announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -Config.announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta < Config.announce.mp_gain_limit then do_mp = false end
 
   if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
   if not do_hp and not do_mp then return end
-  if BRC.Config.announce.always_both then
+  if Config.announce.always_both then
     do_hp = true
     do_mp = true
   end
@@ -152,17 +177,17 @@ function f_announce_hp_mp.ready()
   local hp_msg = get_hp_message(hp_delta, mhp_delta)
   local mp_msg = get_mp_message(mp_delta, mmp_delta)
   local msg_tokens = {}
-  msg_tokens[1] = (BRC.Config.announce.hp_first and do_hp) and hp_msg or mp_msg
+  msg_tokens[1] = (Config.announce.hp_first and do_hp) and hp_msg or mp_msg
   if do_mp and do_hp then
-    msg_tokens[2] = BRC.Config.announce.same_line and "       " or "\n"
-    msg_tokens[3] = BRC.Config.announce.hp_first and mp_msg or hp_msg
+    msg_tokens[2] = Config.announce.same_line and string.rep(" ", 7) or "\n"
+    msg_tokens[3] = Config.announce.hp_first and mp_msg or hp_msg
   end
   if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
 
   -- Add Damage-related warnings, when damage >= threshold
-  if damage_taken >= mhp * BRC.Config.dmg_flash_threshold then
+  if damage_taken >= mhp * Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    local is_force_more_msg = damage_taken >= (mhp * BRC.Config.dmg_fm_threshold)
+    local is_force_more_msg = damage_taken >= (mhp * Config.dmg_fm_threshold)
     local emoji, msg
     if is_force_more_msg then
       emoji = BRC.Emoji.EXCLAMATION_2

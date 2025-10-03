@@ -45,6 +45,27 @@ local function handle_feature_error(feature_name, hook_name, result)
   end
 end
 
+local function handle_core_error(hook_name, result, ...)
+  local params = {}
+  for i = 1, select("#", ...) do
+    local param = select(i, ...)
+    if param and param.name and type(param.name) == "function" then
+      params[#params + 1] = param.name()
+    else
+      params[#params + 1] = BRC.data.val2str(param):gsub("<", "<_")
+    end
+  end
+  local param_str = table.concat(params, ", ")
+
+  BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLORS.yellow) then
+    _hooks[hook_name] = nil
+    BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
+  else
+    BRC.mpr.okay("Returning nil to " .. hook_name .. ".")
+  end
+end
+
 -- Hook dispatching
 local function call_all_hooks(hook_name, ...)
   local last_return_value = nil
@@ -71,27 +92,6 @@ local function call_all_hooks(hook_name, ...)
   end
 
   return last_return_value
-end
-
-local function handle_core_error(hook_name, result, ...)
-  local params = {}
-  for i = 1, select("#", ...) do
-    local param = select(i, ...)
-    if param and param.name and type(param.name) == "function" then
-      params[#params + 1] = param.name()
-    else
-      params[#params + 1] = BRC.data.val2str(param):gsub("<", "<_")
-    end
-  end
-  local param_str = table.concat(params, ", ")
-
-  BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLORS.yellow) then
-    _hooks[hook_name] = nil
-    BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
-  else
-    BRC.mpr.okay("Returning nil to " .. hook_name .. ".")
-  end
 end
 
 -- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it is kept very simple + protected.
@@ -158,6 +158,8 @@ function BRC.register_feature(feature_name, feature_module)
   end
 
   _features[feature_name] = feature_module
+
+  -- Register hooks
   for _, hook_name in pairs(HOOK_FUNCTIONS) do
     if feature_module[hook_name] then
       if not _hooks[hook_name] then _hooks[hook_name] = {} end
@@ -166,6 +168,15 @@ function BRC.register_feature(feature_name, feature_module)
         hook_name = hook_name,
         func = feature_module[hook_name],
       })
+    end
+  end
+
+  -- Apply Config overrides from BRC.Config
+  if BRC.Config[feature_name] then
+    local valid = feature_module.Config and type(feature_module.Config) == "table" and #feature_module.Config == 0
+    if not valid then feature_module.Config = {} end
+    for key, value in pairs(BRC.Config[feature_name]) do
+      feature_module.Config[key] = value
     end
   end
 
@@ -232,6 +243,16 @@ function BRC.init(parent_module)
   return true
 end
 
+function BRC.set_config(feature_name, feature_config)
+  if not BRC.Config[feature_name] then
+    BRC.Config[feature_name] = feature_config
+  else
+    for key, value in pairs(feature_config) do
+      if BRC.Config[feature_name][key] == nil then BRC.Config[feature_name][key] = value end
+    end
+  end
+  return BRC.Config[feature_name]
+end
 
 -- Hook methods
 function BRC.autopickup(it, _)

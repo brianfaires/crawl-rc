@@ -9,6 +9,17 @@ BRC = BRC or {}
 BRC.Config = {}
 
 BRC.Config.emojis = false -- Use emojis in alerts and announcements
+BRC.Config.show_debug_messages = true
+BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unless told to
+
+
+BRC.Config["announce-hp-mp"] = {
+  dmg_flash_threshold = 0.21, -- Flash screen when losing this % of max HP
+  dmg_fm_threshold = 0.31, -- Force more for losing this % of max HP
+  every_turn = true, -- Announce every turn, not just when HP/MP changes
+}
+
+
 
 -- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
 BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
@@ -16,32 +27,6 @@ BRC.Config.pack_timeout = 10 -- # turns to wait before repeating an alert for a 
 BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
 BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
 
--- announce-hp-mp.lua: Announce HP/MP changes
-BRC.Config.dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
-BRC.Config.dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
-BRC.Config.announce = {
-  hp_loss_limit = 1, -- Announce when HP loss >= this
-  hp_gain_limit = 4, -- Announce when HP gain >= this
-  mp_loss_limit = 1, -- Announce when MP loss >= this
-  mp_gain_limit = 2, -- Announce when MP gain >= this
-  hp_first = true, -- Show HP first in the message
-  same_line = true, -- Show HP/MP on the same line
-  always_both = true, -- If showing one, show both
-  very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
-} -- BRC.Config.announce (do not remove this comment)
-
--- An alternative announce setup: Displays meters after every turn. Uncomment the following block to try it.
---[[
-BRC.Config.announce = {
-  hp_loss_limit = 0,
-  hp_gain_limit = 0,
-  mp_loss_limit = 0,
-  mp_gain_limit = 0,
-  hp_first = true,
-  same_line = true,
-  always_both = true
-} -- BRC.Config.announce (do not remove this comment)
---]]
 
 -- drop-inferior.lua
 BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for drop
@@ -148,8 +133,6 @@ BRC.Config.fm_alert = {
 } -- BRC.Config.fm_alert (do not remove this comment)
 
 -- Debugging
-BRC.Config.show_debug_messages = false
-BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unless told to
 BRC.Config.debug_alert_monsters = BRC.Config.debug_alert_monsters or false -- Can also be turned on in feature config
 
 ---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
