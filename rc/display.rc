@@ -12,51 +12,32 @@ menu =
 ## Item colours
 $i_boring := darkgrey
 $i_normal := lightgrey
-$i_warning := red
+$i_warning := lightred
 $i_useful := lightblue
 $i_heal := green
 $i_emergency := lightcyan
 $i_rare := yellow
 
 
-# First, color uselessness everywhere
+## Highest priority
 menu += $i_boring:(melded|useless_item)
-menu += $i_warning:forbidden
+menu += red:forbidden
 
-# Overrides: pickup menu (Affects Cntl-F)
-#   (why don't these work when they come after inventory overrides?)
-menu += pickup:lightmagenta:artefact.*jewellery
-menu += pickup:lightgreen:artefact.*weapon
-menu += pickup:lightcyan:artefact.*armour
-menu += pickup:yellow:artefact
-menu += pickup:magenta:jewellery
-menu += pickup:lightblue:(ego|(unidentified.*(glowing|runed|shiny|embroidered)|troll leather|dragon scales))
-menu += pickup:magenta:(wand|cui_rare|disjunction|throwing net)
-menu += pickup:$i_normal:(missile|weapon|armour)
-menu += brown:spellbook
-
-# Overrides: inventory menu
-menu += inventory:lightgreen:.*equipped.*(weapon|armour|jewellery)
+## Menu-specific overrides
 menu += inventory:$i_boring:inert
-menu += inventory:lightmagenta:artefact.*amulet
-menu += inventory:magenta:amulet
-menu += inventory:cyan:artefact
-menu += inventory:white:ego
-menu += inventory:$i_normal:(weapon|armour|jewellery)
+menu += pickup:lightgreen:potions? of
+menu += pickup:green:scrolls? of
+menu += pickup:cyan:artefact.*weapon
+menu += pickup:white:(ego|(unidentified.*(glowing|runed|shiny|embroidered)|troll leather|dragon scales))
+menu += pickup:magenta:wand of
+menu += pickup:$i_normal:(weapon|armour)
 
-# Overrides: use_item menu
-menu += use_item:lightgreen:.*equipped.*(weapon|armour|jewellery)
-menu += use_item:lightmagenta:artefact.*amulet
-menu += use_item:magenta:amulet
-menu += use_item:white:artefact
-menu += use_item:lightgrey:ego
-menu += use_item:$i_normal:(weapon|armour|jewellery)
-
-## General settings; used for whatever isn't explicitly set above
-# Artefact / Ego / Vanilla (For equipment)
-menu += $i_emergency:artefact
-menu += $i_useful:ego
-menu += $i_normal:(weapon|armour|jewellery)
+## Main item colours
+menu += lightgreen:.*equipped.*(weapon|armour|jewellery)
+menu += lightcyan:artefact
+menu += lightblue:amulet
+menu += blue:jewellery
+menu += white:ego
 
 # Decks
 menu += $i_emergency:deck of escape
@@ -64,12 +45,9 @@ menu += $i_useful:deck of summoning
 menu += $i_warning:deck of destruction
 
 # Misc
-menu += blue:(talisman|bauble)
+menu += brown:(manual of|spellbook|staff of|talisman|bauble)
+menu += $i_rare:(curare|disjunction|throwing net)
 menu += lightmagenta:evoker
-
-# Missiles
-menu += $i_emergency:(curare|disjunction|throwing net)
-menu += $i_normal:missile
 
 # Potions
 menu += $i_emergency:potions? of (cancellation|haste|resistance)
@@ -89,9 +67,6 @@ menu += $i_warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerab
 menu += $i_emergency:wand of digging
 menu += $i_normal:wand of (flame|paralysis|charming|mindburst|polymorph)
 menu += $i_useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
-
-# Weapons
-menu += brown:staff of
 
 
 ####### Message Channels #######
