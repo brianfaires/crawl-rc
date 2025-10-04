@@ -42,40 +42,29 @@ BRC.Config["startup"].auto_set_skill_targets = {
 --[[
   Pickup/Alert system
   This does not affect other autopickup settings; just the BRC Pickup/Alert system
-  Choose which items are auto-picked up, alerted, and when force-more is applied.
 --]]
-BRC.Config.pickup = {
-  armour = true,
-  weapons = true,
-  weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
-  staves = true,
-} -- BRC.Config.pickup (do not remove this comment)
+BRC.Config["pickup"] = {}
+BRC.Config["pickup"].armour = true
+BRC.Config["pickup"].staves = true
+BRC.Config["pickup"].weapons = true
+BRC.Config["pickup"].weapons_pure_upgrades_only = true -- Only pick up better versions of same exact weapon
 
--- Which alerts are enabled
-BRC.Config.alert = {
-  alerts_enabled = true, -- If false, no alerts are generated
-  armour = true,
-  weapons = true,
-  orbs = true,
-  staff_resists = true,
-  talismans = true,
-
-  -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
-  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6, -- 27 for Shapeshifter, 6 for everyone else
-
-  -- Each non-useless item is alerted once.
-  one_time = {
-    "wand of digging", "buckler", "kite shield", "tower shield",
-    "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
-    "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
-    "broad axe", "executioner's axe",
-    "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
-    "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
-  }, -- BRC.Config.alert.one_time (do not remove this comment)
-
-  -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-  OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
-} -- BRC.Config.alert (do not remove this comment)
+BRC.Config["alert"] = {}
+BRC.Config["alert"].enabled = true -- If false, no alerts are generated
+BRC.Config["alert"].armour = true
+BRC.Config["alert"].weapons = true
+BRC.Config["alert"].orbs = true
+BRC.Config["alert"].staff_resists = true
+BRC.Config["alert"].talismans = true
+BRC.Config["alert"].OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 } -- Required skill to do one-time alert
+BRC.Config["alert"].one_time = { -- Each usable item is alerted once.
+  "wand of digging", "buckler", "kite shield", "tower shield",
+  "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+  "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
+  "broad axe", "executioner's axe",
+  "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+  "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+} -- BRC.Config.alert.one_time (do not remove this comment)
 
 -- Which alerts generate a force_more
 BRC.Config.fm_alert = {
@@ -90,7 +79,7 @@ BRC.Config.fm_alert = {
   high_score_armour = true, -- Highest AC found
   one_time_alerts = true,
   artefact = false, -- Any artefact
-  trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
+  trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
   orbs = false,
   talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
   staff_resists = false,

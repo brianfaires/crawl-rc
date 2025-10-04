@@ -17,7 +17,7 @@ f_pickup_alert.Config.pickup = {
 } -- f_pickup_alert.Config.pickup (do not remove this comment)
 
 f_pickup_alert.Config.alert = {
-  alerts_enabled = true, -- If false, no alerts are generated
+  enabled = true, -- If false, no alerts are generated
   armour = true,
   weapons = true,
   orbs = true,
@@ -27,7 +27,7 @@ f_pickup_alert.Config.alert = {
   -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
   talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6, -- 27 for Shapeshifter, 6 for everyone else
 
-  -- Each non-useless item is alerted once.
+  -- Each usable item is alerted once.
   one_time = {
     "wand of digging", "buckler", "kite shield", "tower shield",
     "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
@@ -54,7 +54,7 @@ f_pickup_alert.Config.fm_alert = {
   high_score_armour = true, -- Highest AC found
   one_time_alerts = true,
   artefact = false, -- Any artefact
-  trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
+  trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
   orbs = false,
   talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
   staff_resists = false,
@@ -193,7 +193,7 @@ function f_pickup_alert.autopickup(it, _)
   end
 
   -- Not picking up this item. Now check for alerts.
-  if not Config.alert.alerts_enabled or f_pa_data.find(pa_items_alerted, it) then return end
+  if not Config.alert.enabled or f_pa_data.find(pa_items_alerted, it) then return end
 
   if f_pa_misc and Config.alert.one_time and #Config.alert.one_time > 0 then
     if f_pa_misc.alert_OTA(it) then return end

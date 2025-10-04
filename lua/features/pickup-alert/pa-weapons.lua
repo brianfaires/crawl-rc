@@ -27,7 +27,18 @@ local MELEE = "melee_"
 -- Local variables
 local top_attack_skill
 
--- Global variable: Cache weapons in inventory (so we don't recompute DPS, etc on every autopickup call)
+-- Core logic: How weapon scores are calculated
+local function get_score(it, no_brand_bonus)
+  if it.dps and it.acc then
+    -- Handle cached /  high-score tuples in _weapon_cache
+    return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
+  end
+  local it_plus = it.plus or 0
+  local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
+  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
+end
+
+-- _weapon_cache: Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
 _weapon_cache = {}
 
 function _weapon_cache.get_primary_key(it)
@@ -74,8 +85,8 @@ function _weapon_cache.add_weapon(it)
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
   weap_data.dps = BRC.get.weap_dps(it)
-  weap_data.score = BRC.get.weap_score(it)
-  weap_data.unbranded_score = BRC.get.weap_score(it, true)
+  weap_data.score = get_score(it)
+  weap_data.unbranded_score = get_score(it, true)
 
   -- Check for exclusion tags
   local lower_insc = it.inscription:lower()
@@ -116,6 +127,7 @@ function _weapon_cache.serialize()
   return table.concat(tokens)
 end
 
+
 -- Local functions
 local function is_valid_upgrade(it, cur)
   return (
@@ -148,7 +160,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
     if it_ego and not cur_ego then
-      return BRC.get.weap_score(it) / cur.score > Tuning.weap.pickup.add_ego
+      return get_score(it) / cur.score > Tuning.weap.pickup.add_ego
     end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
@@ -160,7 +172,7 @@ local function is_weapon_upgrade(it, cur, strict)
     if cur.artefact then return false end
 
     local min_ratio = it.is_ranged and Tuning.weap.pickup.same_type_ranged or Tuning.weap.pickup.same_type_melee
-    return BRC.get.weap_score(it) / cur.score > min_ratio
+    return get_score(it) / cur.score > min_ratio
   end
 
   return false
@@ -235,7 +247,7 @@ local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   local cur_ego = BRC.get.ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
     return make_alert(it, cur_ego and "Diff ego" or "Gain ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
-  elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
+  elseif get_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
     return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
   end
 end
@@ -257,7 +269,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Tuning.weap.alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
-  local ratio = penalty * BRC.get.weap_score(it) / best_score
+  local ratio = penalty * get_score(it) / best_score
 
   if BRC.get.hands(it) <= cur.hands then
     if cur.artefact then return false end
@@ -292,7 +304,7 @@ local function get_inventory_upgrade_alert(it)
   -- Once, find the top dps & score for inventory weapons of the same category
   local inv_best = _weapon_cache.max_dps[_weapon_cache.get_primary_key(it)]
   local top_dps = inv_best and inv_best.dps or 0
-  local top_score = inv_best and BRC.get.weap_score(inv_best) or 0
+  local top_score = inv_best and get_score(inv_best) or 0
 
   -- Compare against all inventory weapons, even from other categories
   for _, inv in ipairs(_weapon_cache.weapons) do

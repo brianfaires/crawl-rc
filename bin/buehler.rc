@@ -47,40 +47,29 @@ BRC.Config["startup"].auto_set_skill_targets = {
 --[[
   Pickup/Alert system
   This does not affect other autopickup settings; just the BRC Pickup/Alert system
-  Choose which items are auto-picked up, alerted, and when force-more is applied.
 --]]
-BRC.Config.pickup = {
-  armour = true,
-  weapons = true,
-  weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
-  staves = true,
-} -- BRC.Config.pickup (do not remove this comment)
+BRC.Config["pickup"] = {}
+BRC.Config["pickup"].armour = true
+BRC.Config["pickup"].staves = true
+BRC.Config["pickup"].weapons = true
+BRC.Config["pickup"].weapons_pure_upgrades_only = true -- Only pick up better versions of same exact weapon
 
--- Which alerts are enabled
-BRC.Config.alert = {
-  alerts_enabled = true, -- If false, no alerts are generated
-  armour = true,
-  weapons = true,
-  orbs = true,
-  staff_resists = true,
-  talismans = true,
-
-  -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
-  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6, -- 27 for Shapeshifter, 6 for everyone else
-
-  -- Each non-useless item is alerted once.
-  one_time = {
-    "wand of digging", "buckler", "kite shield", "tower shield",
-    "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
-    "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
-    "broad axe", "executioner's axe",
-    "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
-    "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
-  }, -- BRC.Config.alert.one_time (do not remove this comment)
-
-  -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-  OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
-} -- BRC.Config.alert (do not remove this comment)
+BRC.Config["alert"] = {}
+BRC.Config["alert"].enabled = true -- If false, no alerts are generated
+BRC.Config["alert"].armour = true
+BRC.Config["alert"].weapons = true
+BRC.Config["alert"].orbs = true
+BRC.Config["alert"].staff_resists = true
+BRC.Config["alert"].talismans = true
+BRC.Config["alert"].OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 } -- Required skill to do one-time alert
+BRC.Config["alert"].one_time = { -- Each usable item is alerted once.
+  "wand of digging", "buckler", "kite shield", "tower shield",
+  "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+  "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
+  "broad axe", "executioner's axe",
+  "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+  "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+} -- BRC.Config.alert.one_time (do not remove this comment)
 
 -- Which alerts generate a force_more
 BRC.Config.fm_alert = {
@@ -95,7 +84,7 @@ BRC.Config.fm_alert = {
   high_score_armour = true, -- Highest AC found
   one_time_alerts = true,
   artefact = false, -- Any artefact
-  trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
+  trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
   orbs = false,
   talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
   staff_resists = false,
@@ -1350,7 +1339,6 @@ end
 local function serialize_config()
   local tokens = { "\n---CONFIG---\n" }
   tokens[#tokens + 1] = "\nConfig = " .. BRC.data.val2str(BRC.Config)
-  tokens[#tokens + 1] = "\n\nTuning = " .. BRC.data.val2str(BRC.Tuning)
   tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.data.val2str(BRC.BrandBonus)
   tokens[#tokens + 1] = "\n\nAlertColor = " .. BRC.data.val2str(BRC.AlertColor)
   tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.data.val2str(BRC.LogColor)
@@ -2227,16 +2215,6 @@ function BRC.get.weap_damage(it, dmg_type)
   end
 
   return pre_brand_dmg
-end
-
-function BRC.get.weap_score(it, no_brand_bonus)
-  if it.dps and it.acc then
-    -- Handle cached /  high-score tuples in _weapon_cache
-    return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
-  end
-  local it_plus = it.plus or 0
-  local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
-  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
 end
 
 }
@@ -4669,7 +4647,7 @@ f_pickup_alert.Config.pickup = {
 } -- f_pickup_alert.Config.pickup (do not remove this comment)
 
 f_pickup_alert.Config.alert = {
-  alerts_enabled = true, -- If false, no alerts are generated
+  enabled = true, -- If false, no alerts are generated
   armour = true,
   weapons = true,
   orbs = true,
@@ -4679,7 +4657,7 @@ f_pickup_alert.Config.alert = {
   -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
   talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6, -- 27 for Shapeshifter, 6 for everyone else
 
-  -- Each non-useless item is alerted once.
+  -- Each usable item is alerted once.
   one_time = {
     "wand of digging", "buckler", "kite shield", "tower shield",
     "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
@@ -4706,7 +4684,7 @@ f_pickup_alert.Config.fm_alert = {
   high_score_armour = true, -- Highest AC found
   one_time_alerts = true,
   artefact = false, -- Any artefact
-  trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
+  trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
   orbs = false,
   talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
   staff_resists = false,
@@ -4845,7 +4823,7 @@ function f_pickup_alert.autopickup(it, _)
   end
 
   -- Not picking up this item. Now check for alerts.
-  if not Config.alert.alerts_enabled or f_pa_data.find(pa_items_alerted, it) then return end
+  if not Config.alert.enabled or f_pa_data.find(pa_items_alerted, it) then return end
 
   if f_pa_misc and Config.alert.one_time and #Config.alert.one_time > 0 then
     if f_pa_misc.alert_OTA(it) then return end
@@ -5577,7 +5555,18 @@ local MELEE = "melee_"
 -- Local variables
 local top_attack_skill
 
--- Global variable: Cache weapons in inventory (so we don't recompute DPS, etc on every autopickup call)
+-- Core logic: How weapon scores are calculated
+local function get_score(it, no_brand_bonus)
+  if it.dps and it.acc then
+    -- Handle cached /  high-score tuples in _weapon_cache
+    return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
+  end
+  local it_plus = it.plus or 0
+  local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
+  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
+end
+
+-- _weapon_cache: Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
 _weapon_cache = {}
 
 function _weapon_cache.get_primary_key(it)
@@ -5624,8 +5613,8 @@ function _weapon_cache.add_weapon(it)
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
   weap_data.dps = BRC.get.weap_dps(it)
-  weap_data.score = BRC.get.weap_score(it)
-  weap_data.unbranded_score = BRC.get.weap_score(it, true)
+  weap_data.score = get_score(it)
+  weap_data.unbranded_score = get_score(it, true)
 
   -- Check for exclusion tags
   local lower_insc = it.inscription:lower()
@@ -5666,6 +5655,7 @@ function _weapon_cache.serialize()
   return table.concat(tokens)
 end
 
+
 -- Local functions
 local function is_valid_upgrade(it, cur)
   return (
@@ -5698,7 +5688,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
     if it_ego and not cur_ego then
-      return BRC.get.weap_score(it) / cur.score > Tuning.weap.pickup.add_ego
+      return get_score(it) / cur.score > Tuning.weap.pickup.add_ego
     end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
@@ -5710,7 +5700,7 @@ local function is_weapon_upgrade(it, cur, strict)
     if cur.artefact then return false end
 
     local min_ratio = it.is_ranged and Tuning.weap.pickup.same_type_ranged or Tuning.weap.pickup.same_type_melee
-    return BRC.get.weap_score(it) / cur.score > min_ratio
+    return get_score(it) / cur.score > min_ratio
   end
 
   return false
@@ -5785,7 +5775,7 @@ local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   local cur_ego = BRC.get.ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
     return make_alert(it, cur_ego and "Diff ego" or "Gain ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
-  elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
+  elseif get_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
     return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
   end
 end
@@ -5807,7 +5797,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Tuning.weap.alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
-  local ratio = penalty * BRC.get.weap_score(it) / best_score
+  local ratio = penalty * get_score(it) / best_score
 
   if BRC.get.hands(it) <= cur.hands then
     if cur.artefact then return false end
@@ -5842,7 +5832,7 @@ local function get_inventory_upgrade_alert(it)
   -- Once, find the top dps & score for inventory weapons of the same category
   local inv_best = _weapon_cache.max_dps[_weapon_cache.get_primary_key(it)]
   local top_dps = inv_best and inv_best.dps or 0
-  local top_score = inv_best and BRC.get.weap_score(inv_best) or 0
+  local top_score = inv_best and get_score(inv_best) or 0
 
   -- Compare against all inventory weapons, even from other categories
   for _, inv in ipairs(_weapon_cache.weapons) do

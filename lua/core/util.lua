@@ -56,7 +56,6 @@ end
 local function serialize_config()
   local tokens = { "\n---CONFIG---\n" }
   tokens[#tokens + 1] = "\nConfig = " .. BRC.data.val2str(BRC.Config)
-  tokens[#tokens + 1] = "\n\nTuning = " .. BRC.data.val2str(BRC.Tuning)
   tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.data.val2str(BRC.BrandBonus)
   tokens[#tokens + 1] = "\n\nAlertColor = " .. BRC.data.val2str(BRC.AlertColor)
   tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.data.val2str(BRC.LogColor)
@@ -933,14 +932,4 @@ function BRC.get.weap_damage(it, dmg_type)
   end
 
   return pre_brand_dmg
-end
-
-function BRC.get.weap_score(it, no_brand_bonus)
-  if it.dps and it.acc then
-    -- Handle cached /  high-score tuples in _weapon_cache
-    return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
-  end
-  local it_plus = it.plus or 0
-  local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
-  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
 end
