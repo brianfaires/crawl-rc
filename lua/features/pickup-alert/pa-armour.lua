@@ -10,6 +10,7 @@ f_pa_armour = {}
 -- Local config
 local Config = f_pickup_alert.Config
 local Tuning = f_pickup_alert.Config.Tuning
+local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants / configuration
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
@@ -21,20 +22,20 @@ local HEAVIER = "heavier"
 local LIGHTER = "lighter"
 
 local ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = BRC.Emoji.ARTEFACT },
-  [GAIN] = { msg = "Gain ego", emoji = BRC.Emoji.EGO },
-  [DIFF] = { msg = "Diff ego", emoji = BRC.Emoji.EGO },
+  artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
+  [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
+  [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
   [LIGHTER] = {
-    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = BRC.Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = BRC.Emoji.EGO },
-    [SAME] = { msg = "Lighter armour", emoji = BRC.Emoji.LIGHTER },
-    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = BRC.Emoji.LIGHTER },
+    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
+    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
+    [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
+    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
   },
   [HEAVIER] = {
-    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = BRC.Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = BRC.Emoji.EGO },
-    [SAME] = { msg = "Heavier Armour", emoji = BRC.Emoji.HEAVIER },
-    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = BRC.Emoji.HEAVIER },
+    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
+    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
+    [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
+    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
   }, -- ARMOUR_ALERT.heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
@@ -197,7 +198,7 @@ local function alert_highest_ac(it)
     local itAC = BRC.get.armour_ac(it)
     if itAC > pa_high_score.ac then
       pa_high_score.ac = itAC
-      return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, Config.fm_alert.high_score_armour)
+      return f_pickup_alert.do_alert(it, "Highest AC", Emoji.STRONGEST, Config.fm_alert.high_score_armour)
     end
   end
 
@@ -244,13 +245,13 @@ local function alert_body_armour(it)
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_highest_ac(it) then return true end
   if it_ego and you.xl() <= Tuning.armour.early_xl then
-    return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
+    return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)
   end
 end
 
 local function alert_shield(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, Config.fm_alert.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -261,15 +262,15 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, Config.fm_alert.shields)
   elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
-    return f_pickup_alert.do_alert(it, "Higher SH", BRC.Emoji.STRONGER, Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", Emoji.STRONGER, Config.fm_alert.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, Config.fm_alert.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, Config.fm_alert.aux_armour)
   end
 
   local all_equipped, num_slots = BRC.get.equipped_at(it)
@@ -287,9 +288,9 @@ local function alert_aux_armour(it, unworn_inv_item)
     local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
     if is_new_ego(ego_change) then
       local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, Config.fm_alert.aux_armour)
     elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
-      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Higher AC", Emoji.STRONGER, Config.fm_alert.aux_armour)
     end
   end
 end

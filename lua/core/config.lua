@@ -107,8 +107,8 @@ BRC.BrandBonus = {
     penet = { factor = 1.3, offset = 0 },
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
-    vamp = { factor = 1.2, offset = 0 },
-  }, -- BRC.BrandBonus.subtle (do not remove this comment)
+    vamp = { factor = 1.2, offset = 0 }
+  } -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
@@ -116,56 +116,12 @@ BRC.LogColor = {
   error = "lightred",
   warning = "yellow",
   info = "lightgrey",
-  debug = "lightblue",
+  debug = "lightblue"
 } -- BRC.LogColor (do not remove this comment)
 
-BRC.Emoji = {}
-if BRC.Config.emojis then
-  BRC.Emoji.RARE_ITEM = "💎"
-  BRC.Emoji.ORB = "🔮"
-  BRC.Emoji.TALISMAN = "🧬"
-
-  BRC.Emoji.WEAPON = "⚔️"
-  BRC.Emoji.RANGED = "🏹"
-  BRC.Emoji.POLEARM = "🔱"
-  BRC.Emoji.TWO_HAND = "✋🤚"
-  BRC.Emoji.CAUTION = "⚠️"
-
-  BRC.Emoji.STAFF_RESISTANCE = "🔥"
-
-  BRC.Emoji.ACCURACY = "🎯"
-  BRC.Emoji.STRONGER = "💪"
-  BRC.Emoji.STRONGEST = "💪💪"
-  BRC.Emoji.EGO = "✨"
-  BRC.Emoji.LIGHTER = "⏬"
-  BRC.Emoji.HEAVIER = "⏫"
-  BRC.Emoji.ARTEFACT = "💠"
-
-  BRC.Emoji.REMIND_ID = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>"
-  BRC.Emoji.EXCLAMATION = "❗"
-  BRC.Emoji.EXCLAMATION_2 = "‼️"
-
-  BRC.Emoji.SUCCESS = "✅"
-else
-  BRC.Emoji.EXCLAMATION = "<magenta>!</magenta>"
-  BRC.Emoji.EXCLAMATION_2 = "<lightmagenta>!!</lightmagenta>"
-end
-
-if BRC.Config.emojis then
-  BRC.Emoji.HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" }
-  BRC.Emoji.MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" }
-else
-  BRC.Emoji.HP_METER = {
-    BORDER = "<white>|</white>",
-    FULL = "<lightgreen>+</lightgreen>",
-    PART = "<lightgrey>+</lightgrey>",
-    EMPTY = "<darkgrey>-</darkgrey>",
-  } -- BRC.Emoji.HP_METER (do not remove this comment)
-
-  BRC.Emoji.MP_METER = {
-    BORDER = "<white>|</white>",
-    FULL = "<lightblue>+</lightblue>",
-    PART = "<lightgrey>+</lightgrey>",
-    EMPTY = "<darkgrey>-</darkgrey>",
-  } -- BRC.Emoji.MP_METER (do not remove this comment)
-end
+BRC.Emoji = {
+  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
+  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
+  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
+  SUCCESS = BRC.Config.emojis and "✅" or nil
+} -- BRC.Emoji (do not remove this comment)

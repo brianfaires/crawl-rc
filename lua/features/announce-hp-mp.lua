@@ -21,7 +21,21 @@ f_announce_hp_mp.Config = {
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
-  } -- f_announce_hp_mp.Config.announce (do not remove this comment)
+  }, -- f_announce_hp_mp.Config.announce (do not remove this comment)
+
+  HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
+    BORDER = BRC.text.white("|"),
+    FULL = BRC.text.lightgreen("+"),
+    PART = BRC.text.lightgrey("+"),
+    EMPTY = BRC.text.darkgrey("-"),
+  }, -- f_announce_hp_mp.Config.HP_METER (do not remove this comment)
+
+  MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
+    BORDER = BRC.text.white("|"),
+    FULL = BRC.text.lightblue("+"),
+    PART = BRC.text.lightgrey("+"),
+    EMPTY = BRC.text.darkgrey("-"),
+  }, -- f_announce_hp_mp.Config.MP_METER (do not remove this comment)
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 -- Persistent variables
@@ -32,7 +46,7 @@ local Config = f_announce_hp_mp.Config
 
 -- Local constants
 local NUM_PIPS_PER_METER = 5
-local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
+local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * #(Config.HP_METER.BORDER or "")
 local ALWAYS_BOTTOM_SETTINGS = {
   hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
@@ -86,7 +100,7 @@ end
 local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, BRC.Emoji.HP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, Config.HP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.white(string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
 
@@ -105,7 +119,7 @@ end
 local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, BRC.Emoji.MP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, Config.MP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
 
@@ -189,15 +203,12 @@ function f_announce_hp_mp.ready()
   -- Add Damage-related warnings, when damage >= threshold
   if damage_taken >= mhp * Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    local is_force_more_msg = damage_taken >= (mhp * Config.dmg_fm_threshold)
-    local emoji, msg
-    if is_force_more_msg then
-      emoji = BRC.Emoji.EXCLAMATION_2
-      msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
+    if damage_taken >= (mhp * Config.dmg_fm_threshold) then
+      local msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
+      BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION_2 .. msg .. BRC.Emoji.EXCLAMATION_2)
     else
-      emoji = BRC.Emoji.EXCLAMATION
-      msg = BRC.text.magenta(" BIG DAMAGE ")
+      local msg = BRC.text.magenta(" BIG DAMAGE ")
+      BRC.mpr.que_optmore(false, BRC.Emoji.EXCLAMATION .. msg .. BRC.Emoji.EXCLAMATION)
     end
-    BRC.mpr.que_optmore(is_force_more_msg, emoji .. msg .. emoji)
   end
 end

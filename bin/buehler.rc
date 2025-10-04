@@ -112,8 +112,8 @@ BRC.BrandBonus = {
     penet = { factor = 1.3, offset = 0 },
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
-    vamp = { factor = 1.2, offset = 0 },
-  }, -- BRC.BrandBonus.subtle (do not remove this comment)
+    vamp = { factor = 1.2, offset = 0 }
+  } -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
@@ -121,59 +121,15 @@ BRC.LogColor = {
   error = "lightred",
   warning = "yellow",
   info = "lightgrey",
-  debug = "lightblue",
+  debug = "lightblue"
 } -- BRC.LogColor (do not remove this comment)
 
-BRC.Emoji = {}
-if BRC.Config.emojis then
-  BRC.Emoji.RARE_ITEM = "💎"
-  BRC.Emoji.ORB = "🔮"
-  BRC.Emoji.TALISMAN = "🧬"
-
-  BRC.Emoji.WEAPON = "⚔️"
-  BRC.Emoji.RANGED = "🏹"
-  BRC.Emoji.POLEARM = "🔱"
-  BRC.Emoji.TWO_HAND = "✋🤚"
-  BRC.Emoji.CAUTION = "⚠️"
-
-  BRC.Emoji.STAFF_RESISTANCE = "🔥"
-
-  BRC.Emoji.ACCURACY = "🎯"
-  BRC.Emoji.STRONGER = "💪"
-  BRC.Emoji.STRONGEST = "💪💪"
-  BRC.Emoji.EGO = "✨"
-  BRC.Emoji.LIGHTER = "⏬"
-  BRC.Emoji.HEAVIER = "⏫"
-  BRC.Emoji.ARTEFACT = "💠"
-
-  BRC.Emoji.REMIND_ID = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>"
-  BRC.Emoji.EXCLAMATION = "❗"
-  BRC.Emoji.EXCLAMATION_2 = "‼️"
-
-  BRC.Emoji.SUCCESS = "✅"
-else
-  BRC.Emoji.EXCLAMATION = "<magenta>!</magenta>"
-  BRC.Emoji.EXCLAMATION_2 = "<lightmagenta>!!</lightmagenta>"
-end
-
-if BRC.Config.emojis then
-  BRC.Emoji.HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" }
-  BRC.Emoji.MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" }
-else
-  BRC.Emoji.HP_METER = {
-    BORDER = "<white>|</white>",
-    FULL = "<lightgreen>+</lightgreen>",
-    PART = "<lightgrey>+</lightgrey>",
-    EMPTY = "<darkgrey>-</darkgrey>",
-  } -- BRC.Emoji.HP_METER (do not remove this comment)
-
-  BRC.Emoji.MP_METER = {
-    BORDER = "<white>|</white>",
-    FULL = "<lightblue>+</lightblue>",
-    PART = "<lightgrey>+</lightgrey>",
-    EMPTY = "<darkgrey>-</darkgrey>",
-  } -- BRC.Emoji.MP_METER (do not remove this comment)
-end
+BRC.Emoji = {
+  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
+  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
+  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
+  SUCCESS = BRC.Config.emojis and "✅" or nil
+} -- BRC.Emoji (do not remove this comment)
 
 }
 ############################### End lua/core/config.lua ###############################
@@ -1272,15 +1228,6 @@ Dependencies: (none)
 
 -- Initialize
 BRC = BRC or {}
-BRC.log = {}
-BRC.text = {}
-BRC.mpr = {}
-BRC.get = {}
-BRC.is = {}
-BRC.you = {}
-BRC.set = {}
-BRC.util = {}
-BRC.dump = {}
 
 -- Local variables
 local _mpr_queue = {}
@@ -1328,7 +1275,10 @@ local function serialize_config()
   return table.concat(tokens)
 end
 
--- BRC.log - Logging methods
+-----------------------------------
+---- BRC.log - Logging methods ----
+BRC.log = {}
+
 function BRC.log.error(message, context)
   log_message(message, context, BRC.LogColor.error)
 end
@@ -1346,10 +1296,12 @@ function BRC.log.debug(message, context)
   log_message(message, context, BRC.LogColor.debug)
 end
 
----- BRC.text - Utility functions ----
+---------------------------------------------------
+---- BRC.text - Text color + parsing functions ----
+BRC.text = {}
 
 -- Remove tags from text, and optionally escape special characters
-function BRC.text.clean_text(text, escape_chars)
+function BRC.text.clean(text, escape_chars)
   text = text:gsub("\n", "")
   if escape_chars then text = text:gsub(SPECIAL_CHARS, "%%%1") end
   return text:gsub("<[^>]*>", "")
@@ -1367,14 +1319,24 @@ function BRC.text.color(color, text)
   return color and BRC.text[color](text) or tostring(text)
 end
 
+function BRC.text.contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+
+-- Connect string:contains() to BRC.text.contains()
+getmetatable("").__index.contains = BRC.text.contains
+
 function BRC.text.get_pickup_info(text)
-  local cleaned = BRC.text.clean_text(text, false)
+  local cleaned = BRC.text.clean(text, false)
   if cleaned:sub(2, 4) ~= " - " then return nil end
   return { slot = items.letter_to_index(cleaned:sub(1, 1)), item = cleaned:sub(5, #cleaned) }
 end
 
---- BRC.mpr - Wrappers around crawl.mpr ---
--- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
+---------------------------------------------
+---- BRC.mpr - Wrappers around crawl.mpr ----
+BRC.mpr = {}
+
+-- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
 for k, v in pairs(BRC.COLORS) do
   BRC.mpr[k] = function(text, channel)
     crawl.mpr(BRC.text.color(v, text), channel)
@@ -1395,13 +1357,13 @@ function BRC.mpr.okay(suffix)
   BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
 end
 
--- Message and stop travel/activity
+-- Message plus stop travel/activity
 function BRC.mpr.stop(text, color, channel)
   BRC.mpr.color(text, color, channel)
   you.stop_activity()
 end
 
--- Message and a more prompt
+-- Message as a force_more_message
 function BRC.mpr.more(text, color, channel)
   BRC.mpr.color(text, color, channel)
   you.stop_activity()
@@ -1409,7 +1371,7 @@ function BRC.mpr.more(text, color, channel)
   crawl.redraw_screen()
 end
 
--- Conditionally display a more prompt
+-- Conditional force_more_message
 function BRC.mpr.optmore(show_more, text, color, channel)
   if show_more then
     BRC.mpr.more(text, color, channel)
@@ -1418,7 +1380,7 @@ function BRC.mpr.optmore(show_more, text, color, channel)
   end
 end
 
--- Queue a message, to dispay at start of next turn
+-- Queue the message, to dispay at start of next turn
 function BRC.mpr.que(text, color, channel)
   for _, msg in ipairs(_mpr_queue) do
     if msg.text == text and msg.channel == channel then return end
@@ -1426,7 +1388,7 @@ function BRC.mpr.que(text, color, channel)
   _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color, text), channel = channel, show_more = false }
 end
 
--- Queue msg w/ conditional force-more prompt
+-- Queue msg w/ conditional force_more_message
 function BRC.mpr.que_optmore(show_more, text, color, channel)
   for _, msg in ipairs(_mpr_queue) do
     if msg.text == text and msg.channel == channel and msg.show_more == show_more then return end
@@ -1434,7 +1396,7 @@ function BRC.mpr.que_optmore(show_more, text, color, channel)
   _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color, text), channel = channel, show_more = show_more }
 end
 
--- Display and consume the message queue
+-- Display queued messages and clear the queue
 function BRC.mpr.consume_queue()
   local do_more = false
   for _, msg in ipairs(_mpr_queue) do
@@ -1472,7 +1434,10 @@ function BRC.mpr.yesno(text, color, capital_only)
   return false
 end
 
+-----------------------------------------------------
 ---- BRC.get - Functions to get non-boolean data ----
+BRC.get = {}
+
 function BRC.get.num_equip_slots(it)
   local player_race = you.race()
   if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
@@ -1489,15 +1454,14 @@ function BRC.get.command_key(cmd)
   if not key then return nil end
   -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
   local char_key = key:sub(-1)
-  if key:find("Ctrl", 1, true) then return BRC.util.control_key(char_key) end
+  if key:contains("Ctrl") then return BRC.util.control_key(char_key) end
   return char_key
 end
 
 --[[
-BRC.get.equipped_at() - Returns 2 values:
+BRC.get.equipped_at() - Returns 2 values (usually a list of length 1, with num_slots==1):
   1. A list of equipped items at the same slot as the item
-  2. the num_slots (ie maximum size the list can ever be). This is usually a list of length 1, with num_slots==1.
-  Poltergeists, Coglin, and Formicid may have more
+  2. the num_slots (ie maximum size the list can ever be)
 --]]
 function BRC.get.equipped_at(it)
   local all_aux = {}
@@ -1515,7 +1479,7 @@ function BRC.get.mut(mutation, include_all)
 end
 
 function BRC.get.skill(skill)
-  if not skill:find(",", 1, true) then return you.skill(skill) end
+  if not skill:contains(",") then return you.skill(skill) end
 
   local skills = crawl.split(skill, ",")
   local sum = 0
@@ -1534,7 +1498,7 @@ function BRC.get.skill_with(it)
   if BRC.is.shield(it) then return BRC.get.skill("Shields") end
   if BRC.is.talisman(it) then return BRC.you.shapeshifting_skill() end
 
-  return 1 -- Fallback to 1
+  BRC.log.error("Unknown skill for item: " .. it.name())
 end
 
 function BRC.get.staff_school(it)
@@ -1544,6 +1508,8 @@ function BRC.get.staff_school(it)
 end
 
 function BRC.get.talisman_min_level(it)
+  if it.name() == "protean talisman" then return 6 end
+
   -- Parse the item description
   local tokens = crawl.split(it.description, "\n")
   for _, v in ipairs(tokens) do
@@ -1556,10 +1522,13 @@ function BRC.get.talisman_min_level(it)
     end
   end
 
-  return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
+  BRC.log.error("Failed to find skill required for: " .. it.name())
+  return -1
 end
 
----- BRC.is - Boolean type checks of items ----
+------------------------------------------
+---- BRC.is - Boolean checks of items ----
+BRC.is = {}
 
 function BRC.is.amulet(it)
   return it and it.name("base") == "amulet"
@@ -1593,7 +1562,7 @@ function BRC.is.ring(it)
 end
 
 function BRC.is.scarf(it)
-  return it and it.class(true) == "armour" and it.subtype() == "cloak" and it.name():find("scarf", 1, true)
+  return it and it.class(true) == "armour" and it.subtype() == "cloak" and it.name():contains("scarf")
 end
 
 function BRC.is.shield(it)
@@ -1611,10 +1580,21 @@ function BRC.is.orb(it)
 end
 
 function BRC.is.polearm(it)
-  return it and it.weap_skill:find("Polearms", 1, true)
+  return it and it.weap_skill:contains("Polearms")
 end
 
+-------------------------------------------------------
 ---- BRC.you - Boolean attributes of the character ----
+BRC.you = {}
+
+function BRC.you.by_slimy_wall()
+  for x = -1, 1 do
+    for y = -1, 1 do
+      if view.feature_at(x, y) == "slimy_wall" then return true end
+    end
+  end
+  return false
+end
 
 function BRC.you.free_offhand()
   if BRC.get.mut(BRC.MUTATIONS.missing_hand, true) > 0 then return true end
@@ -1629,15 +1609,6 @@ function BRC.you.in_hell(exclude_vestibule)
   local branch = you.branch()
   if exclude_vestibule and branch == "Hell" then return false end
   return util.contains(BRC.HELL_BRANCHES, branch)
-end
-
-function BRC.you.by_slimy_wall()
-  for x = -1, 1 do
-    for y = -1, 1 do
-      if view.feature_at(x, y) == "slimy_wall" then return true end
-    end
-  end
-  return false
 end
 
 function BRC.you.miasma_immune()
@@ -1664,7 +1635,10 @@ function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
 end
 
----- BRC.set - Simple helper functions wrapping crawl.setopt() ----
+--------------------------------------------------
+---- BRC.set - Wrappers around crawl.setopt() ----
+BRC.set = {}
+
 function BRC.set.autopickup_exceptions(pattern, add_pattern)
   local op = add_pattern and "^=" or "-="
   crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
@@ -1690,7 +1664,7 @@ function BRC.set.force_more_message(pattern, add_pattern)
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
 end
 
--- Sets a macro. Function must be global and not a member of a module.
+-- Binds a macro to a key. Function must be global and not a member of a module.
 function BRC.set.macro(key, function_name)
   BRC.log.debug(string.format(
     "Assigning macro: %s to key: %s",
@@ -1715,7 +1689,9 @@ function BRC.set.runrest_stop_message(pattern, add_pattern)
   crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
 end
 
---- BRC.dump - Debugging utils called from in-game lua interpreter ---
+------------------------------------------------------------------------------
+--- BRC.dump - Debugging messages for char dump or in-game lua interpreter ---
+BRC.dump = {}
 
 function BRC.dump.all(verbose, skip_mpr)
   local tokens = {}
@@ -1749,13 +1725,15 @@ function macro_brc_dump_character()
   BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan))
 end
 
---- BRC.util - Utility functions ----
--- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
--- crawl.do_commands() isn't always immediate; might wait for a keypress before doing the command
+----------------------------------------------
+---- BRC.util - General utility functions ----
+BRC.util = {}
+
 function BRC.util.control_key(c)
   return string.byte(c:upper()) - 64
 end
 
+-- BRC.util.do_cmd(): Tries keypress first, then crawl.do_commands() (which isn't always immediate)
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
   if key then
@@ -1772,11 +1750,11 @@ end
 --[[
 The functions above are general purpose: They should apply to any crawl RC file.
 The functions below contain design choices or logic that are somewhat specific to BRC.
-Examples: Weapon DPS calculation, treating dragon scales as branded, or defining what a "risky item" is.
+Examples: Weapon DPS calculation, treat dragon scales as branded, defining what a "risky item" is.
 --]]
 
 -- Local functions; Often mirroring calculations that live in crawl.
--- Each mirrored function is commented with the last dcss version it was compared against.
+-- Last verified against: dcss v0.33.1
 
 local function format_dmg(dmg)
   -- Always return a string of length 4
@@ -1797,31 +1775,25 @@ local function format_stat(abbr, val, is_worn)
 end
 
 local function get_size_penalty()
-  if util.contains(BRC.LITTLE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.SMALL_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.LARGE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LARGE
+  if util.contains(BRC.LITTLE_RACES, you.race()) then return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then return BRC.SIZE_PENALTY.LARGE
   end
   return BRC.SIZE_PENALTY.NORMAL
 end
 
 local function get_unadjusted_armour_pen(encumb)
-  -- dcss v0.33.1
   local pen = encumb - 2 * BRC.get.mut(BRC.MUTATIONS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
 
 local function get_adjusted_armour_pen(encumb, str)
-  -- dcss v0.33.1
   local base_pen = get_unadjusted_armour_pen(encumb)
   return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
 local function get_adjusted_dodge_bonus(encumb, str, dex)
-  -- dcss v0.33.1
   local size_factor = -2 * get_size_penalty()
   local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
@@ -1832,7 +1804,6 @@ local function get_adjusted_dodge_bonus(encumb, str, dex)
 end
 
 local function get_shield_penalty(sh)
-  -- dcss v0.33.1
   return 2 * sh.encumbrance * sh.encumbrance * (27 - you.skill("Shields")) / 27 / (25 + 5 * you.strength())
 end
 
@@ -1847,16 +1818,15 @@ local function get_branded_delay(delay, ego)
 end
 
 local function get_weap_min_delay(it)
-  -- dcss v0.33.1
   -- This is an abbreviated version of the actual calculation.
-  -- Skips brand and >=3 checks, which are covered in get_weap_delay()
-  if it.artefact and it.name("qual"):find("woodcutter's axe", 1, true) then return it.delay end
+  -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
+  if it.artefact and it.name("qual"):contains("woodcutter's axe") then return it.delay end
 
   local min_delay = math.floor(it.delay / 2)
   if it.weap_skill == "Short Blades" then return 5 end
   if it.is_ranged then
     local basename = it.name("base")
-    local is_2h_ranged = basename:find("crossbow", 1, true) or basename:find("arbalest", 1, true)
+    local is_2h_ranged = basename:contains("crossbow") or basename:contains("arbalest")
     if is_2h_ranged then return math.max(min_delay, 10) end
   end
 
@@ -2020,9 +1990,8 @@ function BRC.get.ego(it, exclude_stat_only_egos)
 
   if BRC.is.body_armour(it) then
     local qualname = it.name("qual")
-    if qualname:find("dragon scales", 1, true) and not qualname:find("steam", 1, true)
-      or qualname:find("troll leather", 1, true) then
-        return qualname
+    if qualname:contains("troll leather") or qualname:contains("dragon scales") and not qualname:contains("steam") then
+      return qualname
     end
   end
 
@@ -2169,7 +2138,7 @@ function BRC.get.weap_damage(it, dmg_type)
   end
 
   local stat = str
-  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex end
+  if it.is_ranged or it.weap_skill:contains("Blades") then stat = dex end
 
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + BRC.get.skill(it.weap_skill) / 25 / 2) * (1 + you.skill("Fighting") / 30 / 2)
@@ -2441,9 +2410,9 @@ function BRC.init(parent_module)
   end
 
   -- Success!
-  local success_emoji = BRC.Config.emojis and BRC.Emoji.SUCCESS.." " or ""
-  local success_text = string.format("Successfully initialized BRC system v%s!", BRC.VERSION)
-  BRC.mpr.lightgreen(string.format("\n%s%s %s", success_emoji, success_text, success_emoji))
+  local msg = string.format("Successfully initialized BRC system v%s!", BRC.VERSION)
+  if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
+  BRC.mpr.lightgreen(string.format("\n%s", msg))
 
   prev_turn = -1
   BRC.active = true
@@ -2529,7 +2498,7 @@ function f_after_shaft.c_message(text, channel)
 
   local text_fall = "ou fall into a shaft"
   local text_sucked = "ou are sucked into a shaft"
-  if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
+  if text:contains(text_fall) or text:contains(text_sucked) then
     as_shaft_depth = you.depth()
     as_shaft_branch = you.branch()
     BRC.set.explore_stop("stairs", true)
@@ -2973,7 +2942,21 @@ f_announce_hp_mp.Config = {
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
-  } -- f_announce_hp_mp.Config.announce (do not remove this comment)
+  }, -- f_announce_hp_mp.Config.announce (do not remove this comment)
+
+  HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
+    BORDER = BRC.text.white("|"),
+    FULL = BRC.text.lightgreen("+"),
+    PART = BRC.text.lightgrey("+"),
+    EMPTY = BRC.text.darkgrey("-"),
+  }, -- f_announce_hp_mp.Config.HP_METER (do not remove this comment)
+
+  MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
+    BORDER = BRC.text.white("|"),
+    FULL = BRC.text.lightblue("+"),
+    PART = BRC.text.lightgrey("+"),
+    EMPTY = BRC.text.darkgrey("-"),
+  }, -- f_announce_hp_mp.Config.MP_METER (do not remove this comment)
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 -- Persistent variables
@@ -2984,7 +2967,7 @@ local Config = f_announce_hp_mp.Config
 
 -- Local constants
 local NUM_PIPS_PER_METER = 5
-local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
+local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * #(Config.HP_METER.BORDER or "")
 local ALWAYS_BOTTOM_SETTINGS = {
   hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
@@ -3038,7 +3021,7 @@ end
 local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, BRC.Emoji.HP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, Config.HP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.white(string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
 
@@ -3057,7 +3040,7 @@ end
 local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, BRC.Emoji.MP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, Config.MP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
 
@@ -3141,16 +3124,13 @@ function f_announce_hp_mp.ready()
   -- Add Damage-related warnings, when damage >= threshold
   if damage_taken >= mhp * Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    local is_force_more_msg = damage_taken >= (mhp * Config.dmg_fm_threshold)
-    local emoji, msg
-    if is_force_more_msg then
-      emoji = BRC.Emoji.EXCLAMATION_2
-      msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
+    if damage_taken >= (mhp * Config.dmg_fm_threshold) then
+      local msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
+      BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION_2 .. msg .. BRC.Emoji.EXCLAMATION_2)
     else
-      emoji = BRC.Emoji.EXCLAMATION
-      msg = BRC.text.magenta(" BIG DAMAGE ")
+      local msg = BRC.text.magenta(" BIG DAMAGE ")
+      BRC.mpr.que_optmore(false, BRC.Emoji.EXCLAMATION .. msg .. BRC.Emoji.EXCLAMATION)
     end
-    BRC.mpr.que_optmore(is_force_more_msg, emoji .. msg .. emoji)
   end
 end
 
@@ -3166,7 +3146,7 @@ f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"
 
 function f_answer_prompts.c_answer_prompt(prompt)
   if prompt == "Die?" then return false end
-  if prompt:find("cheaper one?", 1, true) and you.branch() ~= "Bazaar" then
+  if prompt:contains("cheaper one?") and you.branch() ~= "Bazaar" then
     BRC.mpr.yellow("Replacing shopping list items")
     return true
   end
@@ -3284,7 +3264,7 @@ function f_color_inscribe.c_message(text, _)
   text = colorize_subtext(text)
   if text == orig_text then return end
 
-  local cleaned = BRC.text.clean_text(text)
+  local cleaned = BRC.text.clean(text)
   if cleaned:sub(2, 4) == " - " then
     text = " " .. text
   end
@@ -3322,9 +3302,8 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if f_drop_inferior.Config.msg_on_inscribe then
-    local emoji = BRC.Emoji.CAUTION or ""
     local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
-    local msg = util.trim(string.format("%s You can drop: %s %s", emoji, item_name, emoji))
+    local msg = string.format("%s You can drop: %s %s", BRC.Emoji.CAUTION, item_name, BRC.Emoji.CAUTION)
     BRC.mpr.cyan(msg)
   end
 end
@@ -3568,7 +3547,7 @@ local function enchantable_weap_in_inv()
 end
 
 local function clean_item_text(text)
-  text = BRC.text.clean_text(text, false) -- remove tags
+  text = BRC.text.clean(text, false) -- remove tags
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")
@@ -3576,7 +3555,7 @@ local function clean_item_text(text)
 end
 
 local function extract_jewellery_or_evoker(text)
-  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
+  local idx = text:contains("ring of") or text:contains("amulet of") or text:contains("wand of")
   if idx then return text:sub(idx, #text) end
 
   for _, item_name in ipairs(BRC.MISC_ITEMS) do
@@ -3611,15 +3590,15 @@ end
 
 local function should_exclude(item_name)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-  local weap_scroll = item_name:find("enchant weapon", 1, true) or item_name:find("brand weapon", 1, true)
+  local weap_scroll = item_name:contains("enchant weapon") or item_name:contains("brand weapon")
   if f_exclude_dropped.Config.not_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.name("qual"):find(item_name, 1, true) then
+    if inv.name("qual"):contains(item_name) then
       if BRC.is.jewellery(inv) then return true end
       local qty_str = string.format("ou drop %s %s", inv.quantity, item_name)
-      return inv.quantity == 1 or item_name:find(qty_str, 1, true)
+      return inv.quantity == 1 or item_name:contains(qty_str)
     end
   end
 
@@ -3637,7 +3616,7 @@ function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
 
   local picked_up = BRC.text.get_pickup_info(text)
-  if not picked_up and not text:find("ou drop ", 1, true) then return end
+  if not picked_up and not text:contains("ou drop ") then return end
 
   local item_name = get_item_name(text)
   if not item_name then return end
@@ -3770,7 +3749,7 @@ end
 
 function f_fully_recover.c_message(text, channel)
   if channel == "plain" then
-    if text:find(WAITING_MESSAGE, 1, true) or text:find("ou start resting", 1, true) then
+    if text:contains(WAITING_MESSAGE) or text:contains("ou start resting") then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif fr_start_turn > 0 then
@@ -3853,7 +3832,7 @@ local function inscribe_weapon_stats(it)
   local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[Config.inscribe_dps_type])
   local prefix, suffix = "", ""
 
-  local idx = orig_inscr:find("DPS:", 1, true)
+  local idx = orig_inscr:contains("DPS:")
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr) end
@@ -4007,6 +3986,7 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
+  emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?")
 } -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
@@ -4017,7 +3997,7 @@ local Config = f_remind_id.Config
 
 -- Local constants / configuration
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
-if BRC.Emoji.REMIND_ID then IDENTIFY_MSG = BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .. BRC.Emoji.REMIND_ID end
+if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
 
 -- Local variables
 local do_remind_id_check
@@ -4070,15 +4050,15 @@ function f_remind_id.c_message(text, channel)
 
   if text:find("scrolls? of identify") then
     ri_found_scroll_of_id = true
-    if not text:find("ou drop ", 1, true) and have_unid_item() then
+    if not text:contains("ou drop ") and have_unid_item() then
       you.stop_activity()
       do_remind_id_check = true
     end
   elseif not ri_found_scroll_of_id then
     local pickup_info = BRC.text.get_pickup_info(text)
     if not pickup_info then return end
-    local is_scroll = pickup_info.item:find("scroll", 1, true)
-    local is_potion = pickup_info.item:find("potion", 1, true)
+    local is_scroll = pickup_info.item:contains("scroll")
+    local is_potion = pickup_info.item:contains("potion")
     if not (is_scroll or is_potion) then return end
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
@@ -4143,7 +4123,7 @@ local stop_on_stairs
 
 -- Local functions
 local function is_explore_done_msg(text)
-  local cleaned = BRC.text.clean_text(text)
+  local cleaned = BRC.text.clean(text)
   return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
 end
 
@@ -4283,14 +4263,14 @@ function f_safe_consumables.ready()
         or (st == "torment" and you.torment_immune())
         or util.contains(NO_INSCRIPTION_NEEDED, st)
       then
-        if inv.inscription:find("!r", 1, true) then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
-      elseif not inv.inscription:find("!r", 1, true) then
+        if inv.inscription:contains("!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
+      elseif not inv.inscription:contains("!r") then
         inv.inscribe("!r")
       end
     elseif inv_class == "potion" then
       if util.contains(NO_INSCRIPTION_NEEDED, st) then
-        if inv.inscription:find("!q", 1, true) then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
-      elseif not inv.inscription:find("!q", 1, true) then
+        if inv.inscription:contains("!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+      elseif not inv.inscription:contains("!q") then
         inv.inscribe("!q")
       end
     end
@@ -4332,20 +4312,23 @@ local function check_new_location(cmd)
   if not BRC.active then return BRC.util.do_cmd(cmd) end
 
   local feature = view.feature_at(0, 0)
-  local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
+  local one_way_stair = feature:contains("escape_hatch") or feature:contains("shaft")
 
   local turn_diff = you.turns() - ss_last_stair_turn
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
-      if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
+      if not (feature:contains("down") or feature:contains("shaft")) then
+        BRC.util.do_cmd(cmd)
+        return
+      end
+    elseif cmd == "CMD_GO_UPSTAIRS" then
+      if not feature:contains("up") then
         BRC.util.do_cmd(cmd)
         return
       end
     else
-      if not feature:find("up", 1, true) then
-        BRC.util.do_cmd(cmd)
-        return
-      end
+      BRC.log.error("Invalid command: " .. cmd)
+      return
     end
 
     if not BRC.mpr.yesno("Really go right back?") then
@@ -4353,7 +4336,7 @@ local function check_new_location(cmd)
       return
     end
   elseif Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
-    if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
+    if feature:contains("down") or feature:contains("shaft") then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
         BRC.mpr.okay()
         return
@@ -4584,7 +4567,7 @@ function f_weapon_slots.c_assign_invletter(it)
 end
 
 function f_weapon_slots.c_message(text, channel)
-  do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
+  do_cleanup_weapon_slots = channel == "plain" and text:contains("ou drop ")
 end
 
 function f_weapon_slots.ready()
@@ -4759,6 +4742,25 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COLORS.brown, item = BRC.COLORS.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
+f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+  RARE_ITEM = "💎",
+  ARTEFACT = "💠",
+  ORB = "🔮",
+  TALISMAN = "🧬",
+  STAFF_RESISTANCE = "🔥",
+
+  WEAPON = "⚔️",
+  RANGED = "🏹",
+  POLEARM = "🔱",
+  TWO_HAND = "✋🤚",
+
+  EGO = "✨",
+  ACCURACY = "🎯",
+  STRONGER = "💪",
+  STRONGEST = "💪💪",
+  LIGHTER = "⏬",
+  HEAVIER = "⏫"
+}
 -- Persistent variables
 pa_num_autopickup_funcs = BRC.data.persist("pa_num_autopickup_funcs", #chk_force_autopickup + 1)
 
@@ -4928,11 +4930,11 @@ end
 function f_pickup_alert.c_message(text, channel)
   -- Avoid firing alerts when changing armour/weapons
   if channel == "multiturn" then
-    if not pause_pa_system and text:find("ou start ", 1, true) then pause_pa_system = true end
+    if not pause_pa_system and text:contains("ou start ") then pause_pa_system = true end
   elseif channel == "plain" then
-    if pause_pa_system and (text:find("ou stop ", 1, true) or text:find("ou finish ", 1, true)) then
+    if pause_pa_system and (text:contains("ou stop ") or text:contains("ou finish ")) then
       pause_pa_system = false
-    elseif text:find("one exploring", 1, true) or text:find("artly explored", 1, true) then
+    elseif text:contains("one exploring") or text:contains("artly explored") then
       local tokens = { "Recent alerts:" }
       for _, v in ipairs(pa_recent_alerts) do
         tokens[#tokens + 1] = string.format("\n  %s", v)
@@ -5101,6 +5103,7 @@ f_pa_armour = {}
 -- Local config
 local Config = f_pickup_alert.Config
 local Tuning = f_pickup_alert.Config.Tuning
+local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants / configuration
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
@@ -5112,20 +5115,20 @@ local HEAVIER = "heavier"
 local LIGHTER = "lighter"
 
 local ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = BRC.Emoji.ARTEFACT },
-  [GAIN] = { msg = "Gain ego", emoji = BRC.Emoji.EGO },
-  [DIFF] = { msg = "Diff ego", emoji = BRC.Emoji.EGO },
+  artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
+  [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
+  [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
   [LIGHTER] = {
-    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = BRC.Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = BRC.Emoji.EGO },
-    [SAME] = { msg = "Lighter armour", emoji = BRC.Emoji.LIGHTER },
-    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = BRC.Emoji.LIGHTER },
+    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
+    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
+    [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
+    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
   },
   [HEAVIER] = {
-    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = BRC.Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = BRC.Emoji.EGO },
-    [SAME] = { msg = "Heavier Armour", emoji = BRC.Emoji.HEAVIER },
-    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = BRC.Emoji.HEAVIER },
+    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
+    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
+    [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
+    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
   }, -- ARMOUR_ALERT.heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
@@ -5143,7 +5146,7 @@ local function aux_slot_is_impaired(it)
   elseif st == "boots" then
     return BRC.get.mut(BRC.MUTATIONS.hooves, true) > 0
         or BRC.get.mut(BRC.MUTATIONS.talons, true) > 0
-  elseif it.name("base"):find("helmet", 1, true) then
+  elseif it.name("base"):contains("helmet") then
     return BRC.get.mut(BRC.MUTATIONS.horns, true) > 0
         or BRC.get.mut(BRC.MUTATIONS.beak, true) > 0
         or BRC.get.mut(BRC.MUTATIONS.antennae, true) > 0
@@ -5288,7 +5291,7 @@ local function alert_highest_ac(it)
     local itAC = BRC.get.armour_ac(it)
     if itAC > pa_high_score.ac then
       pa_high_score.ac = itAC
-      return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, Config.fm_alert.high_score_armour)
+      return f_pickup_alert.do_alert(it, "Highest AC", Emoji.STRONGEST, Config.fm_alert.high_score_armour)
     end
   end
 
@@ -5335,13 +5338,13 @@ local function alert_body_armour(it)
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_highest_ac(it) then return true end
   if it_ego and you.xl() <= Tuning.armour.early_xl then
-    return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
+    return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)
   end
 end
 
 local function alert_shield(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, Config.fm_alert.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -5352,15 +5355,15 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, Config.fm_alert.shields)
   elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
-    return f_pickup_alert.do_alert(it, "Higher SH", BRC.Emoji.STRONGER, Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", Emoji.STRONGER, Config.fm_alert.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, Config.fm_alert.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, Config.fm_alert.aux_armour)
   end
 
   local all_equipped, num_slots = BRC.get.equipped_at(it)
@@ -5378,9 +5381,9 @@ local function alert_aux_armour(it, unworn_inv_item)
     local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
     if is_new_ego(ego_change) then
       local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, Config.fm_alert.aux_armour)
     elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
-      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Higher AC", Emoji.STRONGER, Config.fm_alert.aux_armour)
     end
   end
 end
@@ -5431,9 +5434,10 @@ f_pa_misc = {}
 
 -- Local config
 local Config = f_pickup_alert.Config
+local Emoji = f_pickup_alert.Config.Emoji
 
 function f_pa_misc.alert_orb(it)
-  return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, Config.fm_alert.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", Emoji.ORB, Config.fm_alert.orbs)
 end
 
 function f_pa_misc.alert_OTA(it)
@@ -5460,7 +5464,7 @@ function f_pa_misc.alert_OTA(it)
 
   f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, Config.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Found first", Emoji.RARE_ITEM, Config.fm_alert.one_time_alerts)
 end
 
 function f_pa_misc.alert_staff(it)
@@ -5480,16 +5484,16 @@ function f_pa_misc.alert_staff(it)
   end
 
   if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, Config.fm_alert.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", Emoji.STAFF_RESISTANCE, Config.fm_alert.staff_resists)
 end
 
 function f_pa_misc.alert_talisman(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", Emoji.TALISMAN, Config.fm_alert.talismans)
   end
   local required_skill = BRC.get.talisman_min_level(it) - Config.alert.talisman_lvl_diff
   if required_skill > BRC.you.shapeshifting_skill() then return false end
-  return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
+  return f_pickup_alert.do_alert(it, "New talisman", Emoji.TALISMAN, Config.fm_alert.talismans)
 end
 
 function f_pa_misc.is_unneeded_ring(it)
@@ -5535,6 +5539,7 @@ lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
 -- Local config
 local Config = f_pickup_alert.Config
 local Tuning = f_pickup_alert.Config.Tuning
+local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants
 local FIRST_WEAPON_XL_CUTOFF = 4 -- Stop looking for first weapon after this XL
@@ -5609,7 +5614,7 @@ function _weapon_cache.add_weapon(it)
 
   -- Check for exclusion tags
   local lower_insc = it.inscription:lower()
-  weap_data.allow_upgrade = not (lower_insc:find("!u", 1, true) or lower_insc:find("!brc", 1, true))
+  weap_data.allow_upgrade = not (lower_insc:contains("!u") or lower_insc:contains("!brc"))
 
   -- Track unique egos
   if weap_data._ego and not util.contains(_weapon_cache.egos, weap_data._ego) then
@@ -5723,7 +5728,7 @@ local function get_first_of_skill_alert(it, silent)
     lowest_num_hands_alerted[skill] = hands
     if silent then return end
     local msg = string.format("First %s%s", string.sub(skill, 1, -2), hands == 1 and " (1-handed)" or "")
-    return make_alert(it, msg, BRC.Emoji.WEAPON, Config.fm_alert.early_weap)
+    return make_alert(it, msg, Emoji.WEAPON, Config.fm_alert.early_weap)
   end
 end
 
@@ -5733,7 +5738,7 @@ local function get_early_weapon_alert(it)
     if it.plus >= Tuning.weap.alert.early_ranged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"] then
       local low_shield_training = you.skill("Shields") <= Tuning.weap.alert.early_ranged.max_shields
       if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
-        return make_alert(it, "Ranged weapon", BRC.Emoji.RANGED, Config.fm_alert.early_weap)
+        return make_alert(it, "Ranged weapon", Emoji.RANGED, Config.fm_alert.early_weap)
       end
     end
   end
@@ -5746,7 +5751,7 @@ local function get_early_weapon_alert(it)
 
     local it_plus = it.plus or 0
     if BRC.get.ego(it) or it_plus and it_plus >= Tuning.weap.alert.early.branded_min_plus then
-      return make_alert(it, "Early weapon", BRC.Emoji.WEAPON, Config.fm_alert.early_weap)
+      return make_alert(it, "Early weapon", Emoji.WEAPON, Config.fm_alert.early_weap)
     end
   end
 
@@ -5757,7 +5762,7 @@ local function get_weap_high_score_alert(it)
   if _weapon_cache.is_empty() then return end -- Skip if not using weapons
   local category = f_pa_data.update_high_scores(it)
   if not category then return end
-  return make_alert(it, category, BRC.Emoji.WEAPON, Config.fm_alert.high_score_weap)
+  return make_alert(it, category, Emoji.WEAPON, Config.fm_alert.high_score_weap)
 end
 
 local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
@@ -5765,9 +5770,9 @@ local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only consider their DPS)
   local cur_ego = BRC.get.ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
-    return make_alert(it, cur_ego and "Diff ego" or "Gain ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
+    return make_alert(it, cur_ego and "Diff ego" or "Gain ego", Emoji.EGO, Config.fm_alert.weap_ego)
   elseif get_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
-    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
+    return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
   end
 end
 
@@ -5778,10 +5783,10 @@ Check if weapon is worth alerting for, compared against one weapon currently in 
 local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Ensure the non-strict upgrade is checked, if not already done in pickup_weapon()
   if Config.pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
-    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
+    return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
   end
 
-  if it.artefact then return make_alert(it, "Artefact weapon", BRC.Emoji.ARTEFACT) end
+  if it.artefact then return make_alert(it, "Artefact weapon", Emoji.ARTEFACT) end
   if cur.subtype() == it.subtype() then return get_upgrade_alert_same_type(it, cur, best_dps, best_score) end
   if not is_valid_upgrade(it, cur) then return end
 
@@ -5796,26 +5801,26 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
       local it_ego = BRC.get.ego(it)
       if not BRC.get.ego(cur) then
         if ratio > Tuning.weap.alert.gain_ego then
-          return make_alert(it, "Gain ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
+          return make_alert(it, "Gain ego", Emoji.EGO, Config.fm_alert.weap_ego)
         end
       elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Tuning.weap.alert.new_ego then
-        return make_alert(it, "New ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
+        return make_alert(it, "New ego", Emoji.EGO, Config.fm_alert.weap_ego)
       end
     end
     if ratio > Tuning.weap.alert.pure_dps then
-      return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
+      return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
     end
   elseif BRC.you.free_offhand() or (you.skill("Shields") < Tuning.weap.alert.add_hand.ignore_sh_lvl) then
       local it_ego = BRC.get.ego(it)
       local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
       if unique_ego and ratio > Tuning.weap.alert.new_ego then
-        return make_alert(it, "New ego (2-handed)", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
+        return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.fm_alert.weap_ego)
       elseif ratio > Tuning.weap.alert.add_hand.not_using then
-        return make_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
+        return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
       end
   elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Tuning.weap.alert.add_hand.add_ego_lose_sh then
     local msg = "2-handed weapon (Gain ego)"
-    return make_alert(it, msg, BRC.Emoji.TWO_HAND, Config.fm_alert.weap_ego)
+    return make_alert(it, msg, Emoji.TWO_HAND, Config.fm_alert.weap_ego)
   end
 end
 

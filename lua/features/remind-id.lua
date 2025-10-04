@@ -10,6 +10,7 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
+  emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?")
 } -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
@@ -20,7 +21,7 @@ local Config = f_remind_id.Config
 
 -- Local constants / configuration
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
-if BRC.Emoji.REMIND_ID then IDENTIFY_MSG = BRC.Emoji.REMIND_ID .. IDENTIFY_MSG .. BRC.Emoji.REMIND_ID end
+if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
 
 -- Local variables
 local do_remind_id_check

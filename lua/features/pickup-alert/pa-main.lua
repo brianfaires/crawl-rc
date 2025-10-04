@@ -147,6 +147,25 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COLORS.brown, item = BRC.COLORS.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
+f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+  RARE_ITEM = "💎",
+  ARTEFACT = "💠",
+  ORB = "🔮",
+  TALISMAN = "🧬",
+  STAFF_RESISTANCE = "🔥",
+
+  WEAPON = "⚔️",
+  RANGED = "🏹",
+  POLEARM = "🔱",
+  TWO_HAND = "✋🤚",
+
+  EGO = "✨",
+  ACCURACY = "🎯",
+  STRONGER = "💪",
+  STRONGEST = "💪💪",
+  LIGHTER = "⏬",
+  HEAVIER = "⏫"
+}
 -- Persistent variables
 pa_num_autopickup_funcs = BRC.data.persist("pa_num_autopickup_funcs", #chk_force_autopickup + 1)
 

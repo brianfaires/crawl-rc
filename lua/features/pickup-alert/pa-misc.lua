@@ -9,9 +9,10 @@ f_pa_misc = {}
 
 -- Local config
 local Config = f_pickup_alert.Config
+local Emoji = f_pickup_alert.Config.Emoji
 
 function f_pa_misc.alert_orb(it)
-  return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, Config.fm_alert.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", Emoji.ORB, Config.fm_alert.orbs)
 end
 
 function f_pa_misc.alert_OTA(it)
@@ -38,7 +39,7 @@ function f_pa_misc.alert_OTA(it)
 
   f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, Config.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Found first", Emoji.RARE_ITEM, Config.fm_alert.one_time_alerts)
 end
 
 function f_pa_misc.alert_staff(it)
@@ -58,16 +59,16 @@ function f_pa_misc.alert_staff(it)
   end
 
   if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, Config.fm_alert.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", Emoji.STAFF_RESISTANCE, Config.fm_alert.staff_resists)
 end
 
 function f_pa_misc.alert_talisman(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", Emoji.TALISMAN, Config.fm_alert.talismans)
   end
   local required_skill = BRC.get.talisman_min_level(it) - Config.alert.talisman_lvl_diff
   if required_skill > BRC.you.shapeshifting_skill() then return false end
-  return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
+  return f_pickup_alert.do_alert(it, "New talisman", Emoji.TALISMAN, Config.fm_alert.talismans)
 end
 
 function f_pa_misc.is_unneeded_ring(it)
