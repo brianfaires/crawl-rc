@@ -6,15 +6,6 @@ Dependencies: (none)
 
 -- Initialize
 BRC = BRC or {}
-BRC.log = {}
-BRC.text = {}
-BRC.mpr = {}
-BRC.get = {}
-BRC.is = {}
-BRC.you = {}
-BRC.set = {}
-BRC.util = {}
-BRC.dump = {}
 
 -- Local variables
 local _mpr_queue = {}
@@ -62,7 +53,10 @@ local function serialize_config()
   return table.concat(tokens)
 end
 
--- BRC.log - Logging methods
+-----------------------------------
+---- BRC.log - Logging methods ----
+BRC.log = {}
+
 function BRC.log.error(message, context)
   log_message(message, context, BRC.LogColor.error)
 end
@@ -80,10 +74,12 @@ function BRC.log.debug(message, context)
   log_message(message, context, BRC.LogColor.debug)
 end
 
----- BRC.text - Utility functions ----
+---------------------------------------------------
+---- BRC.text - Text color + parsing functions ----
+BRC.text = {}
 
 -- Remove tags from text, and optionally escape special characters
-function BRC.text.clean_text(text, escape_chars)
+function BRC.text.clean(text, escape_chars)
   text = text:gsub("\n", "")
   if escape_chars then text = text:gsub(SPECIAL_CHARS, "%%%1") end
   return text:gsub("<[^>]*>", "")
@@ -101,14 +97,24 @@ function BRC.text.color(color, text)
   return color and BRC.text[color](text) or tostring(text)
 end
 
+function BRC.text.contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+
+-- Connect string:contains() to BRC.text.contains()
+getmetatable("").__index.contains = BRC.text.contains
+
 function BRC.text.get_pickup_info(text)
-  local cleaned = BRC.text.clean_text(text, false)
+  local cleaned = BRC.text.clean(text, false)
   if cleaned:sub(2, 4) ~= " - " then return nil end
   return { slot = items.letter_to_index(cleaned:sub(1, 1)), item = cleaned:sub(5, #cleaned) }
 end
 
---- BRC.mpr - Wrappers around crawl.mpr ---
--- Create a wrapper for each color. Usage: BRC.mpr.lightgreen("Hello"), or BRC.mpr["red"]("Hello")
+---------------------------------------------
+---- BRC.mpr - Wrappers around crawl.mpr ----
+BRC.mpr = {}
+
+-- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
 for k, v in pairs(BRC.COLORS) do
   BRC.mpr[k] = function(text, channel)
     crawl.mpr(BRC.text.color(v, text), channel)
@@ -129,13 +135,13 @@ function BRC.mpr.okay(suffix)
   BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
 end
 
--- Message and stop travel/activity
+-- Message plus stop travel/activity
 function BRC.mpr.stop(text, color, channel)
   BRC.mpr.color(text, color, channel)
   you.stop_activity()
 end
 
--- Message and a more prompt
+-- Message as a force_more_message
 function BRC.mpr.more(text, color, channel)
   BRC.mpr.color(text, color, channel)
   you.stop_activity()
@@ -143,7 +149,7 @@ function BRC.mpr.more(text, color, channel)
   crawl.redraw_screen()
 end
 
--- Conditionally display a more prompt
+-- Conditional force_more_message
 function BRC.mpr.optmore(show_more, text, color, channel)
   if show_more then
     BRC.mpr.more(text, color, channel)
@@ -152,7 +158,7 @@ function BRC.mpr.optmore(show_more, text, color, channel)
   end
 end
 
--- Queue a message, to dispay at start of next turn
+-- Queue the message, to dispay at start of next turn
 function BRC.mpr.que(text, color, channel)
   for _, msg in ipairs(_mpr_queue) do
     if msg.text == text and msg.channel == channel then return end
@@ -160,7 +166,7 @@ function BRC.mpr.que(text, color, channel)
   _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color, text), channel = channel, show_more = false }
 end
 
--- Queue msg w/ conditional force-more prompt
+-- Queue msg w/ conditional force_more_message
 function BRC.mpr.que_optmore(show_more, text, color, channel)
   for _, msg in ipairs(_mpr_queue) do
     if msg.text == text and msg.channel == channel and msg.show_more == show_more then return end
@@ -168,7 +174,7 @@ function BRC.mpr.que_optmore(show_more, text, color, channel)
   _mpr_queue[#_mpr_queue + 1] = { text = BRC.text.color(color, text), channel = channel, show_more = show_more }
 end
 
--- Display and consume the message queue
+-- Display queued messages and clear the queue
 function BRC.mpr.consume_queue()
   local do_more = false
   for _, msg in ipairs(_mpr_queue) do
@@ -206,7 +212,10 @@ function BRC.mpr.yesno(text, color, capital_only)
   return false
 end
 
+-----------------------------------------------------
 ---- BRC.get - Functions to get non-boolean data ----
+BRC.get = {}
+
 function BRC.get.num_equip_slots(it)
   local player_race = you.race()
   if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
@@ -223,15 +232,14 @@ function BRC.get.command_key(cmd)
   if not key then return nil end
   -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
   local char_key = key:sub(-1)
-  if key:find("Ctrl", 1, true) then return BRC.util.control_key(char_key) end
+  if key:contains("Ctrl") then return BRC.util.control_key(char_key) end
   return char_key
 end
 
 --[[
-BRC.get.equipped_at() - Returns 2 values:
+BRC.get.equipped_at() - Returns 2 values (usually a list of length 1, with num_slots==1):
   1. A list of equipped items at the same slot as the item
-  2. the num_slots (ie maximum size the list can ever be). This is usually a list of length 1, with num_slots==1.
-  Poltergeists, Coglin, and Formicid may have more
+  2. the num_slots (ie maximum size the list can ever be)
 --]]
 function BRC.get.equipped_at(it)
   local all_aux = {}
@@ -249,7 +257,7 @@ function BRC.get.mut(mutation, include_all)
 end
 
 function BRC.get.skill(skill)
-  if not skill:find(",", 1, true) then return you.skill(skill) end
+  if not skill:contains(",") then return you.skill(skill) end
 
   local skills = crawl.split(skill, ",")
   local sum = 0
@@ -268,7 +276,7 @@ function BRC.get.skill_with(it)
   if BRC.is.shield(it) then return BRC.get.skill("Shields") end
   if BRC.is.talisman(it) then return BRC.you.shapeshifting_skill() end
 
-  return 1 -- Fallback to 1
+  BRC.log.error("Unknown skill for item: " .. it.name())
 end
 
 function BRC.get.staff_school(it)
@@ -278,6 +286,8 @@ function BRC.get.staff_school(it)
 end
 
 function BRC.get.talisman_min_level(it)
+  if it.name() == "protean talisman" then return 6 end
+
   -- Parse the item description
   local tokens = crawl.split(it.description, "\n")
   for _, v in ipairs(tokens) do
@@ -290,10 +300,13 @@ function BRC.get.talisman_min_level(it)
     end
   end
 
-  return 0 -- Fallback to 0, to surface any errors. Applies to Protean Talisman.
+  BRC.log.error("Failed to find skill required for: " .. it.name())
+  return -1
 end
 
----- BRC.is - Boolean type checks of items ----
+------------------------------------------
+---- BRC.is - Boolean checks of items ----
+BRC.is = {}
 
 function BRC.is.amulet(it)
   return it and it.name("base") == "amulet"
@@ -327,7 +340,7 @@ function BRC.is.ring(it)
 end
 
 function BRC.is.scarf(it)
-  return it and it.class(true) == "armour" and it.subtype() == "cloak" and it.name():find("scarf", 1, true)
+  return it and it.class(true) == "armour" and it.subtype() == "cloak" and it.name():contains("scarf")
 end
 
 function BRC.is.shield(it)
@@ -345,10 +358,21 @@ function BRC.is.orb(it)
 end
 
 function BRC.is.polearm(it)
-  return it and it.weap_skill:find("Polearms", 1, true)
+  return it and it.weap_skill:contains("Polearms")
 end
 
+-------------------------------------------------------
 ---- BRC.you - Boolean attributes of the character ----
+BRC.you = {}
+
+function BRC.you.by_slimy_wall()
+  for x = -1, 1 do
+    for y = -1, 1 do
+      if view.feature_at(x, y) == "slimy_wall" then return true end
+    end
+  end
+  return false
+end
 
 function BRC.you.free_offhand()
   if BRC.get.mut(BRC.MUTATIONS.missing_hand, true) > 0 then return true end
@@ -363,15 +387,6 @@ function BRC.you.in_hell(exclude_vestibule)
   local branch = you.branch()
   if exclude_vestibule and branch == "Hell" then return false end
   return util.contains(BRC.HELL_BRANCHES, branch)
-end
-
-function BRC.you.by_slimy_wall()
-  for x = -1, 1 do
-    for y = -1, 1 do
-      if view.feature_at(x, y) == "slimy_wall" then return true end
-    end
-  end
-  return false
 end
 
 function BRC.you.miasma_immune()
@@ -398,7 +413,10 @@ function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
 end
 
----- BRC.set - Simple helper functions wrapping crawl.setopt() ----
+--------------------------------------------------
+---- BRC.set - Wrappers around crawl.setopt() ----
+BRC.set = {}
+
 function BRC.set.autopickup_exceptions(pattern, add_pattern)
   local op = add_pattern and "^=" or "-="
   crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
@@ -424,7 +442,7 @@ function BRC.set.force_more_message(pattern, add_pattern)
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
 end
 
--- Sets a macro. Function must be global and not a member of a module.
+-- Binds a macro to a key. Function must be global and not a member of a module.
 function BRC.set.macro(key, function_name)
   BRC.log.debug(string.format(
     "Assigning macro: %s to key: %s",
@@ -449,7 +467,9 @@ function BRC.set.runrest_stop_message(pattern, add_pattern)
   crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
 end
 
---- BRC.dump - Debugging utils called from in-game lua interpreter ---
+------------------------------------------------------------------------------
+--- BRC.dump - Debugging messages for char dump or in-game lua interpreter ---
+BRC.dump = {}
 
 function BRC.dump.all(verbose, skip_mpr)
   local tokens = {}
@@ -483,13 +503,15 @@ function macro_brc_dump_character()
   BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan))
 end
 
---- BRC.util - Utility functions ----
--- BRC.util.do_cmd(): Tries via keypress first, fallback to crawl.do_commands()
--- crawl.do_commands() isn't always immediate; might wait for a keypress before doing the command
+----------------------------------------------
+---- BRC.util - General utility functions ----
+BRC.util = {}
+
 function BRC.util.control_key(c)
   return string.byte(c:upper()) - 64
 end
 
+-- BRC.util.do_cmd(): Tries keypress first, then crawl.do_commands() (which isn't always immediate)
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
   if key then
@@ -506,11 +528,11 @@ end
 --[[
 The functions above are general purpose: They should apply to any crawl RC file.
 The functions below contain design choices or logic that are somewhat specific to BRC.
-Examples: Weapon DPS calculation, treating dragon scales as branded, or defining what a "risky item" is.
+Examples: Weapon DPS calculation, treat dragon scales as branded, defining what a "risky item" is.
 --]]
 
 -- Local functions; Often mirroring calculations that live in crawl.
--- Each mirrored function is commented with the last dcss version it was compared against.
+-- Last verified against: dcss v0.33.1
 
 local function format_dmg(dmg)
   -- Always return a string of length 4
@@ -531,31 +553,24 @@ local function format_stat(abbr, val, is_worn)
 end
 
 local function get_size_penalty()
-  if util.contains(BRC.LITTLE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.SMALL_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.LARGE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LARGE
-  end
-  return BRC.SIZE_PENALTY.NORMAL
+  if util.contains(BRC.LITTLE_RACES, you.race()) then return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then return BRC.SIZE_PENALTY.LARGE
+  else return BRC.SIZE_PENALTY.NORMAL end
 end
 
 local function get_unadjusted_armour_pen(encumb)
-  -- dcss v0.33.1
   local pen = encumb - 2 * BRC.get.mut(BRC.MUTATIONS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
 
 local function get_adjusted_armour_pen(encumb, str)
-  -- dcss v0.33.1
   local base_pen = get_unadjusted_armour_pen(encumb)
   return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
 local function get_adjusted_dodge_bonus(encumb, str, dex)
-  -- dcss v0.33.1
   local size_factor = -2 * get_size_penalty()
   local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
@@ -566,7 +581,6 @@ local function get_adjusted_dodge_bonus(encumb, str, dex)
 end
 
 local function get_shield_penalty(sh)
-  -- dcss v0.33.1
   return 2 * sh.encumbrance * sh.encumbrance * (27 - you.skill("Shields")) / 27 / (25 + 5 * you.strength())
 end
 
@@ -581,16 +595,15 @@ local function get_branded_delay(delay, ego)
 end
 
 local function get_weap_min_delay(it)
-  -- dcss v0.33.1
   -- This is an abbreviated version of the actual calculation.
-  -- Skips brand and >=3 checks, which are covered in get_weap_delay()
-  if it.artefact and it.name("qual"):find("woodcutter's axe", 1, true) then return it.delay end
+  -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
+  if it.artefact and it.name("qual"):contains("woodcutter's axe") then return it.delay end
 
   local min_delay = math.floor(it.delay / 2)
   if it.weap_skill == "Short Blades" then return 5 end
   if it.is_ranged then
     local basename = it.name("base")
-    local is_2h_ranged = basename:find("crossbow", 1, true) or basename:find("arbalest", 1, true)
+    local is_2h_ranged = basename:contains("crossbow") or basename:contains("arbalest")
     if is_2h_ranged then return math.max(min_delay, 10) end
   end
 
@@ -754,9 +767,8 @@ function BRC.get.ego(it, exclude_stat_only_egos)
 
   if BRC.is.body_armour(it) then
     local qualname = it.name("qual")
-    if qualname:find("dragon scales", 1, true) and not qualname:find("steam", 1, true)
-      or qualname:find("troll leather", 1, true) then
-        return qualname
+    if qualname:contains("troll leather") or qualname:contains("dragon scales") and not qualname:contains("steam") then
+      return qualname
     end
   end
 
@@ -903,7 +915,7 @@ function BRC.get.weap_damage(it, dmg_type)
   end
 
   local stat = str
-  if it.is_ranged or it.weap_skill:find("Blades", 1, true) then stat = dex end
+  if it.is_ranged or it.weap_skill:contains("Blades") then stat = dex end
 
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + BRC.get.skill(it.weap_skill) / 25 / 2) * (1 + you.skill("Fighting") / 30 / 2)

@@ -1778,8 +1778,7 @@ local function get_size_penalty()
   if util.contains(BRC.LITTLE_RACES, you.race()) then return BRC.SIZE_PENALTY.LITTLE
   elseif util.contains(BRC.SMALL_RACES, you.race()) then return BRC.SIZE_PENALTY.SMALL
   elseif util.contains(BRC.LARGE_RACES, you.race()) then return BRC.SIZE_PENALTY.LARGE
-  end
-  return BRC.SIZE_PENALTY.NORMAL
+  else return BRC.SIZE_PENALTY.NORMAL end
 end
 
 local function get_unadjusted_armour_pen(encumb)
@@ -3555,7 +3554,7 @@ local function clean_item_text(text)
 end
 
 local function extract_jewellery_or_evoker(text)
-  local idx = text:contains("ring of") or text:contains("amulet of") or text:contains("wand of")
+  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
   for _, item_name in ipairs(BRC.MISC_ITEMS) do
@@ -3832,7 +3831,7 @@ local function inscribe_weapon_stats(it)
   local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[Config.inscribe_dps_type])
   local prefix, suffix = "", ""
 
-  local idx = orig_inscr:contains("DPS:")
+  local idx = orig_inscr:find("DPS:", 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr) end
@@ -4251,27 +4250,32 @@ local NO_INSCRIPTION_NEEDED = {
   "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
+-- Local functions
+local function no_inscription_needed(class, st)
+  if util.contains(NO_INSCRIPTION_NEEDED, st) then return true end
+  if class == "scroll" then
+    if st == "poison" then return you.res_poison() == 0 end
+    if st == "torment" then return not you.torment_immune() end
+  end
+  return true
+end
+
 -- Hook functions
 function f_safe_consumables.ready()
   -- Remove the default "!r" and "!q" inscriptions after identify
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_class = inv.class(true)
-    local st = inv.subtype()
     if inv_class == "scroll" then
-      if
-        (st == "poison" and you.res_poison() > 0)
-        or (st == "torment" and you.torment_immune())
-        or util.contains(NO_INSCRIPTION_NEEDED, st)
-      then
+      if no_inscription_needed(inv_class, inv.subtype()) then
         if inv.inscription:contains("!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
-      elseif not inv.inscription:contains("!r") then
-        inv.inscribe("!r")
+      else
+        if not inv.inscription:contains("!r") then inv.inscribe("!r") end
       end
     elseif inv_class == "potion" then
-      if util.contains(NO_INSCRIPTION_NEEDED, st) then
+      if no_inscription_needed(inv_class, inv.subtype()) then
         if inv.inscription:contains("!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
-      elseif not inv.inscription:contains("!q") then
-        inv.inscribe("!q")
+      else
+        if not inv.inscription:contains("!q") then inv.inscribe("!q") end
       end
     end
   end

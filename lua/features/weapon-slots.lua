@@ -132,7 +132,7 @@ function f_weapon_slots.c_assign_invletter(it)
 end
 
 function f_weapon_slots.c_message(text, channel)
-  do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
+  do_cleanup_weapon_slots = channel == "plain" and text:contains("ou drop ")
 end
 
 function f_weapon_slots.ready()

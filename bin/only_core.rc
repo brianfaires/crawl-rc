@@ -803,8 +803,7 @@ local function get_size_penalty()
   if util.contains(BRC.LITTLE_RACES, you.race()) then return BRC.SIZE_PENALTY.LITTLE
   elseif util.contains(BRC.SMALL_RACES, you.race()) then return BRC.SIZE_PENALTY.SMALL
   elseif util.contains(BRC.LARGE_RACES, you.race()) then return BRC.SIZE_PENALTY.LARGE
-  end
-  return BRC.SIZE_PENALTY.NORMAL
+  else return BRC.SIZE_PENALTY.NORMAL end
 end
 
 local function get_unadjusted_armour_pen(encumb)

@@ -28,7 +28,7 @@ function f_after_shaft.c_message(text, channel)
 
   local text_fall = "ou fall into a shaft"
   local text_sucked = "ou are sucked into a shaft"
-  if text:find(text_fall, 1, true) or text:find(text_sucked, 1, true) then
+  if text:contains(text_fall) or text:contains(text_sucked) then
     as_shaft_depth = you.depth()
     as_shaft_branch = you.branch()
     BRC.set.explore_stop("stairs", true)

@@ -91,7 +91,7 @@ function _weapon_cache.add_weapon(it)
 
   -- Check for exclusion tags
   local lower_insc = it.inscription:lower()
-  weap_data.allow_upgrade = not (lower_insc:find("!u", 1, true) or lower_insc:find("!brc", 1, true))
+  weap_data.allow_upgrade = not (lower_insc:contains("!u") or lower_insc:contains("!brc"))
 
   -- Track unique egos
   if weap_data._ego and not util.contains(_weapon_cache.egos, weap_data._ego) then

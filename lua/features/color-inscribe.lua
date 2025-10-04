@@ -103,7 +103,7 @@ function f_color_inscribe.c_message(text, _)
   text = colorize_subtext(text)
   if text == orig_text then return end
 
-  local cleaned = BRC.text.clean_text(text)
+  local cleaned = BRC.text.clean(text)
   if cleaned:sub(2, 4) == " - " then
     text = " " .. text
   end

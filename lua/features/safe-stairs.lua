@@ -26,20 +26,23 @@ local function check_new_location(cmd)
   if not BRC.active then return BRC.util.do_cmd(cmd) end
 
   local feature = view.feature_at(0, 0)
-  local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
+  local one_way_stair = feature:contains("escape_hatch") or feature:contains("shaft")
 
   local turn_diff = you.turns() - ss_last_stair_turn
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
-      if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
+      if not (feature:contains("down") or feature:contains("shaft")) then
+        BRC.util.do_cmd(cmd)
+        return
+      end
+    elseif cmd == "CMD_GO_UPSTAIRS" then
+      if not feature:contains("up") then
         BRC.util.do_cmd(cmd)
         return
       end
     else
-      if not feature:find("up", 1, true) then
-        BRC.util.do_cmd(cmd)
-        return
-      end
+      BRC.log.error("Invalid command: " .. cmd)
+      return
     end
 
     if not BRC.mpr.yesno("Really go right back?") then
@@ -47,7 +50,7 @@ local function check_new_location(cmd)
       return
     end
   elseif Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
-    if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
+    if feature:contains("down") or feature:contains("shaft") then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
         BRC.mpr.okay()
         return

@@ -112,7 +112,7 @@ end
 
 function f_fully_recover.c_message(text, channel)
   if channel == "plain" then
-    if text:find(WAITING_MESSAGE, 1, true) or text:find("ou start resting", 1, true) then
+    if text:contains(WAITING_MESSAGE) or text:contains("ou start resting") then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif fr_start_turn > 0 then

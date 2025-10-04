@@ -335,11 +335,11 @@ end
 function f_pickup_alert.c_message(text, channel)
   -- Avoid firing alerts when changing armour/weapons
   if channel == "multiturn" then
-    if not pause_pa_system and text:find("ou start ", 1, true) then pause_pa_system = true end
+    if not pause_pa_system and text:contains("ou start ") then pause_pa_system = true end
   elseif channel == "plain" then
-    if pause_pa_system and (text:find("ou stop ", 1, true) or text:find("ou finish ", 1, true)) then
+    if pause_pa_system and (text:contains("ou stop ") or text:contains("ou finish ")) then
       pause_pa_system = false
-    elseif text:find("one exploring", 1, true) or text:find("artly explored", 1, true) then
+    elseif text:contains("one exploring") or text:contains("artly explored") then
       local tokens = { "Recent alerts:" }
       for _, v in ipairs(pa_recent_alerts) do
         tokens[#tokens + 1] = string.format("\n  %s", v)

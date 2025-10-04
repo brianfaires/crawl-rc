@@ -74,15 +74,15 @@ function f_remind_id.c_message(text, channel)
 
   if text:find("scrolls? of identify") then
     ri_found_scroll_of_id = true
-    if not text:find("ou drop ", 1, true) and have_unid_item() then
+    if not text:contains("ou drop ") and have_unid_item() then
       you.stop_activity()
       do_remind_id_check = true
     end
   elseif not ri_found_scroll_of_id then
     local pickup_info = BRC.text.get_pickup_info(text)
     if not pickup_info then return end
-    local is_scroll = pickup_info.item:find("scroll", 1, true)
-    local is_potion = pickup_info.item:find("potion", 1, true)
+    local is_scroll = pickup_info.item:contains("scroll")
+    local is_potion = pickup_info.item:contains("potion")
     if not (is_scroll or is_potion) then return end
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")

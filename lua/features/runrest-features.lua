@@ -37,7 +37,7 @@ local stop_on_stairs
 
 -- Local functions
 local function is_explore_done_msg(text)
-  local cleaned = BRC.text.clean_text(text)
+  local cleaned = BRC.text.clean(text)
   return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
 end
 

@@ -53,7 +53,7 @@ local function aux_slot_is_impaired(it)
   elseif st == "boots" then
     return BRC.get.mut(BRC.MUTATIONS.hooves, true) > 0
         or BRC.get.mut(BRC.MUTATIONS.talons, true) > 0
-  elseif it.name("base"):find("helmet", 1, true) then
+  elseif it.name("base"):contains("helmet") then
     return BRC.get.mut(BRC.MUTATIONS.horns, true) > 0
         or BRC.get.mut(BRC.MUTATIONS.beak, true) > 0
         or BRC.get.mut(BRC.MUTATIONS.antennae, true) > 0

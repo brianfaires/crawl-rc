@@ -40,7 +40,7 @@ local function enchantable_weap_in_inv()
 end
 
 local function clean_item_text(text)
-  text = BRC.text.clean_text(text, false) -- remove tags
+  text = BRC.text.clean(text, false) -- remove tags
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")
@@ -83,15 +83,15 @@ end
 
 local function should_exclude(item_name)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-  local weap_scroll = item_name:find("enchant weapon", 1, true) or item_name:find("brand weapon", 1, true)
+  local weap_scroll = item_name:contains("enchant weapon") or item_name:contains("brand weapon")
   if f_exclude_dropped.Config.not_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.name("qual"):find(item_name, 1, true) then
+    if inv.name("qual"):contains(item_name) then
       if BRC.is.jewellery(inv) then return true end
       local qty_str = string.format("ou drop %s %s", inv.quantity, item_name)
-      return inv.quantity == 1 or item_name:find(qty_str, 1, true)
+      return inv.quantity == 1 or item_name:contains(qty_str)
     end
   end
 
@@ -109,7 +109,7 @@ function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
 
   local picked_up = BRC.text.get_pickup_info(text)
-  if not picked_up and not text:find("ou drop ", 1, true) then return end
+  if not picked_up and not text:contains("ou drop ") then return end
 
   local item_name = get_item_name(text)
   if not item_name then return end
