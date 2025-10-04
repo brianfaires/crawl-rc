@@ -15,7 +15,10 @@ BRC.Config.emojis = false -- Use emojis in alerts and announcements
 BRC.Config.show_debug_messages = true
 BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unless told to
 
--- Feature config overrides: `BRC.Config[feature_name] = {...}` Settings will override defaults set in the feature.
+-- Feature config overrides: Can override anything defined in a feature.Config
+-- Define values in a table matching the feature_name like: `BRC.Config[feature_name] = {...}`
+BRC.Config["misc-alerts"] = { alert_low_hp_threshold = 0.35 } -- % max HP to alert; 0 to disable
+
 BRC.Config["announce-hp-mp"] = {}
 BRC.Config["announce-hp-mp"].dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
 BRC.Config["announce-hp-mp"].dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
@@ -24,9 +27,6 @@ BRC.Config["announce-hp-mp"].every_turn = true -- Announce every turn, not just 
 BRC.Config["inscribe-stats"] = {}
 BRC.Config["inscribe-stats"].inscribe_weapons = true -- Inscribe weapon stats on pickup and adjust each turn
 BRC.Config["inscribe-stats"].inscribe_armour = true -- Inscribe armour stats on pickup and adjust each turn
-BRC.Config["inscribe-stats"].inscribe_dps_type = "plain" -- How to calc weapon DPS (See BRC.DMG_TYPE in constants.lua)
-
-BRC.Config["misc-alerts"] = { alert_low_hp_threshold = 0.35 } -- % max HP to alert; 0 to disable
 
 BRC.Config["remind-id"] = {}
 BRC.Config["remind-id"].stop_on_scrolls_count = 2 -- Stop when largest un-ID'd scroll stack increases and is >= this
@@ -34,8 +34,8 @@ BRC.Config["remind-id"].stop_on_pots_count = 3 -- Stop when largest un-ID'd poti
 
 BRC.Config["runrest-features"] = {}
 BRC.Config["runrest-features"].ignore_portal_exits = true -- don't stop explore on portal exits
-BRC.Config["runrest-features"].temple_search = true -- auto-search altars
-BRC.Config["runrest-features"].gauntlet_search = true -- auto-search with filters
+BRC.Config["runrest-features"].temple_search = true -- on enter or explore, auto-search altars
+BRC.Config["runrest-features"].gauntlet_search = true -- on enter or explore, auto-search gauntlet with filters
 
 BRC.Config["startup"] = {}
 BRC.Config["startup"].show_skills_on_startup = false -- Show skills menu on startup
@@ -52,13 +52,13 @@ BRC.Config["startup"].auto_set_skill_targets = {
 BRC.Config.pickup = {
   armour = true,
   weapons = true,
-  weapons_pure_upgrades_only = true,
+  weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
   staves = true,
 } -- BRC.Config.pickup (do not remove this comment)
 
 -- Which alerts are enabled
 BRC.Config.alert = {
-  system_enabled = true, -- If false, no alerts are generated
+  alerts_enabled = true, -- If false, no alerts are generated
   armour = true,
   weapons = true,
   orbs = true,
@@ -101,83 +101,6 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
----- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
-BRC.Tuning = {}
-
---[[
-  BRC.Tuning.armour: Magic numbers for the armour pickup/alert system.
-  For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
-  Lower values mean more alerts. gain/diff/same/lose refers to egos.
-  min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
-  ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
---]]
-BRC.Tuning.armour = {
-  lighter = {
-    gain_ego = 0.6,
-    diff_ego = 0.8,
-    same_ego = 1.2,
-    lost_ego = 2.0,
-    min_gain = 3.0,
-    max_loss = 4.0,
-    ignore_small = 3.5,
-  },
-  heavier = {
-    gain_ego = 0.4,
-    diff_ego = 0.5,
-    same_ego = 0.7,
-    lost_ego = 2.0,
-    min_gain = 3.0,
-    max_loss = 8.0,
-    ignore_small = 5,
-  },
-  encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
-  early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
-} -- BRC.Tuning.armour (do not remove this comment)
-
---[[
-  BRC.Tuning.weap: Magic numbers for the weapon pickup/alert system. Two common types of values:
-    1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
-    2. Cutoffs for when alerts are active (XL, skill_level)
-  Pickup/alert system will try to upgrade ANY weapon in your inventory.
-  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS, brand, and accuracy.
---]]
-BRC.Tuning.weap = {}
-BRC.Tuning.weap.pickup = {
-  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
-  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
-  accuracy_weight = 0.25, -- Treat +1 Accuracy as +`accuracy_weight` DPS
-} -- BRC.Tuning.weap.pickup (do not remove this comment)
-
-BRC.Tuning.weap.alert = {
-  -- Alerts for weapons not requiring an extra hand
-  pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
-  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
-  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > `new_ego`
-  low_skill_penalty_damping = 8, -- Increase to penalize low-trained schools. Penalty = (skill+damp) / (top_skill+damp)
-
-  -- Alerts for 2-handed weapons, when carrying 1-handed
-  add_hand = {
-    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < `ignore_sh_lvl`
-    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > `add_ego_lose_sh`
-    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > `not_using`
-  },
-
-  -- Alerts for good early weapons of all types
-  early = {
-    xl = 7, -- Alert early weapons if XL <= `xl`
-    skill = { factor = 1.5, offset = 2.0 }, -- Skip weapons with skill diff > XL * factor + offset
-    branded_min_plus = 4, -- Alert branded weapons with plus >= `branded_min_plus`
-  },
-
-  -- Alerts for particularly strong ranged weapons
-  early_ranged = {
-    xl = 14, -- Alert strong ranged weapons if XL <= `xl`
-    min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
-    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
-    max_shields = 8.0, -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
-  }, -- BRC.Tuning.weap.alert.early_ranged (do not remove this comment)
-} -- BRC.Tuning.weap.alert (do not remove this comment)
 
 ---- BRC.BrandBonus: Tune the impact of brands on DPS calculations
 -- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
@@ -4122,8 +4045,8 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
-  stop_on_scrolls_count = 2, -- Stop on a stack of this many un-ID'd scrolls
-  stop_on_pots_count = 3, -- Stop on a stack of this many un-ID'd potions
+  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
+  stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
 } -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
@@ -4235,8 +4158,8 @@ f_runrest_features.Config = {
   ignore_portal_exits = true, -- don't stop explore on portal exits
   stop_on_hell_stairs = true, -- stop explore on hell stairs
   stop_on_pan_gates = true, -- stop explore on pan gates
-  temple_search = true, -- auto-search altars
-  gauntlet_search = true, -- auto-search with filters
+  temple_search = true,  -- on enter or explore, auto-search altars
+  gauntlet_search = true,  -- on enter or explore, auto-search gauntlet with filters
 } -- f_runrest_features.Config (do not remove this comment)
 
 -- Persistent variables
@@ -4737,9 +4660,141 @@ Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua,
 
 f_pickup_alert = {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
+f_pickup_alert.Config = {}
+f_pickup_alert.Config.pickup = {
+  armour = true,
+  weapons = true,
+  weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
+  staves = true,
+} -- f_pickup_alert.Config.pickup (do not remove this comment)
+
+f_pickup_alert.Config.alert = {
+  alerts_enabled = true, -- If false, no alerts are generated
+  armour = true,
+  weapons = true,
+  orbs = true,
+  staff_resists = true,
+  talismans = true,
+
+  -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
+  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6, -- 27 for Shapeshifter, 6 for everyone else
+
+  -- Each non-useless item is alerted once.
+  one_time = {
+    "wand of digging", "buckler", "kite shield", "tower shield",
+    "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+    "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
+    "broad axe", "executioner's axe",
+    "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+    "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+  }, -- f_pickup_alert.Config.alert.one_time (do not remove this comment)
+
+  -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
+  OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
+} -- f_pickup_alert.Config.alert (do not remove this comment)
+
+-- Which alerts generate a force_more
+f_pickup_alert.Config.fm_alert = {
+  early_weap = false, -- Good weapons found early
+  upgrade_weap = false, -- Better DPS / weapon_score
+  weap_ego = false, -- New or diff egos
+  body_armour = false,
+  shields = true,
+  aux_armour = false,
+  armour_ego = true, -- New or diff egos
+  high_score_weap = false, -- Highest damage found
+  high_score_armour = true, -- Highest AC found
+  one_time_alerts = true,
+  artefact = false, -- Any artefact
+  trained_artefacts = true, -- Only for artefacts where you have corresponding skill > 0
+  orbs = false,
+  talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
+  staff_resists = false,
+} -- f_pickup_alert.Config.fm_alert (do not remove this comment)
+
+---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
+f_pickup_alert.Config.Tuning = {}
+
+--[[
+  f_pickup_alert.Config.Tuning.armour: Magic numbers for the armour pickup/alert system.
+  For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
+  Lower values mean more alerts. gain/diff/same/lose refers to egos.
+  min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
+  ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
+--]]
+f_pickup_alert.Config.Tuning.armour = {
+  lighter = {
+    gain_ego = 0.6,
+    diff_ego = 0.8,
+    same_ego = 1.2,
+    lost_ego = 2.0,
+    min_gain = 3.0,
+    max_loss = 4.0,
+    ignore_small = 3.5,
+  },
+  heavier = {
+    gain_ego = 0.4,
+    diff_ego = 0.5,
+    same_ego = 0.7,
+    lost_ego = 2.0,
+    min_gain = 3.0,
+    max_loss = 8.0,
+    ignore_small = 5,
+  },
+  encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+  early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
+} -- f_pickup_alert.Config.Tuning.armour (do not remove this comment)
+
+--[[
+  f_pickup_alert.Config.Tuning.weap: Magic numbers for the weapon pickup/alert system. Two common types of values:
+    1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
+    2. Cutoffs for when alerts are active (XL, skill_level)
+  Pickup/alert system will try to upgrade ANY weapon in your inventory.
+  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS, brand, and accuracy.
+--]]
+f_pickup_alert.Config.Tuning.weap = {}
+f_pickup_alert.Config.Tuning.weap.pickup = {
+  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
+  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
+  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
+  accuracy_weight = 0.25, -- Treat +1 Accuracy as +`accuracy_weight` DPS
+} -- f_pickup_alert.Config.Tuning.weap.pickup (do not remove this comment)
+
+f_pickup_alert.Config.Tuning.weap.alert = {
+  -- Alerts for weapons not requiring an extra hand
+  pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
+  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
+  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > `new_ego`
+  low_skill_penalty_damping = 8, -- Increase to penalize low-trained schools. Penalty = (skill+damp) / (top_skill+damp)
+
+  -- Alerts for 2-handed weapons, when carrying 1-handed
+  add_hand = {
+    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < `ignore_sh_lvl`
+    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > `add_ego_lose_sh`
+    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > `not_using`
+  },
+
+  -- Alerts for good early weapons of all types
+  early = {
+    xl = 7, -- Alert early weapons if XL <= `xl`
+    skill = { factor = 1.5, offset = 2.0 }, -- Skip weapons with skill diff > XL * factor + offset
+    branded_min_plus = 4, -- Alert branded weapons with plus >= `branded_min_plus`
+  },
+
+  -- Alerts for particularly strong ranged weapons
+  early_ranged = {
+    xl = 14, -- Alert strong ranged weapons if XL <= `xl`
+    min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
+    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
+    max_shields = 8.0, -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
+  }, -- f_pickup_alert.Config.Tuning.weap.alert.early_ranged (do not remove this comment)
+} -- f_pickup_alert.Config.Tuning.weap.alert (do not remove this comment)
 
 -- Persistent variables
 pa_num_autopickup_funcs = BRC.data.persist("pa_num_autopickup_funcs", #chk_force_autopickup + 1)
+
+-- Local config
+local Config = f_pickup_alert.Config
 
 -- Local variables
 local pause_pa_system
@@ -4747,10 +4802,10 @@ local pause_pa_system
 -- Local functions
 local function has_configured_force_more(it)
   if it.artefact then
-    if BRC.Config.fm_alert.artefact then return true end
-    if BRC.Config.fm_alert.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
+    if Config.fm_alert.artefact then return true end
+    if Config.fm_alert.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
   end
-  if BRC.Config.fm_alert.armour_ego and BRC.is.armour(it) and BRC.get.ego(it) then return true end
+  if Config.fm_alert.armour_ego and BRC.is.armour(it) and BRC.get.ego(it) then return true end
   return false
 end
 
@@ -4778,11 +4833,11 @@ function f_pickup_alert.autopickup(it, _)
     if not unworn_aux_item then return end
   else
     -- Pickup main
-    if f_pa_armour and BRC.Config.pickup.armour and BRC.is.armour(it) then
+    if f_pa_armour and Config.pickup.armour and BRC.is.armour(it) then
       if f_pa_armour.pickup_armour(it) then return true end
-    elseif f_pa_misc and BRC.Config.pickup.staves and BRC.is.magic_staff(it) then
+    elseif f_pa_misc and Config.pickup.staves and BRC.is.magic_staff(it) then
       if f_pa_misc.pickup_staff(it) then return true end
-    elseif f_pa_weapons and BRC.Config.pickup.weapons and it.is_weapon then
+    elseif f_pa_weapons and Config.pickup.weapons and it.is_weapon then
       if f_pa_weapons.pickup_weapon(it) then return true end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
@@ -4790,21 +4845,21 @@ function f_pickup_alert.autopickup(it, _)
   end
 
   -- Not picking up this item. Now check for alerts.
-  if not BRC.Config.alert.system_enabled or f_pa_data.find(pa_items_alerted, it) then return end
+  if not Config.alert.alerts_enabled or f_pa_data.find(pa_items_alerted, it) then return end
 
-  if f_pa_misc and BRC.Config.alert.one_time and #BRC.Config.alert.one_time > 0 then
+  if f_pa_misc and Config.alert.one_time and #Config.alert.one_time > 0 then
     if f_pa_misc.alert_OTA(it) then return end
   end
 
-  if f_pa_misc and BRC.Config.alert.staff_resists and BRC.is.magic_staff(it) then
+  if f_pa_misc and Config.alert.staff_resists and BRC.is.magic_staff(it) then
     if f_pa_misc.alert_staff(it) then return end
-  elseif f_pa_misc and BRC.Config.alert.orbs and BRC.is.orb(it) then
+  elseif f_pa_misc and Config.alert.orbs and BRC.is.orb(it) then
     if f_pa_misc.alert_orb(it) then return end
-  elseif f_pa_misc and BRC.Config.alert.talismans and BRC.is.talisman(it) then
+  elseif f_pa_misc and Config.alert.talismans and BRC.is.talisman(it) then
     if f_pa_misc.alert_talisman(it) then return end
-  elseif f_pa_armour and BRC.Config.alert.armour and BRC.is.armour(it) then
+  elseif f_pa_armour and Config.alert.armour and BRC.is.armour(it) then
     if f_pa_armour.alert_armour(it, unworn_aux_item) then return end
-  elseif f_pa_weapons and BRC.Config.alert.weapons and it.is_weapon then
+  elseif f_pa_weapons and Config.alert.weapons and it.is_weapon then
     if f_pa_weapons.alert_weapon(it) then return end
   end
 end
@@ -4936,16 +4991,15 @@ end
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_data = {}
---f_pa_data.BRC_FEATURE_NAME = "pickup-alert-data"
 
 -- Persistent variables
 pa_items_alerted = BRC.data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.data.persist("pa_recent_alerts", {})
-pa_OTA_items = BRC.data.persist("pa_OTA_items", BRC.Config.alert.one_time)
+pa_OTA_items = BRC.data.persist("pa_OTA_items", f_pickup_alert.Config.alert.one_time)
 pa_high_score = BRC.data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
 
 -- Local functions
@@ -5074,7 +5128,10 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_armour = {}
---f_pa_armour.BRC_FEATURE_NAME = "pickup-alert-armour"
+
+-- Local config
+local Config = f_pickup_alert.Config
+local Tuning = f_pickup_alert.Config.Tuning
 
 -- Local constants / configuration
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
@@ -5134,7 +5191,7 @@ local function get_adjusted_ev_delta(encumb_delta, ev_delta)
   encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
   -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
-  return ev_delta - encumb_delta * encumb_impact * BRC.Tuning.armour.encumb_penalty_weight
+  return ev_delta - encumb_delta * encumb_impact * Tuning.armour.encumb_penalty_weight
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
@@ -5154,7 +5211,7 @@ local function is_new_ego(ego_change)
 end
 
 local function send_armour_alert(it, alert_type)
-  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, BRC.Config.fm_alert.body_armour)
+  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, Config.fm_alert.body_armour)
 end
 
 -- Local functions: Pickup
@@ -5235,14 +5292,14 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
-  local meets_ratio = loss <= 0 or (gain / loss > BRC.Tuning.armour[weight][ego_change])
+  local meets_ratio = loss <= 0 or (gain / loss > Tuning.armour[weight][ego_change])
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if is_new_ego(ego_change) then
-    return loss <= BRC.Tuning.armour[weight].max_loss
+    return loss <= Tuning.armour[weight].max_loss
   elseif ego_change == LOST then
-    return gain >= BRC.Tuning.armour[weight].min_gain
+    return gain >= Tuning.armour[weight].min_gain
   end
 
   return true
@@ -5262,7 +5319,7 @@ local function alert_highest_ac(it)
     local itAC = BRC.get.armour_ac(it)
     if itAC > pa_high_score.ac then
       pa_high_score.ac = itAC
-      return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, BRC.Config.fm_alert.high_score_armour)
+      return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, Config.fm_alert.high_score_armour)
     end
   end
 
@@ -5289,7 +5346,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= BRC.Tuning.armour[weight].ignore_small then
+    if math.abs(ac_delta + ev_delta) <= Tuning.armour[weight].ignore_small then
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -5308,14 +5365,14 @@ local function alert_body_armour(it)
 
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_highest_ac(it) then return true end
-  if it_ego and you.xl() <= BRC.Tuning.armour.early_xl then
+  if it_ego and you.xl() <= Tuning.armour.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
   end
 end
 
 local function alert_shield(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, Config.fm_alert.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -5326,15 +5383,15 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.shields)
   elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
-    return f_pickup_alert.do_alert(it, "Higher SH", BRC.Emoji.STRONGER, BRC.Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", BRC.Emoji.STRONGER, Config.fm_alert.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, Config.fm_alert.aux_armour)
   end
 
   local all_equipped, num_slots = BRC.get.equipped_at(it)
@@ -5343,7 +5400,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, BRC.Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, Config.fm_alert.aux_armour)
     end
   end
 
@@ -5352,9 +5409,9 @@ local function alert_aux_armour(it, unworn_inv_item)
     local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
     if is_new_ego(ego_change) then
       local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.aux_armour)
     elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
-      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, BRC.Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, Config.fm_alert.aux_armour)
     end
   end
 end
@@ -5402,10 +5459,12 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_misc = {}
---f_pa_misc.BRC_FEATURE_NAME = "pickup-alert-misc"
+
+-- Local config
+local Config = f_pickup_alert.Config
 
 function f_pa_misc.alert_orb(it)
-  return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, BRC.Config.fm_alert.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, Config.fm_alert.orbs)
 end
 
 function f_pa_misc.alert_OTA(it)
@@ -5415,7 +5474,7 @@ function f_pa_misc.alert_OTA(it)
   local do_alert = true
 
   if BRC.is.shield(it) then
-    if you.skill("Shields") < BRC.Config.alert.OTA_require_skill.shield then return end
+    if you.skill("Shields") < Config.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if ota_item == "buckler" then
@@ -5425,14 +5484,14 @@ function f_pa_misc.alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif BRC.is.armour(it) then
-    if you.skill("Armour") < BRC.Config.alert.OTA_require_skill.armour then return end
+    if you.skill("Armour") < Config.alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
-    if you.skill(it.weap_skill) < BRC.Config.alert.OTA_require_skill.weapon then return end
+    if you.skill(it.weap_skill) < Config.alert.OTA_require_skill.weapon then return end
   end
 
   f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, Config.fm_alert.one_time_alerts)
 end
 
 function f_pa_misc.alert_staff(it)
@@ -5452,16 +5511,16 @@ function f_pa_misc.alert_staff(it)
   end
 
   if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, BRC.Config.fm_alert.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, Config.fm_alert.staff_resists)
 end
 
 function f_pa_misc.alert_talisman(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
   end
-  local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
+  local required_skill = BRC.get.talisman_min_level(it) - Config.alert.talisman_lvl_diff
   if required_skill > BRC.you.shapeshifting_skill() then return false end
-  return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
+  return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
 end
 
 function f_pa_misc.is_unneeded_ring(it)
@@ -5497,7 +5556,6 @@ Dependencies: core/config.lua, core/data.lua, core/util.lua
 --]]
 
 f_pa_weapons = {}
---f_pa_weapons.BRC_FEATURE_NAME = "pickup-alert-weapons"
 
 -- Persistent variables
 lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
@@ -5505,7 +5563,11 @@ lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
   ["Polearms"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
 }) -- lowest_num_hands_alerted (do not remove this comment)
 
--- Local constants / configuration
+-- Local config
+local Config = f_pickup_alert.Config
+local Tuning = f_pickup_alert.Config.Tuning
+
+-- Local constants
 local FIRST_WEAPON_XL_CUTOFF = 4 -- Stop looking for first weapon after this XL
 local RANGED_XL_THRESHOLD = 3 -- At this skill level, don't bother alerting for polearms
 local UPGRADE_SKILL_FACTOR = 0.5 -- Don't alert for upgrades if weap skill is this much worse
@@ -5636,7 +5698,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
     if it_ego and not cur_ego then
-      return BRC.get.weap_score(it) / cur.score > BRC.Tuning.weap.pickup.add_ego
+      return BRC.get.weap_score(it) / cur.score > Tuning.weap.pickup.add_ego
     end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
@@ -5647,7 +5709,7 @@ local function is_weapon_upgrade(it, cur, strict)
     if it.artefact then return true end
     if cur.artefact then return false end
 
-    local min_ratio = it.is_ranged and BRC.Tuning.weap.pickup.same_type_ranged or BRC.Tuning.weap.pickup.same_type_melee
+    local min_ratio = it.is_ranged and Tuning.weap.pickup.same_type_ranged or Tuning.weap.pickup.same_type_melee
     return BRC.get.weap_score(it) / cur.score > min_ratio
   end
 
@@ -5680,30 +5742,30 @@ local function get_first_of_skill_alert(it, silent)
     lowest_num_hands_alerted[skill] = hands
     if silent then return end
     local msg = string.format("First %s%s", string.sub(skill, 1, -2), hands == 1 and " (1-handed)" or "")
-    return make_alert(it, msg, BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
+    return make_alert(it, msg, BRC.Emoji.WEAPON, Config.fm_alert.early_weap)
   end
 end
 
 local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
-  if it.is_ranged and you.xl() <= BRC.Tuning.weap.alert.early_ranged.xl then
-    if it.plus >= BRC.Tuning.weap.alert.early_ranged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"] then
-      local low_shield_training = you.skill("Shields") <= BRC.Tuning.weap.alert.early_ranged.max_shields
+  if it.is_ranged and you.xl() <= Tuning.weap.alert.early_ranged.xl then
+    if it.plus >= Tuning.weap.alert.early_ranged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"] then
+      local low_shield_training = you.skill("Shields") <= Tuning.weap.alert.early_ranged.max_shields
       if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
-        return make_alert(it, "Ranged weapon", BRC.Emoji.RANGED, BRC.Config.fm_alert.early_weap)
+        return make_alert(it, "Ranged weapon", BRC.Emoji.RANGED, Config.fm_alert.early_weap)
       end
     end
   end
 
-  if you.xl() <= BRC.Tuning.weap.alert.early.xl then
+  if you.xl() <= Tuning.weap.alert.early.xl then
     -- Skip items if we're clearly going another route
-    local skill_setting = BRC.Tuning.weap.alert.early.skill
+    local skill_setting = Tuning.weap.alert.early.skill
     local skill_diff = BRC.get.skill(top_attack_skill) - BRC.get.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
     local it_plus = it.plus or 0
-    if BRC.get.ego(it) or it_plus and it_plus >= BRC.Tuning.weap.alert.early.branded_min_plus then
-      return make_alert(it, "Early weapon", BRC.Emoji.WEAPON, BRC.Config.fm_alert.early_weap)
+    if BRC.get.ego(it) or it_plus and it_plus >= Tuning.weap.alert.early.branded_min_plus then
+      return make_alert(it, "Early weapon", BRC.Emoji.WEAPON, Config.fm_alert.early_weap)
     end
   end
 
@@ -5714,7 +5776,7 @@ local function get_weap_high_score_alert(it)
   if _weapon_cache.is_empty() then return end -- Skip if not using weapons
   local category = f_pa_data.update_high_scores(it)
   if not category then return end
-  return make_alert(it, category, BRC.Emoji.WEAPON, BRC.Config.fm_alert.high_score_weap)
+  return make_alert(it, category, BRC.Emoji.WEAPON, Config.fm_alert.high_score_weap)
 end
 
 local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
@@ -5722,9 +5784,9 @@ local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only consider their DPS)
   local cur_ego = BRC.get.ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
-    return make_alert(it, cur_ego and "Diff ego" or "Gain ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+    return make_alert(it, cur_ego and "Diff ego" or "Gain ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
   elseif BRC.get.weap_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
-    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
+    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
   end
 end
 
@@ -5734,8 +5796,8 @@ Check if weapon is worth alerting for, compared against one weapon currently in 
 --]]
 local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Ensure the non-strict upgrade is checked, if not already done in pickup_weapon()
-  if BRC.Config.pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
-    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
+  if Config.pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
+    return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
   end
 
   if it.artefact then return make_alert(it, "Artefact weapon", BRC.Emoji.ARTEFACT) end
@@ -5743,7 +5805,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   if not is_valid_upgrade(it, cur) then return end
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
-  local damp = BRC.Tuning.weap.alert.low_skill_penalty_damping
+  local damp = Tuning.weap.alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
   local ratio = penalty * BRC.get.weap_score(it) / best_score
 
@@ -5752,27 +5814,27 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
     if BRC.get.ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
       local it_ego = BRC.get.ego(it)
       if not BRC.get.ego(cur) then
-        if ratio > BRC.Tuning.weap.alert.gain_ego then
-          return make_alert(it, "Gain ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+        if ratio > Tuning.weap.alert.gain_ego then
+          return make_alert(it, "Gain ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
         end
-      elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > BRC.Tuning.weap.alert.new_ego then
-        return make_alert(it, "New ego", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
+      elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Tuning.weap.alert.new_ego then
+        return make_alert(it, "New ego", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
       end
     end
-    if ratio > BRC.Tuning.weap.alert.pure_dps then
-      return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, BRC.Config.fm_alert.upgrade_weap)
+    if ratio > Tuning.weap.alert.pure_dps then
+      return make_alert(it, "Weapon upgrade", BRC.Emoji.WEAPON, Config.fm_alert.upgrade_weap)
     end
-  elseif BRC.you.free_offhand() or (you.skill("Shields") < BRC.Tuning.weap.alert.add_hand.ignore_sh_lvl) then
+  elseif BRC.you.free_offhand() or (you.skill("Shields") < Tuning.weap.alert.add_hand.ignore_sh_lvl) then
       local it_ego = BRC.get.ego(it)
       local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
-      if unique_ego and ratio > BRC.Tuning.weap.alert.new_ego then
-        return make_alert(it, "New ego (2-handed)", BRC.Emoji.EGO, BRC.Config.fm_alert.weap_ego)
-      elseif ratio > BRC.Tuning.weap.alert.add_hand.not_using then
-        return make_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.upgrade_weap)
+      if unique_ego and ratio > Tuning.weap.alert.new_ego then
+        return make_alert(it, "New ego (2-handed)", BRC.Emoji.EGO, Config.fm_alert.weap_ego)
+      elseif ratio > Tuning.weap.alert.add_hand.not_using then
+        return make_alert(it, "2-handed weapon", BRC.Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
       end
-  elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > BRC.Tuning.weap.alert.add_hand.add_ego_lose_sh then
+  elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Tuning.weap.alert.add_hand.add_ego_lose_sh then
     local msg = "2-handed weapon (Gain ego)"
-    return make_alert(it, msg, BRC.Emoji.TWO_HAND, BRC.Config.fm_alert.weap_ego)
+    return make_alert(it, msg, BRC.Emoji.TWO_HAND, Config.fm_alert.weap_ego)
   end
 end
 
@@ -5813,10 +5875,10 @@ function f_pa_weapons.pickup_weapon(it)
 
   if BRC.is.risky_item(it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if is_weapon_upgrade(it, inv, BRC.Config.pickup.weapons_pure_upgrades_only) then
+    if is_weapon_upgrade(it, inv, Config.pickup.weapons_pure_upgrades_only) then
       -- Confirm after updating cache, to avoid spurious alerts from XP gain.
       f_pa_weapons.ready()
-      if is_weapon_upgrade(it, inv, BRC.Config.pickup.weapons_pure_upgrades_only) then return true end
+      if is_weapon_upgrade(it, inv, Config.pickup.weapons_pure_upgrades_only) then return true end
     end
   end
 end

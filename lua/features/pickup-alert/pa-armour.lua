@@ -6,7 +6,10 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_armour = {}
---f_pa_armour.BRC_FEATURE_NAME = "pickup-alert-armour"
+
+-- Local config
+local Config = f_pickup_alert.Config
+local Tuning = f_pickup_alert.Config.Tuning
 
 -- Local constants / configuration
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
@@ -66,7 +69,7 @@ local function get_adjusted_ev_delta(encumb_delta, ev_delta)
   encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
   -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
-  return ev_delta - encumb_delta * encumb_impact * BRC.Tuning.armour.encumb_penalty_weight
+  return ev_delta - encumb_delta * encumb_impact * Tuning.armour.encumb_penalty_weight
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
@@ -86,7 +89,7 @@ local function is_new_ego(ego_change)
 end
 
 local function send_armour_alert(it, alert_type)
-  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, BRC.Config.fm_alert.body_armour)
+  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, Config.fm_alert.body_armour)
 end
 
 -- Local functions: Pickup
@@ -167,14 +170,14 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
-  local meets_ratio = loss <= 0 or (gain / loss > BRC.Tuning.armour[weight][ego_change])
+  local meets_ratio = loss <= 0 or (gain / loss > Tuning.armour[weight][ego_change])
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if is_new_ego(ego_change) then
-    return loss <= BRC.Tuning.armour[weight].max_loss
+    return loss <= Tuning.armour[weight].max_loss
   elseif ego_change == LOST then
-    return gain >= BRC.Tuning.armour[weight].min_gain
+    return gain >= Tuning.armour[weight].min_gain
   end
 
   return true
@@ -194,7 +197,7 @@ local function alert_highest_ac(it)
     local itAC = BRC.get.armour_ac(it)
     if itAC > pa_high_score.ac then
       pa_high_score.ac = itAC
-      return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, BRC.Config.fm_alert.high_score_armour)
+      return f_pickup_alert.do_alert(it, "Highest AC", BRC.Emoji.STRONGEST, Config.fm_alert.high_score_armour)
     end
   end
 
@@ -221,7 +224,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= BRC.Tuning.armour[weight].ignore_small then
+    if math.abs(ac_delta + ev_delta) <= Tuning.armour[weight].ignore_small then
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -240,14 +243,14 @@ local function alert_body_armour(it)
 
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_highest_ac(it) then return true end
-  if it_ego and you.xl() <= BRC.Tuning.armour.early_xl then
+  if it_ego and you.xl() <= Tuning.armour.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", BRC.Emoji.EGO)
   end
 end
 
 local function alert_shield(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Artefact shield", BRC.Emoji.ARTEFACT, Config.fm_alert.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -258,15 +261,15 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.shields)
   elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
-    return f_pickup_alert.do_alert(it, "Higher SH", BRC.Emoji.STRONGER, BRC.Config.fm_alert.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", BRC.Emoji.STRONGER, Config.fm_alert.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, BRC.Config.fm_alert.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", BRC.Emoji.ARTEFACT, Config.fm_alert.aux_armour)
   end
 
   local all_equipped, num_slots = BRC.get.equipped_at(it)
@@ -275,7 +278,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, BRC.Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, Config.fm_alert.aux_armour)
     end
   end
 
@@ -284,9 +287,9 @@ local function alert_aux_armour(it, unworn_inv_item)
     local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
     if is_new_ego(ego_change) then
       local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, BRC.Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, alert_msg, BRC.Emoji.EGO, Config.fm_alert.aux_armour)
     elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
-      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, BRC.Config.fm_alert.aux_armour)
+      return f_pickup_alert.do_alert(it, "Higher AC", BRC.Emoji.STRONGER, Config.fm_alert.aux_armour)
     end
   end
 end

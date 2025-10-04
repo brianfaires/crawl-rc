@@ -6,10 +6,12 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 --]]
 
 f_pa_misc = {}
---f_pa_misc.BRC_FEATURE_NAME = "pickup-alert-misc"
+
+-- Local config
+local Config = f_pickup_alert.Config
 
 function f_pa_misc.alert_orb(it)
-  return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, BRC.Config.fm_alert.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", BRC.Emoji.ORB, Config.fm_alert.orbs)
 end
 
 function f_pa_misc.alert_OTA(it)
@@ -19,7 +21,7 @@ function f_pa_misc.alert_OTA(it)
   local do_alert = true
 
   if BRC.is.shield(it) then
-    if you.skill("Shields") < BRC.Config.alert.OTA_require_skill.shield then return end
+    if you.skill("Shields") < Config.alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if ota_item == "buckler" then
@@ -29,14 +31,14 @@ function f_pa_misc.alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif BRC.is.armour(it) then
-    if you.skill("Armour") < BRC.Config.alert.OTA_require_skill.armour then return end
+    if you.skill("Armour") < Config.alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
-    if you.skill(it.weap_skill) < BRC.Config.alert.OTA_require_skill.weapon then return end
+    if you.skill(it.weap_skill) < Config.alert.OTA_require_skill.weapon then return end
   end
 
   f_pa_data.remove(pa_OTA_items, it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, BRC.Config.fm_alert.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Found first", BRC.Emoji.RARE_ITEM, Config.fm_alert.one_time_alerts)
 end
 
 function f_pa_misc.alert_staff(it)
@@ -56,16 +58,16 @@ function f_pa_misc.alert_staff(it)
   end
 
   if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, BRC.Config.fm_alert.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", BRC.Emoji.STAFF_RESISTANCE, Config.fm_alert.staff_resists)
 end
 
 function f_pa_misc.alert_talisman(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
   end
-  local required_skill = BRC.get.talisman_min_level(it) - BRC.Config.alert.talisman_lvl_diff
+  local required_skill = BRC.get.talisman_min_level(it) - Config.alert.talisman_lvl_diff
   if required_skill > BRC.you.shapeshifting_skill() then return false end
-  return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, BRC.Config.fm_alert.talismans)
+  return f_pickup_alert.do_alert(it, "New talisman", BRC.Emoji.TALISMAN, Config.fm_alert.talismans)
 end
 
 function f_pa_misc.is_unneeded_ring(it)

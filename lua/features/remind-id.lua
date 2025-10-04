@@ -8,8 +8,8 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
-  stop_on_scrolls_count = 2, -- Stop on a stack of this many un-ID'd scrolls
-  stop_on_pots_count = 3, -- Stop on a stack of this many un-ID'd potions
+  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
+  stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
 } -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables

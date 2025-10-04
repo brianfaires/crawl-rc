@@ -12,8 +12,8 @@ f_runrest_features.Config = {
   ignore_portal_exits = true, -- don't stop explore on portal exits
   stop_on_hell_stairs = true, -- stop explore on hell stairs
   stop_on_pan_gates = true, -- stop explore on pan gates
-  temple_search = true, -- auto-search altars
-  gauntlet_search = true, -- auto-search with filters
+  temple_search = true,  -- on enter or explore, auto-search altars
+  gauntlet_search = true,  -- on enter or explore, auto-search gauntlet with filters
 } -- f_runrest_features.Config (do not remove this comment)
 
 -- Persistent variables

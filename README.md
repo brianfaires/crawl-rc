@@ -77,7 +77,7 @@ The pickup-alert system provides smart autopickup that grabs items you definitel
 - **No spam** - alerts won't fire for identical/inferior items after you've seen them
 - **Smart** - adjusts behavior to your inventory and character progression
 - **Configurable** - lots of config values for which alerts are active, when they fire, and which trigger a force_more.
-  (Advanced: See `BRC.Tuning` in the config section to adjust heuristics that define when alerts fire.
+  (Advanced: See `f_pickup_alert.Config.Tuning` to adjust heuristics that define when alerts fire.
   These can be used to adjust the frequency of different alerts to your preferences.)
 
 ### Pickup Categories
