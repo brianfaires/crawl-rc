@@ -98,9 +98,7 @@ The pickup-alert system provides smart autopickup that grabs items you definitel
 ### `lua/core/config.lua`
 Main configuration file with all user settings:
 - **BRC.Config** - Feature toggles and basic settings
-- **BRC.Tuning** - Pickup/alert system heuristics (adjust if too many/few alerts)
 - **BRC.BrandBonus** - Weapon brand damage calculations
-- **BRC.AlertColor** - Alert text colors
 - **BRC.Emoji** - Emojis or text substitutes for alerts
 
 ### `lua/core/brc.lua`

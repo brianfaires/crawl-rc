@@ -31,11 +31,11 @@ local top_attack_skill
 local function get_score(it, no_brand_bonus)
   if it.dps and it.acc then
     -- Handle cached /  high-score tuples in _weapon_cache
-    return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
+    return it.dps + it.acc * Tuning.weap.pickup.accuracy_weight
   end
   local it_plus = it.plus or 0
   local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
-  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
+  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * Tuning.weap.pickup.accuracy_weight
 end
 
 -- _weapon_cache: Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call

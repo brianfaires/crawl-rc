@@ -57,7 +57,6 @@ local function serialize_config()
   local tokens = { "\n---CONFIG---\n" }
   tokens[#tokens + 1] = "\nConfig = " .. BRC.data.val2str(BRC.Config)
   tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.data.val2str(BRC.BrandBonus)
-  tokens[#tokens + 1] = "\n\nAlertColor = " .. BRC.data.val2str(BRC.AlertColor)
   tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.data.val2str(BRC.LogColor)
   tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.data.val2str(BRC.Emoji)
   return table.concat(tokens)

@@ -10,7 +10,7 @@ f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
 f_announce_hp_mp.Config = {
   dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
-  every_turn = false, -- Announce every turn, not just when HP/MP changes
+  always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
 
   announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
@@ -33,10 +33,10 @@ local Config = f_announce_hp_mp.Config
 -- Local constants
 local NUM_PIPS_PER_METER = 5
 local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
-local EVERY_TURN_ANNOUNCE = {
+local ALWAYS_BOTTOM_SETTINGS = {
   hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
-} -- EVERY_TURN_ANNOUNCE (do not remove this comment)
+} -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
 
 -- Local functions
 local function create_meter(perc, emojis)
@@ -134,7 +134,7 @@ function f_announce_hp_mp.init()
   ad_prev.mp = 0
   ad_prev.mmp = 0
 
-  if Config.every_turn then Config.announce = EVERY_TURN_ANNOUNCE end
+  if Config.always_on_bottom then Config.announce = ALWAYS_BOTTOM_SETTINGS end
 
   if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
     BRC.set.message_mute("Ouch! That really hurt!", true)

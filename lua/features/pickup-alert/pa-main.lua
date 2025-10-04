@@ -138,6 +138,15 @@ f_pickup_alert.Config.Tuning.weap.alert = {
   }, -- f_pickup_alert.Config.Tuning.weap.alert.early_ranged (do not remove this comment)
 } -- f_pickup_alert.Config.Tuning.weap.alert (do not remove this comment)
 
+f_pickup_alert.Config.AlertColor = {
+  weapon = { desc = BRC.COLORS.magenta, item = BRC.COLORS.yellow, stats = BRC.COLORS.lightgrey, },
+  body_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.lightcyan, stats = BRC.COLORS.lightgrey, },
+  aux_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.yellow },
+  orb = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
+  talisman = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
+  misc = { desc = BRC.COLORS.brown, item = BRC.COLORS.white },
+} -- f_pickup_alert.Config.AlertColor (do not remove this comment)
+
 -- Persistent variables
 pa_num_autopickup_funcs = BRC.data.persist("pa_num_autopickup_funcs", #chk_force_autopickup + 1)
 
@@ -217,23 +226,23 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local alert_col
   if it.is_weapon then
     f_pa_data.update_high_scores(it)
-    alert_col = BRC.AlertColor.weapon
+    alert_col = Config.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
+    item_name = item_name .. BRC.text.color(Config.AlertColor.weapon.stats, weapon_info)
   elseif BRC.is.body_armour(it) then
     f_pa_data.update_high_scores(it)
-    alert_col = BRC.AlertColor.body_arm
+    alert_col = Config.AlertColor.body_arm
     local ac, ev = BRC.get.armour_stats(it)
     local armour_info = string.format(" {%s, %s}", ac, ev)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
+    item_name = item_name .. BRC.text.color(Config.AlertColor.body_arm.stats, armour_info)
   elseif BRC.is.armour(it) then
-    alert_col = BRC.AlertColor.aux_arm
+    alert_col = Config.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
-    alert_col = BRC.AlertColor.orb
+    alert_col = Config.AlertColor.orb
   elseif BRC.is.talisman(it) then
-    alert_col = BRC.AlertColor.talisman
+    alert_col = Config.AlertColor.talisman
   else
-    alert_col = BRC.AlertColor.misc
+    alert_col = Config.AlertColor.misc
   end
 
   local tokens = {}

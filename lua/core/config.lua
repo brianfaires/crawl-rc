@@ -17,7 +17,7 @@ BRC.Config["misc-alerts"] = { alert_low_hp_threshold = 0.35 } -- % max HP to ale
 BRC.Config["announce-hp-mp"] = {}
 BRC.Config["announce-hp-mp"].dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
 BRC.Config["announce-hp-mp"].dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
-BRC.Config["announce-hp-mp"].every_turn = true -- Announce every turn, not just when HP/MP changes
+BRC.Config["announce-hp-mp"].always_on_bottom = true -- Rewrite HP/MP meters after each turn with messages
 
 BRC.Config["inscribe-stats"] = {}
 BRC.Config["inscribe-stats"].inscribe_weapons = true -- Inscribe weapon stats on pickup and adjust each turn
@@ -112,23 +112,6 @@ BRC.BrandBonus = {
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
-BRC.AlertColor = {
-  weapon = {
-    desc = "magenta",
-    item = "yellow",
-    stats = "lightgrey",
-  },
-  body_arm = {
-    desc = "lightblue",
-    item = "lightcyan",
-    stats = "lightgrey",
-  },
-  aux_arm = { desc = "lightblue", item = "yellow" },
-  orb = { desc = "green", item = "lightgreen" },
-  talisman = { desc = "green", item = "lightgreen" },
-  misc = { desc = "brown", item = "white" },
-} -- BRC.AlertColor (do not remove this comment)
-
 BRC.LogColor = {
   error = "lightred",
   warning = "yellow",

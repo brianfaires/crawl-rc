@@ -22,7 +22,7 @@ BRC.Config["misc-alerts"] = { alert_low_hp_threshold = 0.35 } -- % max HP to ale
 BRC.Config["announce-hp-mp"] = {}
 BRC.Config["announce-hp-mp"].dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
 BRC.Config["announce-hp-mp"].dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
-BRC.Config["announce-hp-mp"].every_turn = true -- Announce every turn, not just when HP/MP changes
+BRC.Config["announce-hp-mp"].always_on_bottom = true -- Rewrite HP/MP meters after each turn with messages
 
 BRC.Config["inscribe-stats"] = {}
 BRC.Config["inscribe-stats"].inscribe_weapons = true -- Inscribe weapon stats on pickup and adjust each turn
@@ -117,23 +117,6 @@ BRC.BrandBonus = {
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
-BRC.AlertColor = {
-  weapon = {
-    desc = "magenta",
-    item = "yellow",
-    stats = "lightgrey",
-  },
-  body_arm = {
-    desc = "lightblue",
-    item = "lightcyan",
-    stats = "lightgrey",
-  },
-  aux_arm = { desc = "lightblue", item = "yellow" },
-  orb = { desc = "green", item = "lightgreen" },
-  talisman = { desc = "green", item = "lightgreen" },
-  misc = { desc = "brown", item = "white" },
-} -- BRC.AlertColor (do not remove this comment)
-
 BRC.LogColor = {
   error = "lightred",
   warning = "yellow",
@@ -1340,7 +1323,6 @@ local function serialize_config()
   local tokens = { "\n---CONFIG---\n" }
   tokens[#tokens + 1] = "\nConfig = " .. BRC.data.val2str(BRC.Config)
   tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.data.val2str(BRC.BrandBonus)
-  tokens[#tokens + 1] = "\n\nAlertColor = " .. BRC.data.val2str(BRC.AlertColor)
   tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.data.val2str(BRC.LogColor)
   tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.data.val2str(BRC.Emoji)
   return table.concat(tokens)
@@ -2980,7 +2962,7 @@ f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
 f_announce_hp_mp.Config = {
   dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
-  every_turn = false, -- Announce every turn, not just when HP/MP changes
+  always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
 
   announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
@@ -3003,10 +2985,10 @@ local Config = f_announce_hp_mp.Config
 -- Local constants
 local NUM_PIPS_PER_METER = 5
 local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
-local EVERY_TURN_ANNOUNCE = {
+local ALWAYS_BOTTOM_SETTINGS = {
   hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
-} -- EVERY_TURN_ANNOUNCE (do not remove this comment)
+} -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
 
 -- Local functions
 local function create_meter(perc, emojis)
@@ -3104,7 +3086,7 @@ function f_announce_hp_mp.init()
   ad_prev.mp = 0
   ad_prev.mmp = 0
 
-  if Config.every_turn then Config.announce = EVERY_TURN_ANNOUNCE end
+  if Config.always_on_bottom then Config.announce = ALWAYS_BOTTOM_SETTINGS end
 
   if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
     BRC.set.message_mute("Ouch! That really hurt!", true)
@@ -4768,6 +4750,15 @@ f_pickup_alert.Config.Tuning.weap.alert = {
   }, -- f_pickup_alert.Config.Tuning.weap.alert.early_ranged (do not remove this comment)
 } -- f_pickup_alert.Config.Tuning.weap.alert (do not remove this comment)
 
+f_pickup_alert.Config.AlertColor = {
+  weapon = { desc = BRC.COLORS.magenta, item = BRC.COLORS.yellow, stats = BRC.COLORS.lightgrey, },
+  body_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.lightcyan, stats = BRC.COLORS.lightgrey, },
+  aux_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.yellow },
+  orb = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
+  talisman = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
+  misc = { desc = BRC.COLORS.brown, item = BRC.COLORS.white },
+} -- f_pickup_alert.Config.AlertColor (do not remove this comment)
+
 -- Persistent variables
 pa_num_autopickup_funcs = BRC.data.persist("pa_num_autopickup_funcs", #chk_force_autopickup + 1)
 
@@ -4847,23 +4838,23 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local alert_col
   if it.is_weapon then
     f_pa_data.update_high_scores(it)
-    alert_col = BRC.AlertColor.weapon
+    alert_col = Config.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.weapon.stats, weapon_info)
+    item_name = item_name .. BRC.text.color(Config.AlertColor.weapon.stats, weapon_info)
   elseif BRC.is.body_armour(it) then
     f_pa_data.update_high_scores(it)
-    alert_col = BRC.AlertColor.body_arm
+    alert_col = Config.AlertColor.body_arm
     local ac, ev = BRC.get.armour_stats(it)
     local armour_info = string.format(" {%s, %s}", ac, ev)
-    item_name = item_name .. BRC.text.color(BRC.AlertColor.body_arm.stats, armour_info)
+    item_name = item_name .. BRC.text.color(Config.AlertColor.body_arm.stats, armour_info)
   elseif BRC.is.armour(it) then
-    alert_col = BRC.AlertColor.aux_arm
+    alert_col = Config.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
-    alert_col = BRC.AlertColor.orb
+    alert_col = Config.AlertColor.orb
   elseif BRC.is.talisman(it) then
-    alert_col = BRC.AlertColor.talisman
+    alert_col = Config.AlertColor.talisman
   else
-    alert_col = BRC.AlertColor.misc
+    alert_col = Config.AlertColor.misc
   end
 
   local tokens = {}
@@ -5559,11 +5550,11 @@ local top_attack_skill
 local function get_score(it, no_brand_bonus)
   if it.dps and it.acc then
     -- Handle cached /  high-score tuples in _weapon_cache
-    return it.dps + it.acc * BRC.Tuning.weap.pickup.accuracy_weight
+    return it.dps + it.acc * Tuning.weap.pickup.accuracy_weight
   end
   local it_plus = it.plus or 0
   local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
-  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * BRC.Tuning.weap.pickup.accuracy_weight
+  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * Tuning.weap.pickup.accuracy_weight
 end
 
 -- _weapon_cache: Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
