@@ -2,7 +2,7 @@
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/data.lua, core/util.lua
 --]]
 
 f_fully_recover = {}
@@ -14,7 +14,11 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
--- Local constants / configuration
+
+-- Local config
+local Config = f_fully_recover.Config
+
+-- Local constants
 local MAX_TURNS_TO_WAIT = 500
 local WAITING_MESSAGE = "You start waiting."
 
@@ -60,7 +64,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
+  for _, s in ipairs(Config.rest_off_statuses) do
     if status:find(s) and not should_ignore_status(s) then return false end
   end
 
@@ -70,11 +74,11 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
+  for _, s in ipairs(Config.rest_off_statuses) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(BRC.Config.rest_off_statuses, s)
+    util.remove(Config.rest_off_statuses, s)
     BRC.log.error(string.format("  Removed: %s", s))
   end
 end
@@ -132,7 +136,7 @@ function f_fully_recover.ready()
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
       BRC.log.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
-      BRC.log.error("Adjusting BRC.Config.rest_off_statuses:")
+      BRC.log.error("f_fully_recover.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
     else

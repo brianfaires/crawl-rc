@@ -5,7 +5,7 @@ Description: Dynamic force_more configuration for monsters based on player HP, x
       - Never put a '}' on a line by itself. This breaks crawl's RC parser.
       - POSIX regex are required for this feature to use '|' in patterns.
 Author: original by gammafunk, extended by buehler
-Dependencies: core/config.lua, core/util.lua
+Dependencies: core/util.lua
 --]]
 
 f_alert_monsters = {}
@@ -26,7 +26,7 @@ FM_PATTERNS configures all alerts. Each table within it creates one alert, using
   - `name` is for debugging.
   - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
   - `is_pack` (optional) indicates the alert is for a pack of monsters.
-    Packs only fire once every few turns - as defined in BRC.Config.pack_timeout (default 15).
+    Packs only fire once every few turns - as defined in Config.pack_timeout (default 15).
   - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
   - `cutoff` sets the point when the alert is active (usually how much HP you have)
   - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).

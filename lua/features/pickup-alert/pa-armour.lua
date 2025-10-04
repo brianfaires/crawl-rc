@@ -2,7 +2,7 @@
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua, pa-main.lua
 --]]
 
 f_pa_armour = {}

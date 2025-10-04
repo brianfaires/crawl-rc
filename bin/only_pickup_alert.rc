@@ -7,7 +7,7 @@
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua, pa-main.lua
 --]]
 
 f_pa_armour = {}
@@ -339,7 +339,7 @@ end
 Feature: pickup-alert-weapons
 Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-main.lua
 --]]
 
 f_pa_weapons = {}
@@ -737,7 +737,7 @@ end
 Feature: pickup-alert-misc
 Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
+Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, pa-main.lua
 --]]
 
 f_pa_misc = {}

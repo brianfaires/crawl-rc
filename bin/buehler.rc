@@ -2471,7 +2471,7 @@ end
 Feature: after-shaft
 Description: Automatically stops exploration on stairs after falling into a shaft
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/data.lua, core/util.lua
 --]]
 
 f_after_shaft = {}
@@ -2526,7 +2526,7 @@ Description: Dynamic force_more configuration for monsters based on player HP, x
       - Never put a '}' on a line by itself. This breaks crawl's RC parser.
       - POSIX regex are required for this feature to use '|' in patterns.
 Author: original by gammafunk, extended by buehler
-Dependencies: core/config.lua, core/util.lua
+Dependencies: core/util.lua
 --]]
 
 f_alert_monsters = {}
@@ -2547,7 +2547,7 @@ FM_PATTERNS configures all alerts. Each table within it creates one alert, using
   - `name` is for debugging.
   - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
   - `is_pack` (optional) indicates the alert is for a pack of monsters.
-    Packs only fire once every few turns - as defined in BRC.Config.pack_timeout (default 15).
+    Packs only fire once every few turns - as defined in Config.pack_timeout (default 15).
   - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
   - `cutoff` sets the point when the alert is active (usually how much HP you have)
   - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
@@ -3140,6 +3140,13 @@ end
 ################################### Begin lua/features/answer-prompts.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
+--[[
+Feature: answer-prompts
+Description: Automatically answer crawl prompts
+Author: buehler
+Dependencies: core/util.lua
+--]]
+
 f_answer_prompts = {}
 f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"
 
@@ -3162,7 +3169,7 @@ end
 Feature: color-inscribe
 Description: Colorizes inscriptions on items with appropriate colors for resistances, stats, and other properties
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua
+Dependencies: core/constants.lua
 --]]
 
 f_color_inscribe = {}
@@ -3283,7 +3290,7 @@ end
 Feature: drop-inferior
 Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
+Dependencies: core/config.lua, core/util.lua
 --]]
 
 f_drop_inferior = {}
@@ -3348,7 +3355,7 @@ end
 Feature: dynamic-options
 Description: Changes options based on game state: xl, class, race, god, skills
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua
+Dependencies: core/constants.lua, core/util.lua
 --]]
 
 f_dynamic_options = {}
@@ -3508,7 +3515,7 @@ end
 Feature: exclude-dropped
 Description: Automatically excludes dropped items from autopickup and removes exclusion when items are picked up
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 f_exclude_dropped = {}
@@ -3638,7 +3645,7 @@ end
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/data.lua, core/util.lua
 --]]
 
 f_fully_recover = {}
@@ -3650,7 +3657,11 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
--- Local constants / configuration
+
+-- Local config
+local Config = f_fully_recover.Config
+
+-- Local constants
 local MAX_TURNS_TO_WAIT = 500
 local WAITING_MESSAGE = "You start waiting."
 
@@ -3696,7 +3707,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
+  for _, s in ipairs(Config.rest_off_statuses) do
     if status:find(s) and not should_ignore_status(s) then return false end
   end
 
@@ -3706,11 +3717,11 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
+  for _, s in ipairs(Config.rest_off_statuses) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(BRC.Config.rest_off_statuses, s)
+    util.remove(Config.rest_off_statuses, s)
     BRC.log.error(string.format("  Removed: %s", s))
   end
 end
@@ -3768,7 +3779,7 @@ function f_fully_recover.ready()
       abort_fully_recover()
     elseif you.turns() - fr_start_turn > MAX_TURNS_TO_WAIT then
       BRC.log.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
-      BRC.log.error("Adjusting BRC.Config.rest_off_statuses:")
+      BRC.log.error("f_fully_recover.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
     else
@@ -3790,7 +3801,7 @@ end
 Feature: inscribe-stats
 Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/util.lua
 --]]
 
 f_inscribe_stats = {}
@@ -3869,7 +3880,7 @@ end
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
 Author: orig save w/msg by gammafunk, buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_misc_alerts = {}
@@ -4087,7 +4098,7 @@ end
 Feature: runrest-features
 Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/data.lua, core/constants.lua, core/util.lua
 --]]
 
 f_runrest_features = {}
@@ -4238,7 +4249,7 @@ end
 Feature: safe-consumables
 Description: Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
 Author: buehler
-Dependencies: core/config.lua, core/util.lua
+Dependencies: core/util.lua
 --]]
 
 f_safe_consumables = {}
@@ -4292,7 +4303,7 @@ end
 Feature: safe-stairs
 Description: Prevents accidental stairs use by warning about backtracking and dangerous locations like Vaults:5
 Author: buehler, rypofalem (V5 warning idea)
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/data.lua, core/util.lua
 --]]
 
 f_safe_stairs = {}
@@ -4313,32 +4324,20 @@ local Config = f_safe_stairs.Config
 
 -- Local functions
 local function check_new_location(cmd)
-  if not BRC.active then return BRC.util.do_cmd(cmd) end
-
   local feature = view.feature_at(0, 0)
   local one_way_stair = feature:contains("escape_hatch") or feature:contains("shaft")
 
   local turn_diff = you.turns() - ss_last_stair_turn
   if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
-      if not (feature:contains("down") or feature:contains("shaft")) then
-        BRC.util.do_cmd(cmd)
-        return
-      end
+      if not (feature:contains("down") or feature:contains("shaft")) then return BRC.util.do_cmd(cmd) end
     elseif cmd == "CMD_GO_UPSTAIRS" then
-      if not feature:contains("up") then
-        BRC.util.do_cmd(cmd)
-        return
-      end
+      if not feature:contains("up") then return BRC.util.do_cmd(cmd) end
     else
-      BRC.log.error("Invalid command: " .. cmd)
-      return
+      return BRC.log.error("Invalid command: " .. cmd)
     end
 
-    if not BRC.mpr.yesno("Really go right back?") then
-      BRC.mpr.okay()
-      return
-    end
+    if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
   elseif Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
     if feature:contains("down") or feature:contains("shaft") then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
@@ -4355,11 +4354,15 @@ end
 
 -- Macro functions
 function macro_f_safe_stairs_down()
-  check_new_location("CMD_GO_DOWNSTAIRS")
+  local cmd = "CMD_GO_DOWNSTAIRS"
+  if not BRC.active then return BRC.util.do_cmd(cmd) end
+  check_new_location(cmd)
 end
 
 function macro_f_safe_stairs_up()
-  check_new_location("CMD_GO_UPSTAIRS")
+  local cmd = "CMD_GO_UPSTAIRS"
+  if not BRC.active then return BRC.util.do_cmd(cmd) end
+  check_new_location(cmd)
 end
 
 -- Hook functions
@@ -4389,7 +4392,7 @@ end
 Feature: startup
 Description: Handles startup features like skill menu display and auto-setting skill targets
 Author: rwbarton, buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/util.lua
 --]]
 
 f_startup = {}
@@ -4441,7 +4444,7 @@ end
 Feature: weapon-slots
 Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
 Author: buehler
-Dependencies: core/config.lua, core/util.lua
+Dependencies: core/util.lua
 --]]
 
 f_weapon_slots = {}
@@ -5099,7 +5102,7 @@ end
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua, pa-main.lua
 --]]
 
 f_pa_armour = {}
@@ -5431,7 +5434,7 @@ end
 Feature: pickup-alert-misc
 Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
+Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, pa-main.lua
 --]]
 
 f_pa_misc = {}
@@ -5529,7 +5532,7 @@ end
 Feature: pickup-alert-weapons
 Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-main.lua
 --]]
 
 f_pa_weapons = {}

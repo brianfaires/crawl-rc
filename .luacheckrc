@@ -28,7 +28,6 @@ globals = {
   "macro_f_misc_alerts_save_with_message",
   "macro_f_safe_stairs_down",
   "macro_f_safe_stairs_up",
-  "macro_f_runrest_explore_with_ready",
 
   
   -- BRC modules

@@ -2,7 +2,7 @@
 Feature: startup
 Description: Handles startup features like skill menu display and auto-setting skill targets
 Author: rwbarton, buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/util.lua
 --]]
 
 f_startup = {}

@@ -2,7 +2,7 @@
 Feature: exclude-dropped
 Description: Automatically excludes dropped items from autopickup and removes exclusion when items are picked up
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 f_exclude_dropped = {}

@@ -2,7 +2,7 @@
 Feature: inscribe-stats
 Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/util.lua
 --]]
 
 f_inscribe_stats = {}
