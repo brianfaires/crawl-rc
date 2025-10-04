@@ -7,12 +7,19 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_safe_stairs = {}
 f_safe_stairs.BRC_FEATURE_NAME = "safe-stairs"
+f_safe_stairs.Config = {
+  warn_v5 = true, -- Prompt before entering Vaults:5
+  warn_stairs_threshold = 5, -- Warn if taking stairs back within # turns; 0 to disable
+} -- f_safe_stairs.Config (do not remove this comment)
 
 -- Persistent variables
 ss_prev_location = BRC.data.persist("ss_prev_location", "")
 ss_cur_location = BRC.data.persist("ss_cur_location", "")
 ss_last_stair_turn = BRC.data.persist("ss_last_stair_turn", 0)
 ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
+
+-- Local config
+local Config = f_safe_stairs.Config
 
 -- Local functions
 local function check_new_location(cmd)
@@ -22,7 +29,7 @@ local function check_new_location(cmd)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
   local turn_diff = you.turns() - ss_last_stair_turn
-  if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
+  if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
         BRC.util.do_cmd(cmd)
@@ -39,7 +46,7 @@ local function check_new_location(cmd)
       BRC.mpr.okay()
       return
     end
-  elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
+  elseif Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
         BRC.mpr.okay()

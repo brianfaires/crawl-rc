@@ -7,18 +7,28 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 
 f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
+f_startup.Config = {
+  show_skills_on_startup = true, -- Show skills menu on startup
+  auto_set_skill_targets = {
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+  }, -- Auto-set default skill targets
+} -- f_startup.Config (do not remove this comment)
+
+-- Local config
+local Config = f_startup.Config
 
 -- Hook functions
 function f_startup.ready()
   if you.turns() == 0 then
-    if BRC.Config.show_skills_on_startup then
+    if f_startup.Config.show_skills_on_startup then
       local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
       if show_skills_on_startup then BRC.util.do_cmd("CMD_DISPLAY_SKILLS") end
     end
 
     ---- Auto-set default skill targets ----
-    if BRC.Config.auto_set_skill_targets then
-      for _, skill_target in ipairs(BRC.Config.auto_set_skill_targets) do
+    if f_startup.Config.auto_set_skill_targets then
+      for _, skill_target in ipairs(Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then
           for _, s in ipairs(BRC.TRAINING_SKILLS) do

@@ -10,6 +10,15 @@ Dependencies: core/config.lua, core/util.lua
 
 f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
+f_alert_monsters.Config = {
+  fm_on_uniques = true, -- Stop on all Uniques & Pan lords
+  pack_timeout = 10, -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
+  disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
+  debug_alert_monsters = false, -- Get a message when alerts toggle off/on
+} -- f_alert_monsters.Config (do not remove this comment)
+
+-- Local config
+local Config = f_alert_monsters.Config
 
 -- Local constants / configuration
 --[[
@@ -208,7 +217,7 @@ local function append_conditional_alerts()
   end
 
   -- If configured, add fm for all uniques and pan lords
-  if BRC.Config.fm_on_uniques then
+  if Config.fm_on_uniques then
     BRC.set.force_more_message("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
   end
 end
@@ -236,16 +245,16 @@ local function update_pack_mutes()
     else
       BRC.set.force_more_message(v, false)
     end
-    if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("Muted pack: %s", v)) end
+    if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Muted pack: %s", v)) end
   end
   patterns_to_mute = {}
 
   -- Remove expired mutes
   for _, v in ipairs(FM_PATTERNS) do
-    if v.is_pack and v.last_fm_turn ~= -1 and you.turns() >= v.last_fm_turn + BRC.Config.pack_timeout then
+    if v.is_pack and v.last_fm_turn ~= -1 and you.turns() >= v.last_fm_turn + Config.pack_timeout then
       v.last_fm_turn = -1
       v.active_alert = false -- Set to false and let the main logic decide if it should reactivate it.
-      if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("Unmuted pack: %s", v.pattern)) end
+      if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Unmuted pack: %s", v.pattern)) end
     end
   end
 end
@@ -287,15 +296,15 @@ function f_alert_monsters.init()
 end
 
 function f_alert_monsters.c_message(text, channel)
-  if channel ~= "monster_warning" or not text:find("comes? into view") or BRC.Config.pack_timeout <= 0 then return end
+  if channel ~= "monster_warning" or not text:find("comes? into view") or Config.pack_timeout <= 0 then return end
   -- Identify when a mute should be turned on
   for _, v in ipairs(FM_PATTERNS) do
     if v.is_pack and v.regex:matches(text) then
       if v.last_fm_turn == -1 then
         patterns_to_mute[#patterns_to_mute + 1] = v.pattern
-        if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("To mute: %s", v.pattern)) end
+        if Config.debug_alert_monsters then BRC.mpr.blue(string.format("To mute: %s", v.pattern)) end
       else
-        if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("Extending mute: %s", v.pattern)) end
+        if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Extending mute: %s", v.pattern)) end
       end
       v.last_fm_turn = you.turns()
     end
@@ -327,7 +336,7 @@ function f_alert_monsters.ready()
   for _, v in ipairs(FM_PATTERNS) do
     local should_be_active = nil
 
-    if BRC.Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
+    if Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
       should_be_active = false
     elseif not v.cond then
       should_be_active = true
@@ -363,7 +372,7 @@ function f_alert_monsters.ready()
         BRC.set.force_more_message(v.pattern, should_be_active)
       end
 
-      if BRC.Config.debug_alert_monsters then
+      if Config.debug_alert_monsters then
         if v.active_alert then
           activated[#activated + 1] = v.name or v.pattern
         else
@@ -373,10 +382,10 @@ function f_alert_monsters.ready()
     end
   end
 
-  if BRC.Config.debug_alert_monsters then
+  if Config.debug_alert_monsters then
     if #activated > 0 then BRC.mpr.blue(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
     if #deactivated > 0 then BRC.mpr.blue(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
   end
 
-  if BRC.Config.pack_timeout > 0 then update_pack_mutes() end
+  if Config.pack_timeout > 0 then update_pack_mutes() end
 end

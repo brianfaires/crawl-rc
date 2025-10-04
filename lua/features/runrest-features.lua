@@ -7,10 +7,21 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_runrest_features = {}
 f_runrest_features.BRC_FEATURE_NAME = "runrest-features"
+f_runrest_features.Config = {
+  ignore_altars = true, -- when you have a god already
+  ignore_portal_exits = true, -- don't stop explore on portal exits
+  stop_on_hell_stairs = true, -- stop explore on hell stairs
+  stop_on_pan_gates = true, -- stop explore on pan gates
+  temple_search = true, -- auto-search altars
+  gauntlet_search = true, -- auto-search with filters
+} -- f_runrest_features.Config (do not remove this comment)
 
 -- Persistent variables
 rr_autosearched_temple = BRC.data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
+
+-- Local config
+local Config = f_runrest_features.Config
 
 -- Local constants / configuration
 local GAUNTLET_CONCAT_STRING = " && !!"
@@ -100,8 +111,8 @@ local function ready_ignore_portals()
 end
 
 local function ready_stop_on_stairs_in_pan_or_hell()
-  local should_be_active = BRC.Config.stop_on_pan_gates and you.branch() == "Pan"
-    or BRC.Config.stop_on_hell_stairs and BRC.you.in_hell(true)
+  local should_be_active = Config.stop_on_pan_gates and you.branch() == "Pan"
+    or Config.stop_on_hell_stairs and BRC.you.in_hell(true)
   if stop_on_stairs and not should_be_active then
     stop_on_stairs = false
     BRC.set.explore_stop("stairs", false)
@@ -119,14 +130,14 @@ function f_runrest_features.init()
 end
 
 function f_runrest_features.c_message(text, _)
-  if BRC.Config.temple_macros then c_message_temple(text) end
-  if BRC.Config.gauntlet_macros then c_message_gauntlet(text) end
+  if Config.temple_search then c_message_temple(text) end
+  if Config.gauntlet_search then c_message_gauntlet(text) end
 end
 
 function f_runrest_features.ready()
-  if BRC.Config.ignore_altars then ready_ignore_altars() end
-  if BRC.Config.ignore_portal_exits then ready_ignore_portals() end
-  if BRC.Config.temple_macros then ready_temple_macro() end
-  if BRC.Config.gauntlet_macros then ready_gauntlet_macro() end
+  if Config.ignore_altars then ready_ignore_altars() end
+  if Config.ignore_portal_exits then ready_ignore_portals() end
+  if Config.temple_search then ready_temple_macro() end
+  if Config.gauntlet_search then ready_gauntlet_macro() end
   ready_stop_on_stairs_in_pan_or_hell()
 end

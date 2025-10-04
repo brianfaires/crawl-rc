@@ -7,6 +7,14 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 
 f_inscribe_stats = {}
 f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
+f_inscribe_stats.Config = {
+  inscribe_weapons = true, -- Inscribe weapon stats on pickup
+  inscribe_armour = true, -- Inscribe armour stats on pickup
+  inscribe_dps_type = "plain", -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
+} -- f_inscribe_stats.Config (do not remove this comment)
+
+-- Local config
+local Config = f_inscribe_stats.Config
 
 -- Local constants / configuration
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
@@ -32,7 +40,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[BRC.Config.inscribe_dps_type])
+  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[Config.inscribe_dps_type])
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
@@ -49,9 +57,9 @@ end
 -- Hook functions
 function f_inscribe_stats.do_stat_inscription(it)
   -- NOTE: It is important that other features do not meddle with the inscription; e.g. adding color tags
-  if BRC.Config.inscribe_weapons and it.is_weapon then
+  if Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif BRC.Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
+  elseif Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
     inscribe_armour_stats(it)
   end
 end

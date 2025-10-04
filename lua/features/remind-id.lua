@@ -7,9 +7,16 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
+f_remind_id.Config = {
+  stop_on_scrolls_count = 2, -- Stop on a stack of this many un-ID'd scrolls
+  stop_on_pots_count = 3, -- Stop on a stack of this many un-ID'd potions
+} -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
 ri_found_scroll_of_id = BRC.data.persist("ri_found_scroll_of_id", false)
+
+-- Local config
+local Config = f_remind_id.Config
 
 -- Local constants / configuration
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
@@ -79,8 +86,8 @@ function f_remind_id.c_message(text, channel)
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
     local num_pots, slot_pots = get_max_stack("potion")
-    if is_scroll and num_scrolls >= BRC.Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
-      or is_potion and num_pots >= BRC.Config.stop_on_pots_count and slot_pots == pickup_info.slot then
+    if is_scroll and num_scrolls >= Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
+      or is_potion and num_pots >= Config.stop_on_pots_count and slot_pots == pickup_info.slot then
         you.stop_activity()
     end
   end

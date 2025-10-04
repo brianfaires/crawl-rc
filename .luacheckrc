@@ -88,10 +88,10 @@ globals = {
   "ss_last_stair_turn",
   "ss_prev_location",
   "ss_v5_unwarned",
-  "template_counter",
-  "template_dict",
-  "template_flag",
-  "template_list",
+  "persistent_bool",
+  "persistent_int",
+  "persistent_list",
+  "persistent_dict",
 
 }
 

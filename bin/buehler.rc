@@ -4,7 +4,7 @@
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
-BRC Configuration - All user-configurable settings
+BRC Configuration - BRC.Config settings, and overrides for feature configs
 Author: buehler
 Dependencies: (None)
 --]]
@@ -19,66 +19,40 @@ BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unles
 
 
 BRC.Config["announce-hp-mp"] = {
-  dmg_flash_threshold = 0.21, -- Flash screen when losing this % of max HP
-  dmg_fm_threshold = 0.31, -- Force more for losing this % of max HP
+  dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+  dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   every_turn = true, -- Announce every turn, not just when HP/MP changes
-}
+} -- announce-hp-mp.Config (do not remove this comment)
 
+BRC.Config["inscribe-stats"] = {
+  inscribe_weapons = true, -- Inscribe weapon stats on pickup and adjust each turn
+  inscribe_armour = true, -- Inscribe armour stats on pickup and adjust each turn
+  inscribe_dps_type = "plain" -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
+} -- inscribe-stats.Config (do not remove this comment)
 
+BRC.Config["misc-alerts"] = {
+  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+} -- misc-alerts.Config (do not remove this comment)
 
--- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
-BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
-BRC.Config.pack_timeout = 10 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
-BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
-BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
+BRC.Config["remind-id"] = {
+  stop_on_scrolls_count = 2, -- Stop when max stack size of un-ID'd scrolls increases, and is >= this
+  stop_on_pots_count = 3, -- Stop when max stack size of un-ID'd potions increases, and is >= this
+} -- remind-id.Config (do not remove this comment)
 
-
--- drop-inferior.lua
-BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for drop
-
--- exclude-dropped.lua: Disables auto-pickup for whatever you drop
-BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
-
--- fully-recover.lua: Keep resting until these statuses are gone.
--- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
-BRC.Config.rest_off_statuses = {
-  "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-  "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
-} -- BRC.Config.rest_off_statuses (do not remove this comment)
-
--- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
-BRC.Config.inscribe_weapons = true
-BRC.Config.inscribe_armour = true
-BRC.Config.inscribe_dps_type = "plain" -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
-
--- misc-alerts.lua
-BRC.Config.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
-BRC.Config.alert_remove_faith = true -- Reminder to remove amulet at max piety
-BRC.Config.alert_spell_level_changes = true -- Alert when you gain additional spell levels
-BRC.Config.save_with_msg = true -- Shift-S to save and leave yourself a message
-
--- remind-id.lua: Before finding scroll of ID, stop travel when increasing largest stack size, starting at:
-BRC.Config.stop_on_scrolls_count = 2 -- Stop on a stack of this many un-ID'd scrolls
-BRC.Config.stop_on_pots_count = 3 -- Stop on a stack of this many un-ID'd potions
-
--- runrest-features.lua: Runrest features
-BRC.Config.ignore_altars = true -- when you have a god already
-BRC.Config.ignore_portal_exits = true -- don't stop explore on portal exits
-BRC.Config.stop_on_hell_stairs = true -- stop explore on hell stairs
-BRC.Config.stop_on_pan_gates = true -- stop explore on pan gates
-BRC.Config.temple_macros = true -- auto-search altars; run to exit after worship
-BRC.Config.gauntlet_macros = true -- auto-search with filters
-
--- safe-stairs.lua: Detect/warn for accidental stair usage
-BRC.Config.warn_v5 = true -- Prompt before entering Vaults:5
-BRC.Config.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
+BRC.Config["runrest-features"] = {
+  ignore_portal_exits = true, -- don't stop explore on portal exits
+  temple_search = true, -- auto-search altars
+  gauntlet_search = true, -- auto-search with filters
+} -- runrest-features.Config (do not remove this comment)
 
 -- startup.lua: Startup features
-BRC.Config.show_skills_on_startup = true
-BRC.Config.auto_set_skill_targets = {
-  { "Stealth", 2.0 }, -- First, focus stealth to 2.0
-  { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
-} -- auto_set_skill_targets (do not remove this comment)
+BRC.Config["startup"] = {
+  show_skills_on_startup = false, -- Show skills menu on startup
+  auto_set_skill_targets = {
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+  },
+} -- startup.Config (do not remove this comment)
 
 --[[
   Pickup/Alert system
@@ -2718,6 +2692,15 @@ Dependencies: core/config.lua, core/util.lua
 
 f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
+f_alert_monsters.Config = {
+  fm_on_uniques = true, -- Stop on all Uniques & Pan lords
+  pack_timeout = 10, -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
+  disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
+  debug_alert_monsters = false, -- Get a message when alerts toggle off/on
+} -- f_alert_monsters.Config (do not remove this comment)
+
+-- Local config
+local Config = f_alert_monsters.Config
 
 -- Local constants / configuration
 --[[
@@ -2916,7 +2899,7 @@ local function append_conditional_alerts()
   end
 
   -- If configured, add fm for all uniques and pan lords
-  if BRC.Config.fm_on_uniques then
+  if Config.fm_on_uniques then
     BRC.set.force_more_message("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
   end
 end
@@ -2944,16 +2927,16 @@ local function update_pack_mutes()
     else
       BRC.set.force_more_message(v, false)
     end
-    if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("Muted pack: %s", v)) end
+    if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Muted pack: %s", v)) end
   end
   patterns_to_mute = {}
 
   -- Remove expired mutes
   for _, v in ipairs(FM_PATTERNS) do
-    if v.is_pack and v.last_fm_turn ~= -1 and you.turns() >= v.last_fm_turn + BRC.Config.pack_timeout then
+    if v.is_pack and v.last_fm_turn ~= -1 and you.turns() >= v.last_fm_turn + Config.pack_timeout then
       v.last_fm_turn = -1
       v.active_alert = false -- Set to false and let the main logic decide if it should reactivate it.
-      if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("Unmuted pack: %s", v.pattern)) end
+      if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Unmuted pack: %s", v.pattern)) end
     end
   end
 end
@@ -2995,15 +2978,15 @@ function f_alert_monsters.init()
 end
 
 function f_alert_monsters.c_message(text, channel)
-  if channel ~= "monster_warning" or not text:find("comes? into view") or BRC.Config.pack_timeout <= 0 then return end
+  if channel ~= "monster_warning" or not text:find("comes? into view") or Config.pack_timeout <= 0 then return end
   -- Identify when a mute should be turned on
   for _, v in ipairs(FM_PATTERNS) do
     if v.is_pack and v.regex:matches(text) then
       if v.last_fm_turn == -1 then
         patterns_to_mute[#patterns_to_mute + 1] = v.pattern
-        if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("To mute: %s", v.pattern)) end
+        if Config.debug_alert_monsters then BRC.mpr.blue(string.format("To mute: %s", v.pattern)) end
       else
-        if BRC.Config.debug_alert_monsters then BRC.mpr.blue(string.format("Extending mute: %s", v.pattern)) end
+        if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Extending mute: %s", v.pattern)) end
       end
       v.last_fm_turn = you.turns()
     end
@@ -3035,7 +3018,7 @@ function f_alert_monsters.ready()
   for _, v in ipairs(FM_PATTERNS) do
     local should_be_active = nil
 
-    if BRC.Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
+    if Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
       should_be_active = false
     elseif not v.cond then
       should_be_active = true
@@ -3071,7 +3054,7 @@ function f_alert_monsters.ready()
         BRC.set.force_more_message(v.pattern, should_be_active)
       end
 
-      if BRC.Config.debug_alert_monsters then
+      if Config.debug_alert_monsters then
         if v.active_alert then
           activated[#activated + 1] = v.name or v.pattern
         else
@@ -3081,12 +3064,12 @@ function f_alert_monsters.ready()
     end
   end
 
-  if BRC.Config.debug_alert_monsters then
+  if Config.debug_alert_monsters then
     if #activated > 0 then BRC.mpr.blue(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
     if #deactivated > 0 then BRC.mpr.blue(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
   end
 
-  if BRC.Config.pack_timeout > 0 then update_pack_mutes() end
+  if Config.pack_timeout > 0 then update_pack_mutes() end
 end
 
 }
@@ -3125,8 +3108,10 @@ f_announce_hp_mp.Config = {
 -- Persistent variables
 ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local config + constants
+-- Local config
 local Config = f_announce_hp_mp.Config
+
+-- Local constants
 local NUM_PIPS_PER_METER = 5
 local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * (BRC.Emoji.HP_BORDER and #BRC.Emoji.HP_BORDER or 0)
 local EVERY_TURN_ANNOUNCE = {
@@ -3453,6 +3438,10 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 
 f_drop_inferior = {}
 f_drop_inferior.BRC_FEATURE_NAME = "drop-inferior"
+f_drop_inferior.Config = {
+  msg_on_inscribe = true, -- Show a message when an item is marked for drop
+} -- f_drop_inferior.Config (do not remove this comment)
+
 
 -- Local constants
 local DROP_KEY = "~~DROP_ME"
@@ -3461,7 +3450,7 @@ local DROP_KEY = "~~DROP_ME"
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
-  if BRC.Config.msg_on_inscribe then
+  if f_drop_inferior.Config.msg_on_inscribe then
     local emoji = BRC.Emoji.CAUTION or ""
     local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
     local msg = util.trim(string.format("%s You can drop: %s %s", emoji, item_name, emoji))
@@ -3675,6 +3664,9 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_exclude_dropped = {}
 f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
+f_exclude_dropped.Config = {
+  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
+} -- f_exclude_dropped.Config (do not remove this comment)
 
 -- Persistent variables
 ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
@@ -3749,7 +3741,7 @@ end
 local function should_exclude(item_name)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
   local weap_scroll = item_name:find("enchant weapon", 1, true) or item_name:find("brand weapon", 1, true)
-  if BRC.Config.ignore_stashed_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
+  if f_exclude_dropped.Config.not_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -3802,6 +3794,12 @@ Dependencies: core/config.lua, core/data.lua, core/util.lua
 
 f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
+f_fully_recover.Config = {
+  rest_off_statuses = { -- Keep resting until these statuses are gone
+    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
+    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
+  },
+} -- f_fully_recover.Config (do not remove this comment)
 
 -- Local constants / configuration
 local MAX_TURNS_TO_WAIT = 500
@@ -3849,10 +3847,8 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(BRC.Config.rest_off_statuses) do
-    if status:find(s) then
-      if not should_ignore_status(s) then return false end
-    end
+  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
+    if status:find(s) and not should_ignore_status(s) then return false end
   end
 
   return true
@@ -3861,7 +3857,7 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(BRC.Config.rest_off_statuses) do
+  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
@@ -3895,7 +3891,6 @@ end
 function f_fully_recover.init()
   fr_start_turn = 0
   fr_explore_after = false
-  util.remove(BRC.Config.rest_off_statuses, "slowed") -- special case handled elsewhere
 
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)
@@ -3951,6 +3946,14 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 
 f_inscribe_stats = {}
 f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
+f_inscribe_stats.Config = {
+  inscribe_weapons = true, -- Inscribe weapon stats on pickup
+  inscribe_armour = true, -- Inscribe armour stats on pickup
+  inscribe_dps_type = "plain", -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
+} -- f_inscribe_stats.Config (do not remove this comment)
+
+-- Local config
+local Config = f_inscribe_stats.Config
 
 -- Local constants / configuration
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
@@ -3976,7 +3979,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[BRC.Config.inscribe_dps_type])
+  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[Config.inscribe_dps_type])
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
@@ -3993,9 +3996,9 @@ end
 -- Hook functions
 function f_inscribe_stats.do_stat_inscription(it)
   -- NOTE: It is important that other features do not meddle with the inscription; e.g. adding color tags
-  if BRC.Config.inscribe_weapons and it.is_weapon then
+  if Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif BRC.Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
+  elseif Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
     inscribe_armour_stats(it)
   end
 end
@@ -4022,11 +4025,20 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
+f_misc_alerts.Config = {
+  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  alert_remove_faith = true, -- Reminder to remove amulet at max piety
+  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
+  save_with_msg = true, -- Shift-S to save and leave yourself a message
+} -- f_misc_alerts.Config (do not remove this comment)
 
 -- Persistent variables
 ma_alerted_max_piety = BRC.data.persist("ma_alerted_max_piety", false)
 ma_prev_spell_levels = BRC.data.persist("ma_prev_spell_levels", 0)
 ma_saved_msg = BRC.data.persist("ma_saved_msg", "")
+
+-- Local config
+local Config = f_misc_alerts.Config
 
 -- Local constants / configuration
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
@@ -4039,9 +4051,9 @@ local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= BRC.Config.alert_low_hp_threshold * mhp then
+  elseif hp <= Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = string.format(" Dropped below %s%% HP ", 100 * BRC.Config.alert_low_hp_threshold)
+    local low_hp_msg = string.format(" Dropped below %s%% HP ", 100 * Config.alert_low_hp_threshold)
     BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.Emoji.EXCLAMATION)
   end
 end
@@ -4090,7 +4102,7 @@ function f_misc_alerts.init()
   ma_prev_spell_levels = you.spell_levels()
   below_hp_threshold = false
 
-  if BRC.Config.save_with_msg then
+  if Config.save_with_msg then
     BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_f_misc_alerts_save_with_message")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white(string.format("MESSAGE: %s", ma_saved_msg))
@@ -4100,9 +4112,9 @@ function f_misc_alerts.init()
 end
 
 function f_misc_alerts.ready()
-  if BRC.Config.alert_remove_faith then alert_remove_faith() end
-  if BRC.Config.alert_low_hp_threshold > 0 then alert_low_hp() end
-  if BRC.Config.alert_spell_level_changes then alert_spell_level_changes() end
+  if Config.alert_remove_faith then alert_remove_faith() end
+  if Config.alert_low_hp_threshold > 0 then alert_low_hp() end
+  if Config.alert_spell_level_changes then alert_spell_level_changes() end
 end
 
 }
@@ -4121,9 +4133,16 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
+f_remind_id.Config = {
+  stop_on_scrolls_count = 2, -- Stop on a stack of this many un-ID'd scrolls
+  stop_on_pots_count = 3, -- Stop on a stack of this many un-ID'd potions
+} -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
 ri_found_scroll_of_id = BRC.data.persist("ri_found_scroll_of_id", false)
+
+-- Local config
+local Config = f_remind_id.Config
 
 -- Local constants / configuration
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
@@ -4193,8 +4212,8 @@ function f_remind_id.c_message(text, channel)
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
     local num_pots, slot_pots = get_max_stack("potion")
-    if is_scroll and num_scrolls >= BRC.Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
-      or is_potion and num_pots >= BRC.Config.stop_on_pots_count and slot_pots == pickup_info.slot then
+    if is_scroll and num_scrolls >= Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
+      or is_potion and num_pots >= Config.stop_on_pots_count and slot_pots == pickup_info.slot then
         you.stop_activity()
     end
   end
@@ -4223,10 +4242,21 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_runrest_features = {}
 f_runrest_features.BRC_FEATURE_NAME = "runrest-features"
+f_runrest_features.Config = {
+  ignore_altars = true, -- when you have a god already
+  ignore_portal_exits = true, -- don't stop explore on portal exits
+  stop_on_hell_stairs = true, -- stop explore on hell stairs
+  stop_on_pan_gates = true, -- stop explore on pan gates
+  temple_search = true, -- auto-search altars
+  gauntlet_search = true, -- auto-search with filters
+} -- f_runrest_features.Config (do not remove this comment)
 
 -- Persistent variables
 rr_autosearched_temple = BRC.data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.data.persist("rr_autosearched_gauntlet", false)
+
+-- Local config
+local Config = f_runrest_features.Config
 
 -- Local constants / configuration
 local GAUNTLET_CONCAT_STRING = " && !!"
@@ -4316,8 +4346,8 @@ local function ready_ignore_portals()
 end
 
 local function ready_stop_on_stairs_in_pan_or_hell()
-  local should_be_active = BRC.Config.stop_on_pan_gates and you.branch() == "Pan"
-    or BRC.Config.stop_on_hell_stairs and BRC.you.in_hell(true)
+  local should_be_active = Config.stop_on_pan_gates and you.branch() == "Pan"
+    or Config.stop_on_hell_stairs and BRC.you.in_hell(true)
   if stop_on_stairs and not should_be_active then
     stop_on_stairs = false
     BRC.set.explore_stop("stairs", false)
@@ -4335,15 +4365,15 @@ function f_runrest_features.init()
 end
 
 function f_runrest_features.c_message(text, _)
-  if BRC.Config.temple_macros then c_message_temple(text) end
-  if BRC.Config.gauntlet_macros then c_message_gauntlet(text) end
+  if Config.temple_search then c_message_temple(text) end
+  if Config.gauntlet_search then c_message_gauntlet(text) end
 end
 
 function f_runrest_features.ready()
-  if BRC.Config.ignore_altars then ready_ignore_altars() end
-  if BRC.Config.ignore_portal_exits then ready_ignore_portals() end
-  if BRC.Config.temple_macros then ready_temple_macro() end
-  if BRC.Config.gauntlet_macros then ready_gauntlet_macro() end
+  if Config.ignore_altars then ready_ignore_altars() end
+  if Config.ignore_portal_exits then ready_ignore_portals() end
+  if Config.temple_search then ready_temple_macro() end
+  if Config.gauntlet_search then ready_gauntlet_macro() end
   ready_stop_on_stairs_in_pan_or_hell()
 end
 
@@ -4412,12 +4442,19 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_safe_stairs = {}
 f_safe_stairs.BRC_FEATURE_NAME = "safe-stairs"
+f_safe_stairs.Config = {
+  warn_v5 = true, -- Prompt before entering Vaults:5
+  warn_stairs_threshold = 5, -- Warn if taking stairs back within # turns; 0 to disable
+} -- f_safe_stairs.Config (do not remove this comment)
 
 -- Persistent variables
 ss_prev_location = BRC.data.persist("ss_prev_location", "")
 ss_cur_location = BRC.data.persist("ss_cur_location", "")
 ss_last_stair_turn = BRC.data.persist("ss_last_stair_turn", 0)
 ss_v5_unwarned = BRC.data.persist("ss_v5_unwarned", true)
+
+-- Local config
+local Config = f_safe_stairs.Config
 
 -- Local functions
 local function check_new_location(cmd)
@@ -4427,7 +4464,7 @@ local function check_new_location(cmd)
   local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
 
   local turn_diff = you.turns() - ss_last_stair_turn
-  if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < BRC.Config.warn_stairs_threshold then
+  if ss_prev_location ~= ss_cur_location and turn_diff > 0 and turn_diff < Config.warn_stairs_threshold then
     if cmd == "CMD_GO_DOWNSTAIRS" then
       if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
         BRC.util.do_cmd(cmd)
@@ -4444,7 +4481,7 @@ local function check_new_location(cmd)
       BRC.mpr.okay()
       return
     end
-  elseif BRC.Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
+  elseif Config.warn_v5 and ss_v5_unwarned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
     if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
       if not BRC.mpr.yesno("Really go to Vaults:5?") then
         BRC.mpr.okay()
@@ -4499,18 +4536,28 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 
 f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
+f_startup.Config = {
+  show_skills_on_startup = true, -- Show skills menu on startup
+  auto_set_skill_targets = {
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+  }, -- Auto-set default skill targets
+} -- f_startup.Config (do not remove this comment)
+
+-- Local config
+local Config = f_startup.Config
 
 -- Hook functions
 function f_startup.ready()
   if you.turns() == 0 then
-    if BRC.Config.show_skills_on_startup then
+    if f_startup.Config.show_skills_on_startup then
       local show_skills_on_startup = (you.race() ~= "Gnoll" or you.class() == "Wanderer")
       if show_skills_on_startup then BRC.util.do_cmd("CMD_DISPLAY_SKILLS") end
     end
 
     ---- Auto-set default skill targets ----
-    if BRC.Config.auto_set_skill_targets then
-      for _, skill_target in ipairs(BRC.Config.auto_set_skill_targets) do
+    if f_startup.Config.auto_set_skill_targets then
+      for _, skill_target in ipairs(Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then
           for _, s in ipairs(BRC.TRAINING_SKILLS) do

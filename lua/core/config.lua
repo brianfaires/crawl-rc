@@ -1,5 +1,5 @@
 --[[
-BRC Configuration - All user-configurable settings
+BRC Configuration - BRC.Config settings, and overrides for feature configs
 Author: buehler
 Dependencies: (None)
 --]]
@@ -14,66 +14,40 @@ BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unles
 
 
 BRC.Config["announce-hp-mp"] = {
-  dmg_flash_threshold = 0.21, -- Flash screen when losing this % of max HP
-  dmg_fm_threshold = 0.31, -- Force more for losing this % of max HP
+  dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+  dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   every_turn = true, -- Announce every turn, not just when HP/MP changes
-}
+} -- announce-hp-mp.Config (do not remove this comment)
 
+BRC.Config["inscribe-stats"] = {
+  inscribe_weapons = true, -- Inscribe weapon stats on pickup and adjust each turn
+  inscribe_armour = true, -- Inscribe armour stats on pickup and adjust each turn
+  inscribe_dps_type = "plain" -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
+} -- inscribe-stats.Config (do not remove this comment)
 
+BRC.Config["misc-alerts"] = {
+  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+} -- misc-alerts.Config (do not remove this comment)
 
--- alert-monsters.lua: Dynamically set force mores based on hp/xl/willpower/resistance/etc
-BRC.Config.fm_on_uniques = true -- Stop on all Uniques & Pan lords
-BRC.Config.pack_timeout = 10 -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
-BRC.Config.disable_alert_monsters_in_zigs = true -- Disable dynamic force_mores in Ziggurats
-BRC.Config.debug_alert_monsters = false -- Get a message when alerts toggle off/on
+BRC.Config["remind-id"] = {
+  stop_on_scrolls_count = 2, -- Stop when max stack size of un-ID'd scrolls increases, and is >= this
+  stop_on_pots_count = 3, -- Stop when max stack size of un-ID'd potions increases, and is >= this
+} -- remind-id.Config (do not remove this comment)
 
-
--- drop-inferior.lua
-BRC.Config.msg_on_inscribe = true -- Show a message when an item is marked for drop
-
--- exclude-dropped.lua: Disables auto-pickup for whatever you drop
-BRC.Config.ignore_stashed_weapon_scrolls = true -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
-
--- fully-recover.lua: Keep resting until these statuses are gone.
--- Special cases exist for "slowed" and "corroded". If you include them, use those exact strings only.
-BRC.Config.rest_off_statuses = {
-  "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-  "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
-} -- BRC.Config.rest_off_statuses (do not remove this comment)
-
--- inscribe-stats.lua: Inscribe stats on pickup and adjust each turn
-BRC.Config.inscribe_weapons = true
-BRC.Config.inscribe_armour = true
-BRC.Config.inscribe_dps_type = "plain" -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
-
--- misc-alerts.lua
-BRC.Config.alert_low_hp_threshold = 0.35 -- % max HP to alert; 0 to disable
-BRC.Config.alert_remove_faith = true -- Reminder to remove amulet at max piety
-BRC.Config.alert_spell_level_changes = true -- Alert when you gain additional spell levels
-BRC.Config.save_with_msg = true -- Shift-S to save and leave yourself a message
-
--- remind-id.lua: Before finding scroll of ID, stop travel when increasing largest stack size, starting at:
-BRC.Config.stop_on_scrolls_count = 2 -- Stop on a stack of this many un-ID'd scrolls
-BRC.Config.stop_on_pots_count = 3 -- Stop on a stack of this many un-ID'd potions
-
--- runrest-features.lua: Runrest features
-BRC.Config.ignore_altars = true -- when you have a god already
-BRC.Config.ignore_portal_exits = true -- don't stop explore on portal exits
-BRC.Config.stop_on_hell_stairs = true -- stop explore on hell stairs
-BRC.Config.stop_on_pan_gates = true -- stop explore on pan gates
-BRC.Config.temple_macros = true -- auto-search altars; run to exit after worship
-BRC.Config.gauntlet_macros = true -- auto-search with filters
-
--- safe-stairs.lua: Detect/warn for accidental stair usage
-BRC.Config.warn_v5 = true -- Prompt before entering Vaults:5
-BRC.Config.warn_stairs_threshold = 5 -- Warn if taking stairs back within # turns; 0 to disable
+BRC.Config["runrest-features"] = {
+  ignore_portal_exits = true, -- don't stop explore on portal exits
+  temple_search = true, -- auto-search altars
+  gauntlet_search = true, -- auto-search with filters
+} -- runrest-features.Config (do not remove this comment)
 
 -- startup.lua: Startup features
-BRC.Config.show_skills_on_startup = true
-BRC.Config.auto_set_skill_targets = {
-  { "Stealth", 2.0 }, -- First, focus stealth to 2.0
-  { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
-} -- auto_set_skill_targets (do not remove this comment)
+BRC.Config["startup"] = {
+  show_skills_on_startup = false, -- Show skills menu on startup
+  auto_set_skill_targets = {
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+  },
+} -- startup.Config (do not remove this comment)
 
 --[[
   Pickup/Alert system

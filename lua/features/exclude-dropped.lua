@@ -7,6 +7,9 @@ Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
 
 f_exclude_dropped = {}
 f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
+f_exclude_dropped.Config = {
+  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
+} -- f_exclude_dropped.Config (do not remove this comment)
 
 -- Persistent variables
 ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
@@ -81,7 +84,7 @@ end
 local function should_exclude(item_name)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
   local weap_scroll = item_name:find("enchant weapon", 1, true) or item_name:find("brand weapon", 1, true)
-  if BRC.Config.ignore_stashed_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
+  if f_exclude_dropped.Config.not_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
   for inv in iter.invent_iterator:new(items.inventory()) do

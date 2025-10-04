@@ -7,6 +7,10 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua
 
 f_drop_inferior = {}
 f_drop_inferior.BRC_FEATURE_NAME = "drop-inferior"
+f_drop_inferior.Config = {
+  msg_on_inscribe = true, -- Show a message when an item is marked for drop
+} -- f_drop_inferior.Config (do not remove this comment)
+
 
 -- Local constants
 local DROP_KEY = "~~DROP_ME"
@@ -15,7 +19,7 @@ local DROP_KEY = "~~DROP_ME"
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
-  if BRC.Config.msg_on_inscribe then
+  if f_drop_inferior.Config.msg_on_inscribe then
     local emoji = BRC.Emoji.CAUTION or ""
     local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
     local msg = util.trim(string.format("%s You can drop: %s %s", emoji, item_name, emoji))

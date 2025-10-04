@@ -7,6 +7,12 @@ Dependencies: core/config.lua, core/data.lua, core/util.lua
 
 f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
+f_fully_recover.Config = {
+  rest_off_statuses = { -- Keep resting until these statuses are gone
+    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
+    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
+  },
+} -- f_fully_recover.Config (do not remove this comment)
 
 -- Local constants / configuration
 local MAX_TURNS_TO_WAIT = 500
@@ -54,10 +60,8 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(BRC.Config.rest_off_statuses) do
-    if status:find(s) then
-      if not should_ignore_status(s) then return false end
-    end
+  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
+    if status:find(s) and not should_ignore_status(s) then return false end
   end
 
   return true
@@ -66,7 +70,7 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(BRC.Config.rest_off_statuses) do
+  for _, s in ipairs(f_fully_recover.Config.rest_off_statuses) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
@@ -100,7 +104,6 @@ end
 function f_fully_recover.init()
   fr_start_turn = 0
   fr_explore_after = false
-  util.remove(BRC.Config.rest_off_statuses, "slowed") -- special case handled elsewhere
 
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)

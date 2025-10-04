@@ -1,54 +1,68 @@
 --[[
-Feature: _template
+Feature: template_feature
 Description: Brief description of what this feature does
 Author: Your Name
 Dependencies: List any dependencies (e.g., BRC.data)
 --]]
 
--- Define the feature module here, in the global namespace for auto-loading
+-- Global definitions: feature module, name, and config
 f_template = {}
--- Define BRC_FEATURE_NAME to mark it for auto-loading
 f_template.BRC_FEATURE_NAME = "template_feature"
+f_template.Config = {
+  example_boolean = true,
+  example_number = 42,
+  example_list = { "Done exploring.", "A gnoll comes into view." },
+  example_dict = {
+    key1 = 1,
+    key2 = 2,
+    ["100"] = "value for key=100",
+  },
+} -- f_template.Config (Always add a comment to a line only containing "}"), or crawl's RC parser will break
 
--- Define persistent variables globally (use unique names)
-template_counter = BRC.data.persist("template_counter", 0)
-template_flag = BRC.data.persist("template_flag", false)
-template_list = BRC.data.persist("template_list", {})
-template_dict = BRC.data.persist("template_dict", {})
+-- Persistent variables (Defined globally, so give them unique names)
+persistent_int = BRC.data.persist("persistent_int", 0)
+persistent_bool = BRC.data.persist("persistent_bool", false)
+persistent_list = BRC.data.persist("persistent_list", {})
+persistent_dict = BRC.data.persist("persistent_dict", {})
 
--- Define local (private) constants and configuration
+-- Local config (Optional local alias, for more concise code)
+local Config = f_template.Config
 
--- Define local (private) variables. Recommended to only use init() for setting their initial values.
-local my_name
-
--- Define local (private) functions here
+-- Local constants
+-- Local variables
+-- Local functions
 
 -- Public hook functions (Remove any hooks you don't use)
 function f_template.init()
-  -- Init local vars, and other one-time startup tasks
-  my_name = "be" .. string.rep("u", template_counter) .. "hler"
+  -- Called when game opens
+  persistent_int = persistent_int + 1
+  persistent_dict.num_startups = persistent_int
+
+  if Config.example_boolean then
+    BRC.log.debug("Template feature initialized.")
+  end
 end
 
 function f_template.ready()
   -- Called at the start of each turn
-  template_counter = template_counter + 1
-  template_flag = not template_flag
-  template_dict.num_startups = template_counter
+  if you.turns() == Config.example_number then
+    BRC.mpr.blue("Hit magic number!")
+  end
 end
 
 function f_template.c_message(text, channel)
   -- React to incoming messages
-  crawl.mpr(string.format("%s got the message: %s", my_name, text), channel)
+  crawl.mpr(string.format("Got message: '%s' on channel %s", text, channel), channel)
 end
 
 function f_template.c_answer_prompt(prompt)
   -- Respond to prompts (return true/false or nil)
-  if util.contains(template_list, prompt) then return true end
-  return nil -- Abstain from answering
+  if util.contains(persistent_list, prompt) then return true end
+  return nil -- Don't answer
 end
 
 function f_template.c_assign_invletter(it)
   -- Inventory letter assignment; fires on every pickup of a new item
-  if it.name() == "Item headed for slot b" then return 3 end
+  if it.name() == "Item for slot d" then return 3 end
   return nil
 end
