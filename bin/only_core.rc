@@ -4,12 +4,10 @@
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
-BRC Configuration - BRC.Config settings, and overrides for feature configs
+BRC Configuration - Core BRC config, and optional overrides for any config value defined in a feature module.
 Author: buehler
 Dependencies: (None)
 --]]
-
--- Initialize
 BRC = BRC or {}
 BRC.Config = {}
 
@@ -17,42 +15,34 @@ BRC.Config.emojis = false -- Use emojis in alerts and announcements
 BRC.Config.show_debug_messages = true
 BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unless told to
 
+-- Feature config overrides: `BRC.Config[feature_name] = {...}` Settings will override defaults set in the feature.
+BRC.Config["announce-hp-mp"] = {}
+BRC.Config["announce-hp-mp"].dmg_flash_threshold = 0.20 -- Flash screen when losing this % of max HP
+BRC.Config["announce-hp-mp"].dmg_fm_threshold = 0.30 -- Force more for losing this % of max HP
+BRC.Config["announce-hp-mp"].every_turn = true -- Announce every turn, not just when HP/MP changes
 
-BRC.Config["announce-hp-mp"] = {
-  dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
-  dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
-  every_turn = true, -- Announce every turn, not just when HP/MP changes
-} -- announce-hp-mp.Config (do not remove this comment)
+BRC.Config["inscribe-stats"] = {}
+BRC.Config["inscribe-stats"].inscribe_weapons = true -- Inscribe weapon stats on pickup and adjust each turn
+BRC.Config["inscribe-stats"].inscribe_armour = true -- Inscribe armour stats on pickup and adjust each turn
+BRC.Config["inscribe-stats"].inscribe_dps_type = "plain" -- How to calc weapon DPS (See BRC.DMG_TYPE in constants.lua)
 
-BRC.Config["inscribe-stats"] = {
-  inscribe_weapons = true, -- Inscribe weapon stats on pickup and adjust each turn
-  inscribe_armour = true, -- Inscribe armour stats on pickup and adjust each turn
-  inscribe_dps_type = "plain" -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
-} -- inscribe-stats.Config (do not remove this comment)
+BRC.Config["misc-alerts"] = { alert_low_hp_threshold = 0.35 } -- % max HP to alert; 0 to disable
 
-BRC.Config["misc-alerts"] = {
-  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
-} -- misc-alerts.Config (do not remove this comment)
+BRC.Config["remind-id"] = {}
+BRC.Config["remind-id"].stop_on_scrolls_count = 2 -- Stop when largest un-ID'd scroll stack increases and is >= this
+BRC.Config["remind-id"].stop_on_pots_count = 3 -- Stop when largest un-ID'd potion stack increases and is >= this
 
-BRC.Config["remind-id"] = {
-  stop_on_scrolls_count = 2, -- Stop when max stack size of un-ID'd scrolls increases, and is >= this
-  stop_on_pots_count = 3, -- Stop when max stack size of un-ID'd potions increases, and is >= this
-} -- remind-id.Config (do not remove this comment)
+BRC.Config["runrest-features"] = {}
+BRC.Config["runrest-features"].ignore_portal_exits = true -- don't stop explore on portal exits
+BRC.Config["runrest-features"].temple_search = true -- auto-search altars
+BRC.Config["runrest-features"].gauntlet_search = true -- auto-search with filters
 
-BRC.Config["runrest-features"] = {
-  ignore_portal_exits = true, -- don't stop explore on portal exits
-  temple_search = true, -- auto-search altars
-  gauntlet_search = true, -- auto-search with filters
-} -- runrest-features.Config (do not remove this comment)
-
--- startup.lua: Startup features
-BRC.Config["startup"] = {
-  show_skills_on_startup = false, -- Show skills menu on startup
-  auto_set_skill_targets = {
-    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
-    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
-  },
-} -- startup.Config (do not remove this comment)
+BRC.Config["startup"] = {}
+BRC.Config["startup"].show_skills_on_startup = false -- Show skills menu on startup
+BRC.Config["startup"].auto_set_skill_targets = {
+  { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+  { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+} -- BRC.Config["startup"].auto_set_skill_targets (Do not remove this comment)
 
 --[[
   Pickup/Alert system
@@ -110,9 +100,6 @@ BRC.Config.fm_alert = {
   talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
-
--- Debugging
-BRC.Config.debug_alert_monsters = BRC.Config.debug_alert_monsters or false -- Can also be turned on in feature config
 
 ---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 BRC.Tuning = {}
@@ -264,19 +251,20 @@ if BRC.Config.emojis then
   BRC.Emoji.HEAVIER = "⏫"
   BRC.Emoji.ARTEFACT = "💠"
 
-  BRC.Emoji.REMIND_ID = "🎁"
+  BRC.Emoji.REMIND_ID = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>"
   BRC.Emoji.EXCLAMATION = "❗"
   BRC.Emoji.EXCLAMATION_2 = "‼️"
 
-  BRC.Emoji.HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" }
-  BRC.Emoji.MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" }
-
   BRC.Emoji.SUCCESS = "✅"
 else
-  BRC.Emoji.REMIND_ID = "<magenta>?</magenta>"
   BRC.Emoji.EXCLAMATION = "<magenta>!</magenta>"
   BRC.Emoji.EXCLAMATION_2 = "<lightmagenta>!!</lightmagenta>"
+end
 
+if BRC.Config.emojis then
+  BRC.Emoji.HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" }
+  BRC.Emoji.MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" }
+else
   BRC.Emoji.HP_METER = {
     BORDER = "<white>|</white>",
     FULL = "<lightgreen>+</lightgreen>",
