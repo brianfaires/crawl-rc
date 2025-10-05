@@ -16,6 +16,38 @@ local BRC_PREFIX = "brc_data_"
 local _persist_names = {}
 local _game_trackers = {} -- Values to detect when character is changed
 
+-- Local functions
+-- verify_reinit(): After all feature init(), verifies data restored as expected
+local function verify_reinit()
+  local failed_reinit = false
+  if you.turns() > 0 then
+    for k, v in pairs(_game_trackers) do
+      local prev = _G[BRC_PREFIX .. k]
+      if prev ~= v then
+        failed_reinit = true
+        local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
+        _G[BRC_PREFIX .. k] = v
+        BRC.mpr.lightred(msg)
+      end
+    end
+
+    if not _G[BRC_PREFIX .. "successful_reload"] then
+      failed_reinit = true
+      BRC.log.error(string.format("Did not reload persistent data for buehler.rc v%s!", BRC.VERSION))
+      BRC.mpr.darkgrey("Try restarting, or set BRC.Config.show_debug_messages=True for more info.")
+    end
+  end
+
+  for k, v in pairs(_game_trackers) do
+    local var_name = BRC_PREFIX .. k
+    _G[var_name] = BRC.data.persist(var_name, v)
+  end
+  _G[BRC_PREFIX .. "successful_reload"] = true
+
+  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow) then return false end
+  return true
+end
+
 -- Public API
 
 --[[
@@ -68,40 +100,6 @@ function BRC.data.erase()
   BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
---[[
-BRC.data.verify_reinit() Verifies data reinitialization and game state consistency
-This should be called after all features have run init() to declare their data
---]]
-function BRC.data.verify_reinit()
-  local failed_reinit = false
-  if you.turns() > 0 then
-    for k, v in pairs(_game_trackers) do
-      local prev = _G[BRC_PREFIX .. k]
-      if prev ~= v then
-        failed_reinit = true
-        local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-        _G[BRC_PREFIX .. k] = v
-        BRC.mpr.lightred(msg)
-      end
-    end
-
-    if not _G[BRC_PREFIX .. "successful_reload"] then
-      failed_reinit = true
-      BRC.log.error(string.format("Persistent data not loaded for buehler.rc v%s!", BRC.VERSION))
-      BRC.mpr.darkgrey("Try restarting, or set BRC.Config.show_debug_messages=True for more info.")
-    end
-  end
-
-  for k, v in pairs(_game_trackers) do
-    local var_name = BRC_PREFIX .. k
-    _G[var_name] = BRC.data.persist(var_name, v)
-  end
-  _G[BRC_PREFIX .. "successful_reload"] = true
-
-  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow) then return false end
-  return true
-end
-
 function BRC.data.init()
   _game_trackers.buehler_rc_version = BRC.VERSION
   _game_trackers.buehler_name = you.name()
@@ -115,5 +113,5 @@ function BRC.data.init()
 
   -- brc_data_successful_reload comes last, defaults to false. If true, confirms all data reloaded.
   BRC.data.persist(BRC_PREFIX .. "successful_reload", false)
-  return BRC.data.verify_reinit()
+  return verify_reinit()
 end
