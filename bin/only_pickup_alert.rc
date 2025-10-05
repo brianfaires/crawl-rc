@@ -41,7 +41,7 @@ local ARMOUR_ALERT = {
     [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
     [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
     [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
-  }, -- ARMOUR_ALERT.Heavier (do not remove this comment)
+  },
 } -- ARMOUR_ALERT (do not remove this comment)
 
 -- Local functions
@@ -346,7 +346,7 @@ f_pa_weapons = {}
 lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
   ["Polearms"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
-}) -- lowest_num_hands_alerted (do not remove this comment)
+})
 
 -- Local config
 local Config = f_pickup_alert.Config
@@ -994,7 +994,7 @@ f_pickup_alert.Config.Alert = {
     "broad axe", "executioner's axe",
     "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
     "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
-  }, -- f_pickup_alert.Config.Alert.one_time (do not remove this comment)
+  },
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
   OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
@@ -1094,7 +1094,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
     min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
     branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
     max_shields = 8.0, -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
-  }, -- f_pickup_alert.Config.Tuning.Weap.Alert.EarlyRanged (do not remove this comment)
+  },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {

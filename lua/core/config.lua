@@ -107,7 +107,7 @@ BRC.BrandBonus = {
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
     vamp = { factor = 1.2, offset = 0 },
-  }, -- BRC.BrandBonus.subtle (do not remove this comment)
+  },
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings

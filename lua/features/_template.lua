@@ -16,7 +16,7 @@ f_template.Config = {
     key1 = 1,
     key2 = 2,
     ["100"] = "value for key=100",
-  },
+  }, -- Comment for safe parsing
 } -- f_template.Config (Always add a comment to a line only containing "}"), or crawl's RC parser will break
 
 -- Persistent variables (Defined globally, so give them unique names)

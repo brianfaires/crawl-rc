@@ -188,7 +188,7 @@ local FM_PATTERNS = {
     pattern = { "revenant", "demonspawn blood saint" } },
   { name = "drain_190", cond = "drain", cutoff = 190,
     pattern = { "shadow dragon" } },
-} -- end fm_patterns (do not remove this comment)
+} -- fm_patterns (do not remove this comment)
 
 local function append_conditional_alerts()
   -- Conditionally add miasma monsters

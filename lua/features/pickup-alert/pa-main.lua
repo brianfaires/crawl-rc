@@ -35,7 +35,7 @@ f_pickup_alert.Config.Alert = {
     "broad axe", "executioner's axe",
     "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
     "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
-  }, -- f_pickup_alert.Config.Alert.one_time (do not remove this comment)
+  },
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
   OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
@@ -135,7 +135,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
     min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
     branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
     max_shields = 8.0, -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
-  }, -- f_pickup_alert.Config.Tuning.Weap.Alert.EarlyRanged (do not remove this comment)
+  },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {

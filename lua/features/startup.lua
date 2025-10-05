@@ -12,7 +12,7 @@ f_startup.Config = {
   auto_set_skill_targets = {
     { "Stealth", 2.0 }, -- First, focus stealth to 2.0
     { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
-  }, -- Auto-set default skill targets
+  },
 } -- f_startup.Config (do not remove this comment)
 
 -- Local config

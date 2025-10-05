@@ -36,7 +36,7 @@ local ARMOUR_ALERT = {
     [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
     [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
     [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
-  }, -- ARMOUR_ALERT.Heavier (do not remove this comment)
+  },
 } -- ARMOUR_ALERT (do not remove this comment)
 
 -- Local functions

@@ -12,7 +12,7 @@ f_announce_hp_mp.Config = {
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
 
-  Announce = {
+  announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
     hp_gain_limit = 4, -- Announce when HP gain >= this
     mp_loss_limit = 1, -- Announce when MP loss >= this
@@ -21,21 +21,21 @@ f_announce_hp_mp.Config = {
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
-  }, -- f_announce_hp_mp.Config.Announce (do not remove this comment)
+  },
 
   HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
     BORDER = BRC.text.white("|"),
     FULL = BRC.text.lightgreen("+"),
     PART = BRC.text.lightgrey("+"),
     EMPTY = BRC.text.darkgrey("-"),
-  }, -- f_announce_hp_mp.Config.HP_METER (do not remove this comment)
+  },
 
   MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
     BORDER = BRC.text.white("|"),
     FULL = BRC.text.lightblue("+"),
     PART = BRC.text.lightgrey("+"),
     EMPTY = BRC.text.darkgrey("-"),
-  }, -- f_announce_hp_mp.Config.MP_METER (do not remove this comment)
+  },
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 -- Persistent variables

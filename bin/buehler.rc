@@ -112,7 +112,7 @@ BRC.BrandBonus = {
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
     vamp = { factor = 1.2, offset = 0 },
-  }, -- BRC.BrandBonus.subtle (do not remove this comment)
+  },
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
@@ -2687,7 +2687,7 @@ local FM_PATTERNS = {
     pattern = { "revenant", "demonspawn blood saint" } },
   { name = "drain_190", cond = "drain", cutoff = 190,
     pattern = { "shadow dragon" } },
-} -- end fm_patterns (do not remove this comment)
+} -- fm_patterns (do not remove this comment)
 
 local function append_conditional_alerts()
   -- Conditionally add miasma monsters
@@ -2910,7 +2910,7 @@ f_announce_hp_mp.Config = {
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
 
-  Announce = {
+  announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
     hp_gain_limit = 4, -- Announce when HP gain >= this
     mp_loss_limit = 1, -- Announce when MP loss >= this
@@ -2919,21 +2919,21 @@ f_announce_hp_mp.Config = {
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
-  }, -- f_announce_hp_mp.Config.Announce (do not remove this comment)
+  },
 
   HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
     BORDER = BRC.text.white("|"),
     FULL = BRC.text.lightgreen("+"),
     PART = BRC.text.lightgrey("+"),
     EMPTY = BRC.text.darkgrey("-"),
-  }, -- f_announce_hp_mp.Config.HP_METER (do not remove this comment)
+  },
 
   MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
     BORDER = BRC.text.white("|"),
     FULL = BRC.text.lightblue("+"),
     PART = BRC.text.lightgrey("+"),
     EMPTY = BRC.text.darkgrey("-"),
-  }, -- f_announce_hp_mp.Config.MP_METER (do not remove this comment)
+  },
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 -- Persistent variables
@@ -4380,7 +4380,7 @@ f_startup.Config = {
   auto_set_skill_targets = {
     { "Stealth", 2.0 }, -- First, focus stealth to 2.0
     { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
-  }, -- Auto-set default skill targets
+  },
 } -- f_startup.Config (do not remove this comment)
 
 -- Local config
@@ -4618,7 +4618,7 @@ f_pickup_alert.Config.Alert = {
     "broad axe", "executioner's axe",
     "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
     "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
-  }, -- f_pickup_alert.Config.Alert.one_time (do not remove this comment)
+  },
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
   OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
@@ -4718,7 +4718,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
     min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
     branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
     max_shields = 8.0, -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
-  }, -- f_pickup_alert.Config.Tuning.Weap.Alert.EarlyRanged (do not remove this comment)
+  },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {
@@ -5114,7 +5114,7 @@ local ARMOUR_ALERT = {
     [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
     [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
     [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
-  }, -- ARMOUR_ALERT.Heavier (do not remove this comment)
+  },
 } -- ARMOUR_ALERT (do not remove this comment)
 
 -- Local functions
@@ -5517,7 +5517,7 @@ f_pa_weapons = {}
 lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
   ["Polearms"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
-}) -- lowest_num_hands_alerted (do not remove this comment)
+})
 
 -- Local config
 local Config = f_pickup_alert.Config
