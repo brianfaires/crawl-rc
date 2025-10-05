@@ -233,8 +233,10 @@ function BRC.init(parent_module)
   end
 
   -- Init and verify persistent data
-  if not BRC.data.init() then
-    BRC.log.error("Failed to initialize data module. BRC is inactive.")
+  BRC.data.init()
+  if not BRC.data.verify_reinit() then
+    BRC.active = false
+    BRC.mpr.lightred("BRC is off.")
     return false
   end
 

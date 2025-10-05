@@ -1283,14 +1283,14 @@ local _persist_names = {}
 local _game_trackers = {} -- Values to detect when character is changed
 
 -- Local functions
--- verify_reinit(): After all feature init(), verifies data restored as expected
-local function verify_reinit()
-  local failed_reinit = false
+local function verify_game_trackers()
+  local success = true
+
   if you.turns() > 0 then
     for k, v in pairs(_game_trackers) do
       local prev = _G[BRC_PREFIX .. k]
       if prev ~= v then
-        failed_reinit = true
+        success = false
         local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
         _G[BRC_PREFIX .. k] = v
         BRC.mpr.lightred(msg)
@@ -1298,20 +1298,33 @@ local function verify_reinit()
     end
 
     if not _G[BRC_PREFIX .. "successful_reload"] then
-      failed_reinit = true
-      BRC.log.error(string.format("Did not reload persistent data for buehler.rc v%s!", BRC.VERSION))
+      success = false
+      BRC.log.warning(string.format("Did not reload persistent data for buehler.rc v%s!", BRC.VERSION))
       BRC.mpr.darkgrey("Try restarting, or set BRC.Config.show_debug_messages=True for more info.")
     end
   end
 
-  for k, v in pairs(_game_trackers) do
-    local var_name = BRC_PREFIX .. k
-    _G[var_name] = BRC.data.persist(var_name, v)
-  end
-  _G[BRC_PREFIX .. "successful_reload"] = true
+  return success
+end
 
-  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow) then return false end
-  return true
+local function verify_num_autopickup_funcs()
+  _G.num_autopickup_funcs = BRC.data.persist("num_autopickup_funcs", 0) -- Use _G to make checklua happy
+
+  local success = true
+
+  if _G.num_autopickup_funcs == 0 then _G.num_autopickup_funcs = #chk_force_autopickup end
+  if _G.num_autopickup_funcs ~= #chk_force_autopickup then
+    BRC.log.warning(string.format("%s\nExpected: %s but got: %s",
+      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)",
+      _G.num_autopickup_funcs,
+      #chk_force_autopickup
+    ))
+    BRC.mpr.blue("If this is not expected, restart crawl.")
+    success = BRC.mpr.yesno("Update expected number of autopickup functions?")
+    if success then _G.num_autopickup_funcs = #chk_force_autopickup end
+  end
+
+  return success
 end
 
 -- Public API
@@ -1379,9 +1392,25 @@ function BRC.data.init()
     BRC.data.persist(BRC_PREFIX .. k, v)
   end
 
-  -- brc_data_successful_reload comes last, defaults to false. If true, confirms all data reloaded.
+  -- brc_data_successful_reload comes after all other data, defaults to false. If true, confirms all data reloaded.
   BRC.data.persist(BRC_PREFIX .. "successful_reload", false)
-  return verify_reinit()
+end
+
+-- BRC.data.verify_reinit(): After all feature init(), verifies data restored as expected
+function BRC.data.verify_reinit()
+  local success = true
+
+  if not verify_game_trackers() then success = false end
+  if not verify_num_autopickup_funcs() then success = false end
+
+  -- Update game trackers, to compare on next init()
+  for k, v in pairs(_game_trackers) do
+    local var_name = BRC_PREFIX .. k
+    _G[var_name] = BRC.data.persist(var_name, v)
+  end
+  _G[BRC_PREFIX .. "successful_reload"] = true
+
+  return success or not BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow)
 end
 
 }
@@ -1626,8 +1655,10 @@ function BRC.init(parent_module)
   end
 
   -- Init and verify persistent data
-  if not BRC.data.init() then
-    BRC.log.error("Failed to initialize data module. BRC is inactive.")
+  BRC.data.init()
+  if not BRC.data.verify_reinit() then
+    BRC.active = false
+    BRC.mpr.lightred("BRC is off.")
     return false
   end
 

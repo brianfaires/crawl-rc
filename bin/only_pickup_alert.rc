@@ -1125,8 +1125,6 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   LIGHTER = "⏬",
   HEAVIER = "⏫"
 }
--- Persistent variables
-pa_num_autopickup_funcs = BRC.data.persist("pa_num_autopickup_funcs", #chk_force_autopickup + 1)
 
 -- Local config
 local Config = f_pickup_alert.Config
@@ -1255,23 +1253,6 @@ function f_pickup_alert.init()
     if f_pa_misc.init then f_pa_misc.init() end
     BRC.log.debug(indent .. "pa-misc loaded")
   end
-
-  -- Check for duplicate autopickup creation (affects local only)
-  if pa_num_autopickup_funcs < #chk_force_autopickup then
-    BRC.log.warning(string.format("%s\nExpected: %s but got: %s\n%s",
-      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)",
-      pa_num_autopickup_funcs,
-      #chk_force_autopickup,
-      "If this is not expected, restart crawl to clear its memory."
-    ))
-
-    if not BRC.mpr.yesno("Continue adding BRC autopickup function?") then
-      BRC.log.info("Skipping BRC autopickup function.")
-      return
-    end
-  end
-
-  pa_num_autopickup_funcs = #chk_force_autopickup
 end
 
 function f_pickup_alert.c_assign_invletter(it)
