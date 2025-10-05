@@ -219,10 +219,7 @@ function BRC.init(parent_module)
   -- Init features
   BRC.log.debug(BRC.text.green("Initializing features..."))
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
-  if not BRC.data.init() then
-    BRC.log.error("Failed to initialize data module. BRC is inactive.")
-    return false
-  end
+
 
   -- Add the autopickup hook
   add_autopickup_func(function(it, _) return BRC.autopickup(it) end)
@@ -230,6 +227,12 @@ function BRC.init(parent_module)
   -- Register the char_dump macro
   if BRC.Config.offer_debug_notes_on_char_dump then
     BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  end
+
+  -- Init and verify persistent data
+  if not BRC.data.init() then
+    BRC.log.error("Failed to initialize data module. BRC is inactive.")
+    return false
   end
 
   -- Success!

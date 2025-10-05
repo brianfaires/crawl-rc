@@ -545,7 +545,6 @@ function BRC.util.int2char(num)
 end
 
 function BRC.util.tostring(value, indent_count)
-  if not value then return "nil" end
   indent_count = indent_count or 1
   local indent = string.rep("  ", indent_count)
   local parent_indent = string.rep("  ", indent_count - 1)

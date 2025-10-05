@@ -45,8 +45,8 @@ ad_prev = BRC.data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 local Config = f_announce_hp_mp.Config
 
 -- Local constants
-local NUM_PIPS_PER_METER = 5
-local METER_LENGTH = 2 + NUM_PIPS_PER_METER + 2 * #(Config.HP_METER.BORDER or "")
+local PIPS_PER_METER = 5
+local METER_LENGTH = PIPS_PER_METER + 2 * #BRC.text.clean(Config.HP_METER.BORDER or "")
 local ALWAYS_BOTTOM_SETTINGS = {
   hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
@@ -56,10 +56,10 @@ local ALWAYS_BOTTOM_SETTINGS = {
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  local num_halfpips = math.floor(perc * NUM_PIPS_PER_METER * 2)
+  local num_halfpips = math.floor(perc * PIPS_PER_METER * 2)
   local num_full_emojis = math.floor(num_halfpips / 2)
   local num_part_emojis = num_halfpips % 2
-  local num_empty_emojis = NUM_PIPS_PER_METER - num_full_emojis - num_part_emojis
+  local num_empty_emojis = PIPS_PER_METER - num_full_emojis - num_part_emojis
 
   return table.concat({
     emojis.BORDER or "",
