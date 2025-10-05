@@ -6,7 +6,7 @@
 --[[
 BRC Configuration - Core BRC config, and optional overrides for any config value defined in a feature module.
 Author: buehler
-Dependencies: (None)
+Dependencies: (none)
 --]]
 BRC = BRC or {}
 BRC.Config = {}
@@ -1253,7 +1253,7 @@ end
 BRC.data - Persistent data management module
 Manages persistent data across games and saves
 Author: buehler
-Dependencies: core/util.lua
+Dependencies: core/constants.lua, core/util.lua
 --]]
 
 -- Initialize
@@ -1382,7 +1382,7 @@ This module serves as the central coordinator for all feature modules
 It automatically loads any global module/table that defines `BRC_FEATURE_NAME`
 It then manages the feature's lifecycle and hook dispatching
 Author: buehler
-Dependencies: core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 -- Initialize

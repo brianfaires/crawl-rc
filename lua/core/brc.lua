@@ -4,7 +4,7 @@ This module serves as the central coordinator for all feature modules
 It automatically loads any global module/table that defines `BRC_FEATURE_NAME`
 It then manages the feature's lifecycle and hook dispatching
 Author: buehler
-Dependencies: core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 -- Initialize

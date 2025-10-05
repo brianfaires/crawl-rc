@@ -6,7 +6,7 @@
 --[[
 BRC Configuration - Core BRC config, and optional overrides for any config value defined in a feature module.
 Author: buehler
-Dependencies: (None)
+Dependencies: (none)
 --]]
 BRC = BRC or {}
 BRC.Config = {}
@@ -2018,7 +2018,7 @@ end
 BRC.data - Persistent data management module
 Manages persistent data across games and saves
 Author: buehler
-Dependencies: core/util.lua
+Dependencies: core/constants.lua, core/util.lua
 --]]
 
 -- Initialize
@@ -2147,7 +2147,7 @@ This module serves as the central coordinator for all feature modules
 It automatically loads any global module/table that defines `BRC_FEATURE_NAME`
 It then manages the feature's lifecycle and hook dispatching
 Author: buehler
-Dependencies: core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 -- Initialize
@@ -2892,7 +2892,7 @@ end
 Feature: announce-hp-mp
 Description: Announces changes in HP/MP with visual meters and damage warnings
 Author: magus, buehler
-Dependencies: core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 f_announce_hp_mp = {}
@@ -3615,7 +3615,7 @@ end
 Feature: fully-recover
 Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
 Author: buehler
-Dependencies: core/data.lua, core/util.lua
+Dependencies: core/util.lua
 --]]
 
 f_fully_recover = {}
@@ -3850,7 +3850,7 @@ end
 Feature: misc-alerts
 Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
 Author: orig save w/msg by gammafunk, buehler
-Dependencies: core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 f_misc_alerts = {}
@@ -3958,7 +3958,7 @@ end
 Feature: remind-id
 Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
 Author: buehler
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 f_remind_id = {}
@@ -4068,7 +4068,7 @@ end
 Feature: runrest-features
 Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
 Author: buehler
-Dependencies: core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 f_runrest_features = {}
@@ -4939,7 +4939,7 @@ end
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: core/data.lua, core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
 
 f_pa_data = {}
@@ -5072,7 +5072,7 @@ end
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/data.lua, core/constants.lua, core/util.lua, pa-main.lua
+Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
 --]]
 
 f_pa_armour = {}

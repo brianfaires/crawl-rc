@@ -1,7 +1,7 @@
 --[[
 BRC Configuration - Core BRC config, and optional overrides for any config value defined in a feature module.
 Author: buehler
-Dependencies: (None)
+Dependencies: (none)
 --]]
 BRC = BRC or {}
 BRC.Config = {}

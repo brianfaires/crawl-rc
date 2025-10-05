@@ -2,7 +2,7 @@
 Feature: template_feature
 Description: Brief description of what this feature does
 Author: Your Name
-Dependencies: List any dependencies (e.g., BRC.data)
+Dependencies: List any dependencies (e.g., core/data.lua)
 --]]
 
 -- Global definitions: feature module, name, and config
