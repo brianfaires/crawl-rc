@@ -979,12 +979,12 @@ BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 
 ---- Other ----
--- BRC.COLORS:Would prefer to use integer values, but they don't work in all menus
-BRC.COLORS = {
+-- BRC.Color:Would prefer to use integer values, but they don't work in all menus
+BRC.Color = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COLORS (do not remove this comment)
+} -- BRC.Color (do not remove this comment)
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
@@ -1098,7 +1098,7 @@ function BRC.text.clean(text, escape_chars)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.COLORS) do
+for k, v in pairs(BRC.Color) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -1127,7 +1127,7 @@ end
 BRC.mpr = {}
 
 -- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.COLORS) do
+for k, v in pairs(BRC.Color) do
   BRC.mpr[k] = function(text, channel)
     crawl.mpr(BRC.text.color(v, text), channel)
     crawl.flush_prev_message()
@@ -1531,7 +1531,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.Color.lightcyan))
 end
 
 ----------------------------------------------
@@ -2114,7 +2114,7 @@ function BRC.data.verify_reinit()
   end
   _G[BRC_PREFIX .. "successful_reload"] = true
 
-  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
+  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow) then return false end
   return true
 end
 
@@ -2181,7 +2181,7 @@ end
 
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLORS.yellow) then
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.Color.yellow) then
     BRC.unregister_feature(feature_name)
   else
     BRC.mpr.okay()
@@ -2201,7 +2201,7 @@ local function handle_core_error(hook_name, result, ...)
   local param_str = table.concat(params, ", ")
 
   BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLORS.yellow) then
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.Color.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
@@ -2251,7 +2251,7 @@ local function safe_call_all_hooks(hook_name, ...)
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
   BRC.log.error("Failed to report BRC core error!", result)
-  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLORS.yellow) then
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.Color.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)
@@ -2973,15 +2973,15 @@ end
 local function format_ratio(cur, max)
   local color
   if cur <= (max * 0.25) then
-    color = BRC.COLORS.lightred
+    color = BRC.Color.lightred
   elseif cur <= (max * 0.50) then
-    color = BRC.COLORS.red
+    color = BRC.Color.red
   elseif cur <= (max * 0.75) then
-    color = BRC.COLORS.yellow
+    color = BRC.Color.yellow
   elseif cur < max then
-    color = BRC.COLORS.white
+    color = BRC.Color.white
   else
-    color = BRC.COLORS.green
+    color = BRC.Color.green
   end
 
   return BRC.text.color(color, string.format(" -> %s/%s", cur, max))
@@ -3146,33 +3146,33 @@ f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
 -- Local constants / configuration
-local negative_color = BRC.COLORS.brown
-local positive_color = BRC.COLORS.white
+local negative_color = BRC.Color.brown
+local positive_color = BRC.Color.white
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local COLORIZE_TAGS = {
-  { "rF" .. MULTI_PLUS, BRC.COLORS.lightred },
+  { "rF" .. MULTI_PLUS, BRC.Color.lightred },
   { "rF" .. MULTI_MINUS, negative_color },
-  { "rC" .. MULTI_PLUS, BRC.COLORS.lightblue },
+  { "rC" .. MULTI_PLUS, BRC.Color.lightblue },
   { "rC" .. MULTI_MINUS, negative_color },
-  { "rN" .. MULTI_PLUS, BRC.COLORS.lightmagenta },
+  { "rN" .. MULTI_PLUS, BRC.Color.lightmagenta },
   { "rN" .. MULTI_MINUS, negative_color },
-  { "rPois", BRC.COLORS.lightgreen },
-  { "rElec", BRC.COLORS.lightcyan },
-  { "rCorr", BRC.COLORS.yellow },
-  { "rMut", BRC.COLORS.yellow },
-  { "sInv", BRC.COLORS.magenta },
-  { "MRegen" .. MULTI_PLUS, BRC.COLORS.cyan },
-  { "^Regen" .. MULTI_PLUS, BRC.COLORS.green }, -- Avoiding "MRegen"
-  { " Regen" .. MULTI_PLUS, BRC.COLORS.green }, -- Avoiding "MRegen"
+  { "rPois", BRC.Color.lightgreen },
+  { "rElec", BRC.Color.lightcyan },
+  { "rCorr", BRC.Color.yellow },
+  { "rMut", BRC.Color.yellow },
+  { "sInv", BRC.Color.magenta },
+  { "MRegen" .. MULTI_PLUS, BRC.Color.cyan },
+  { "^Regen" .. MULTI_PLUS, BRC.Color.green }, -- Avoiding "MRegen"
+  { " Regen" .. MULTI_PLUS, BRC.Color.green }, -- Avoiding "MRegen"
   { "Stlth" .. MULTI_PLUS, positive_color },
   { "%+Fly", positive_color },
-  { "RMsl", BRC.COLORS.yellow },
-  { "Will" .. MULTI_PLUS, BRC.COLORS.blue },
+  { "RMsl", BRC.Color.yellow },
+  { "Will" .. MULTI_PLUS, BRC.Color.blue },
   { "Will" .. MULTI_MINUS, negative_color },
-  { "Wiz" .. MULTI_PLUS, BRC.COLORS.cyan },
+  { "Wiz" .. MULTI_PLUS, BRC.Color.cyan },
   { "Wiz" .. MULTI_MINUS, negative_color },
   { "Slay" .. POS_NUM, positive_color },
   { "Slay" .. NEG_NUM, negative_color },
@@ -3223,8 +3223,8 @@ function f_color_inscribe.c_assign_invletter(it)
   local max_length = 80 - (it.is_melded and 32 or 25) - #it.name("plain", true) - 3
   if max_length < 0 then return end
   -- Try removing darkgrey and white, then just remove all
-  if #text > max_length then text = text:gsub("</*" .. BRC.COLORS.darkgrey .. ">", "") end
-  if #text > max_length then text = text:gsub("</*" .. BRC.COLORS.white .. ">", "") end
+  if #text > max_length then text = text:gsub("</*" .. BRC.Color.darkgrey .. ">", "") end
+  if #text > max_length then text = text:gsub("</*" .. BRC.Color.white .. ">", "") end
   if #text > max_length then text = text:gsub("<.->", "") end
 
   it.inscribe(text, false)
@@ -3893,7 +3893,7 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" then return end
-      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COLORS.lightcyan)
+      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.Color.lightcyan)
       ma_alerted_max_piety = true
     end
   end
@@ -3917,7 +3917,7 @@ end
 function macro_f_misc_alerts_save_with_message()
   if not BRC.active then return BRC.util.do_cmd("CMD_SAVE_GAME_NOW") end
 
-  if not BRC.mpr.yesno("Save game and exit?", BRC.COLORS.lightcyan) then
+  if not BRC.mpr.yesno("Save game and exit?", BRC.Color.lightcyan) then
     BRC.mpr.okay()
     return
   end
@@ -4711,12 +4711,12 @@ f_pickup_alert.Config.Tuning.weap.alert = {
 } -- f_pickup_alert.Config.Tuning.weap.alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {
-  weapon = { desc = BRC.COLORS.magenta, item = BRC.COLORS.yellow, stats = BRC.COLORS.lightgrey, },
-  body_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.lightcyan, stats = BRC.COLORS.lightgrey, },
-  aux_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.yellow },
-  orb = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
-  talisman = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
-  misc = { desc = BRC.COLORS.brown, item = BRC.COLORS.white },
+  weapon = { desc = BRC.Color.magenta, item = BRC.Color.yellow, stats = BRC.Color.lightgrey, },
+  body_arm = { desc = BRC.Color.lightblue, item = BRC.Color.lightcyan, stats = BRC.Color.lightgrey, },
+  aux_arm = { desc = BRC.Color.lightblue, item = BRC.Color.yellow },
+  orb = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
+  talisman = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
+  misc = { desc = BRC.Color.brown, item = BRC.Color.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
 f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
@@ -4916,7 +4916,7 @@ function f_pickup_alert.c_message(text, channel)
       for _, v in ipairs(pa_recent_alerts) do
         tokens[#tokens + 1] = string.format("\n  %s", v)
       end
-      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COLORS.magenta) end
+      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.Color.magenta) end
       pa_recent_alerts = {}
     end
   end

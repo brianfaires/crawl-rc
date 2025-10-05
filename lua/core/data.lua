@@ -98,7 +98,7 @@ function BRC.data.verify_reinit()
   end
   _G[BRC_PREFIX .. "successful_reload"] = true
 
-  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
+  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow) then return false end
   return true
 end
 

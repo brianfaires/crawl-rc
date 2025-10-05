@@ -214,12 +214,12 @@ BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 
 ---- Other ----
--- BRC.COLORS:Would prefer to use integer values, but they don't work in all menus
-BRC.COLORS = {
+-- BRC.Color:Would prefer to use integer values, but they don't work in all menus
+BRC.Color = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COLORS (do not remove this comment)
+} -- BRC.Color (do not remove this comment)
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
@@ -333,7 +333,7 @@ function BRC.text.clean(text, escape_chars)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.COLORS) do
+for k, v in pairs(BRC.Color) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -362,7 +362,7 @@ end
 BRC.mpr = {}
 
 -- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.COLORS) do
+for k, v in pairs(BRC.Color) do
   BRC.mpr[k] = function(text, channel)
     crawl.mpr(BRC.text.color(v, text), channel)
     crawl.flush_prev_message()
@@ -766,7 +766,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.Color.lightcyan))
 end
 
 ----------------------------------------------
@@ -1349,7 +1349,7 @@ function BRC.data.verify_reinit()
   end
   _G[BRC_PREFIX .. "successful_reload"] = true
 
-  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.COLORS.yellow) then return false end
+  if failed_reinit and BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow) then return false end
   return true
 end
 
@@ -1416,7 +1416,7 @@ end
 
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLORS.yellow) then
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.Color.yellow) then
     BRC.unregister_feature(feature_name)
   else
     BRC.mpr.okay()
@@ -1436,7 +1436,7 @@ local function handle_core_error(hook_name, result, ...)
   local param_str = table.concat(params, ", ")
 
   BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLORS.yellow) then
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.Color.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
@@ -1486,7 +1486,7 @@ local function safe_call_all_hooks(hook_name, ...)
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
   BRC.log.error("Failed to report BRC core error!", result)
-  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLORS.yellow) then
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.Color.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)

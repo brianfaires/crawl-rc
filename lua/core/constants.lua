@@ -74,12 +74,12 @@ BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 
 ---- Other ----
--- BRC.COLORS:Would prefer to use integer values, but they don't work in all menus
-BRC.COLORS = {
+-- BRC.Color:Would prefer to use integer values, but they don't work in all menus
+BRC.Color = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COLORS (do not remove this comment)
+} -- BRC.Color (do not remove this comment)
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand

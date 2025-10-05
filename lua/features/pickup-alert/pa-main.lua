@@ -139,12 +139,12 @@ f_pickup_alert.Config.Tuning.weap.alert = {
 } -- f_pickup_alert.Config.Tuning.weap.alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {
-  weapon = { desc = BRC.COLORS.magenta, item = BRC.COLORS.yellow, stats = BRC.COLORS.lightgrey, },
-  body_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.lightcyan, stats = BRC.COLORS.lightgrey, },
-  aux_arm = { desc = BRC.COLORS.lightblue, item = BRC.COLORS.yellow },
-  orb = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
-  talisman = { desc = BRC.COLORS.green, item = BRC.COLORS.lightgreen },
-  misc = { desc = BRC.COLORS.brown, item = BRC.COLORS.white },
+  weapon = { desc = BRC.Color.magenta, item = BRC.Color.yellow, stats = BRC.Color.lightgrey, },
+  body_arm = { desc = BRC.Color.lightblue, item = BRC.Color.lightcyan, stats = BRC.Color.lightgrey, },
+  aux_arm = { desc = BRC.Color.lightblue, item = BRC.Color.yellow },
+  orb = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
+  talisman = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
+  misc = { desc = BRC.Color.brown, item = BRC.Color.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
 f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
@@ -344,7 +344,7 @@ function f_pickup_alert.c_message(text, channel)
       for _, v in ipairs(pa_recent_alerts) do
         tokens[#tokens + 1] = string.format("\n  %s", v)
       end
-      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COLORS.magenta) end
+      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.Color.magenta) end
       pa_recent_alerts = {}
     end
   end

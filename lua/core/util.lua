@@ -86,7 +86,7 @@ function BRC.text.clean(text, escape_chars)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.COLORS) do
+for k, v in pairs(BRC.Color) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -115,7 +115,7 @@ end
 BRC.mpr = {}
 
 -- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.COLORS) do
+for k, v in pairs(BRC.Color) do
   BRC.mpr[k] = function(text, channel)
     crawl.mpr(BRC.text.color(v, text), channel)
     crawl.flush_prev_message()
@@ -519,7 +519,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLORS.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.Color.lightcyan))
 end
 
 ----------------------------------------------

@@ -9,33 +9,33 @@ f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
 -- Local constants / configuration
-local negative_color = BRC.COLORS.brown
-local positive_color = BRC.COLORS.white
+local negative_color = BRC.Color.brown
+local positive_color = BRC.Color.white
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local COLORIZE_TAGS = {
-  { "rF" .. MULTI_PLUS, BRC.COLORS.lightred },
+  { "rF" .. MULTI_PLUS, BRC.Color.lightred },
   { "rF" .. MULTI_MINUS, negative_color },
-  { "rC" .. MULTI_PLUS, BRC.COLORS.lightblue },
+  { "rC" .. MULTI_PLUS, BRC.Color.lightblue },
   { "rC" .. MULTI_MINUS, negative_color },
-  { "rN" .. MULTI_PLUS, BRC.COLORS.lightmagenta },
+  { "rN" .. MULTI_PLUS, BRC.Color.lightmagenta },
   { "rN" .. MULTI_MINUS, negative_color },
-  { "rPois", BRC.COLORS.lightgreen },
-  { "rElec", BRC.COLORS.lightcyan },
-  { "rCorr", BRC.COLORS.yellow },
-  { "rMut", BRC.COLORS.yellow },
-  { "sInv", BRC.COLORS.magenta },
-  { "MRegen" .. MULTI_PLUS, BRC.COLORS.cyan },
-  { "^Regen" .. MULTI_PLUS, BRC.COLORS.green }, -- Avoiding "MRegen"
-  { " Regen" .. MULTI_PLUS, BRC.COLORS.green }, -- Avoiding "MRegen"
+  { "rPois", BRC.Color.lightgreen },
+  { "rElec", BRC.Color.lightcyan },
+  { "rCorr", BRC.Color.yellow },
+  { "rMut", BRC.Color.yellow },
+  { "sInv", BRC.Color.magenta },
+  { "MRegen" .. MULTI_PLUS, BRC.Color.cyan },
+  { "^Regen" .. MULTI_PLUS, BRC.Color.green }, -- Avoiding "MRegen"
+  { " Regen" .. MULTI_PLUS, BRC.Color.green }, -- Avoiding "MRegen"
   { "Stlth" .. MULTI_PLUS, positive_color },
   { "%+Fly", positive_color },
-  { "RMsl", BRC.COLORS.yellow },
-  { "Will" .. MULTI_PLUS, BRC.COLORS.blue },
+  { "RMsl", BRC.Color.yellow },
+  { "Will" .. MULTI_PLUS, BRC.Color.blue },
   { "Will" .. MULTI_MINUS, negative_color },
-  { "Wiz" .. MULTI_PLUS, BRC.COLORS.cyan },
+  { "Wiz" .. MULTI_PLUS, BRC.Color.cyan },
   { "Wiz" .. MULTI_MINUS, negative_color },
   { "Slay" .. POS_NUM, positive_color },
   { "Slay" .. NEG_NUM, negative_color },
@@ -86,8 +86,8 @@ function f_color_inscribe.c_assign_invletter(it)
   local max_length = 80 - (it.is_melded and 32 or 25) - #it.name("plain", true) - 3
   if max_length < 0 then return end
   -- Try removing darkgrey and white, then just remove all
-  if #text > max_length then text = text:gsub("</*" .. BRC.COLORS.darkgrey .. ">", "") end
-  if #text > max_length then text = text:gsub("</*" .. BRC.COLORS.white .. ">", "") end
+  if #text > max_length then text = text:gsub("</*" .. BRC.Color.darkgrey .. ">", "") end
+  if #text > max_length then text = text:gsub("</*" .. BRC.Color.white .. ">", "") end
   if #text > max_length then text = text:gsub("<.->", "") end
 
   it.inscribe(text, false)
