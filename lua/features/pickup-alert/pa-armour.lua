@@ -250,9 +250,7 @@ local function alert_body_armour(it)
 end
 
 local function alert_shield(it)
-  if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, Config.fm_alert.shields)
-  end
+  if it.artefact then return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, Config.fm_alert.shields) end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
   local cur = items.equipped_at("offhand")

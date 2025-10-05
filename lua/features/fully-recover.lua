@@ -14,7 +14,6 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
-
 -- Local config
 local Config = f_fully_recover.Config
 

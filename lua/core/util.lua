@@ -410,9 +410,7 @@ end
 function BRC.you.shapeshifting_skill()
   local skill = you.skill("Shapeshifting")
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if BRC.is.amulet(inv) and inv.name() == "amulet of wildshape" then
-      return skill + 5
-    end
+    if inv.name() == "amulet of wildshape" then return skill + 5 end
   end
   return skill
 end
@@ -452,11 +450,13 @@ end
 
 -- Binds a macro to a key. Function must be global and not a member of a module.
 function BRC.set.macro(key, function_name)
-  BRC.log.debug(string.format(
-    "Assigning macro: %s to key: %s",
-    BRC.text.magenta(function_name.."()"),
-    BRC.text.lightred("<<< '" .. key .. "' >>")
-  ))
+  BRC.log.debug(
+    string.format(
+      "Assigning macro: %s to key: %s",
+      BRC.text.magenta(function_name .. "()"),
+      BRC.text.lightred("<<< '" .. key .. "' >>")
+    )
+  )
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
@@ -603,10 +603,15 @@ local function format_stat(abbr, val, is_worn)
 end
 
 local function get_size_penalty()
-  if util.contains(BRC.LITTLE_RACES, you.race()) then return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.SMALL_RACES, you.race()) then return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.LARGE_RACES, you.race()) then return BRC.SIZE_PENALTY.LARGE
-  else return BRC.SIZE_PENALTY.NORMAL end
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
 end
 
 local function get_unadjusted_armour_pen(encumb)
@@ -975,7 +980,7 @@ function BRC.get.weap_damage(it, dmg_type)
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
-  if BRC.is.magic_staff(it) then return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type)) end
+  if BRC.is.magic_staff(it) then return pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type) end
 
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)

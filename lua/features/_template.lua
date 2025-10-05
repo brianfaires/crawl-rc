@@ -38,16 +38,12 @@ function f_template.init()
   persistent_int = persistent_int + 1
   persistent_map.num_startups = persistent_int
 
-  if Config.example_boolean then
-    BRC.log.debug("Template feature initialized.")
-  end
+  if Config.example_boolean then BRC.log.debug("Template feature initialized.") end
 end
 
 function f_template.ready()
   -- Called at the start of each turn
-  if you.turns() == Config.example_number then
-    BRC.mpr.blue("Hit magic number!")
-  end
+  if you.turns() == Config.example_number then BRC.mpr.blue("Hit magic number!") end
 end
 
 function f_template.c_message(text, channel)

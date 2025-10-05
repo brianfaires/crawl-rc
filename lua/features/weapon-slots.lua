@@ -121,7 +121,10 @@ function f_weapon_slots.c_assign_invletter(it)
 
     local any_are_weapon = false
     for _, inv in ipairs(inv_items) do
-      if inv.is_weapon then any_are_weapon = true break end
+      if inv.is_weapon then
+        any_are_weapon = true
+        break
+      end
     end
     if not any_are_weapon then
       items.swap_slots(slot, get_first_empty_slot())

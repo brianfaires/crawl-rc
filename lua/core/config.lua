@@ -85,7 +85,6 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
-
 ---- BRC.BrandBonus: Tune the impact of brands on DPS calculations
 -- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
 -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
@@ -107,8 +106,8 @@ BRC.BrandBonus = {
     penet = { factor = 1.3, offset = 0 },
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
-    vamp = { factor = 1.2, offset = 0 }
-  } -- BRC.BrandBonus.subtle (do not remove this comment)
+    vamp = { factor = 1.2, offset = 0 },
+  }, -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
@@ -116,12 +115,12 @@ BRC.LogColor = {
   error = "lightred",
   warning = "yellow",
   info = "lightgrey",
-  debug = "lightblue"
+  debug = "lightblue",
 } -- BRC.LogColor (do not remove this comment)
 
 BRC.Emoji = {
   CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
   EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
   EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
 } -- BRC.Emoji (do not remove this comment)

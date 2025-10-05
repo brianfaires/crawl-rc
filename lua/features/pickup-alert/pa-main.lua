@@ -139,8 +139,8 @@ f_pickup_alert.Config.Tuning.weap.alert = {
 } -- f_pickup_alert.Config.Tuning.weap.alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {
-  weapon = { desc = BRC.Color.magenta, item = BRC.Color.yellow, stats = BRC.Color.lightgrey, },
-  body_arm = { desc = BRC.Color.lightblue, item = BRC.Color.lightcyan, stats = BRC.Color.lightgrey, },
+  weapon = { desc = BRC.Color.magenta, item = BRC.Color.yellow, stats = BRC.Color.lightgrey },
+  body_arm = { desc = BRC.Color.lightblue, item = BRC.Color.lightcyan, stats = BRC.Color.lightgrey },
   aux_arm = { desc = BRC.Color.lightblue, item = BRC.Color.yellow },
   orb = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
   talisman = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
@@ -187,12 +187,9 @@ end
 
 -- Public API
 function f_pickup_alert.autopickup(it, _)
-  if (
-    not BRC.active or
-    pause_pa_system or
-    you.have_orb() or
-    not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
-  ) then return end
+  if not BRC.active or pause_pa_system or you.have_orb()
+    or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
+  then return end
 
   local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
   if it.is_useless then
@@ -302,11 +299,13 @@ function f_pickup_alert.init()
 
   -- Check for duplicate autopickup creation (affects local only)
   if pa_num_autopickup_funcs < #chk_force_autopickup then
-    BRC.log.warning(table.concat({
-      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)\n",
-      "Expected: ", pa_num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
+    BRC.log.warning(string.format("%s\nExpected: %s but got: %s\n%s",
+      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)",
+      pa_num_autopickup_funcs,
+      #chk_force_autopickup,
       "If this is not expected, restart crawl to clear its memory."
-    }))
+    ))
+
     if not BRC.mpr.yesno("Continue adding BRC autopickup function?") then
       BRC.log.info("Skipping BRC autopickup function.")
       return
@@ -321,9 +320,7 @@ function f_pickup_alert.c_assign_invletter(it)
   f_pa_data.remove(pa_recent_alerts, it)
 
   -- Re-enable the alert, iff we are able to use another one
-  if BRC.get.num_equip_slots(it) > 1 then
-    f_pa_data.remove(pa_items_alerted, it)
-  end
+  if BRC.get.num_equip_slots(it) > 1 then f_pa_data.remove(pa_items_alerted, it) end
 
   -- Ensure we always stop for these autopickup types
   if it.is_weapon or BRC.is.armour(it) then

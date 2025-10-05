@@ -78,12 +78,16 @@ local function call_all_hooks(hook_name, ...)
       handle_feature_error(hook_info.feature_name, hook_name, result)
     else
       if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(string.format(
+        BRC.log.warning(
+          string.format(
             "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
             hook_name,
-            returning_feature, BRC.util.tostring(last_return_value),
-            hook_info.feature_name, BRC.util.tostring(result)
-          ))
+            returning_feature,
+            BRC.util.tostring(last_return_value),
+            hook_info.feature_name,
+            BRC.util.tostring(result)
+          )
+        )
       end
 
       last_return_value = result
@@ -220,9 +224,8 @@ function BRC.init(parent_module)
   BRC.log.debug(BRC.text.green("Initializing features..."))
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
 
-
   -- Add the autopickup hook
-  add_autopickup_func(function(it, _) return BRC.autopickup(it) end)
+  add_autopickup_func(BRC.autopickup)
 
   -- Register the char_dump macro
   if BRC.Config.offer_debug_notes_on_char_dump then

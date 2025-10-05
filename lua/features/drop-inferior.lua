@@ -11,7 +11,6 @@ f_drop_inferior.Config = {
   msg_on_inscribe = true, -- Show a message when an item is marked for drop
 } -- f_drop_inferior.Config (do not remove this comment)
 
-
 -- Local constants
 local DROP_KEY = "~~DROP_ME"
 

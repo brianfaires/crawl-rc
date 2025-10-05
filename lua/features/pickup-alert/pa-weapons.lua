@@ -74,14 +74,14 @@ function _weapon_cache.add_weapon(it)
   weap_data.is_weapon = it.is_weapon
   weap_data.basename = it.name("base")
   weap_data._subtype = it.subtype()
-  weap_data.subtype = function() return weap_data._subtype end -- For consistency in other code
+  weap_data.subtype = function() return weap_data._subtype end -- For consistency with crawl.item.subtype()
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end -- For consistency in other code
+  weap_data.ego = function() return weap_data._ego end -- For consistency with crawl.item.ego()
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -128,14 +128,12 @@ function _weapon_cache.serialize()
   return table.concat(tokens)
 end
 
-
 -- Local functions
 local function is_valid_upgrade(it, cur)
-  return (
-    cur.is_ranged == it.is_ranged and
-    BRC.is.polearm(cur) == BRC.is.polearm(it) and
-    (you.race() == "Gnoll" or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
-  )
+  return
+    cur.is_ranged == it.is_ranged
+    and BRC.is.polearm(cur) == BRC.is.polearm(it)
+    and (you.race() == "Gnoll" or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
 end
 
 -- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
@@ -160,9 +158,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local it_ego = BRC.get.ego(it)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
-    if it_ego and not cur_ego then
-      return get_score(it) / cur.score > Tuning.weap.pickup.add_ego
-    end
+    if it_ego and not cur_ego then return get_score(it) / cur.score > Tuning.weap.pickup.add_ego end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     if BRC.get.hands(it) > cur.hands then return false end
@@ -288,13 +284,13 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
       return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
     end
   elseif BRC.you.free_offhand() or (you.skill("Shields") < Tuning.weap.alert.add_hand.ignore_sh_lvl) then
-      local it_ego = BRC.get.ego(it)
-      local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
-      if unique_ego and ratio > Tuning.weap.alert.new_ego then
-        return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.fm_alert.weap_ego)
-      elseif ratio > Tuning.weap.alert.add_hand.not_using then
-        return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
-      end
+    local it_ego = BRC.get.ego(it)
+    local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
+    if unique_ego and ratio > Tuning.weap.alert.new_ego then
+      return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.fm_alert.weap_ego)
+    elseif ratio > Tuning.weap.alert.add_hand.not_using then
+      return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
+    end
   elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Tuning.weap.alert.add_hand.add_ego_lose_sh then
     local msg = "2-handed weapon (Gain ego)"
     return make_alert(it, msg, Emoji.TWO_HAND, Config.fm_alert.weap_ego)
@@ -317,12 +313,11 @@ local function get_inventory_upgrade_alert(it)
 end
 
 local function get_weapon_alert(it)
-  return (
-    get_inventory_upgrade_alert(it) or
-    get_first_of_skill_alert(it) or
-    get_early_weapon_alert(it) or
-    get_weap_high_score_alert(it)
-  )
+  return
+    get_inventory_upgrade_alert(it)
+    or get_first_of_skill_alert(it)
+    or get_early_weapon_alert(it)
+    or get_weap_high_score_alert(it)
 end
 
 -- Public API

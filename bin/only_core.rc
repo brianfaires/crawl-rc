@@ -90,7 +90,6 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
-
 ---- BRC.BrandBonus: Tune the impact of brands on DPS calculations
 -- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
 -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
@@ -112,8 +111,8 @@ BRC.BrandBonus = {
     penet = { factor = 1.3, offset = 0 },
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
-    vamp = { factor = 1.2, offset = 0 }
-  } -- BRC.BrandBonus.subtle (do not remove this comment)
+    vamp = { factor = 1.2, offset = 0 },
+  }, -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
@@ -121,14 +120,14 @@ BRC.LogColor = {
   error = "lightred",
   warning = "yellow",
   info = "lightgrey",
-  debug = "lightblue"
+  debug = "lightblue",
 } -- BRC.LogColor (do not remove this comment)
 
 BRC.Emoji = {
   CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
   EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
   EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
 } -- BRC.Emoji (do not remove this comment)
 
 }
@@ -657,9 +656,7 @@ end
 function BRC.you.shapeshifting_skill()
   local skill = you.skill("Shapeshifting")
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if BRC.is.amulet(inv) and inv.name() == "amulet of wildshape" then
-      return skill + 5
-    end
+    if inv.name() == "amulet of wildshape" then return skill + 5 end
   end
   return skill
 end
@@ -699,11 +696,13 @@ end
 
 -- Binds a macro to a key. Function must be global and not a member of a module.
 function BRC.set.macro(key, function_name)
-  BRC.log.debug(string.format(
-    "Assigning macro: %s to key: %s",
-    BRC.text.magenta(function_name.."()"),
-    BRC.text.lightred("<<< '" .. key .. "' >>")
-  ))
+  BRC.log.debug(
+    string.format(
+      "Assigning macro: %s to key: %s",
+      BRC.text.magenta(function_name .. "()"),
+      BRC.text.lightred("<<< '" .. key .. "' >>")
+    )
+  )
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
@@ -850,10 +849,15 @@ local function format_stat(abbr, val, is_worn)
 end
 
 local function get_size_penalty()
-  if util.contains(BRC.LITTLE_RACES, you.race()) then return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.SMALL_RACES, you.race()) then return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.LARGE_RACES, you.race()) then return BRC.SIZE_PENALTY.LARGE
-  else return BRC.SIZE_PENALTY.NORMAL end
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
 end
 
 local function get_unadjusted_armour_pen(encumb)
@@ -1222,7 +1226,7 @@ function BRC.get.weap_damage(it, dmg_type)
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
-  if BRC.is.magic_staff(it) then return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type)) end
+  if BRC.is.magic_staff(it) then return pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type) end
 
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)
@@ -1315,7 +1319,9 @@ function BRC.data.persist(name, default_value)
     BRC.log.error(string.format("Cannot persist %s. Its value (%s) is of type %s", name, _G[name], type(_G[name])))
   elseif not util.contains(_persist_names, name) then
     _persist_names[#_persist_names + 1] = name
-    table.insert(chk_lua_save, function() return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF end)
+    table.insert(chk_lua_save, function()
+      return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF
+    end)
   end
 
   return _G[name]
@@ -1454,12 +1460,16 @@ local function call_all_hooks(hook_name, ...)
       handle_feature_error(hook_info.feature_name, hook_name, result)
     else
       if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(string.format(
+        BRC.log.warning(
+          string.format(
             "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
             hook_name,
-            returning_feature, BRC.util.tostring(last_return_value),
-            hook_info.feature_name, BRC.util.tostring(result)
-          ))
+            returning_feature,
+            BRC.util.tostring(last_return_value),
+            hook_info.feature_name,
+            BRC.util.tostring(result)
+          )
+        )
       end
 
       last_return_value = result
@@ -1596,9 +1606,8 @@ function BRC.init(parent_module)
   BRC.log.debug(BRC.text.green("Initializing features..."))
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
 
-
   -- Add the autopickup hook
-  add_autopickup_func(function(it, _) return BRC.autopickup(it) end)
+  add_autopickup_func(BRC.autopickup)
 
   -- Register the char_dump macro
   if BRC.Config.offer_debug_notes_on_char_dump then

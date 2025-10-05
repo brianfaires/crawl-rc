@@ -10,7 +10,7 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?")
+  emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?"),
 } -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
@@ -87,9 +87,11 @@ function f_remind_id.c_message(text, channel)
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
     local num_pots, slot_pots = get_max_stack("potion")
-    if is_scroll and num_scrolls >= Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
-      or is_potion and num_pots >= Config.stop_on_pots_count and slot_pots == pickup_info.slot then
-        you.stop_activity()
+    if
+      is_scroll and num_scrolls >= Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
+      or is_potion and num_pots >= Config.stop_on_pots_count and slot_pots == pickup_info.slot
+    then
+      you.stop_activity()
     end
   end
 end

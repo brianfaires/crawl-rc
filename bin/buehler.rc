@@ -90,7 +90,6 @@ BRC.Config.fm_alert = {
   staff_resists = false,
 } -- BRC.Config.fm_alert (do not remove this comment)
 
-
 ---- BRC.BrandBonus: Tune the impact of brands on DPS calculations
 -- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
 -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
@@ -112,8 +111,8 @@ BRC.BrandBonus = {
     penet = { factor = 1.3, offset = 0 },
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
-    vamp = { factor = 1.2, offset = 0 }
-  } -- BRC.BrandBonus.subtle (do not remove this comment)
+    vamp = { factor = 1.2, offset = 0 },
+  }, -- BRC.BrandBonus.subtle (do not remove this comment)
 } -- BRC.BrandBonus (do not remove this comment)
 
 ---- Cosmetic settings
@@ -121,14 +120,14 @@ BRC.LogColor = {
   error = "lightred",
   warning = "yellow",
   info = "lightgrey",
-  debug = "lightblue"
+  debug = "lightblue",
 } -- BRC.LogColor (do not remove this comment)
 
 BRC.Emoji = {
   CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
   EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
   EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
 } -- BRC.Emoji (do not remove this comment)
 
 }
@@ -1422,9 +1421,7 @@ end
 function BRC.you.shapeshifting_skill()
   local skill = you.skill("Shapeshifting")
   for inv in iter.invent_iterator:new(items.inventory()) do
-    if BRC.is.amulet(inv) and inv.name() == "amulet of wildshape" then
-      return skill + 5
-    end
+    if inv.name() == "amulet of wildshape" then return skill + 5 end
   end
   return skill
 end
@@ -1464,11 +1461,13 @@ end
 
 -- Binds a macro to a key. Function must be global and not a member of a module.
 function BRC.set.macro(key, function_name)
-  BRC.log.debug(string.format(
-    "Assigning macro: %s to key: %s",
-    BRC.text.magenta(function_name.."()"),
-    BRC.text.lightred("<<< '" .. key .. "' >>")
-  ))
+  BRC.log.debug(
+    string.format(
+      "Assigning macro: %s to key: %s",
+      BRC.text.magenta(function_name .. "()"),
+      BRC.text.lightred("<<< '" .. key .. "' >>")
+    )
+  )
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
@@ -1615,10 +1614,15 @@ local function format_stat(abbr, val, is_worn)
 end
 
 local function get_size_penalty()
-  if util.contains(BRC.LITTLE_RACES, you.race()) then return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.SMALL_RACES, you.race()) then return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.LARGE_RACES, you.race()) then return BRC.SIZE_PENALTY.LARGE
-  else return BRC.SIZE_PENALTY.NORMAL end
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
 end
 
 local function get_unadjusted_armour_pen(encumb)
@@ -1987,7 +1991,7 @@ function BRC.get.weap_damage(it, dmg_type)
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
-  if BRC.is.magic_staff(it) then return (pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type)) end
+  if BRC.is.magic_staff(it) then return pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type) end
 
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)
@@ -2080,7 +2084,9 @@ function BRC.data.persist(name, default_value)
     BRC.log.error(string.format("Cannot persist %s. Its value (%s) is of type %s", name, _G[name], type(_G[name])))
   elseif not util.contains(_persist_names, name) then
     _persist_names[#_persist_names + 1] = name
-    table.insert(chk_lua_save, function() return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF end)
+    table.insert(chk_lua_save, function()
+      return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF
+    end)
   end
 
   return _G[name]
@@ -2219,12 +2225,16 @@ local function call_all_hooks(hook_name, ...)
       handle_feature_error(hook_info.feature_name, hook_name, result)
     else
       if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(string.format(
+        BRC.log.warning(
+          string.format(
             "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
             hook_name,
-            returning_feature, BRC.util.tostring(last_return_value),
-            hook_info.feature_name, BRC.util.tostring(result)
-          ))
+            returning_feature,
+            BRC.util.tostring(last_return_value),
+            hook_info.feature_name,
+            BRC.util.tostring(result)
+          )
+        )
       end
 
       last_return_value = result
@@ -2361,9 +2371,8 @@ function BRC.init(parent_module)
   BRC.log.debug(BRC.text.green("Initializing features..."))
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
 
-
   -- Add the autopickup hook
-  add_autopickup_func(function(it, _) return BRC.autopickup(it) end)
+  add_autopickup_func(BRC.autopickup)
 
   -- Register the char_dump macro
   if BRC.Config.offer_debug_notes_on_char_dump then
@@ -3267,7 +3276,6 @@ f_drop_inferior.Config = {
   msg_on_inscribe = true, -- Show a message when an item is marked for drop
 } -- f_drop_inferior.Config (do not remove this comment)
 
-
 -- Local constants
 local DROP_KEY = "~~DROP_ME"
 
@@ -3625,7 +3633,6 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
-
 -- Local config
 local Config = f_fully_recover.Config
 
@@ -3777,7 +3784,7 @@ f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  inscribe_dps_type = BRC.DMG_TYPE.plain
+  inscribe_dps_type = BRC.DMG_TYPE.plain,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 -- Local config
@@ -3964,7 +3971,7 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?")
+  emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?"),
 } -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
@@ -4041,9 +4048,11 @@ function f_remind_id.c_message(text, channel)
 
     local num_scrolls, slot_scrolls = get_max_stack("scroll")
     local num_pots, slot_pots = get_max_stack("potion")
-    if is_scroll and num_scrolls >= Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
-      or is_potion and num_pots >= Config.stop_on_pots_count and slot_pots == pickup_info.slot then
-        you.stop_activity()
+    if
+      is_scroll and num_scrolls >= Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
+      or is_potion and num_pots >= Config.stop_on_pots_count and slot_pots == pickup_info.slot
+    then
+      you.stop_activity()
     end
   end
 end
@@ -4076,8 +4085,8 @@ f_runrest_features.Config = {
   ignore_portal_exits = true, -- don't stop explore on portal exits
   stop_on_hell_stairs = true, -- stop explore on hell stairs
   stop_on_pan_gates = true, -- stop explore on pan gates
-  temple_search = true,  -- on enter or explore, auto-search altars
-  gauntlet_search = true,  -- on enter or explore, auto-search gauntlet with filters
+  temple_search = true, -- on enter or explore, auto-search altars
+  gauntlet_search = true, -- on enter or explore, auto-search gauntlet with filters
 } -- f_runrest_features.Config (do not remove this comment)
 
 -- Persistent variables
@@ -4531,7 +4540,10 @@ function f_weapon_slots.c_assign_invletter(it)
 
     local any_are_weapon = false
     for _, inv in ipairs(inv_items) do
-      if inv.is_weapon then any_are_weapon = true break end
+      if inv.is_weapon then
+        any_are_weapon = true
+        break
+      end
     end
     if not any_are_weapon then
       items.swap_slots(slot, get_first_empty_slot())
@@ -4709,8 +4721,8 @@ f_pickup_alert.Config.Tuning.weap.alert = {
 } -- f_pickup_alert.Config.Tuning.weap.alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {
-  weapon = { desc = BRC.Color.magenta, item = BRC.Color.yellow, stats = BRC.Color.lightgrey, },
-  body_arm = { desc = BRC.Color.lightblue, item = BRC.Color.lightcyan, stats = BRC.Color.lightgrey, },
+  weapon = { desc = BRC.Color.magenta, item = BRC.Color.yellow, stats = BRC.Color.lightgrey },
+  body_arm = { desc = BRC.Color.lightblue, item = BRC.Color.lightcyan, stats = BRC.Color.lightgrey },
   aux_arm = { desc = BRC.Color.lightblue, item = BRC.Color.yellow },
   orb = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
   talisman = { desc = BRC.Color.green, item = BRC.Color.lightgreen },
@@ -4757,12 +4769,9 @@ end
 
 -- Public API
 function f_pickup_alert.autopickup(it, _)
-  if (
-    not BRC.active or
-    pause_pa_system or
-    you.have_orb() or
-    not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
-  ) then return end
+  if not BRC.active or pause_pa_system or you.have_orb()
+    or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
+  then return end
 
   local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
   if it.is_useless then
@@ -4872,11 +4881,13 @@ function f_pickup_alert.init()
 
   -- Check for duplicate autopickup creation (affects local only)
   if pa_num_autopickup_funcs < #chk_force_autopickup then
-    BRC.log.warning(table.concat({
-      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)\n",
-      "Expected: ", pa_num_autopickup_funcs, " but got: ", #chk_force_autopickup, "\n",
+    BRC.log.warning(string.format("%s\nExpected: %s but got: %s\n%s",
+      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)",
+      pa_num_autopickup_funcs,
+      #chk_force_autopickup,
       "If this is not expected, restart crawl to clear its memory."
-    }))
+    ))
+
     if not BRC.mpr.yesno("Continue adding BRC autopickup function?") then
       BRC.log.info("Skipping BRC autopickup function.")
       return
@@ -4891,9 +4902,7 @@ function f_pickup_alert.c_assign_invletter(it)
   f_pa_data.remove(pa_recent_alerts, it)
 
   -- Re-enable the alert, iff we are able to use another one
-  if BRC.get.num_equip_slots(it) > 1 then
-    f_pa_data.remove(pa_items_alerted, it)
-  end
+  if BRC.get.num_equip_slots(it) > 1 then f_pa_data.remove(pa_items_alerted, it) end
 
   -- Ensure we always stop for these autopickup types
   if it.is_weapon or BRC.is.armour(it) then
@@ -5318,9 +5327,7 @@ local function alert_body_armour(it)
 end
 
 local function alert_shield(it)
-  if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, Config.fm_alert.shields)
-  end
+  if it.artefact then return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, Config.fm_alert.shields) end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
   local cur = items.equipped_at("offhand")
@@ -5572,14 +5579,14 @@ function _weapon_cache.add_weapon(it)
   weap_data.is_weapon = it.is_weapon
   weap_data.basename = it.name("base")
   weap_data._subtype = it.subtype()
-  weap_data.subtype = function() return weap_data._subtype end -- For consistency in other code
+  weap_data.subtype = function() return weap_data._subtype end -- For consistency with crawl.item.subtype()
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end -- For consistency in other code
+  weap_data.ego = function() return weap_data._ego end -- For consistency with crawl.item.ego()
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -5626,14 +5633,12 @@ function _weapon_cache.serialize()
   return table.concat(tokens)
 end
 
-
 -- Local functions
 local function is_valid_upgrade(it, cur)
-  return (
-    cur.is_ranged == it.is_ranged and
-    BRC.is.polearm(cur) == BRC.is.polearm(it) and
-    (you.race() == "Gnoll" or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
-  )
+  return
+    cur.is_ranged == it.is_ranged
+    and BRC.is.polearm(cur) == BRC.is.polearm(it)
+    and (you.race() == "Gnoll" or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
 end
 
 -- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
@@ -5658,9 +5663,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local it_ego = BRC.get.ego(it)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
-    if it_ego and not cur_ego then
-      return get_score(it) / cur.score > Tuning.weap.pickup.add_ego
-    end
+    if it_ego and not cur_ego then return get_score(it) / cur.score > Tuning.weap.pickup.add_ego end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     if BRC.get.hands(it) > cur.hands then return false end
@@ -5786,13 +5789,13 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
       return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
     end
   elseif BRC.you.free_offhand() or (you.skill("Shields") < Tuning.weap.alert.add_hand.ignore_sh_lvl) then
-      local it_ego = BRC.get.ego(it)
-      local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
-      if unique_ego and ratio > Tuning.weap.alert.new_ego then
-        return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.fm_alert.weap_ego)
-      elseif ratio > Tuning.weap.alert.add_hand.not_using then
-        return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
-      end
+    local it_ego = BRC.get.ego(it)
+    local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
+    if unique_ego and ratio > Tuning.weap.alert.new_ego then
+      return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.fm_alert.weap_ego)
+    elseif ratio > Tuning.weap.alert.add_hand.not_using then
+      return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
+    end
   elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Tuning.weap.alert.add_hand.add_ego_lose_sh then
     local msg = "2-handed weapon (Gain ego)"
     return make_alert(it, msg, Emoji.TWO_HAND, Config.fm_alert.weap_ego)
@@ -5815,12 +5818,11 @@ local function get_inventory_upgrade_alert(it)
 end
 
 local function get_weapon_alert(it)
-  return (
-    get_inventory_upgrade_alert(it) or
-    get_first_of_skill_alert(it) or
-    get_early_weapon_alert(it) or
-    get_weap_high_score_alert(it)
-  )
+  return
+    get_inventory_upgrade_alert(it)
+    or get_first_of_skill_alert(it)
+    or get_early_weapon_alert(it)
+    or get_weap_high_score_alert(it)
 end
 
 -- Public API

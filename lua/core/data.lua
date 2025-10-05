@@ -64,7 +64,9 @@ function BRC.data.persist(name, default_value)
     BRC.log.error(string.format("Cannot persist %s. Its value (%s) is of type %s", name, _G[name], type(_G[name])))
   elseif not util.contains(_persist_names, name) then
     _persist_names[#_persist_names + 1] = name
-    table.insert(chk_lua_save, function() return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF end)
+    table.insert(chk_lua_save, function()
+      return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF
+    end)
   end
 
   return _G[name]
