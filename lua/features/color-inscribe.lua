@@ -9,19 +9,19 @@ f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
 -- Local constants / configuration
-local negative_color = BRC.Color.brown
-local positive_color = BRC.Color.white
+local LOSS_COLOR = BRC.Color.brown
+local GAIN_COLOR = BRC.Color.white
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local COLORIZE_TAGS = {
   { "rF" .. MULTI_PLUS, BRC.Color.lightred },
-  { "rF" .. MULTI_MINUS, negative_color },
+  { "rF" .. MULTI_MINUS, LOSS_COLOR },
   { "rC" .. MULTI_PLUS, BRC.Color.lightblue },
-  { "rC" .. MULTI_MINUS, negative_color },
+  { "rC" .. MULTI_MINUS, LOSS_COLOR },
   { "rN" .. MULTI_PLUS, BRC.Color.lightmagenta },
-  { "rN" .. MULTI_MINUS, negative_color },
+  { "rN" .. MULTI_MINUS, LOSS_COLOR },
   { "rPois", BRC.Color.lightgreen },
   { "rElec", BRC.Color.lightcyan },
   { "rCorr", BRC.Color.yellow },
@@ -30,31 +30,31 @@ local COLORIZE_TAGS = {
   { "MRegen" .. MULTI_PLUS, BRC.Color.cyan },
   { "^Regen" .. MULTI_PLUS, BRC.Color.green }, -- Avoiding "MRegen"
   { " Regen" .. MULTI_PLUS, BRC.Color.green }, -- Avoiding "MRegen"
-  { "Stlth" .. MULTI_PLUS, positive_color },
-  { "%+Fly", positive_color },
+  { "Stlth" .. MULTI_PLUS, GAIN_COLOR },
+  { "%+Fly", GAIN_COLOR },
   { "RMsl", BRC.Color.yellow },
   { "Will" .. MULTI_PLUS, BRC.Color.blue },
-  { "Will" .. MULTI_MINUS, negative_color },
+  { "Will" .. MULTI_MINUS, LOSS_COLOR },
   { "Wiz" .. MULTI_PLUS, BRC.Color.cyan },
-  { "Wiz" .. MULTI_MINUS, negative_color },
-  { "Slay" .. POS_NUM, positive_color },
-  { "Slay" .. NEG_NUM, negative_color },
-  { "Str" .. POS_NUM, positive_color },
-  { "Str" .. NEG_NUM, negative_color },
-  { "Dex" .. POS_NUM, positive_color },
-  { "Dex" .. NEG_NUM, negative_color },
-  { "Int" .. POS_NUM, positive_color },
-  { "Int" .. NEG_NUM, negative_color },
-  { "AC" .. POS_NUM, positive_color },
-  { "AC" .. NEG_NUM, negative_color },
-  { "EV" .. POS_NUM, positive_color },
-  { "EV" .. NEG_NUM, negative_color },
-  { "SH" .. POS_NUM, positive_color },
-  { "SH" .. NEG_NUM, negative_color },
-  { "HP" .. POS_NUM, positive_color },
-  { "HP" .. NEG_NUM, negative_color },
-  { "MP" .. POS_NUM, positive_color },
-  { "MP" .. NEG_NUM, negative_color },
+  { "Wiz" .. MULTI_MINUS, LOSS_COLOR },
+  { "Slay" .. POS_NUM, GAIN_COLOR },
+  { "Slay" .. NEG_NUM, LOSS_COLOR },
+  { "Str" .. POS_NUM, GAIN_COLOR },
+  { "Str" .. NEG_NUM, LOSS_COLOR },
+  { "Dex" .. POS_NUM, GAIN_COLOR },
+  { "Dex" .. NEG_NUM, LOSS_COLOR },
+  { "Int" .. POS_NUM, GAIN_COLOR },
+  { "Int" .. NEG_NUM, LOSS_COLOR },
+  { "AC" .. POS_NUM, GAIN_COLOR },
+  { "AC" .. NEG_NUM, LOSS_COLOR },
+  { "EV" .. POS_NUM, GAIN_COLOR },
+  { "EV" .. NEG_NUM, LOSS_COLOR },
+  { "SH" .. POS_NUM, GAIN_COLOR },
+  { "SH" .. NEG_NUM, LOSS_COLOR },
+  { "HP" .. POS_NUM, GAIN_COLOR },
+  { "HP" .. NEG_NUM, LOSS_COLOR },
+  { "MP" .. POS_NUM, GAIN_COLOR },
+  { "MP" .. NEG_NUM, LOSS_COLOR },
 } -- COLORIZE_TAGS (do not remove this comment)
 
 -- Local functions

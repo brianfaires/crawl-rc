@@ -18,8 +18,8 @@ local SAME = "same_ego"
 local LOST = "lost_ego"
 local GAIN = "gain_ego"
 local DIFF = "diff_ego"
-local HEAVIER = "heavier"
-local LIGHTER = "lighter"
+local HEAVIER = "Heavier"
+local LIGHTER = "Lighter"
 
 local ARMOUR_ALERT = {
   artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
@@ -36,7 +36,7 @@ local ARMOUR_ALERT = {
     [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
     [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
     [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
-  }, -- ARMOUR_ALERT.heavier (do not remove this comment)
+  }, -- ARMOUR_ALERT.Heavier (do not remove this comment)
 } -- ARMOUR_ALERT (do not remove this comment)
 
 -- Local functions
@@ -69,8 +69,8 @@ local function get_adjusted_ev_delta(encumb_delta, ev_delta)
   local encumb_impact = encumb_skills / you.xl()
   encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
-  -- Subtract weighted encumbrance penalty, to align with ev_delta (negative == heavier)
-  return ev_delta - encumb_delta * encumb_impact * Tuning.armour.encumb_penalty_weight
+  -- Subtract weighted encumbrance penalty, to align with ev_delta (heavier is negative)
+  return ev_delta - encumb_delta * encumb_impact * Tuning.Armour.encumb_penalty_weight
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
@@ -171,14 +171,14 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
-  local meets_ratio = loss <= 0 or (gain / loss > Tuning.armour[weight][ego_change])
+  local meets_ratio = loss <= 0 or (gain / loss > Tuning.Armour[weight][ego_change])
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if is_new_ego(ego_change) then
-    return loss <= Tuning.armour[weight].max_loss
+    return loss <= Tuning.Armour[weight].max_loss
   elseif ego_change == LOST then
-    return gain >= Tuning.armour[weight].min_gain
+    return gain >= Tuning.Armour[weight].min_gain
   end
 
   return true
@@ -225,7 +225,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= Tuning.armour[weight].ignore_small then
+    if math.abs(ac_delta + ev_delta) <= Tuning.Armour[weight].ignore_small then
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -233,18 +233,18 @@ local function alert_body_armour(it)
   -- Alert for lighter/heavier armour, based on configured AC/EV ratio
   if encumb_delta < 0 then
     if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
-      return send_armour_alert(it, ARMOUR_ALERT.lighter[ego_change])
+      return send_armour_alert(it, ARMOUR_ALERT[LIGHTER][ego_change])
     end
   elseif encumb_delta > 0 then
     local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
     if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
-      return send_armour_alert(it, ARMOUR_ALERT.heavier[ego_change])
+      return send_armour_alert(it, ARMOUR_ALERT[HEAVIER][ego_change])
     end
   end
 
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_highest_ac(it) then return true end
-  if it_ego and you.xl() <= Tuning.armour.early_xl then
+  if it_ego and you.xl() <= Tuning.Armour.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)
   end
 end

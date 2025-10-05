@@ -64,7 +64,7 @@ BRC.Config["alert"].one_time = { -- Each usable item is alerted once.
   "broad axe", "executioner's axe",
   "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
   "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
-} -- BRC.Config.alert.one_time (do not remove this comment)
+} -- BRC.Config.Alert.one_time (do not remove this comment)
 
 -- Which alerts generate a force_more
 BRC.Config.fm_alert = {

@@ -12,7 +12,7 @@ f_announce_hp_mp.Config = {
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
 
-  announce = {
+  Announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
     hp_gain_limit = 4, -- Announce when HP gain >= this
     mp_loss_limit = 1, -- Announce when MP loss >= this
@@ -21,7 +21,7 @@ f_announce_hp_mp.Config = {
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
-  }, -- f_announce_hp_mp.Config.announce (do not remove this comment)
+  }, -- f_announce_hp_mp.Config.Announce (do not remove this comment)
 
   HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
     BORDER = BRC.text.white("|"),
@@ -109,7 +109,7 @@ local function get_hp_message(hp_delta, mhp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.text.lightgrey(text)
   end
 
-  if not Config.announce.same_line and hp == mhp then
+  if not Config.Announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)")
   end
 
@@ -128,7 +128,7 @@ local function get_mp_message(mp_delta, mmp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.text.cyan(tok)
   end
 
-  if not Config.announce.same_line and mp == mmp then
+  if not Config.Announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(" (Full MP)")
   end
 
@@ -148,7 +148,7 @@ function f_announce_hp_mp.init()
   ad_prev.mp = 0
   ad_prev.mmp = 0
 
-  if Config.always_on_bottom then Config.announce = ALWAYS_BOTTOM_SETTINGS end
+  if Config.always_on_bottom then Config.Announce = ALWAYS_BOTTOM_SETTINGS end
 
   if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
     BRC.set.message_mute("Ouch! That really hurt!", true)
@@ -172,19 +172,19 @@ function f_announce_hp_mp.ready()
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = hp <= Config.announce.very_low_hp * mhp
+  local is_very_low_hp = hp <= Config.Announce.very_low_hp * mhp
 
   -- Determine which messages to show
   local do_hp = true
   local do_mp = true
-  if hp_delta <= 0 and hp_delta > -Config.announce.hp_loss_limit then do_hp = false end
-  if hp_delta >= 0 and hp_delta < Config.announce.hp_gain_limit then do_hp = false end
-  if mp_delta <= 0 and mp_delta > -Config.announce.mp_loss_limit then do_mp = false end
-  if mp_delta >= 0 and mp_delta < Config.announce.mp_gain_limit then do_mp = false end
+  if hp_delta <= 0 and hp_delta > -Config.Announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta < Config.Announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -Config.Announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta < Config.Announce.mp_gain_limit then do_mp = false end
 
   if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
   if not do_hp and not do_mp then return end
-  if Config.announce.always_both then
+  if Config.Announce.always_both then
     do_hp = true
     do_mp = true
   end
@@ -193,10 +193,10 @@ function f_announce_hp_mp.ready()
   local hp_msg = get_hp_message(hp_delta, mhp_delta)
   local mp_msg = get_mp_message(mp_delta, mmp_delta)
   local msg_tokens = {}
-  msg_tokens[1] = (Config.announce.hp_first and do_hp) and hp_msg or mp_msg
+  msg_tokens[1] = (Config.Announce.hp_first and do_hp) and hp_msg or mp_msg
   if do_mp and do_hp then
-    msg_tokens[2] = Config.announce.same_line and string.rep(" ", 7) or "\n"
-    msg_tokens[3] = Config.announce.hp_first and mp_msg or hp_msg
+    msg_tokens[2] = Config.Announce.same_line and string.rep(" ", 7) or "\n"
+    msg_tokens[3] = Config.Announce.hp_first and mp_msg or hp_msg
   end
   if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
 

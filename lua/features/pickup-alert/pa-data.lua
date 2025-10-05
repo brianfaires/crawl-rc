@@ -10,7 +10,7 @@ f_pa_data = {}
 -- Persistent variables
 pa_items_alerted = BRC.data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.data.persist("pa_recent_alerts", {})
-pa_OTA_items = BRC.data.persist("pa_OTA_items", f_pickup_alert.Config.alert.one_time)
+pa_OTA_items = BRC.data.persist("pa_OTA_items", f_pickup_alert.Config.Alert.one_time)
 pa_high_score = BRC.data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
 
 -- Local functions

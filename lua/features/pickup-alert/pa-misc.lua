@@ -22,7 +22,7 @@ function f_pa_misc.alert_OTA(it)
   local do_alert = true
 
   if BRC.is.shield(it) then
-    if you.skill("Shields") < Config.alert.OTA_require_skill.shield then return end
+    if you.skill("Shields") < Config.Alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if ota_item == "buckler" then
@@ -32,9 +32,9 @@ function f_pa_misc.alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif BRC.is.armour(it) then
-    if you.skill("Armour") < Config.alert.OTA_require_skill.armour then return end
+    if you.skill("Armour") < Config.Alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
-    if you.skill(it.weap_skill) < Config.alert.OTA_require_skill.weapon then return end
+    if you.skill(it.weap_skill) < Config.Alert.OTA_require_skill.weapon then return end
   end
 
   f_pa_data.remove(pa_OTA_items, it)
@@ -66,7 +66,7 @@ function f_pa_misc.alert_talisman(it)
   if it.artefact then
     return f_pickup_alert.do_alert(it, "Artefact talisman", Emoji.TALISMAN, Config.fm_alert.talismans)
   end
-  local required_skill = BRC.get.talisman_min_level(it) - Config.alert.talisman_lvl_diff
+  local required_skill = BRC.get.talisman_min_level(it) - Config.Alert.talisman_lvl_diff
   if required_skill > BRC.you.shapeshifting_skill() then return false end
   return f_pickup_alert.do_alert(it, "New talisman", Emoji.TALISMAN, Config.fm_alert.talismans)
 end
