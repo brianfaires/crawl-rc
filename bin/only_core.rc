@@ -311,7 +311,7 @@ end
 BRC.log = {}
 
 function BRC.log.error(message, context)
-  log_message(message, context, BRC.LogColor.error)
+  log_message("(Error) " .. message, context, BRC.LogColor.error)
 end
 
 function BRC.log.warning(message, context)

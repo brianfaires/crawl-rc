@@ -1,6 +1,13 @@
 more := force_more_message
 flash := flash_screen_message
 
+# BRC errors
+more += \[BRC\] \(Error\)
+
+# Almost worth removing
+#force_more_message -= You bow before the missionary of Beogh
+#force_more_message -= You .* the altar of
+
 # Remove annoying defaults
 more -= You have reached level
 more -= Marking area around .* as unsafe
@@ -15,11 +22,6 @@ more -= With a soft hiss the gate opens wide
 more -= grants you (a gift|throwing weapons|a weapon)
 more += grants you (a gift|a weapon)
 more -= You finish merging with the rock
-
-# Almost worth removing
-#force_more_message -= You bow before the missionary of Beogh
-#force_more_message -= You .* the altar of
-
 
 # Significant spells/effects ending
 flash += You feel stable
