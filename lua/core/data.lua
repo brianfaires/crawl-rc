@@ -11,13 +11,10 @@ BRC.data = {}
 
 -- Local constants
 local BRC_PREFIX = "brc_data_"
-local VALID_PERSISTENCE_TYPES = { "table", "string", "number", "boolean" }
-
 
 -- Local variables
-local _persistent_var_names = {}
-local _persistent_table_names = {}
-local game_trackers = {} -- Values to detect when character is changed
+local _persist_names = {}
+local _game_trackers = {} -- Values to detect when character is changed
 
 -- Public API
 
@@ -31,35 +28,26 @@ function BRC.data.persist(name, default_value)
   -- Set global if it doesn't exist, or on turn 0
   if you.turns() == 0 or _G[name] == nil then _G[name] = default_value end
 
-  if not util.contains(VALID_PERSISTENCE_TYPES, type(_G[name])) then
+  if not util.contains({ "table", "string", "number", "boolean" }, type(_G[name])) then
     BRC.log.error(string.format("Cannot persist %s. Its value (%s) is of type %s", name, _G[name], type(_G[name])))
-    return _G[name]
+  elseif not util.contains(_persist_names, name) then
+    _persist_names[#_persist_names + 1] = name
+    table.insert(chk_lua_save, function() return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF end)
   end
-
-
-  if type(_G[name]) == "table" then
-    if util.contains(util.keys(_persistent_table_names), name) then return _G[name] end
-    _persistent_table_names[#_persistent_table_names + 1] = name
-  else
-    if util.contains(_persistent_var_names, name) then return _G[name] end
-    _persistent_var_names[#_persistent_var_names + 1] = name
-  end
-
-  table.insert(chk_lua_save, function() return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF end)
 
   return _G[name]
 end
 
 function BRC.data.serialize()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
-  for _, name in ipairs(_persistent_table_names) do
+  for _, name in ipairs(_persist_names) do
     if type(_G[name]) == "table" then
       tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.util.tostring(_G[name]))
     end
   end
 
   tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
-  for _, name in ipairs(_persistent_var_names) do
+  for _, name in ipairs(_persist_names) do
     if type(_G[name]) ~= "table" then
       tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.util.tostring(_G[name]))
     end
@@ -69,20 +57,13 @@ function BRC.data.serialize()
 end
 
 function BRC.data.erase()
-  if _persistent_var_names then
-    for _, name in ipairs(_persistent_var_names) do
+  if _persist_names then
+    for _, name in ipairs(_persist_names) do
       _G[name] = nil
     end
   end
 
-  if _persistent_table_names then
-    for _, name in ipairs(_persistent_table_names) do
-      _G[name] = nil
-    end
-  end
-
-  _persistent_var_names = {}
-  _persistent_table_names = {}
+  _persist_names = {}
   BRC.active = false
   BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
@@ -94,7 +75,7 @@ This should be called after all features have run init() to declare their data
 function BRC.data.verify_reinit()
   local failed_reinit = false
   if you.turns() > 0 then
-    for k, v in pairs(game_trackers) do
+    for k, v in pairs(_game_trackers) do
       local prev = _G[BRC_PREFIX .. k]
       if prev ~= v then
         failed_reinit = true
@@ -111,7 +92,7 @@ function BRC.data.verify_reinit()
     end
   end
 
-  for k, v in pairs(game_trackers) do
+  for k, v in pairs(_game_trackers) do
     local var_name = BRC_PREFIX .. k
     _G[var_name] = BRC.data.persist(var_name, v)
   end
@@ -122,13 +103,13 @@ function BRC.data.verify_reinit()
 end
 
 function BRC.data.init()
-  game_trackers.buehler_rc_version = BRC.VERSION
-  game_trackers.buehler_name = you.name()
-  game_trackers.buehler_race = you.race()
-  game_trackers.buehler_class = you.class()
+  _game_trackers.buehler_rc_version = BRC.VERSION
+  _game_trackers.buehler_name = you.name()
+  _game_trackers.buehler_race = you.race()
+  _game_trackers.buehler_class = you.class()
 
   -- If monitors already are defined, they will keep their values
-  for k, v in pairs(game_trackers) do
+  for k, v in pairs(_game_trackers) do
     BRC.data.persist(BRC_PREFIX .. k, v)
   end
 
