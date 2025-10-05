@@ -1,7 +1,7 @@
 --[[
 BRC Utility Functions - All utility functions organized into logical tables
 Author: buehler
-Dependencies: (none)
+Dependencies: core/config.lua, core/constants.lua
 --]]
 
 -- Initialize
@@ -46,10 +46,10 @@ end
 
 local function serialize_config()
   local tokens = { "\n---CONFIG---\n" }
-  tokens[#tokens + 1] = "\nConfig = " .. BRC.data.val2str(BRC.Config)
-  tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.data.val2str(BRC.BrandBonus)
-  tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.data.val2str(BRC.LogColor)
-  tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.data.val2str(BRC.Emoji)
+  tokens[#tokens + 1] = "\nConfig = " .. BRC.util.tostring(BRC.Config)
+  tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.util.tostring(BRC.BrandBonus)
+  tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.util.tostring(BRC.LogColor)
+  tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.util.tostring(BRC.Emoji)
   return table.concat(tokens)
 end
 
@@ -331,8 +331,16 @@ function BRC.is.jewellery(it)
   return it and it.class(true) == "jewellery"
 end
 
+function BRC.is.list(value)
+  return value and type(value) == "table" and #value > 0
+end
+
 function BRC.is.magic_staff(it)
   return it and it.class and it.class(true) == "magical staff"
+end
+
+function BRC.is.map(value)
+  return value and type(value) == "table" and next(value) ~= nil and #value == 0
 end
 
 function BRC.is.ring(it)
@@ -471,15 +479,26 @@ end
 --- BRC.dump - Debugging messages for char dump or in-game lua interpreter ---
 BRC.dump = {}
 
+-- BRC.dump.all(): Main debug dump. Serializes from non-dependent modules, after checking for existence
+-- Usage: In lua interpreter, usually `BRC.dump.all()`, or `BRC.dump.all(1)` for verbose output
 function BRC.dump.all(verbose, skip_mpr)
   local tokens = {}
 
-  tokens[#tokens + 1] = BRC.data.serialize()
+  if BRC.data and BRC.data.serialize and type(BRC.data.serialize) == "function" then
+    tokens[#tokens + 1] = BRC.data.serialize()
+  else
+    BRC.log.error("Failed to run BRC.data.serialize()")
+  end
+
   if verbose then
     tokens[#tokens + 1] = serialize_config()
     tokens[#tokens + 1] = serialize_inventory()
-    tokens[#tokens + 1] = _weapon_cache.serialize()
     tokens[#tokens + 1] = serialize_chk_lua_save()
+    if _weapon_cache and _weapon_cache.serialize and type(_weapon_cache) == "function" then
+      tokens[#tokens + 1] = _weapon_cache.serialize()
+    else
+      BRC.log.error("Failed to run _weapon_cache.serialize()")
+    end
   end
 
   local text = table.concat(tokens, "\n")
@@ -523,6 +542,38 @@ end
 
 function BRC.util.int2char(num)
   return string.char(string.byte("a") + num)
+end
+
+function BRC.util.tostring(value, indent_count)
+  if not value then return "nil" end
+  indent_count = indent_count or 1
+  local indent = string.rep("  ", indent_count)
+  local parent_indent = string.rep("  ", indent_count - 1)
+  local list_separator = ",\n" .. indent
+
+  local type = type(value)
+  if type == "string" then
+    return string.format('"%s"', value:gsub('"', ""))
+  elseif type == "table" then
+    if BRC.is.list(value) then
+      local tokens = {}
+      for _, v in ipairs(value) do
+        tokens[#tokens + 1] = BRC.util.tostring(v, indent_count + 1)
+      end
+      if #tokens < 4 then return string.format("{ %s }", table.concat(tokens, ", ")) end
+      return "{\n" .. indent .. table.concat(tokens, list_separator) .. "\n" .. parent_indent .. "}"
+    elseif BRC.is.map(value) then
+      local tokens = {}
+      for k, v in pairs(value) do
+        tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, indent_count + 1))
+      end
+      return "{\n" .. indent .. table.concat(tokens, list_separator) .. "\n" .. parent_indent .. "}"
+    else
+      return "{}"
+    end
+  else
+    return tostring(value)
+  end
 end
 
 --[[

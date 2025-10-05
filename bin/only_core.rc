@@ -141,7 +141,7 @@ BRC.Emoji = {
 --[[
 BRC Constants - All constant definitions
 Author: buehler
-Dependencies: (none, but indirectly references core/constants.lua)
+Dependencies: (none)
 --]]
 
 -- Initialize
@@ -248,7 +248,7 @@ BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2, 
 --[[
 BRC Utility Functions - All utility functions organized into logical tables
 Author: buehler
-Dependencies: (none)
+Dependencies: core/config.lua, core/constants.lua
 --]]
 
 -- Initialize
@@ -293,10 +293,10 @@ end
 
 local function serialize_config()
   local tokens = { "\n---CONFIG---\n" }
-  tokens[#tokens + 1] = "\nConfig = " .. BRC.data.val2str(BRC.Config)
-  tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.data.val2str(BRC.BrandBonus)
-  tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.data.val2str(BRC.LogColor)
-  tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.data.val2str(BRC.Emoji)
+  tokens[#tokens + 1] = "\nConfig = " .. BRC.util.tostring(BRC.Config)
+  tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.util.tostring(BRC.BrandBonus)
+  tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.util.tostring(BRC.LogColor)
+  tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.util.tostring(BRC.Emoji)
   return table.concat(tokens)
 end
 
@@ -578,8 +578,16 @@ function BRC.is.jewellery(it)
   return it and it.class(true) == "jewellery"
 end
 
+function BRC.is.list(value)
+  return value and type(value) == "table" and #value > 0
+end
+
 function BRC.is.magic_staff(it)
   return it and it.class and it.class(true) == "magical staff"
+end
+
+function BRC.is.map(value)
+  return value and type(value) == "table" and next(value) ~= nil and #value == 0
 end
 
 function BRC.is.ring(it)
@@ -718,15 +726,26 @@ end
 --- BRC.dump - Debugging messages for char dump or in-game lua interpreter ---
 BRC.dump = {}
 
+-- BRC.dump.all(): Main debug dump. Serializes from non-dependent modules, after checking for existence
+-- Usage: In lua interpreter, usually `BRC.dump.all()`, or `BRC.dump.all(1)` for verbose output
 function BRC.dump.all(verbose, skip_mpr)
   local tokens = {}
 
-  tokens[#tokens + 1] = BRC.data.serialize()
+  if BRC.data and BRC.data.serialize and type(BRC.data.serialize) == "function" then
+    tokens[#tokens + 1] = BRC.data.serialize()
+  else
+    BRC.log.error("Failed to run BRC.data.serialize()")
+  end
+
   if verbose then
     tokens[#tokens + 1] = serialize_config()
     tokens[#tokens + 1] = serialize_inventory()
-    tokens[#tokens + 1] = _weapon_cache.serialize()
     tokens[#tokens + 1] = serialize_chk_lua_save()
+    if _weapon_cache and _weapon_cache.serialize and type(_weapon_cache) == "function" then
+      tokens[#tokens + 1] = _weapon_cache.serialize()
+    else
+      BRC.log.error("Failed to run _weapon_cache.serialize()")
+    end
   end
 
   local text = table.concat(tokens, "\n")
@@ -770,6 +789,38 @@ end
 
 function BRC.util.int2char(num)
   return string.char(string.byte("a") + num)
+end
+
+function BRC.util.tostring(value, indent_count)
+  if not value then return "nil" end
+  indent_count = indent_count or 1
+  local indent = string.rep("  ", indent_count)
+  local parent_indent = string.rep("  ", indent_count - 1)
+  local list_separator = ",\n" .. indent
+
+  local type = type(value)
+  if type == "string" then
+    return string.format('"%s"', value:gsub('"', ""))
+  elseif type == "table" then
+    if BRC.is.list(value) then
+      local tokens = {}
+      for _, v in ipairs(value) do
+        tokens[#tokens + 1] = BRC.util.tostring(v, indent_count + 1)
+      end
+      if #tokens < 4 then return string.format("{ %s }", table.concat(tokens, ", ")) end
+      return "{\n" .. indent .. table.concat(tokens, list_separator) .. "\n" .. parent_indent .. "}"
+    elseif BRC.is.map(value) then
+      local tokens = {}
+      for k, v in pairs(value) do
+        tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, indent_count + 1))
+      end
+      return "{\n" .. indent .. table.concat(tokens, list_separator) .. "\n" .. parent_indent .. "}"
+    else
+      return "{}"
+    end
+  else
+    return tostring(value)
+  end
 end
 
 --[[
@@ -1203,7 +1254,7 @@ end
 BRC.data - Persistent data management module
 Manages persistent data across games and saves
 Author: buehler
-Dependencies: (none)
+Dependencies: core/util.lua
 --]]
 
 -- Initialize
@@ -1212,109 +1263,41 @@ BRC.data = {}
 
 -- Local constants
 local BRC_PREFIX = "brc_data_"
-local TYPES = {
-  string = "string",
-  number = "number",
-  boolean = "boolean",
-  list = "list",
-  dict = "dict",
-  table = "table",
-  unknown = "unknown",
-} -- TYPES (do not remove this comment)
+local VALID_PERSISTENCE_TYPES = { "table", "string", "number", "boolean" }
 
--- Values to detect when character is changed
-local GAME_CHANGE_MONITORS = {}
 
--- Persistent variables - BRC.data defines these in init(), to come after all other persistent data
-
--- Private variables
+-- Local variables
 local _persistent_var_names = {}
 local _persistent_table_names = {}
-
--- Private functions (defined globally to allow access from chk_lua_save)
-function BRC.data._brc_type_of(value)
-  local t = type(value)
-  if t == "table" then
-    if #value > 0 then
-      return TYPES.list
-    else
-      return TYPES.dict
-    end
-  elseif t == "string" then
-    return TYPES.string
-  elseif t == "number" then
-    return TYPES.number
-  elseif t == "boolean" then
-    return TYPES.boolean
-  else
-    return TYPES.unknown
-  end
-end
-
-function BRC.data.val2str(value, indent_count)
-  if not value then return "nil" end
-  indent_count = indent_count or 1
-  local indent = string.rep("  ", indent_count)
-  local parent_indent = string.rep("  ", indent_count - 1)
-  local list_separator = ",\n" .. indent
-
-  local type = BRC.data._brc_type_of(value)
-  if type == TYPES.string then
-    return string.format('"%s"', value:gsub('"', ""))
-  elseif type == TYPES.number then
-    return tostring(value)
-  elseif type == TYPES.boolean then
-    return tostring(value)
-  elseif type == TYPES.list then
-    local tokens = {}
-    for _, v in ipairs(value) do
-      tokens[#tokens + 1] = BRC.data.val2str(v, indent_count + 1)
-    end
-    if #tokens == 0 then return "{}" end
-    if #tokens < 4 then return string.format("{ %s }", table.concat(tokens, ", ")) end
-    return string.format("{\n%s%s\n%s}", indent, table.concat(tokens, list_separator), parent_indent)
-  elseif type == TYPES.dict then
-    local tokens = {}
-    for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.data.val2str(v, indent_count + 1))
-    end
-    if #tokens == 0 then return "{}" end
-    return string.format("{\n%s%s\n%s}", indent, table.concat(tokens, list_separator), parent_indent)
-  else
-    local str = tostring(value) or "nil"
-    BRC.log.error(string.format("Unknown data type for value (%s): %s", str, type))
-    return "nil"
-  end
-end
+local game_trackers = {} -- Values to detect when character is changed
 
 -- Public API
 
 --[[
 BRC.data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.
-The variable/list/dict is automatically persisted across saves.
+The variable/table is automatically persisted across saves.
 Returns the current value.
 Usage: variable_name = BRC.data.persist("variable_name", default_value)
 --]]
 function BRC.data.persist(name, default_value)
-  -- Reset persistent data on new game, or if not created yet
+  -- Set global if it doesn't exist, or on turn 0
   if you.turns() == 0 or _G[name] == nil then _G[name] = default_value end
-  local is_in_tables = util.contains(util.keys(_persistent_table_names), name)
-  local is_in_vars = util.contains(_persistent_var_names, name)
 
-  if not is_in_tables and not is_in_vars then
-    table.insert(chk_lua_save, function()
-      local var_type = BRC.data._brc_type_of(_G[name])
-      if var_type == TYPES.unknown then return "" end
-      return string.format("%s = %s%s", name, BRC.data.val2str(_G[name]), BRC.KEYS.LF)
-    end)
+  if not util.contains(VALID_PERSISTENCE_TYPES, type(_G[name])) then
+    BRC.log.error(string.format("Cannot persist %s. Its value (%s) is of type %s", name, _G[name], type(_G[name])))
+    return _G[name]
   end
 
-  local var_type = BRC.data._brc_type_of(_G[name])
-  if var_type == TYPES.list or var_type == TYPES.dict then
-    if not is_in_tables then _persistent_table_names[#_persistent_table_names + 1] = name end
+
+  if type(_G[name]) == "table" then
+    if util.contains(util.keys(_persistent_table_names), name) then return _G[name] end
+    _persistent_table_names[#_persistent_table_names + 1] = name
   else
-    if not is_in_vars then _persistent_var_names[#_persistent_var_names + 1] = name end
+    if util.contains(_persistent_var_names, name) then return _G[name] end
+    _persistent_var_names[#_persistent_var_names + 1] = name
   end
+
+  table.insert(chk_lua_save, function() return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF end)
 
   return _G[name]
 end
@@ -1322,12 +1305,16 @@ end
 function BRC.data.serialize()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persistent_table_names) do
-    tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.data.val2str(_G[name]))
+    if type(_G[name]) == "table" then
+      tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.util.tostring(_G[name]))
+    end
   end
 
   tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
   for _, name in ipairs(_persistent_var_names) do
-    tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.data.val2str(_G[name]))
+    if type(_G[name]) ~= "table" then
+      tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.util.tostring(_G[name]))
+    end
   end
 
   return table.concat(tokens)
@@ -1359,7 +1346,7 @@ This should be called after all features have run init() to declare their data
 function BRC.data.verify_reinit()
   local failed_reinit = false
   if you.turns() > 0 then
-    for k, v in pairs(GAME_CHANGE_MONITORS) do
+    for k, v in pairs(game_trackers) do
       local prev = _G[BRC_PREFIX .. k]
       if prev ~= v then
         failed_reinit = true
@@ -1376,7 +1363,7 @@ function BRC.data.verify_reinit()
     end
   end
 
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
+  for k, v in pairs(game_trackers) do
     local var_name = BRC_PREFIX .. k
     _G[var_name] = BRC.data.persist(var_name, v)
   end
@@ -1387,13 +1374,13 @@ function BRC.data.verify_reinit()
 end
 
 function BRC.data.init()
-  GAME_CHANGE_MONITORS.buehler_rc_version = BRC.VERSION
-  GAME_CHANGE_MONITORS.buehler_name = you.name()
-  GAME_CHANGE_MONITORS.buehler_race = you.race()
-  GAME_CHANGE_MONITORS.buehler_class = you.class()
+  game_trackers.buehler_rc_version = BRC.VERSION
+  game_trackers.buehler_name = you.name()
+  game_trackers.buehler_race = you.race()
+  game_trackers.buehler_class = you.class()
 
   -- If monitors already are defined, they will keep their values
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
+  for k, v in pairs(game_trackers) do
     BRC.data.persist(BRC_PREFIX .. k, v)
   end
 
@@ -1463,7 +1450,7 @@ local function handle_core_error(hook_name, result, ...)
     if param and param.name and type(param.name) == "function" then
       params[#params + 1] = param.name()
     else
-      params[#params + 1] = BRC.data.val2str(param):gsub("<", "<_")
+      params[#params + 1] = BRC.util.tostring(param):gsub("<", "<_")
     end
   end
   local param_str = table.concat(params, ", ")
@@ -1492,8 +1479,8 @@ local function call_all_hooks(hook_name, ...)
         BRC.log.warning(string.format(
             "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
             hook_name,
-            returning_feature, BRC.data.BRC.data.val2str(last_return_value),
-            hook_info.feature_name, BRC.data.BRC.data.val2str(result)
+            returning_feature, BRC.util.tostring(last_return_value),
+            hook_info.feature_name, BRC.util.tostring(result)
           ))
       end
 
@@ -1584,7 +1571,7 @@ function BRC.register_feature(feature_name, feature_module)
 
   -- Apply Config overrides from BRC.Config
   if BRC.Config[feature_name] then
-    local valid = feature_module.Config and type(feature_module.Config) == "table" and #feature_module.Config == 0
+    local valid = feature_module.Config and BRC.is.map(feature_module.Config)
     if not valid then feature_module.Config = {} end
     for key, value in pairs(BRC.Config[feature_name]) do
       feature_module.Config[key] = value

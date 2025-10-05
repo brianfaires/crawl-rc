@@ -2,7 +2,7 @@
 BRC.data - Persistent data management module
 Manages persistent data across games and saves
 Author: buehler
-Dependencies: (none)
+Dependencies: core/util.lua
 --]]
 
 -- Initialize
@@ -11,109 +11,41 @@ BRC.data = {}
 
 -- Local constants
 local BRC_PREFIX = "brc_data_"
-local TYPES = {
-  string = "string",
-  number = "number",
-  boolean = "boolean",
-  list = "list",
-  dict = "dict",
-  table = "table",
-  unknown = "unknown",
-} -- TYPES (do not remove this comment)
+local VALID_PERSISTENCE_TYPES = { "table", "string", "number", "boolean" }
 
--- Values to detect when character is changed
-local GAME_CHANGE_MONITORS = {}
 
--- Persistent variables - BRC.data defines these in init(), to come after all other persistent data
-
--- Private variables
+-- Local variables
 local _persistent_var_names = {}
 local _persistent_table_names = {}
-
--- Private functions (defined globally to allow access from chk_lua_save)
-function BRC.data._brc_type_of(value)
-  local t = type(value)
-  if t == "table" then
-    if #value > 0 then
-      return TYPES.list
-    else
-      return TYPES.dict
-    end
-  elseif t == "string" then
-    return TYPES.string
-  elseif t == "number" then
-    return TYPES.number
-  elseif t == "boolean" then
-    return TYPES.boolean
-  else
-    return TYPES.unknown
-  end
-end
-
-function BRC.data.val2str(value, indent_count)
-  if not value then return "nil" end
-  indent_count = indent_count or 1
-  local indent = string.rep("  ", indent_count)
-  local parent_indent = string.rep("  ", indent_count - 1)
-  local list_separator = ",\n" .. indent
-
-  local type = BRC.data._brc_type_of(value)
-  if type == TYPES.string then
-    return string.format('"%s"', value:gsub('"', ""))
-  elseif type == TYPES.number then
-    return tostring(value)
-  elseif type == TYPES.boolean then
-    return tostring(value)
-  elseif type == TYPES.list then
-    local tokens = {}
-    for _, v in ipairs(value) do
-      tokens[#tokens + 1] = BRC.data.val2str(v, indent_count + 1)
-    end
-    if #tokens == 0 then return "{}" end
-    if #tokens < 4 then return string.format("{ %s }", table.concat(tokens, ", ")) end
-    return string.format("{\n%s%s\n%s}", indent, table.concat(tokens, list_separator), parent_indent)
-  elseif type == TYPES.dict then
-    local tokens = {}
-    for k, v in pairs(value) do
-      tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.data.val2str(v, indent_count + 1))
-    end
-    if #tokens == 0 then return "{}" end
-    return string.format("{\n%s%s\n%s}", indent, table.concat(tokens, list_separator), parent_indent)
-  else
-    local str = tostring(value) or "nil"
-    BRC.log.error(string.format("Unknown data type for value (%s): %s", str, type))
-    return "nil"
-  end
-end
+local game_trackers = {} -- Values to detect when character is changed
 
 -- Public API
 
 --[[
 BRC.data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.
-The variable/list/dict is automatically persisted across saves.
+The variable/table is automatically persisted across saves.
 Returns the current value.
 Usage: variable_name = BRC.data.persist("variable_name", default_value)
 --]]
 function BRC.data.persist(name, default_value)
-  -- Reset persistent data on new game, or if not created yet
+  -- Set global if it doesn't exist, or on turn 0
   if you.turns() == 0 or _G[name] == nil then _G[name] = default_value end
-  local is_in_tables = util.contains(util.keys(_persistent_table_names), name)
-  local is_in_vars = util.contains(_persistent_var_names, name)
 
-  if not is_in_tables and not is_in_vars then
-    table.insert(chk_lua_save, function()
-      local var_type = BRC.data._brc_type_of(_G[name])
-      if var_type == TYPES.unknown then return "" end
-      return string.format("%s = %s%s", name, BRC.data.val2str(_G[name]), BRC.KEYS.LF)
-    end)
+  if not util.contains(VALID_PERSISTENCE_TYPES, type(_G[name])) then
+    BRC.log.error(string.format("Cannot persist %s. Its value (%s) is of type %s", name, _G[name], type(_G[name])))
+    return _G[name]
   end
 
-  local var_type = BRC.data._brc_type_of(_G[name])
-  if var_type == TYPES.list or var_type == TYPES.dict then
-    if not is_in_tables then _persistent_table_names[#_persistent_table_names + 1] = name end
+
+  if type(_G[name]) == "table" then
+    if util.contains(util.keys(_persistent_table_names), name) then return _G[name] end
+    _persistent_table_names[#_persistent_table_names + 1] = name
   else
-    if not is_in_vars then _persistent_var_names[#_persistent_var_names + 1] = name end
+    if util.contains(_persistent_var_names, name) then return _G[name] end
+    _persistent_var_names[#_persistent_var_names + 1] = name
   end
+
+  table.insert(chk_lua_save, function() return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF end)
 
   return _G[name]
 end
@@ -121,12 +53,16 @@ end
 function BRC.data.serialize()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persistent_table_names) do
-    tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.data.val2str(_G[name]))
+    if type(_G[name]) == "table" then
+      tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.util.tostring(_G[name]))
+    end
   end
 
   tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
   for _, name in ipairs(_persistent_var_names) do
-    tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.data.val2str(_G[name]))
+    if type(_G[name]) ~= "table" then
+      tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.util.tostring(_G[name]))
+    end
   end
 
   return table.concat(tokens)
@@ -158,7 +94,7 @@ This should be called after all features have run init() to declare their data
 function BRC.data.verify_reinit()
   local failed_reinit = false
   if you.turns() > 0 then
-    for k, v in pairs(GAME_CHANGE_MONITORS) do
+    for k, v in pairs(game_trackers) do
       local prev = _G[BRC_PREFIX .. k]
       if prev ~= v then
         failed_reinit = true
@@ -175,7 +111,7 @@ function BRC.data.verify_reinit()
     end
   end
 
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
+  for k, v in pairs(game_trackers) do
     local var_name = BRC_PREFIX .. k
     _G[var_name] = BRC.data.persist(var_name, v)
   end
@@ -186,13 +122,13 @@ function BRC.data.verify_reinit()
 end
 
 function BRC.data.init()
-  GAME_CHANGE_MONITORS.buehler_rc_version = BRC.VERSION
-  GAME_CHANGE_MONITORS.buehler_name = you.name()
-  GAME_CHANGE_MONITORS.buehler_race = you.race()
-  GAME_CHANGE_MONITORS.buehler_class = you.class()
+  game_trackers.buehler_rc_version = BRC.VERSION
+  game_trackers.buehler_name = you.name()
+  game_trackers.buehler_race = you.race()
+  game_trackers.buehler_class = you.class()
 
   -- If monitors already are defined, they will keep their values
-  for k, v in pairs(GAME_CHANGE_MONITORS) do
+  for k, v in pairs(game_trackers) do
     BRC.data.persist(BRC_PREFIX .. k, v)
   end
 

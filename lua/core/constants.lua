@@ -1,7 +1,7 @@
 --[[
 BRC Constants - All constant definitions
 Author: buehler
-Dependencies: (none, but indirectly references core/constants.lua)
+Dependencies: (none)
 --]]
 
 -- Initialize

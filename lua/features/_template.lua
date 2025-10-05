@@ -12,7 +12,7 @@ f_template.Config = {
   example_boolean = true,
   example_number = 42,
   example_list = { "Done exploring.", "A gnoll comes into view." },
-  example_dict = {
+  example_map = {
     key1 = 1,
     key2 = 2,
     ["100"] = "value for key=100",
@@ -23,7 +23,7 @@ f_template.Config = {
 persistent_int = BRC.data.persist("persistent_int", 0)
 persistent_bool = BRC.data.persist("persistent_bool", false)
 persistent_list = BRC.data.persist("persistent_list", {})
-persistent_dict = BRC.data.persist("persistent_dict", {})
+persistent_map = BRC.data.persist("persistent_map", {})
 
 -- Local config (Optional local alias, for more concise code)
 local Config = f_template.Config
@@ -36,7 +36,7 @@ local Config = f_template.Config
 function f_template.init()
   -- Called when game opens
   persistent_int = persistent_int + 1
-  persistent_dict.num_startups = persistent_int
+  persistent_map.num_startups = persistent_int
 
   if Config.example_boolean then
     BRC.log.debug("Template feature initialized.")

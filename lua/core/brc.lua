@@ -52,7 +52,7 @@ local function handle_core_error(hook_name, result, ...)
     if param and param.name and type(param.name) == "function" then
       params[#params + 1] = param.name()
     else
-      params[#params + 1] = BRC.data.val2str(param):gsub("<", "<_")
+      params[#params + 1] = BRC.util.tostring(param):gsub("<", "<_")
     end
   end
   local param_str = table.concat(params, ", ")
@@ -81,8 +81,8 @@ local function call_all_hooks(hook_name, ...)
         BRC.log.warning(string.format(
             "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
             hook_name,
-            returning_feature, BRC.data.BRC.data.val2str(last_return_value),
-            hook_info.feature_name, BRC.data.BRC.data.val2str(result)
+            returning_feature, BRC.util.tostring(last_return_value),
+            hook_info.feature_name, BRC.util.tostring(result)
           ))
       end
 
@@ -173,7 +173,7 @@ function BRC.register_feature(feature_name, feature_module)
 
   -- Apply Config overrides from BRC.Config
   if BRC.Config[feature_name] then
-    local valid = feature_module.Config and type(feature_module.Config) == "table" and #feature_module.Config == 0
+    local valid = feature_module.Config and BRC.is.map(feature_module.Config)
     if not valid then feature_module.Config = {} end
     for key, value in pairs(BRC.Config[feature_name]) do
       feature_module.Config[key] = value

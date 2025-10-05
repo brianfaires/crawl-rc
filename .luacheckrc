@@ -90,7 +90,7 @@ globals = {
   "persistent_bool",
   "persistent_int",
   "persistent_list",
-  "persistent_dict",
+  "persistent_map",
 
 }
 

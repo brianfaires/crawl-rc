@@ -10,7 +10,7 @@ f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  inscribe_dps_type = "plain", -- How to calc dmg for weapon inscriptions (See BRC.DMG_TYPE in constants.lua)
+  inscribe_dps_type = BRC.DMG_TYPE.plain
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 -- Local config
