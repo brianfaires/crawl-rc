@@ -240,6 +240,7 @@ function BRC.init(parent_module)
 
   -- Success!
   local msg = string.format("Successfully initialized BRC system v%s!", BRC.VERSION)
+  msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
   if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
   BRC.mpr.lightgreen(string.format("\n%s", msg))
 
