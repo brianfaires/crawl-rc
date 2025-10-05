@@ -250,15 +250,8 @@ function BRC.init(parent_module)
   return true
 end
 
-function BRC.set_config(feature_name, feature_config)
-  if not BRC.Config[feature_name] then
-    BRC.Config[feature_name] = feature_config
-  else
-    for key, value in pairs(feature_config) do
-      if BRC.Config[feature_name][key] == nil then BRC.Config[feature_name][key] = value end
-    end
-  end
-  return BRC.Config[feature_name]
+function BRC.get_registered_features()
+  return _features
 end
 
 -- Hook methods

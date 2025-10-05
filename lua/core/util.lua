@@ -45,11 +45,18 @@ local function serialize_inventory()
 end
 
 local function serialize_config()
-  local tokens = { "\n---CONFIG---\n" }
-  tokens[#tokens + 1] = "\nConfig = " .. BRC.util.tostring(BRC.Config)
+  local tokens = { "\n---BRC Config---\n" .. BRC.util.tostring(BRC.Config) }
+  for name, mod in pairs(BRC.get_registered_features()) do
+    if mod.Config then
+      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(mod.Config)
+    end
+  end
+
+  tokens[#tokens + 1] = "\n\n---BRC other config tables---"
   tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.util.tostring(BRC.BrandBonus)
   tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.util.tostring(BRC.LogColor)
   tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.util.tostring(BRC.Emoji)
+
   return table.concat(tokens)
 end
 
@@ -494,7 +501,7 @@ function BRC.dump.all(verbose, skip_mpr)
     tokens[#tokens + 1] = serialize_config()
     tokens[#tokens + 1] = serialize_inventory()
     tokens[#tokens + 1] = serialize_chk_lua_save()
-    if _weapon_cache and _weapon_cache.serialize and type(_weapon_cache) == "function" then
+    if _weapon_cache and _weapon_cache.serialize and type(_weapon_cache.serialize) == "function" then
       tokens[#tokens + 1] = _weapon_cache.serialize()
     else
       BRC.log.error("Failed to run _weapon_cache.serialize()")
@@ -515,6 +522,10 @@ function BRC.dump.char(add_debug_info)
     BRC.mpr.darkgrey("No debug info added.")
   end
   BRC.util.do_cmd("CMD_CHARACTER_DUMP")
+end
+
+function BRC.dump.var(v)
+  crawl.mpr(BRC.util.tostring(v))
 end
 
 function macro_brc_dump_character()
