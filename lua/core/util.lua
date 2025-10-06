@@ -497,10 +497,10 @@ BRC.dump = {}
 function BRC.dump.all(verbose, skip_mpr)
   local tokens = {}
 
-  if BRC.data and BRC.data.serialize and type(BRC.data.serialize) == "function" then
-    tokens[#tokens + 1] = BRC.data.serialize()
+  if BRC.Data and BRC.Data.serialize and type(BRC.Data.serialize) == "function" then
+    tokens[#tokens + 1] = BRC.Data.serialize()
   else
-    BRC.log.error("Failed to run BRC.data.serialize()")
+    BRC.log.error("Failed to run BRC.Data.serialize()")
   end
 
   if verbose then

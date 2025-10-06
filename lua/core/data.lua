@@ -1,5 +1,5 @@
 --[[
-BRC.data - Persistent data management module
+BRC.Data - Persistent data management module
 Manages persistent data across games and saves
 Author: buehler
 Dependencies: core/constants.lua, core/util.lua
@@ -7,10 +7,11 @@ Dependencies: core/constants.lua, core/util.lua
 
 -- Initialize
 BRC = BRC or {}
-BRC.data = {}
+BRC.Data = {}
+BRC.data = BRC.Data -- alias
 
 -- Local constants
-local BRC_PREFIX = "brc_data_"
+local TRACKER_PREFIX = "tracker_"
 
 -- Local variables
 local _persist_names = {}
@@ -22,18 +23,17 @@ local function verify_game_trackers()
 
   if you.turns() > 0 then
     for k, v in pairs(_game_trackers) do
-      local prev = _G[BRC_PREFIX .. k]
+      local prev = _G[TRACKER_PREFIX .. k]
       if prev ~= v then
         success = false
-        local msg = string.format("Unexpected change to %s: %s -> %s", k, prev, v)
-        _G[BRC_PREFIX .. k] = v
-        BRC.mpr.lightred(msg)
+        _G[TRACKER_PREFIX .. k] = v
+        BRC.log.warning(string.format("Unexpected change of %s: %s -> %s", k, prev, v))
       end
     end
 
-    if not _G[BRC_PREFIX .. "successful_reload"] then
+    if not _G["reload_complete"] then
       success = false
-      BRC.log.warning(string.format("Did not reload persistent data for buehler.rc v%s!", BRC.VERSION))
+      BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
       BRC.mpr.darkgrey("Try restarting, or set BRC.Config.show_debug_messages=True for more info.")
     end
   end
@@ -42,7 +42,7 @@ local function verify_game_trackers()
 end
 
 local function verify_num_autopickup_funcs()
-  _G.num_autopickup_funcs = BRC.data.persist("num_autopickup_funcs", 0) -- Use _G to make checklua happy
+  _G.num_autopickup_funcs = BRC.Data.persist("num_autopickup_funcs", 0) -- Use _G to make checklua happy
 
   local success = true
 
@@ -64,12 +64,12 @@ end
 -- Public API
 
 --[[
-BRC.data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.
+BRC.Data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.
 The variable/table is automatically persisted across saves.
 Returns the current value.
-Usage: variable_name = BRC.data.persist("variable_name", default_value)
+Usage: variable_name = BRC.Data.persist("variable_name", default_value)
 --]]
-function BRC.data.persist(name, default_value)
+function BRC.Data.persist(name, default_value)
   -- Set global if it doesn't exist, or on turn 0
   if you.turns() == 0 or _G[name] == nil then _G[name] = default_value end
 
@@ -85,7 +85,7 @@ function BRC.data.persist(name, default_value)
   return _G[name]
 end
 
-function BRC.data.serialize()
+function BRC.Data.serialize()
   local tokens = { "\n---PERSISTENT TABLES---\n" }
   for _, name in ipairs(_persist_names) do
     if type(_G[name]) == "table" then
@@ -103,7 +103,7 @@ function BRC.data.serialize()
   return table.concat(tokens)
 end
 
-function BRC.data.erase()
+function BRC.Data.erase()
   if _persist_names then
     for _, name in ipairs(_persist_names) do
       _G[name] = nil
@@ -115,23 +115,23 @@ function BRC.data.erase()
   BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
-function BRC.data.init()
-  _game_trackers.buehler_rc_version = BRC.VERSION
-  _game_trackers.buehler_name = you.name()
-  _game_trackers.buehler_race = you.race()
-  _game_trackers.buehler_class = you.class()
+function BRC.Data.init()
+  _game_trackers.brc_version = BRC.VERSION
+  _game_trackers.brc_name = you.name()
+  _game_trackers.brc_race = you.race()
+  _game_trackers.brc_class = you.class()
 
   -- If monitors already are defined, they will keep their values
   for k, v in pairs(_game_trackers) do
-    BRC.data.persist(BRC_PREFIX .. k, v)
+    BRC.Data.persist(TRACKER_PREFIX .. k, v)
   end
 
-  -- brc_data_successful_reload comes after all other data, defaults to false. If true, confirms all data reloaded.
-  BRC.data.persist(BRC_PREFIX .. "successful_reload", false)
+  -- reload_complete comes after all other data, defaults to false. If true, confirms all data reloaded.
+  BRC.Data.persist("reload_complete", false)
 end
 
--- BRC.data.verify_reinit(): After all feature init(), verifies data restored as expected
-function BRC.data.verify_reinit()
+-- BRC.Data.verify_reinit(): After all feature init(), verifies data restored as expected
+function BRC.Data.verify_reinit()
   local success = true
 
   if not verify_game_trackers() then success = false end
@@ -139,10 +139,28 @@ function BRC.data.verify_reinit()
 
   -- Update game trackers, to compare on next init()
   for k, v in pairs(_game_trackers) do
-    local var_name = BRC_PREFIX .. k
-    _G[var_name] = BRC.data.persist(var_name, v)
+    local var_name = TRACKER_PREFIX .. k
+    _G[var_name] = BRC.Data.persist(var_name, v)
   end
-  _G[BRC_PREFIX .. "successful_reload"] = true
+  _G["reload_complete"] = true
 
-  return success or not BRC.mpr.yesno("Deactivate buehler.rc?", BRC.Color.yellow)
+  return success
+end
+
+-- Backup and Restore data to c_persist
+function BRC.Data.backup()
+  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
+  if type(c_persist.BRC.Backup) ~= "table" then c_persist.BRC.Backup = {} end
+  for _, name in ipairs(_persist_names) do
+    c_persist.BRC.Backup[name] = _G[name]
+  end
+  c_persist.BRC.Backup.backup_turn = you.turns()
+end
+
+function BRC.Data.restore()
+  if type(c_persist.BRC) ~= "table" or type(c_persist.BRC.Backup) ~= "table" then return false end
+  for name, value in pairs(c_persist.BRC.Backup) do
+    BRC.data.persist(name, value)
+    _G[name] = c_persist.BRC.Backup[name]
+  end
 end

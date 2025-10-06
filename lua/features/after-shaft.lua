@@ -9,8 +9,8 @@ f_after_shaft = {}
 f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
 -- Persistent variables
-as_shaft_depth = BRC.data.persist("as_shaft_depth", 0)
-as_shaft_branch = BRC.data.persist("as_shaft_branch", "NA")
+as_shaft_depth = BRC.Data.persist("as_shaft_depth", 0)
+as_shaft_branch = BRC.Data.persist("as_shaft_branch", "NA")
 
 -- Hook functions
 function f_after_shaft.init()

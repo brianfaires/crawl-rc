@@ -12,7 +12,7 @@ f_exclude_dropped.Config = {
 } -- f_exclude_dropped.Config (do not remove this comment)
 
 -- Persistent variables
-ed_dropped_items = BRC.data.persist("ed_dropped_items", {})
+ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})
 
 -- Local functions
 local function add_exclusion(item_name)

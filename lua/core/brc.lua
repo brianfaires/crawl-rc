@@ -240,18 +240,21 @@ function BRC.init(parent_module)
   end
 
   -- Init and verify persistent data
-  BRC.data.init()
-  if not BRC.data.verify_reinit() then
-    BRC.active = false
+  BRC.Data.init()
+  if BRC.Data.verify_reinit() then
+    local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION)
+    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
+    if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
+    BRC.mpr.lightgreen(string.format("\n%s", msg))
+  elseif BRC.mpr.yesno("Deactivate BRC?", BRC.Color.yellow) then
     BRC.mpr.lightred("BRC is off.")
+    BRC.active = false
     return false
+  else
+    local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
+    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
+    BRC.mpr.magenta(string.format("\n%s", msg))
   end
-
-  -- Success!
-  local msg = string.format("Successfully initialized BRC system v%s!", BRC.VERSION)
-  msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
-  if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
-  BRC.mpr.lightgreen(string.format("\n%s", msg))
 
   prev_turn = -1
   BRC.active = true

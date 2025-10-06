@@ -8,7 +8,7 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-
 f_pa_weapons = {}
 
 -- Persistent variables
-lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
+lowest_num_hands_alerted = BRC.Data.persist("lowest_num_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
   ["Polearms"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
 })

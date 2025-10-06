@@ -15,9 +15,9 @@ f_misc_alerts.Config = {
 } -- f_misc_alerts.Config (do not remove this comment)
 
 -- Persistent variables
-ma_alerted_max_piety = BRC.data.persist("ma_alerted_max_piety", false)
-ma_prev_spell_levels = BRC.data.persist("ma_prev_spell_levels", 0)
-ma_saved_msg = BRC.data.persist("ma_saved_msg", "")
+ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
+ma_prev_spell_levels = BRC.Data.persist("ma_prev_spell_levels", 0)
+ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 
 -- Local config
 local Config = f_misc_alerts.Config

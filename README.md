@@ -27,7 +27,7 @@ See `features/_template.lua` for an example.
   - `c_assign_invletter(item)`
   - `c_message(text, channel)`
 
-- `<var_name> = BRC.data.persist("<var_name>", <initial_value>)` creates vars/tables that persist across game saves.
+- `<var_name> = BRC.Data.persist("<var_name>", <initial_value>)` creates vars/tables that persist across game saves.
 
 ### Modify Features
 - **Add new**: Define a feature module anywhere in your RC file.
@@ -135,7 +135,7 @@ A bunch of constants and lists, many of which should be kept up-to-date when cra
 
 ### In-game lua commands
 - Use `~` to open the Lua interpreter in-game
-- `BRC.data.erase()` - Reset all persistent data
+- `BRC.Data.erase()` - Reset all persistent data
 - `BRC.dump.all()` or verbose: `BRC.dump.all(1)` - Prints debugging info of the curent BRC state
 - `BRC.active = false` - Disable BRC system
 - `BRC.Config.<setting> = <value>` - Change settings mid-game

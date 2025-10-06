@@ -18,6 +18,7 @@ globals = {
   "c_answer_prompt",
   "c_assign_invletter",
   "c_message",
+  "c_persist",
   "chk_force_autopickup",
   "chk_lua_save",
   "ready",
@@ -62,7 +63,7 @@ globals = {
   "f_template",
   "f_weapon_slots",
   
-  -- Persistent variables from BRC.data.persist()
+  -- Persistent variables from BRC.Data.persist()
   "ad_prev",
   "as_shaft_branch",
   "as_shaft_depth",

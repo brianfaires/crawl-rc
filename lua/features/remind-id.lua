@@ -14,7 +14,7 @@ f_remind_id.Config = {
 } -- f_remind_id.Config (do not remove this comment)
 
 -- Persistent variables
-ri_found_scroll_of_id = BRC.data.persist("ri_found_scroll_of_id", false)
+ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
 -- Local config
 local Config = f_remind_id.Config

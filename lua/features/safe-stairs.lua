@@ -13,8 +13,8 @@ f_safe_stairs.Config = {
 } -- f_safe_stairs.Config (do not remove this comment)
 
 -- Persistent variables
-ss_prev_location = BRC.data.persist("ss_prev_location", you.branch() .. you.depth())
-ss_v5_warned = BRC.data.persist("ss_v5_warned", false)
+ss_prev_location = BRC.Data.persist("ss_prev_location", you.branch() .. you.depth())
+ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
 -- Local config
 local Config = f_safe_stairs.Config

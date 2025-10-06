@@ -20,10 +20,10 @@ f_template.Config = {
 } -- f_template.Config (Always add a comment to a line only containing "}"), or crawl's RC parser will break
 
 -- Persistent variables (Defined globally, so give them unique names)
-persistent_int = BRC.data.persist("persistent_int", 0)
-persistent_bool = BRC.data.persist("persistent_bool", false)
-persistent_list = BRC.data.persist("persistent_list", {})
-persistent_map = BRC.data.persist("persistent_map", {})
+persistent_int = BRC.Data.persist("persistent_int", 0)
+persistent_bool = BRC.Data.persist("persistent_bool", false)
+persistent_list = BRC.Data.persist("persistent_list", {})
+persistent_map = BRC.Data.persist("persistent_map", {})
 
 -- Local config (Optional local alias, for more concise code)
 local Config = f_template.Config
