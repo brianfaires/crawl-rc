@@ -9,7 +9,7 @@ f_pa_armour = {}
 
 -- Local config
 local Config = f_pickup_alert.Config
-local Tuning = f_pickup_alert.Config.Tuning
+local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants / configuration
@@ -70,7 +70,7 @@ local function get_adjusted_ev_delta(encumb_delta, ev_delta)
   encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
   -- Subtract weighted encumbrance penalty, to align with ev_delta (heavier is negative)
-  return ev_delta - encumb_delta * encumb_impact * Tuning.Armour.encumb_penalty_weight
+  return ev_delta - encumb_delta * encumb_impact * Heur.encumb_penalty_weight
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
@@ -171,14 +171,14 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
-  local meets_ratio = loss <= 0 or (gain / loss > Tuning.Armour[weight][ego_change] / Config.Alert.armour_sensitivity)
+  local meets_ratio = loss <= 0 or (gain / loss > Heur[weight][ego_change] / Config.Alert.armour_sensitivity)
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if is_new_ego(ego_change) then
-    return loss <= Tuning.Armour[weight].max_loss * Config.Alert.armour_sensitivity
+    return loss <= Heur[weight].max_loss * Config.Alert.armour_sensitivity
   elseif ego_change == LOST then
-    return gain >= Tuning.Armour[weight].min_gain / Config.Alert.armour_sensitivity
+    return gain >= Heur[weight].min_gain / Config.Alert.armour_sensitivity
   end
 
   return true
@@ -225,7 +225,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= Tuning.Armour[weight].ignore_small * Config.Alert.armour_sensitivity then
+    if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Config.Alert.armour_sensitivity then
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -244,7 +244,7 @@ local function alert_body_armour(it)
 
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_highest_ac(it) then return true end
-  if it_ego and you.xl() <= Tuning.Armour.early_xl then
+  if it_ego and you.xl() <= Heur.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)
   end
 end

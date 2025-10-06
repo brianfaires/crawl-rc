@@ -14,7 +14,7 @@ f_pa_armour = {}
 
 -- Local config
 local Config = f_pickup_alert.Config
-local Tuning = f_pickup_alert.Config.Tuning
+local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants / configuration
@@ -75,7 +75,7 @@ local function get_adjusted_ev_delta(encumb_delta, ev_delta)
   encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
   -- Subtract weighted encumbrance penalty, to align with ev_delta (heavier is negative)
-  return ev_delta - encumb_delta * encumb_impact * Tuning.Armour.encumb_penalty_weight
+  return ev_delta - encumb_delta * encumb_impact * Heur.encumb_penalty_weight
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
@@ -176,14 +176,14 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
-  local meets_ratio = loss <= 0 or (gain / loss > Tuning.Armour[weight][ego_change] / Config.Alert.armour_sensitivity)
+  local meets_ratio = loss <= 0 or (gain / loss > Heur[weight][ego_change] / Config.Alert.armour_sensitivity)
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if is_new_ego(ego_change) then
-    return loss <= Tuning.Armour[weight].max_loss * Config.Alert.armour_sensitivity
+    return loss <= Heur[weight].max_loss * Config.Alert.armour_sensitivity
   elseif ego_change == LOST then
-    return gain >= Tuning.Armour[weight].min_gain / Config.Alert.armour_sensitivity
+    return gain >= Heur[weight].min_gain / Config.Alert.armour_sensitivity
   end
 
   return true
@@ -230,7 +230,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= Tuning.Armour[weight].ignore_small * Config.Alert.armour_sensitivity then
+    if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Config.Alert.armour_sensitivity then
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -249,7 +249,7 @@ local function alert_body_armour(it)
 
   -- Alert for highest AC found so far, or early armour with any ego
   if alert_highest_ac(it) then return true end
-  if it_ego and you.xl() <= Tuning.Armour.early_xl then
+  if it_ego and you.xl() <= Heur.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)
   end
 end
@@ -350,7 +350,7 @@ lowest_num_hands_alerted = BRC.data.persist("lowest_num_hands_alerted", {
 
 -- Local config
 local Config = f_pickup_alert.Config
-local Tuning = f_pickup_alert.Config.Tuning
+local Heur = f_pickup_alert.Config.Tuning.Weap
 local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants
@@ -367,10 +367,11 @@ local top_attack_skill
 local function get_score(it, no_brand_bonus)
   if it.dps and it.acc then
     -- Handle cached /  high-score tuples in _weapon_cache
-    return it.dps + it.acc * Tuning.Weap.Pickup.accuracy_weight
+    return it.dps + it.acc * Heur.Pickup.accuracy_weight
   end
   local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
-  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + (it.plus or 0)) * Tuning.Weap.Pickup.accuracy_weight
+  local acc_bonus = (it.accuracy + (it.plus or 0)) * Heur.Pickup.accuracy_weight
+  return BRC.get.weap_dps(it, dmg_type) + acc_bonus
 end
 
 -- _weapon_cache: Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
@@ -492,7 +493,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local it_ego = BRC.get.ego(it)
     local cur_ego = BRC.get.ego(cur)
     if cur_ego and not it_ego then return false end
-    if it_ego and not cur_ego then return get_score(it) / cur.score > Tuning.Weap.Pickup.add_ego end
+    if it_ego and not cur_ego then return get_score(it) / cur.score > Heur.Pickup.add_ego end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     if BRC.get.hands(it) > cur.hands then return false end
@@ -502,7 +503,7 @@ local function is_weapon_upgrade(it, cur, strict)
     if it.artefact then return true end
     if cur.artefact then return false end
 
-    local min_ratio = it.is_ranged and Tuning.Weap.Pickup.same_type_ranged or Tuning.Weap.Pickup.same_type_melee
+    local min_ratio = it.is_ranged and Heur.Pickup.same_type_ranged or Heur.Pickup.same_type_melee
     return get_score(it) / cur.score > min_ratio
   end
 
@@ -541,24 +542,24 @@ end
 
 local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
-  if it.is_ranged and you.xl() <= Tuning.Weap.Alert.EarlyRanged.xl then
-    local min_plus = Tuning.Weap.Alert.EarlyRanged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"]
+  if it.is_ranged and you.xl() <= Heur.Alert.EarlyRanged.xl then
+    local min_plus = Heur.Alert.EarlyRanged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"]
     if (it.plus or 0) >= min_plus / Config.Alert.weapon_sensitivity then
-      local low_shield_training = you.skill("Shields") <= Tuning.Weap.Alert.EarlyRanged.max_shields
+      local low_shield_training = you.skill("Shields") <= Heur.Alert.EarlyRanged.max_shields
       if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
         return make_alert(it, "Ranged weapon", Emoji.RANGED, Config.fm_alert.early_weap)
       end
     end
   end
 
-  if you.xl() <= Tuning.Weap.Alert.Early.xl then
+  if you.xl() <= Heur.Alert.Early.xl then
     -- Ignore items if we're clearly going another route
-    local skill_setting = Tuning.Weap.Alert.Early.skill
+    local skill_setting = Heur.Alert.Early.skill
     local skill_diff = BRC.get.skill(top_attack_skill) - BRC.get.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
     local it_plus = it.plus or 0
-    if BRC.get.ego(it) or it_plus >= Tuning.Weap.Alert.Early.branded_min_plus / Config.Alert.weapon_sensitivity then
+    if BRC.get.ego(it) or it_plus >= Heur.Alert.Early.branded_min_plus / Config.Alert.weapon_sensitivity then
       return make_alert(it, "Early weapon", Emoji.WEAPON, Config.fm_alert.early_weap)
     end
   end
@@ -602,7 +603,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   if not is_valid_upgrade(it, cur) then return end
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
-  local damp = Tuning.Weap.Alert.low_skill_penalty_damping
+  local damp = Heur.Alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score / Config.Alert.weapon_sensitivity
 
@@ -611,24 +612,24 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
     if BRC.get.ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
       local it_ego = BRC.get.ego(it)
       if not BRC.get.ego(cur) then
-        if ratio > Tuning.Weap.Alert.gain_ego then
+        if ratio > Heur.Alert.gain_ego then
           return make_alert(it, "Gain ego", Emoji.EGO, Config.fm_alert.weap_ego)
         end
-      elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Tuning.Weap.Alert.new_ego then
+      elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
         return make_alert(it, "New ego", Emoji.EGO, Config.fm_alert.weap_ego)
       end
     end
-    if ratio > Tuning.Weap.Alert.pure_dps then
+    if ratio > Heur.Alert.pure_dps then
       return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
     end
-  elseif BRC.you.free_offhand() or (you.skill("Shields") < Tuning.Weap.Alert.AddHand.ignore_sh_lvl) then
+  elseif BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl) then
     local it_ego = BRC.get.ego(it)
-    if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Tuning.Weap.Alert.new_ego then
+    if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
       return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.fm_alert.weap_ego)
-    elseif ratio > Tuning.Weap.Alert.AddHand.not_using then
+    elseif ratio > Heur.Alert.AddHand.not_using then
       return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
     end
-  elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Tuning.Weap.Alert.AddHand.add_ego_lose_sh then
+  elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Heur.Alert.AddHand.add_ego_lose_sh then
     return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.fm_alert.weap_ego)
   end
 end
