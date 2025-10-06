@@ -208,7 +208,8 @@ end
 local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
   if it.is_ranged and you.xl() <= Tuning.Weap.Alert.EarlyRanged.xl then
-    if it.plus >= Tuning.Weap.Alert.EarlyRanged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"] then
+    local min_plus = Tuning.Weap.Alert.EarlyRanged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"]
+    if it.plus >= min_plus / Config.Alert.weapon_sensitivity then
       local low_shield_training = you.skill("Shields") <= Tuning.Weap.Alert.EarlyRanged.max_shields
       if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
         return make_alert(it, "Ranged weapon", Emoji.RANGED, Config.fm_alert.early_weap)
@@ -217,13 +218,13 @@ local function get_early_weapon_alert(it)
   end
 
   if you.xl() <= Tuning.Weap.Alert.Early.xl then
-    -- Skip items if we're clearly going another route
+    -- Ignore items if we're clearly going another route
     local skill_setting = Tuning.Weap.Alert.Early.skill
     local skill_diff = BRC.get.skill(top_attack_skill) - BRC.get.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
     local it_plus = it.plus or 0
-    if BRC.get.ego(it) or it_plus and it_plus >= Tuning.Weap.Alert.Early.branded_min_plus then
+    if BRC.get.ego(it) or it_plus >= Tuning.Weap.Alert.Early.branded_min_plus / Config.Alert.weapon_sensitivity then
       return make_alert(it, "Early weapon", Emoji.WEAPON, Config.fm_alert.early_weap)
     end
   end
@@ -244,8 +245,11 @@ local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   local cur_ego = BRC.get.ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
     return make_alert(it, cur_ego and "Diff ego" or "Gain ego", Emoji.EGO, Config.fm_alert.weap_ego)
-  elseif get_score(it) > best_score or BRC.get.weap_dps(it) > best_dps then
-    return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
+  else
+    local s = Config.Alert.weapon_sensitivity
+    if get_score(it) > best_score / s or BRC.get.weap_dps(it) > best_dps / s then
+      return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.fm_alert.upgrade_weap)
+    end
   end
 end
 
@@ -266,7 +270,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Tuning.Weap.Alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
-  local ratio = penalty * get_score(it) / best_score
+  local ratio = penalty * get_score(it) / best_score / Config.Alert.weapon_sensitivity
 
   if BRC.get.hands(it) <= cur.hands then
     if cur.artefact then return false end
@@ -285,15 +289,13 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
     end
   elseif BRC.you.free_offhand() or (you.skill("Shields") < Tuning.Weap.Alert.AddHand.ignore_sh_lvl) then
     local it_ego = BRC.get.ego(it)
-    local unique_ego = it_ego and not util.contains(_weapon_cache.egos, it_ego)
-    if unique_ego and ratio > Tuning.Weap.Alert.new_ego then
+    if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Tuning.Weap.Alert.new_ego then
       return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.fm_alert.weap_ego)
     elseif ratio > Tuning.Weap.Alert.AddHand.not_using then
       return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.fm_alert.upgrade_weap)
     end
   elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Tuning.Weap.Alert.AddHand.add_ego_lose_sh then
-    local msg = "2-handed weapon (Gain ego)"
-    return make_alert(it, msg, Emoji.TWO_HAND, Config.fm_alert.weap_ego)
+    return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.fm_alert.weap_ego)
   end
 end
 

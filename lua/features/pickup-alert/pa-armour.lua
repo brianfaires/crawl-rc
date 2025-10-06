@@ -171,14 +171,14 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
-  local meets_ratio = loss <= 0 or (gain / loss > Tuning.Armour[weight][ego_change])
+  local meets_ratio = loss <= 0 or (gain / loss > Tuning.Armour[weight][ego_change] / Config.Alert.armour_sensitivity)
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if is_new_ego(ego_change) then
-    return loss <= Tuning.Armour[weight].max_loss
+    return loss <= Tuning.Armour[weight].max_loss * Config.Alert.armour_sensitivity
   elseif ego_change == LOST then
-    return gain >= Tuning.Armour[weight].min_gain
+    return gain >= Tuning.Armour[weight].min_gain / Config.Alert.armour_sensitivity
   end
 
   return true
@@ -225,7 +225,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= Tuning.Armour[weight].ignore_small then
+    if math.abs(ac_delta + ev_delta) <= Tuning.Armour[weight].ignore_small * Config.Alert.armour_sensitivity then
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end

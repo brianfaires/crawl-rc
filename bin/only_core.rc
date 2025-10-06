@@ -55,9 +55,8 @@ BRC.Config["pickup"].weapons = true
 BRC.Config["pickup"].weapons_pure_upgrades_only = true -- Only pick up better versions of same exact weapon
 
 BRC.Config["alert"] = {}
-BRC.Config["alert"].enabled = true -- If false, no alerts are generated
-BRC.Config["alert"].armour = true
-BRC.Config["alert"].weapons = true
+BRC.Config["alert"].armour_sensitivity = 1.0 -- Adjust all armour alerts; 0 = no alerts (typical range 0.5-2.0)
+BRC.Config["alert"].weapon_sensitivity = 1.0 -- Adjust all weapon alerts; 0 = no alerts (typical range 0.5-2.0)
 BRC.Config["alert"].orbs = true
 BRC.Config["alert"].staff_resists = true
 BRC.Config["alert"].talismans = true

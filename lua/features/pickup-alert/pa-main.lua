@@ -17,9 +17,8 @@ f_pickup_alert.Config.Pickup = {
 } -- f_pickup_alert.Config.Pickup (do not remove this comment)
 
 f_pickup_alert.Config.Alert = {
-  enabled = true, -- If false, no alerts are generated
-  armour = true,
-  weapons = true,
+  armour_sensitivity = 1.0, -- Adjust all armour alerts; 0 to disable all (typical range 0.5-2.0)
+  weapon_sensitivity = 1.0, -- Adjust all weapon alerts; 0 to disable all (typical range 0.5-2.0)
   orbs = true,
   staff_resists = true,
   talismans = true,
@@ -125,7 +124,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
   -- Alerts for good early weapons of all types
   Early = {
     xl = 7, -- Alert early weapons if XL <= `xl`
-    skill = { factor = 1.5, offset = 2.0 }, -- Skip weapons with skill diff > XL * factor + offset
+    skill = { factor = 1.5, offset = 2.0 }, -- Don't alert weapons with skill diff > XL * `factor` + `offset`
     branded_min_plus = 4, -- Alert branded weapons with plus >= `branded_min_plus`
   },
 
@@ -134,7 +133,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
     xl = 14, -- Alert strong ranged weapons if XL <= `xl`
     min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
     branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
-    max_shields = 8.0, -- Alert 2h ranged, despite shield, if shield_skill <= `max_shields`
+    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= `max_shields`
   },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
@@ -216,7 +215,7 @@ function f_pickup_alert.autopickup(it, _)
   end
 
   -- Not picking up this item. Now check for alerts.
-  if not Config.Alert.enabled or f_pa_data.find(pa_items_alerted, it) then return end
+  if f_pa_data.find(pa_items_alerted, it) then return end
 
   if f_pa_misc and Config.Alert.one_time and #Config.Alert.one_time > 0 then
     if f_pa_misc.alert_OTA(it) then return end
@@ -228,9 +227,9 @@ function f_pickup_alert.autopickup(it, _)
     if f_pa_misc.alert_orb(it) then return end
   elseif f_pa_misc and Config.Alert.talismans and BRC.is.talisman(it) then
     if f_pa_misc.alert_talisman(it) then return end
-  elseif f_pa_armour and Config.Alert.armour and BRC.is.armour(it) then
+  elseif f_pa_armour and Config.Alert.armour_sensitivity > 0 and BRC.is.armour(it) then
     if f_pa_armour.alert_armour(it, unworn_aux_item) then return end
-  elseif f_pa_weapons and Config.Alert.weapons and it.is_weapon then
+  elseif f_pa_weapons and Config.Alert.weapon_sensitivity > 0 and it.is_weapon then
     if f_pa_weapons.alert_weapon(it) then return end
   end
 end
