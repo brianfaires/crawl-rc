@@ -46,7 +46,7 @@ BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll", }
 
 ---- Skills ----
 BRC.STAFF_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", death = "Necromancy",
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", necromancy = "Necromancy",
   earth = "Earth Magic", fire = "Fire Magic", conjuration = "Conjurations",
 } -- BRC.STAFF_SCHOOLS (do not remove this comment)
 

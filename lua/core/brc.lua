@@ -66,6 +66,17 @@ local function handle_core_error(hook_name, result, ...)
   end
 end
 
+local function override_config(source, dest)
+  for key, value in pairs(source) do
+    if BRC.is.map(value) then
+      if not dest[key] then dest[key] = {} end
+      override_config(value, dest[key])
+    else
+      dest[key] = value
+    end
+  end
+end
+
 -- Hook dispatching
 local function call_all_hooks(hook_name, ...)
   local last_return_value = nil
@@ -175,13 +186,9 @@ function BRC.register_feature(feature_name, feature_module)
     end
   end
 
-  -- Apply Config overrides from BRC.Config
   if BRC.Config[feature_name] then
-    local valid = feature_module.Config and BRC.is.map(feature_module.Config)
-    if not valid then feature_module.Config = {} end
-    for key, value in pairs(BRC.Config[feature_name]) do
-      feature_module.Config[key] = value
-    end
+    if not feature_module.Config then feature_module.Config = {} end
+    override_config(BRC.Config[feature_name], feature_module.Config)
   end
 
   BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))

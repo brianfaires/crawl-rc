@@ -67,7 +67,9 @@ BRC.log = {}
 function BRC.log.error(message, context)
   log_message("(Error) " .. message, context, BRC.LogColor.error)
   you.stop_activity()
+  crawl.redraw_screen()
   crawl.more()
+  crawl.redraw_screen()
 end
 
 function BRC.log.warning(message, context)
@@ -155,6 +157,7 @@ end
 function BRC.mpr.more(text, color, channel)
   BRC.mpr.color(text, color, channel)
   you.stop_activity()
+  crawl.redraw_screen()
   crawl.more()
   crawl.redraw_screen()
 end
@@ -267,7 +270,7 @@ function BRC.get.mut(mutation, include_all)
 end
 
 function BRC.get.skill(skill)
-  if not skill:contains(",") then return you.skill(skill) end
+  if skill and not skill:contains(",") then return you.skill(skill) end
 
   local skills = crawl.split(skill, ",")
   local sum = 0

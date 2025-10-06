@@ -162,6 +162,7 @@ msc ^= mute:You now have .* runes
 msc ^= mute:to see all the runes you have collected
 msc ^= mute:A chill wind blows around you
 msc ^= mute:An electric hum fills the air
+msc ^= mute:You reach to attack
 
 # Wielding weapons
 msc ^= mute:Your .* exudes an aura of protection

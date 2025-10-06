@@ -15,11 +15,11 @@ local NO_INSCRIPTION_NEEDED = {
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
 -- Local functions
-local function no_inscription_needed(class, st)
-  if util.contains(NO_INSCRIPTION_NEEDED, st) then return true end
+local function inscription_needed(class, st)
+  if util.contains(NO_INSCRIPTION_NEEDED, st) then return false end
   if class == "scroll" then
-    if st == "poison" then return you.res_poison() == 0 end
-    if st == "torment" then return not you.torment_immune() end
+    if st == "poison" then return you.res_poison() > 0 end
+    if st == "torment" then return you.torment_immune() end
   end
   return true
 end
@@ -30,16 +30,16 @@ function f_safe_consumables.ready()
   for inv in iter.invent_iterator:new(items.inventory()) do
     local inv_class = inv.class(true)
     if inv_class == "scroll" then
-      if no_inscription_needed(inv_class, inv.subtype()) then
-        if inv.inscription:contains("!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
-      else
+      if inscription_needed(inv_class, inv.subtype()) then
         if not inv.inscription:contains("!r") then inv.inscribe("!r") end
+      else
+        if inv.inscription:contains("!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
       end
     elseif inv_class == "potion" then
-      if no_inscription_needed(inv_class, inv.subtype()) then
-        if inv.inscription:contains("!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
-      else
+      if inscription_needed(inv_class, inv.subtype()) then
         if not inv.inscription:contains("!q") then inv.inscribe("!q") end
+      else
+        if inv.inscription:contains("!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
       end
     end
   end

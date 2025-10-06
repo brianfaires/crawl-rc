@@ -38,26 +38,26 @@ f_pickup_alert.Config.Alert = {
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
   OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
-} -- f_pickup_alert.Config.Alert (do not remove this comment)
 
--- Which alerts generate a force_more
-f_pickup_alert.Config.fm_alert = {
-  early_weap = false, -- Good weapons found early
-  upgrade_weap = false, -- Better DPS / weapon_score
-  weap_ego = false, -- New or diff egos
-  body_armour = false,
-  shields = true,
-  aux_armour = false,
-  armour_ego = true, -- New or diff egos
-  high_score_weap = false, -- Highest damage found
-  high_score_armour = true, -- Highest AC found
-  one_time_alerts = true,
-  artefact = false, -- Any artefact
-  trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
-  orbs = false,
-  talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
-  staff_resists = false,
-} -- f_pickup_alert.Config.fm_alert (do not remove this comment)
+  -- Which alerts generate a force_more
+  More = {
+    early_weap = false, -- Good weapons found early
+    upgrade_weap = false, -- Better DPS / weapon_score
+    weap_ego = false, -- New or diff egos
+    body_armour = false,
+    shields = true,
+    aux_armour = false,
+    armour_ego = true, -- New or diff egos
+    high_score_weap = false, -- Highest damage found
+    high_score_armour = true, -- Highest AC found
+    one_time_alerts = true,
+    artefact = false, -- Any artefact
+    trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
+    orbs = false,
+    talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
+    staff_resists = false,
+  },
+} -- f_pickup_alert.Config.Alert (do not remove this comment)
 
 ---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
 f_pickup_alert.Config.Tuning = {}
@@ -175,10 +175,10 @@ local pause_pa_system
 -- Local functions
 local function has_configured_force_more(it)
   if it.artefact then
-    if Config.fm_alert.artefact then return true end
-    if Config.fm_alert.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
+    if Config.Alert.More.artefact then return true end
+    if Config.Alert.More.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
   end
-  if Config.fm_alert.armour_ego and BRC.is.armour(it) and BRC.get.ego(it) then return true end
+  if Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it) then return true end
   return false
 end
 
