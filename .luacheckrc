@@ -86,7 +86,7 @@ globals = {
   "ss_cur_location",
   "ss_last_stair_turn",
   "ss_prev_location",
-  "ss_v5_unwarned",
+  "ss_v5_warned",
   "persistent_bool",
   "persistent_int",
   "persistent_list",
