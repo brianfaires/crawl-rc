@@ -451,9 +451,6 @@ msc ^= mute:Moving in this stuff is going to be slow
 more := force_more_message
 flash := flash_screen_message
 
-# BRC errors
-more += \[BRC\] \(Error\)
-
 # Almost worth removing
 #force_more_message -= You bow before the missionary of Beogh
 #force_more_message -= You .* the altar of
@@ -1078,10 +1075,13 @@ BRC.log = {}
 
 function BRC.log.error(message, context)
   log_message("(Error) " .. message, context, BRC.LogColor.error)
+  you.stop_activity()
+  crawl.more()
 end
 
 function BRC.log.warning(message, context)
   log_message(message, context, BRC.LogColor.warning)
+  you.stop_activity()
 end
 
 function BRC.log.info(message, context)

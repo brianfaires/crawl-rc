@@ -311,10 +311,13 @@ BRC.log = {}
 
 function BRC.log.error(message, context)
   log_message("(Error) " .. message, context, BRC.LogColor.error)
+  you.stop_activity()
+  crawl.more()
 end
 
 function BRC.log.warning(message, context)
   log_message(message, context, BRC.LogColor.warning)
+  you.stop_activity()
 end
 
 function BRC.log.info(message, context)

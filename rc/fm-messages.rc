@@ -1,9 +1,6 @@
 more := force_more_message
 flash := flash_screen_message
 
-# BRC errors
-more += \[BRC\] \(Error\)
-
 # Almost worth removing
 #force_more_message -= You bow before the missionary of Beogh
 #force_more_message -= You .* the altar of
