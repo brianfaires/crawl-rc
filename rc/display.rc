@@ -9,35 +9,61 @@ mp_colour = 100:green, 99:lightgrey, 75:yellow, 50:lightred, 25:red
 menu := menu_colour
 menu =
 
-## Item colours
+#### Item colours
+$i_equipped := lightgreen
 $i_boring := darkgrey
-$i_normal := lightgrey
+$i_plain := lightgrey
+$i_ego := white
+$i_wand := lightblue
+$i_evoker := yellow
+$i_misc := brown
+$i_shade_artefact := cyan
+$i_shade_jewellery := magenta
+$i_shade_consumables := green
+
+## Consumables
 $i_warning := lightred
 $i_useful := lightblue
 $i_heal := green
 $i_emergency := lightcyan
-$i_rare := yellow
+$i_rare := lightcyan
 
-
-## Highest priority
+#### Assign item menu_colours
+## Highest priority; always correct
 menu += $i_boring:(melded|useless_item)
-menu += red:forbidden
+menu += $i_warning:forbidden
+menu += inventory:$i_equipped:.*equipped
 
 ## Menu-specific overrides
+# Begin workaround for https://github.com/crawl/crawl/issues/4825 (to override inventory color only)
+menu += pickup:light$i_shade_artefact:artefact
+menu += stash:light$i_shade_artefact:artefact
+
+menu += pickup:$i_evoker:inert
+menu += stash:$i_evoker:inert
 menu += inventory:$i_boring:inert
-menu += pickup:lightgreen:potions? of
-menu += pickup:green:scrolls? of
-menu += pickup:cyan:artefact.*weapon
-menu += pickup:white:(ego|(unidentified.*(glowing|runed|shiny|embroidered)|troll leather|dragon scales))
-menu += pickup:magenta:wand of
-menu += pickup:$i_normal:(weapon|armour)
+
+menu += pickup:light$i_shade_jewellery:amulet
+menu += stash:light$i_shade_jewellery:amulet
+menu += inventory:$i_shade_jewellery:amulet
+# End workaround
+
+menu += inventory:$i_boring:inert
+menu += inventory:$i_shade_jewellery:amulet
+menu += pickup:light$i_shade_consumables:potion
+menu += pickup:$i_shade_consumables:scroll
+menu += pickup:$i_shade_artefact:artefact.*weapon
+menu += pickup:$i_ego:(ego|(unidentified.*(glowing|runed|shiny|embroidered)|troll leather|dragon scales))
+menu += pickup:$i_wand:wand of
+menu += resists:$i_shade_artefact:artefact
+menu += resists:$i_ego:ego
+menu += resists:$i_plain:(armour|weapon|jewellery)
 
 ## Main item colours
-menu += lightgreen:.*equipped.*(weapon|armour|jewellery)
-menu += lightcyan:artefact
-menu += lightblue:amulet
-menu += blue:jewellery
-menu += white:ego
+menu += $i_equipped:.*equipped.*(weapon|armour|jewellery)
+menu += light$i_shade_artefact:artefact
+menu += light$i_shade_jewellery:jewellery
+menu += $i_ego:ego
 
 # Decks
 menu += $i_emergency:deck of escape
@@ -45,9 +71,9 @@ menu += $i_useful:deck of summoning
 menu += $i_warning:deck of destruction
 
 # Misc
-menu += brown:(manual of|spellbook|staff of|talisman|bauble)
-menu += $i_rare:(curare|disjunction|throwing net)
-menu += lightmagenta:evoker
+menu += $i_misc:(manual of|spellbook|staff of|talisman|bauble)
+menu += $i_evoker:(curare|disjunction|throwing net)
+menu += $i_evoker:evoker
 
 # Potions
 menu += $i_emergency:potions? of (cancellation|haste|resistance)
@@ -57,7 +83,7 @@ menu += $i_useful:potions? of (brilliance|enlightenment|invisibility|might)
 menu += $i_warning:potions? of (attraction|berserk|lignification|mutation)
 
 # Scrolls
-menu += $i_normal:scrolls? of (amnesia|enchant|identify)
+menu += $i_plain:scrolls? of (amnesia|enchant|identify)
 menu += $i_emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
 menu += $i_rare:scrolls? of (acquirement|brand)
 menu += $i_useful:scrolls? of (revelation)
@@ -65,7 +91,7 @@ menu += $i_warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerab
 
 # Wands
 menu += $i_emergency:wand of digging
-menu += $i_normal:wand of (flame|paralysis|charming|mindburst|polymorph)
+menu += $i_plain:wand of (flame|paralysis|charming|mindburst|polymorph)
 menu += $i_useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
 
 
