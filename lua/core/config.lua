@@ -39,24 +39,21 @@ BRC.Config["startup"].auto_set_skill_targets = {
   { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
 } -- BRC.Config["startup"].auto_set_skill_targets (Do not remove this comment)
 
---[[
-  Pickup/Alert system
-  This does not affect other autopickup settings; just the BRC Pickup/Alert system
---]]
-BRC.Config["pickup"] = {}
-BRC.Config["pickup"].armour = true
-BRC.Config["pickup"].staves = true
-BRC.Config["pickup"].weapons = true
-BRC.Config["pickup"].weapons_pure_upgrades_only = true -- Only pick up better versions of same exact weapon
 
-BRC.Config["alert"] = {}
-BRC.Config["alert"].armour_sensitivity = 1.0 -- Adjust all armour alerts; 0 = no alerts (typical range 0.5-2.0)
-BRC.Config["alert"].weapon_sensitivity = 1.0 -- Adjust all weapon alerts; 0 = no alerts (typical range 0.5-2.0)
-BRC.Config["alert"].orbs = true
-BRC.Config["alert"].staff_resists = true
-BRC.Config["alert"].talismans = true
-BRC.Config["alert"].OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 } -- Required skill to do one-time alert
-BRC.Config["alert"].one_time = { -- Each usable item is alerted once.
+BRC.Config["Pickup"] = {}
+BRC.Config["Pickup"].armour = true
+BRC.Config["Pickup"].staves = true
+BRC.Config["Pickup"].weapons = true
+BRC.Config["Pickup"].weapons_pure_upgrades_only = true -- Only pick up better versions of same exact weapon
+
+BRC.Config["Alert"] = {}
+BRC.Config["Alert"].armour_sensitivity = 1.0 -- Adjust all armour alerts; 0 = no alerts (typical range 0.5-2.0)
+BRC.Config["Alert"].weapon_sensitivity = 1.0 -- Adjust all weapon alerts; 0 = no alerts (typical range 0.5-2.0)
+BRC.Config["Alert"].orbs = true
+BRC.Config["Alert"].staff_resists = true
+BRC.Config["Alert"].talismans = true
+BRC.Config["Alert"].OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 } -- Required skill to do one-time alert
+BRC.Config["Alert"].one_time = { -- Each usable item is alerted once.
   "wand of digging", "buckler", "kite shield", "tower shield",
   "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
   "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",

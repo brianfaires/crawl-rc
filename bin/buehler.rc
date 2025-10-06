@@ -44,24 +44,21 @@ BRC.Config["startup"].auto_set_skill_targets = {
   { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
 } -- BRC.Config["startup"].auto_set_skill_targets (Do not remove this comment)
 
---[[
-  Pickup/Alert system
-  This does not affect other autopickup settings; just the BRC Pickup/Alert system
---]]
-BRC.Config["pickup"] = {}
-BRC.Config["pickup"].armour = true
-BRC.Config["pickup"].staves = true
-BRC.Config["pickup"].weapons = true
-BRC.Config["pickup"].weapons_pure_upgrades_only = true -- Only pick up better versions of same exact weapon
 
-BRC.Config["alert"] = {}
-BRC.Config["alert"].armour_sensitivity = 1.0 -- Adjust all armour alerts; 0 = no alerts (typical range 0.5-2.0)
-BRC.Config["alert"].weapon_sensitivity = 1.0 -- Adjust all weapon alerts; 0 = no alerts (typical range 0.5-2.0)
-BRC.Config["alert"].orbs = true
-BRC.Config["alert"].staff_resists = true
-BRC.Config["alert"].talismans = true
-BRC.Config["alert"].OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 } -- Required skill to do one-time alert
-BRC.Config["alert"].one_time = { -- Each usable item is alerted once.
+BRC.Config["Pickup"] = {}
+BRC.Config["Pickup"].armour = true
+BRC.Config["Pickup"].staves = true
+BRC.Config["Pickup"].weapons = true
+BRC.Config["Pickup"].weapons_pure_upgrades_only = true -- Only pick up better versions of same exact weapon
+
+BRC.Config["Alert"] = {}
+BRC.Config["Alert"].armour_sensitivity = 1.0 -- Adjust all armour alerts; 0 = no alerts (typical range 0.5-2.0)
+BRC.Config["Alert"].weapon_sensitivity = 1.0 -- Adjust all weapon alerts; 0 = no alerts (typical range 0.5-2.0)
+BRC.Config["Alert"].orbs = true
+BRC.Config["Alert"].staff_resists = true
+BRC.Config["Alert"].talismans = true
+BRC.Config["Alert"].OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 } -- Required skill to do one-time alert
+BRC.Config["Alert"].one_time = { -- Each usable item is alerted once.
   "wand of digging", "buckler", "kite shield", "tower shield",
   "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
   "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
@@ -5547,9 +5544,8 @@ local function get_score(it, no_brand_bonus)
     -- Handle cached /  high-score tuples in _weapon_cache
     return it.dps + it.acc * Tuning.Weap.Pickup.accuracy_weight
   end
-  local it_plus = it.plus or 0
   local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
-  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + it_plus) * Tuning.Weap.Pickup.accuracy_weight
+  return BRC.get.weap_dps(it, dmg_type) + (it.accuracy + (it.plus or 0)) * Tuning.Weap.Pickup.accuracy_weight
 end
 
 -- _weapon_cache: Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
@@ -5722,7 +5718,7 @@ local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
   if it.is_ranged and you.xl() <= Tuning.Weap.Alert.EarlyRanged.xl then
     local min_plus = Tuning.Weap.Alert.EarlyRanged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"]
-    if it.plus >= min_plus / Config.Alert.weapon_sensitivity then
+    if (it.plus or 0) >= min_plus / Config.Alert.weapon_sensitivity then
       local low_shield_training = you.skill("Shields") <= Tuning.Weap.Alert.EarlyRanged.max_shields
       if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
         return make_alert(it, "Ranged weapon", Emoji.RANGED, Config.fm_alert.early_weap)
