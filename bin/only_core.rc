@@ -4,32 +4,42 @@
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
-BRC Configuration - Core BRC config, and optional overrides for feature config values.
+BRC Configuration - Various configs, overriding default values in feature configs.
 Author: buehler
 Dependencies: (none)
-Notes: Never put a closing brace `}` on a line by itself. (This will break crawl's RC parser.)
+Usage:
+  - Update BRC.config_to_use to load the corresponding config.
+  - Update each config or create new ones.
+  - Values that aren't defined will first fall back to Configs.Default, then to the defaults defined in feature configs.
+  - Define `init = function() ... end` in a config to run code after it loads.
 --]]
 
-
-
--- Initialize BRC namespace and Config module
+-- Initialize BRC namespace and Public modules
 BRC = BRC or {}
-BRC.Configs = { -- Declare different config setups
-  Defaults = {},
-  Custom = {},
-  Streak = {},
-  Speed = {},
-  Turncount = {},
-} -- BRC.Configs
+BRC.Configs = {}
+BRC.config_to_use = "Testing"
 
--- Assign Config to use
-BRC.Config = BRC.Configs.Custom
-
-BRC.Configs.Custom = {
+-- Default: Values to always apply, unless
+BRC.Configs.Default = {
   emojis = false, -- Use emojis in alerts and announcements
-  show_debug_messages = true,
-  offer_debug_notes_on_char_dump = true, -- Won't add to char dump unless told to
+  show_debug_messages = false,
+  offer_debug_notes_on_char_dump = true,
+} -- BRC.Configs.Default (do not remove this comment)
+BRC.Config = BRC.Configs.Default
 
+-- Testing: Cherry-pick settings to test specific features
+BRC.Configs.Testing = {
+  show_debug_messages = true,
+  ["pickup-alert"] = {
+    Alert = {
+      armour_sensitivity = 0.1,
+      weapon_sensitivity = 0.1,
+    },
+  },
+} -- BRC.Configs.Testing (do not remove this comment)
+
+-- Custom: Personalized config
+BRC.Configs.Custom = {
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
   },
@@ -127,7 +137,7 @@ BRC.Configs.Custom = {
       vamp = { factor = 1.2, offset = 0 },
     },
   },
-} -- BRC.Configs.Custom
+} -- BRC.Configs.Custom (do not remove this comment)
 
 BRC.Configs.Speed = {
   ["misc-alerts"] = {
@@ -180,15 +190,19 @@ BRC.Configs.Speed = {
       { (you.skill("Axes") > you.skill("Maces & Flails")) and "Axes" or "Maces & Flails", 6.0 },
     },
   },
-} -- BRC.Configs.Speed
+
+  init = function(self)
+    self.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
+  end
+} -- BRC.Configs.Speed (do not remove this comment)
 
 BRC.Configs.Turncount = {
 
-} -- BRC.Configs.Turncount
+} -- BRC.Configs.Turncount (do not remove this comment)
 
 BRC.Configs.Streak = {
 
-} -- BRC.Configs.Streak
+} -- BRC.Configs.Streak (do not remove this comment)
 
 }
 ############################### End lua/core/config.lua ###############################
@@ -281,12 +295,12 @@ BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
 
 ---- Other ----
--- BRC.Color:Would prefer to use integer values, but they don't work in all menus
-BRC.Color = {
+-- BRC.COLOR:Would prefer to use integer values, but they don't work in all menus
+BRC.COLOR = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.Color (do not remove this comment)
+} -- BRC.COLOR (do not remove this comment)
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
@@ -407,7 +421,7 @@ function BRC.text.clean(text, escape_chars)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.Color) do
+for k, v in pairs(BRC.COLOR) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -436,7 +450,7 @@ end
 BRC.mpr = {}
 
 -- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.Color) do
+for k, v in pairs(BRC.COLOR) do
   BRC.mpr[k] = function(text, channel)
     crawl.mpr(BRC.text.color(v, text), channel)
     crawl.flush_prev_message()
@@ -576,6 +590,18 @@ end
 
 function BRC.get.mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
+end
+
+function BRC.get.preferred_weapon_type()
+  local max_weap_skill = 0
+  local pref = nil
+  for _, v in ipairs(BRC.WEAP_SCHOOLS) do
+    if BRC.get.skill(v) > max_weap_skill then
+      max_weap_skill = BRC.get.skill(v)
+      pref = v
+    end
+  end
+  return pref
 end
 
 function BRC.get.skill(skill)
@@ -845,7 +871,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.Color.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLOR.lightcyan))
 end
 
 ----------------------------------------------
@@ -1584,9 +1610,14 @@ local function is_feature_module(maybe_feature_module)
     and #maybe_feature_module.BRC_FEATURE_NAME > 0
 end
 
+local function feature_is_disabled(feature_module)
+  return feature_module and feature_module.Config and feature_module.Config.disabled
+    or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
+end
+
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.Color.yellow) then
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLOR.yellow) then
     BRC.unregister_feature(feature_name)
   else
     BRC.mpr.okay()
@@ -1606,7 +1637,7 @@ local function handle_core_error(hook_name, result, ...)
   local param_str = table.concat(params, ", ")
 
   BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.Color.yellow) then
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLOR.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
@@ -1614,26 +1645,21 @@ local function handle_core_error(hook_name, result, ...)
   end
 end
 
-local function override_config_table(source, dest)
+local function override_feature_config_table(source, dest)
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
-      override_config_table(value, dest[key])
+      override_feature_config_table(value, dest[key])
     else
       dest[key] = value
     end
   end
 end
 
-local function override_config(feature_name)
+local function override_feature_config(feature_name)
   if not BRC.Config[feature_name] then return end
   if not _features[feature_name].Config then _features[feature_name].Config = {} end
-  override_config_table(BRC.Config[feature_name], _features[feature_name].Config)
-end
-
-local function feature_is_disabled(feature_module)
-  return feature_module and feature_module.Config and feature_module.Config.disabled
-    or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
+  override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
 end
 
 -- Hook dispatching
@@ -1681,7 +1707,7 @@ local function safe_call_all_hooks(hook_name, ...)
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
   BRC.log.error("Failed to report BRC core error!", result)
-  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.Color.yellow) then
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLOR.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)
@@ -1708,6 +1734,7 @@ local function register_all_features(parent_module)
       local success = BRC.register_feature(feature_name, value)
 
       if success then
+        BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
         loaded_count = loaded_count + 1
       elseif success == false then
         BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
@@ -1747,9 +1774,7 @@ function BRC.register_feature(feature_name, feature_module)
     end
   end
 
-  override_config(feature_name)
-
-  BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
+  override_feature_config(feature_name)
   return true
 end
 
@@ -1773,9 +1798,21 @@ function BRC.unregister_feature(feature_name)
   return true
 end
 
+function BRC.get_registered_features()
+  return _features
+end
+
 function BRC.init(parent_module)
   _features = {}
   _hooks = {}
+
+  -- Load and log config
+  if BRC.load_config(BRC.config_to_use) then
+    BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(BRC.config_to_use or "Default")))
+  elseif type(BRC.config_to_use ~= nil) then
+    BRC.log.error(string.format("Failed to load config: %s", BRC.text.red(BRC.config_to_use)))
+    return false
+  end
 
   -- Register all features
   local loaded_count = register_all_features(parent_module)
@@ -1808,7 +1845,7 @@ function BRC.init(parent_module)
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
   elseif reinit_success == false then
     if not BRC.Data.try_backup_restore() then
-      if BRC.mpr.yesno("Deactivate BRC?", BRC.Color.yellow) then
+      if BRC.mpr.yesno("Deactivate BRC?", BRC.COLOR.yellow) then
         BRC.active = false
         BRC.mpr.lightred("\nBRC is off.\n")
         return false
@@ -1830,8 +1867,25 @@ function BRC.init(parent_module)
   return true
 end
 
-function BRC.get_registered_features()
-  return _features
+function BRC.load_config(config_name)
+  if type(config_name) ~= "string" or type(BRC.Configs[config_name]) ~= "table" then
+    BRC.log.error(string.format("Config '%s' not found", config_name))
+    return false
+  end
+
+  BRC.config_to_use = config_name
+  BRC.Config = BRC.Configs.Default
+  for k, v in pairs(BRC.Configs[config_name]) do
+    BRC.Config[k] = v
+  end
+
+  if type(BRC.Config.init) == "function" then BRC.Config.init() end
+
+  for name, _ in pairs(_features) do
+    override_feature_config(name)
+  end
+
+  return true
 end
 
 -- Hook methods

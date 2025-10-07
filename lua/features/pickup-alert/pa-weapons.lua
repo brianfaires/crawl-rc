@@ -366,14 +366,7 @@ function f_pa_weapons.init()
   end
 
   -- Set top weapon skill
-  top_attack_skill = "Unarmed Combat"
-  local max_weap_skill = BRC.get.skill(top_attack_skill)
-  for _, v in ipairs(BRC.WEAP_SCHOOLS) do
-    if BRC.get.skill(v) > max_weap_skill then
-      max_weap_skill = BRC.get.skill(v)
-      top_attack_skill = v
-    end
-  end
+  top_attack_skill = BRC.get.preferred_weapon_type() or "Unarmed Combat"
 end
 
 function f_pa_weapons.ready()

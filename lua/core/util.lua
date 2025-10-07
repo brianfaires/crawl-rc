@@ -93,7 +93,7 @@ function BRC.text.clean(text, escape_chars)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.Color) do
+for k, v in pairs(BRC.COLOR) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -122,7 +122,7 @@ end
 BRC.mpr = {}
 
 -- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.Color) do
+for k, v in pairs(BRC.COLOR) do
   BRC.mpr[k] = function(text, channel)
     crawl.mpr(BRC.text.color(v, text), channel)
     crawl.flush_prev_message()
@@ -262,6 +262,18 @@ end
 
 function BRC.get.mut(mutation, include_all)
   return you.get_base_mutation_level(mutation, true, include_all, include_all)
+end
+
+function BRC.get.preferred_weapon_type()
+  local max_weap_skill = 0
+  local pref = nil
+  for _, v in ipairs(BRC.WEAP_SCHOOLS) do
+    if BRC.get.skill(v) > max_weap_skill then
+      max_weap_skill = BRC.get.skill(v)
+      pref = v
+    end
+  end
+  return pref
 end
 
 function BRC.get.skill(skill)
@@ -531,7 +543,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.Color.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLOR.lightcyan))
 end
 
 ----------------------------------------------

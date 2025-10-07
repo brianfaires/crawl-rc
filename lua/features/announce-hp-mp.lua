@@ -83,15 +83,15 @@ end
 local function format_ratio(cur, max)
   local color
   if cur <= (max * 0.25) then
-    color = BRC.Color.lightred
+    color = BRC.COLOR.lightred
   elseif cur <= (max * 0.50) then
-    color = BRC.Color.red
+    color = BRC.COLOR.red
   elseif cur <= (max * 0.75) then
-    color = BRC.Color.yellow
+    color = BRC.COLOR.yellow
   elseif cur < max then
-    color = BRC.Color.white
+    color = BRC.COLOR.white
   else
-    color = BRC.Color.green
+    color = BRC.COLOR.green
   end
 
   return BRC.text.color(color, string.format(" -> %s/%s", cur, max))

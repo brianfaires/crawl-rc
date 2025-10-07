@@ -1,30 +1,40 @@
 --[[
-BRC Configuration - Core BRC config, and optional overrides for feature config values.
+BRC Configuration - Various configs, overriding default values in feature configs.
 Author: buehler
 Dependencies: (none)
-Notes: Never put a closing brace `}` on a line by itself. (This will break crawl's RC parser.)
+Usage:
+  - Update BRC.config_to_use to load the corresponding config.
+  - Update each config or create new ones.
+  - Values that aren't defined will first fall back to Configs.Default, then to the defaults defined in feature configs.
+  - Define `init = function() ... end` in a config to run code after it loads.
 --]]
 
-
-
--- Initialize BRC namespace and Config module
+-- Initialize BRC namespace and Public modules
 BRC = BRC or {}
-BRC.Configs = { -- Declare different config setups
-  Defaults = {},
-  Custom = {},
-  Streak = {},
-  Speed = {},
-  Turncount = {},
-} -- BRC.Configs
+BRC.Configs = {}
+BRC.config_to_use = "Testing"
 
--- Assign Config to use
-BRC.Config = BRC.Configs.Custom
-
-BRC.Configs.Custom = {
+-- Default: Values to always apply, unless
+BRC.Configs.Default = {
   emojis = false, -- Use emojis in alerts and announcements
-  show_debug_messages = true,
-  offer_debug_notes_on_char_dump = true, -- Won't add to char dump unless told to
+  show_debug_messages = false,
+  offer_debug_notes_on_char_dump = true,
+} -- BRC.Configs.Default (do not remove this comment)
+BRC.Config = BRC.Configs.Default
 
+-- Testing: Cherry-pick settings to test specific features
+BRC.Configs.Testing = {
+  show_debug_messages = true,
+  ["pickup-alert"] = {
+    Alert = {
+      armour_sensitivity = 0.1,
+      weapon_sensitivity = 0.1,
+    },
+  },
+} -- BRC.Configs.Testing (do not remove this comment)
+
+-- Custom: Personalized config
+BRC.Configs.Custom = {
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
   },
@@ -122,7 +132,7 @@ BRC.Configs.Custom = {
       vamp = { factor = 1.2, offset = 0 },
     },
   },
-} -- BRC.Configs.Custom
+} -- BRC.Configs.Custom (do not remove this comment)
 
 BRC.Configs.Speed = {
   ["misc-alerts"] = {
@@ -175,12 +185,16 @@ BRC.Configs.Speed = {
       { (you.skill("Axes") > you.skill("Maces & Flails")) and "Axes" or "Maces & Flails", 6.0 },
     },
   },
-} -- BRC.Configs.Speed
+
+  init = function(self)
+    self.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
+  end
+} -- BRC.Configs.Speed (do not remove this comment)
 
 BRC.Configs.Turncount = {
 
-} -- BRC.Configs.Turncount
+} -- BRC.Configs.Turncount (do not remove this comment)
 
 BRC.Configs.Streak = {
 
-} -- BRC.Configs.Streak
+} -- BRC.Configs.Streak (do not remove this comment)

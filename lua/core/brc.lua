@@ -37,9 +37,14 @@ local function is_feature_module(maybe_feature_module)
     and #maybe_feature_module.BRC_FEATURE_NAME > 0
 end
 
+local function feature_is_disabled(feature_module)
+  return feature_module and feature_module.Config and feature_module.Config.disabled
+    or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
+end
+
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.Color.yellow) then
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLOR.yellow) then
     BRC.unregister_feature(feature_name)
   else
     BRC.mpr.okay()
@@ -59,7 +64,7 @@ local function handle_core_error(hook_name, result, ...)
   local param_str = table.concat(params, ", ")
 
   BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.Color.yellow) then
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLOR.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
@@ -67,26 +72,21 @@ local function handle_core_error(hook_name, result, ...)
   end
 end
 
-local function override_config_table(source, dest)
+local function override_feature_config_table(source, dest)
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
-      override_config_table(value, dest[key])
+      override_feature_config_table(value, dest[key])
     else
       dest[key] = value
     end
   end
 end
 
-local function override_config(feature_name)
+local function override_feature_config(feature_name)
   if not BRC.Config[feature_name] then return end
   if not _features[feature_name].Config then _features[feature_name].Config = {} end
-  override_config_table(BRC.Config[feature_name], _features[feature_name].Config)
-end
-
-local function feature_is_disabled(feature_module)
-  return feature_module and feature_module.Config and feature_module.Config.disabled
-    or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
+  override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
 end
 
 -- Hook dispatching
@@ -134,7 +134,7 @@ local function safe_call_all_hooks(hook_name, ...)
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
   BRC.log.error("Failed to report BRC core error!", result)
-  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.Color.yellow) then
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLOR.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)
@@ -161,6 +161,7 @@ local function register_all_features(parent_module)
       local success = BRC.register_feature(feature_name, value)
 
       if success then
+        BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
         loaded_count = loaded_count + 1
       elseif success == false then
         BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
@@ -200,9 +201,7 @@ function BRC.register_feature(feature_name, feature_module)
     end
   end
 
-  override_config(feature_name)
-
-  BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
+  override_feature_config(feature_name)
   return true
 end
 
@@ -226,9 +225,21 @@ function BRC.unregister_feature(feature_name)
   return true
 end
 
+function BRC.get_registered_features()
+  return _features
+end
+
 function BRC.init(parent_module)
   _features = {}
   _hooks = {}
+
+  -- Load and log config
+  if BRC.load_config(BRC.config_to_use) then
+    BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(BRC.config_to_use or "Default")))
+  elseif type(BRC.config_to_use ~= nil) then
+    BRC.log.error(string.format("Failed to load config: %s", BRC.text.red(BRC.config_to_use)))
+    return false
+  end
 
   -- Register all features
   local loaded_count = register_all_features(parent_module)
@@ -261,7 +272,7 @@ function BRC.init(parent_module)
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
   elseif reinit_success == false then
     if not BRC.Data.try_backup_restore() then
-      if BRC.mpr.yesno("Deactivate BRC?", BRC.Color.yellow) then
+      if BRC.mpr.yesno("Deactivate BRC?", BRC.COLOR.yellow) then
         BRC.active = false
         BRC.mpr.lightred("\nBRC is off.\n")
         return false
@@ -283,8 +294,25 @@ function BRC.init(parent_module)
   return true
 end
 
-function BRC.get_registered_features()
-  return _features
+function BRC.load_config(config_name)
+  if type(config_name) ~= "string" or type(BRC.Configs[config_name]) ~= "table" then
+    BRC.log.error(string.format("Config '%s' not found", config_name))
+    return false
+  end
+
+  BRC.config_to_use = config_name
+  BRC.Config = BRC.Configs.Default
+  for k, v in pairs(BRC.Configs[config_name]) do
+    BRC.Config[k] = v
+  end
+
+  if type(BRC.Config.init) == "function" then BRC.Config.init() end
+
+  for name, _ in pairs(_features) do
+    override_feature_config(name)
+  end
+
+  return true
 end
 
 -- Hook methods
