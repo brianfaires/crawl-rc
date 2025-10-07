@@ -28,6 +28,9 @@ See `features/_template.lua` for an example.
   - `c_message(text, channel)`
 
 - `<var_name> = BRC.Data.persist("<var_name>", <initial_value>)` creates vars/tables that persist across game saves.
+- To disable a feature:
+  - Remove the module, or don't define `BRC_FEATURE_NAME` in it
+  - For more flexibility, set either `<feature>.Config.disable` or `BRC.Config.<feature>.disable` to `true`.
 
 ### Modify Features
 - **Add new**: Define a feature module anywhere in your RC file.
@@ -98,8 +101,7 @@ The pickup-alert system provides smart autopickup that grabs items you definitel
 ### `lua/core/config.lua`
 Main configuration file with all user settings:
 - **BRC.Config** - Feature toggles and basic settings
-- **BRC.BrandBonus** - Weapon brand damage calculations
-- **BRC.Emoji** - Emojis or text substitutes for alerts
+- **BRC.Config.BrandBonus** - Weapon brand damage calculations
 
 ### `lua/core/brc.lua`
 Core system coordinator that:

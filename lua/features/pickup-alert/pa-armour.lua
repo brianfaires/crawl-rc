@@ -279,7 +279,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, Config.Alert.More.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", BRC.EMOJI.EXCLAMATION, Config.Alert.More.aux_armour)
     end
   end
 

@@ -67,15 +67,26 @@ local function handle_core_error(hook_name, result, ...)
   end
 end
 
-local function override_config(source, dest)
+local function override_config_table(source, dest)
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
-      override_config(value, dest[key])
+      override_config_table(value, dest[key])
     else
       dest[key] = value
     end
   end
+end
+
+local function override_config(feature_name)
+  if not BRC.Config[feature_name] then return end
+  if not _features[feature_name].Config then _features[feature_name].Config = {} end
+  override_config_table(BRC.Config[feature_name], _features[feature_name].Config)
+end
+
+local function feature_is_disabled(feature_module)
+  return feature_module and feature_module.Config and feature_module.Config.disabled
+    or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
 end
 
 -- Hook dispatching
@@ -85,25 +96,24 @@ local function call_all_hooks(hook_name, ...)
 
   for i = #_hooks[hook_name], 1, -1 do
     local hook_info = _hooks[hook_name][i]
-    local success, result = pcall(hook_info.func, ...)
-    if not success then
-      handle_feature_error(hook_info.feature_name, hook_name, result)
-    else
-      if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(
-          string.format(
-            "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
-            hook_name,
-            returning_feature,
-            BRC.util.tostring(last_return_value),
-            hook_info.feature_name,
-            BRC.util.tostring(result)
-          )
-        )
-      end
+    if not feature_is_disabled(_features[hook_info.feature_name]) then
+      local success, result = pcall(hook_info.func, ...)
+      if not success then
+        handle_feature_error(hook_info.feature_name, hook_name, result)
+      else
+        if last_return_value and result and last_return_value ~= result then
+          BRC.log.warning(string.format("Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+              hook_name,
+              returning_feature,
+              BRC.util.tostring(last_return_value),
+              hook_info.feature_name,
+              BRC.util.tostring(result)
+          ))
+        end
 
-      last_return_value = result
-      returning_feature = hook_info.feature_name
+        last_return_value = result
+        returning_feature = hook_info.feature_name
+      end
     end
   end
 
@@ -152,7 +162,7 @@ local function register_all_features(parent_module)
 
       if success then
         loaded_count = loaded_count + 1
-      else
+      elseif success == false then
         BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
         return loaded_count
       end
@@ -163,14 +173,17 @@ local function register_all_features(parent_module)
 end
 
 -- Public API
+-- BRC.register_feature(): Return true if success, false if error, nil if feature is disabled
 function BRC.register_feature(feature_name, feature_module)
   if not feature_name or not feature_module then
     BRC.log.error("Invalid feature registration: missing name or module")
     return false
-  end
-  if _features[feature_name] then
+  elseif _features[feature_name] then
     BRC.log.error(BRC.text.yellow(feature_name) .. " is already registered")
     return false
+  elseif feature_is_disabled(feature_name) then
+    BRC.log.debug(string.format("Feature '%s' is disabled", BRC.text.lightcyan(feature_name)))
+    return nil
   end
 
   _features[feature_name] = feature_module
@@ -187,10 +200,7 @@ function BRC.register_feature(feature_name, feature_module)
     end
   end
 
-  if BRC.Config[feature_name] then
-    if not feature_module.Config then feature_module.Config = {} end
-    override_config(BRC.Config[feature_name], feature_module.Config)
-  end
+  override_config(feature_name)
 
   BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
   return true
@@ -247,7 +257,7 @@ function BRC.init(parent_module)
     BRC.Data.backup() -- Only backup on clean success
     local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION)
     msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
-    if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
+    if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
   elseif reinit_success == false then
     if not BRC.Data.try_backup_restore() then

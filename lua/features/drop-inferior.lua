@@ -20,7 +20,7 @@ local function inscribe_drop(it)
   it.inscribe(new_inscr, false)
   if f_drop_inferior.Config.msg_on_inscribe then
     local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
-    local msg = string.format("%s You can drop: %s %s", BRC.Emoji.CAUTION, item_name, BRC.Emoji.CAUTION)
+    local msg = string.format("%s You can drop: %s %s", BRC.EMOJI.CAUTION, item_name, BRC.EMOJI.CAUTION)
     BRC.mpr.cyan(msg)
   end
 end

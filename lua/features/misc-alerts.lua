@@ -36,7 +36,7 @@ local function alert_low_hp()
   elseif hp <= Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local low_hp_msg = string.format(" Dropped below %s%% HP ", 100 * Config.alert_low_hp_threshold)
-    BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.Emoji.EXCLAMATION)
+    BRC.mpr.que_optmore(true, BRC.EMOJI.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.EMOJI.EXCLAMATION)
   end
 end
 

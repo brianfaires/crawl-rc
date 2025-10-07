@@ -10,135 +10,185 @@ Dependencies: (none)
 Notes: Never put a closing brace `}` on a line by itself. (This will break crawl's RC parser.)
 --]]
 
+
+
 -- Initialize BRC namespace and Config module
 BRC = BRC or {}
-BRC.Config = {}
+BRC.Configs = { -- Declare different config setups
+  Defaults = {},
+  Custom = {},
+  Streak = {},
+  Speed = {},
+  Turncount = {},
+} -- BRC.Configs
 
--- Core config values
-BRC.Config.emojis = false -- Use emojis in alerts and announcements
-BRC.Config.show_debug_messages = true
-BRC.Config.offer_debug_notes_on_char_dump = true -- Won't add to char dump unless told to
+-- Assign Config to use
+BRC.Config = BRC.Configs.Custom
 
--- Feature config overrides: Define like `BRC.Config[feature_name] = {...}`
-BRC.Config["misc-alerts"] = {
-  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
-} -- BRC.Config["misc-alerts"] (do not remove this comment)
+BRC.Configs.Custom = {
+  emojis = false, -- Use emojis in alerts and announcements
+  show_debug_messages = true,
+  offer_debug_notes_on_char_dump = true, -- Won't add to char dump unless told to
 
-BRC.Config["announce-hp-mp"] = {
-  dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
-  dmg_fm_threshold = 0.30,    -- Force more for losing this % of max HP
-  always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
-} -- BRC.Config["announce-hp-mp"] (do not remove this comment)
-
-BRC.Config["inscribe-stats"] = {
-  inscribe_weapons = true, -- Inscribe weapon stats on pickup and adjust each turn
-  inscribe_armour = true,  -- Inscribe armour stats on pickup and adjust each turn
-} -- BRC.Config["inscribe-stats"] (do not remove this comment)
-
-BRC.Config["remind-id"] = {
-  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
-  stop_on_pots_count = 3,    -- Stop when largest un-ID'd potion stack increases and is >= this
-} -- BRC.Config["remind-id"] (do not remove this comment)
-
-BRC.Config["runrest-features"] = {
-  ignore_portal_exits = true, -- don't stop explore on portal exits
-  temple_search = true,       -- on enter or explore, auto-search altars
-  gauntlet_search = true,     -- on enter or explore, auto-search gauntlet with filters
-} -- BRC.Config["runrest-features"] (do not remove this comment)
-
-BRC.Config["startup"] = {
-  show_skills_on_startup = false, -- Open skills menu on startup
-  auto_set_skill_targets = {
-    { "Stealth", 2.0 },  -- First, focus stealth to 2.0
-    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+  ["misc-alerts"] = {
+    alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
   },
-} -- BRC.Config["startup"] (do not remove this comment)
-
-
-BRC.Config["pickup-alert"] = {
-  Pickup = {
-    armour = true,
-    staves = true,
-    weapons = true,
-    weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
+  ["announce-hp-mp"] = {
+    dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+    dmg_fm_threshold = 0.30,    -- Force more for losing this % of max HP
+    always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
   },
-
-  Alert = {
-    armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 = disable all armour alerts
-    weapon_sensitivity = 0.1, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
-    orbs = true,
-    staff_resists = true, -- When a staff gives a missing resistance
-    talismans = true,
-
-    one_time = { -- Alert the first time each itemis found
-      "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
-      "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
-      "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
-      "broad axe", "executioner's axe",
-      "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
-      "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+  ["inscribe-stats"] = {
+    inscribe_weapons = true, -- Inscribe weapon stats on pickup and adjust each turn
+    inscribe_armour = true,  -- Inscribe armour stats on pickup and adjust each turn
+  },
+  ["remind-id"] = {
+    stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
+    stop_on_pots_count = 3,    -- Stop when largest un-ID'd potion stack increases and is >= this
+  },
+  ["runrest-features"] = {
+    ignore_portal_exits = true, -- don't stop explore on portal exits
+    temple_search = true,       -- on enter or explore, auto-search altars
+    gauntlet_search = true,     -- on enter or explore, auto-search gauntlet with filters
+  },
+  ["startup"] = {
+    show_skills_on_startup = false, -- Open skills menu on startup
+    auto_set_skill_targets = {
+      { "Stealth", 2.0 },  -- First, focus stealth to 2.0
+      { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
     },
-    OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- One-time alert only when skill level >= this
+  },
+  ["pickup-alert"] = {
+    Pickup = {
+      armour = true,
+      staves = true,
+      weapons = true,
+      weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
+    },
 
-    More = { -- Which alerts generate a force_more_message (some categories overlap)
-      early_weap = false,       -- Good weapons found early
-      upgrade_weap = false,     -- Better DPS / weapon_score
-      weap_ego = false,         -- New or diff egos
-      body_armour = false,
-      shields = true,
-      aux_armour = false,
-      armour_ego = true,        -- New or diff egos
-      high_score_weap = false,  -- Highest damage found
-      high_score_armour = true, -- Highest AC found
-      one_time_alerts = true,
-      artefact = false,         -- Any artefact
-      trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
+    Alert = {
+      armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 = disable all armour alerts
+      weapon_sensitivity = 0.1, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
+      orbs = true,
+      staff_resists = true, -- When a staff gives a missing resistance
+      talismans = true,
+
+      one_time = { -- Alert the first time each itemis found
+        "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+        "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+        "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
+        "broad axe", "executioner's axe",
+        "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+        "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+      },
+      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- One-time alert only when skill level >= this
+
+      More = { -- Which alerts generate a force_more_message (some categories overlap)
+        early_weap = false,       -- Good weapons found early
+        upgrade_weap = false,     -- Better DPS / weapon_score
+        weap_ego = false,         -- New or diff egos
+        body_armour = false,
+        shields = true,
+        aux_armour = false,
+        armour_ego = true,        -- New or diff egos
+        high_score_weap = false,  -- Highest damage found
+        high_score_armour = true, -- Highest AC found
+        one_time_alerts = true,
+        artefact = false,         -- Any artefact
+        trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
+        orbs = false,
+        talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
+        staff_resists = false,
+      },
+    },
+  },
+
+  ---- BRC.Config.BrandBonus: Tune the impact of brands on DPS calculations
+  -- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
+  -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
+  BrandBonus = {
+    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
+    distort = { factor = 1.0, offset = 6.0 },
+    drain = { factor = 1.25, offset = 2.0 },
+    elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
+    flame = { factor = 1.25, offset = 0 },
+    freeze = { factor = 1.25, offset = 0 },
+    heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
+    pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
+    spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
+    venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
+
+    subtle = { -- Values estimated for weapon comparisons
+      antimagic = { factor = 1.1, offset = 0 },
+      holy = { factor = 1.15, offset = 0 },
+      penet = { factor = 1.3, offset = 0 },
+      protect = { factor = 1.15, offset = 0 },
+      reap = { factor = 1.3, offset = 0 },
+      vamp = { factor = 1.2, offset = 0 },
+    },
+  },
+} -- BRC.Configs.Custom
+
+BRC.Configs.Speed = {
+  ["misc-alerts"] = {
+    fm_on_uniques = false,
+    FM_PATTERNS = {},
+  },
+  ["announce-hp-mp"] = {
+    dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+    dmg_fm_threshold = 1,    -- Force more for losing this % of max HP
+    always_on_bottom = true,   -- Rewrite HP/MP meters after each turn with messages
+  },
+  ["remind-id"] = {
+    stop_on_scrolls_count = 99, -- Stop when largest un-ID'd scroll stack increases and is >= this
+    stop_on_pots_count = 99,    -- Stop when largest un-ID'd potion stack increases and is >= this
+  },
+  ["pickup-alert"] = {
+    Pickup = {
+      armour = true,
+      staves = true,
+      weapons = true,
+      weapons_pure_upgrades_only = false, -- Only pick up better versions of same exact weapon
+    },
+
+    Alert = {
+      armour_sensitivity = 1.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 = disable all armour alerts
+      weapon_sensitivity = 1.2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
       orbs = false,
-      talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
-      staff_resists = false,
+      staff_resists = false, -- When a staff gives a missing resistance
+      talismans = false,
+
+      one_time = { -- Alert the first time each itemis found
+        "kite shield", "tower shield", "crystal plate armour",
+        "gold dragon scales", "pearl dragon scales", "storm dragon scales",
+        "broad axe", "demon whip", "eveningstar", "morningstar",
+      },
+      OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- One-time alert only when skill level >= this
+
+      More = { }, -- All nil / false
+    },
+    Tuning = {
+      Armour = {
+        encumb_penalty_weight = 0, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+        early_xl = 0, -- Alert all usable runed body armour if XL <= `early_xl`
+      },
     },
   },
-} -- BRC.Config["pickup-alert"] (do not remove this comment)
-
----- BRC.BrandBonus: Tune the impact of brands on DPS calculations
--- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
--- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
-BRC.BrandBonus = {
-  chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
-  distort = { factor = 1.0, offset = 6.0 },
-  drain = { factor = 1.25, offset = 2.0 },
-  elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
-  flame = { factor = 1.25, offset = 0 },
-  freeze = { factor = 1.25, offset = 0 },
-  heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
-  pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
-  spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
-  venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
-
-  subtle = { -- Values estimated for weapon comparisons
-    antimagic = { factor = 1.1, offset = 0 },
-    holy = { factor = 1.15, offset = 0 },
-    penet = { factor = 1.3, offset = 0 },
-    protect = { factor = 1.15, offset = 0 },
-    reap = { factor = 1.3, offset = 0 },
-    vamp = { factor = 1.2, offset = 0 },
+  ["startup"] = {
+    show_skills_on_startup = false, -- Open skills menu on startup
+    auto_set_skill_targets = {
+      { (you.skill("Axes") > you.skill("Maces & Flails")) and "Axes" or "Maces & Flails", 6.0 },
+    },
   },
-} -- BRC.BrandBonus (do not remove this comment)
+} -- BRC.Configs.Speed
 
----- Cosmetic settings
-BRC.LogColor = {
-  error = "lightred",
-  warning = "yellow",
-  info = "lightgrey",
-  debug = "lightblue",
-} -- BRC.LogColor (do not remove this comment)
+BRC.Configs.Turncount = {
 
-BRC.Emoji = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.Emoji (do not remove this comment)
+} -- BRC.Configs.Turncount
+
+BRC.Configs.Streak = {
+
+} -- BRC.Configs.Streak
 
 }
 ############################### End lua/core/config.lua ###############################
@@ -947,6 +997,14 @@ Dependencies: (none)
 -- Initialize BRC namespace
 BRC = BRC or {}
 
+---- Cosmetic settings
+BRC.EMOJI = {
+  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
+  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
+  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
+} -- BRC.EMOJI (do not remove this comment)
+
 ---- Items ----
 BRC.MISC_ITEMS = {
   "box of beasts", "condenser vane", "figurine of a ziggurat", "Gell's gravitambourine", "horn of Geryon",
@@ -1062,7 +1120,7 @@ local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", "."
 
 -- Local functions
 local function log_message(message, context, color)
-  color = color or BRC.LogColor.info
+  color = color or BRC.COLOR.lightgrey
   local msg = string.format("[BRC] %s", tostring(message))
   if context then msg = string.format("%s (%s)", msg, context) end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
@@ -1093,16 +1151,11 @@ end
 
 local function serialize_config()
   local tokens = { "\n---BRC Config---\n" .. BRC.util.tostring(BRC.Config) }
-  for name, mod in pairs(BRC.get_registered_features()) do
-    if mod.Config then
-      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(mod.Config)
+  for name, feature in pairs(BRC.get_registered_features()) do
+    if feature.Config then
+      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(feature.Config)
     end
   end
-
-  tokens[#tokens + 1] = "\n\n---BRC other config tables---"
-  tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.util.tostring(BRC.BrandBonus)
-  tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.util.tostring(BRC.LogColor)
-  tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.util.tostring(BRC.Emoji)
 
   return table.concat(tokens)
 end
@@ -1112,7 +1165,7 @@ end
 BRC.log = {}
 
 function BRC.log.error(message, context)
-  log_message("(Error) " .. message, context, BRC.LogColor.error)
+  log_message("(Error) " .. message, context, BRC.COLOR.lightred)
   you.stop_activity()
   crawl.redraw_screen()
   crawl.more()
@@ -1120,17 +1173,17 @@ function BRC.log.error(message, context)
 end
 
 function BRC.log.warning(message, context)
-  log_message(message, context, BRC.LogColor.warning)
+  log_message(message, context, BRC.COLOR.yellow)
   you.stop_activity()
 end
 
 function BRC.log.info(message, context)
-  log_message(message, context, BRC.LogColor.info)
+  log_message(message, context, BRC.COLOR.lightgrey)
 end
 
 function BRC.log.debug(message, context)
   if not BRC.Config.show_debug_messages then return end
-  log_message(message, context, BRC.LogColor.debug)
+  log_message(message, context, BRC.COLOR.lightblue)
 end
 
 ---------------------------------------------------
@@ -2049,14 +2102,14 @@ function BRC.get.weap_damage(it, dmg_type)
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)
     if ego and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego) then
-      local bonus = BRC.BrandBonus[ego] or BRC.BrandBonus.subtle[ego]
+      local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
       return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
     end
   elseif dmg_type >= BRC.DMG_TYPE.branded then
     local ego = BRC.get.ego(it)
     if ego then
-      local bonus = BRC.BrandBonus[ego]
-      if not bonus and dmg_type == BRC.DMG_TYPE.scoring then bonus = BRC.BrandBonus.subtle[ego] end
+      local bonus = BRC.Config.BrandBonus[ego]
+      if not bonus and dmg_type == BRC.DMG_TYPE.scoring then bonus = BRC.Config.BrandBonus.subtle[ego] end
       if bonus then return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset end
     end
   end
@@ -2352,15 +2405,26 @@ local function handle_core_error(hook_name, result, ...)
   end
 end
 
-local function override_config(source, dest)
+local function override_config_table(source, dest)
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
-      override_config(value, dest[key])
+      override_config_table(value, dest[key])
     else
       dest[key] = value
     end
   end
+end
+
+local function override_config(feature_name)
+  if not BRC.Config[feature_name] then return end
+  if not _features[feature_name].Config then _features[feature_name].Config = {} end
+  override_config_table(BRC.Config[feature_name], _features[feature_name].Config)
+end
+
+local function feature_is_disabled(feature_module)
+  return feature_module and feature_module.Config and feature_module.Config.disabled
+    or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
 end
 
 -- Hook dispatching
@@ -2370,25 +2434,24 @@ local function call_all_hooks(hook_name, ...)
 
   for i = #_hooks[hook_name], 1, -1 do
     local hook_info = _hooks[hook_name][i]
-    local success, result = pcall(hook_info.func, ...)
-    if not success then
-      handle_feature_error(hook_info.feature_name, hook_name, result)
-    else
-      if last_return_value and result and last_return_value ~= result then
-        BRC.log.warning(
-          string.format(
-            "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
-            hook_name,
-            returning_feature,
-            BRC.util.tostring(last_return_value),
-            hook_info.feature_name,
-            BRC.util.tostring(result)
-          )
-        )
-      end
+    if not feature_is_disabled(_features[hook_info.feature_name]) then
+      local success, result = pcall(hook_info.func, ...)
+      if not success then
+        handle_feature_error(hook_info.feature_name, hook_name, result)
+      else
+        if last_return_value and result and last_return_value ~= result then
+          BRC.log.warning(string.format("Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+              hook_name,
+              returning_feature,
+              BRC.util.tostring(last_return_value),
+              hook_info.feature_name,
+              BRC.util.tostring(result)
+          ))
+        end
 
-      last_return_value = result
-      returning_feature = hook_info.feature_name
+        last_return_value = result
+        returning_feature = hook_info.feature_name
+      end
     end
   end
 
@@ -2437,7 +2500,7 @@ local function register_all_features(parent_module)
 
       if success then
         loaded_count = loaded_count + 1
-      else
+      elseif success == false then
         BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
         return loaded_count
       end
@@ -2448,14 +2511,17 @@ local function register_all_features(parent_module)
 end
 
 -- Public API
+-- BRC.register_feature(): Return true if success, false if error, nil if feature is disabled
 function BRC.register_feature(feature_name, feature_module)
   if not feature_name or not feature_module then
     BRC.log.error("Invalid feature registration: missing name or module")
     return false
-  end
-  if _features[feature_name] then
+  elseif _features[feature_name] then
     BRC.log.error(BRC.text.yellow(feature_name) .. " is already registered")
     return false
+  elseif feature_is_disabled(feature_name) then
+    BRC.log.debug(string.format("Feature '%s' is disabled", BRC.text.lightcyan(feature_name)))
+    return nil
   end
 
   _features[feature_name] = feature_module
@@ -2472,10 +2538,7 @@ function BRC.register_feature(feature_name, feature_module)
     end
   end
 
-  if BRC.Config[feature_name] then
-    if not feature_module.Config then feature_module.Config = {} end
-    override_config(BRC.Config[feature_name], feature_module.Config)
-  end
+  override_config(feature_name)
 
   BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
   return true
@@ -2532,7 +2595,7 @@ function BRC.init(parent_module)
     BRC.Data.backup() -- Only backup on clean success
     local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION)
     msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
-    if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
+    if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
   elseif reinit_success == false then
     if not BRC.Data.try_backup_restore() then
@@ -3264,10 +3327,10 @@ function f_announce_hp_mp.ready()
     if is_very_low_hp then return end -- mute % HP alerts
     if damage_taken >= (mhp * Config.dmg_fm_threshold) then
       local msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
-      BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION_2 .. msg .. BRC.Emoji.EXCLAMATION_2)
+      BRC.mpr.que_optmore(true, BRC.EMOJI.EXCLAMATION_2 .. msg .. BRC.EMOJI.EXCLAMATION_2)
     else
       local msg = BRC.text.magenta(" BIG DAMAGE ")
-      BRC.mpr.que_optmore(false, BRC.Emoji.EXCLAMATION .. msg .. BRC.Emoji.EXCLAMATION)
+      BRC.mpr.que_optmore(false, BRC.EMOJI.EXCLAMATION .. msg .. BRC.EMOJI.EXCLAMATION)
     end
   end
 end
@@ -3447,7 +3510,7 @@ local function inscribe_drop(it)
   it.inscribe(new_inscr, false)
   if f_drop_inferior.Config.msg_on_inscribe then
     local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
-    local msg = string.format("%s You can drop: %s %s", BRC.Emoji.CAUTION, item_name, BRC.Emoji.CAUTION)
+    local msg = string.format("%s You can drop: %s %s", BRC.EMOJI.CAUTION, item_name, BRC.EMOJI.CAUTION)
     BRC.mpr.cyan(msg)
   end
 end
@@ -4051,7 +4114,7 @@ local function alert_low_hp()
   elseif hp <= Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local low_hp_msg = string.format(" Dropped below %s%% HP ", 100 * Config.alert_low_hp_threshold)
-    BRC.mpr.que_optmore(true, BRC.Emoji.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.Emoji.EXCLAMATION)
+    BRC.mpr.que_optmore(true, BRC.EMOJI.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.EMOJI.EXCLAMATION)
   end
 end
 
@@ -5489,7 +5552,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return f_pickup_alert.do_alert(it, "Aux armour", BRC.Emoji.EXCLAMATION, Config.Alert.More.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", BRC.EMOJI.EXCLAMATION, Config.Alert.More.aux_armour)
     end
   end
 

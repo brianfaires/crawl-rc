@@ -15,7 +15,7 @@ local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", "."
 
 -- Local functions
 local function log_message(message, context, color)
-  color = color or BRC.LogColor.info
+  color = color or BRC.COLOR.lightgrey
   local msg = string.format("[BRC] %s", tostring(message))
   if context then msg = string.format("%s (%s)", msg, context) end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
@@ -46,16 +46,11 @@ end
 
 local function serialize_config()
   local tokens = { "\n---BRC Config---\n" .. BRC.util.tostring(BRC.Config) }
-  for name, mod in pairs(BRC.get_registered_features()) do
-    if mod.Config then
-      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(mod.Config)
+  for name, feature in pairs(BRC.get_registered_features()) do
+    if feature.Config then
+      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(feature.Config)
     end
   end
-
-  tokens[#tokens + 1] = "\n\n---BRC other config tables---"
-  tokens[#tokens + 1] = "\n\nBrandBonus = " .. BRC.util.tostring(BRC.BrandBonus)
-  tokens[#tokens + 1] = "\n\nLogColor = " .. BRC.util.tostring(BRC.LogColor)
-  tokens[#tokens + 1] = "\n\nEmoji = " .. BRC.util.tostring(BRC.Emoji)
 
   return table.concat(tokens)
 end
@@ -65,7 +60,7 @@ end
 BRC.log = {}
 
 function BRC.log.error(message, context)
-  log_message("(Error) " .. message, context, BRC.LogColor.error)
+  log_message("(Error) " .. message, context, BRC.COLOR.lightred)
   you.stop_activity()
   crawl.redraw_screen()
   crawl.more()
@@ -73,17 +68,17 @@ function BRC.log.error(message, context)
 end
 
 function BRC.log.warning(message, context)
-  log_message(message, context, BRC.LogColor.warning)
+  log_message(message, context, BRC.COLOR.yellow)
   you.stop_activity()
 end
 
 function BRC.log.info(message, context)
-  log_message(message, context, BRC.LogColor.info)
+  log_message(message, context, BRC.COLOR.lightgrey)
 end
 
 function BRC.log.debug(message, context)
   if not BRC.Config.show_debug_messages then return end
-  log_message(message, context, BRC.LogColor.debug)
+  log_message(message, context, BRC.COLOR.lightblue)
 end
 
 ---------------------------------------------------
@@ -1002,14 +997,14 @@ function BRC.get.weap_damage(it, dmg_type)
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)
     if ego and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego) then
-      local bonus = BRC.BrandBonus[ego] or BRC.BrandBonus.subtle[ego]
+      local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
       return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
     end
   elseif dmg_type >= BRC.DMG_TYPE.branded then
     local ego = BRC.get.ego(it)
     if ego then
-      local bonus = BRC.BrandBonus[ego]
-      if not bonus and dmg_type == BRC.DMG_TYPE.scoring then bonus = BRC.BrandBonus.subtle[ego] end
+      local bonus = BRC.Config.BrandBonus[ego]
+      if not bonus and dmg_type == BRC.DMG_TYPE.scoring then bonus = BRC.Config.BrandBonus.subtle[ego] end
       if bonus then return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset end
     end
   end

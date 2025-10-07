@@ -7,6 +7,14 @@ Dependencies: (none)
 -- Initialize BRC namespace
 BRC = BRC or {}
 
+---- Cosmetic settings
+BRC.EMOJI = {
+  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
+  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
+  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
+} -- BRC.EMOJI (do not remove this comment)
+
 ---- Items ----
 BRC.MISC_ITEMS = {
   "box of beasts", "condenser vane", "figurine of a ziggurat", "Gell's gravitambourine", "horn of Geryon",
