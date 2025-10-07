@@ -4,7 +4,7 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua
 --]]
 
--- Initialize
+-- Initialize BRC namespace
 BRC = BRC or {}
 
 -- Local variables

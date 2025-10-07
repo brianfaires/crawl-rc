@@ -4,7 +4,7 @@ Author: buehler
 Dependencies: (none)
 --]]
 
--- Initialize
+-- Initialize BRC namespace
 BRC = BRC or {}
 
 ---- Items ----

@@ -7,10 +7,10 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
--- Initialize
+-- Initialize BRC namespace and non-persistent public variables
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
-BRC.active = false
+BRC.active = nil
 
 -- Local constants
 local HOOK_FUNCTIONS = {
@@ -25,7 +25,8 @@ local HOOK_FUNCTIONS = {
 -- Local variables
 local _features = {}
 local _hooks = {}
-local prev_turn
+local turn_count = nil
+local depth = nil
 
 -- Local functions
 local function is_feature_module(maybe_feature_module)
@@ -219,7 +220,7 @@ function BRC.init(parent_module)
   _features = {}
   _hooks = {}
 
-  -- Load all features, then the data module last
+  -- Register all features
   local loaded_count = register_all_features(parent_module)
   if loaded_count == 0 then
     BRC.mpr.lightred("No features loaded. BRC is inactive.")
@@ -227,7 +228,7 @@ function BRC.init(parent_module)
   end
   BRC.log.debug(string.format("Loaded %d features.", loaded_count, parent_module))
 
-  -- Init features
+  -- Init all features
   BRC.log.debug(BRC.text.green("Initializing features..."))
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
 
@@ -241,22 +242,32 @@ function BRC.init(parent_module)
 
   -- Init and verify persistent data
   BRC.Data.init()
-  if BRC.Data.verify_reinit() then
+  local reinit_success = BRC.Data.verify_reinit()
+  if reinit_success == true then
+    BRC.Data.backup() -- Only backup on clean success
     local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION)
     msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
     if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
-    BRC.mpr.lightgreen(string.format("\n%s", msg))
-  elseif BRC.mpr.yesno("Deactivate BRC?", BRC.Color.yellow) then
-    BRC.mpr.lightred("BRC is off.")
-    BRC.active = false
-    return false
-  else
-    local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
-    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
-    BRC.mpr.magenta(string.format("\n%s", msg))
+    BRC.mpr.lightgreen(string.format("\n%s\n", msg))
+  elseif reinit_success == false then
+    if not BRC.Data.try_backup_restore() then
+      if BRC.mpr.yesno("Deactivate BRC?", BRC.Color.yellow) then
+        BRC.active = false
+        BRC.mpr.lightred("\nBRC is off.\n")
+        return false
+      end
+    end
   end
 
-  prev_turn = -1
+  if not reinit_success then
+    local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
+    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
+    BRC.mpr.magenta(string.format("\n%s\n", msg))
+  end
+
+  -- We're a go!
+  turn_count = -1
+  depth = you.depth()
   BRC.active = true
   BRC.ready()
   return true
@@ -273,8 +284,15 @@ end
 
 function BRC.ready()
   crawl.redraw_screen()
-  if you.turns() == prev_turn then return end
-  prev_turn = you.turns()
+
+  if you.turns() == turn_count then return end
+  turn_count = you.turns()
+
+  if you.depth() ~= depth and not you.have_orb() then
+    depth = you.depth()
+    BRC.Data.backup()
+  end
+
   safe_call_all_hooks(HOOK_FUNCTIONS.ready)
   BRC.mpr.consume_queue()
 end

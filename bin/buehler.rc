@@ -9,6 +9,8 @@ Author: buehler
 Dependencies: (none)
 Notes: Never put a closing brace `}` on a line by itself. (This will break crawl's RC parser.)
 --]]
+
+-- Initialize BRC namespace and Config module
 BRC = BRC or {}
 BRC.Config = {}
 
@@ -942,7 +944,7 @@ Author: buehler
 Dependencies: (none)
 --]]
 
--- Initialize
+-- Initialize BRC namespace
 BRC = BRC or {}
 
 ---- Items ----
@@ -1049,7 +1051,7 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua
 --]]
 
--- Initialize
+-- Initialize BRC namespace
 BRC = BRC or {}
 
 -- Local variables
@@ -2076,17 +2078,20 @@ Author: buehler
 Dependencies: core/constants.lua, core/util.lua
 --]]
 
--- Initialize
+-- Initialize BRC namespace and Data module
 BRC = BRC or {}
 BRC.Data = {}
 BRC.data = BRC.Data -- alias
 
--- Local constants
-local TRACKER_PREFIX = "tracker_"
-
 -- Local variables
 local _persist_names = {}
-local _game_trackers = {} -- Values to detect when character is changed
+local _game_trackers = { -- Values to detect when character is changed
+  brc_version = nil,
+  brc_name = nil,
+  brc_race = nil,
+  brc_class = nil,
+  brc_turn = nil,
+} -- _game_trackers (do not remove this comment)
 
 -- Local functions
 local function verify_game_trackers()
@@ -2094,10 +2099,10 @@ local function verify_game_trackers()
 
   if you.turns() > 0 then
     for k, v in pairs(_game_trackers) do
-      local prev = _G[TRACKER_PREFIX .. k]
+      local prev = _G[k]
       if prev ~= v then
         success = false
-        _G[TRACKER_PREFIX .. k] = v
+        _G[k] = v
         BRC.log.warning(string.format("Unexpected change of %s: %s -> %s", k, prev, v))
       end
     end
@@ -2105,7 +2110,7 @@ local function verify_game_trackers()
     if not _G["reload_complete"] then
       success = false
       BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
-      BRC.mpr.darkgrey("Try restarting, or set BRC.Config.show_debug_messages=True for more info.")
+      BRC.mpr.lightgrey("[BRC] This is usually from a malformed RC file. Will attempt to restore from backup.")
     end
   end
 
@@ -2114,22 +2119,45 @@ end
 
 local function verify_num_autopickup_funcs()
   _G.num_autopickup_funcs = BRC.Data.persist("num_autopickup_funcs", 0) -- Use _G to make checklua happy
-
-  local success = true
-
   if _G.num_autopickup_funcs == 0 then _G.num_autopickup_funcs = #chk_force_autopickup end
-  if _G.num_autopickup_funcs ~= #chk_force_autopickup then
-    BRC.log.warning(string.format("%s\nExpected: %s but got: %s",
-      "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)",
-      _G.num_autopickup_funcs,
-      #chk_force_autopickup
-    ))
-    BRC.mpr.blue("If this is not expected, restart crawl.")
-    success = BRC.mpr.yesno("Update expected number of autopickup functions?")
-    if success then _G.num_autopickup_funcs = #chk_force_autopickup end
+  if _G.num_autopickup_funcs == #chk_force_autopickup then return true end
+
+  BRC.log.warning(string.format("%s\nExpected: %s but got: %s",
+    "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)",
+    _G.num_autopickup_funcs,
+    #chk_force_autopickup
+  ))
+  BRC.mpr.lightgrey("If this is unexpected, you might want to restart crawl.")
+  if BRC.mpr.yesno("Update expected number of autopickup functions?") then
+    _G.num_autopickup_funcs = #chk_force_autopickup
   end
 
-  return success
+  return nil
+end
+
+local function is_usable_backup()
+  if
+    type(c_persist.BRC) ~= "table"
+    or type(c_persist.BRC.Backup) ~= "table"
+    or c_persist.BRC.Backup.brc_version ~= BRC.VERSION
+    or c_persist.BRC.Backup.brc_name ~= you.name()
+    or c_persist.BRC.Backup.brc_race ~= you.race()
+    or c_persist.BRC.Backup.brc_class ~= you.class()
+  then
+    return false
+  end
+
+  local turn_diff = you.turns() - c_persist.BRC.Backup.backup_turn
+  if turn_diff == 0 then return true end
+  return BRC.mpr.yesno(string.format("Use backup from %s turns ago?", turn_diff))
+end
+
+local function restore_from_backup()
+  if type(c_persist.BRC) ~= "table" or type(c_persist.BRC.Backup) ~= "table" then return false end
+  for name, value in pairs(c_persist.BRC.Backup) do
+    BRC.data.persist(name, value)
+    _G[name] = c_persist.BRC.Backup[name]
+  end
 end
 
 -- Public API
@@ -2149,6 +2177,7 @@ function BRC.Data.persist(name, default_value)
   elseif not util.contains(_persist_names, name) then
     _persist_names[#_persist_names + 1] = name
     table.insert(chk_lua_save, function()
+      if not _G[name] then return "" end
       return name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF
     end)
   end
@@ -2187,14 +2216,20 @@ function BRC.Data.erase()
 end
 
 function BRC.Data.init()
+  -- Update game trackers; Important that this happens in init()
   _game_trackers.brc_version = BRC.VERSION
   _game_trackers.brc_name = you.name()
   _game_trackers.brc_race = you.race()
   _game_trackers.brc_class = you.class()
+  _game_trackers.brc_turn = you.turns()
 
-  -- If monitors already are defined, they will keep their values
+  -- Ensure turns() is captured on save, before persist() to get the updated value in chk_lua_save before it's checked
+  table.insert(chk_lua_save, function()
+    _G["brc_turn"] = you.turns()
+    return ""
+  end)
   for k, v in pairs(_game_trackers) do
-    BRC.Data.persist(TRACKER_PREFIX .. k, v)
+    BRC.Data.persist(k, v)
   end
 
   -- reload_complete comes after all other data, defaults to false. If true, confirms all data reloaded.
@@ -2202,38 +2237,43 @@ function BRC.Data.init()
 end
 
 -- BRC.Data.verify_reinit(): After all feature init(), verifies data restored as expected
+-- Returns true if successful, false if failed, nil if warning only
 function BRC.Data.verify_reinit()
   local success = true
 
   if not verify_game_trackers() then success = false end
-  if not verify_num_autopickup_funcs() then success = false end
+  local autopickup_valid = verify_num_autopickup_funcs()
+  if not autopickup_valid then success = autopickup_valid end -- False, or nil for warning only
 
   -- Update game trackers, to compare on next init()
   for k, v in pairs(_game_trackers) do
-    local var_name = TRACKER_PREFIX .. k
-    _G[var_name] = BRC.Data.persist(var_name, v)
+    BRC.Data.persist(k, v)
   end
-  _G["reload_complete"] = true
 
+  _G["reload_complete"] = true
   return success
 end
 
--- Backup and Restore data to c_persist
+-- Backup and Restore from c_persist.BRC.Backup
 function BRC.Data.backup()
   if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
-  if type(c_persist.BRC.Backup) ~= "table" then c_persist.BRC.Backup = {} end
+  c_persist.BRC.Backup = {}
   for _, name in ipairs(_persist_names) do
     c_persist.BRC.Backup[name] = _G[name]
   end
   c_persist.BRC.Backup.backup_turn = you.turns()
 end
 
-function BRC.Data.restore()
-  if type(c_persist.BRC) ~= "table" or type(c_persist.BRC.Backup) ~= "table" then return false end
-  for name, value in pairs(c_persist.BRC.Backup) do
-    BRC.data.persist(name, value)
-    _G[name] = c_persist.BRC.Backup[name]
+function BRC.Data.try_backup_restore()
+  if not is_usable_backup() then
+    local msg = "[BRC] Could not restore from backup. Try restarting. "
+    BRC.mpr.lightgrey(msg .. "For detailed startup info, set BRC.Config.show_debug_messages=True.")
+    return false
   end
+
+  restore_from_backup()
+  BRC.mpr.lightblue("[BRC] Restored data using c_persist.BRC.Backup.")
+  return true
 end
 
 }
@@ -2252,10 +2292,10 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
--- Initialize
+-- Initialize BRC namespace and non-persistent public variables
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
-BRC.active = false
+BRC.active = nil
 
 -- Local constants
 local HOOK_FUNCTIONS = {
@@ -2270,7 +2310,8 @@ local HOOK_FUNCTIONS = {
 -- Local variables
 local _features = {}
 local _hooks = {}
-local prev_turn
+local turn_count = nil
+local depth = nil
 
 -- Local functions
 local function is_feature_module(maybe_feature_module)
@@ -2464,7 +2505,7 @@ function BRC.init(parent_module)
   _features = {}
   _hooks = {}
 
-  -- Load all features, then the data module last
+  -- Register all features
   local loaded_count = register_all_features(parent_module)
   if loaded_count == 0 then
     BRC.mpr.lightred("No features loaded. BRC is inactive.")
@@ -2472,7 +2513,7 @@ function BRC.init(parent_module)
   end
   BRC.log.debug(string.format("Loaded %d features.", loaded_count, parent_module))
 
-  -- Init features
+  -- Init all features
   BRC.log.debug(BRC.text.green("Initializing features..."))
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
 
@@ -2486,22 +2527,32 @@ function BRC.init(parent_module)
 
   -- Init and verify persistent data
   BRC.Data.init()
-  if BRC.Data.verify_reinit() then
+  local reinit_success = BRC.Data.verify_reinit()
+  if reinit_success == true then
+    BRC.Data.backup() -- Only backup on clean success
     local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION)
     msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
     if BRC.Emoji.SUCCESS then msg = string.format("%s %s %s", BRC.Emoji.SUCCESS, msg, BRC.Emoji.SUCCESS) end
-    BRC.mpr.lightgreen(string.format("\n%s", msg))
-  elseif BRC.mpr.yesno("Deactivate BRC?", BRC.Color.yellow) then
-    BRC.mpr.lightred("BRC is off.")
-    BRC.active = false
-    return false
-  else
-    local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
-    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
-    BRC.mpr.magenta(string.format("\n%s", msg))
+    BRC.mpr.lightgreen(string.format("\n%s\n", msg))
+  elseif reinit_success == false then
+    if not BRC.Data.try_backup_restore() then
+      if BRC.mpr.yesno("Deactivate BRC?", BRC.Color.yellow) then
+        BRC.active = false
+        BRC.mpr.lightred("\nBRC is off.\n")
+        return false
+      end
+    end
   end
 
-  prev_turn = -1
+  if not reinit_success then
+    local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
+    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
+    BRC.mpr.magenta(string.format("\n%s\n", msg))
+  end
+
+  -- We're a go!
+  turn_count = -1
+  depth = you.depth()
   BRC.active = true
   BRC.ready()
   return true
@@ -2518,8 +2569,15 @@ end
 
 function BRC.ready()
   crawl.redraw_screen()
-  if you.turns() == prev_turn then return end
-  prev_turn = you.turns()
+
+  if you.turns() == turn_count then return end
+  turn_count = you.turns()
+
+  if you.depth() ~= depth and not you.have_orb() then
+    depth = you.depth()
+    BRC.Data.backup()
+  end
+
   safe_call_all_hooks(HOOK_FUNCTIONS.ready)
   BRC.mpr.consume_queue()
 end

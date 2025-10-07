@@ -4,7 +4,6 @@
 
 ### To do list
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
-1. Write persistent data to c_persist after each level (to recover from crashes)
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
 1. On alert, prompt/offer to pickup item (or macro available)
 1. On pickup, if safe(), offer to wear/wield item (or macro available)

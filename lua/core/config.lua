@@ -4,6 +4,8 @@ Author: buehler
 Dependencies: (none)
 Notes: Never put a closing brace `}` on a line by itself. (This will break crawl's RC parser.)
 --]]
+
+-- Initialize BRC namespace and Config module
 BRC = BRC or {}
 BRC.Config = {}
 
