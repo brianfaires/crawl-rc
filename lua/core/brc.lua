@@ -182,7 +182,7 @@ function BRC.register_feature(feature_name, feature_module)
   elseif _features[feature_name] then
     BRC.log.error(BRC.text.yellow(feature_name) .. " is already registered")
     return false
-  elseif feature_is_disabled(feature_name) then
+  elseif feature_is_disabled(feature_module) then
     BRC.log.debug(string.format("Feature '%s' is disabled", BRC.text.lightcyan(feature_name)))
     return nil
   end

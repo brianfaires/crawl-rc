@@ -39,9 +39,9 @@ BRC.Configs.Testing = {
   },
   init = function(self)
     if self.disable_other_features then
-      for name, value in pairs(_G) do
-        if BRC.is_feature_module(value) and not self[name] then
-          self[name] = { disabled = true }
+      for _, v in pairs(_G) do
+        if BRC.is_feature_module(v) and not self[v.BRC_FEATURE_NAME] then
+          self[v.BRC_FEATURE_NAME] = { disabled = true }
         end
       end
     end
@@ -1766,7 +1766,7 @@ function BRC.register_feature(feature_name, feature_module)
   elseif _features[feature_name] then
     BRC.log.error(BRC.text.yellow(feature_name) .. " is already registered")
     return false
-  elseif feature_is_disabled(feature_name) then
+  elseif feature_is_disabled(feature_module) then
     BRC.log.debug(string.format("Feature '%s' is disabled", BRC.text.lightcyan(feature_name)))
     return nil
   end
