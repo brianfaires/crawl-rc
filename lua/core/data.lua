@@ -37,7 +37,7 @@ local function verify_game_trackers()
     if not _G.reload_complete then
       success = false
       BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
-      BRC.mpr.lightgrey("[BRC] This is usually from a malformed RC file. Will attempt to restore from backup.")
+      BRC.mpr.lightgrey("[BRC] This usually occurs following a malformed RC file. Attempting backup restore...")
     end
   end
 
@@ -191,14 +191,14 @@ function BRC.Data.backup()
   c_persist.BRC.Backup.backup_turn = you.turns()
 end
 
-function BRC.Data.try_backup_restore()
+function BRC.Data.try_restore()
   if not is_usable_backup() then
-    local msg = "[BRC] Could not restore from backup. Try restarting. "
-    BRC.mpr.lightgrey(msg .. "For detailed startup info, set BRC.Config.show_debug_messages=True.")
+    BRC.mpr.red("[BRC] Failed to restore backup. Persistent data may have been lost. ")
+    BRC.log.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
     return false
   end
 
   restore_from_backup()
-  BRC.mpr.lightblue("[BRC] Restored data using c_persist.BRC.Backup.")
+  BRC.mpr.green("[BRC] Restored data from backup.")
   return true
 end

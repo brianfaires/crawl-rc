@@ -116,7 +116,6 @@ end
 -- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it is kept very simple + protected.
 -- Errors in call_all_hooks() or handle_core_error() are caught by this function.
 local function safe_call_all_hooks(hook_name, ...)
-  if not BRC.active and hook_name ~= HOOK_FUNCTIONS.init then return end
   if not _hooks or not _hooks[hook_name] then return end
 
   local success, result = pcall(call_all_hooks, hook_name, ...)
@@ -276,7 +275,7 @@ function BRC.init(parent_module)
     if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
   elseif reinit_success == false then
-    if not BRC.Data.try_backup_restore() then
+    if not BRC.Data.try_restore() then
       if BRC.mpr.yesno("Deactivate BRC?", BRC.COLOR.yellow) then
         BRC.active = false
         BRC.mpr.lightred("\nBRC is off.\n")
@@ -326,6 +325,7 @@ function BRC.autopickup(it, _)
 end
 
 function BRC.ready()
+  if not BRC.active then return end
   crawl.redraw_screen()
 
   if you.turns() == turn_count then return end
@@ -341,14 +341,17 @@ function BRC.ready()
 end
 
 function BRC.c_message(text, channel)
+  if not BRC.active then return end
   safe_call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
+  if not BRC.active then return end
   if not prompt then return end -- This fires from crawl, e.g. Shop purchase confirmation
   return safe_call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
 function BRC.c_assign_invletter(it)
+  if not BRC.active then return end
   return safe_call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
 end

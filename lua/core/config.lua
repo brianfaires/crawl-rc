@@ -35,7 +35,9 @@ BRC.Configs.Testing = {
   init = function(self)
     if self.disable_other_features then
       for name, value in pairs(_G) do
-        if BRC.is_feature_module(value) and not self[name] then self[name].disabled = true end
+        if BRC.is_feature_module(value) and not self[name] then
+          self[name] = { disabled = true }
+        end
       end
     end
   end,

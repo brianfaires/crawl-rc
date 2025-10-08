@@ -40,7 +40,9 @@ BRC.Configs.Testing = {
   init = function(self)
     if self.disable_other_features then
       for name, value in pairs(_G) do
-        if BRC.is_feature_module(value) and not self[name] then self[name].disabled = true end
+        if BRC.is_feature_module(value) and not self[name] then
+          self[name] = { disabled = true }
+        end
       end
     end
   end,
@@ -2198,7 +2200,7 @@ local function verify_game_trackers()
     if not _G.reload_complete then
       success = false
       BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
-      BRC.mpr.lightgrey("[BRC] This is usually from a malformed RC file. Will attempt to restore from backup.")
+      BRC.mpr.lightgrey("[BRC] This usually occurs following a malformed RC file. Attempting backup restore...")
     end
   end
 
@@ -2352,15 +2354,15 @@ function BRC.Data.backup()
   c_persist.BRC.Backup.backup_turn = you.turns()
 end
 
-function BRC.Data.try_backup_restore()
+function BRC.Data.try_restore()
   if not is_usable_backup() then
-    local msg = "[BRC] Could not restore from backup. Try restarting. "
-    BRC.mpr.lightgrey(msg .. "For detailed startup info, set BRC.Config.show_debug_messages=True.")
+    BRC.mpr.red("[BRC] Failed to restore backup. Persistent data may have been lost. ")
+    BRC.log.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
     return false
   end
 
   restore_from_backup()
-  BRC.mpr.lightblue("[BRC] Restored data using c_persist.BRC.Backup.")
+  BRC.mpr.green("[BRC] Restored data from backup.")
   return true
 end
 
@@ -2489,7 +2491,6 @@ end
 -- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it is kept very simple + protected.
 -- Errors in call_all_hooks() or handle_core_error() are caught by this function.
 local function safe_call_all_hooks(hook_name, ...)
-  if not BRC.active and hook_name ~= HOOK_FUNCTIONS.init then return end
   if not _hooks or not _hooks[hook_name] then return end
 
   local success, result = pcall(call_all_hooks, hook_name, ...)
@@ -2649,7 +2650,7 @@ function BRC.init(parent_module)
     if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
   elseif reinit_success == false then
-    if not BRC.Data.try_backup_restore() then
+    if not BRC.Data.try_restore() then
       if BRC.mpr.yesno("Deactivate BRC?", BRC.COLOR.yellow) then
         BRC.active = false
         BRC.mpr.lightred("\nBRC is off.\n")
@@ -2699,6 +2700,7 @@ function BRC.autopickup(it, _)
 end
 
 function BRC.ready()
+  if not BRC.active then return end
   crawl.redraw_screen()
 
   if you.turns() == turn_count then return end
@@ -2714,15 +2716,18 @@ function BRC.ready()
 end
 
 function BRC.c_message(text, channel)
+  if not BRC.active then return end
   safe_call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
+  if not BRC.active then return end
   if not prompt then return end -- This fires from crawl, e.g. Shop purchase confirmation
   return safe_call_all_hooks(HOOK_FUNCTIONS.c_answer_prompt, prompt)
 end
 
 function BRC.c_assign_invletter(it)
+  if not BRC.active then return end
   return safe_call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
 end
 
