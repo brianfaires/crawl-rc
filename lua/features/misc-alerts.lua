@@ -26,7 +26,7 @@ local Config = f_misc_alerts.Config
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
 -- Local variables
-local below_hp_threshold
+local below_hp_threshold = nil
 
 -- Local functions
 local function alert_low_hp()

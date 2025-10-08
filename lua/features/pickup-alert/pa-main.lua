@@ -170,7 +170,7 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
 local Config = f_pickup_alert.Config
 
 -- Local variables
-local pause_pa_system
+local pause_pa_system = nil
 
 -- Local functions
 local function has_configured_force_more(it)

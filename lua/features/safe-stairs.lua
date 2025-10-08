@@ -20,7 +20,7 @@ ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 local Config = f_safe_stairs.Config
 
 -- Local variables
-local ss_cur_location
+local ss_cur_location = nil
 
 -- Local functions
 local function check_new_location(cmd)

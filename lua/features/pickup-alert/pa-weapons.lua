@@ -26,7 +26,7 @@ local RANGED = "range_"
 local MELEE = "melee_"
 
 -- Local variables
-local top_attack_skill
+local top_attack_skill = nil
 
 -- Core logic: How weapon scores are calculated
 local function get_score(it, no_brand_bonus)

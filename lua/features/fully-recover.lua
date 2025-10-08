@@ -22,8 +22,8 @@ local MAX_TURNS_TO_WAIT = 500
 local WAITING_MESSAGE = "You start waiting."
 
 -- Local variables
-local fr_start_turn
-local fr_explore_after
+local fr_start_turn = nil
+local fr_explore_after = nil
 
 -- Local functions
 local function abort_fully_recover()

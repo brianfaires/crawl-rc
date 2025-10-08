@@ -3019,7 +3019,7 @@ end
 ------------------- End config section -------------------
 
 -- Local variables
-local patterns_to_mute -- which packs to mute at next ready()
+local patterns_to_mute = nil -- which packs to mute at next ready()
 
 -- Local constants
 local WARN_PREFIX = "monster_warning:(?<!spectral )("
@@ -3645,11 +3645,11 @@ local XL_FORCE_MORES = {
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
--- Local state
-local cur_god
-local ignore_all_magic
-local ignore_advanced_magic
-local xl_force_mores_active
+-- Local variables
+local cur_god = nil
+local ignore_all_magic = nil
+local ignore_advanced_magic = nil
+local xl_force_mores_active = nil
 
 -- Local functions
 local function set_class_options()
@@ -3937,8 +3937,8 @@ local MAX_TURNS_TO_WAIT = 500
 local WAITING_MESSAGE = "You start waiting."
 
 -- Local variables
-local fr_start_turn
-local fr_explore_after
+local fr_start_turn = nil
+local fr_explore_after = nil
 
 -- Local functions
 local function abort_fully_recover()
@@ -4175,7 +4175,7 @@ local Config = f_misc_alerts.Config
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
 -- Local variables
-local below_hp_threshold
+local below_hp_threshold = nil
 
 -- Local functions
 local function alert_low_hp()
@@ -4281,7 +4281,7 @@ local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
 if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
 
 -- Local variables
-local do_remind_id_check
+local do_remind_id_check = nil
 
 -- Local functions
 local function get_max_stack(class)
@@ -4400,9 +4400,9 @@ local GAUNTLET_SEARCH_STRING = table.concat(
 )
 
 -- Local variables
-local stop_on_altars
-local stop_on_portals
-local stop_on_stairs
+local stop_on_altars = nil
+local stop_on_portals = nil
+local stop_on_stairs = nil
 
 -- Local functions
 local function is_explore_done_msg(text)
@@ -4594,7 +4594,7 @@ ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 local Config = f_safe_stairs.Config
 
 -- Local variables
-local ss_cur_location
+local ss_cur_location = nil
 
 -- Local functions
 local function check_new_location(cmd)
@@ -4715,10 +4715,10 @@ f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
 
 -- Local variables
-local do_cleanup_weapon_slots
-local priorities_ab
-local priorities_w
-local slots_changed
+local do_cleanup_weapon_slots = nil
+local priorities_ab = nil
+local priorities_w = nil
+local slots_changed = nil
 
 -- Local functions
 local function get_first_empty_slot()
@@ -5039,7 +5039,7 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
 local Config = f_pickup_alert.Config
 
 -- Local variables
-local pause_pa_system
+local pause_pa_system = nil
 
 -- Local functions
 local function has_configured_force_more(it)
@@ -5800,7 +5800,7 @@ local RANGED = "range_"
 local MELEE = "melee_"
 
 -- Local variables
-local top_attack_skill
+local top_attack_skill = nil
 
 -- Core logic: How weapon scores are calculated
 local function get_score(it, no_brand_bonus)
