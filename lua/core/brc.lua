@@ -50,7 +50,7 @@ local function handle_core_error(hook_name, result, ...)
     if param and param.name and type(param.name) == "function" then
       params[#params + 1] = param.name()
     else
-      params[#params + 1] = BRC.util.tostring(param):gsub("<", "<_")
+      params[#params + 1] = BRC.util.tostring(param, true)
     end
   end
   local param_str = table.concat(params, ", ")
@@ -98,9 +98,9 @@ local function call_all_hooks(hook_name, ...)
           BRC.log.warning(string.format("Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
               hook_name,
               returning_feature,
-              BRC.util.tostring(last_return_value),
+              BRC.util.tostring(last_return_value, true),
               hook_info.feature_name,
-              BRC.util.tostring(result)
+              BRC.util.tostring(result, true)
           ))
         end
 

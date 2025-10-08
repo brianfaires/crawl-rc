@@ -45,10 +45,10 @@ local function serialize_inventory()
 end
 
 local function serialize_config()
-  local tokens = { "\n---BRC Config---\n" .. BRC.util.tostring(BRC.Config) }
+  local tokens = { "\n---BRC Config---\n" .. BRC.util.tostring(BRC.Config, true) }
   for name, feature in pairs(BRC.get_registered_features()) do
     if feature.Config then
-      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(feature.Config)
+      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(feature.Config, true)
     end
   end
 
@@ -538,7 +538,7 @@ function BRC.dump.char(add_debug_info)
 end
 
 function BRC.dump.var(v)
-  crawl.mpr(BRC.util.tostring(v))
+  crawl.mpr(BRC.util.tostring(v, true))
 end
 
 function macro_brc_dump_character()
@@ -568,29 +568,35 @@ function BRC.util.int2char(num)
   return string.char(string.byte("a") + num)
 end
 
-function BRC.util.tostring(value, indent_count)
-  indent_count = indent_count or 1
-  local indent = string.rep("  ", indent_count)
-  local parent_indent = string.rep("  ", indent_count - 1)
-  local list_separator = ",\n" .. indent
+function BRC.util.tostring(value, replace_gt_lt, indent_count)
+  local var_type = type(value)
+  if var_type == "string" then
+    local s = '"' .. value:gsub('"', "") .. '"'
+    if not replace_gt_lt then return s end
+    return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
+  elseif var_type == "table" then
+    indent_count = indent_count or 0
+    local indent = string.rep("  ", indent_count)
+    local child_indent = string.rep("  ", indent_count+1)
+    local list_separator = ",\n" .. child_indent
 
-  local type = type(value)
-  if type == "string" then
-    return string.format('"%s"', value:gsub('"', ""))
-  elseif type == "table" then
     if BRC.is.list(value) then
       local tokens = {}
       for _, v in ipairs(value) do
-        tokens[#tokens + 1] = BRC.util.tostring(v, indent_count + 1)
+        tokens[#tokens + 1] = BRC.util.tostring(v, replace_gt_lt, indent_count + 1)
       end
-      if #tokens < 4 then return string.format("{ %s }", table.concat(tokens, ", ")) end
-      return "{\n" .. indent .. table.concat(tokens, list_separator) .. "\n" .. parent_indent .. "}"
+      if #tokens < 4 then
+        return string.format("{ %s }", table.concat(tokens, ", "))
+      else
+        return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
+      end
     elseif BRC.is.map(value) then
       local tokens = {}
       for k, v in pairs(value) do
-        tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, indent_count + 1))
+        local form = type(value) == "table" and '["%s"] = %s' or "%s = %s"
+        tokens[#tokens + 1] = string.format(form, k, BRC.util.tostring(v, replace_gt_lt, indent_count + 1))
       end
-      return "{\n" .. indent .. table.concat(tokens, list_separator) .. "\n" .. parent_indent .. "}"
+      return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
     else
       return "{}"
     end
