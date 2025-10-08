@@ -118,7 +118,7 @@ function _weapon_cache.is_empty()
 end
 
 function _weapon_cache.serialize()
-  local tokens = { "\n---INVENTORY WEAPONS---" }
+  local tokens = { BRC.text.cyan("\n---INVENTORY WEAPONS---") }
   for _, weap in ipairs(_weapon_cache.weapons) do
     tokens[#tokens + 1] = string.format("\n%s\n", weap.basename)
     for k, v in pairs(weap) do

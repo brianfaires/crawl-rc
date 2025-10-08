@@ -113,14 +113,14 @@ function BRC.Data.persist(name, default_value)
 end
 
 function BRC.Data.serialize()
-  local tokens = { "\n---PERSISTENT TABLES---\n" }
+  local tokens = { BRC.text.lightmagenta("\n---PERSISTENT TABLES---\n") }
   for _, name in ipairs(_persist_names) do
     if type(_G[name]) == "table" then
       tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.util.tostring(_G[name], true))
     end
   end
 
-  tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
+  tokens[#tokens + 1] = BRC.text.lightmagenta("\n---PERSISTENT VARIABLES---\n")
   for _, name in ipairs(_persist_names) do
     if type(_G[name]) ~= "table" then
       tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.util.tostring(_G[name], true))

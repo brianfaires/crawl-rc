@@ -1153,7 +1153,7 @@ local function log_message(message, context, color)
 end
 
 local function serialize_chk_lua_save()
-  local tokens = { "\n---CHK_LUA_SAVE---" }
+  local tokens = { BRC.text.lightblue("\n---CHK_LUA_SAVE---") }
   for _, func in ipairs(chk_lua_save) do
     tokens[#tokens + 1] = util.trim(func())
   end
@@ -1162,7 +1162,7 @@ local function serialize_chk_lua_save()
 end
 
 local function serialize_inventory()
-  local tokens = { "\n---INVENTORY---\n" }
+  local tokens = { BRC.text.lightcyan("\n---INVENTORY---\n") }
   for inv in iter.invent_iterator:new(items.inventory()) do
     tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
     local base = inv.name("base") or "N/A"
@@ -1175,10 +1175,11 @@ local function serialize_inventory()
 end
 
 local function serialize_config()
-  local tokens = { "\n---BRC Config---\n" .. BRC.util.tostring(BRC.Config, true) }
+  local tokens = { BRC.text.lightcyan("\n---BRC Config---\n") .. BRC.util.tostring(BRC.Config, true) }
   for name, feature in pairs(BRC.get_registered_features()) do
     if feature.Config then
-      tokens[#tokens + 1] = "\n\n---Feature Config: " .. name .. "---\n" .. BRC.util.tostring(feature.Config, true)
+      local header = BRC.text.cyan("\n\n---Feature Config: " .. name .. "---\n")
+      tokens[#tokens + 1] = header .. BRC.util.tostring(feature.Config, true)
     end
   end
 
@@ -1641,14 +1642,10 @@ function BRC.dump.all(verbose, skip_mpr)
   end
 
   if verbose then
-    tokens[#tokens + 1] = serialize_config()
-    tokens[#tokens + 1] = serialize_inventory()
     tokens[#tokens + 1] = serialize_chk_lua_save()
-    if _weapon_cache and _weapon_cache.serialize and type(_weapon_cache.serialize) == "function" then
-      tokens[#tokens + 1] = _weapon_cache.serialize()
-    else
-      BRC.log.error("Failed to run _weapon_cache.serialize()")
-    end
+    tokens[#tokens + 1] = serialize_inventory()
+    tokens[#tokens + 1] = _weapon_cache.serialize()
+    tokens[#tokens + 1] = serialize_config()
   end
 
   local text = table.concat(tokens, "\n")
@@ -1698,11 +1695,11 @@ function BRC.util.int2char(num)
   return string.char(string.byte("a") + num)
 end
 
-function BRC.util.tostring(value, replace_gt_lt, indent_count)
+function BRC.util.tostring(value, format_for_display, indent_count)
   local var_type = type(value)
   if var_type == "string" then
     local s = '"' .. value:gsub('"', "") .. '"'
-    if not replace_gt_lt then return s end
+    if not format_for_display then return s end
     return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
   elseif var_type == "table" then
     indent_count = indent_count or 0
@@ -1713,20 +1710,29 @@ function BRC.util.tostring(value, replace_gt_lt, indent_count)
     if BRC.is.list(value) then
       local tokens = {}
       for _, v in ipairs(value) do
-        tokens[#tokens + 1] = BRC.util.tostring(v, replace_gt_lt, indent_count + 1)
+        tokens[#tokens + 1] = BRC.util.tostring(v, format_for_display, indent_count + 1)
       end
-      if #tokens < 4 then
+      if #tokens < 4 and not util.exists(value, function(t) return type(t) == "table" end) then
         return string.format("{ %s }", table.concat(tokens, ", "))
       else
         return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
       end
     elseif BRC.is.map(value) then
       local tokens = {}
+      local contains_table = false
       for k, v in pairs(value) do
-        local form = type(value) == "table" and '["%s"] = %s' or "%s = %s"
-        tokens[#tokens + 1] = string.format(form, k, BRC.util.tostring(v, replace_gt_lt, indent_count + 1))
+        local form = '["%s"] = %s'
+        if format_for_display then
+          if type(v) ~= "table" then form = "%s = %s" end
+          contains_table = contains_table or type(v) == "table"
+        end
+        tokens[#tokens + 1] = string.format(form, k, BRC.util.tostring(v, format_for_display, indent_count + 1))
       end
-      return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
+      if format_for_display and #tokens <= 2 and not contains_table then
+        return string.format("{ %s }", table.concat(tokens, ", "))
+      else
+        return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
+      end
     else
       return "{}"
     end
@@ -2282,14 +2288,14 @@ function BRC.Data.persist(name, default_value)
 end
 
 function BRC.Data.serialize()
-  local tokens = { "\n---PERSISTENT TABLES---\n" }
+  local tokens = { BRC.text.lightmagenta("\n---PERSISTENT TABLES---\n") }
   for _, name in ipairs(_persist_names) do
     if type(_G[name]) == "table" then
       tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.util.tostring(_G[name], true))
     end
   end
 
-  tokens[#tokens + 1] = "\n---PERSISTENT VARIABLES---\n"
+  tokens[#tokens + 1] = BRC.text.lightmagenta("\n---PERSISTENT VARIABLES---\n")
   for _, name in ipairs(_persist_names) do
     if type(_G[name]) ~= "table" then
       tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.util.tostring(_G[name], true))
@@ -5898,7 +5904,7 @@ function _weapon_cache.is_empty()
 end
 
 function _weapon_cache.serialize()
-  local tokens = { "\n---INVENTORY WEAPONS---" }
+  local tokens = { BRC.text.cyan("\n---INVENTORY WEAPONS---") }
   for _, weap in ipairs(_weapon_cache.weapons) do
     tokens[#tokens + 1] = string.format("\n%s\n", weap.basename)
     for k, v in pairs(weap) do
