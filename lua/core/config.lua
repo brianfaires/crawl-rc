@@ -12,9 +12,9 @@ Usage:
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "Speed"
+BRC.config_to_use = "Testing"
 
--- Default: Values to always apply, unless
+-- Default: non-feature default values
 BRC.Configs.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
@@ -22,15 +22,23 @@ BRC.Configs.Default = {
 } -- BRC.Configs.Default (do not remove this comment)
 BRC.Config = BRC.Configs.Default
 
--- Testing: Cherry-pick settings to test specific features
+-- Testing: Isolate and test specific features
 BRC.Configs.Testing = {
   show_debug_messages = true,
+  disable_other_features = true,
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.1,
       weapon_sensitivity = 0.1,
     },
   },
+  init = function(self)
+    if self.disable_other_features then
+      for name, value in pairs(_G) do
+        if BRC.is_feature_module(value) and not self[name] then self[name].disabled = true end
+      end
+    end
+  end,
 } -- BRC.Configs.Testing (do not remove this comment)
 
 -- Custom: Personalized config
@@ -78,7 +86,7 @@ BRC.Configs.Custom = {
       staff_resists = true, -- When a staff gives a missing resistance
       talismans = true,
 
-      one_time = { -- Alert the first time each itemis found
+      one_time = { -- Alert the first time each item is found
         "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
         "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
@@ -108,9 +116,6 @@ BRC.Configs.Custom = {
     },
   },
 
-  ---- BRC.Config.BrandBonus: Tune the impact of brands on DPS calculations
-  -- This applies to weapon inscriptions, and item comparisons in the pickup-alert system.
-  -- Uses "terse" ego names, e.g. "spect" instead of "spectralizing"
   BrandBonus = {
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
     distort = { factor = 1.0, offset = 6.0 },
@@ -134,24 +139,32 @@ BRC.Configs.Custom = {
   },
 } -- BRC.Configs.Custom (do not remove this comment)
 
+-- Speed: For speed runs
 BRC.Configs.Speed = {
-  ["alert-monsters"] = {
-    fm_on_uniques = false,
-    Alerts = {},
-  },
+  ["after-shaft"] = { disabled = true },
+  ["alert-monsters"] = { disabled = true },
+  ["safe-consumables"] = { disabled = true },
+  ["safe-stairs"] = { disabled = true },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 1,    -- Force more for losing this % of max HP
     always_on_bottom = true,   -- Rewrite HP/MP meters after each turn with messages
   },
+  ["misc-alerts"] = {
+    alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
+    save_with_msg = false, -- Shift-S to save and leave yourself a message
+  },
   ["remind-id"] = {
-    stop_on_scrolls_count = 99, -- Stop when largest un-ID'd scroll stack increases and is >= this
-    stop_on_pots_count = 99,    -- Stop when largest un-ID'd potion stack increases and is >= this
+    stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
+    stop_on_pots_count = 9,    -- Stop when largest un-ID'd potion stack increases and is >= this
+  },
+  ["startup"] = {
+    show_skills_on_startup = false, -- Open skills menu on startup
   },
   ["pickup-alert"] = {
     Pickup = {
       armour = true,
-      staves = true,
+      staves = false,
       weapons = true,
       weapons_pure_upgrades_only = false, -- Only pick up better versions of same exact weapon
     },
@@ -163,7 +176,7 @@ BRC.Configs.Speed = {
       staff_resists = false, -- When a staff gives a missing resistance
       talismans = false,
 
-      one_time = { -- Alert the first time each itemis found
+      one_time = { -- Alert the first time each item is found
         "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales",
         "broad axe", "demon whip", "eveningstar", "morningstar",
@@ -179,22 +192,18 @@ BRC.Configs.Speed = {
       },
     },
   },
-  ["startup"] = {
-    show_skills_on_startup = false, -- Open skills menu on startup
-    auto_set_skill_targets = {
-      { (you.skill("Axes") > you.skill("Maces & Flails")) and "Axes" or "Maces & Flails", 6.0 },
-    },
-  },
 
   init = function(self)
     self.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
   end
 } -- BRC.Configs.Speed (do not remove this comment)
 
+-- Turncount: For turncount runs
 BRC.Configs.Turncount = {
 
 } -- BRC.Configs.Turncount (do not remove this comment)
 
+-- Streak: For win streaks
 BRC.Configs.Streak = {
 
 } -- BRC.Configs.Streak (do not remove this comment)

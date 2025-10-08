@@ -29,14 +29,6 @@ local turn_count = nil
 local depth = nil
 
 -- Local functions
-local function is_feature_module(maybe_feature_module)
-  return maybe_feature_module
-    and type(maybe_feature_module) == "table"
-    and maybe_feature_module.BRC_FEATURE_NAME
-    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
-    and #maybe_feature_module.BRC_FEATURE_NAME > 0
-end
-
 local function feature_is_disabled(feature_module)
   return feature_module and feature_module.Config and feature_module.Config.disabled
     or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
@@ -157,7 +149,7 @@ local function register_all_features(parent_module)
 
   -- Scan the namespace for feature modules and load them
   for name, value in pairs(parent_module) do
-    if is_feature_module(value) then
+    if BRC.is_feature_module(value) then
       local feature_name = value.BRC_FEATURE_NAME
       local success = BRC.register_feature(feature_name, value)
 
@@ -175,6 +167,14 @@ local function register_all_features(parent_module)
 end
 
 -- Public API
+function BRC.is_feature_module(maybe_feature_module)
+  return maybe_feature_module
+    and type(maybe_feature_module) == "table"
+    and maybe_feature_module.BRC_FEATURE_NAME
+    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
+    and #maybe_feature_module.BRC_FEATURE_NAME > 0
+end
+
 -- BRC.register_feature(): Return true if success, false if error, nil if feature is disabled
 function BRC.register_feature(feature_name, feature_module)
   if not feature_name or not feature_module then

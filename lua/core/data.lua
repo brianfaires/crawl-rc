@@ -34,7 +34,7 @@ local function verify_game_trackers()
       end
     end
 
-    if not _G["reload_complete"] then
+    if not _G.reload_complete then
       success = false
       BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
       BRC.mpr.lightgrey("[BRC] This is usually from a malformed RC file. Will attempt to restore from backup.")
@@ -152,7 +152,7 @@ function BRC.Data.init()
 
   -- Ensure turns() is captured on save, before persist() to get the updated value in chk_lua_save before it's checked
   table.insert(chk_lua_save, function()
-    _G["brc_turn"] = you.turns()
+    _G.brc_turn = you.turns()
     return ""
   end)
   for k, v in pairs(_game_trackers) do
@@ -177,7 +177,7 @@ function BRC.Data.verify_reinit()
     BRC.Data.persist(k, v)
   end
 
-  _G["reload_complete"] = true
+  _G.reload_complete = true
   return success
 end
 
