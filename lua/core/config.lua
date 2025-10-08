@@ -6,13 +6,13 @@ Usage:
   - Update BRC.config_to_use to load the corresponding config.
   - Update each config or create new ones.
   - Values that aren't defined will first fall back to Configs.Default, then to the defaults defined in feature configs.
-  - Define `init = function() ... end` in a config to run code after it loads.
+  - Define `init = function(self) ... end` in a config to run code after it loads. (use self to access the config table)
 --]]
 
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "Testing"
+BRC.config_to_use = "Speed"
 
 -- Default: Values to always apply, unless
 BRC.Configs.Default = {
@@ -135,9 +135,9 @@ BRC.Configs.Custom = {
 } -- BRC.Configs.Custom (do not remove this comment)
 
 BRC.Configs.Speed = {
-  ["misc-alerts"] = {
+  ["alert-monsters"] = {
     fm_on_uniques = false,
-    FM_PATTERNS = {},
+    Alerts = {},
   },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP

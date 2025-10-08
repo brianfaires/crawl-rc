@@ -20,9 +20,8 @@ f_alert_monsters.Config = {
 -- Local config
 local Config = f_alert_monsters.Config
 
--- Local constants / configuration
 --[[
-FM_PATTERNS configures all alerts. Each table within it creates one alert, using the following fields:
+Config.Alerts configures all alerts. Each table within it creates one alert, using the following fields:
   - `name` is for debugging.
   - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
   - `is_pack` (optional) indicates the alert is for a pack of monsters.
@@ -39,7 +38,7 @@ FM_PATTERNS configures all alerts. Each table within it creates one alert, using
         `elec` alerts are active when you have no rElec and < `cutoff` HP.
         `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
 --]]
-local FM_PATTERNS = {
+f_alert_monsters.Config.Alerts = {
   { name = "always_fm",
     pattern = {
       -- High damage/speed
@@ -190,10 +189,10 @@ local FM_PATTERNS = {
     pattern = { "shadow dragon" } },
 } -- fm_patterns (do not remove this comment)
 
-local function append_conditional_alerts()
+f_alert_monsters.Config.init = function()
   -- Conditionally add miasma monsters
   if not BRC.you.miasma_immune() then
-    util.append(FM_PATTERNS, {
+    util.append(Config.Alerts, {
       name = "miasma", cond = "always", cutoff = 0,
       pattern = { "death drake", "tainted leviathan", "putrid mouth", }
     })
@@ -201,7 +200,7 @@ local function append_conditional_alerts()
 
   -- Conditionally add tormentors
   if not you.torment_immune() then
-    util.append(FM_PATTERNS, {
+    util.append(Config.Alerts, {
       name = "torment", cond = "always", cutoff = 0,
       pattern = { "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
                   "mummy priest", "(dread|ancient) lich", "lurking horror", }
@@ -213,7 +212,7 @@ local function append_conditional_alerts()
   if BRC.you.mutation_immune() then
     BRC.set.flash_screen_message("monster_warning:" .. mutator_str, true)
   else
-    util.append(FM_PATTERNS, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
+    util.append(Config.Alerts, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
   end
 
   -- If configured, add fm for all uniques and pan lords
@@ -250,7 +249,7 @@ local function update_pack_mutes()
   patterns_to_mute = {}
 
   -- Remove expired mutes
-  for _, v in ipairs(FM_PATTERNS) do
+  for _, v in ipairs(Config.Alerts) do
     if v.is_pack and v.last_fm_turn ~= -1 and you.turns() >= v.last_fm_turn + Config.pack_timeout then
       v.last_fm_turn = -1
       v.active_alert = false -- Set to false and let the main logic decide if it should reactivate it.
@@ -262,12 +261,11 @@ end
 -- Hook functions
 function f_alert_monsters.init()
   patterns_to_mute = {}
-  append_conditional_alerts()
 
   -- Break packs with tables into individual alerts
   local add_patterns = {}
   local remove_patterns = {}
-  for _, v in ipairs(FM_PATTERNS) do
+  for _, v in ipairs(Config.Alerts) do
     if v.is_pack and type(v.pattern) == "table" and #v.pattern > 1 then
       remove_patterns[#remove_patterns + 1] = v
       for _, m in ipairs(v.pattern) do
@@ -278,13 +276,13 @@ function f_alert_monsters.init()
       end
     end
   end
-  util.append(FM_PATTERNS, add_patterns)
+  util.append(Config.Alerts, add_patterns)
   for _, v in ipairs(remove_patterns) do
-    util.remove(FM_PATTERNS, v)
+    util.remove(Config.Alerts, v)
   end
 
   -- Convert patterns to regex
-  for _, v in ipairs(FM_PATTERNS) do
+  for _, v in ipairs(Config.Alerts) do
     v.active_alert = false
     v.last_fm_turn = -1
     if type(v.pattern) == "table" then
@@ -298,7 +296,7 @@ end
 function f_alert_monsters.c_message(text, channel)
   if channel ~= "monster_warning" or not text:find("comes? into view") or Config.pack_timeout <= 0 then return end
   -- Identify when a mute should be turned on
-  for _, v in ipairs(FM_PATTERNS) do
+  for _, v in ipairs(Config.Alerts) do
     if v.is_pack and v.regex:matches(text) then
       if v.last_fm_turn == -1 then
         patterns_to_mute[#patterns_to_mute + 1] = v.pattern
@@ -333,7 +331,7 @@ function f_alert_monsters.ready()
   local res_cold = you.res_cold()
   local res_drain = you.res_draining()
 
-  for _, v in ipairs(FM_PATTERNS) do
+  for _, v in ipairs(Config.Alerts) do
     local should_be_active = nil
 
     if Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then

@@ -87,6 +87,7 @@ local function override_feature_config(feature_name)
   if not BRC.Config[feature_name] then return end
   if not _features[feature_name].Config then _features[feature_name].Config = {} end
   override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
+  if type(_features[feature_name].Config.init) == "function" then _features[feature_name].Config:init() end
 end
 
 -- Hook dispatching
@@ -201,6 +202,10 @@ function BRC.register_feature(feature_name, feature_module)
     end
   end
 
+  -- Handle config init() and overrides
+  if type(feature_module.Config) == "table" and type(feature_module.Config.init) == "function" then
+    feature_module.Config:init()
+  end
   override_feature_config(feature_name)
   return true
 end
@@ -306,7 +311,7 @@ function BRC.load_config(config_name)
     BRC.Config[k] = v
   end
 
-  if type(BRC.Config.init) == "function" then BRC.Config.init() end
+  if type(BRC.Config.init) == "function" then BRC.Config:init() end
 
   for name, _ in pairs(_features) do
     override_feature_config(name)

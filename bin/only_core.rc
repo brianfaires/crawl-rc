@@ -11,13 +11,13 @@ Usage:
   - Update BRC.config_to_use to load the corresponding config.
   - Update each config or create new ones.
   - Values that aren't defined will first fall back to Configs.Default, then to the defaults defined in feature configs.
-  - Define `init = function() ... end` in a config to run code after it loads.
+  - Define `init = function(self) ... end` in a config to run code after it loads. (use self to access the config table)
 --]]
 
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "Testing"
+BRC.config_to_use = "Speed"
 
 -- Default: Values to always apply, unless
 BRC.Configs.Default = {
@@ -140,9 +140,9 @@ BRC.Configs.Custom = {
 } -- BRC.Configs.Custom (do not remove this comment)
 
 BRC.Configs.Speed = {
-  ["misc-alerts"] = {
+  ["alert-monsters"] = {
     fm_on_uniques = false,
-    FM_PATTERNS = {},
+    Alerts = {},
   },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
@@ -401,7 +401,7 @@ function BRC.log.warning(message, context)
 end
 
 function BRC.log.info(message, context)
-  log_message(message, context, BRC.COLOR.lightgrey)
+  log_message(message, context, BRC.COLOR.white)
 end
 
 function BRC.log.debug(message, context)
@@ -1660,6 +1660,7 @@ local function override_feature_config(feature_name)
   if not BRC.Config[feature_name] then return end
   if not _features[feature_name].Config then _features[feature_name].Config = {} end
   override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
+  if type(_features[feature_name].Config.init) == "function" then _features[feature_name].Config:init() end
 end
 
 -- Hook dispatching
@@ -1774,6 +1775,10 @@ function BRC.register_feature(feature_name, feature_module)
     end
   end
 
+  -- Handle config init() and overrides
+  if type(feature_module.Config) == "table" and type(feature_module.Config.init) == "function" then
+    feature_module.Config:init()
+  end
   override_feature_config(feature_name)
   return true
 end
@@ -1879,7 +1884,7 @@ function BRC.load_config(config_name)
     BRC.Config[k] = v
   end
 
-  if type(BRC.Config.init) == "function" then BRC.Config.init() end
+  if type(BRC.Config.init) == "function" then BRC.Config:init() end
 
   for name, _ in pairs(_features) do
     override_feature_config(name)

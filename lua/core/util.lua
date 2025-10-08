@@ -73,7 +73,7 @@ function BRC.log.warning(message, context)
 end
 
 function BRC.log.info(message, context)
-  log_message(message, context, BRC.COLOR.lightgrey)
+  log_message(message, context, BRC.COLOR.white)
 end
 
 function BRC.log.debug(message, context)
