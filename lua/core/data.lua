@@ -12,9 +12,12 @@ BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for th
 
 BRC.Data.Config = {
   offer_on_char_dump = true,
-  max_lines_per_table_in = 200, -- Avoid huge tables in debug dumps, like alert_monsters.Config.Alerts
-  exclude_functions_and_userdata = true,
+  max_lines_per_table = 200, -- Avoid huge tables in debug dumps, like alert_monsters.Config.Alerts
+  skip_pointers = true, -- Don't dump functions and userdata (they just show a hex value)
 }
+
+-- Local config
+local Config = BRC.Data.Config
 
 -- Local variables
 local _persist_names = {}
@@ -141,7 +144,7 @@ end
 
 -- BRC.Data._init(): Called explicitly by BRC.init(); important that it be initialized last
 function BRC.Data.init()
-  if BRC.Data.Config.offer_on_char_dump then
+  if Config.offer_on_char_dump then
     BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
   end
 

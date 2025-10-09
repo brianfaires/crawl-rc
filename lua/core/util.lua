@@ -14,6 +14,16 @@ local _mpr_queue = {}
 local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", ".", "[", "]", "*", "+", "-", "?", ")" })
 
 -- Local functions
+local function cap_lines(str)
+  if BRC.Data.Config.max_lines_per_table and BRC.Data.Config.max_lines_per_table > 0 then
+    local lines = BRC.util.count_lines(str)
+    if lines > BRC.Data.Config.max_lines_per_table then
+      return string.format("{ %s lines... }", lines)
+    end
+  end
+  return str
+end
+
 local function log_message(message, context, color)
   color = color or BRC.COLOR.lightgrey
   local msg = string.format("[BRC] %s", tostring(message))
@@ -552,6 +562,13 @@ function BRC.util.control_key(c)
   return string.byte(c:upper()) - 64
 end
 
+function BRC.util.count_lines(str)
+  if not str then return 0 end
+  local count = 1
+  str:gsub("\n", function() count = count + 1 end)
+  return count
+end
+
 -- BRC.util.do_cmd(): Tries keypress first, then crawl.do_commands() (which isn't always immediate)
 function BRC.util.do_cmd(cmd)
   local key = BRC.get.command_key(cmd)
@@ -603,7 +620,7 @@ function BRC.util.tostring(var, formatted, indent_count)
     if BRC.is.list(var) then
       local tokens = {}
       for _, v in ipairs(var) do
-        tokens[#tokens + 1] = BRC.util.tostring(v, formatted, indent_count + 1)
+        tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, formatted, indent_count + 1))
       end
       if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
         return string.format("{ %s }", table.concat(tokens, ", "))
@@ -616,12 +633,14 @@ function BRC.util.tostring(var, formatted, indent_count)
         local keys = BRC.util.get_sorted_keys(var)
         local contains_table = false
         for i = 1, #keys do
-          local v = BRC.util.tostring(var[keys[i]], true, indent_count + 1)
-          if type(var[keys[i]]) == "table" then
-            contains_table = true
-            tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
-          else
-            tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
+          local v = cap_lines(BRC.util.tostring(var[keys[i]], true, indent_count + 1))
+          if v then
+            if type(var[keys[i]]) == "table" then
+              contains_table = true
+              tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
+            else
+              tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
+            end
           end
         end
         if #tokens <= 2 and not contains_table then
@@ -637,6 +656,9 @@ function BRC.util.tostring(var, formatted, indent_count)
       return "{}"
     end
   else
+    if BRC.Data.Config.skip_pointers and type(var) == "function" or type(var) == "userdata" then
+      return nil
+    end
     return tostring(var)
   end
 end
