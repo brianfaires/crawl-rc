@@ -23,7 +23,6 @@ BRC.config_to_use = "Custom"
 BRC.Configs.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
-  offer_debug_notes_on_char_dump = true,
 } -- BRC.Configs.Default (do not remove this comment)
 BRC.Config = BRC.Configs.Default
 
@@ -386,7 +385,13 @@ end
 
 local function serialize_config()
   local tokens = { BRC.text.lightcyan("\n---BRC Config---\n") .. BRC.util.tostring(BRC.Config, true) }
-  for name, feature in pairs(BRC.get_registered_features()) do
+  local all_features = BRC.get_registered_features()
+  local keys = util.keys(all_features)
+  util.sort(keys)
+
+  for i = 1, #keys do
+    local name = keys[i]
+    local feature = all_features[name]
     if feature.Config then
       local header = BRC.text.cyan("\n\n---Feature Config: " .. name .. "---\n")
       tokens[#tokens + 1] = header .. BRC.util.tostring(feature.Config, true)
@@ -844,13 +849,7 @@ BRC.dump = {}
 -- Usage: In lua interpreter, usually `BRC.dump.all()`, or `BRC.dump.all(1)` for verbose output
 function BRC.dump.all(verbose, skip_mpr)
   local tokens = {}
-
-  if BRC.Data and BRC.Data.serialize and type(BRC.Data.serialize) == "function" then
-    tokens[#tokens + 1] = BRC.Data.serialize()
-  else
-    BRC.log.error("Failed to run BRC.Data.serialize()")
-  end
-
+  tokens[#tokens + 1] = BRC.Data.serialize()
   if verbose then
     tokens[#tokens + 1] = serialize_chk_lua_save()
     tokens[#tokens + 1] = serialize_inventory()
@@ -905,11 +904,33 @@ function BRC.util.int2char(num)
   return string.char(string.byte("a") + num)
 end
 
-function BRC.util.tostring(value, format_for_display, indent_count)
-  local var_type = type(value)
+-- Sorts the keys of a dictionary/map: vars before tables, then alphabetically by key
+-- If a list is passed, it assumed it is a list of global variable names
+function BRC.util.get_sorted_keys(map_or_list)
+  local keys_vars = {}
+  local keys_tables = {}
+
+  if BRC.is.map(map_or_list) then
+    for key, v in pairs(map_or_list) do
+      table.insert(type(v) == "table" and keys_tables or keys_vars, key)
+    end
+  else
+    for _, key in ipairs(map_or_list) do
+      table.insert(type(_G[key]) == "table" and keys_tables or keys_vars, key)
+    end
+  end
+
+  util.sort(keys_vars)
+  util.sort(keys_tables)
+  util.append(keys_vars, keys_tables)
+  return keys_vars
+end
+
+function BRC.util.tostring(var, formatted, indent_count)
+  local var_type = type(var)
   if var_type == "string" then
-    local s = '"' .. value:gsub('"', "") .. '"'
-    if not format_for_display then return s end
+    local s = '"' .. var:gsub('"', "") .. '"'
+    if not formatted then return s end
     return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
   elseif var_type == "table" then
     indent_count = indent_count or 0
@@ -917,37 +938,44 @@ function BRC.util.tostring(value, format_for_display, indent_count)
     local child_indent = string.rep("  ", indent_count+1)
     local list_separator = ",\n" .. child_indent
 
-    if BRC.is.list(value) then
+    if BRC.is.list(var) then
       local tokens = {}
-      for _, v in ipairs(value) do
-        tokens[#tokens + 1] = BRC.util.tostring(v, format_for_display, indent_count + 1)
+      for _, v in ipairs(var) do
+        tokens[#tokens + 1] = BRC.util.tostring(v, formatted, indent_count + 1)
       end
-      if #tokens < 4 and not util.exists(value, function(t) return type(t) == "table" end) then
+      if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
         return string.format("{ %s }", table.concat(tokens, ", "))
       else
         return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
       end
-    elseif BRC.is.map(value) then
+    elseif BRC.is.map(var) then
       local tokens = {}
-      local contains_table = false
-      for k, v in pairs(value) do
-        local form = '["%s"] = %s'
-        if format_for_display then
-          if type(v) ~= "table" then form = "%s = %s" end
-          contains_table = contains_table or type(v) == "table"
+      if formatted then
+        local keys = BRC.util.get_sorted_keys(var)
+        local contains_table = false
+        for i = 1, #keys do
+          local v = BRC.util.tostring(var[keys[i]], true, indent_count + 1)
+          if type(var[keys[i]]) == "table" then
+            contains_table = true
+            tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
+          else
+            tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
+          end
         end
-        tokens[#tokens + 1] = string.format(form, k, BRC.util.tostring(v, format_for_display, indent_count + 1))
-      end
-      if format_for_display and #tokens <= 2 and not contains_table then
-        return string.format("{ %s }", table.concat(tokens, ", "))
+        if #tokens <= 2 and not contains_table then
+          return string.format("{ %s }", table.concat(tokens, ", "))
+        end
       else
-        return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
+        for k, v in pairs(var) do
+          tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, formatted, indent_count + 1))
+        end
       end
+      return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
     else
       return "{}"
     end
   else
-    return tostring(value)
+    return tostring(var)
   end
 end
 
@@ -1395,6 +1423,12 @@ BRC = BRC or {}
 BRC.Data = {}
 BRC.data = BRC.Data -- alias
 
+BRC.Data.Config = {
+  offer_on_char_dump = true,
+  max_lines_per_table_in = 200, -- Avoid huge tables in debug dumps, like alert_monsters.Config.Alerts
+  exclude_functions_and_userdata = true,
+}
+
 -- Local variables
 local _persist_names = {}
 local _game_trackers = { -- Values to detect when character is changed
@@ -1498,20 +1532,11 @@ function BRC.Data.persist(name, default_value)
 end
 
 function BRC.Data.serialize()
-  local tokens = { BRC.text.lightmagenta("\n---PERSISTENT TABLES---\n") }
-  for _, name in ipairs(_persist_names) do
-    if type(_G[name]) == "table" then
-      tokens[#tokens + 1] = string.format("%s = %s\n\n", name, BRC.util.tostring(_G[name], true))
-    end
+  local tokens = { BRC.text.lightmagenta("\n---PERSISTENT VARIABLES---\n") }
+  local sorted_keys = BRC.util.get_sorted_keys(_persist_names)
+  for _, key in ipairs(sorted_keys) do
+    tokens[#tokens + 1] = string.format("%s = %s\n", key, BRC.util.tostring(_G[key], true))
   end
-
-  tokens[#tokens + 1] = BRC.text.lightmagenta("\n---PERSISTENT VARIABLES---\n")
-  for _, name in ipairs(_persist_names) do
-    if type(_G[name]) ~= "table" then
-      tokens[#tokens + 1] = string.format("%s = %s\n", name, BRC.util.tostring(_G[name], true))
-    end
-  end
-
   return table.concat(tokens)
 end
 
@@ -1858,7 +1883,7 @@ function BRC.init(parent_module)
   add_autopickup_func(BRC.autopickup)
 
   -- Register the char_dump macro
-  if BRC.Config.offer_debug_notes_on_char_dump then
+  if BRC.Config.offer_on_char_dump then
     BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
   end
 
