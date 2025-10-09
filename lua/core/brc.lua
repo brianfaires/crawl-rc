@@ -243,10 +243,13 @@ function BRC.init(parent_module)
 
   BRC.log.debug("Load main config...")
   if BRC.load_config(BRC.config_to_use) then
-    BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(BRC.config_to_use or "Default")))
+    BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(c_persist.BRC.current_config or "Default")))
   elseif type(BRC.config_to_use ~= nil) then
     BRC.log.error(string.format("Failed to load config: %s", BRC.text.red(BRC.config_to_use)))
     return false
+  else
+    BRC.config_to_use = "Default"
+    return BRC.init(parent_module)
   end
 
   BRC.log.debug("Register features...")
@@ -291,12 +294,14 @@ function BRC.init(parent_module)
 end
 
 function BRC.load_config(config_name)
-  if type(config_name) ~= "string" or type(BRC.Configs[config_name]) ~= "table" then
+  if type(config_name) == "string" and config_name:lower() == "previous" then
+    if c_persist.BRC.current_config and BRC.load_config(c_persist.BRC.current_config) then return true end
+    config_name = BRC.mpr.select("Select a config:", util.keys(BRC.Configs))
+  elseif type(config_name) ~= "string" or type(BRC.Configs[config_name]) ~= "table" then
     BRC.log.error(string.format("Config '%s' not found", config_name))
     return false
   end
 
-  BRC.config_to_use = config_name
   BRC.Config = BRC.Configs.Default
   for k, v in pairs(BRC.Configs[config_name]) do
     BRC.Config[k] = v
@@ -308,6 +313,7 @@ function BRC.load_config(config_name)
     override_feature_config(name)
   end
 
+  c_persist.BRC.current_config = config_name
   return true
 end
 

@@ -219,6 +219,33 @@ function BRC.mpr.consume_queue()
   _mpr_queue = {}
 end
 
+-- Get a selection from the user, from a list of options
+function BRC.mpr.select(text, options, color)
+  if not (options and type(options) == "table" and #options > 0) then
+    BRC.log.error("No options provided for BRC.mpr.select")
+    return false
+  end
+
+  local MAX_TRIES = 10
+  color = color or BRC.COLOR.lightcyan
+  local msg = string.format("%s:\n", text)
+  for i, option in ipairs(options) do
+    msg = msg .. string.format("%s: %s\n", i, BRC.text.white(option))
+  end
+  crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
+  for _ = 1, MAX_TRIES do
+    local res = crawl.getch()
+    if res then
+      local num = res - string.byte("0")
+      if num > 0 and num <= #options then return options[num] end
+    end
+    BRC.mpr.magenta("Invalid option, try again.")
+  end
+
+  BRC.mpr.lightmagenta("Fine then. Using option 1: " .. options[1])
+  return options[1]
+end
+
 -- Get a yes/no response
 function BRC.mpr.yesno(text, color, capital_only)
   local msg = string.format("%s (%s)", text, capital_only and "Y/N" or "y/n")
