@@ -78,7 +78,7 @@ function f_pa_misc.is_unneeded_ring(it)
   local found_first = false
   for inv in iter.invent_iterator:new(items.inventory()) do
     if BRC.is.ring(inv) and inv.subtype() == st then
-      if found_first or missing_hand then return true end
+      if found_first or (missing_hand > 0) then return true end
       found_first = true
     end
   end

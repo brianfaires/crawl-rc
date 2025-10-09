@@ -1965,7 +1965,15 @@ end
 
 -- Hook methods
 function BRC.autopickup(it, _)
-  return safe_call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
+  if BRC.is.talisman(it) then
+    BRC.dump.var(it.name())
+    BRC.dump.var(it.is_in_shop)
+  end
+  local r = safe_call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
+  if r == false then
+    BRC.dump.var("blocked: " .. it.name())
+  end
+  return r
 end
 
 function BRC.ready()
