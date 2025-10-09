@@ -734,7 +734,7 @@ end
 function BRC.is.talisman(it)
   if not it then return false end
   local c = it.class(true)
-  return c and (c == "talisman" or c == "bauble")
+  return c and (c == "talisman")
 end
 
 function BRC.is.orb(it)
@@ -1965,15 +1965,7 @@ end
 
 -- Hook methods
 function BRC.autopickup(it, _)
-  if BRC.is.talisman(it) then
-    BRC.dump.var(it.name())
-    BRC.dump.var(it.is_in_shop)
-  end
-  local r = safe_call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
-  if r == false then
-    BRC.dump.var("blocked: " .. it.name())
-  end
-  return r
+  return safe_call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end
 
 function BRC.ready()

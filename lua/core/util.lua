@@ -396,7 +396,7 @@ end
 function BRC.is.talisman(it)
   if not it then return false end
   local c = it.class(true)
-  return c and (c == "talisman" or c == "bauble")
+  return c and (c == "talisman")
 end
 
 function BRC.is.orb(it)

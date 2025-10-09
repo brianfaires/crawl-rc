@@ -63,6 +63,7 @@ function f_pa_misc.alert_staff(it)
 end
 
 function f_pa_misc.alert_talisman(it)
+  if not it.is_identified then return false end -- Necessary to avoid firing on '\' menu
   if it.artefact then
     return f_pickup_alert.do_alert(it, "Artefact talisman", Emoji.TALISMAN, Config.Alert.More.talismans)
   end
