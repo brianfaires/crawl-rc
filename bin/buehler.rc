@@ -17,16 +17,16 @@ Usage:
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "Testing"
+BRC.config_to_use = "Custom"
 
 -- Default: non-feature default values
 BRC.Configs.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
 } -- BRC.Configs.Default (do not remove this comment)
-BRC.Config = BRC.Configs.Default
+BRC.Config = BRC.Configs.Default -- Init BRC.Config
 
--- Testing: Isolate and test specific features
+-- Testing Config: Isolate and test specific features
 BRC.Configs.Testing = {
   show_debug_messages = true,
   disable_other_features = true,
@@ -47,7 +47,7 @@ BRC.Configs.Testing = {
   end,
 } -- BRC.Configs.Testing (do not remove this comment)
 
--- Custom: Personalized config
+-- Custom Config: Personalized settings
 BRC.Configs.Custom = {
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
@@ -87,7 +87,7 @@ BRC.Configs.Custom = {
 
     Alert = {
       armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 = disable all armour alerts
-      weapon_sensitivity = 0.1, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
+      weapon_sensitivity = 2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
       orbs = true,
       staff_resists = true, -- When a staff gives a missing resistance
       talismans = true,
@@ -145,7 +145,7 @@ BRC.Configs.Custom = {
   },
 } -- BRC.Configs.Custom (do not remove this comment)
 
--- Speed: For speed runs
+-- Speed Config: For speed runs
 BRC.Configs.Speed = {
   ["after-shaft"] = { disabled = true },
   ["alert-monsters"] = { disabled = true },
@@ -204,12 +204,12 @@ BRC.Configs.Speed = {
   end
 } -- BRC.Configs.Speed (do not remove this comment)
 
--- Turncount: For turncount runs
+-- Turncount Config: For turncount runs
 BRC.Configs.Turncount = {
 
 } -- BRC.Configs.Turncount (do not remove this comment)
 
--- Streak: For win streaks
+-- Streak Config: For win streaks
 BRC.Configs.Streak = {
 
 } -- BRC.Configs.Streak (do not remove this comment)
@@ -1734,11 +1734,13 @@ function BRC.util.get_sorted_keys(map_or_list)
   return keys_vars
 end
 
-function BRC.util.tostring(var, formatted, indent_count)
+-- BRC.util.tostring(): Serializes a variable to a string, for chk_lua_save or data dumps.
+-- If pretty = true, the string is formatted for readability and in-game display.
+function BRC.util.tostring(var, pretty, indent_count)
   local var_type = type(var)
   if var_type == "string" then
     local s = '"' .. var:gsub('"', "") .. '"'
-    if not formatted then return s end
+    if not pretty then return s end
     return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
   elseif var_type == "table" then
     indent_count = indent_count or 0
@@ -1749,7 +1751,7 @@ function BRC.util.tostring(var, formatted, indent_count)
     if BRC.is.list(var) then
       local tokens = {}
       for _, v in ipairs(var) do
-        tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, formatted, indent_count + 1))
+        tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, pretty, indent_count + 1))
       end
       if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
         return string.format("{ %s }", table.concat(tokens, ", "))
@@ -1758,7 +1760,7 @@ function BRC.util.tostring(var, formatted, indent_count)
       end
     elseif BRC.is.map(var) then
       local tokens = {}
-      if formatted then
+      if pretty then
         local keys = BRC.util.get_sorted_keys(var)
         local contains_table = false
         for i = 1, #keys do
@@ -1777,7 +1779,7 @@ function BRC.util.tostring(var, formatted, indent_count)
         end
       else
         for k, v in pairs(var) do
-          tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, formatted, indent_count + 1))
+          tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, pretty, indent_count + 1))
         end
       end
       return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
@@ -2236,10 +2238,11 @@ BRC = BRC or {}
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for the Config override feature
 
+-- Config values for data dumps
 BRC.Data.Config = {
   offer_on_char_dump = true,
   max_lines_per_table = 200, -- Avoid huge tables in debug dumps, like alert_monsters.Config.Alerts
-  skip_pointers = true, -- Don't dump functions and userdata (they just show a hex value)
+  skip_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 }
 
 -- Local config
@@ -6105,7 +6108,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Heur.Alert.low_skill_penalty_damping
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
-  local ratio = penalty * get_score(it) / best_score / Config.Alert.weapon_sensitivity
+  local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
   if BRC.get.hands(it) <= cur.hands then
     if cur.artefact then return false end

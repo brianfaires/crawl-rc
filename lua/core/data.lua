@@ -10,10 +10,11 @@ BRC = BRC or {}
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for the Config override feature
 
+-- Config values for data dumps
 BRC.Data.Config = {
   offer_on_char_dump = true,
   max_lines_per_table = 200, -- Avoid huge tables in debug dumps, like alert_monsters.Config.Alerts
-  skip_pointers = true, -- Don't dump functions and userdata (they just show a hex value)
+  skip_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 }
 
 -- Local config

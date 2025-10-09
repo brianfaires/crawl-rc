@@ -12,16 +12,16 @@ Usage:
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "Testing"
+BRC.config_to_use = "Custom"
 
 -- Default: non-feature default values
 BRC.Configs.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
 } -- BRC.Configs.Default (do not remove this comment)
-BRC.Config = BRC.Configs.Default
+BRC.Config = BRC.Configs.Default -- Init BRC.Config
 
--- Testing: Isolate and test specific features
+-- Testing Config: Isolate and test specific features
 BRC.Configs.Testing = {
   show_debug_messages = true,
   disable_other_features = true,
@@ -42,7 +42,7 @@ BRC.Configs.Testing = {
   end,
 } -- BRC.Configs.Testing (do not remove this comment)
 
--- Custom: Personalized config
+-- Custom Config: Personalized settings
 BRC.Configs.Custom = {
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
@@ -82,7 +82,7 @@ BRC.Configs.Custom = {
 
     Alert = {
       armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 = disable all armour alerts
-      weapon_sensitivity = 0.1, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
+      weapon_sensitivity = 2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
       orbs = true,
       staff_resists = true, -- When a staff gives a missing resistance
       talismans = true,
@@ -140,7 +140,7 @@ BRC.Configs.Custom = {
   },
 } -- BRC.Configs.Custom (do not remove this comment)
 
--- Speed: For speed runs
+-- Speed Config: For speed runs
 BRC.Configs.Speed = {
   ["after-shaft"] = { disabled = true },
   ["alert-monsters"] = { disabled = true },
@@ -199,12 +199,12 @@ BRC.Configs.Speed = {
   end
 } -- BRC.Configs.Speed (do not remove this comment)
 
--- Turncount: For turncount runs
+-- Turncount Config: For turncount runs
 BRC.Configs.Turncount = {
 
 } -- BRC.Configs.Turncount (do not remove this comment)
 
--- Streak: For win streaks
+-- Streak Config: For win streaks
 BRC.Configs.Streak = {
 
 } -- BRC.Configs.Streak (do not remove this comment)

@@ -605,11 +605,13 @@ function BRC.util.get_sorted_keys(map_or_list)
   return keys_vars
 end
 
-function BRC.util.tostring(var, formatted, indent_count)
+-- BRC.util.tostring(): Serializes a variable to a string, for chk_lua_save or data dumps.
+-- If pretty = true, the string is formatted for readability and in-game display.
+function BRC.util.tostring(var, pretty, indent_count)
   local var_type = type(var)
   if var_type == "string" then
     local s = '"' .. var:gsub('"', "") .. '"'
-    if not formatted then return s end
+    if not pretty then return s end
     return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
   elseif var_type == "table" then
     indent_count = indent_count or 0
@@ -620,7 +622,7 @@ function BRC.util.tostring(var, formatted, indent_count)
     if BRC.is.list(var) then
       local tokens = {}
       for _, v in ipairs(var) do
-        tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, formatted, indent_count + 1))
+        tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, pretty, indent_count + 1))
       end
       if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
         return string.format("{ %s }", table.concat(tokens, ", "))
@@ -629,7 +631,7 @@ function BRC.util.tostring(var, formatted, indent_count)
       end
     elseif BRC.is.map(var) then
       local tokens = {}
-      if formatted then
+      if pretty then
         local keys = BRC.util.get_sorted_keys(var)
         local contains_table = false
         for i = 1, #keys do
@@ -648,7 +650,7 @@ function BRC.util.tostring(var, formatted, indent_count)
         end
       else
         for k, v in pairs(var) do
-          tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, formatted, indent_count + 1))
+          tokens[#tokens + 1] = string.format('["%s"] = %s', k, BRC.util.tostring(v, pretty, indent_count + 1))
         end
       end
       return "{\n" .. child_indent .. table.concat(tokens, list_separator) .. "\n" .. indent .. "}"
