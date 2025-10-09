@@ -241,16 +241,8 @@ function BRC.init(parent_module)
   _features = {}
   _hooks = {}
 
-  BRC.log.debug("Load main config...")
-  if BRC.load_config(BRC.config_to_use) then
-    BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(c_persist.BRC.current_config or "Default")))
-  elseif type(BRC.config_to_use ~= nil) then
-    BRC.log.error(string.format("Failed to load config: %s", BRC.text.red(BRC.config_to_use)))
-    return false
-  else
-    BRC.config_to_use = "Default"
-    return BRC.init(parent_module)
-  end
+  BRC.log.debug("Load config...")
+  BRC.load_config(BRC.config_to_use)
 
   BRC.log.debug("Register features...")
   BRC.register_feature(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
@@ -293,28 +285,50 @@ function BRC.init(parent_module)
   return true
 end
 
-function BRC.load_config(config_name)
-  if type(config_name) == "string" and config_name:lower() == "previous" then
-    if c_persist.BRC.current_config and BRC.load_config(c_persist.BRC.current_config) then return true end
-    config_name = BRC.mpr.select("Select a config:", util.keys(BRC.Configs))
-  elseif type(config_name) ~= "string" or type(BRC.Configs[config_name]) ~= "table" then
-    BRC.log.error(string.format("Config '%s' not found", config_name))
-    return false
+local function get_validated_config_name(input_name)
+  if type(input_name) ~= "string" then
+    BRC.log.warning(string.format("Non-string config name: '%s'", tostring(input_name)))
+  else
+    local config_name = input_name:lower()
+    if config_name == "ask" then
+      if _G.game_config_name then
+        return get_validated_config_name(_G.game_config_name)
+      end
+    elseif config_name == "previous" then
+      if c_persist.BRC and c_persist.BRC.current_config then
+        return get_validated_config_name(c_persist.BRC.current_config)
+      else
+        BRC.log.warning("No previous config found.")
+      end
+    else
+      for k, _ in pairs(BRC.Configs) do
+        if config_name == k:lower() then return k end
+      end
+      BRC.log.warning(string.format("Could not load config: '%s'", tostring(input_name)))
+    end
   end
 
-  BRC.Config = BRC.Configs.Default
+  return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
+end
+
+function BRC.load_config(input_name)
+  local config_name = get_validated_config_name(input_name)
+
+  -- Load Defaults + Config
+  BRC.Config = util.copy_table(BRC.Configs.Default)
   for k, v in pairs(BRC.Configs[config_name]) do
     BRC.Config[k] = v
   end
-
   if type(BRC.Config.init) == "function" then BRC.Config:init() end
 
+  -- Override feature configs
   for name, _ in pairs(_features) do
     override_feature_config(name)
   end
 
+  BRC.Data.persist("game_config_name", config_name)
   c_persist.BRC.current_config = config_name
-  return true
+  BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(config_name)))
 end
 
 -- Hook methods

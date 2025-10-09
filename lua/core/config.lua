@@ -12,7 +12,7 @@ Usage:
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "previous"
+BRC.config_to_use = "ask"
 
 -- Default: non-feature default values
 BRC.Configs.Default = {
