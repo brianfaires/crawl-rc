@@ -8,7 +8,13 @@ Dependencies: core/constants.lua, core/util.lua
 -- Initialize BRC namespace and Data module
 BRC = BRC or {}
 BRC.Data = {}
-BRC.data = BRC.Data -- alias
+BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for the Config override feature
+
+BRC.Data.Config = {
+  offer_on_char_dump = true,
+  max_lines_per_table_in = 200, -- Avoid huge tables in debug dumps, like alert_monsters.Config.Alerts
+  exclude_functions_and_userdata = true,
+}
 
 -- Local variables
 local _persist_names = {}
@@ -82,7 +88,7 @@ end
 local function restore_from_backup()
   if type(c_persist.BRC) ~= "table" or type(c_persist.BRC.Backup) ~= "table" then return false end
   for name, value in pairs(c_persist.BRC.Backup) do
-    BRC.data.persist(name, value)
+    BRC.Data.persist(name, value)
     _G[name] = c_persist.BRC.Backup[name]
   end
 end
@@ -133,7 +139,12 @@ function BRC.Data.erase()
   BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
+-- BRC.Data._init(): Called explicitly by BRC.init(); important that it be initialized last
 function BRC.Data.init()
+  if BRC.Data.Config.offer_on_char_dump then
+    BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  end
+
   -- Update game trackers; Important that this happens in init()
   _game_trackers.brc_version = BRC.VERSION
   _game_trackers.brc_name = you.name()

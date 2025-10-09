@@ -17,7 +17,7 @@ Usage:
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "Custom"
+BRC.config_to_use = "Testing"
 
 -- Default: non-feature default values
 BRC.Configs.Default = {
@@ -1421,7 +1421,7 @@ Dependencies: core/constants.lua, core/util.lua
 -- Initialize BRC namespace and Data module
 BRC = BRC or {}
 BRC.Data = {}
-BRC.data = BRC.Data -- alias
+BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for the Config override feature
 
 BRC.Data.Config = {
   offer_on_char_dump = true,
@@ -1501,7 +1501,7 @@ end
 local function restore_from_backup()
   if type(c_persist.BRC) ~= "table" or type(c_persist.BRC.Backup) ~= "table" then return false end
   for name, value in pairs(c_persist.BRC.Backup) do
-    BRC.data.persist(name, value)
+    BRC.Data.persist(name, value)
     _G[name] = c_persist.BRC.Backup[name]
   end
 end
@@ -1552,7 +1552,12 @@ function BRC.Data.erase()
   BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
+-- BRC.Data._init(): Called explicitly by BRC.init(); important that it be initialized last
 function BRC.Data.init()
+  if BRC.Data.Config.offer_on_char_dump then
+    BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  end
+
   -- Update game trackers; Important that this happens in init()
   _game_trackers.brc_version = BRC.VERSION
   _game_trackers.brc_name = you.name()
@@ -1712,6 +1717,9 @@ local function call_all_hooks(hook_name, ...)
   for i = #_hooks[hook_name], 1, -1 do
     local hook_info = _hooks[hook_name][i]
     if not feature_is_disabled(_features[hook_info.feature_name]) then
+      if hook_name == HOOK_FUNCTIONS.init then
+        BRC.log.debug(string.format("Initialize %s...", BRC.text.lightcyan(hook_info.feature_name)))
+      end
       local success, result = pcall(hook_info.func, ...)
       if not success then
         handle_feature_error(hook_info.feature_name, hook_name, result)
@@ -1771,11 +1779,8 @@ local function register_all_features(parent_module)
   -- Scan the namespace for feature modules and load them
   for name, value in pairs(parent_module) do
     if BRC.is_feature_module(value) then
-      local feature_name = value.BRC_FEATURE_NAME
-      local success = BRC.register_feature(feature_name, value)
-
+      local success = BRC.register_feature(value)
       if success then
-        BRC.log.debug(string.format("Feature '%s' registered", BRC.text.lightcyan(feature_name)))
         loaded_count = loaded_count + 1
       elseif success == false then
         BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
@@ -1788,66 +1793,70 @@ local function register_all_features(parent_module)
 end
 
 -- Public API
-function BRC.is_feature_module(maybe_feature_module)
-  return maybe_feature_module
-    and type(maybe_feature_module) == "table"
-    and maybe_feature_module.BRC_FEATURE_NAME
-    and type(maybe_feature_module.BRC_FEATURE_NAME) == "string"
-    and #maybe_feature_module.BRC_FEATURE_NAME > 0
+function BRC.is_feature_module(f)
+  return f
+    and type(f) == "table"
+    and f.BRC_FEATURE_NAME
+    and type(f.BRC_FEATURE_NAME) == "string"
+    and #f.BRC_FEATURE_NAME > 0
 end
 
 -- BRC.register_feature(): Return true if success, false if error, nil if feature is disabled
-function BRC.register_feature(feature_name, feature_module)
-  if not feature_name or not feature_module then
-    BRC.log.error("Invalid feature registration: missing name or module")
+function BRC.register_feature(f)
+  if not BRC.is_feature_module(f) then
+    BRC.log.error("Tried to register a non-feature module! Module contents:")
+    BRC.dump.var(f)
     return false
-  elseif _features[feature_name] then
-    BRC.log.error(BRC.text.yellow(feature_name) .. " is already registered")
-    return false
-  elseif feature_is_disabled(feature_module) then
-    BRC.log.debug(string.format("Feature '%s' is disabled", BRC.text.lightcyan(feature_name)))
+  elseif _features[f.BRC_FEATURE_NAME] then
+    BRC.log.warning("Repeat registration of " .. f.BRC_FEATURE_NAME .. "! Will redo registration...")
+    BRC.unregister_feature(f.BRC_FEATURE_NAME)
+  end
+  if feature_is_disabled(f) then
+    BRC.log.debug(string.format("%s is disabled. Skipped registration.", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))
     return nil
   end
 
-  _features[feature_name] = feature_module
+  BRC.log.debug(string.format("Registering %s...", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))
+  _features[f.BRC_FEATURE_NAME] = f
 
   -- Register hooks
   for _, hook_name in pairs(HOOK_FUNCTIONS) do
-    if feature_module[hook_name] then
+    if f[hook_name] then
       if not _hooks[hook_name] then _hooks[hook_name] = {} end
       table.insert(_hooks[hook_name], {
-        feature_name = feature_name,
+        feature_name = f.BRC_FEATURE_NAME,
         hook_name = hook_name,
-        func = feature_module[hook_name],
+        func = f[hook_name],
       })
     end
   end
 
   -- Handle config init() and overrides
-  if type(feature_module.Config) == "table" and type(feature_module.Config.init) == "function" then
-    feature_module.Config:init()
+  if type(f.Config) == "table" and type(f.Config.init) == "function" then
+    f.Config:init()
   end
-  override_feature_config(feature_name)
+  override_feature_config(f.BRC_FEATURE_NAME)
+
   return true
 end
 
-function BRC.unregister_feature(feature_name)
-  if not _features[feature_name] then
-    BRC.log.error(string.format("Feature '%s' is not registered", BRC.text.yellow(feature_name)))
+function BRC.unregister_feature(name)
+  if not _features[name] then
+    BRC.log.error(string.format("%s is not registered. Cannot unregister.", BRC.text.yellow(name)))
     return false
   end
 
-  _features[feature_name] = nil
-  for _, hook_list in pairs(_hooks) do
-    for i = #hook_list, 1, -1 do
-      if hook_list[i].feature_name == feature_name then
-        BRC.log.info(string.format("Unregistered hook: %s.%s", hook_list[i].feature_name, hook_list[i].hook_name))
-        table.remove(hook_list, i)
+  _features[name] = nil
+  for _, hooks in pairs(_hooks) do
+    for i = #hooks, 1, -1 do
+      if hooks[i].feature_name == name then
+        BRC.log.debug(string.format("Unregistered hook: %s.%s", hooks[i].feature_name, hooks[i].hook_name))
+        table.remove(hooks, i)
       end
     end
   end
 
-  BRC.log.debug(string.format("Feature '%s' unregistered", BRC.text.lightcyan(feature_name)))
+  BRC.log.info(string.format("Unregistered %s.", BRC.text.lightcyan(name)))
   return true
 end
 
@@ -1859,7 +1868,7 @@ function BRC.init(parent_module)
   _features = {}
   _hooks = {}
 
-  -- Load and log config
+  BRC.log.debug("Load main config...")
   if BRC.load_config(BRC.config_to_use) then
     BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(BRC.config_to_use or "Default")))
   elseif type(BRC.config_to_use ~= nil) then
@@ -1867,38 +1876,27 @@ function BRC.init(parent_module)
     return false
   end
 
-  -- Register all features
-  local loaded_count = register_all_features(parent_module)
-  if loaded_count == 0 then
-    BRC.mpr.lightred("No features loaded. BRC is inactive.")
-    return false
-  end
-  BRC.log.debug(string.format("Loaded %d features.", loaded_count, parent_module))
+  BRC.log.debug("Register features...")
+  BRC.register_feature(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
+  register_all_features(parent_module)
 
-  -- Init all features
-  BRC.log.debug(BRC.text.green("Initializing features..."))
+  BRC.log.debug("Initialize features...")
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
 
-  -- Add the autopickup hook
+  BRC.log.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
 
-  -- Register the char_dump macro
-  if BRC.Config.offer_on_char_dump then
-    BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
-  end
-
-  -- Init and verify persistent data
-  BRC.Data.init()
+  BRC.log.debug("Verify persistent data reload...")
+  local suffix = BRC.text.blue(string.format(" (%s features)", #util.keys(_features)))
   local reinit_success = BRC.Data.verify_reinit()
   if reinit_success == true then
-    BRC.Data.backup() -- Only backup on clean success
-    local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION)
-    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
+    BRC.Data.backup() -- Only backup after a clean startup
+    local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION) .. suffix
     if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
   elseif reinit_success == false then
     if not BRC.Data.try_restore() then
-      if BRC.mpr.yesno("Deactivate BRC?", BRC.COLOR.yellow) then
+      if BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
         BRC.active = false
         BRC.mpr.lightred("\nBRC is off.\n")
         return false
@@ -1908,8 +1906,7 @@ function BRC.init(parent_module)
 
   if not reinit_success then
     local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
-    msg = msg .. BRC.text.blue(string.format(" (%s features loaded)", loaded_count))
-    BRC.mpr.magenta(string.format("\n%s\n", msg))
+    BRC.mpr.magenta(string.format("\n%s\n", msg .. suffix))
   end
 
   -- We're a go!

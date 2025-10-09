@@ -1229,7 +1229,7 @@ end
 
 -- Hook functions
 function f_pickup_alert.init()
-  BRC.log.debug("Initializing pickup-alert submodules...")
+  BRC.log.debug("Initialize pickup-alert submodules...")
   local indent = "  "
   pause_pa_system = false
   f_pa_data.init()

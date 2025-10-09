@@ -12,13 +12,12 @@ Usage:
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "Custom"
+BRC.config_to_use = "Testing"
 
 -- Default: non-feature default values
 BRC.Configs.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
-  offer_debug_notes_on_char_dump = true,
 } -- BRC.Configs.Default (do not remove this comment)
 BRC.Config = BRC.Configs.Default
 
