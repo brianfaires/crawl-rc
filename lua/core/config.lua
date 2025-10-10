@@ -6,14 +6,16 @@ Usage:
   - Update BRC.config_to_use to load the corresponding config.
   - Update each config or create new ones.
   - Values that aren't defined will first fall back to Configs.Default, then to the defaults defined in feature configs.
-  - Define `init = function(self) ... end` in a config to run code after it loads. (use self to access the config table)
---]]
+  - Define `init = function() ... end` in a config to run code after it loads, and before overrides are applied.
+  - If using config_memory == "full", the function needs to be saved as a string instead. --]]
+  -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
+
 
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "previous"
-BRC.config_full_memory = false
+BRC.config_to_use = "ask"
+BRC.config_memory = "full"
 
 -- Default: non-feature default values
 BRC.Configs.Default = {
@@ -25,22 +27,22 @@ BRC.Config = BRC.Configs.Default -- Init BRC.Config
 -- Testing Config: Isolate and test specific features
 BRC.Configs.Testing = {
   show_debug_messages = true,
-  disable_other_features = true,
+  disable_other_features = false,
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.1,
       weapon_sensitivity = 0.1,
     },
   },
-  init = function(self)
-    if self.disable_other_features then
+  init = [[
+    if BRC.Config.disable_other_features then
       for _, v in pairs(_G) do
-        if BRC.is_feature_module(v) and not self[v.BRC_FEATURE_NAME] then
-          self[v.BRC_FEATURE_NAME] = { disabled = true }
+        if BRC.is_feature_module(v) and not BRC.Config[v.BRC_FEATURE_NAME] then
+          BRC.Config[v.BRC_FEATURE_NAME] = { disabled = true }
         end
       end
     end
-  end,
+  ]],
 } -- BRC.Configs.Testing (do not remove this comment)
 
 -- Custom Config: Personalized settings
@@ -173,9 +175,9 @@ BRC.Configs.Speed = {
     },
   },
 
-  init = function(self)
+  init = [[
     self.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
-  end
+  ]],
 } -- BRC.Configs.Speed (do not remove this comment)
 
 -- Turncount Config: For turncount runs

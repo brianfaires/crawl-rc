@@ -573,7 +573,7 @@ function BRC.dump.char(add_debug_info)
 end
 
 function BRC.dump.var(v)
-  crawl.mpr(BRC.util.tostring(v, true))
+  crawl.mpr(BRC.util.tostring(v, true) or "nil")
 end
 
 function macro_brc_dump_character()
@@ -637,7 +637,12 @@ end
 function BRC.util.tostring(var, pretty, indent_count)
   local var_type = type(var)
   if var_type == "string" then
-    local s = '"' .. var:gsub('"', "") .. '"'
+    local s
+    if var:contains("\n") then
+      s = "[[\n" .. var .. "\n]]"
+    else
+      s = '"' .. var:gsub('"', "") .. '"'
+    end
     if not pretty then return s end
     return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
   elseif var_type == "table" then
@@ -685,7 +690,7 @@ function BRC.util.tostring(var, pretty, indent_count)
       return "{}"
     end
   else
-    if BRC.Data.Config.skip_pointers and type(var) == "function" or type(var) == "userdata" then
+    if BRC.Data.Config.skip_pointers and (type(var) == "function" or type(var) == "userdata") then
       return nil
     end
     return tostring(var)

@@ -68,17 +68,22 @@ local function override_feature_config_table(source, dest)
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
       override_feature_config_table(value, dest[key])
-    else
+    elseif key ~= "init" then
       dest[key] = value
     end
   end
 end
 
 local function override_feature_config(feature_name)
-  if not BRC.Config[feature_name] then return end
   if not _features[feature_name].Config then _features[feature_name].Config = {} end
+  if type(_features[feature_name].Config.init) == "function" then
+    _features[feature_name].Config.init()
+  elseif type(_features[feature_name].Config.init) == "string" then
+    loadstring(_features[feature_name].Config.init)
+  end
+
+  if not BRC.Config[feature_name] then return end
   override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
-  if type(_features[feature_name].Config.init) == "function" then _features[feature_name].Config:init() end
 end
 
 -- Hook dispatching
@@ -244,7 +249,16 @@ function BRC.init(parent_module)
   if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
 
   BRC.log.debug("Load config...")
-  BRC.load_config(BRC.config_to_use)
+  local config_name
+  if BRC.config_memory:lower() == "full" then
+    config_name = BRC.load_config(_G.config_full_memory or _G.game_config_name or BRC.config_to_use)
+    BRC.Data.persist("config_full_memory", BRC.Config)
+  elseif BRC.config_memory:lower() == "name" then
+    config_name = BRC.load_config(_G.game_config_name or BRC.config_to_use)
+  else
+    config_name = BRC.load_config(BRC.config_to_use)
+  end
+  BRC.Data.persist("game_config_name", config_name)
 
   BRC.log.debug("Register features...")
   BRC.register_feature(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
@@ -313,32 +327,31 @@ local function get_validated_config_name(input_name)
   return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
 end
 
-function BRC.load_config(input_name)
-  -- Load main config
+function BRC.load_config(input_config)
   local config_name
-  if BRC.config_full_memory and _G.game_config_name and _G.config_full_memory then
-    config_name = _G.game_config_name
+  if type(input_config) == "table" then
+    BRC.Config = input_config
+    config_name = _G.game_config_name or "Unknown"
   else
-    config_name = get_validated_config_name(input_name)
+    config_name = get_validated_config_name(input_config)
     BRC.Config = util.copy_table(BRC.Configs.Default)
     for k, v in pairs(BRC.Configs[config_name]) do
       BRC.Config[k] = v
     end
   end
-  if BRC.config_full_memory then
-    BRC.Config = BRC.Data.persist("config_full_memory", BRC.Config)
-  end
 
   -- Do config init() and feature overrides
-  if type(BRC.Config.init) == "function" then BRC.Config:init() end
+  if type(BRC.Config.init) == "function" then
+    BRC.Config.init()
+  elseif type(BRC.Config.init) == "string" then
+    loadstring(BRC.Config.init)
+  end
   for name, _ in pairs(_features) do
     override_feature_config(name)
   end
 
-  -- Persist config
-  c_persist.BRC.current_config = config_name
-  BRC.Data.persist("game_config_name", config_name)
   BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(config_name)))
+  return config_name
 end
 
 -- Hook methods

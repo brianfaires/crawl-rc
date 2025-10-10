@@ -189,10 +189,10 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "shadow dragon" } },
 } -- fm_patterns (do not remove this comment)
 
-f_alert_monsters.Config.init = function()
+f_alert_monsters.Config.init = [[
   -- Conditionally add miasma monsters
   if not BRC.you.miasma_immune() then
-    util.append(Config.Alerts, {
+    util.append(f_alert_monsters.Config.Alerts, {
       name = "miasma", cond = "always", cutoff = 0,
       pattern = { "death drake", "tainted leviathan", "putrid mouth", }
     })
@@ -200,7 +200,7 @@ f_alert_monsters.Config.init = function()
 
   -- Conditionally add tormentors
   if not you.torment_immune() then
-    util.append(Config.Alerts, {
+    util.append(f_alert_monsters.Config.Alerts, {
       name = "torment", cond = "always", cutoff = 0,
       pattern = { "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
                   "mummy priest", "(dread|ancient) lich", "lurking horror", }
@@ -212,14 +212,14 @@ f_alert_monsters.Config.init = function()
   if BRC.you.mutation_immune() then
     BRC.set.flash_screen_message("monster_warning:" .. mutator_str, true)
   else
-    util.append(Config.Alerts, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
+    util.append(f_alert_monsters.Config.Alerts, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
   end
 
   -- If configured, add fm for all uniques and pan lords
-  if Config.fm_on_uniques then
+  if f_alert_monsters.Config.fm_on_uniques then
     BRC.set.force_more_message("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
   end
-end
+]]
 ------------------- End config section -------------------
 
 -- Local variables
