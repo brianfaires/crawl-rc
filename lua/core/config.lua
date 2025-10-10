@@ -12,7 +12,8 @@ Usage:
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Configs = {}
-BRC.config_to_use = "ask"
+BRC.config_to_use = "previous"
+BRC.config_full_memory = false
 
 -- Default: non-feature default values
 BRC.Configs.Default = {
@@ -114,28 +115,6 @@ BRC.Configs.Custom = {
         talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
         staff_resists = false,
       },
-    },
-  },
-
-  BrandBonus = {
-    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
-    distort = { factor = 1.0, offset = 6.0 },
-    drain = { factor = 1.25, offset = 2.0 },
-    elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
-    flame = { factor = 1.25, offset = 0 },
-    freeze = { factor = 1.25, offset = 0 },
-    heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
-    pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
-    spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
-    venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
-
-    subtle = { -- Values estimated for weapon comparisons
-      antimagic = { factor = 1.1, offset = 0 },
-      holy = { factor = 1.15, offset = 0 },
-      penet = { factor = 1.3, offset = 0 },
-      protect = { factor = 1.15, offset = 0 },
-      reap = { factor = 1.3, offset = 0 },
-      vamp = { factor = 1.2, offset = 0 },
     },
   },
 } -- BRC.Configs.Custom (do not remove this comment)

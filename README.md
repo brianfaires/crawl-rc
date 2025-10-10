@@ -101,7 +101,7 @@ The pickup-alert system provides smart autopickup that grabs items you definitel
 ### `lua/core/config.lua`
 Main configuration file with all user settings:
 - **BRC.Config** - Feature toggles and basic settings
-- **BRC.Config.BrandBonus** - Weapon brand damage calculations
+- **BRC.Config.Data.BrandBonus** - Weapon brand damage calculations
 
 ### `lua/core/brc.lua`
 Core system coordinator that:

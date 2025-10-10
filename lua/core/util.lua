@@ -1102,14 +1102,14 @@ function BRC.get.weap_damage(it, dmg_type)
   if dmg_type == BRC.DMG_TYPE.plain then
     local ego = BRC.get.ego(it)
     if ego and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego) then
-      local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
+      local bonus = BRC.Data.Config.BrandBonus[ego] or BRC.Data.Config.BrandBonus.subtle[ego]
       return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
     end
   elseif dmg_type >= BRC.DMG_TYPE.branded then
     local ego = BRC.get.ego(it)
     if ego then
-      local bonus = BRC.Config.BrandBonus[ego]
-      if not bonus and dmg_type == BRC.DMG_TYPE.scoring then bonus = BRC.Config.BrandBonus.subtle[ego] end
+      local bonus = BRC.Data.Config.BrandBonus[ego]
+      if not bonus and dmg_type == BRC.DMG_TYPE.scoring then bonus = BRC.Data.Config.BrandBonus.subtle[ego] end
       if bonus then return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset end
     end
   end

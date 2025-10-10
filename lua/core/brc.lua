@@ -29,9 +29,8 @@ local turn_count = nil
 local depth = nil
 
 -- Local functions
-local function feature_is_disabled(feature_module)
-  return feature_module and feature_module.Config and feature_module.Config.disabled
-    or BRC.Config[feature_module.BRC_FEATURE_NAME] and BRC.Config[feature_module.BRC_FEATURE_NAME].disabled
+local function feature_is_disabled(f)
+  return f.Config and f.Config.disabled or BRC.Config[f.BRC_FEATURE_NAME] and BRC.Config[f.BRC_FEATURE_NAME].disabled
 end
 
 local function handle_feature_error(feature_name, hook_name, result)
@@ -119,7 +118,7 @@ end
 -- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it is kept very simple + protected.
 -- Errors in call_all_hooks() or handle_core_error() are caught by this function.
 local function safe_call_all_hooks(hook_name, ...)
-  if not _hooks or not _hooks[hook_name] then return end
+  if not (_hooks and _hooks[hook_name] and #_hooks[hook_name] > 0) then return end
 
   local success, result = pcall(call_all_hooks, hook_name, ...)
   if success then return result end
@@ -220,16 +219,18 @@ function BRC.unregister_feature(name)
   end
 
   _features[name] = nil
-  for _, hooks in pairs(_hooks) do
+  local hooks_removed = {}
+  for hook_name, hooks in pairs(_hooks) do
     for i = #hooks, 1, -1 do
       if hooks[i].feature_name == name then
-        BRC.log.debug(string.format("Unregistered hook: %s.%s", hooks[i].feature_name, hooks[i].hook_name))
         table.remove(hooks, i)
+        hooks_removed[#hooks_removed + 1] = hook_name
       end
     end
   end
 
   BRC.log.info(string.format("Unregistered %s.", BRC.text.lightcyan(name)))
+  BRC.log.debug(string.format("Unregistered hooks: (%s)", table.concat(hooks_removed, ", ")))
   return true
 end
 
@@ -240,6 +241,7 @@ end
 function BRC.init(parent_module)
   _features = {}
   _hooks = {}
+  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
 
   BRC.log.debug("Load config...")
   BRC.load_config(BRC.config_to_use)
@@ -291,7 +293,7 @@ local function get_validated_config_name(input_name)
   else
     local config_name = input_name:lower()
     if config_name == "ask" then
-      if _G.game_config_name then
+      if you.turns() > 0 and _G.game_config_name then
         return get_validated_config_name(_G.game_config_name)
       end
     elseif config_name == "previous" then
@@ -312,22 +314,30 @@ local function get_validated_config_name(input_name)
 end
 
 function BRC.load_config(input_name)
-  local config_name = get_validated_config_name(input_name)
-
-  -- Load Defaults + Config
-  BRC.Config = util.copy_table(BRC.Configs.Default)
-  for k, v in pairs(BRC.Configs[config_name]) do
-    BRC.Config[k] = v
+  -- Load main config
+  local config_name
+  if BRC.config_full_memory and _G.game_config_name and _G.config_full_memory then
+    config_name = _G.game_config_name
+  else
+    config_name = get_validated_config_name(input_name)
+    BRC.Config = util.copy_table(BRC.Configs.Default)
+    for k, v in pairs(BRC.Configs[config_name]) do
+      BRC.Config[k] = v
+    end
   end
-  if type(BRC.Config.init) == "function" then BRC.Config:init() end
+  if BRC.config_full_memory then
+    BRC.Config = BRC.Data.persist("config_full_memory", BRC.Config)
+  end
 
-  -- Override feature configs
+  -- Do config init() and feature overrides
+  if type(BRC.Config.init) == "function" then BRC.Config:init() end
   for name, _ in pairs(_features) do
     override_feature_config(name)
   end
 
-  BRC.Data.persist("game_config_name", config_name)
+  -- Persist config
   c_persist.BRC.current_config = config_name
+  BRC.Data.persist("game_config_name", config_name)
   BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(config_name)))
 end
 
