@@ -1028,22 +1028,24 @@ f_pickup_alert.Config.Tuning = {}
 --]]
 f_pickup_alert.Config.Tuning.Armour = {
   Lighter = {
-    gain_ego = 0.6,
-    diff_ego = 0.8,
-    same_ego = 1.2,
-    lost_ego = 2.0,
-    min_gain = 3.0,
-    max_loss = 4.0,
-    ignore_small = 3.5,
+    -- AC/EV ratio thresholds for lighter armour (lower encumbrance)
+    gain_ego = 0.6,    -- Alert if new armour has 60% of old AC but gains an ego
+    diff_ego = 0.8,    -- Alert if new armour has 80% of old AC but different ego
+    same_ego = 1.2,    -- Alert if new armour has 120% of old AC with same ego
+    lost_ego = 2.0,    -- Alert if new armour has 200% of old AC but loses ego
+    min_gain = 3.0,    -- Minimum AC+EV gain required for ego change alerts
+    max_loss = 4.0,    -- Maximum AC+EV loss allowed for ego change alerts
+    ignore_small = 3.5, -- Ignore small AC+EV changes (≤3.5) when checking ego changes
   },
   Heavier = {
-    gain_ego = 0.4,
-    diff_ego = 0.5,
-    same_ego = 0.7,
-    lost_ego = 2.0,
-    min_gain = 3.0,
-    max_loss = 8.0,
-    ignore_small = 5,
+    -- AC/EV ratio thresholds for heavier armour (higher encumbrance)
+    gain_ego = 0.4,    -- Alert if new armour has 40% of old AC but gains an ego
+    diff_ego = 0.5,    -- Alert if new armour has 50% of old AC but different ego
+    same_ego = 0.7,    -- Alert if new armour has 70% of old AC with same ego
+    lost_ego = 2.0,    -- Alert if new armour has 200% of old AC but loses ego
+    min_gain = 3.0,    -- Minimum AC+EV gain required for ego change alerts
+    max_loss = 8.0,    -- Maximum AC+EV loss allowed for ego change alerts (higher for heavy armour)
+    ignore_small = 5,  -- Ignore small AC+EV changes (≤5) when checking ego changes
   },
   encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
   early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
@@ -1058,39 +1060,39 @@ f_pickup_alert.Config.Tuning.Armour = {
 --]]
 f_pickup_alert.Config.Tuning.Weap = {}
 f_pickup_alert.Config.Tuning.Weap.Pickup = {
-  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
-  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
-  accuracy_weight = 0.25, -- Treat +1 Accuracy as +`accuracy_weight` DPS
+  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > 1.0 (any improvement)
+  same_type_melee = 1.2, -- Pickup melee weapon of same school if DPS ratio > 1.2 (20% better)
+  same_type_ranged = 1.1, -- Pickup ranged weapon if DPS ratio > 1.1 (10% better)
+  accuracy_weight = 0.25, -- Treat +1 Accuracy as +0.25 DPS (accuracy is less valuable than damage)
 } -- f_pickup_alert.Config.Tuning.Weap.Pickup (do not remove this comment)
 
 f_pickup_alert.Config.Tuning.Weap.Alert = {
-  -- Alerts for weapons not requiring an extra hand
-  pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
-  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
-  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > `new_ego`
-  low_skill_penalty_damping = 8, -- Increase to penalize low-trained schools. Penalty = (skill+damp) / (top_skill+damp)
+  -- Alerts for weapons not requiring an extra hand (1-handed weapons)
+  pure_dps = 1.0, -- Alert if DPS ratio > 1.0 (any improvement over current weapon)
+  gain_ego = 0.8, -- Alert if gaining ego and DPS ratio > 0.8 (80% of current damage is acceptable for new ego)
+  new_ego = 0.8, -- Alert if getting new ego type and DPS ratio > 0.8
+  low_skill_penalty_damping = 8, -- Penalty for low weapon skill: (skill+8) / (top_skill+8). Higher = more penalty
 
-  -- Alerts for 2-handed weapons, when carrying 1-handed
+  -- Alerts for 2-handed weapons when carrying 1-handed weapons
   AddHand = {
-    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < `ignore_sh_lvl`
-    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > `add_ego_lose_sh`
-    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > `not_using`
+    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield skill < 4.0 (low shield skill = less valuable)
+    add_ego_lose_sh = 0.8, -- Alert 1h->2h (losing shield) if DPS ratio > 0.8
+    not_using = 1.0, -- Alert 1h->2h (not using 2nd hand) if DPS ratio > 1.0
   },
 
-  -- Alerts for good early weapons of all types
+  -- Alerts for good early weapons (when you're low level)
   Early = {
-    xl = 7, -- Alert early weapons if XL <= `xl`
-    skill = { factor = 1.5, offset = 2.0 }, -- Don't alert weapons with skill diff > XL * `factor` + `offset`
-    branded_min_plus = 4, -- Alert branded weapons with plus >= `branded_min_plus`
+    xl = 7, -- Alert early weapons if character level <= 7
+    skill = { factor = 1.5, offset = 2.0 }, -- Don't alert if weapon skill diff > (XL * 1.5) + 2.0
+    branded_min_plus = 4, -- Alert branded weapons with enchantment >= +4
   },
 
   -- Alerts for particularly strong ranged weapons
   EarlyRanged = {
-    xl = 14, -- Alert strong ranged weapons if XL <= `xl`
-    min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
-    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
-    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= `max_shields`
+    xl = 14, -- Alert strong ranged weapons if character level <= 14
+    min_plus = 7, -- Alert ranged weapons with enchantment >= +7
+    branded_min_plus = 4, -- Alert branded ranged weapons with enchantment >= +4
+    max_shields = 8.0, -- Alert 2h ranged despite wearing shield if shield skill <= 8.0
   },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 

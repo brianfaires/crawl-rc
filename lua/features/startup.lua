@@ -27,7 +27,7 @@ function f_startup.ready()
     end
 
     ---- Auto-set default skill targets ----
-    if f_startup.Config.auto_set_skill_targets then
+    if f_startup.Config.auto_set_skill_targets and you.race() ~= "Gnoll" then
       for _, skill_target in ipairs(Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then

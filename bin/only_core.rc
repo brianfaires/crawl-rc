@@ -181,7 +181,7 @@ BRC.Configs.Speed = {
   },
 
   init = [[
-    self.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
+    BRC.Config.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
   ]],
 } -- BRC.Configs.Speed (do not remove this comment)
 
@@ -1043,84 +1043,120 @@ local function format_stat(abbr, val, is_worn)
   end
 end
 
+-- Get size-based penalty for dodging (larger races are easier to hit)
 local function get_size_penalty()
   if util.contains(BRC.LITTLE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LITTLE
+    return BRC.SIZE_PENALTY.LITTLE  -- Spriggan: -2 penalty (harder to hit)
   elseif util.contains(BRC.SMALL_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.SMALL
+    return BRC.SIZE_PENALTY.SMALL   -- Kobold: -1 penalty
   elseif util.contains(BRC.LARGE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LARGE
+    return BRC.SIZE_PENALTY.LARGE   -- Troll, etc: +1 penalty (easier to hit)
   else
-    return BRC.SIZE_PENALTY.NORMAL
+    return BRC.SIZE_PENALTY.NORMAL  -- Most races: 0 penalty
   end
 end
 
+-- Calculate base armour encumbrance penalty (before skill/strength adjustments)
 local function get_unadjusted_armour_pen(encumb)
+  -- Sturdy frame mutation reduces encumbrance penalty
   local pen = encumb - 2 * BRC.get.mut(BRC.MUTATIONS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
 
+-- Calculate final armour penalty affecting spellcasting and ranged attacks
+-- Formula: 2 * encumbrance² * (45 - Armour skill) / 45 / (5 * (str + 3))
 local function get_adjusted_armour_pen(encumb, str)
   local base_pen = get_unadjusted_armour_pen(encumb)
+  -- Higher armour skill reduces penalty, higher strength reduces penalty
   return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
+-- Calculate dodge bonus from armour (can be negative due to encumbrance)
+-- This is the armour's contribution to your total EV (Evasion)
 local function get_adjusted_dodge_bonus(encumb, str, dex)
-  local size_factor = -2 * get_size_penalty()
+  local size_factor = -2 * get_size_penalty()  -- Convert size penalty to dodge factor
+  -- Base dodge calculation: 8 * (10 + Dodging skill * dex) / (20 - size_factor) / 10
   local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
-  local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
-  if armour_dodge_penalty <= 0 then return dodge_bonus end
 
+  -- Apply armour encumbrance penalty (armour makes you easier to hit)
+  local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
+  if armour_dodge_penalty <= 0 then return dodge_bonus end  -- No penalty
+
+  -- If encumbrance > strength, penalty is severe
   if armour_dodge_penalty >= str then return dodge_bonus * str / (armour_dodge_penalty * 2) end
+  -- Otherwise, linear penalty based on encumbrance vs strength ratio
   return dodge_bonus - dodge_bonus * armour_dodge_penalty / (str * 2)
 end
 
+-- Calculate shield penalty affecting spellcasting and ranged attacks
+-- Formula: 2 * encumbrance² * (27 - Shields skill) / 27 / (25 + 5 * strength)
 local function get_shield_penalty(sh)
+  -- Higher shield skill and strength reduce the penalty
   return 2 * sh.encumbrance * sh.encumbrance * (27 - you.skill("Shields")) / 27 / (25 + 5 * you.strength())
 end
 
+-- Apply weapon brand effects to attack delay
 local function get_branded_delay(delay, ego)
   if not ego then return delay end
   if ego == "speed" then
-    return delay * 2 / 3
+    return delay * 2 / 3  -- Speed brand: 33% faster attacks
   elseif ego == "heavy" then
-    return delay * 1.5
+    return delay * 1.5    -- Heavy brand: 50% slower attacks
   end
   return delay
 end
 
+-- Calculate minimum possible delay for a weapon (based on weapon type)
+-- This is an abbreviated version of the actual DCSS calculation
 local function get_weap_min_delay(it)
-  -- This is an abbreviated version of the actual calculation.
-  -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
+  -- Special case: Woodcutter's axe artefact has fixed delay
   if it.artefact and it.name("qual"):contains("woodcutter's axe") then return it.delay end
 
+  -- Base minimum is half the weapon's base delay
   local min_delay = math.floor(it.delay / 2)
+
+  -- Short blades have a fixed minimum of 5 auts
   if it.weap_skill == "Short Blades" then return 5 end
+
+  -- Two-handed ranged weapons have higher minimum delay
   if it.is_ranged then
     local basename = it.name("base")
     local is_2h_ranged = basename:contains("crossbow") or basename:contains("arbalest")
     if is_2h_ranged then return math.max(min_delay, 10) end
   end
 
+  -- Most weapons cap at 7 auts minimum
   return math.min(min_delay, 7)
 end
 
+-- Calculate final weapon attack delay (in auts, 10 auts = 1 turn)
+-- This models the complete DCSS delay calculation including skills, brands, and penalties
 local function get_weap_delay(it)
   -- dcss v0.33.1
+  -- Start with base delay, reduced by weapon skill (each skill point reduces delay by 0.5 auts)
   local delay = it.delay - BRC.get.skill(it.weap_skill) / 2
+
+  -- Apply minimum delay cap
   delay = math.max(delay, get_weap_min_delay(it))
+
+  -- Apply brand effects (speed/heavy)
   delay = get_branded_delay(delay, BRC.get.ego(it))
+
+  -- Absolute minimum delay is 3 auts (no weapon can be faster)
   delay = math.max(delay, 3)
 
+  -- Add shield penalty if wearing a shield
   local sh = items.equipped_at("offhand")
   if BRC.is.shield(sh) then delay = delay + get_shield_penalty(sh) end
 
+  -- Add armour penalty for ranged weapons
   if it.is_ranged then
     local worn = items.equipped_at("armour")
     if worn then
       local str = you.strength()
 
+      -- Adjust strength for artefact stat changes when comparing weapons
       local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
         if it.artefact and it.artprops["Str"] then str = str + it.artprops["Str"] end
@@ -1131,27 +1167,33 @@ local function get_weap_delay(it)
     end
   end
 
-  return delay / 10
+  return delay / 10  -- Convert auts to turns (10 auts = 1 turn)
 end
 
+-- Calculate total slaying bonus from all equipped items
+-- Slaying increases weapon damage (both melee and ranged)
 local function get_slay_bonuses()
   local sum = 0
 
-  -- Slots can go as high as 18 afaict
+  -- Check all equipment slots (0-20 covers all possible slots)
   for i = 0, 20 do
     local inv = items.equipped_at(i)
     if inv then
+      -- Check rings for slaying bonuses
       if BRC.is.ring(inv) then
         if inv.artefact then
+          -- Parse artefact ring names like "ring of Slaying+3" or "ring of Slaying-2"
           local name = inv.name()
           local idx = name:find("Slay", 1, true)
           if idx then
             local slay = tonumber(name:sub(idx + 5, idx + 5))
+            -- Handle double-digit slaying (e.g., "Slaying+12")
             if slay == 1 then
               local next_digit = tonumber(name:sub(idx + 6, idx + 6))
               if next_digit then slay = 10 + next_digit end
             end
 
+            -- Add or subtract based on +/- sign
             if name:sub(idx + 4, idx + 4) == "+" then
               sum = sum + slay
             else
@@ -1159,18 +1201,21 @@ local function get_slay_bonuses()
             end
           end
         elseif BRC.get.ego(inv) == "Slay" then
+          -- Non-artefact slaying rings
           sum = sum + inv.plus
         end
       elseif inv.artefact and (BRC.is.armour(inv, true) or BRC.is.amulet(inv)) then
+        -- Check armour and amulets for slaying properties
         local slay = inv.artprops["Slay"]
         if slay then sum = sum + slay end
       end
     end
   end
 
+  -- Demonspawn mutations provide slaying bonuses
   if you.race() == "Demonspawn" then
-    sum = sum + 3 * BRC.get.mut(BRC.MUTATIONS.augmentation, true)
-    sum = sum + BRC.get.mut(BRC.MUTATIONS.sharp_scales, true)
+    sum = sum + 3 * BRC.get.mut(BRC.MUTATIONS.augmentation, true)  -- +3 slay per level
+    sum = sum + BRC.get.mut(BRC.MUTATIONS.sharp_scales, true)       -- +1 slay per level
   end
 
   return sum
@@ -1384,40 +1429,53 @@ function BRC.get.weap_dps(it, dmg_type)
   return BRC.get.weap_damage(it, dmg_type) / get_weap_delay(it)
 end
 
+-- Calculate weapon damage including all modifiers (stats, skills, slaying, brands)
+-- This models the complete DCSS damage calculation for weapon comparisons
 function BRC.get.weap_damage(it, dmg_type)
-  -- Returns an adjusted weapon damage = damage * speed
-  -- Includes stat/slay changes between weapon and the one currently wielded
-  -- Aux attacks not included
+  -- Returns adjusted weapon damage including stat/slay changes between weapons
+  -- Auxiliary attacks (like headbutt) are not included in this calculation
   if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
   local it_plus = it.plus or 0
-  -- Adjust str/dex/slay from artefacts
+
+  -- Start with base character stats
   local str = you.strength()
   local dex = you.dexterity()
 
-  -- Adjust str/dex/EV for artefact stat changes
+  -- Adjust stats for artefact changes when comparing weapons
+  -- This ensures fair comparison between current weapon and potential new weapon
   if not it.equipped then
     local wielded = items.equipped_at("weapon")
     if wielded and wielded.artefact then
+      -- Remove current weapon's stat bonuses
       if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
       if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
       if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
     end
 
     if it.artefact and it.is_identified then
+      -- Add new weapon's stat bonuses
       if it.artprops["Str"] then str = str + it.artprops["Str"] end
       if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
       if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
     end
   end
 
+  -- Determine which stat affects damage (strength for most weapons, dexterity for ranged/blades)
   local stat = str
   if it.is_ranged or it.weap_skill:contains("Blades") then stat = dex end
 
+  -- Calculate stat modifier: 0.75 + 0.025 * stat
+  -- This means each point of the relevant stat adds 2.5% damage
   local stat_mod = 0.75 + 0.025 * stat
+
+  -- Calculate skill modifier: (1 + weapon_skill/50) * (1 + fighting/60)
+  -- Each weapon skill point adds 2% damage, each fighting point adds ~1.67% damage
   local skill_mod = (1 + BRC.get.skill(it.weap_skill) / 25 / 2) * (1 + you.skill("Fighting") / 30 / 2)
 
+  -- Add slaying bonus from all equipped items
   it_plus = it_plus + get_slay_bonuses()
 
+  -- Calculate base damage before brand effects
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
@@ -1503,10 +1561,14 @@ local _game_trackers = { -- Values to detect when character is changed
 } -- _game_trackers (do not remove this comment)
 
 -- Local functions
+-- Verify that the game state matches what we expect (detects character changes, RC reloads, etc.)
+-- This helps detect when the player switches characters or when the RC file is reloaded
 local function verify_game_trackers()
   local success = true
 
   if you.turns() > 0 then
+    -- Check if any tracked values have changed unexpectedly
+    -- This detects character switches, RC reloads, or other state changes
     for k, v in pairs(_game_trackers) do
       local prev = _G[k]
       if prev ~= v then
@@ -1516,6 +1578,8 @@ local function verify_game_trackers()
       end
     end
 
+    -- Check if the reload process completed successfully
+    -- This detects RC file reloads or crashes that interrupted the initialization
     if not _G.reload_complete then
       success = false
       BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
@@ -1764,12 +1828,24 @@ local function override_feature_config_table(source, dest)
   end
 end
 
+local function safe_call_string(str, module_name)
+  local chunk, err = loadstring(str)
+  if not chunk then
+    BRC.log.error("Error loading " .. module_name .. ".Config.init string: ", err)
+  else
+    local success, result = pcall(chunk)
+    if not success then
+      BRC.log.error("Error executing " .. module_name .. ".Config.init string: ", result)
+    end
+  end
+end
+
 local function override_feature_config(feature_name)
   if not _features[feature_name].Config then _features[feature_name].Config = {} end
   if type(_features[feature_name].Config.init) == "function" then
     _features[feature_name].Config.init()
   elseif type(_features[feature_name].Config.init) == "string" then
-    loadstring(_features[feature_name].Config.init)
+    safe_call_string(_features[feature_name].Config.init, feature_name)
   end
 
   if not BRC.Config[feature_name] then return end
@@ -2034,7 +2110,7 @@ function BRC.load_config(input_config)
   if type(BRC.Config.init) == "function" then
     BRC.Config.init()
   elseif type(BRC.Config.init) == "string" then
-    loadstring(BRC.Config.init)
+    safe_call_string(BRC.Config.init, "BRC")
   end
   for name, _ in pairs(_features) do
     override_feature_config(name)

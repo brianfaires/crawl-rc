@@ -176,7 +176,7 @@ BRC.Configs.Speed = {
   },
 
   init = [[
-    self.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
+    BRC.Config.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
   ]],
 } -- BRC.Configs.Speed (do not remove this comment)
 

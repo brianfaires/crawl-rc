@@ -74,12 +74,24 @@ local function override_feature_config_table(source, dest)
   end
 end
 
+local function safe_call_string(str, module_name)
+  local chunk, err = loadstring(str)
+  if not chunk then
+    BRC.log.error("Error loading " .. module_name .. ".Config.init string: ", err)
+  else
+    local success, result = pcall(chunk)
+    if not success then
+      BRC.log.error("Error executing " .. module_name .. ".Config.init string: ", result)
+    end
+  end
+end
+
 local function override_feature_config(feature_name)
   if not _features[feature_name].Config then _features[feature_name].Config = {} end
   if type(_features[feature_name].Config.init) == "function" then
     _features[feature_name].Config.init()
   elseif type(_features[feature_name].Config.init) == "string" then
-    loadstring(_features[feature_name].Config.init)
+    safe_call_string(_features[feature_name].Config.init, feature_name)
   end
 
   if not BRC.Config[feature_name] then return end
@@ -344,7 +356,7 @@ function BRC.load_config(input_config)
   if type(BRC.Config.init) == "function" then
     BRC.Config.init()
   elseif type(BRC.Config.init) == "string" then
-    loadstring(BRC.Config.init)
+    safe_call_string(BRC.Config.init, "BRC")
   end
   for name, _ in pairs(_features) do
     override_feature_config(name)
