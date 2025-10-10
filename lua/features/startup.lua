@@ -15,7 +15,7 @@ f_startup.Config = {
   },
 } -- f_startup.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_startup.Config
 
 -- Hook functions

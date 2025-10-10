@@ -25,7 +25,7 @@ persistent_bool = BRC.Data.persist("persistent_bool", false)
 persistent_list = BRC.Data.persist("persistent_list", {})
 persistent_map = BRC.Data.persist("persistent_map", {})
 
--- Local config (Optional local alias, for more concise code)
+-- Local config alias (Optional local alias, for more concise code)
 local Config = f_template.Config
 
 -- Local constants

@@ -39,7 +39,7 @@ BRC.Data.Config = {
   },
 }
 
--- Local config
+-- Local config alias
 local Config = BRC.Data.Config
 
 -- Local variables
@@ -53,6 +53,7 @@ local _game_trackers = { -- Values to detect when character is changed
 } -- _game_trackers (do not remove this comment)
 
 -- Local functions
+-- Verify that the game state matches what we expect (RC or character changes, stale data,etc.)
 local function verify_game_trackers()
   local success = true
 
@@ -66,6 +67,7 @@ local function verify_game_trackers()
       end
     end
 
+    -- reload_complete is the last data restored by chk_lua_save, so it confirms all data reloaded.
     if not _G.reload_complete then
       success = false
       BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))

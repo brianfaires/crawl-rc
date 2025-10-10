@@ -9,19 +9,19 @@ f_pa_weapons = {}
 
 -- Persistent variables
 lowest_num_hands_alerted = BRC.Data.persist("lowest_num_hands_alerted", {
-  ["Ranged Weapons"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
-  ["Polearms"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
+  ["Ranged Weapons"] = 3, -- Track lowest hand count alerted for this weapon school
+  ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
 
--- Local config
+-- Local config alias
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Weap
 local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants
-local FIRST_WEAPON_XL_CUTOFF = 4 -- Stop looking for first weapon after this XL
-local RANGED_XL_THRESHOLD = 3 -- At this skill level, don't bother alerting for polearms
-local UPGRADE_SKILL_FACTOR = 0.5 -- Don't alert for upgrades if weap skill is this much worse
+local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
+local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
+local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
 local RANGED = "range_"
 local MELEE = "melee_"
 
@@ -195,7 +195,7 @@ local function get_first_of_skill_alert(it, silent)
   if lowest_num_hands_alerted[skill] > hands then
     -- Some early checks to skip alerts
     if hands == 2 and BRC.you.have_shield() then return end
-    if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return end
+    if skill == "Polearms" and you.skill("Ranged Weapons") >= POLEARM_RANGED_CUTOFF then return end
 
     -- Update lowest # hands alerted, and alert
     lowest_num_hands_alerted[skill] = hands

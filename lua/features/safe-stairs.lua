@@ -16,7 +16,7 @@ f_safe_stairs.Config = {
 ss_prev_location = BRC.Data.persist("ss_prev_location", you.branch() .. you.depth())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
--- Local config
+-- Local config alias
 local Config = f_safe_stairs.Config
 
 -- Local variables

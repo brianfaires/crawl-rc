@@ -17,7 +17,7 @@ f_alert_monsters.Config = {
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
 } -- f_alert_monsters.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_alert_monsters.Config
 
 --[[

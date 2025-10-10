@@ -7,7 +7,7 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
 
 f_pa_armour = {}
 
--- Local config
+-- Local config alias
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
@@ -171,6 +171,7 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
+  -- Check if armour stat trade-off meets configured ratio thresholds
   local meets_ratio = loss <= 0 or (gain / loss > Heur[weight][ego_change] / Config.Alert.armour_sensitivity)
   if not meets_ratio then return false end
 
@@ -184,7 +185,7 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
   return true
 end
 
--- Alert the highest AC armour, unless training spells/ranged and NOT armour
+-- Alert when finding higher AC armour than previously seen, unless training spells/ranged and NOT armour
 local function alert_highest_ac(it)
   if you.xl() > 12 then return false end
   local total_skill = you.skill("Spellcasting") + you.skill("Ranged Weapons")
@@ -230,7 +231,7 @@ local function alert_body_armour(it)
     end
   end
 
-  -- Alert for lighter/heavier armour, based on configured AC/EV ratio
+  -- Check if lighter/heavier armour meets stat trade-off thresholds
   if encumb_delta < 0 then
     if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
       return send_armour_alert(it, ARMOUR_ALERT[LIGHTER][ego_change])
@@ -242,7 +243,7 @@ local function alert_body_armour(it)
     end
   end
 
-  -- Alert for highest AC found so far, or early armour with any ego
+  -- Check for record AC values or early-game ego armour
   if alert_highest_ac(it) then return true end
   if it_ego and you.xl() <= Heur.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)

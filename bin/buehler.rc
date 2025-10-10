@@ -1817,13 +1817,14 @@ Examples: Weapon DPS calculation, treat dragon scales as branded, defining what 
 -- Last verified against: dcss v0.33.1
 
 local function format_dmg(dmg)
-  -- Always return a string of length 4
+  -- Format damage values for consistent display width (4 characters)
   if dmg < 10 then return string.format("%.2f", dmg) end
   if dmg > 99.9 then return ">100" end
   return string.format("%.1f", dmg)
 end
 
 local function format_stat(abbr, val, is_worn)
+  -- Format stat changes for inscriptions: current values for equipped items(:), or relative for unequpped (+/-)
   local stat_str = string.format("%.1f", val)
   if val < 0 then
     return string.format("%s%s", abbr, stat_str)
@@ -1834,120 +1835,84 @@ local function format_stat(abbr, val, is_worn)
   end
 end
 
--- Get size-based penalty for dodging (larger races are easier to hit)
 local function get_size_penalty()
   if util.contains(BRC.LITTLE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LITTLE  -- Spriggan: -2 penalty (harder to hit)
+    return BRC.SIZE_PENALTY.LITTLE
   elseif util.contains(BRC.SMALL_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.SMALL   -- Kobold: -1 penalty
+    return BRC.SIZE_PENALTY.SMALL
   elseif util.contains(BRC.LARGE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LARGE   -- Troll, etc: +1 penalty (easier to hit)
+    return BRC.SIZE_PENALTY.LARGE
   else
-    return BRC.SIZE_PENALTY.NORMAL  -- Most races: 0 penalty
+    return BRC.SIZE_PENALTY.NORMAL
   end
 end
 
--- Calculate base armour encumbrance penalty (before skill/strength adjustments)
 local function get_unadjusted_armour_pen(encumb)
-  -- Sturdy frame mutation reduces encumbrance penalty
   local pen = encumb - 2 * BRC.get.mut(BRC.MUTATIONS.sturdy_frame, true)
   if pen > 0 then return pen end
   return 0
 end
 
--- Calculate final armour penalty affecting spellcasting and ranged attacks
--- Formula: 2 * encumbrance² * (45 - Armour skill) / 45 / (5 * (str + 3))
 local function get_adjusted_armour_pen(encumb, str)
   local base_pen = get_unadjusted_armour_pen(encumb)
-  -- Higher armour skill reduces penalty, higher strength reduces penalty
   return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
--- Calculate dodge bonus from armour (can be negative due to encumbrance)
--- This is the armour's contribution to your total EV (Evasion)
 local function get_adjusted_dodge_bonus(encumb, str, dex)
-  local size_factor = -2 * get_size_penalty()  -- Convert size penalty to dodge factor
-  -- Base dodge calculation: 8 * (10 + Dodging skill * dex) / (20 - size_factor) / 10
+  local size_factor = -2 * get_size_penalty()
   local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
-
-  -- Apply armour encumbrance penalty (armour makes you easier to hit)
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
-  if armour_dodge_penalty <= 0 then return dodge_bonus end  -- No penalty
+  if armour_dodge_penalty <= 0 then return dodge_bonus end
 
-  -- If encumbrance > strength, penalty is severe
   if armour_dodge_penalty >= str then return dodge_bonus * str / (armour_dodge_penalty * 2) end
-  -- Otherwise, linear penalty based on encumbrance vs strength ratio
   return dodge_bonus - dodge_bonus * armour_dodge_penalty / (str * 2)
 end
 
--- Calculate shield penalty affecting spellcasting and ranged attacks
--- Formula: 2 * encumbrance² * (27 - Shields skill) / 27 / (25 + 5 * strength)
 local function get_shield_penalty(sh)
-  -- Higher shield skill and strength reduce the penalty
   return 2 * sh.encumbrance * sh.encumbrance * (27 - you.skill("Shields")) / 27 / (25 + 5 * you.strength())
 end
 
--- Apply weapon brand effects to attack delay
 local function get_branded_delay(delay, ego)
   if not ego then return delay end
   if ego == "speed" then
-    return delay * 2 / 3  -- Speed brand: 33% faster attacks
+    return delay * 2 / 3
   elseif ego == "heavy" then
-    return delay * 1.5    -- Heavy brand: 50% slower attacks
+    return delay * 1.5
   end
   return delay
 end
 
--- Calculate minimum possible delay for a weapon (based on weapon type)
--- This is an abbreviated version of the actual DCSS calculation
 local function get_weap_min_delay(it)
-  -- Special case: Woodcutter's axe artefact has fixed delay
+  -- This is an abbreviated version of the actual calculation.
+  -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
   if it.artefact and it.name("qual"):contains("woodcutter's axe") then return it.delay end
 
-  -- Base minimum is half the weapon's base delay
   local min_delay = math.floor(it.delay / 2)
-
-  -- Short blades have a fixed minimum of 5 auts
   if it.weap_skill == "Short Blades" then return 5 end
-
-  -- Two-handed ranged weapons have higher minimum delay
   if it.is_ranged then
     local basename = it.name("base")
     local is_2h_ranged = basename:contains("crossbow") or basename:contains("arbalest")
     if is_2h_ranged then return math.max(min_delay, 10) end
   end
 
-  -- Most weapons cap at 7 auts minimum
   return math.min(min_delay, 7)
 end
 
--- Calculate final weapon attack delay (in auts, 10 auts = 1 turn)
--- This models the complete DCSS delay calculation including skills, brands, and penalties
 local function get_weap_delay(it)
   -- dcss v0.33.1
-  -- Start with base delay, reduced by weapon skill (each skill point reduces delay by 0.5 auts)
   local delay = it.delay - BRC.get.skill(it.weap_skill) / 2
-
-  -- Apply minimum delay cap
   delay = math.max(delay, get_weap_min_delay(it))
-
-  -- Apply brand effects (speed/heavy)
   delay = get_branded_delay(delay, BRC.get.ego(it))
-
-  -- Absolute minimum delay is 3 auts (no weapon can be faster)
   delay = math.max(delay, 3)
 
-  -- Add shield penalty if wearing a shield
   local sh = items.equipped_at("offhand")
   if BRC.is.shield(sh) then delay = delay + get_shield_penalty(sh) end
 
-  -- Add armour penalty for ranged weapons
   if it.is_ranged then
     local worn = items.equipped_at("armour")
     if worn then
       local str = you.strength()
 
-      -- Adjust strength for artefact stat changes when comparing weapons
       local cur = items.equipped_at("weapon")
       if cur and cur ~= it and cur.artefact then
         if it.artefact and it.artprops["Str"] then str = str + it.artprops["Str"] end
@@ -1958,33 +1923,27 @@ local function get_weap_delay(it)
     end
   end
 
-  return delay / 10  -- Convert auts to turns (10 auts = 1 turn)
+  return delay / 10
 end
 
--- Calculate total slaying bonus from all equipped items
--- Slaying increases weapon damage (both melee and ranged)
 local function get_slay_bonuses()
   local sum = 0
 
-  -- Check all equipment slots (0-20 covers all possible slots)
+  -- Slots can go as high as 18 afaict
   for i = 0, 20 do
     local inv = items.equipped_at(i)
     if inv then
-      -- Check rings for slaying bonuses
       if BRC.is.ring(inv) then
         if inv.artefact then
-          -- Parse artefact ring names like "ring of Slaying+3" or "ring of Slaying-2"
           local name = inv.name()
           local idx = name:find("Slay", 1, true)
           if idx then
             local slay = tonumber(name:sub(idx + 5, idx + 5))
-            -- Handle double-digit slaying (e.g., "Slaying+12")
             if slay == 1 then
               local next_digit = tonumber(name:sub(idx + 6, idx + 6))
               if next_digit then slay = 10 + next_digit end
             end
 
-            -- Add or subtract based on +/- sign
             if name:sub(idx + 4, idx + 4) == "+" then
               sum = sum + slay
             else
@@ -1992,21 +1951,18 @@ local function get_slay_bonuses()
             end
           end
         elseif BRC.get.ego(inv) == "Slay" then
-          -- Non-artefact slaying rings
           sum = sum + inv.plus
         end
       elseif inv.artefact and (BRC.is.armour(inv, true) or BRC.is.amulet(inv)) then
-        -- Check armour and amulets for slaying properties
         local slay = inv.artprops["Slay"]
         if slay then sum = sum + slay end
       end
     end
   end
 
-  -- Demonspawn mutations provide slaying bonuses
   if you.race() == "Demonspawn" then
-    sum = sum + 3 * BRC.get.mut(BRC.MUTATIONS.augmentation, true)  -- +3 slay per level
-    sum = sum + BRC.get.mut(BRC.MUTATIONS.sharp_scales, true)       -- +1 slay per level
+    sum = sum + 3 * BRC.get.mut(BRC.MUTATIONS.augmentation, true)
+    sum = sum + BRC.get.mut(BRC.MUTATIONS.sharp_scales, true)
   end
 
   return sum
@@ -2220,53 +2176,40 @@ function BRC.get.weap_dps(it, dmg_type)
   return BRC.get.weap_damage(it, dmg_type) / get_weap_delay(it)
 end
 
--- Calculate weapon damage including all modifiers (stats, skills, slaying, brands)
--- This models the complete DCSS damage calculation for weapon comparisons
 function BRC.get.weap_damage(it, dmg_type)
-  -- Returns adjusted weapon damage including stat/slay changes between weapons
-  -- Auxiliary attacks (like headbutt) are not included in this calculation
+  -- Returns an adjusted weapon damage = damage * speed
+  -- Includes stat/slay changes between weapon and the one currently wielded
+  -- Aux attacks not included
   if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
   local it_plus = it.plus or 0
-
-  -- Start with base character stats
+  -- Adjust str/dex/slay from artefacts
   local str = you.strength()
   local dex = you.dexterity()
 
-  -- Adjust stats for artefact changes when comparing weapons
-  -- This ensures fair comparison between current weapon and potential new weapon
+  -- Adjust str/dex/EV for artefact stat changes
   if not it.equipped then
     local wielded = items.equipped_at("weapon")
     if wielded and wielded.artefact then
-      -- Remove current weapon's stat bonuses
       if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
       if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
       if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
     end
 
     if it.artefact and it.is_identified then
-      -- Add new weapon's stat bonuses
       if it.artprops["Str"] then str = str + it.artprops["Str"] end
       if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
       if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
     end
   end
 
-  -- Determine which stat affects damage (strength for most weapons, dexterity for ranged/blades)
   local stat = str
   if it.is_ranged or it.weap_skill:contains("Blades") then stat = dex end
 
-  -- Calculate stat modifier: 0.75 + 0.025 * stat
-  -- This means each point of the relevant stat adds 2.5% damage
   local stat_mod = 0.75 + 0.025 * stat
-
-  -- Calculate skill modifier: (1 + weapon_skill/50) * (1 + fighting/60)
-  -- Each weapon skill point adds 2% damage, each fighting point adds ~1.67% damage
   local skill_mod = (1 + BRC.get.skill(it.weap_skill) / 25 / 2) * (1 + you.skill("Fighting") / 30 / 2)
 
-  -- Add slaying bonus from all equipped items
   it_plus = it_plus + get_slay_bonuses()
 
-  -- Calculate base damage before brand effects
   local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
   local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
 
@@ -2338,7 +2281,7 @@ BRC.Data.Config = {
   },
 }
 
--- Local config
+-- Local config alias
 local Config = BRC.Data.Config
 
 -- Local variables
@@ -2352,14 +2295,11 @@ local _game_trackers = { -- Values to detect when character is changed
 } -- _game_trackers (do not remove this comment)
 
 -- Local functions
--- Verify that the game state matches what we expect (detects character changes, RC reloads, etc.)
--- This helps detect when the player switches characters or when the RC file is reloaded
+-- Verify that the game state matches what we expect (RC or character changes, stale data,etc.)
 local function verify_game_trackers()
   local success = true
 
   if you.turns() > 0 then
-    -- Check if any tracked values have changed unexpectedly
-    -- This detects character switches, RC reloads, or other state changes
     for k, v in pairs(_game_trackers) do
       local prev = _G[k]
       if prev ~= v then
@@ -2369,8 +2309,7 @@ local function verify_game_trackers()
       end
     end
 
-    -- Check if the reload process completed successfully
-    -- This detects RC file reloads or crashes that interrupted the initialization
+    -- reload_complete is the last data restored by chk_lua_save, so it confirms all data reloaded.
     if not _G.reload_complete then
       success = false
       BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
@@ -3030,7 +2969,7 @@ f_alert_monsters.Config = {
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
 } -- f_alert_monsters.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_alert_monsters.Config
 
 --[[
@@ -3451,7 +3390,7 @@ f_announce_hp_mp.Config = {
 -- Persistent variables
 ad_prev = BRC.Data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local config
+-- Local config alias
 local Config = f_announce_hp_mp.Config
 
 -- Local constants
@@ -4146,7 +4085,7 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_fully_recover.Config
 
 -- Local constants
@@ -4300,7 +4239,7 @@ f_inscribe_stats.Config = {
   inscribe_dps_type = BRC.DMG_TYPE.plain,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_inscribe_stats.Config
 
 -- Local constants / configuration
@@ -4385,7 +4324,7 @@ ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_prev_spell_levels = BRC.Data.persist("ma_prev_spell_levels", 0)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 
--- Local config
+-- Local config alias
 local Config = f_misc_alerts.Config
 
 -- Local constants / configuration
@@ -4490,7 +4429,7 @@ f_remind_id.Config = {
 -- Persistent variables
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
--- Local config
+-- Local config alias
 local Config = f_remind_id.Config
 
 -- Local constants / configuration
@@ -4606,7 +4545,7 @@ f_runrest_features.Config = {
 rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 
--- Local config
+-- Local config alias
 local Config = f_runrest_features.Config
 
 -- Local constants / configuration
@@ -4807,7 +4746,7 @@ f_safe_stairs.Config = {
 ss_prev_location = BRC.Data.persist("ss_prev_location", you.branch() .. you.depth())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
--- Local config
+-- Local config alias
 local Config = f_safe_stairs.Config
 
 -- Local variables
@@ -4886,7 +4825,7 @@ f_startup.Config = {
   },
 } -- f_startup.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_startup.Config
 
 -- Hook functions
@@ -5157,24 +5096,22 @@ f_pickup_alert.Config.Tuning = {}
 --]]
 f_pickup_alert.Config.Tuning.Armour = {
   Lighter = {
-    -- AC/EV ratio thresholds for lighter armour (lower encumbrance)
-    gain_ego = 0.6,    -- Alert if new armour has 60% of old AC but gains an ego
-    diff_ego = 0.8,    -- Alert if new armour has 80% of old AC but different ego
-    same_ego = 1.2,    -- Alert if new armour has 120% of old AC with same ego
-    lost_ego = 2.0,    -- Alert if new armour has 200% of old AC but loses ego
-    min_gain = 3.0,    -- Minimum AC+EV gain required for ego change alerts
-    max_loss = 4.0,    -- Maximum AC+EV loss allowed for ego change alerts
-    ignore_small = 3.5, -- Ignore small AC+EV changes (≤3.5) when checking ego changes
+    gain_ego = 0.6,
+    diff_ego = 0.8,
+    same_ego = 1.2,
+    lost_ego = 2.0,
+    min_gain = 3.0,
+    max_loss = 4.0,
+    ignore_small = 3.5,
   },
   Heavier = {
-    -- AC/EV ratio thresholds for heavier armour (higher encumbrance)
-    gain_ego = 0.4,    -- Alert if new armour has 40% of old AC but gains an ego
-    diff_ego = 0.5,    -- Alert if new armour has 50% of old AC but different ego
-    same_ego = 0.7,    -- Alert if new armour has 70% of old AC with same ego
-    lost_ego = 2.0,    -- Alert if new armour has 200% of old AC but loses ego
-    min_gain = 3.0,    -- Minimum AC+EV gain required for ego change alerts
-    max_loss = 8.0,    -- Maximum AC+EV loss allowed for ego change alerts (higher for heavy armour)
-    ignore_small = 5,  -- Ignore small AC+EV changes (≤5) when checking ego changes
+    gain_ego = 0.4,
+    diff_ego = 0.5,
+    same_ego = 0.7,
+    lost_ego = 2.0,
+    min_gain = 3.0,
+    max_loss = 8.0,
+    ignore_small = 5,
   },
   encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
   early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
@@ -5189,39 +5126,39 @@ f_pickup_alert.Config.Tuning.Armour = {
 --]]
 f_pickup_alert.Config.Tuning.Weap = {}
 f_pickup_alert.Config.Tuning.Weap.Pickup = {
-  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > 1.0 (any improvement)
-  same_type_melee = 1.2, -- Pickup melee weapon of same school if DPS ratio > 1.2 (20% better)
-  same_type_ranged = 1.1, -- Pickup ranged weapon if DPS ratio > 1.1 (10% better)
-  accuracy_weight = 0.25, -- Treat +1 Accuracy as +0.25 DPS (accuracy is less valuable than damage)
+  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
+  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
+  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
+  accuracy_weight = 0.25, -- Treat +1 Accuracy as +`accuracy_weight` DPS
 } -- f_pickup_alert.Config.Tuning.Weap.Pickup (do not remove this comment)
 
 f_pickup_alert.Config.Tuning.Weap.Alert = {
-  -- Alerts for weapons not requiring an extra hand (1-handed weapons)
-  pure_dps = 1.0, -- Alert if DPS ratio > 1.0 (any improvement over current weapon)
-  gain_ego = 0.8, -- Alert if gaining ego and DPS ratio > 0.8 (80% of current damage is acceptable for new ego)
-  new_ego = 0.8, -- Alert if getting new ego type and DPS ratio > 0.8
-  low_skill_penalty_damping = 8, -- Penalty for low weapon skill: (skill+8) / (top_skill+8). Higher = more penalty
+  -- Alerts for weapons not requiring an extra hand
+  pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
+  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
+  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > `new_ego`
+  low_skill_penalty_damping = 8, -- Increase to penalize low-trained schools. Penalty = (skill+damp) / (top_skill+damp)
 
-  -- Alerts for 2-handed weapons when carrying 1-handed weapons
+  -- Alerts for 2-handed weapons, when carrying 1-handed
   AddHand = {
-    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield skill < 4.0 (low shield skill = less valuable)
-    add_ego_lose_sh = 0.8, -- Alert 1h->2h (losing shield) if DPS ratio > 0.8
-    not_using = 1.0, -- Alert 1h->2h (not using 2nd hand) if DPS ratio > 1.0
+    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < `ignore_sh_lvl`
+    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > `add_ego_lose_sh`
+    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > `not_using`
   },
 
-  -- Alerts for good early weapons (when you're low level)
+  -- Alerts for good early weapons of all types
   Early = {
-    xl = 7, -- Alert early weapons if character level <= 7
-    skill = { factor = 1.5, offset = 2.0 }, -- Don't alert if weapon skill diff > (XL * 1.5) + 2.0
-    branded_min_plus = 4, -- Alert branded weapons with enchantment >= +4
+    xl = 7, -- Alert early weapons if XL <= `xl`
+    skill = { factor = 1.5, offset = 2.0 }, -- Don't alert weapons with skill diff > XL * `factor` + `offset`
+    branded_min_plus = 4, -- Alert branded weapons with plus >= `branded_min_plus`
   },
 
   -- Alerts for particularly strong ranged weapons
   EarlyRanged = {
-    xl = 14, -- Alert strong ranged weapons if character level <= 14
-    min_plus = 7, -- Alert ranged weapons with enchantment >= +7
-    branded_min_plus = 4, -- Alert branded ranged weapons with enchantment >= +4
-    max_shields = 8.0, -- Alert 2h ranged despite wearing shield if shield skill <= 8.0
+    xl = 14, -- Alert strong ranged weapons if XL <= `xl`
+    min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
+    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
+    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= `max_shields`
   },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
@@ -5254,7 +5191,7 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   HEAVIER = "⏫"
 }
 
--- Local config
+-- Local config alias
 local Config = f_pickup_alert.Config
 
 -- Local variables
@@ -5276,7 +5213,7 @@ function f_pickup_alert.autopickup(it, _)
     or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
   then return end
 
-  local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
+  local unworn_aux_item = nil -- Track carried aux armour for mutation scenarios
   if it.is_useless then
     -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
     if not BRC.is.aux_armour(it) then return end
@@ -5302,7 +5239,7 @@ function f_pickup_alert.autopickup(it, _)
     end
   end
 
-  -- Not picking up this item. Now check for alerts.
+  -- Item not picked up - check if it should trigger alerts
   if f_pa_data.find(pa_items_alerted, it) then return end
 
   if f_pa_misc and Config.Alert.one_time and #Config.Alert.one_time > 0 then
@@ -5570,7 +5507,7 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
 
 f_pa_armour = {}
 
--- Local config
+-- Local config alias
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
@@ -5734,6 +5671,7 @@ end
 
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
+  -- Check if armour stat trade-off meets configured ratio thresholds
   local meets_ratio = loss <= 0 or (gain / loss > Heur[weight][ego_change] / Config.Alert.armour_sensitivity)
   if not meets_ratio then return false end
 
@@ -5747,7 +5685,7 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
   return true
 end
 
--- Alert the highest AC armour, unless training spells/ranged and NOT armour
+-- Alert when finding higher AC armour than previously seen, unless training spells/ranged and NOT armour
 local function alert_highest_ac(it)
   if you.xl() > 12 then return false end
   local total_skill = you.skill("Spellcasting") + you.skill("Ranged Weapons")
@@ -5793,7 +5731,7 @@ local function alert_body_armour(it)
     end
   end
 
-  -- Alert for lighter/heavier armour, based on configured AC/EV ratio
+  -- Check if lighter/heavier armour meets stat trade-off thresholds
   if encumb_delta < 0 then
     if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
       return send_armour_alert(it, ARMOUR_ALERT[LIGHTER][ego_change])
@@ -5805,7 +5743,7 @@ local function alert_body_armour(it)
     end
   end
 
-  -- Alert for highest AC found so far, or early armour with any ego
+  -- Check for record AC values or early-game ego armour
   if alert_highest_ac(it) then return true end
   if it_ego and you.xl() <= Heur.early_xl then
     return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)
@@ -5902,7 +5840,7 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, p
 
 f_pa_misc = {}
 
--- Local config
+-- Local config alias
 local Config = f_pickup_alert.Config
 local Emoji = f_pickup_alert.Config.Emoji
 
@@ -6003,19 +5941,19 @@ f_pa_weapons = {}
 
 -- Persistent variables
 lowest_num_hands_alerted = BRC.Data.persist("lowest_num_hands_alerted", {
-  ["Ranged Weapons"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
-  ["Polearms"] = 3, -- Start with 3 (to fire both 1 and 2-handed alerts)
+  ["Ranged Weapons"] = 3, -- Track lowest hand count alerted for this weapon school
+  ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
 
--- Local config
+-- Local config alias
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Weap
 local Emoji = f_pickup_alert.Config.Emoji
 
 -- Local constants
-local FIRST_WEAPON_XL_CUTOFF = 4 -- Stop looking for first weapon after this XL
-local RANGED_XL_THRESHOLD = 3 -- At this skill level, don't bother alerting for polearms
-local UPGRADE_SKILL_FACTOR = 0.5 -- Don't alert for upgrades if weap skill is this much worse
+local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
+local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
+local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
 local RANGED = "range_"
 local MELEE = "melee_"
 
@@ -6189,7 +6127,7 @@ local function get_first_of_skill_alert(it, silent)
   if lowest_num_hands_alerted[skill] > hands then
     -- Some early checks to skip alerts
     if hands == 2 and BRC.you.have_shield() then return end
-    if skill == "Polearms" and you.skill("Ranged Weapons") >= RANGED_XL_THRESHOLD then return end
+    if skill == "Polearms" and you.skill("Ranged Weapons") >= POLEARM_RANGED_CUTOFF then return end
 
     -- Update lowest # hands alerted, and alert
     lowest_num_hands_alerted[skill] = hands

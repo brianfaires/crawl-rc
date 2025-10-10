@@ -19,7 +19,7 @@ ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_prev_spell_levels = BRC.Data.persist("ma_prev_spell_levels", 0)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 
--- Local config
+-- Local config alias
 local Config = f_misc_alerts.Config
 
 -- Local constants / configuration

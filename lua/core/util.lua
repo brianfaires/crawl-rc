@@ -707,13 +707,14 @@ Examples: Weapon DPS calculation, treat dragon scales as branded, defining what 
 -- Last verified against: dcss v0.33.1
 
 local function format_dmg(dmg)
-  -- Always return a string of length 4
+  -- Format damage values for consistent display width (4 characters)
   if dmg < 10 then return string.format("%.2f", dmg) end
   if dmg > 99.9 then return ">100" end
   return string.format("%.1f", dmg)
 end
 
 local function format_stat(abbr, val, is_worn)
+  -- Format stat changes for inscriptions: current values for equipped items(:), or relative for unequpped (+/-)
   local stat_str = string.format("%.1f", val)
   if val < 0 then
     return string.format("%s%s", abbr, stat_str)

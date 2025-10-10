@@ -20,7 +20,7 @@ f_runrest_features.Config = {
 rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 
--- Local config
+-- Local config alias
 local Config = f_runrest_features.Config
 
 -- Local constants / configuration

@@ -13,7 +13,7 @@ f_inscribe_stats.Config = {
   inscribe_dps_type = BRC.DMG_TYPE.plain,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_inscribe_stats.Config
 
 -- Local constants / configuration

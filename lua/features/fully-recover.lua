@@ -14,7 +14,7 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
--- Local config
+-- Local config alias
 local Config = f_fully_recover.Config
 
 -- Local constants

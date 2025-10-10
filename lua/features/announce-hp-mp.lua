@@ -41,7 +41,7 @@ f_announce_hp_mp.Config = {
 -- Persistent variables
 ad_prev = BRC.Data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local config
+-- Local config alias
 local Config = f_announce_hp_mp.Config
 
 -- Local constants

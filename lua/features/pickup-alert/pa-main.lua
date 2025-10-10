@@ -166,7 +166,7 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   HEAVIER = "⏫"
 }
 
--- Local config
+-- Local config alias
 local Config = f_pickup_alert.Config
 
 -- Local variables
@@ -188,7 +188,7 @@ function f_pickup_alert.autopickup(it, _)
     or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
   then return end
 
-  local unworn_aux_item = nil -- Conditionally set for pa-alert-armour
+  local unworn_aux_item = nil -- Track carried aux armour for mutation scenarios
   if it.is_useless then
     -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
     if not BRC.is.aux_armour(it) then return end
@@ -214,7 +214,7 @@ function f_pickup_alert.autopickup(it, _)
     end
   end
 
-  -- Not picking up this item. Now check for alerts.
+  -- Item not picked up - check if it should trigger alerts
   if f_pa_data.find(pa_items_alerted, it) then return end
 
   if f_pa_misc and Config.Alert.one_time and #Config.Alert.one_time > 0 then

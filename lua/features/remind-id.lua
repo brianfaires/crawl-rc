@@ -16,7 +16,7 @@ f_remind_id.Config = {
 -- Persistent variables
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
--- Local config
+-- Local config alias
 local Config = f_remind_id.Config
 
 -- Local constants / configuration
