@@ -1516,49 +1516,6 @@ local _game_trackers = { -- Values to detect when character is changed
 } -- _game_trackers (do not remove this comment)
 
 -- Local functions
--- Verify that the game state matches what we expect (RC or character changes, stale data,etc.)
-local function verify_game_trackers()
-  local success = true
-
-  if you.turns() > 0 then
-    for k, v in pairs(_game_trackers) do
-      local prev = _G[k]
-      if prev ~= v then
-        success = false
-        _G[k] = v
-        BRC.log.warning(string.format("Unexpected change of %s: %s -> %s", k, prev, v))
-      end
-    end
-
-    -- reload_complete is the last data restored by chk_lua_save, so it confirms all data reloaded.
-    if not _G.reload_complete then
-      success = false
-      BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
-      BRC.mpr.lightgrey("[BRC] This usually occurs following a malformed RC file. Attempting backup restore...")
-    end
-  end
-
-  return success
-end
-
-local function verify_num_autopickup_funcs()
-  _G.num_autopickup_funcs = BRC.Data.persist("num_autopickup_funcs", 0) -- Use _G to make checklua happy
-  if _G.num_autopickup_funcs == 0 then _G.num_autopickup_funcs = #chk_force_autopickup end
-  if _G.num_autopickup_funcs == #chk_force_autopickup then return true end
-
-  BRC.log.warning(string.format("%s\nExpected: %s but got: %s",
-    "Warning: Extra autopickup funcs detected. (Commonly from reloading a local game.)",
-    _G.num_autopickup_funcs,
-    #chk_force_autopickup
-  ))
-  BRC.mpr.lightgrey("If this is unexpected, you might want to restart crawl.")
-  if BRC.mpr.yesno("Update expected number of autopickup functions?") then
-    _G.num_autopickup_funcs = #chk_force_autopickup
-  end
-
-  return nil
-end
-
 local function is_usable_backup()
   if
     type(c_persist.BRC) ~= "table"
@@ -1657,13 +1614,26 @@ function BRC.Data.init()
 end
 
 -- BRC.Data.verify_reinit(): After all feature init(), verifies data restored as expected
--- Returns true if successful, false if failed, nil if warning only
 function BRC.Data.verify_reinit()
   local success = true
 
-  if not verify_game_trackers() then success = false end
-  local autopickup_valid = verify_num_autopickup_funcs()
-  if not autopickup_valid then success = autopickup_valid end -- False, or nil for warning only
+  if you.turns() > 0 then
+    for k, v in pairs(_game_trackers) do
+      local prev = _G[k]
+      if prev ~= v then
+        success = false
+        _G[k] = v
+        BRC.log.warning(string.format("Unexpected change of %s: %s -> %s", k, prev, v))
+      end
+    end
+
+    -- reload_complete is the last data restored by chk_lua_save, so it confirms all data reloaded.
+    if not _G.reload_complete then
+      success = false
+      BRC.log.warning(string.format("Did not reload persistent data for BRC v%s!", BRC.VERSION))
+      BRC.mpr.lightgrey("[BRC] This usually occurs following a malformed RC file. Attempting backup restore...")
+    end
+  end
 
   -- Update game trackers, to compare on next init()
   for k, v in pairs(_game_trackers) do
@@ -1981,31 +1951,24 @@ function BRC.init()
 
   BRC.log.debug("Initialize features...")
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
+  local suffix = BRC.text.blue(string.format(" (%s features)", #util.keys(_features)))
 
   BRC.log.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
 
   BRC.log.debug("Verify persistent data reload...")
-  local suffix = BRC.text.blue(string.format(" (%s features)", #util.keys(_features)))
-  local reinit_success = BRC.Data.verify_reinit()
-  if reinit_success == true then
+  if BRC.Data.verify_reinit() then
     BRC.Data.backup() -- Only backup after a clean startup
     local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION) .. suffix
     if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
-  elseif reinit_success == false then
-    if not BRC.Data.try_restore() then
-      if BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
-        BRC.active = false
-        BRC.mpr.lightred("\nBRC is off.\n")
-        return false
-      end
-    end
-  end
-
-  if not reinit_success then
+  elseif BRC.Data.try_restore() or BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) == false then
     local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
     BRC.mpr.magenta(string.format("\n%s\n", msg .. suffix))
+  else
+    BRC.active = false
+    BRC.mpr.lightred("\nBRC is off.\n")
+    return false
   end
 
   -- We're a go!

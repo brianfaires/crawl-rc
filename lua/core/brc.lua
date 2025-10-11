@@ -276,31 +276,24 @@ function BRC.init()
 
   BRC.log.debug("Initialize features...")
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
+  local suffix = BRC.text.blue(string.format(" (%s features)", #util.keys(_features)))
 
   BRC.log.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
 
   BRC.log.debug("Verify persistent data reload...")
-  local suffix = BRC.text.blue(string.format(" (%s features)", #util.keys(_features)))
-  local reinit_success = BRC.Data.verify_reinit()
-  if reinit_success == true then
+  if BRC.Data.verify_reinit() then
     BRC.Data.backup() -- Only backup after a clean startup
     local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION) .. suffix
     if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
-  elseif reinit_success == false then
-    if not BRC.Data.try_restore() then
-      if BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
-        BRC.active = false
-        BRC.mpr.lightred("\nBRC is off.\n")
-        return false
-      end
-    end
-  end
-
-  if not reinit_success then
+  elseif BRC.Data.try_restore() or BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) == false then
     local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
     BRC.mpr.magenta(string.format("\n%s\n", msg .. suffix))
+  else
+    BRC.active = false
+    BRC.mpr.lightred("\nBRC is off.\n")
+    return false
   end
 
   -- We're a go!
