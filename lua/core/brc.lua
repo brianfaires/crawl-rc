@@ -32,7 +32,7 @@ local _hooks = {}
 local turn_count = nil
 local depth = nil
 
--- Local functions
+---- Local functions ----
 local function feature_is_disabled(f)
   return f.Config and f.Config.disabled or BRC.Config[f.BRC_FEATURE_NAME] and BRC.Config[f.BRC_FEATURE_NAME].disabled
 end
@@ -67,15 +67,31 @@ local function handle_core_error(hook_name, result, ...)
   end
 end
 
-local function override_feature_config_table(source, dest)
-  for key, value in pairs(source) do
-    if BRC.is.map(value) then
-      if not dest[key] then dest[key] = {} end
-      override_feature_config_table(value, dest[key])
-    elseif key ~= "init" then
-      dest[key] = value
+-- Config management
+local function get_validated_config_name(input_name)
+  if type(input_name) ~= "string" then
+    BRC.log.warning(string.format("Non-string config name: '%s'", tostring(input_name)))
+  else
+    local config_name = input_name:lower()
+    if config_name == "ask" then
+      if you.turns() > 0 and brc_config_name then
+        return get_validated_config_name(brc_config_name)
+      end
+    elseif config_name == "previous" then
+      if c_persist.BRC and c_persist.BRC.current_config then
+        return get_validated_config_name(c_persist.BRC.current_config)
+      else
+        BRC.log.warning("No previous config found.")
+      end
+    else
+      for k, _ in pairs(BRC.Profiles) do
+        if config_name == k:lower() then return k end
+      end
+      BRC.log.warning(string.format("Could not load config: '%s'", tostring(input_name)))
     end
   end
+
+  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
 end
 
 local function safe_call_string(str, module_name)
@@ -86,6 +102,17 @@ local function safe_call_string(str, module_name)
     local success, result = pcall(chunk)
     if not success then
       BRC.log.error("Error executing " .. module_name .. ".Config.init string: ", result)
+    end
+  end
+end
+
+local function override_feature_config_table(source, dest)
+  for key, value in pairs(source) do
+    if BRC.is.map(value) then
+      if not dest[key] then dest[key] = {} end
+      override_feature_config_table(value, dest[key])
+    elseif key ~= "init" then
+      dest[key] = value
     end
   end
 end
@@ -102,7 +129,7 @@ local function override_feature_config(feature_name)
   override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
 end
 
--- Hook dispatching
+-- Hook management
 local function call_all_hooks(hook_name, ...)
   local last_return_value = nil
   local returning_feature = nil
@@ -136,7 +163,7 @@ local function call_all_hooks(hook_name, ...)
   return last_return_value
 end
 
--- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it is kept very simple + protected.
+-- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it's kept simple and safe.
 -- Errors in call_all_hooks() or handle_core_error() are caught by this function.
 local function safe_call_all_hooks(hook_name, ...)
   if not (_hooks and _hooks[hook_name] and #_hooks[hook_name] > 0) then return end
@@ -158,7 +185,6 @@ local function safe_call_all_hooks(hook_name, ...)
   end
 end
 
--- Hook management
 local function register_all_features()
   local loaded_count = 0
 
@@ -178,7 +204,11 @@ local function register_all_features()
   return loaded_count
 end
 
--- Public API
+---- Public API ----
+function BRC.get_registered_features()
+  return _features
+end
+
 function BRC.is_feature_module(f)
   return f
     and type(f) == "table"
@@ -253,10 +283,6 @@ function BRC.unregister(name)
   return true
 end
 
-function BRC.get_registered_features()
-  return _features
-end
-
 function BRC.init()
   _features = {}
   _hooks = {}
@@ -314,32 +340,6 @@ function BRC.init()
   return true
 end
 
-local function get_validated_config_name(input_name)
-  if type(input_name) ~= "string" then
-    BRC.log.warning(string.format("Non-string config name: '%s'", tostring(input_name)))
-  else
-    local config_name = input_name:lower()
-    if config_name == "ask" then
-      if you.turns() > 0 and brc_config_name then
-        return get_validated_config_name(brc_config_name)
-      end
-    elseif config_name == "previous" then
-      if c_persist.BRC and c_persist.BRC.current_config then
-        return get_validated_config_name(c_persist.BRC.current_config)
-      else
-        BRC.log.warning("No previous config found.")
-      end
-    else
-      for k, _ in pairs(BRC.Profiles) do
-        if config_name == k:lower() then return k end
-      end
-      BRC.log.warning(string.format("Could not load config: '%s'", tostring(input_name)))
-    end
-  end
-
-  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
-end
-
 function BRC.load_config(input_config)
   local config_name
   if type(input_config) == "table" then
@@ -367,7 +367,7 @@ function BRC.load_config(input_config)
   return config_name
 end
 
--- Hook methods
+---- Crawl hooks ----
 function BRC.autopickup(it, _)
   return safe_call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
 end

@@ -134,7 +134,7 @@ function BRC.Data.erase()
   BRC.log.warning("Erased all persistent data and disabled BRC. Restart crawl to reload defaults.")
 end
 
--- verify_reinit(): Returns true if all data successful, and a list of failed variables needing backup restore
+-- verify_reinit(): Returns true if all data successful, and a list of failed variables
 function BRC.Data.verify_reinit()
   if #failed_restores == 0 then return true, nil end
   local patt = "%s persistent variables did not restore: (%s)"
