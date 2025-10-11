@@ -27,7 +27,7 @@ BRC.Config = BRC.Profiles.Default-- Always init to Default profile
 -- Testing Config Profile: Isolate and test specific features
 BRC.Profiles.Testing = {
   show_debug_messages = true,
-  disable_other_features = false,
+  disable_other_features = true,
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.1,
@@ -183,10 +183,15 @@ BRC.Profiles.Speed = {
 -- Turncount Config Profile: For turncount runs
 BRC.Profiles.Turncount = {
   ["after-shaft"] = { disabled = true },
-
+  ["alert-monsters"] = {
+    sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
+  },
 } -- BRC.Profiles.Turncount (do not remove this comment)
 
 -- Streak Config Profile: For win streaks
 BRC.Profiles.Streak = {
+  ["alert-monsters"] = {
+    sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
+  },
 
 } -- BRC.Profiles.Streak (do not remove this comment)

@@ -193,9 +193,14 @@ function BRC.register(f)
     BRC.log.warning("Repeat registration of " .. f.BRC_FEATURE_NAME .. "! Will redo registration...")
     BRC.unregister(f.BRC_FEATURE_NAME)
   end
+
   if feature_is_disabled(f) then
     BRC.log.debug(string.format("%s is disabled. Skipped registration.", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))
     return nil
+  else
+    if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
+    if not f.Config then f.Config = {} end
+    f.Config.disabled = false
   end
 
   BRC.log.debug(string.format("Registering %s...", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))

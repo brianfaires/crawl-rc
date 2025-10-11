@@ -648,7 +648,7 @@ function BRC.util.tostring(var, pretty, indent_count)
   elseif var_type == "table" then
     indent_count = indent_count or 0
     local indent = string.rep("  ", indent_count)
-    local child_indent = string.rep("  ", indent_count+1)
+    local child_indent = string.rep("  ", indent_count + 1)
     local list_separator = ",\n" .. child_indent
 
     if BRC.is.list(var) then
@@ -912,7 +912,13 @@ end
 
 function BRC.get.weapon_stats(it, dmg_type)
   if not it.is_weapon then return end
-  dmg_type = dmg_type or BRC.DMG_TYPE[BRC.Config.inscribe_dps_type] or BRC.DMG_TYPE.plain
+  if not dmg_type then
+    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.inscribe_dps_type then
+      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.inscribe_dps_type]
+    else
+      dmg_type = BRC.DMG_TYPE.plain
+    end
+  end
   local dmg = format_dmg(BRC.get.weap_damage(it, dmg_type))
   local delay = get_weap_delay(it)
   local delay_str = string.format("%.1f", delay)
@@ -982,8 +988,8 @@ end
 function BRC.is.unusable_ego(ego)
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
-    or ego == "pain" and you.skill("Necromancy") == 0
+      or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+      or ego == "pain" and you.skill("Necromancy") == 0
 end
 
 -- Armour stats

@@ -11,6 +11,7 @@ Dependencies: core/util.lua
 f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 f_alert_monsters.Config = {
+  sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   fm_on_uniques = true, -- Stop on all Uniques & Pan lords
   pack_timeout = 10, -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
   disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
@@ -339,27 +340,27 @@ function f_alert_monsters.ready()
     elseif not v.cond then
       should_be_active = true
     elseif v.cond == "xl" then
-      should_be_active = xl < v.cutoff
+      should_be_active = xl < v.cutoff * Config.sensitivity
     elseif v.cond == "hp" then
-      should_be_active = hp < v.cutoff
+      should_be_active = hp < v.cutoff * Config.sensitivity
     elseif v.cond == "int" then
-      should_be_active = int < v.cutoff
+      should_be_active = int < v.cutoff * Config.sensitivity
     elseif v.cond == "will" then
-      should_be_active = willpower < v.cutoff
+      should_be_active = willpower < v.cutoff * Config.sensitivity
     elseif v.cond == "mut" then
       should_be_active = res_mut == 0
     elseif v.cond == "pois" then
-      should_be_active = res_pois == 0 and hp < v.cutoff
+      should_be_active = res_pois == 0 and hp < v.cutoff * Config.sensitivity
     elseif v.cond == "elec" then
-      should_be_active = res_elec == 0 and hp < v.cutoff
+      should_be_active = res_elec == 0 and hp < v.cutoff * Config.sensitivity
     elseif v.cond == "corr" then
-      should_be_active = not res_corr and hp < v.cutoff
+      should_be_active = not res_corr and hp < v.cutoff * Config.sensitivity
     elseif v.cond == "fire" then
-      should_be_active = check_alert_three_pip(hp, v.cutoff, res_fire)
+      should_be_active = check_alert_three_pip(hp, v.cutoff * Config.sensitivity, res_fire)
     elseif v.cond == "cold" then
-      should_be_active = check_alert_three_pip(hp, v.cutoff, res_cold)
+      should_be_active = check_alert_three_pip(hp, v.cutoff * Config.sensitivity, res_cold)
     elseif v.cond == "drain" then
-      should_be_active = check_alert_three_pip(hp, v.cutoff, res_drain)
+      should_be_active = check_alert_three_pip(hp, v.cutoff * Config.sensitivity, res_drain)
     end
 
     if should_be_active ~= v.active_alert then
