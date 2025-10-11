@@ -79,15 +79,15 @@ lua_file = crawl-rc/lua/features/pickup-alert/pa-weapons.lua
 {
 -- Hook functions that delegate to BRC
 function ready()
-    BRC.ready()
+  BRC.ready()
 end
 
 function c_message(text, channel)
-    BRC.c_message(text, channel)
+  BRC.c_message(text, channel)
 end
 
 function c_answer_prompt(prompt)
-    return BRC.c_answer_prompt(prompt)
+  return BRC.c_answer_prompt(prompt)
 end
 
 function c_assign_invletter(it)

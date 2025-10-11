@@ -18,19 +18,19 @@ Usage:
 
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
-BRC.Configs = {}
+BRC.Profiles = {}
 BRC.config_to_use = "ask"
 BRC.config_memory = "full"
 
--- Default: non-feature default values
-BRC.Configs.Default = {
+-- Default Config Profile (defines all non-feature values)
+BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
-} -- BRC.Configs.Default (do not remove this comment)
-BRC.Config = BRC.Configs.Default -- Init BRC.Config
+} -- BRC.Profiles.Default (do not remove this comment)
+BRC.Config = BRC.Profiles.Default-- Always init to Default profile
 
--- Testing Config: Isolate and test specific features
-BRC.Configs.Testing = {
+-- Testing Config Profile: Isolate and test specific features
+BRC.Profiles.Testing = {
   show_debug_messages = true,
   disable_other_features = false,
   ["pickup-alert"] = {
@@ -48,10 +48,10 @@ BRC.Configs.Testing = {
       end
     end
   ]],
-} -- BRC.Configs.Testing (do not remove this comment)
+} -- BRC.Profiles.Testing (do not remove this comment)
 
--- Custom Config: Personalized settings
-BRC.Configs.Custom = {
+-- Custom Config Profile: Personalized settings
+BRC.Profiles.Custom = {
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
   },
@@ -61,8 +61,8 @@ BRC.Configs.Custom = {
     always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
   },
   ["inscribe-stats"] = {
-    inscribe_weapons = true, -- Inscribe weapon stats on pickup and adjust each turn
-    inscribe_armour = true,  -- Inscribe armour stats on pickup and adjust each turn
+    inscribe_weapons = true, -- Inscribe weapon stats on pickup and keep updated
+    inscribe_armour = true,  -- Inscribe armour stats on pickup and keep updated
   },
   ["remind-id"] = {
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
@@ -124,10 +124,10 @@ BRC.Configs.Custom = {
       },
     },
   },
-} -- BRC.Configs.Custom (do not remove this comment)
+} -- BRC.Profiles.Custom (do not remove this comment)
 
--- Speed Config: For speed runs
-BRC.Configs.Speed = {
+-- Speed Config Profile: For speed runs
+BRC.Profiles.Speed = {
   ["after-shaft"] = { disabled = true },
   ["alert-monsters"] = { disabled = true },
   ["safe-consumables"] = { disabled = true },
@@ -183,17 +183,18 @@ BRC.Configs.Speed = {
   init = [[
     BRC.Config.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
   ]],
-} -- BRC.Configs.Speed (do not remove this comment)
+} -- BRC.Profiles.Speed (do not remove this comment)
 
--- Turncount Config: For turncount runs
-BRC.Configs.Turncount = {
+-- Turncount Config Profile: For turncount runs
+BRC.Profiles.Turncount = {
+  ["after-shaft"] = { disabled = true },
 
-} -- BRC.Configs.Turncount (do not remove this comment)
+} -- BRC.Profiles.Turncount (do not remove this comment)
 
--- Streak Config: For win streaks
-BRC.Configs.Streak = {
+-- Streak Config Profile: For win streaks
+BRC.Profiles.Streak = {
 
-} -- BRC.Configs.Streak (do not remove this comment)
+} -- BRC.Profiles.Streak (do not remove this comment)
 
 }
 ############################### End lua/core/config.lua ###############################
@@ -2520,7 +2521,7 @@ end
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
   if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLOR.yellow) then
-    BRC.unregister_feature(feature_name)
+    BRC.unregister(feature_name)
   else
     BRC.mpr.okay()
   end
@@ -2652,7 +2653,7 @@ local function register_all_features(parent_module)
   -- Scan the namespace for feature modules and load them
   for name, value in pairs(parent_module) do
     if BRC.is_feature_module(value) then
-      local success = BRC.register_feature(value)
+      local success = BRC.register(value)
       if success then
         loaded_count = loaded_count + 1
       elseif success == false then
@@ -2674,15 +2675,15 @@ function BRC.is_feature_module(f)
     and #f.BRC_FEATURE_NAME > 0
 end
 
--- BRC.register_feature(): Return true if success, false if error, nil if feature is disabled
-function BRC.register_feature(f)
+-- BRC.register(): Return true if success, false if error, nil if feature is disabled
+function BRC.register(f)
   if not BRC.is_feature_module(f) then
     BRC.log.error("Tried to register a non-feature module! Module contents:")
     BRC.dump.var(f)
     return false
   elseif _features[f.BRC_FEATURE_NAME] then
     BRC.log.warning("Repeat registration of " .. f.BRC_FEATURE_NAME .. "! Will redo registration...")
-    BRC.unregister_feature(f.BRC_FEATURE_NAME)
+    BRC.unregister(f.BRC_FEATURE_NAME)
   end
   if feature_is_disabled(f) then
     BRC.log.debug(string.format("%s is disabled. Skipped registration.", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))
@@ -2713,7 +2714,7 @@ function BRC.register_feature(f)
   return true
 end
 
-function BRC.unregister_feature(name)
+function BRC.unregister(name)
   if not _features[name] then
     BRC.log.error(string.format("%s is not registered. Cannot unregister.", BRC.text.yellow(name)))
     return false
@@ -2746,10 +2747,10 @@ function BRC.init(parent_module)
 
   BRC.log.debug("Load config...")
   local config_name
-  if BRC.config_memory:lower() == "full" then
+  if BRC.config_memory and BRC.config_memory:lower() == "full" then
     config_name = BRC.load_config(_G.config_full_memory or _G.game_config_name or BRC.config_to_use)
     BRC.Data.persist("config_full_memory", BRC.Config)
-  elseif BRC.config_memory:lower() == "name" then
+  elseif BRC.config_memory and BRC.config_memory:lower() == "name" then
     config_name = BRC.load_config(_G.game_config_name or BRC.config_to_use)
   else
     config_name = BRC.load_config(BRC.config_to_use)
@@ -2757,7 +2758,7 @@ function BRC.init(parent_module)
   BRC.Data.persist("game_config_name", config_name)
 
   BRC.log.debug("Register features...")
-  BRC.register_feature(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
+  BRC.register(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
   register_all_features(parent_module)
 
   BRC.log.debug("Initialize features...")
@@ -2813,14 +2814,14 @@ local function get_validated_config_name(input_name)
         BRC.log.warning("No previous config found.")
       end
     else
-      for k, _ in pairs(BRC.Configs) do
+      for k, _ in pairs(BRC.Profiles) do
         if config_name == k:lower() then return k end
       end
       BRC.log.warning(string.format("Could not load config: '%s'", tostring(input_name)))
     end
   end
 
-  return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
+  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
 end
 
 function BRC.load_config(input_config)
@@ -2830,8 +2831,8 @@ function BRC.load_config(input_config)
     config_name = _G.game_config_name or "Unknown"
   else
     config_name = get_validated_config_name(input_config)
-    BRC.Config = util.copy_table(BRC.Configs.Default)
-    for k, v in pairs(BRC.Configs[config_name]) do
+    BRC.Config = util.copy_table(BRC.Profiles.Default)
+    for k, v in pairs(BRC.Profiles[config_name]) do
       BRC.Config[k] = v
     end
   end
@@ -6322,15 +6323,15 @@ end
 {
 -- Hook functions that delegate to BRC
 function ready()
-    BRC.ready()
+  BRC.ready()
 end
 
 function c_message(text, channel)
-    BRC.c_message(text, channel)
+  BRC.c_message(text, channel)
 end
 
 function c_answer_prompt(prompt)
-    return BRC.c_answer_prompt(prompt)
+  return BRC.c_answer_prompt(prompt)
 end
 
 function c_assign_invletter(it)

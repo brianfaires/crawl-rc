@@ -13,19 +13,19 @@ Usage:
 
 -- Initialize BRC namespace and Public modules
 BRC = BRC or {}
-BRC.Configs = {}
+BRC.Profiles = {}
 BRC.config_to_use = "ask"
 BRC.config_memory = "full"
 
--- Default: non-feature default values
-BRC.Configs.Default = {
+-- Default Config Profile (defines all non-feature values)
+BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
-} -- BRC.Configs.Default (do not remove this comment)
-BRC.Config = BRC.Configs.Default -- Init BRC.Config
+} -- BRC.Profiles.Default (do not remove this comment)
+BRC.Config = BRC.Profiles.Default-- Always init to Default profile
 
--- Testing Config: Isolate and test specific features
-BRC.Configs.Testing = {
+-- Testing Config Profile: Isolate and test specific features
+BRC.Profiles.Testing = {
   show_debug_messages = true,
   disable_other_features = false,
   ["pickup-alert"] = {
@@ -43,10 +43,10 @@ BRC.Configs.Testing = {
       end
     end
   ]],
-} -- BRC.Configs.Testing (do not remove this comment)
+} -- BRC.Profiles.Testing (do not remove this comment)
 
--- Custom Config: Personalized settings
-BRC.Configs.Custom = {
+-- Custom Config Profile: Personalized settings
+BRC.Profiles.Custom = {
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
   },
@@ -56,8 +56,8 @@ BRC.Configs.Custom = {
     always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
   },
   ["inscribe-stats"] = {
-    inscribe_weapons = true, -- Inscribe weapon stats on pickup and adjust each turn
-    inscribe_armour = true,  -- Inscribe armour stats on pickup and adjust each turn
+    inscribe_weapons = true, -- Inscribe weapon stats on pickup and keep updated
+    inscribe_armour = true,  -- Inscribe armour stats on pickup and keep updated
   },
   ["remind-id"] = {
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
@@ -119,10 +119,10 @@ BRC.Configs.Custom = {
       },
     },
   },
-} -- BRC.Configs.Custom (do not remove this comment)
+} -- BRC.Profiles.Custom (do not remove this comment)
 
--- Speed Config: For speed runs
-BRC.Configs.Speed = {
+-- Speed Config Profile: For speed runs
+BRC.Profiles.Speed = {
   ["after-shaft"] = { disabled = true },
   ["alert-monsters"] = { disabled = true },
   ["safe-consumables"] = { disabled = true },
@@ -178,14 +178,15 @@ BRC.Configs.Speed = {
   init = [[
     BRC.Config.startup.auto_set_skill_targets = { { BRC.get.preferred_weapon_type(), 8.0 } }
   ]],
-} -- BRC.Configs.Speed (do not remove this comment)
+} -- BRC.Profiles.Speed (do not remove this comment)
 
--- Turncount Config: For turncount runs
-BRC.Configs.Turncount = {
+-- Turncount Config Profile: For turncount runs
+BRC.Profiles.Turncount = {
+  ["after-shaft"] = { disabled = true },
 
-} -- BRC.Configs.Turncount (do not remove this comment)
+} -- BRC.Profiles.Turncount (do not remove this comment)
 
--- Streak Config: For win streaks
-BRC.Configs.Streak = {
+-- Streak Config Profile: For win streaks
+BRC.Profiles.Streak = {
 
-} -- BRC.Configs.Streak (do not remove this comment)
+} -- BRC.Profiles.Streak (do not remove this comment)

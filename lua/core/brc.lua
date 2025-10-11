@@ -36,7 +36,7 @@ end
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
   if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLOR.yellow) then
-    BRC.unregister_feature(feature_name)
+    BRC.unregister(feature_name)
   else
     BRC.mpr.okay()
   end
@@ -168,7 +168,7 @@ local function register_all_features(parent_module)
   -- Scan the namespace for feature modules and load them
   for name, value in pairs(parent_module) do
     if BRC.is_feature_module(value) then
-      local success = BRC.register_feature(value)
+      local success = BRC.register(value)
       if success then
         loaded_count = loaded_count + 1
       elseif success == false then
@@ -190,15 +190,15 @@ function BRC.is_feature_module(f)
     and #f.BRC_FEATURE_NAME > 0
 end
 
--- BRC.register_feature(): Return true if success, false if error, nil if feature is disabled
-function BRC.register_feature(f)
+-- BRC.register(): Return true if success, false if error, nil if feature is disabled
+function BRC.register(f)
   if not BRC.is_feature_module(f) then
     BRC.log.error("Tried to register a non-feature module! Module contents:")
     BRC.dump.var(f)
     return false
   elseif _features[f.BRC_FEATURE_NAME] then
     BRC.log.warning("Repeat registration of " .. f.BRC_FEATURE_NAME .. "! Will redo registration...")
-    BRC.unregister_feature(f.BRC_FEATURE_NAME)
+    BRC.unregister(f.BRC_FEATURE_NAME)
   end
   if feature_is_disabled(f) then
     BRC.log.debug(string.format("%s is disabled. Skipped registration.", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))
@@ -229,7 +229,7 @@ function BRC.register_feature(f)
   return true
 end
 
-function BRC.unregister_feature(name)
+function BRC.unregister(name)
   if not _features[name] then
     BRC.log.error(string.format("%s is not registered. Cannot unregister.", BRC.text.yellow(name)))
     return false
@@ -262,10 +262,10 @@ function BRC.init(parent_module)
 
   BRC.log.debug("Load config...")
   local config_name
-  if BRC.config_memory:lower() == "full" then
+  if BRC.config_memory and BRC.config_memory:lower() == "full" then
     config_name = BRC.load_config(_G.config_full_memory or _G.game_config_name or BRC.config_to_use)
     BRC.Data.persist("config_full_memory", BRC.Config)
-  elseif BRC.config_memory:lower() == "name" then
+  elseif BRC.config_memory and BRC.config_memory:lower() == "name" then
     config_name = BRC.load_config(_G.game_config_name or BRC.config_to_use)
   else
     config_name = BRC.load_config(BRC.config_to_use)
@@ -273,7 +273,7 @@ function BRC.init(parent_module)
   BRC.Data.persist("game_config_name", config_name)
 
   BRC.log.debug("Register features...")
-  BRC.register_feature(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
+  BRC.register(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
   register_all_features(parent_module)
 
   BRC.log.debug("Initialize features...")
@@ -329,14 +329,14 @@ local function get_validated_config_name(input_name)
         BRC.log.warning("No previous config found.")
       end
     else
-      for k, _ in pairs(BRC.Configs) do
+      for k, _ in pairs(BRC.Profiles) do
         if config_name == k:lower() then return k end
       end
       BRC.log.warning(string.format("Could not load config: '%s'", tostring(input_name)))
     end
   end
 
-  return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
+  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
 end
 
 function BRC.load_config(input_config)
@@ -346,8 +346,8 @@ function BRC.load_config(input_config)
     config_name = _G.game_config_name or "Unknown"
   else
     config_name = get_validated_config_name(input_config)
-    BRC.Config = util.copy_table(BRC.Configs.Default)
-    for k, v in pairs(BRC.Configs[config_name]) do
+    BRC.Config = util.copy_table(BRC.Profiles.Default)
+    for k, v in pairs(BRC.Profiles[config_name]) do
       BRC.Config[k] = v
     end
   end
