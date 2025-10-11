@@ -8,7 +8,7 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-
 f_pa_weapons = {}
 
 -- Persistent variables
-lowest_num_hands_alerted = BRC.Data.persist("lowest_num_hands_alerted", {
+pa_lowest_hands_alerted = BRC.Data.persist("pa_lowest_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Track lowest hand count alerted for this weapon school
   ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
@@ -189,16 +189,16 @@ end
 -- Local functions: Alerting
 local function get_first_of_skill_alert(it, silent)
   local skill = it.weap_skill
-  if not lowest_num_hands_alerted[skill] then return end
+  if not pa_lowest_hands_alerted[skill] then return end
 
   local hands = BRC.get.hands(it)
-  if lowest_num_hands_alerted[skill] > hands then
+  if pa_lowest_hands_alerted[skill] > hands then
     -- Some early checks to skip alerts
     if hands == 2 and BRC.you.have_shield() then return end
     if skill == "Polearms" and you.skill("Ranged Weapons") >= POLEARM_RANGED_CUTOFF then return end
 
     -- Update lowest # hands alerted, and alert
-    lowest_num_hands_alerted[skill] = hands
+    pa_lowest_hands_alerted[skill] = hands
     if silent then return end
     local msg = string.format("First %s%s", string.sub(skill, 1, -2), hands == 1 and " (1-handed)" or "")
     return make_alert(it, msg, Emoji.WEAPON, Config.Alert.More.early_weap)

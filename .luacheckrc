@@ -70,7 +70,7 @@ globals = {
   "ed_dropped_items",
   "fr_explore_after",
   "fr_start_turn",
-  "lowest_num_hands_alerted",
+  "pa_lowest_hands_alerted",
   "ma_alerted_max_piety",
   "ma_prev_spell_levels",
   "ma_saved_msg",

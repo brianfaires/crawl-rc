@@ -1500,7 +1500,7 @@ BRC.Data.Config = {
       vamp = { factor = 1.2, offset = 0 },
     },
   },
-}
+} -- BRC.Data.Config (do not remove this comment)
 
 -- Local config alias
 local Config = BRC.Data.Config

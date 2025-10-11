@@ -1,4 +1,4 @@
-## Config at start of file
+:error("Use buehler.rc instead. Multi-file lua does not work well with crawl (It doesn't re-execute on char switch.)")
 lua_file = crawl-rc/lua/core/config.lua
 
 ####### Main options #######

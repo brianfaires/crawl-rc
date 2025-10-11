@@ -3,11 +3,8 @@
 A modular system for Dungeon Crawl Stone Soup RC files, designed to be easily customized and extended.
 
 ## Quick Start
-- **Single file (Webtiles)**: Include the contents of `bin/buehler.rc` in your RC file.
-
-- **Multi-file (Local)**: Add `include = init.txt` in your RC file.
-
-**Merge hooks (if needed)**: Hook functions like `ready()` are defined at the very end of BRC. If your RC already contains these, remove BRC's hook function and add `BRC.ready()` at the top of your hook function.
+- Include the contents of `bin/buehler.rc` in your RC file.
+- **Merge hooks (if needed)**: Hook functions like `ready()` are defined at the very end of BRC. If your RC already contains these, remove BRC's hook function and add `BRC.ready()` at the top of your hook function.
 
 ## File Structure
 
@@ -28,8 +25,6 @@ lua/                    # Lua files
 │   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
 │   └── ...                     # Other features
 rc/                     # RC file components
-├─── init.txt               # Entry point for multi-file RC
-├─── ...                    # Other RC files
 build/                  # Scripts to generate bin/
 ```
 
@@ -96,11 +91,7 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 **Method 1 (Simple): Delete the code**
 
 - Delete the feature definition from your RC:
-  - _(buehler.rc)_ Delete everything from: `#### Begin <feature_name>` - `#### End <feature_name>`
-  - _(init.txt)_ Comment out the feature you don't want:
-    ```
-    # lua_file = misc-alerts
-    ```
+  - Delete everything from: `#### Begin <feature_name>` - `#### End <feature_name>`
 
 **Method 2 (Flexible): Disable via config**
 
@@ -308,7 +299,7 @@ BRC.Config.show_debug_messages = true -- Enable debug output
   - **Regex issues**: Some regular expression patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
   - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT MacOS doesn't, so I configure `BRC.Config.emojis = false` locally.
   If you have one, define it in `rc/display.rc`, and LMK!
-  - **Switching between characters** doesn't clear out the lua environment (at least on MacOS). Things get duplicated, including crawl's own autopickup functions.
+  - **Switching between characters** uses the same lua environment (at least on MacOS). Nothing gets reset except what's in init() Things get duplicated, including crawl's own autopickup functions.
   BRC checks for this and warns you to restart. It appears to be harmless but I usually restart anyway.
 
 **RC syntax errors**: When editing the RC, a single character out of place can break the whole thing. 

@@ -31,7 +31,7 @@ def write_footer(file_path, outfile):
 def write_resume(file_path, outfile):
     comment = get_comment_char(file_path)
     name = str(file_path).replace(str(base_dir) + "/", "")
-    outfile.write(f"\n{comment * 2} (Resuming {name}) {comment * 2}\n")
+    outfile.write(f"{comment * 2} (Resuming {name}) {comment * 2}\n\n")
 
 def parse_include(line):
     if line.startswith(rc_prefix):
@@ -66,28 +66,41 @@ def process_file(file_path, outfile):
             outfile.write("\n}")
         write_footer(file_path, outfile)
 
+def process_line(line, outfile):
+    """Process a single line, handling includes and returns True if a file was processed."""
+    if line.startswith(lua_prefix):
+        include_path = parse_include(line.strip())
+        if include_path and include_path.exists():
+            process_file(include_path, outfile)
+            return True
+        else:
+            outfile.write(line)
+    elif line.startswith(rc_prefix):
+        include_path = parse_include(line.strip())
+        if include_path and include_path.exists():
+            process_file(include_path, outfile)
+            return True
+        else:
+            outfile.write(line)
+    else:
+        outfile.write(line)
+    return False
+
 def process_init_file(infile, outfile):
     resume = False
+    # skip first line of infile, if it starts with ":error"
+    first_line = infile.readline()
+    if not first_line.startswith(":error"):
+        resume = process_line(first_line, outfile)
+    
+    # Process the rest of the lines
     for line in infile:
-        if line.startswith(lua_prefix):
-            include_path = parse_include(line.strip())
-            if include_path and include_path.exists():
-                process_file(include_path, outfile)
-                resume = True
-            else:
-                outfile.write(line)
-        elif line.startswith(rc_prefix):
-            include_path = parse_include(line.strip())
-            if include_path and include_path.exists():
-                process_file(include_path, outfile)
-                resume = True
-            else:
-                outfile.write(line)
+        if process_line(line, outfile):
+            resume = True
         else:
             if resume:
                 write_resume(init_file, outfile)
                 resume = False
-            outfile.write(line)
 
 print("Building buehler.rc...")
 with open(init_file, 'r') as infile:

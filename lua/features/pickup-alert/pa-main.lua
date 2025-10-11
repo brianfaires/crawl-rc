@@ -164,7 +164,7 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   STRONGEST = "💪💪",
   LIGHTER = "⏬",
   HEAVIER = "⏫"
-}
+} -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
 -- Local config alias
 local Config = f_pickup_alert.Config
