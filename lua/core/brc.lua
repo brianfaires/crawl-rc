@@ -155,18 +155,11 @@ local function safe_call_all_hooks(hook_name, ...)
 end
 
 -- Hook management
-local function register_all_features(parent_module)
+local function register_all_features()
   local loaded_count = 0
 
-  -- Default to scanning the global namespace for modules
-  parent_module = parent_module or _G
-  if type(parent_module) ~= "table" then
-    BRC.log.warning("Invalid parent module (must be a table). Using global namespace instead.")
-    parent_module = _G
-  end
-
-  -- Scan the namespace for feature modules and load them
-  for name, value in pairs(parent_module) do
+  -- Scan for feature modules and load them
+  for name, value in pairs(_G) do
     if BRC.is_feature_module(value) then
       local success = BRC.register(value)
       if success then
@@ -255,7 +248,7 @@ function BRC.get_registered_features()
   return _features
 end
 
-function BRC.init(parent_module)
+function BRC.init()
   _features = {}
   _hooks = {}
   if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
@@ -274,7 +267,7 @@ function BRC.init(parent_module)
 
   BRC.log.debug("Register features...")
   BRC.register(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
-  register_all_features(parent_module)
+  register_all_features()
 
   BRC.log.debug("Initialize features...")
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
