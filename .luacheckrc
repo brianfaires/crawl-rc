@@ -29,7 +29,6 @@ globals = {
   "macro_f_misc_alerts_save_with_message",
   "macro_f_safe_stairs_down",
   "macro_f_safe_stairs_up",
-
   
   -- BRC modules
   "BRC",
@@ -67,15 +66,17 @@ globals = {
   "ad_prev",
   "as_shaft_branch",
   "as_shaft_depth",
+  "brc_config_full",
+  "brc_config_name",
   "ed_dropped_items",
   "fr_explore_after",
   "fr_start_turn",
-  "pa_lowest_hands_alerted",
   "ma_alerted_max_piety",
   "ma_prev_spell_levels",
   "ma_saved_msg",
   "pa_high_score",
   "pa_items_alerted",
+  "pa_lowest_hands_alerted",
   "pa_OTA_items",
   "pa_recent_alerts",
   "ri_found_scroll_of_id",

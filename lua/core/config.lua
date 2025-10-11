@@ -27,7 +27,7 @@ BRC.Config = BRC.Profiles.Default-- Always init to Default profile
 -- Testing Config Profile: Isolate and test specific features
 BRC.Profiles.Testing = {
   show_debug_messages = true,
-  disable_other_features = true,
+  disable_other_features = false,
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.1,

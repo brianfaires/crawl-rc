@@ -12,6 +12,10 @@ BRC = BRC or {}
 BRC.VERSION = "1.2.0"
 BRC.active = nil
 
+-- Persistent variables
+brc_config_full = BRC.Data.persist("brc_config_full", nil)
+brc_config_name = BRC.Data.persist("brc_config_name", nil)
+
 -- Local constants
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
@@ -220,7 +224,7 @@ function BRC.register(f)
 
   -- Handle config init() and overrides
   if type(f.Config) == "table" and type(f.Config.init) == "function" then
-    f.Config:init()
+    f.Config.init()
   end
   override_feature_config(f.BRC_FEATURE_NAME)
 
@@ -261,14 +265,14 @@ function BRC.init()
   BRC.log.debug("Load config...")
   local config_name
   if BRC.config_memory and BRC.config_memory:lower() == "full" then
-    config_name = BRC.load_config(_G.config_full_memory or _G.game_config_name or BRC.config_to_use)
-    BRC.Data.persist("config_full_memory", BRC.Config)
+    config_name = BRC.load_config(brc_config_full or brc_config_name or BRC.config_to_use)
+    brc_config_full = BRC.Config
   elseif BRC.config_memory and BRC.config_memory:lower() == "name" then
-    config_name = BRC.load_config(_G.game_config_name or BRC.config_to_use)
+    config_name = BRC.load_config(brc_config_name or BRC.config_to_use)
   else
     config_name = BRC.load_config(BRC.config_to_use)
   end
-  BRC.Data.persist("game_config_name", config_name)
+  brc_config_name = config_name
 
   BRC.log.debug("Register features...")
   BRC.register(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
@@ -280,20 +284,26 @@ function BRC.init()
 
   BRC.log.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
+  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
 
   BRC.log.debug("Verify persistent data reload...")
-  if BRC.Data.verify_reinit() then
+  local success, failures = BRC.Data.verify_reinit()
+  if not success and #failures > 0 then
+    if not BRC.Data.try_restore(failures) and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
+      BRC.active = false
+      BRC.mpr.lightred("\nBRC is off.\n")
+      return false
+    end
+  end
+
+  if success then
     BRC.Data.backup() -- Only backup after a clean startup
     local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION) .. suffix
     if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
     BRC.mpr.lightgreen(string.format("\n%s\n", msg))
-  elseif BRC.Data.try_restore() or BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) == false then
+  else
     local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
     BRC.mpr.magenta(string.format("\n%s\n", msg .. suffix))
-  else
-    BRC.active = false
-    BRC.mpr.lightred("\nBRC is off.\n")
-    return false
   end
 
   -- We're a go!
@@ -310,8 +320,8 @@ local function get_validated_config_name(input_name)
   else
     local config_name = input_name:lower()
     if config_name == "ask" then
-      if you.turns() > 0 and _G.game_config_name then
-        return get_validated_config_name(_G.game_config_name)
+      if you.turns() > 0 and brc_config_name then
+        return get_validated_config_name(brc_config_name)
       end
     elseif config_name == "previous" then
       if c_persist.BRC and c_persist.BRC.current_config then
@@ -334,7 +344,7 @@ function BRC.load_config(input_config)
   local config_name
   if type(input_config) == "table" then
     BRC.Config = input_config
-    config_name = _G.game_config_name or "Unknown"
+    config_name = brc_config_name or "Unknown"
   else
     config_name = get_validated_config_name(input_config)
     BRC.Config = util.copy_table(BRC.Profiles.Default)

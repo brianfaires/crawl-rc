@@ -226,14 +226,13 @@ function BRC.mpr.select(text, options, color)
     return false
   end
 
-  local MAX_TRIES = 10
   color = color or BRC.COLOR.lightcyan
   local msg = string.format("%s:\n", text)
   for i, option in ipairs(options) do
     msg = msg .. string.format("%s: %s\n", i, BRC.text.white(option))
   end
   crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
-  for _ = 1, MAX_TRIES do
+  for _ = 1, 10 do
     local res = crawl.getch()
     if res then
       local num = res - string.byte("0")
@@ -249,9 +248,8 @@ end
 -- Get a yes/no response
 function BRC.mpr.yesno(text, color, capital_only)
   local msg = string.format("%s (%s)", text, capital_only and "Y/N" or "y/n")
-  local MAX_TRIES = 10
 
-  for i = 1, MAX_TRIES do
+  for i = 1, 10 do
     crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
     local res = crawl.getch()
     if res and res >= 0 and res <= 255 then
