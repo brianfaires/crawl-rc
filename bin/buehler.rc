@@ -15,7 +15,7 @@ Usage:
   -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
 
 
--- Initialize BRC namespace and Public modules
+---- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Profiles = {}
 BRC.config_to_use = "ask"
@@ -1004,7 +1004,7 @@ Author: buehler
 Dependencies: (none)
 --]]
 
--- Initialize BRC namespace
+---- Initialize BRC namespace
 BRC = BRC or {}
 
 ---- Cosmetic settings
@@ -1119,16 +1119,16 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua
 --]]
 
--- Initialize BRC namespace
+---- Initialize BRC namespace
 BRC = BRC or {}
 
--- Local variables
+---- Local variables ----
 local _mpr_queue = {}
 
--- Local constants
+---- Local constants ----
 local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", ".", "[", "]", "*", "+", "-", "?", ")" })
 
--- Local functions
+---- Local functions ----
 local function cap_lines(str)
   if BRC.Data.Config.max_lines_per_table and BRC.Data.Config.max_lines_per_table > 0 then
     local lines = BRC.util.count_lines(str)
@@ -1816,7 +1816,7 @@ The functions below contain design choices or logic that are somewhat specific t
 Examples: Weapon DPS calculation, treat dragon scales as branded, defining what a "risky item" is.
 --]]
 
--- Local functions; Often mirroring calculations that live in crawl.
+---- Local functions ---- (Often mirroring calculations that live in crawl.)
 -- Last verified against: dcss v0.33.1
 
 local function format_dmg(dmg)
@@ -2256,7 +2256,7 @@ Author: buehler
 Dependencies: core/constants.lua, core/util.lua
 --]]
 
--- Initialize BRC namespace and Data module
+---- Initialize BRC namespace and Data module
 BRC = BRC or {}
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for the Config override feature
@@ -2289,15 +2289,15 @@ BRC.Data.Config = {
   },
 } -- BRC.Data.Config (do not remove this comment)
 
--- Local constants
+---- Local constants ----
 local RESTORE_TABLE = "_brc_persist_restore_table"
 
--- Local variables
+---- Local variables ----
 local failed_restores = {}
 local pushed_restore_table_creation = false
 local _persist_names = {}
 
--- Local functions
+---- Local functions ----
 local function is_usable_backup()
   if
     type(c_persist.BRC) ~= "table"
@@ -2318,7 +2318,7 @@ local function is_usable_backup()
   return true
 end
 
--- Public API
+---- Public API ----
 
 --[[
 BRC.Data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.
@@ -2441,16 +2441,16 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
--- Initialize BRC namespace and non-persistent public variables
+---- Initialize BRC namespace and non-persistent public variables
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
 BRC.active = nil
 
--- Persistent variables
+---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
 
--- Local constants
+---- Local constants ----
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
   c_answer_prompt = "c_answer_prompt",
@@ -2460,7 +2460,7 @@ local HOOK_FUNCTIONS = {
   ready = "ready",
 } -- HOOK_FUNCTIONS (do not remove this comment)
 
--- Local variables
+---- Local variables ----
 local _features = {}
 local _hooks = {}
 local turn_count = nil
@@ -2859,11 +2859,11 @@ Dependencies: core/data.lua, core/util.lua
 f_after_shaft = {}
 f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
--- Persistent variables
+---- Persistent variables ----
 as_shaft_depth = BRC.Data.persist("as_shaft_depth", 0)
 as_shaft_branch = BRC.Data.persist("as_shaft_branch", "NA")
 
--- Hook functions
+---- Hook functions ----
 function f_after_shaft.init()
   if you.turns() == 0 and you.class() == "Delver" then
     as_shaft_depth = 1
@@ -2921,7 +2921,7 @@ f_alert_monsters.Config = {
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
 } -- f_alert_monsters.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_alert_monsters.Config
 
 --[[
@@ -3126,14 +3126,14 @@ f_alert_monsters.Config.init = [[
 ]]
 ------------------- End config section -------------------
 
--- Local variables
+---- Local variables ----
 local patterns_to_mute = nil -- which packs to mute at next ready()
 
--- Local constants
+---- Local constants ----
 local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 
--- Local functions
+---- Local functions ----
 local function check_alert_three_pip(hp, dmg_threshold, resistance)
   -- Dmg taken is 1/1; 1/2; 1/3; 1/5 (for 0; 1; 2; 3 resistance)
   if resistance >= 3 then return hp < dmg_threshold / 5 end
@@ -3162,7 +3162,7 @@ local function update_pack_mutes()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_alert_monsters.init()
   patterns_to_mute = {}
 
@@ -3339,13 +3339,13 @@ f_announce_hp_mp.Config = {
   },
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ad_prev = BRC.Data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local config alias
+---- Local config alias ----
 local Config = f_announce_hp_mp.Config
 
--- Local constants
+---- Local constants ----
 local PIPS_PER_METER = 5
 local METER_LENGTH = PIPS_PER_METER + 2 * #BRC.text.clean(Config.HP_METER.BORDER or "")
 local ALWAYS_BOTTOM_SETTINGS = {
@@ -3353,7 +3353,7 @@ local ALWAYS_BOTTOM_SETTINGS = {
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
 } -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
@@ -3442,7 +3442,7 @@ local function last_msg_is_meter()
   return check and (check == " HP[" or check == " MP[")
 end
 
--- Hook functions
+---- Hook functions ----
 function f_announce_hp_mp.init()
   ad_prev.hp = 0
   ad_prev.mhp = 0
@@ -3556,7 +3556,7 @@ Dependencies: core/constants.lua
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local LOSS_COLOR = BRC.COLOR.brown
 local GAIN_COLOR = BRC.COLOR.white
 local MULTI_PLUS = "%++"
@@ -3605,7 +3605,7 @@ local COLORIZE_TAGS = {
   { "MP" .. NEG_NUM, LOSS_COLOR },
 } -- COLORIZE_TAGS (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function colorize_subtext(text, s, tag)
   local idx = text:find(s)
   if not idx then return text end
@@ -3618,7 +3618,7 @@ local function colorize_subtext(text, s, tag)
   return text:gsub(s, string.format("<%s>%%1</%s>", tag, tag))
 end
 
--- Hook functions
+---- Hook functions ----
 function f_color_inscribe.c_assign_invletter(it)
   if it.artefact then return end
   -- If enabled, call out to inscribe stats before coloring
@@ -3680,10 +3680,10 @@ f_drop_inferior.Config = {
   msg_on_inscribe = true, -- Show a message when an item is marked for drop
 } -- f_drop_inferior.Config (do not remove this comment)
 
--- Local constants
+---- Local constants ----
 local DROP_KEY = "~~DROP_ME"
 
--- Local functions
+---- Local functions ----
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
@@ -3694,7 +3694,7 @@ local function inscribe_drop(it)
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_drop_inferior.init()
   crawl.setopt(string.format("drop_filter += %s", DROP_KEY))
 end
@@ -3741,7 +3741,7 @@ Dependencies: core/constants.lua, core/util.lua
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local XL_FORCE_MORES = {
   { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
   { pattern = "You.*re more poisoned", xl = 7 },
@@ -3753,13 +3753,13 @@ local XL_FORCE_MORES = {
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
--- Local variables
+---- Local variables ----
 local cur_god = nil
 local ignore_all_magic = nil
 local ignore_advanced_magic = nil
 local xl_force_mores_active = nil
 
--- Local functions
+---- Local functions ----
 local function set_class_options()
   if you.class() == "Hunter" then
     crawl.setopt("view_delay = 30")
@@ -3866,7 +3866,7 @@ local function set_skill_options()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_dynamic_options.init()
   cur_god = "No God"
   ignore_advanced_magic = false
@@ -3904,10 +3904,10 @@ f_exclude_dropped.Config = {
   not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
 } -- f_exclude_dropped.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})
 
--- Local functions
+---- Local functions ----
 local function add_exclusion(item_name)
   if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
   BRC.set.autopickup_exceptions(item_name, true)
@@ -3991,7 +3991,7 @@ local function should_exclude(item_name)
   return true
 end
 
--- Hook functions
+---- Hook functions ----
 function f_exclude_dropped.init()
   for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)
@@ -4037,18 +4037,18 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_fully_recover.Config
 
--- Local constants
+---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500
 local WAITING_MESSAGE = "You start waiting."
 
--- Local variables
+---- Local variables ----
 local fr_start_turn = nil
 local fr_explore_after = nil
 
--- Local functions
+---- Local functions ----
 local function abort_fully_recover()
   fr_start_turn = 0
   fr_explore_after = false
@@ -4126,7 +4126,7 @@ function macro_f_fully_recover_explore()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_fully_recover.init()
   fr_start_turn = 0
   fr_explore_after = false
@@ -4191,13 +4191,13 @@ f_inscribe_stats.Config = {
   inscribe_dps_type = BRC.DMG_TYPE.plain,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_inscribe_stats.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
--- Local functions
+---- Local functions ----
 local function inscribe_armour_stats(it)
   local abbr = BRC.is.shield(it) and "SH" or "AC"
   local ac_or_sh, ev = BRC.get.armour_stats(it)
@@ -4232,7 +4232,7 @@ local function inscribe_weapon_stats(it)
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
--- Hook functions
+---- Hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
   -- NOTE: It is important that other features do not meddle with the inscription; e.g. adding color tags
   if Config.inscribe_weapons and it.is_weapon then
@@ -4271,21 +4271,21 @@ f_misc_alerts.Config = {
   save_with_msg = true, -- Shift-S to save and leave yourself a message
 } -- f_misc_alerts.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_prev_spell_levels = BRC.Data.persist("ma_prev_spell_levels", 0)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 
--- Local config alias
+---- Local config alias ----
 local Config = f_misc_alerts.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
--- Local variables
+---- Local variables ----
 local below_hp_threshold = nil
 
--- Local functions
+---- Local functions ----
 local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
@@ -4336,7 +4336,7 @@ function macro_f_misc_alerts_save_with_message()
   BRC.util.do_cmd("CMD_SAVE_GAME_NOW")
 end
 
--- Hook functions
+---- Hook functions ----
 function f_misc_alerts.init()
   ma_prev_spell_levels = you.spell_levels()
   below_hp_threshold = false
@@ -4378,20 +4378,20 @@ f_remind_id.Config = {
   emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?"),
 } -- f_remind_id.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_remind_id.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
 if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
 
--- Local variables
+---- Local variables ----
 local do_remind_id_check = nil
 
--- Local functions
+---- Local functions ----
 local function get_max_stack(class)
   local max_stack_size = 0
   local slot = nil
@@ -4422,7 +4422,7 @@ local function have_unid_item()
   return false
 end
 
--- Hook functions
+---- Hook functions ----
 function f_remind_id.init()
   do_remind_id_check = true
 end
@@ -4493,26 +4493,26 @@ f_runrest_features.Config = {
   gauntlet_search = true, -- on enter or explore, auto-search gauntlet with filters
 } -- f_runrest_features.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_runrest_features.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local GAUNTLET_CONCAT_STRING = " && !!"
 local GAUNTLET_SEARCH_STRING = table.concat(
   { "gauntlet", "gate leading", "a transporter", "gold piece", " trap", "translucent door", "translucent gate" },
   GAUNTLET_CONCAT_STRING
 )
 
--- Local variables
+---- Local variables ----
 local stop_on_altars = nil
 local stop_on_portals = nil
 local stop_on_stairs = nil
 
--- Local functions
+---- Local functions ----
 local function is_explore_done_msg(text)
   local cleaned = BRC.text.clean(text)
   return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
@@ -4599,7 +4599,7 @@ local function ready_stop_on_stairs_in_pan_or_hell()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_runrest_features.init()
   stop_on_altars = true
   stop_on_portals = true
@@ -4636,13 +4636,13 @@ Dependencies: core/util.lua
 f_safe_consumables = {}
 f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
 
--- Local constants
+---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
   "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", "identify",
   "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function inscription_needed(class, st)
   if util.contains(NO_INSCRIPTION_NEEDED, st) then return false end
   if class == "scroll" then
@@ -4652,7 +4652,7 @@ local function inscription_needed(class, st)
   return true
 end
 
--- Hook functions
+---- Hook functions ----
 function f_safe_consumables.ready()
   -- Remove the default "!r" and "!q" inscriptions after identify
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -4694,17 +4694,17 @@ f_safe_stairs.Config = {
   warn_v5 = true, -- Prompt before entering Vaults:5
 } -- f_safe_stairs.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ss_prev_location = BRC.Data.persist("ss_prev_location", you.branch() .. you.depth())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_safe_stairs.Config
 
--- Local variables
+---- Local variables ----
 local ss_cur_location = nil
 
--- Local functions
+---- Local functions ----
 local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
 
@@ -4741,7 +4741,7 @@ function macro_f_safe_stairs_up()
   check_new_location("CMD_GO_UPSTAIRS")
 end
 
--- Hook functions
+---- Hook functions ----
 function f_safe_stairs.init()
   ss_cur_location = you.branch() .. you.depth()
   BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_f_safe_stairs_down")
@@ -4777,10 +4777,10 @@ f_startup.Config = {
   },
 } -- f_startup.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_startup.Config
 
--- Hook functions
+---- Hook functions ----
 function f_startup.ready()
   if you.turns() == 0 then
     if f_startup.Config.show_skills_on_startup then
@@ -4822,13 +4822,13 @@ Dependencies: core/util.lua
 f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
 
--- Local variables
+---- Local variables ----
 local do_cleanup_weapon_slots = nil
 local priorities_ab = nil
 local priorities_w = nil
 local slots_changed = nil
 
--- Local functions
+---- Local functions ----
 local function get_first_empty_slot()
   for slot = 1, 52 do
     if #BRC.get.items_in_slot(slot) == 0 then return slot end
@@ -4917,7 +4917,7 @@ local function cleanup_weapon_slots()
   cleanup_w()
 end
 
--- Hook functions
+---- Hook functions ----
 function f_weapon_slots.init()
   do_cleanup_weapon_slots = false
   slots_changed = false
@@ -5143,13 +5143,13 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   HEAVIER = "⏫"
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 
--- Local variables
+---- Local variables ----
 local pause_pa_system = nil
 
--- Local functions
+---- Local functions ----
 local function has_configured_force_more(it)
   if it.artefact then
     if Config.Alert.More.artefact then return true end
@@ -5159,7 +5159,7 @@ local function has_configured_force_more(it)
   return false
 end
 
--- Public API
+---- Public API ----
 function f_pickup_alert.autopickup(it, _)
   if not BRC.active or pause_pa_system or you.have_orb()
     or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
@@ -5248,7 +5248,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   return true
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pickup_alert.init()
   BRC.log.debug("Initialize pickup-alert submodules...")
   local indent = "  "
@@ -5326,13 +5326,13 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua
 
 f_pa_data = {}
 
--- Persistent variables
+---- Persistent variables ----
 pa_items_alerted = BRC.Data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.Data.persist("pa_recent_alerts", {})
 pa_OTA_items = BRC.Data.persist("pa_OTA_items", f_pickup_alert.Config.Alert.one_time)
 pa_high_score = BRC.Data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
 
--- Local functions
+---- Local functions ----
 local function get_pa_keys(it, use_plain_name)
   if it.class(true) == "bauble" then
     return it.name("qual"):gsub('"', ""), 0
@@ -5348,7 +5348,7 @@ local function get_pa_keys(it, use_plain_name)
   end
 end
 
--- Public API
+---- Public API ----
 -- Return name of first entry found in item name, or nil if not found
 function f_pa_data.find(table_ref, it)
   if table_ref == pa_OTA_items then
@@ -5435,7 +5435,7 @@ function f_pa_data.update_high_scores(it)
   return ret_val
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -5459,12 +5459,12 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
 
 f_pa_armour = {}
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
 local SAME = "same_ego"
 local LOST = "lost_ego"
@@ -5491,7 +5491,7 @@ local ARMOUR_ALERT = {
   },
 } -- ARMOUR_ALERT (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function aux_slot_is_impaired(it)
   local st = it.subtype()
   -- Skip boots/gloves/helmet if wearing Lear's hauberk
@@ -5748,7 +5748,7 @@ local function alert_aux_armour(it, unworn_inv_item)
   end
 end
 
--- Public API
+---- Public API ----
 function f_pa_armour.pickup_armour(it)
   if BRC.is.risky_item(it) then return false end
 
@@ -5792,7 +5792,7 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, p
 
 f_pa_misc = {}
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Emoji = f_pickup_alert.Config.Emoji
 
@@ -5891,25 +5891,25 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-
 
 f_pa_weapons = {}
 
--- Persistent variables
+---- Persistent variables ----
 pa_lowest_hands_alerted = BRC.Data.persist("pa_lowest_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Track lowest hand count alerted for this weapon school
   ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Weap
 local Emoji = f_pickup_alert.Config.Emoji
 
--- Local constants
+---- Local constants ----
 local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
 local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
 local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
 local RANGED = "range_"
 local MELEE = "melee_"
 
--- Local variables
+---- Local variables ----
 local top_attack_skill = nil
 
 -- Core logic: How weapon scores are calculated
@@ -6012,7 +6012,7 @@ function _weapon_cache.serialize()
   return table.concat(tokens)
 end
 
--- Local functions
+---- Local functions ----
 local function is_valid_upgrade(it, cur)
   return
     cur.is_ranged == it.is_ranged
@@ -6206,7 +6206,7 @@ local function get_weapon_alert(it)
     or get_weap_high_score_alert(it)
 end
 
--- Public API
+---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if need_first_weapon() then
@@ -6237,7 +6237,7 @@ function f_pa_weapons.alert_weapon(it)
   return false
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pa_weapons.init()
   _weapon_cache.weapons = {}
   _weapon_cache.egos = {}
@@ -6272,7 +6272,6 @@ end
 
 ############## Lua Hook Functions ##############
 {
--- Hook functions that delegate to BRC
 function ready()
   BRC.ready()
 end

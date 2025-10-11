@@ -13,20 +13,20 @@ f_remind_id.Config = {
   emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?"),
 } -- f_remind_id.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_remind_id.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
 if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
 
--- Local variables
+---- Local variables ----
 local do_remind_id_check = nil
 
--- Local functions
+---- Local functions ----
 local function get_max_stack(class)
   local max_stack_size = 0
   local slot = nil
@@ -57,7 +57,7 @@ local function have_unid_item()
   return false
 end
 
--- Hook functions
+---- Hook functions ----
 function f_remind_id.init()
   do_remind_id_check = true
 end

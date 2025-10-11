@@ -12,12 +12,12 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
 
 f_pa_armour = {}
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
 local SAME = "same_ego"
 local LOST = "lost_ego"
@@ -44,7 +44,7 @@ local ARMOUR_ALERT = {
   },
 } -- ARMOUR_ALERT (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function aux_slot_is_impaired(it)
   local st = it.subtype()
   -- Skip boots/gloves/helmet if wearing Lear's hauberk
@@ -301,7 +301,7 @@ local function alert_aux_armour(it, unworn_inv_item)
   end
 end
 
--- Public API
+---- Public API ----
 function f_pa_armour.pickup_armour(it)
   if BRC.is.risky_item(it) then return false end
 
@@ -345,25 +345,25 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-
 
 f_pa_weapons = {}
 
--- Persistent variables
+---- Persistent variables ----
 pa_lowest_hands_alerted = BRC.Data.persist("pa_lowest_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Track lowest hand count alerted for this weapon school
   ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Weap
 local Emoji = f_pickup_alert.Config.Emoji
 
--- Local constants
+---- Local constants ----
 local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
 local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
 local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
 local RANGED = "range_"
 local MELEE = "melee_"
 
--- Local variables
+---- Local variables ----
 local top_attack_skill = nil
 
 -- Core logic: How weapon scores are calculated
@@ -466,7 +466,7 @@ function _weapon_cache.serialize()
   return table.concat(tokens)
 end
 
--- Local functions
+---- Local functions ----
 local function is_valid_upgrade(it, cur)
   return
     cur.is_ranged == it.is_ranged
@@ -660,7 +660,7 @@ local function get_weapon_alert(it)
     or get_weap_high_score_alert(it)
 end
 
--- Public API
+---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if need_first_weapon() then
@@ -691,7 +691,7 @@ function f_pa_weapons.alert_weapon(it)
   return false
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pa_weapons.init()
   _weapon_cache.weapons = {}
   _weapon_cache.egos = {}
@@ -733,7 +733,7 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, p
 
 f_pa_misc = {}
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Emoji = f_pickup_alert.Config.Emoji
 
@@ -832,13 +832,13 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua
 
 f_pa_data = {}
 
--- Persistent variables
+---- Persistent variables ----
 pa_items_alerted = BRC.Data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.Data.persist("pa_recent_alerts", {})
 pa_OTA_items = BRC.Data.persist("pa_OTA_items", f_pickup_alert.Config.Alert.one_time)
 pa_high_score = BRC.Data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
 
--- Local functions
+---- Local functions ----
 local function get_pa_keys(it, use_plain_name)
   if it.class(true) == "bauble" then
     return it.name("qual"):gsub('"', ""), 0
@@ -854,7 +854,7 @@ local function get_pa_keys(it, use_plain_name)
   end
 end
 
--- Public API
+---- Public API ----
 -- Return name of first entry found in item name, or nil if not found
 function f_pa_data.find(table_ref, it)
   if table_ref == pa_OTA_items then
@@ -941,7 +941,7 @@ function f_pa_data.update_high_scores(it)
   return ret_val
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pa_data.init()
   -- Update alerts & tables for starting items
   for inv in iter.invent_iterator:new(items.inventory()) do
@@ -1124,13 +1124,13 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   HEAVIER = "⏫"
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 
--- Local variables
+---- Local variables ----
 local pause_pa_system = nil
 
--- Local functions
+---- Local functions ----
 local function has_configured_force_more(it)
   if it.artefact then
     if Config.Alert.More.artefact then return true end
@@ -1140,7 +1140,7 @@ local function has_configured_force_more(it)
   return false
 end
 
--- Public API
+---- Public API ----
 function f_pickup_alert.autopickup(it, _)
   if not BRC.active or pause_pa_system or you.have_orb()
     or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
@@ -1229,7 +1229,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   return true
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pickup_alert.init()
   BRC.log.debug("Initialize pickup-alert submodules...")
   local indent = "  "

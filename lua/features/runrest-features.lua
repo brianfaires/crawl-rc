@@ -16,26 +16,26 @@ f_runrest_features.Config = {
   gauntlet_search = true, -- on enter or explore, auto-search gauntlet with filters
 } -- f_runrest_features.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_runrest_features.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local GAUNTLET_CONCAT_STRING = " && !!"
 local GAUNTLET_SEARCH_STRING = table.concat(
   { "gauntlet", "gate leading", "a transporter", "gold piece", " trap", "translucent door", "translucent gate" },
   GAUNTLET_CONCAT_STRING
 )
 
--- Local variables
+---- Local variables ----
 local stop_on_altars = nil
 local stop_on_portals = nil
 local stop_on_stairs = nil
 
--- Local functions
+---- Local functions ----
 local function is_explore_done_msg(text)
   local cleaned = BRC.text.clean(text)
   return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
@@ -122,7 +122,7 @@ local function ready_stop_on_stairs_in_pan_or_hell()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_runrest_features.init()
   stop_on_altars = true
   stop_on_portals = true

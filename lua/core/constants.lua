@@ -4,7 +4,7 @@ Author: buehler
 Dependencies: (none)
 --]]
 
--- Initialize BRC namespace
+---- Initialize BRC namespace
 BRC = BRC or {}
 
 ---- Cosmetic settings

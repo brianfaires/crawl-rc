@@ -14,18 +14,18 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_fully_recover.Config
 
--- Local constants
+---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500
 local WAITING_MESSAGE = "You start waiting."
 
--- Local variables
+---- Local variables ----
 local fr_start_turn = nil
 local fr_explore_after = nil
 
--- Local functions
+---- Local functions ----
 local function abort_fully_recover()
   fr_start_turn = 0
   fr_explore_after = false
@@ -103,7 +103,7 @@ function macro_f_fully_recover_explore()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_fully_recover.init()
   fr_start_turn = 0
   fr_explore_after = false

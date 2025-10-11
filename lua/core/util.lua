@@ -4,16 +4,16 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua
 --]]
 
--- Initialize BRC namespace
+---- Initialize BRC namespace
 BRC = BRC or {}
 
--- Local variables
+---- Local variables ----
 local _mpr_queue = {}
 
--- Local constants
+---- Local constants ----
 local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", ".", "[", "]", "*", "+", "-", "?", ")" })
 
--- Local functions
+---- Local functions ----
 local function cap_lines(str)
   if BRC.Data.Config.max_lines_per_table and BRC.Data.Config.max_lines_per_table > 0 then
     local lines = BRC.util.count_lines(str)
@@ -701,7 +701,7 @@ The functions below contain design choices or logic that are somewhat specific t
 Examples: Weapon DPS calculation, treat dragon scales as branded, defining what a "risky item" is.
 --]]
 
--- Local functions; Often mirroring calculations that live in crawl.
+---- Local functions ---- (Often mirroring calculations that live in crawl.)
 -- Last verified against: dcss v0.33.1
 
 local function format_dmg(dmg)

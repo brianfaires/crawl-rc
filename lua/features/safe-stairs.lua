@@ -12,17 +12,17 @@ f_safe_stairs.Config = {
   warn_v5 = true, -- Prompt before entering Vaults:5
 } -- f_safe_stairs.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ss_prev_location = BRC.Data.persist("ss_prev_location", you.branch() .. you.depth())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_safe_stairs.Config
 
--- Local variables
+---- Local variables ----
 local ss_cur_location = nil
 
--- Local functions
+---- Local functions ----
 local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
 
@@ -59,7 +59,7 @@ function macro_f_safe_stairs_up()
   check_new_location("CMD_GO_UPSTAIRS")
 end
 
--- Hook functions
+---- Hook functions ----
 function f_safe_stairs.init()
   ss_cur_location = you.branch() .. you.depth()
   BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_f_safe_stairs_down")

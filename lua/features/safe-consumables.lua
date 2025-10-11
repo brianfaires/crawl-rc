@@ -8,13 +8,13 @@ Dependencies: core/util.lua
 f_safe_consumables = {}
 f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
 
--- Local constants
+---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
   "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", "identify",
   "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function inscription_needed(class, st)
   if util.contains(NO_INSCRIPTION_NEEDED, st) then return false end
   if class == "scroll" then
@@ -24,7 +24,7 @@ local function inscription_needed(class, st)
   return true
 end
 
--- Hook functions
+---- Hook functions ----
 function f_safe_consumables.ready()
   -- Remove the default "!r" and "!q" inscriptions after identify
   for inv in iter.invent_iterator:new(items.inventory()) do

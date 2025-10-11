@@ -7,25 +7,25 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-
 
 f_pa_weapons = {}
 
--- Persistent variables
+---- Persistent variables ----
 pa_lowest_hands_alerted = BRC.Data.persist("pa_lowest_hands_alerted", {
   ["Ranged Weapons"] = 3, -- Track lowest hand count alerted for this weapon school
   ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Weap
 local Emoji = f_pickup_alert.Config.Emoji
 
--- Local constants
+---- Local constants ----
 local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
 local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
 local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
 local RANGED = "range_"
 local MELEE = "melee_"
 
--- Local variables
+---- Local variables ----
 local top_attack_skill = nil
 
 -- Core logic: How weapon scores are calculated
@@ -128,7 +128,7 @@ function _weapon_cache.serialize()
   return table.concat(tokens)
 end
 
--- Local functions
+---- Local functions ----
 local function is_valid_upgrade(it, cur)
   return
     cur.is_ranged == it.is_ranged
@@ -322,7 +322,7 @@ local function get_weapon_alert(it)
     or get_weap_high_score_alert(it)
 end
 
--- Public API
+---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
   -- Check if we need the first weapon of the game
   if need_first_weapon() then
@@ -353,7 +353,7 @@ function f_pa_weapons.alert_weapon(it)
   return false
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pa_weapons.init()
   _weapon_cache.weapons = {}
   _weapon_cache.egos = {}

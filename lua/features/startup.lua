@@ -15,10 +15,10 @@ f_startup.Config = {
   },
 } -- f_startup.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_startup.Config
 
--- Hook functions
+---- Hook functions ----
 function f_startup.ready()
   if you.turns() == 0 then
     if f_startup.Config.show_skills_on_startup then

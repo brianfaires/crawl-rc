@@ -11,7 +11,7 @@ Usage:
   -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
 
 
--- Initialize BRC namespace and Public modules
+---- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Profiles = {}
 BRC.config_to_use = "ask"

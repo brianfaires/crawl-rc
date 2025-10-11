@@ -7,7 +7,7 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, p
 
 f_pa_misc = {}
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Emoji = f_pickup_alert.Config.Emoji
 

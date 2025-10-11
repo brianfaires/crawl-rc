@@ -8,7 +8,7 @@ Dependencies: core/constants.lua
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local LOSS_COLOR = BRC.COLOR.brown
 local GAIN_COLOR = BRC.COLOR.white
 local MULTI_PLUS = "%++"
@@ -57,7 +57,7 @@ local COLORIZE_TAGS = {
   { "MP" .. NEG_NUM, LOSS_COLOR },
 } -- COLORIZE_TAGS (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function colorize_subtext(text, s, tag)
   local idx = text:find(s)
   if not idx then return text end
@@ -70,7 +70,7 @@ local function colorize_subtext(text, s, tag)
   return text:gsub(s, string.format("<%s>%%1</%s>", tag, tag))
 end
 
--- Hook functions
+---- Hook functions ----
 function f_color_inscribe.c_assign_invletter(it)
   if it.artefact then return end
   -- If enabled, call out to inscribe stats before coloring

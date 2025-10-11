@@ -38,13 +38,13 @@ f_announce_hp_mp.Config = {
   },
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ad_prev = BRC.Data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
--- Local config alias
+---- Local config alias ----
 local Config = f_announce_hp_mp.Config
 
--- Local constants
+---- Local constants ----
 local PIPS_PER_METER = 5
 local METER_LENGTH = PIPS_PER_METER + 2 * #BRC.text.clean(Config.HP_METER.BORDER or "")
 local ALWAYS_BOTTOM_SETTINGS = {
@@ -52,7 +52,7 @@ local ALWAYS_BOTTOM_SETTINGS = {
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
 } -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
@@ -141,7 +141,7 @@ local function last_msg_is_meter()
   return check and (check == " HP[" or check == " MP[")
 end
 
--- Hook functions
+---- Hook functions ----
 function f_announce_hp_mp.init()
   ad_prev.hp = 0
   ad_prev.mhp = 0

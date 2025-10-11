@@ -5,7 +5,7 @@ Author: buehler
 Dependencies: core/constants.lua, core/util.lua
 --]]
 
--- Initialize BRC namespace and Data module
+---- Initialize BRC namespace and Data module
 BRC = BRC or {}
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for the Config override feature
@@ -38,15 +38,15 @@ BRC.Data.Config = {
   },
 } -- BRC.Data.Config (do not remove this comment)
 
--- Local constants
+---- Local constants ----
 local RESTORE_TABLE = "_brc_persist_restore_table"
 
--- Local variables
+---- Local variables ----
 local failed_restores = {}
 local pushed_restore_table_creation = false
 local _persist_names = {}
 
--- Local functions
+---- Local functions ----
 local function is_usable_backup()
   if
     type(c_persist.BRC) ~= "table"
@@ -67,7 +67,7 @@ local function is_usable_backup()
   return true
 end
 
--- Public API
+---- Public API ----
 
 --[[
 BRC.Data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.

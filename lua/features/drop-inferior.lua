@@ -11,10 +11,10 @@ f_drop_inferior.Config = {
   msg_on_inscribe = true, -- Show a message when an item is marked for drop
 } -- f_drop_inferior.Config (do not remove this comment)
 
--- Local constants
+---- Local constants ----
 local DROP_KEY = "~~DROP_ME"
 
--- Local functions
+---- Local functions ----
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
@@ -25,7 +25,7 @@ local function inscribe_drop(it)
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_drop_inferior.init()
   crawl.setopt(string.format("drop_filter += %s", DROP_KEY))
 end

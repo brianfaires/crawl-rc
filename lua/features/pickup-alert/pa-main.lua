@@ -166,13 +166,13 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   HEAVIER = "⏫"
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 
--- Local variables
+---- Local variables ----
 local pause_pa_system = nil
 
--- Local functions
+---- Local functions ----
 local function has_configured_force_more(it)
   if it.artefact then
     if Config.Alert.More.artefact then return true end
@@ -182,7 +182,7 @@ local function has_configured_force_more(it)
   return false
 end
 
--- Public API
+---- Public API ----
 function f_pickup_alert.autopickup(it, _)
   if not BRC.active or pause_pa_system or you.have_orb()
     or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
@@ -271,7 +271,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   return true
 end
 
--- Hook functions
+---- Hook functions ----
 function f_pickup_alert.init()
   BRC.log.debug("Initialize pickup-alert submodules...")
   local indent = "  "

@@ -77,7 +77,6 @@ lua_file = crawl-rc/lua/features/pickup-alert/pa-weapons.lua
 
 ############## Lua Hook Functions ##############
 {
--- Hook functions that delegate to BRC
 function ready()
   BRC.ready()
 end

@@ -14,21 +14,21 @@ f_misc_alerts.Config = {
   save_with_msg = true, -- Shift-S to save and leave yourself a message
 } -- f_misc_alerts.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_prev_spell_levels = BRC.Data.persist("ma_prev_spell_levels", 0)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 
--- Local config alias
+---- Local config alias ----
 local Config = f_misc_alerts.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
--- Local variables
+---- Local variables ----
 local below_hp_threshold = nil
 
--- Local functions
+---- Local functions ----
 local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
@@ -79,7 +79,7 @@ function macro_f_misc_alerts_save_with_message()
   BRC.util.do_cmd("CMD_SAVE_GAME_NOW")
 end
 
--- Hook functions
+---- Hook functions ----
 function f_misc_alerts.init()
   ma_prev_spell_levels = you.spell_levels()
   below_hp_threshold = false

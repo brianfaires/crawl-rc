@@ -8,11 +8,11 @@ Dependencies: core/data.lua, core/util.lua
 f_after_shaft = {}
 f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
--- Persistent variables
+---- Persistent variables ----
 as_shaft_depth = BRC.Data.persist("as_shaft_depth", 0)
 as_shaft_branch = BRC.Data.persist("as_shaft_branch", "NA")
 
--- Hook functions
+---- Hook functions ----
 function f_after_shaft.init()
   if you.turns() == 0 and you.class() == "Delver" then
     as_shaft_depth = 1

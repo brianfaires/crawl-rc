@@ -16,7 +16,7 @@ Usage:
   -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
 
 
--- Initialize BRC namespace and Public modules
+---- Initialize BRC namespace and Public modules
 BRC = BRC or {}
 BRC.Profiles = {}
 BRC.config_to_use = "ask"
@@ -214,7 +214,7 @@ Author: buehler
 Dependencies: (none)
 --]]
 
--- Initialize BRC namespace
+---- Initialize BRC namespace
 BRC = BRC or {}
 
 ---- Cosmetic settings
@@ -329,16 +329,16 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua
 --]]
 
--- Initialize BRC namespace
+---- Initialize BRC namespace
 BRC = BRC or {}
 
--- Local variables
+---- Local variables ----
 local _mpr_queue = {}
 
--- Local constants
+---- Local constants ----
 local SPECIAL_CHARS = table.concat({ "(", "[", "%", "^", "$", "(", ")", "%", ".", "[", "]", "*", "+", "-", "?", ")" })
 
--- Local functions
+---- Local functions ----
 local function cap_lines(str)
   if BRC.Data.Config.max_lines_per_table and BRC.Data.Config.max_lines_per_table > 0 then
     local lines = BRC.util.count_lines(str)
@@ -1026,7 +1026,7 @@ The functions below contain design choices or logic that are somewhat specific t
 Examples: Weapon DPS calculation, treat dragon scales as branded, defining what a "risky item" is.
 --]]
 
--- Local functions; Often mirroring calculations that live in crawl.
+---- Local functions ---- (Often mirroring calculations that live in crawl.)
 -- Last verified against: dcss v0.33.1
 
 local function format_dmg(dmg)
@@ -1466,7 +1466,7 @@ Author: buehler
 Dependencies: core/constants.lua, core/util.lua
 --]]
 
--- Initialize BRC namespace and Data module
+---- Initialize BRC namespace and Data module
 BRC = BRC or {}
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature, just for the Config override feature
@@ -1499,15 +1499,15 @@ BRC.Data.Config = {
   },
 } -- BRC.Data.Config (do not remove this comment)
 
--- Local constants
+---- Local constants ----
 local RESTORE_TABLE = "_brc_persist_restore_table"
 
--- Local variables
+---- Local variables ----
 local failed_restores = {}
 local pushed_restore_table_creation = false
 local _persist_names = {}
 
--- Local functions
+---- Local functions ----
 local function is_usable_backup()
   if
     type(c_persist.BRC) ~= "table"
@@ -1528,7 +1528,7 @@ local function is_usable_backup()
   return true
 end
 
--- Public API
+---- Public API ----
 
 --[[
 BRC.Data.persist() Creates a persistent global variable or table, initialized to the default value if it doesn't exist.
@@ -1651,16 +1651,16 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
--- Initialize BRC namespace and non-persistent public variables
+---- Initialize BRC namespace and non-persistent public variables
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
 BRC.active = nil
 
--- Persistent variables
+---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
 
--- Local constants
+---- Local constants ----
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
   c_answer_prompt = "c_answer_prompt",
@@ -1670,7 +1670,7 @@ local HOOK_FUNCTIONS = {
   ready = "ready",
 } -- HOOK_FUNCTIONS (do not remove this comment)
 
--- Local variables
+---- Local variables ----
 local _features = {}
 local _hooks = {}
 local turn_count = nil

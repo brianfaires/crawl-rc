@@ -8,7 +8,7 @@ Dependencies: core/constants.lua, core/util.lua
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local XL_FORCE_MORES = {
   { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
   { pattern = "You.*re more poisoned", xl = 7 },
@@ -20,13 +20,13 @@ local XL_FORCE_MORES = {
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
--- Local variables
+---- Local variables ----
 local cur_god = nil
 local ignore_all_magic = nil
 local ignore_advanced_magic = nil
 local xl_force_mores_active = nil
 
--- Local functions
+---- Local functions ----
 local function set_class_options()
   if you.class() == "Hunter" then
     crawl.setopt("view_delay = 30")
@@ -133,7 +133,7 @@ local function set_skill_options()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_dynamic_options.init()
   cur_god = "No God"
   ignore_advanced_magic = false

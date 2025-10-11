@@ -19,18 +19,18 @@ f_template.Config = {
   }, -- Comment for safe parsing
 } -- f_template.Config (Always add a comment to a line only containing "}"), or crawl's RC parser will break
 
--- Persistent variables (Defined globally, so give them unique names)
+---- Persistent variables ---- (Defined globally, so give them unique names)
 persistent_int = BRC.Data.persist("persistent_int", 0)
 persistent_bool = BRC.Data.persist("persistent_bool", false)
 persistent_list = BRC.Data.persist("persistent_list", {})
 persistent_map = BRC.Data.persist("persistent_map", {})
 
--- Local config alias (Optional local alias, for more concise code)
+---- Local config alias ---- (Optional local alias, for more concise code)
 local Config = f_template.Config
 
--- Local constants
--- Local variables
--- Local functions
+---- Local constants ----
+---- Local variables ----
+---- Local functions ----
 
 -- Public hook functions (Remove any hooks you don't use)
 function f_template.init()

@@ -8,13 +8,13 @@ Dependencies: core/util.lua
 f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
 
--- Local variables
+---- Local variables ----
 local do_cleanup_weapon_slots = nil
 local priorities_ab = nil
 local priorities_w = nil
 local slots_changed = nil
 
--- Local functions
+---- Local functions ----
 local function get_first_empty_slot()
   for slot = 1, 52 do
     if #BRC.get.items_in_slot(slot) == 0 then return slot end
@@ -103,7 +103,7 @@ local function cleanup_weapon_slots()
   cleanup_w()
 end
 
--- Hook functions
+---- Hook functions ----
 function f_weapon_slots.init()
   do_cleanup_weapon_slots = false
   slots_changed = false

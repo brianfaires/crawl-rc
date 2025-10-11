@@ -11,10 +11,10 @@ f_exclude_dropped.Config = {
   not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
 } -- f_exclude_dropped.Config (do not remove this comment)
 
--- Persistent variables
+---- Persistent variables ----
 ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})
 
--- Local functions
+---- Local functions ----
 local function add_exclusion(item_name)
   if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
   BRC.set.autopickup_exceptions(item_name, true)
@@ -98,7 +98,7 @@ local function should_exclude(item_name)
   return true
 end
 
--- Hook functions
+---- Hook functions ----
 function f_exclude_dropped.init()
   for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)

@@ -7,16 +7,16 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
--- Initialize BRC namespace and non-persistent public variables
+---- Initialize BRC namespace and non-persistent public variables
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
 BRC.active = nil
 
--- Persistent variables
+---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
 
--- Local constants
+---- Local constants ----
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
   c_answer_prompt = "c_answer_prompt",
@@ -26,7 +26,7 @@ local HOOK_FUNCTIONS = {
   ready = "ready",
 } -- HOOK_FUNCTIONS (do not remove this comment)
 
--- Local variables
+---- Local variables ----
 local _features = {}
 local _hooks = {}
 local turn_count = nil

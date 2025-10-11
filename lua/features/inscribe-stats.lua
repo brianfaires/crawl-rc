@@ -13,13 +13,13 @@ f_inscribe_stats.Config = {
   inscribe_dps_type = BRC.DMG_TYPE.plain,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_inscribe_stats.Config
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
--- Local functions
+---- Local functions ----
 local function inscribe_armour_stats(it)
   local abbr = BRC.is.shield(it) and "SH" or "AC"
   local ac_or_sh, ev = BRC.get.armour_stats(it)
@@ -54,7 +54,7 @@ local function inscribe_weapon_stats(it)
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
--- Hook functions
+---- Hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
   -- NOTE: It is important that other features do not meddle with the inscription; e.g. adding color tags
   if Config.inscribe_weapons and it.is_weapon then

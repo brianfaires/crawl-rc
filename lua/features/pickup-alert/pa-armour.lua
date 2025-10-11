@@ -7,12 +7,12 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
 
 f_pa_armour = {}
 
--- Local config alias
+---- Local config alias ----
 local Config = f_pickup_alert.Config
 local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
 
--- Local constants / configuration
+---- Local constants / configuration ----
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
 local SAME = "same_ego"
 local LOST = "lost_ego"
@@ -39,7 +39,7 @@ local ARMOUR_ALERT = {
   },
 } -- ARMOUR_ALERT (do not remove this comment)
 
--- Local functions
+---- Local functions ----
 local function aux_slot_is_impaired(it)
   local st = it.subtype()
   -- Skip boots/gloves/helmet if wearing Lear's hauberk
@@ -296,7 +296,7 @@ local function alert_aux_armour(it, unworn_inv_item)
   end
 end
 
--- Public API
+---- Public API ----
 function f_pa_armour.pickup_armour(it)
   if BRC.is.risky_item(it) then return false end
 

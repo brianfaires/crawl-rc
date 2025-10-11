@@ -18,7 +18,7 @@ f_alert_monsters.Config = {
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
 } -- f_alert_monsters.Config (do not remove this comment)
 
--- Local config alias
+---- Local config alias ----
 local Config = f_alert_monsters.Config
 
 --[[
@@ -223,14 +223,14 @@ f_alert_monsters.Config.init = [[
 ]]
 ------------------- End config section -------------------
 
--- Local variables
+---- Local variables ----
 local patterns_to_mute = nil -- which packs to mute at next ready()
 
--- Local constants
+---- Local constants ----
 local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 
--- Local functions
+---- Local functions ----
 local function check_alert_three_pip(hp, dmg_threshold, resistance)
   -- Dmg taken is 1/1; 1/2; 1/3; 1/5 (for 0; 1; 2; 3 resistance)
   if resistance >= 3 then return hp < dmg_threshold / 5 end
@@ -259,7 +259,7 @@ local function update_pack_mutes()
   end
 end
 
--- Hook functions
+---- Hook functions ----
 function f_alert_monsters.init()
   patterns_to_mute = {}
 
