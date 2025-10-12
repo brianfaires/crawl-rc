@@ -88,11 +88,12 @@ def process_line(line, outfile):
 
 def process_init_file(infile, outfile):
     resume = False
-    # skip first line of infile, if it starts with ":error"
-    first_line = infile.readline()
-    if not first_line.startswith(":error"):
-        resume = process_line(first_line, outfile)
-    
+    # skip first 5 lines of init.txt, assuming they still start with ":crawl"
+    for _ in range(5):
+        line = infile.readline()
+        if not (line.find("crawl.mpr(") or line.find("crawl.more()")):
+            resume = process_line(line, outfile)
+        
     # Process the rest of the lines
     for line in infile:
         if process_line(line, outfile):

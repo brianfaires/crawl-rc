@@ -19,7 +19,7 @@ Usage:
 BRC = BRC or {}
 BRC.Profiles = {}
 BRC.config_to_use = "ask"
-BRC.config_memory = "full"
+BRC.config_memory = "name"
 
 -- Default Config Profile (defines all non-feature values)
 BRC.Profiles.Default = {
@@ -1096,8 +1096,6 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.KEYS = { LF = string.char(10), CR = string.char(13), }
-
 BRC.MUTATIONS = {
   antennae = "antennae", augmentation = "augmentation", beak = "beak", claws = "claws", deformed = "deformed body",
   demonic_touch = "demonic touch", hooves = "hooves", horns = "horns", missing_hand = "missing a hand",
@@ -1703,7 +1701,7 @@ function BRC.util.control_key(c)
 end
 
 function BRC.util.count_lines(str)
-  if not str then return 0 end
+  if type(str) ~= "string" then return 0 end
   local count = 1
   str:gsub("\n", function() count = count + 1 end)
   return count
@@ -2347,7 +2345,7 @@ function BRC.Data.persist(name, default_value)
   -- Create persistent restore table on next startup
   if not pushed_restore_table_creation then
     table.insert(chk_lua_save, function()
-      return RESTORE_TABLE .. " = {}" .. BRC.KEYS.LF
+      return RESTORE_TABLE .. " = {}\n"
     end)
     pushed_restore_table_creation = true
   end
@@ -2357,7 +2355,7 @@ function BRC.Data.persist(name, default_value)
     _persist_names[#_persist_names + 1] = name
     table.insert(chk_lua_save, function()
       if _G[name] == nil then return "" end
-      return RESTORE_TABLE .. "." .. name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF
+      return RESTORE_TABLE .. "." .. name .. " = " .. BRC.util.tostring(_G[name]) .. "\n"
     end)
   end
 
@@ -4539,7 +4537,7 @@ end
 -- Temple-related functions
 local function search_altars()
   local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES") or BRC.util.control_key("f")
-  crawl.sendkeys({ cmd_key, "altar", BRC.KEYS.CR })
+  crawl.sendkeys({ cmd_key, "altar", "\r" })
 end
 
 local function ready_temple_macro()
@@ -4559,7 +4557,7 @@ end
 -- Gauntlet-related functions
 local function search_gauntlet()
   local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES") or BRC.util.control_key("f")
-  crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, BRC.KEYS.CR })
+  crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
 end
 
 local function ready_gauntlet_macro()

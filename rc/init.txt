@@ -1,4 +1,8 @@
-:error("Use buehler.rc instead. Multi-file lua does not work well with crawl (It doesn't re-execute on char switch.)")
+{
+  crawl.mpr("<yellow>Recommended to use buehler.rc instead. Only use multi-file for improved error messages.")
+  crawl.mpr("<yellow>If running BRC as multi-file, you must restart crawl after saving a game, to reset memory.")
+  crawl.more()
+}
 lua_file = crawl-rc/lua/core/config.lua
 
 ####### Main options #######
