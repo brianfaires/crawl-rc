@@ -588,7 +588,7 @@ function BRC.util.control_key(c)
 end
 
 function BRC.util.count_lines(str)
-  if not str then return 0 end
+  if type(str) ~= "string" then return 0 end
   local count = 1
   str:gsub("\n", function() count = count + 1 end)
   return count
