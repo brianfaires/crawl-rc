@@ -3,13 +3,15 @@
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
+1. [BUG] explore after rest; can use new setting w/ macro?
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
+1. turncount profile: (disable autopickup, auto-display info for items in view)
 1. Add macro to save skill targets & CONFIG values (by race or race+class)
+1. Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
 1. On alert, prompt/offer to pickup item (or macro available)
 1. On pickup, if safe(), offer to wear/wield item (or macro available)
 1. On drop_inferior inscribe, if safe(), offer to drop item (or macro available)
 1. In-game guided menu (change config, save settings, etc...)
-1. Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal
