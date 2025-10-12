@@ -637,7 +637,7 @@ function BRC.util.tostring(var, pretty, indent_count)
   if var_type == "string" then
     local s
     if var:contains("\n") then
-      s = "[[\n" .. var .. "\n]]"
+      s = string.format("[[\n%s]]", var)
     else
       s = '"' .. var:gsub('"', "") .. '"'
     end

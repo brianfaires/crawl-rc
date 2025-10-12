@@ -191,35 +191,36 @@ f_alert_monsters.Config.Alerts = {
 } -- fm_patterns (do not remove this comment)
 
 f_alert_monsters.Config.init = [[
-  -- Conditionally add miasma monsters
-  if not BRC.you.miasma_immune() then
-    util.append(f_alert_monsters.Config.Alerts, {
-      name = "miasma", cond = "always", cutoff = 0,
-      pattern = { "death drake", "tainted leviathan", "putrid mouth", }
-    })
-  end
+    local alert_list = f_alert_monsters.Config.Alerts
+    -- Conditionally add miasma monsters
+    if not BRC.you.miasma_immune() then
+      util.append(alert_list, {
+        name = "miasma", cond = "always", cutoff = 0,
+        pattern = { "death drake", "tainted leviathan", "putrid mouth", }
+      })
+    end
 
-  -- Conditionally add tormentors
-  if not you.torment_immune() then
-    util.append(f_alert_monsters.Config.Alerts, {
-      name = "torment", cond = "always", cutoff = 0,
-      pattern = { "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
-                  "mummy priest", "(dread|ancient) lich", "lurking horror", }
-    })
-  end
+    -- Conditionally add tormentors
+    if not you.torment_immune() then
+      util.append(alert_list, {
+        name = "torment", cond = "always", cutoff = 0,
+        pattern = { "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
+                    "mummy priest", "(dread|ancient) lich", "lurking horror", }
+      })
+    end
 
-  -- Set mutators to either flash (if undead) or a conditional fm
-  local mutator_str = "cacodemon|neqoxec|shining eye"
-  if BRC.you.mutation_immune() then
-    BRC.set.flash_screen_message("monster_warning:" .. mutator_str, true)
-  else
-    util.append(f_alert_monsters.Config.Alerts, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
-  end
+    -- Set mutators to either flash (if undead) or a conditional fm
+    local mutator_str = "cacodemon|neqoxec|shining eye"
+    if BRC.you.mutation_immune() then
+      BRC.set.flash_screen_message("monster_warning:" .. mutator_str, true)
+    else
+      util.append(alert_list, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
+    end
 
-  -- If configured, add fm for all uniques and pan lords
-  if f_alert_monsters.Config.fm_on_uniques then
-    BRC.set.force_more_message("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
-  end
+    -- If configured, add fm for all uniques and pan lords
+    if f_alert_monsters.Config.fm_on_uniques then
+      BRC.set.force_more_message("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
+    end
 ]]
 ------------------- End config section -------------------
 

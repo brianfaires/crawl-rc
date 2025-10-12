@@ -20,7 +20,7 @@ Usage:
 BRC = BRC or {}
 BRC.Profiles = {}
 BRC.config_to_use = "ask"
-BRC.config_memory = "name"
+BRC.config_memory = "full"
 
 -- Default Config Profile (defines all non-feature values)
 BRC.Profiles.Default = {
@@ -960,7 +960,7 @@ function BRC.util.tostring(var, pretty, indent_count)
   if var_type == "string" then
     local s
     if var:contains("\n") then
-      s = "[[\n" .. var .. "\n]]"
+      s = string.format("[[\n%s]]", var)
     else
       s = '"' .. var:gsub('"', "") .. '"'
     end
