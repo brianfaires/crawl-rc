@@ -36,7 +36,7 @@ local function serialize_chk_lua_save()
   local tokens = { BRC.text.lightblue("\n---CHK_LUA_SAVE---") }
   for _, func in ipairs(chk_lua_save) do
     local result = func()
-    if #result > 0 then tokens[#tokens + 1] = util.trim(result) end
+    if result and #result > 0 then tokens[#tokens + 1] = util.trim(result) end
   end
 
   return table.concat(tokens, "\n")
