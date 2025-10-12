@@ -19,7 +19,7 @@ Usage:
 BRC = BRC or {}
 BRC.Profiles = {}
 BRC.config_to_use = "ask"
-BRC.config_memory = "full"
+BRC.config_memory = "name"
 
 -- Default Config Profile (defines all non-feature values)
 BRC.Profiles.Default = {
@@ -468,6 +468,7 @@ msc ^= $m_warning:You are caught in .* web
 
 # Combat
 msc ^= $m_boring:does no damage
+msc ^= $m_boring:fails to defend itself
 msc ^= $m_boring:No (reachable )?target in view
 msc ^= $m_boring:struggles against the net
 msc ^= $m_boring:You furiously retaliate
@@ -1997,9 +1998,9 @@ function BRC.get.armour_stats(it)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  -- Never show deltas if multiple equip slots
+
+  -- Show as delta if wearing a different item (and only one equip slot)
   if cur and not is_worn and BRC.get.num_equip_slots(it) == 1 then
-    -- Show deltas if not worn, else compare against 0
     if BRC.is.shield(cur) then
       cur_sh = BRC.get.shield_sh(cur)
       cur_ev = -get_shield_penalty(cur)
@@ -2746,7 +2747,7 @@ function BRC.init()
 
   BRC.log.debug("Verify persistent data reload...")
   local success, failures = BRC.Data.verify_reinit()
-  if not success and #failures > 0 then
+  if not success and failures and #failures > 0 then
     if not BRC.Data.try_restore(failures) and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
       BRC.active = false
       BRC.mpr.lightred("\nBRC is off.\n")

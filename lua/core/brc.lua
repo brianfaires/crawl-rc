@@ -314,7 +314,7 @@ function BRC.init()
 
   BRC.log.debug("Verify persistent data reload...")
   local success, failures = BRC.Data.verify_reinit()
-  if not success and #failures > 0 then
+  if not success and failures and #failures > 0 then
     if not BRC.Data.try_restore(failures) and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
       BRC.active = false
       BRC.mpr.lightred("\nBRC is off.\n")

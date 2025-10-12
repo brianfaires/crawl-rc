@@ -15,7 +15,7 @@ Usage:
 BRC = BRC or {}
 BRC.Profiles = {}
 BRC.config_to_use = "ask"
-BRC.config_memory = "full"
+BRC.config_memory = "name"
 
 -- Default Config Profile (defines all non-feature values)
 BRC.Profiles.Default = {

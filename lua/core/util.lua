@@ -884,9 +884,9 @@ function BRC.get.armour_stats(it)
   local cur_ac = 0
   local cur_sh = 0
   local cur_ev = 0
-  -- Never show deltas if multiple equip slots
+
+  -- Show as delta if wearing a different item (and only one equip slot)
   if cur and not is_worn and BRC.get.num_equip_slots(it) == 1 then
-    -- Show deltas if not worn, else compare against 0
     if BRC.is.shield(cur) then
       cur_sh = BRC.get.shield_sh(cur)
       cur_ev = -get_shield_penalty(cur)
