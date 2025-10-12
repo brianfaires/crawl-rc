@@ -96,8 +96,6 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.KEYS = { LF = string.char(10), CR = string.char(13), }
-
 BRC.MUTATIONS = {
   antennae = "antennae", augmentation = "augmentation", beak = "beak", claws = "claws", deformed = "deformed body",
   demonic_touch = "demonic touch", hooves = "hooves", horns = "horns", missing_hand = "missing a hand",

@@ -96,7 +96,7 @@ function BRC.Data.persist(name, default_value)
   -- Create persistent restore table on next startup
   if not pushed_restore_table_creation then
     table.insert(chk_lua_save, function()
-      return RESTORE_TABLE .. " = {}" .. BRC.KEYS.LF
+      return RESTORE_TABLE .. " = {}\n"
     end)
     pushed_restore_table_creation = true
   end
@@ -106,7 +106,7 @@ function BRC.Data.persist(name, default_value)
     _persist_names[#_persist_names + 1] = name
     table.insert(chk_lua_save, function()
       if _G[name] == nil then return "" end
-      return RESTORE_TABLE .. "." .. name .. " = " .. BRC.util.tostring(_G[name]) .. BRC.KEYS.LF
+      return RESTORE_TABLE .. "." .. name .. " = " .. BRC.util.tostring(_G[name]) .. "\n"
     end)
   end
 
