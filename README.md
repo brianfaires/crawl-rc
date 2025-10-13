@@ -260,7 +260,7 @@ BRC.Profiles.Testing = {
 ## Other topics
 ### In-Game Commands
 
-Use the Lua interpreter (`~` key) for these commands:
+Use the Lua interpreter (open with the ` key) for these commands:
 
 ```lua
 -- BRC management
