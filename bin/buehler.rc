@@ -714,7 +714,7 @@ more += god:will now cure all your mutations
 
 ################################### Begin rc/macros.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
-bindkey = [~] CMD_LUA_CONSOLE
+bindkey = [`] CMD_LUA_CONSOLE
 
 # Numpad keymaps
 macros += K \{-1019} f
@@ -4080,6 +4080,7 @@ local function should_ignore_status(s)
 end
 
 local function fully_recovered()
+  if you.contaminated() > 0 then return false end
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
   if hp ~= mhp then return false end
