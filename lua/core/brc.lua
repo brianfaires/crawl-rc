@@ -186,18 +186,26 @@ local function safe_call_all_hooks(hook_name, ...)
 end
 
 local function register_all_features()
-  local loaded_count = 0
-
-  -- Scan for feature modules and load them
+  -- Find all feature modules
+  local feature_names = {}
   for name, value in pairs(_G) do
     if BRC.is_feature_module(value) then
-      local success = BRC.register(value)
-      if success then
-        loaded_count = loaded_count + 1
-      elseif success == false then
-        BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
-        return loaded_count
-      end
+      feature_names[#feature_names + 1] = name
+    end
+  end
+
+  -- Sort alphabetically (for reproducable behavior)
+  table.sort(feature_names)
+
+  -- Register features
+  local loaded_count = 0
+  for _, name in ipairs(feature_names) do
+    local success = BRC.register(_G[name])
+    if success then
+      loaded_count = loaded_count + 1
+    elseif success == false then
+      BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
+      return loaded_count
     end
   end
 
