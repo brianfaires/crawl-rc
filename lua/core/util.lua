@@ -879,7 +879,9 @@ end
 function BRC.get.armour_stats(it)
   if not BRC.is.armour(it) then return "", "" end
 
-  local cur = items.equipped_at(it.equip_type)
+  local equip_type = it.equip_type
+  if equip_type == "body armour" then equip_type = "armour" end
+  local cur = items.equipped_at(equip_type)
   local is_worn = it.equipped or (it.ininventory and cur and cur.slot == it.slot)
   local cur_ac = 0
   local cur_sh = 0

@@ -14,6 +14,9 @@
   - On drop_inferior inscribe, if safe(), offer to drop item (or macro available)
 1. In-game guided menu (change config, save settings, etc...)
 
+### crawl PRs
+https://github.com/crawl/crawl/pull/4830 -> remove "body armour" workaround
+
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal
 1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
