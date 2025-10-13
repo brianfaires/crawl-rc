@@ -81,7 +81,7 @@ local function set_god_options()
   end
 
   if new_god == "Xom" or prev_god == "Xom" then
-    BRC.set.force_more_message("god:", new_god == "Xom")
+    BRC.set.flash_screen_message("god:", new_god == "Xom")
   end
 end
 

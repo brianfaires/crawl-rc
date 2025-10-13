@@ -483,8 +483,6 @@ msc ^= $m_interesting:You feel a bit more experienced
 msc ^= $m_interesting:You .*miss something
 msc ^= $m_interesting:You are blasted
 
-# Specific
-
 # Equipment
 msc ^= $m_boring:You unwield your 
 

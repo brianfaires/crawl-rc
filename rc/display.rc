@@ -163,6 +163,7 @@ msc ^= $m_boring:No (reachable )?target in view
 msc ^= $m_boring:struggles against the net
 msc ^= $m_boring:You furiously retaliate
 msc ^= $m_boring:You swing at nothing
+msc ^= $m_boring:(T|t)he (bush|plant|fungus)
 msc ^= $m_interesting:flickers and vanishes
 msc ^= $m_interesting:is touched by paradox
 msc ^= $m_interesting:seems to slow down
