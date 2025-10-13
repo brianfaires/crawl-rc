@@ -3580,6 +3580,7 @@ local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
+local POS_WORN = ":%d+%.?%d*"
 local COLORIZE_TAGS = {
   { "rF" .. MULTI_PLUS, BRC.COLOR.lightred },
   { "rF" .. MULTI_MINUS, LOSS_COLOR },
@@ -3611,10 +3612,13 @@ local COLORIZE_TAGS = {
   { "Int" .. POS_NUM, GAIN_COLOR },
   { "Int" .. NEG_NUM, LOSS_COLOR },
   { "AC" .. POS_NUM, GAIN_COLOR },
+  { "AC" .. POS_WORN, GAIN_COLOR },
   { "AC" .. NEG_NUM, LOSS_COLOR },
   { "EV" .. POS_NUM, GAIN_COLOR },
+  { "EV" .. POS_WORN, GAIN_COLOR },
   { "EV" .. NEG_NUM, LOSS_COLOR },
   { "SH" .. POS_NUM, GAIN_COLOR },
+  { "SH" .. POS_WORN, GAIN_COLOR },
   { "SH" .. NEG_NUM, LOSS_COLOR },
   { "HP" .. POS_NUM, GAIN_COLOR },
   { "HP" .. NEG_NUM, LOSS_COLOR },
@@ -3623,20 +3627,15 @@ local COLORIZE_TAGS = {
 } -- COLORIZE_TAGS (do not remove this comment)
 
 ---- Local functions ----
-local function colorize_subtext(text, s, tag)
-  local idx = text:find(s)
-  if not idx then return text end
-  if idx > 1 then
-    -- Avoid '!r' or an existing color tag
-    local prev = text:sub(idx - 1, idx - 1)
-    if prev == "!" or prev == ">" then return text end
-  end
-
-  return text:gsub(s, string.format("<%s>%%1</%s>", tag, tag))
+local function colorize_subtext(text, subtext, tag)
+  if not text:find(subtext) then return text end
+  -- Remove current color tag if it exists
+  text = text:gsub("<(%d%d?)>(" .. subtext .. ")</%1>", "%2")
+  return text:gsub(subtext, string.format("<%s>%%1</%s>", tag, tag))
 end
 
 ---- Public API ----
-function f_color_inscribe.do_colorize(it)
+function f_color_inscribe.colorize(it)
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do
     text = colorize_subtext(text, tag[1], tag[2])
@@ -3670,7 +3669,7 @@ function f_color_inscribe.c_assign_invletter(it)
     f_inscribe_stats.do_stat_inscription(it)
   end
 
-  f_color_inscribe.do_colorize(it)
+  f_color_inscribe.colorize(it)
 end
 
 --[[
@@ -4256,8 +4255,8 @@ local function inscribe_armour_stats(it)
   it.inscribe(new_insc, false)
 
   -- If enabled, update the colorized inscription
-  if sign_change and f_color_inscribe and not f_color_inscribe.Config.disabled and f_color_inscribe.do_colorize then
-    f_color_inscribe.do_colorize(it)
+  if sign_change and f_color_inscribe and not f_color_inscribe.Config.disabled and f_color_inscribe.colorize then
+    f_color_inscribe.colorize(it)
   end
 end
 
