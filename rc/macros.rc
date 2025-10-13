@@ -1,5 +1,9 @@
 bindkey = [`] CMD_LUA_CONSOLE
 
+# Go down closest stairs
+macros += M \{4} \{7}>
+
+
 # Numpad keymaps
 macros += K \{-1019} f
 macros += K \{-1018} 3
