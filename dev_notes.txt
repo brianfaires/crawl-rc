@@ -16,6 +16,7 @@
 
 ### crawl PRs
 https://github.com/crawl/crawl/pull/4830 -> remove "body armour" workaround
+https://github.com/crawl/crawl/pull/4814 -> remove cap on inscription colors
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal
