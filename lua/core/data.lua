@@ -75,7 +75,7 @@ The variable/table is automatically persisted across saves.
 Returns the current value.
 Usage: variable_name = BRC.Data.persist("variable_name", default_value)
 --]]
-function BRC.Data.persist(name, default_value, is_new_var)
+function BRC.Data.persist(name, default_value)
   if not util.contains({ "table", "string", "number", "boolean", "nil" }, type(default_value)) then
     BRC.log.error(string.format("Cannot persist %s. Default value is of type %s", name, type(default_value)))
     return default_value
@@ -87,7 +87,7 @@ function BRC.Data.persist(name, default_value, is_new_var)
   elseif _G[RESTORE_TABLE] and _G[RESTORE_TABLE][name] ~= nil then
     _G[name] = _G[RESTORE_TABLE][name]
     _G[RESTORE_TABLE][name] = nil
-  elseif default_value ~= nil and not is_new_var then -- default of nil means only restore if the var is set
+  elseif default_value ~= nil and not util.contains(failed_restores, name) then -- nil default is fine & avoid inf loop
     _G[name] = default_value
     failed_restores[#failed_restores + 1] = name
     BRC.log.debug(BRC.text.red(name .. " failed to restore from chk_lua_save."))
@@ -168,7 +168,7 @@ function BRC.Data.try_restore(failures)
   end
 
   for _, name in ipairs(failures) do
-    _G[name] = BRC.Data.persist(name, c_persist.BRC.Backup[name], true)
+    _G[name] = BRC.Data.persist(name, c_persist.BRC.Backup[name])
   end
   BRC.mpr.green("[BRC] Restored data from backup.")
   return true
