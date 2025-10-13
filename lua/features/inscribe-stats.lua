@@ -2,7 +2,7 @@
 Feature: inscribe-stats
 Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
 Author: buehler
-Dependencies: core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/util.lua, color-inscribe.lua
 --]]
 
 f_inscribe_stats = {}
@@ -23,12 +23,17 @@ local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 local function inscribe_armour_stats(it)
   local abbr = BRC.is.shield(it) and "SH" or "AC"
   local ac_or_sh, ev = BRC.get.armour_stats(it)
+  local sign_change = false
 
   local new_insc
   if it.inscription:find(abbr .. NUM_PATTERN) then
-    -- Replace each stat individually, to avoid overwriting <color> tags
     new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, ac_or_sh)
-    if ev and ev ~= "" then new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev) end
+    if not it.inscription:contains(ac_or_sh:sub(1, 3)) then sign_change = true end
+
+    if ev and ev ~= "" then
+      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
+      if not it.inscription:contains(ev:sub(1, 3)) then sign_change = true end
+    end
   else
     new_insc = ac_or_sh
     if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
@@ -36,6 +41,11 @@ local function inscribe_armour_stats(it)
   end
 
   it.inscribe(new_insc, false)
+
+  -- If enabled, update the colorized inscription
+  if sign_change and f_color_inscribe and not f_color_inscribe.Config.disabled and f_color_inscribe.do_colorize then
+    f_color_inscribe.do_colorize(it)
+  end
 end
 
 local function inscribe_weapon_stats(it)
@@ -56,7 +66,7 @@ end
 
 ---- Hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
-  -- NOTE: It is important that other features do not meddle with the inscription; e.g. adding color tags
+  -- NOTE: It's important that other features don't meddle with the inscription; e.g. inserting unexpected color tags
   if Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
   elseif Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then

@@ -2,7 +2,7 @@
 Feature: color-inscribe
 Description: Colorizes inscriptions on items with appropriate colors for resistances, stats, and other properties
 Author: buehler
-Dependencies: core/constants.lua
+Dependencies: core/constants.lua, inscribe-stats.lua
 --]]
 
 f_color_inscribe = {}
@@ -70,12 +70,8 @@ local function colorize_subtext(text, s, tag)
   return text:gsub(s, string.format("<%s>%%1</%s>", tag, tag))
 end
 
----- Hook functions ----
-function f_color_inscribe.c_assign_invletter(it)
-  if it.artefact then return end
-  -- If enabled, call out to inscribe stats before coloring
-  if f_inscribe_stats.do_stat_inscription then f_inscribe_stats.do_stat_inscription(it) end
-
+---- Public API ----
+function f_color_inscribe.do_colorize(it)
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do
     text = colorize_subtext(text, tag[1], tag[2])
@@ -91,6 +87,25 @@ function f_color_inscribe.c_assign_invletter(it)
   if #text > max_length then text = text:gsub("<.->", "") end
 
   it.inscribe(text, false)
+end
+
+---- Hook functions ----
+function f_color_inscribe.c_assign_invletter(it)
+  if it.artefact then return end
+  -- If enabled, call inscribe stats before colorizing
+  if (
+    f_inscribe_stats and f_inscribe_stats.Config
+    and not f_inscribe_stats.Config.disabled
+    and f_inscribe_stats.do_stat_inscription
+    and (
+      it.is_weapon and f_inscribe_stats.Config.inscribe_weapons
+      or BRC.is.armour(it) and f_inscribe_stats.Config.inscribe_armour
+    ))
+  then
+    f_inscribe_stats.do_stat_inscription(it)
+  end
+
+  f_color_inscribe.do_colorize(it)
 end
 
 --[[
