@@ -3,7 +3,6 @@
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
-1. [BUG] explore after rest; not consistent (is queue'ing the explore flag)
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. Features:
   - Turncount profile: (disable autopickup, auto-display info for items in view)
