@@ -64,6 +64,7 @@ lua_file = crawl-rc/lua/features/exclude-dropped.lua
 lua_file = crawl-rc/lua/features/fully-recover.lua
 lua_file = crawl-rc/lua/features/inscribe-stats.lua
 lua_file = crawl-rc/lua/features/misc-alerts.lua
+lua_file = crawl-rc/lua/features/quiver-reminders.lua
 lua_file = crawl-rc/lua/features/remind-id.lua
 lua_file = crawl-rc/lua/features/runrest-features.lua
 lua_file = crawl-rc/lua/features/safe-consumables.lua

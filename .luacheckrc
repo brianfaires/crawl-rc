@@ -27,6 +27,7 @@ globals = {
   "macro_brc_dump_character",
   "macro_f_fully_recover_explore",
   "macro_f_misc_alerts_save_with_message",
+  "macro_f_quiver_reminders_fire",
   "macro_f_safe_stairs_down",
   "macro_f_safe_stairs_up",
   
@@ -60,6 +61,7 @@ globals = {
   "f_safe_stairs",
   "f_startup",
   "f_template",
+  "f_quiver_reminders",
   "f_weapon_slots",
   
   -- Persistent variables from BRC.Data.persist()

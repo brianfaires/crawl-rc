@@ -46,6 +46,7 @@ _(See header of each feature's lua code for more detail)_
 - **alert-monsters** - `flash_screen` or `force_more` on dangerous monsters, based on your HP/Will/Resistances/etc _(Huge config)_
 - **remind-id** - Alert when you should read a scroll of ID. Before finding scroll of ID, stop travel on increasing un-ID'd stack sizes
 - **misc-alerts** - Misc useful alerts: Low HP, spell levels, Amulet of faith + max piety
+- **quiver-reminders** - Alert before (f)iring from quiver: if a consumable, or after (F)iring a different ammo
 
 ### Exploration
 - **runrest-features** - Update travel stops based on location. Auto-search when entering temple/gauntlet
@@ -260,7 +261,7 @@ BRC.Profiles.Testing = {
 ## Other topics
 ### In-Game Commands
 
-Use the Lua interpreter (open with the ` key) for these commands:
+Use the Lua interpreter (open with the `~` key) for these commands:
 
 ```lua
 -- BRC management
