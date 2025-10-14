@@ -719,6 +719,7 @@ more += god:will now cure all your mutations
 
 ################################### Begin rc/macros.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
+# Remap ~ to Lua interpreter (CMD_GAME_MENU is still on F1)
 bindkey = [~] CMD_LUA_CONSOLE
 
 # Cntl-Tab
@@ -728,7 +729,7 @@ bindkey = [\{-222}] CMD_AUTOFIGHT_NOMOVE
 macros += M \{4} \{7}>
 
 # Cntl-E (Go up closest stairs)
-macros += M \{5} \{7}>
+macros += M \{5} \{7}<
 
 # Numpad keymaps
 macros += K \{-1019} f
