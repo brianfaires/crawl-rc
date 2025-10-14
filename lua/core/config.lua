@@ -21,6 +21,10 @@ BRC.config_memory = "name"
 BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
+  hotkey = {
+    key = { keycode = "13", name = "[Enter]", },
+    autoequip = true
+  },
 } -- BRC.Profiles.Default (do not remove this comment)
 BRC.Config = BRC.Profiles.Default-- Always init to Default profile
 
