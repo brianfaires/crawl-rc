@@ -29,6 +29,8 @@ local HOOK_FUNCTIONS = {
 ---- Local variables ----
 local _features = {}
 local _hooks = {}
+local _hotkey_action = nil
+local hotkey_timeout = nil
 local turn_count = nil
 local depth = nil
 
@@ -225,6 +227,19 @@ function BRC.is_feature_module(f)
     and #f.BRC_FEATURE_NAME > 0
 end
 
+function BRC.set_hotkey(func, turns_available)
+  _hotkey_action = func
+  hotkey_timeout = you.turns() + (turns_available or 0)
+end
+
+function macro_brc_do_hotkey()
+  if _hotkey_action and you.turns() <= hotkey_timeout then
+    _hotkey_action()
+  else
+    BRC.mpr.darkgrey("Unknown command (BRC hotkey action not set).")
+  end
+end
+
 -- BRC.register(): Return true if success, false if error, nil if feature is disabled
 function BRC.register(f)
   if not BRC.is_feature_module(f) then
@@ -319,6 +334,7 @@ function BRC.init()
   BRC.log.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
   BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  BRC.set.macro("\\{13}", "macro_brc_do_hotkey_action")
 
   BRC.log.debug("Verify persistent data reload...")
   local success, failures = BRC.Data.verify_reinit()
