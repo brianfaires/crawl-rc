@@ -81,8 +81,8 @@ function f_color_inscribe.colorize(it)
   local max_length = 80 - (it.is_melded and 32 or 25) - #it.name("plain", true) - 3
   if max_length < 0 then return end
   -- Try removing darkgrey and white, then just remove all
-  if #text > max_length then text = text:gsub("</*" .. BRC.COLOR.darkgrey .. ">", "") end
-  if #text > max_length then text = text:gsub("</*" .. BRC.COLOR.white .. ">", "") end
+  if #text > max_length then text = text:gsub("</?" .. BRC.COLOR.darkgrey .. ">", "") end
+  if #text > max_length then text = text:gsub("</?" .. BRC.COLOR.white .. ">", "") end
   if #text > max_length then text = text:gsub("<.->", "") end
 
   it.inscribe(text, false)
