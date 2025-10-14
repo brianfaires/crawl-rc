@@ -48,15 +48,21 @@ local function check_new_location(cmd)
   BRC.util.do_cmd(cmd)
 end
 
--- Macro functions
+---- Macro functions ----
 function macro_f_safe_stairs_down()
-  if not BRC.active then return BRC.util.do_cmd("CMD_GO_DOWNSTAIRS") end
-  check_new_location("CMD_GO_DOWNSTAIRS")
+  if BRC.active and not f_safe_stairs.Config.disabled then
+    check_new_location("CMD_GO_DOWNSTAIRS")
+  else
+    BRC.util.do_cmd("CMD_GO_DOWNSTAIRS")
+  end
 end
 
 function macro_f_safe_stairs_up()
-  if not BRC.active then return BRC.util.do_cmd("CMD_GO_UPSTAIRS") end
-  check_new_location("CMD_GO_UPSTAIRS")
+  if BRC.active and not f_safe_stairs.Config.disabled then
+    check_new_location("CMD_GO_UPSTAIRS")
+  else
+    BRC.util.do_cmd("CMD_GO_UPSTAIRS")
+  end
 end
 
 ---- Hook functions ----

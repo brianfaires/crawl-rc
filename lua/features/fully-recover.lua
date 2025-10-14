@@ -88,9 +88,11 @@ local function start_fully_recover()
   BRC.set.message_mute(WAITING_MESSAGE, true)
 end
 
--- Macro function: Attach full recovery to auto-explore
+---- Macro function: Attach full recovery to auto-explore ----
 function macro_f_fully_recover_explore()
-  if not BRC.active then return BRC.util.do_cmd("CMD_EXPLORE") end
+  if not BRC.active or f_fully_recover.Config.disabled then
+    return BRC.util.do_cmd("CMD_EXPLORE")
+  end
 
   if fully_recovered() then
     if recovery_start_turn > 0 then

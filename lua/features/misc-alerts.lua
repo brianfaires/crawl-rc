@@ -65,9 +65,11 @@ local function alert_spell_level_changes()
   ma_prev_spell_levels = new_spell_levels
 end
 
--- Macro function: Save with message feature
+---- Macro function: Save with message feature ----
 function macro_f_misc_alerts_save_with_message()
-  if not BRC.active then return BRC.util.do_cmd("CMD_SAVE_GAME_NOW") end
+  if not BRC.active or f_misc_alerts.Config.disabled then
+    return BRC.util.do_cmd("CMD_SAVE_GAME")
+  end
 
   if not BRC.mpr.yesno("Save game and exit?", BRC.COLOR.lightcyan) then
     BRC.mpr.okay()
