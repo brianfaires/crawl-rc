@@ -4251,9 +4251,8 @@ local _actions = {}
 ---- Local functions ----
 local function display_next_message()
   if #_actions == 0 then return end
-  BRC.mpr.que(string.format("Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
+  BRC.mpr.que(string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
   _actions[1].m = nil
-  _actions[1].t = _actions[1].t + you.turns()
 end
 
 local function c_assign_invletter_autoequip(it)
@@ -4305,9 +4304,12 @@ function f_hotkey.ready()
   if #_actions == 0 then return end
   if _actions[1].m then
     display_next_message()
-  elseif _actions[1].t <= you.turns() then
-    table.remove(_actions, 1)
-    f_hotkey.ready()
+  else
+    _actions[1].t = _actions[1].t - 1
+    if _actions[1].t <= 0 then
+      table.remove(_actions, 1)
+      f_hotkey.ready()
+    end
   end
 end
 
@@ -4457,9 +4459,9 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COLOR.lightcyan)
       ma_alerted_max_piety = true
-      if false and Config.remove_faith_hotkey then
-        BRC.set.hotkey("remove " .. BRC.text.white("amulet of faith"), function()
-          am:remove()
+      if Config.remove_faith_hotkey then
+        BRC.set_hotkey("remove " .. BRC.text.white("amulet of faith"), function()
+          items.equipped_at("amulet"):remove()
         end, 1)
       end
     end

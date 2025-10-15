@@ -8,10 +8,11 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua
 f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
 f_misc_alerts.Config = {
-  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
-  alert_remove_faith = true, -- Reminder to remove amulet at max piety
-  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
   save_with_msg = true, -- Shift-S to save and leave yourself a message
+  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
+  alert_remove_faith = true, -- Reminder to remove amulet at max piety
+  remove_faith_hotkey = true, -- Hotkey remove amulet
 } -- f_misc_alerts.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -47,6 +48,11 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COLOR.lightcyan)
       ma_alerted_max_piety = true
+      if Config.remove_faith_hotkey then
+        BRC.set_hotkey("remove " .. BRC.text.white("amulet of faith"), function()
+          items.equipped_at("amulet"):remove()
+        end, 1)
+      end
     end
   end
 end

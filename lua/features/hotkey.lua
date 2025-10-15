@@ -21,9 +21,8 @@ local _actions = {}
 ---- Local functions ----
 local function display_next_message()
   if #_actions == 0 then return end
-  BRC.mpr.que(string.format("Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
+  BRC.mpr.que(string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
   _actions[1].m = nil
-  _actions[1].t = _actions[1].t + you.turns()
 end
 
 local function c_assign_invletter_autoequip(it)
@@ -75,8 +74,11 @@ function f_hotkey.ready()
   if #_actions == 0 then return end
   if _actions[1].m then
     display_next_message()
-  elseif _actions[1].t <= you.turns() then
-    table.remove(_actions, 1)
-    f_hotkey.ready()
+  else
+    _actions[1].t = _actions[1].t - 1
+    if _actions[1].t <= 0 then
+      table.remove(_actions, 1)
+      f_hotkey.ready()
+    end
   end
 end
