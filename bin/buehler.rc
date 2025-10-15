@@ -25,10 +25,6 @@ BRC.config_memory = "name"
 BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
-  hotkey = {
-    key = { keycode = "13", name = "[Enter]", },
-    autoequip = true
-  },
 } -- BRC.Profiles.Default (do not remove this comment)
 BRC.Config = BRC.Profiles.Default-- Always init to Default profile
 
@@ -2479,8 +2475,6 @@ local HOOK_FUNCTIONS = {
 ---- Local variables ----
 local _features = {}
 local _hooks = {}
-local _hotkey_action = nil
-local hotkey_timeout = nil
 local turn_count = nil
 local depth = nil
 
@@ -2517,30 +2511,6 @@ local function handle_core_error(hook_name, result, ...)
   else
     BRC.mpr.okay("Returning nil to " .. hook_name .. ".")
   end
-end
-
--- Hotkey functions
-local function hotkey_is_live()
-  return _hotkey_action and you.turns() <= hotkey_timeout
-end
-
-local function c_message_autoequip(it)
-  if hotkey_is_live() or not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
-  local TURNS = 1
-  local name = it.name():gsub(" {.*}", "")
-
-  BRC.mpr.que("Press " .. BRC.Config.hotkey.key.name .. " to equip " .. name .. ".", BRC.COLOR.darkgrey)
-
-  BRC.set_hotkey(function()
-    local inv_items = util.filter(function(i) return i.name():gsub(" {.*}", "") == name end, items.inventory())
-    for i = 1, #inv_items do
-      if not inv_items[i].equipped then
-        inv_items[i]:equip()
-        return
-      end
-    end
-    BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory")
-  end, TURNS)
 end
 
 -- Config management
@@ -2701,19 +2671,6 @@ function BRC.is_feature_module(f)
     and #f.BRC_FEATURE_NAME > 0
 end
 
-function BRC.set_hotkey(func, turns_available)
-  _hotkey_action = func
-  hotkey_timeout = you.turns() + (turns_available or 1)
-end
-
-function macro_brc_do_hotkey()
-  if hotkey_is_live() then
-    _hotkey_action()
-  else
-    BRC.mpr.darkgrey("Unknown command (BRC hotkey action not set).")
-  end
-end
-
 -- BRC.register(): Return true if success, false if error, nil if feature is disabled
 function BRC.register(f)
   if not BRC.is_feature_module(f) then
@@ -2808,7 +2765,6 @@ function BRC.init()
   BRC.log.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
   BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
-  BRC.set.macro("\\{" .. BRC.Config.hotkey.key.keycode .. "}", "macro_brc_do_hotkey")
 
   BRC.log.debug("Verify persistent data reload...")
   local success, failures = BRC.Data.verify_reinit()
@@ -2899,7 +2855,6 @@ end
 
 function BRC.c_assign_invletter(it)
   if not BRC.active then return end
-  if BRC.Config.hotkey.autoequip then c_message_autoequip(it) end
   return safe_call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
 end
 
@@ -3751,13 +3706,14 @@ end
 Feature: drop-inferior
 Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
 Author: buehler
-Dependencies: core/config.lua, core/util.lua
+Dependencies: core/config.lua, core/util.lua, hotkey.lua
 --]]
 
 f_drop_inferior = {}
 f_drop_inferior.BRC_FEATURE_NAME = "drop-inferior"
 f_drop_inferior.Config = {
   msg_on_inscribe = true, -- Show a message when an item is marked for drop
+  hotkey_drop = true, -- BRC hotkey drops all items on the drop list
 } -- f_drop_inferior.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -3787,6 +3743,7 @@ function f_drop_inferior.c_assign_invletter(it)
   if BRC.get.num_equip_slots(it) > 1 then return end
 
   local it_ego = BRC.get.ego(it)
+  local marked_something = false
   for inv in iter.invent_iterator:new(items.inventory()) do
     -- To be a clear upgrade: Not artefact, same subtype, and ego is same or a clear upgrade
     local inv_ego = BRC.get.ego(inv)
@@ -3794,13 +3751,23 @@ function f_drop_inferior.c_assign_invletter(it)
     if not inv.artefact and inv.subtype() == it.subtype() and ego_same_or_better then
       if it.is_weapon then
         if you.race() == "Coglin" then return end -- More trouble than it's worth
-        if inv.plus <= (it.plus or 0) then inscribe_drop(inv) end
+        if inv.plus <= (it.plus or 0) then
+          inscribe_drop(inv)
+          marked_something = true
+        end
       else
         if BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it) and inv.encumbrance >= it.encumbrance then
           inscribe_drop(inv)
+          marked_something = true
         end
       end
     end
+  end
+
+  if marked_something and f_drop_inferior.Config.hotkey_drop then
+    BRC.set_hotkey("drop your useless items",function()
+      crawl.sendkeys(BRC.get.command_key("CMD_DROP") .. ",\r")
+    end, 1)
   end
 end
 
@@ -4256,6 +4223,86 @@ end
 
 }
 ############################### End lua/features/fully-recover.lua ###############################
+##########################################################################################
+
+################################### Begin lua/features/hotkey.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--[[
+Feature: hotkey
+Description: Configures a BRC hotkey that features can assign actions to
+Author: buehler
+Dependencies: core/data.lua, core/util.lua
+--]]
+
+f_hotkey = {}
+f_hotkey.BRC_FEATURE_NAME = "hotkey"
+f_hotkey.Config = {
+  key = { keycode = "13", name = "[Enter]", },
+  autoequip = true,
+} -- f_hotkey.Config (do not remove this comment)
+
+---- Config alias ----
+local Config = f_hotkey.Config
+
+---- Local variables ----
+local _actions = {}
+
+---- Local functions ----
+local function c_assign_invletter_autoequip(it)
+  if not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
+  local TURNS = 1
+  local name = it.name():gsub(" {.*}", "")
+
+  BRC.set_hotkey("equip " .. BRC.text.white(name),  function()
+    local inv_items = util.filter(function(i) return i.name():gsub(" {.*}", "") == name end, items.inventory())
+    for i = 1, #inv_items do
+      if not inv_items[i].equipped then
+        inv_items[i]:equip()
+        return
+      end
+    end
+    BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory")
+  end, TURNS)
+end
+
+---- Public API ----
+function BRC.set_hotkey(msg, func, turns)
+  table.insert(_actions, { m = msg, f = func, t = turns or 1 })
+end
+
+function macro_f_hotkey()
+  if #_actions > 0 then
+    _actions[1].f()
+    table.remove(_actions, 1)
+  else
+    BRC.mpr.darkgrey("Unknown command (no actions assigned to BRC hotkey).")
+  end
+end
+
+---- Hook functions ----
+function f_hotkey.init()
+  BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_f_hotkey")
+end
+
+function f_hotkey.c_assign_invletter(it)
+  if Config.autoequip then c_assign_invletter_autoequip(it) end
+end
+
+function f_hotkey.ready()
+  if #_actions == 0 then return end
+  if _actions[1].m then
+    BRC.mpr.que(string.format("Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
+    _actions[1].m = nil
+    _actions[1].t = _actions[1].t + you.turns()
+  elseif _actions[1].t <= you.turns() then
+    table.remove(_actions, 1)
+    f_hotkey.ready()
+  end
+end
+
+}
+############################### End lua/features/hotkey.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/features/inscribe-stats.lua ###################################

@@ -2,13 +2,14 @@
 Feature: drop-inferior
 Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
 Author: buehler
-Dependencies: core/config.lua, core/util.lua
+Dependencies: core/config.lua, core/util.lua, hotkey.lua
 --]]
 
 f_drop_inferior = {}
 f_drop_inferior.BRC_FEATURE_NAME = "drop-inferior"
 f_drop_inferior.Config = {
   msg_on_inscribe = true, -- Show a message when an item is marked for drop
+  hotkey_drop = true, -- BRC hotkey drops all items on the drop list
 } -- f_drop_inferior.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -38,6 +39,7 @@ function f_drop_inferior.c_assign_invletter(it)
   if BRC.get.num_equip_slots(it) > 1 then return end
 
   local it_ego = BRC.get.ego(it)
+  local marked_something = false
   for inv in iter.invent_iterator:new(items.inventory()) do
     -- To be a clear upgrade: Not artefact, same subtype, and ego is same or a clear upgrade
     local inv_ego = BRC.get.ego(inv)
@@ -45,12 +47,22 @@ function f_drop_inferior.c_assign_invletter(it)
     if not inv.artefact and inv.subtype() == it.subtype() and ego_same_or_better then
       if it.is_weapon then
         if you.race() == "Coglin" then return end -- More trouble than it's worth
-        if inv.plus <= (it.plus or 0) then inscribe_drop(inv) end
+        if inv.plus <= (it.plus or 0) then
+          inscribe_drop(inv)
+          marked_something = true
+        end
       else
         if BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it) and inv.encumbrance >= it.encumbrance then
           inscribe_drop(inv)
+          marked_something = true
         end
       end
     end
+  end
+
+  if marked_something and f_drop_inferior.Config.hotkey_drop then
+    BRC.set_hotkey("drop your useless items",function()
+      crawl.sendkeys(BRC.get.command_key("CMD_DROP") .. ",\r")
+    end, 1)
   end
 end

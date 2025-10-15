@@ -25,8 +25,8 @@ globals = {
 
   -- BRC macro functions
   "macro_brc_dump_character",
-  "macro_brc_do_hotkey",
   "macro_f_fully_recover_explore",
+  "macro_f_hotkey",
   "macro_f_misc_alerts_save_with_message",
   "macro_f_quiver_reminders_fire",
   "macro_f_safe_stairs_down",
@@ -49,6 +49,7 @@ globals = {
   "f_exclude_dropped",
   "f_fm_disable",
   "f_fully_recover",
+  "f_hotkey",
   "f_inscribe_stats",
   "f_misc_alerts",
   "f_pa_armour",

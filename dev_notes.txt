@@ -10,7 +10,6 @@
   - Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
 1. Prompt for Auto-actions:
   - On alert, prompt/offer to pickup item (or macro available)
-  - On pickup, if safe(), offer to wear/wield item (or macro available)
   - On drop_inferior inscribe, if safe(), offer to drop item (or macro available)
 1. In-game guided menu (change config, save settings, etc...)
 

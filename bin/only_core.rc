@@ -26,10 +26,6 @@ BRC.config_memory = "name"
 BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
-  hotkey = {
-    key = { keycode = "13", name = "[Enter]", },
-    autoequip = true
-  },
 } -- BRC.Profiles.Default (do not remove this comment)
 BRC.Config = BRC.Profiles.Default-- Always init to Default profile
 
@@ -1677,8 +1673,6 @@ local HOOK_FUNCTIONS = {
 ---- Local variables ----
 local _features = {}
 local _hooks = {}
-local _hotkey_action = nil
-local hotkey_timeout = nil
 local turn_count = nil
 local depth = nil
 
@@ -1715,30 +1709,6 @@ local function handle_core_error(hook_name, result, ...)
   else
     BRC.mpr.okay("Returning nil to " .. hook_name .. ".")
   end
-end
-
--- Hotkey functions
-local function hotkey_is_live()
-  return _hotkey_action and you.turns() <= hotkey_timeout
-end
-
-local function c_message_autoequip(it)
-  if hotkey_is_live() or not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
-  local TURNS = 1
-  local name = it.name():gsub(" {.*}", "")
-
-  BRC.mpr.que("Press " .. BRC.Config.hotkey.key.name .. " to equip " .. name .. ".", BRC.COLOR.darkgrey)
-
-  BRC.set_hotkey(function()
-    local inv_items = util.filter(function(i) return i.name():gsub(" {.*}", "") == name end, items.inventory())
-    for i = 1, #inv_items do
-      if not inv_items[i].equipped then
-        inv_items[i]:equip()
-        return
-      end
-    end
-    BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory")
-  end, TURNS)
 end
 
 -- Config management
@@ -1899,19 +1869,6 @@ function BRC.is_feature_module(f)
     and #f.BRC_FEATURE_NAME > 0
 end
 
-function BRC.set_hotkey(func, turns_available)
-  _hotkey_action = func
-  hotkey_timeout = you.turns() + (turns_available or 1)
-end
-
-function macro_brc_do_hotkey()
-  if hotkey_is_live() then
-    _hotkey_action()
-  else
-    BRC.mpr.darkgrey("Unknown command (BRC hotkey action not set).")
-  end
-end
-
 -- BRC.register(): Return true if success, false if error, nil if feature is disabled
 function BRC.register(f)
   if not BRC.is_feature_module(f) then
@@ -2006,7 +1963,6 @@ function BRC.init()
   BRC.log.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
   BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
-  BRC.set.macro("\\{" .. BRC.Config.hotkey.key.keycode .. "}", "macro_brc_do_hotkey")
 
   BRC.log.debug("Verify persistent data reload...")
   local success, failures = BRC.Data.verify_reinit()
@@ -2097,7 +2053,6 @@ end
 
 function BRC.c_assign_invletter(it)
   if not BRC.active then return end
-  if BRC.Config.hotkey.autoequip then c_message_autoequip(it) end
   return safe_call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
 end
 
