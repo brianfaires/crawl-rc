@@ -139,10 +139,10 @@ function f_weapon_slots.ready()
   if do_cleanup_weapon_slots then
     cleanup_weapon_slots()
     do_cleanup_weapon_slots = false
-    if slots_changed then
-      BRC.mpr.darkgrey("Weapon slots updated (ab+w).")
-      crawl.redraw_screen()
-      slots_changed = false
-    end
+  end
+  if slots_changed then
+    BRC.mpr.darkgrey("Weapon slots updated (ab+w).")
+    crawl.redraw_screen()
+    slots_changed = false
   end
 end
