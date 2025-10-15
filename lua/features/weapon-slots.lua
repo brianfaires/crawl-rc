@@ -15,10 +15,6 @@ local priorities_w = nil
 local slots_changed = nil
 
 ---- Local functions ----
-local function items_in_slot(slot)
-  return util.filter(function(inv) return inv.slot == slot end, items.inventory())
-end
-
 local function get_first_empty_slot()
   -- First try to avoid same slot as a consumable, then find first empty equipment slot
   local used_slots = {}
@@ -79,9 +75,8 @@ local function generate_priorities()
 end
 
 local function cleanup_ab(slot)
-  for _, inv in ipairs(items_in_slot(slot)) do
-    if inv.is_weapon then return end
-  end
+  local inv = items.inslot(slot)
+  if inv and inv.is_weapon then return end
 
   for p = 1, #priorities_ab do
     if priorities_ab[p] > slot then -- Not from earlier slot
@@ -95,9 +90,8 @@ end
 
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
-  for _, inv in ipairs(items_in_slot(slot_w)) do
-    if inv.is_weapon then return end
-  end
+  local inv = items.inslot(slot_w)
+  if inv and inv.is_weapon then return end
 
   for p = 1, #priorities_w do
     if priorities_w[p] > 1 then -- Not from slots a or b
@@ -128,8 +122,8 @@ function f_weapon_slots.c_assign_invletter(it)
 
   for _, s in ipairs({ "a", "b", "w" }) do
     local slot = items.letter_to_index(s)
-
-    if not util.exists(items_in_slot(slot), function(i) return i.is_weapon end) then
+    local inv = items.inslot(slot)
+    if not (inv and inv.is_weapon) then
       items.swap_slots(slot, get_first_empty_slot())
       slots_changed = true
       return slot
