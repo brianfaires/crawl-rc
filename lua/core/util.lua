@@ -144,6 +144,7 @@ for k, v in pairs(BRC.COLOR) do
     crawl.mpr(BRC.text.color(v, text), channel)
     crawl.flush_prev_message()
   end
+  BRC.mpr[v] = BRC.mpr[k]
 end
 
 function BRC.mpr.color(text, color, channel)

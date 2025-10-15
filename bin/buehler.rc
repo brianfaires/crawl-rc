@@ -1269,6 +1269,7 @@ for k, v in pairs(BRC.COLOR) do
     crawl.mpr(BRC.text.color(v, text), channel)
     crawl.flush_prev_message()
   end
+  BRC.mpr[v] = BRC.mpr[k]
 end
 
 function BRC.mpr.color(text, color, channel)
@@ -4274,8 +4275,12 @@ end
 
 ---- Public API ----
 function BRC.set_hotkey(msg, func, turns)
-  table.insert(_actions, { m = msg, f = func, t = turns or 1 })
-  if #_actions == 1 then display_next_message() end
+  local act = { m = msg, f = func, t = turns or 1 }
+  table.insert(_actions, act)
+  if #_actions == 1 then
+    display_next_message()
+    act.t = act.t + 1 -- Extra turn cause we're displaying msg a turn early
+  end
 end
 
 function macro_f_hotkey()
@@ -4412,10 +4417,11 @@ Dependencies: core/constants.lua, core/data.lua, core/util.lua
 f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
 f_misc_alerts.Config = {
-  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
-  alert_remove_faith = true, -- Reminder to remove amulet at max piety
-  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
   save_with_msg = true, -- Shift-S to save and leave yourself a message
+  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
+  alert_remove_faith = true, -- Reminder to remove amulet at max piety
+  remove_faith_hotkey = true, -- Hotkey remove amulet
 } -- f_misc_alerts.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -4451,6 +4457,11 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COLOR.lightcyan)
       ma_alerted_max_piety = true
+      if false and Config.remove_faith_hotkey then
+        BRC.set.hotkey("remove " .. BRC.text.white("amulet of faith"), function()
+          am:remove()
+        end, 1)
+      end
     end
   end
 end

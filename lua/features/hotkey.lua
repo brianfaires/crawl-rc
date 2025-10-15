@@ -45,8 +45,12 @@ end
 
 ---- Public API ----
 function BRC.set_hotkey(msg, func, turns)
-  table.insert(_actions, { m = msg, f = func, t = turns or 1 })
-  if #_actions == 1 then display_next_message() end
+  local act = { m = msg, f = func, t = turns or 1 }
+  table.insert(_actions, act)
+  if #_actions == 1 then
+    display_next_message()
+    act.t = act.t + 1 -- Extra turn cause we're displaying msg a turn early
+  end
 end
 
 function macro_f_hotkey()
