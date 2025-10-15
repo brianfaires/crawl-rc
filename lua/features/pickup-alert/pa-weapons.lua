@@ -324,13 +324,9 @@ end
 
 ---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
-  -- Check if we need the first weapon of the game
   if need_first_weapon() then
     -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.is_weapon then return false end
-    end
-    return true
+    return not util.exists(items.inventory(), function(i) return i.is_weapon end)
   end
 
   if BRC.is.risky_item(it) then return false end
@@ -371,7 +367,7 @@ end
 
 function f_pa_weapons.ready()
   f_pa_weapons:init()
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.is_weapon and not BRC.is.magic_staff(inv) then
       _weapon_cache.add_weapon(inv)
       f_pa_data.update_high_scores(inv)

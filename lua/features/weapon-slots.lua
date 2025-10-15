@@ -15,9 +15,23 @@ local priorities_w = nil
 local slots_changed = nil
 
 ---- Local functions ----
+local function items_in_slot(slot)
+  return util.filter(function(inv) return inv.slot == slot end, items.inventory())
+end
+
 local function get_first_empty_slot()
-  for slot = 1, 52 do
-    if #BRC.get.items_in_slot(slot) == 0 then return slot end
+  -- First try to avoid same slot as a consumable, then find first empty equipment slot
+  local used_slots = {}
+  for _, inv in ipairs(items.inventory()) do
+    used_slots[inv.slot] = true
+  end
+
+  for slot = 0, 51 do
+    if not used_slots[slot] then return slot end
+  end
+
+  for slot = 0, 51 do
+    if not items.inslot(slot) then return slot end
   end
 end
 
@@ -43,7 +57,7 @@ local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
   priorities_w = { -1, -1, -1, -1 }
 
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     local p = get_priority_w(inv)
     if p > 0 then
       if priorities_w[p] == -1 then
@@ -65,8 +79,7 @@ local function generate_priorities()
 end
 
 local function cleanup_ab(slot)
-  local inv_items = BRC.get.items_in_slot(slot)
-  for _, inv in ipairs(inv_items) do
+  for _, inv in ipairs(items_in_slot(slot)) do
     if inv.is_weapon then return end
   end
 
@@ -82,8 +95,7 @@ end
 
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
-  local inv_items = BRC.get.items_in_slot(slot_w)
-  for _, inv in ipairs(inv_items) do
+  for _, inv in ipairs(items_in_slot(slot_w)) do
     if inv.is_weapon then return end
   end
 
@@ -114,19 +126,10 @@ end
 function f_weapon_slots.c_assign_invletter(it)
   if not it.is_weapon then return end
 
-  for _, i in ipairs({ "a", "b", "w" }) do
-    local slot = items.letter_to_index(i)
-    local inv_items = BRC.get.items_in_slot(slot)
-    if #inv_items == 0 then return slot end
+  for _, s in ipairs({ "a", "b", "w" }) do
+    local slot = items.letter_to_index(s)
 
-    local any_are_weapon = false
-    for _, inv in ipairs(inv_items) do
-      if inv.is_weapon then
-        any_are_weapon = true
-        break
-      end
-    end
-    if not any_are_weapon then
+    if not util.exists(items_in_slot(slot), function(i) return i.is_weapon end) then
       items.swap_slots(slot, get_first_empty_slot())
       slots_changed = true
       return slot

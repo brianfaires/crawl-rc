@@ -44,7 +44,7 @@ end
 
 local function serialize_inventory()
   local tokens = { BRC.text.lightcyan("\n---INVENTORY---\n") }
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
     local base = inv.name("base") or "N/A"
     local cls = inv.class(true) or "N/A"
@@ -472,8 +472,9 @@ end
 
 function BRC.you.shapeshifting_skill()
   local skill = you.skill("Shapeshifting")
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.name() == "amulet of wildshape" then return skill + 5 end
+  local AMU = "amulet of wildshape"
+  if util.exists(items.inventory(), function(i) return i.name("qual") == AMU end) then
+    return skill + 5
   end
   return skill
 end
@@ -964,14 +965,6 @@ function BRC.get.hands(it)
   local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
-end
-
-function BRC.get.items_in_slot(slot)
-  local inv_items = {}
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.slot == slot then inv_items[#inv_items + 1] = inv end
-  end
-  return inv_items
 end
 
 function BRC.is.risky_item(it)

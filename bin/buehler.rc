@@ -1169,7 +1169,7 @@ end
 
 local function serialize_inventory()
   local tokens = { BRC.text.lightcyan("\n---INVENTORY---\n") }
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name("qual"))
     local base = inv.name("base") or "N/A"
     local cls = inv.class(true) or "N/A"
@@ -1597,8 +1597,9 @@ end
 
 function BRC.you.shapeshifting_skill()
   local skill = you.skill("Shapeshifting")
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.name() == "amulet of wildshape" then return skill + 5 end
+  local AMU = "amulet of wildshape"
+  if util.exists(items.inventory(), function(i) return i.name("qual") == AMU end) then
+    return skill + 5
   end
   return skill
 end
@@ -2089,14 +2090,6 @@ function BRC.get.hands(it)
   local st = it.subtype()
   if st == "giant club" or st == "giant spiked club" then return 2 end
   return 1
-end
-
-function BRC.get.items_in_slot(slot)
-  local inv_items = {}
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.slot == slot then inv_items[#inv_items + 1] = inv end
-  end
-  return inv_items
 end
 
 function BRC.is.risky_item(it)
@@ -3739,18 +3732,20 @@ function f_drop_inferior.c_assign_invletter(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if not (it.is_weapon or BRC.is.armour(it)) or BRC.is.risky_item(it) then return end
-  if BRC.get.num_equip_slots(it) > 1 then return end
+  if (
+    not (it.is_weapon or BRC.is.armour(it))
+    or BRC.is.risky_item(it)
+    or BRC.get.num_equip_slots(it) > 1
+  ) then return end
 
   local it_ego = BRC.get.ego(it)
   local marked_something = false
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     -- To be a clear upgrade: Not artefact, same subtype, and ego is same or a clear upgrade
     local inv_ego = BRC.get.ego(inv)
-    local ego_same_or_better = inv_ego == it_ego or not inv_ego or BRC.is.risky_item(inv)
-    if not inv.artefact and inv.subtype() == it.subtype() and ego_same_or_better then
+    local not_worse = inv_ego == it_ego or not inv_ego or BRC.is.risky_item(inv)
+    if not_worse and not inv.artefact and inv.subtype() == it.subtype() then
       if it.is_weapon then
-        if you.race() == "Coglin" then return end -- More trouble than it's worth
         if inv.plus <= (it.plus or 0) then
           inscribe_drop(inv)
           marked_something = true
@@ -3966,17 +3961,13 @@ local function remove_exclusion(item_name)
 end
 
 local function enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if
-      inv.is_weapon
-      and not BRC.is.magic_staff(inv)
-      and inv.plus < 9
-      and (not inv.artefact or you.race() == "Mountain Dwarf")
-    then
-      return true
-    end
-  end
-  return false
+  return util.exists(items.inventory(), function(i)
+    return
+      i.is_weapon
+      and not BRC.is.magic_staff(i)
+      and i.plus < 9
+      and (not i.artefact or you.race() == "Mountain Dwarf")
+  end)
 end
 
 local function clean_item_text(text)
@@ -3988,7 +3979,9 @@ local function clean_item_text(text)
 end
 
 local function extract_jewellery_or_evoker(text)
-  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
+  local idx = text:find("ring of", 1, true)
+    or text:find("amulet of", 1, true)
+    or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
   for _, item_name in ipairs(BRC.MISC_ITEMS) do
@@ -4018,20 +4011,26 @@ end
 --]]
 local function get_item_name(text)
   text = clean_item_text(text)
-  return extract_jewellery_or_evoker(text) or extract_missile(text) or extract_potion(text) or extract_scroll(text)
+  return extract_jewellery_or_evoker(text)
+    or extract_missile(text)
+    or extract_potion(text)
+    or extract_scroll(text)
 end
 
-local function should_exclude(item_name)
+local function should_exclude(item_name, full_msg)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-  local weap_scroll = item_name:contains("enchant weapon") or item_name:contains("brand weapon")
-  if f_exclude_dropped.Config.not_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
+  if (
+    f_exclude_dropped.Config.not_weapon_scrolls
+    and (item_name:contains("enchant weapon") or item_name:contains("brand weapon"))
+    and enchantable_weap_in_inv()
+  ) then return false end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.name("qual"):contains(item_name) then
-      if BRC.is.jewellery(inv) then return true end
-      local qty_str = string.format("ou drop %s %s", inv.quantity, item_name)
-      return inv.quantity == 1 or item_name:contains(qty_str)
+      return BRC.is.jewellery(inv)
+        or inv.quantity == 1
+        or full_msg:contains("ou drop " .. item_name .. " " .. inv.quantity)
     end
   end
 
@@ -4056,7 +4055,7 @@ function f_exclude_dropped.c_message(text, channel)
 
   if picked_up then
     remove_exclusion(item_name)
-  elseif should_exclude(item_name) then
+  elseif should_exclude(item_name, text) then
     add_exclusion(item_name)
   end
 end
@@ -4397,7 +4396,7 @@ function f_inscribe_stats.do_stat_inscription(it)
 end
 
 function f_inscribe_stats.ready()
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     f_inscribe_stats.do_stat_inscription(inv)
   end
 end
@@ -4552,7 +4551,7 @@ local Config = f_quiver_reminders.Config
 ---- Local functions ----
 local function quiver_missile_by_name(name)
   local slot = nil
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.name("qual") == name then
       slot = inv.slot
       break
@@ -4647,7 +4646,7 @@ local do_remind_id_check = nil
 local function get_max_stack(class)
   local max_stack_size = 0
   local slot = nil
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.class(true) == class and not inv.is_identified then
       if inv.quantity > max_stack_size then
         max_stack_size = inv.quantity
@@ -4661,17 +4660,12 @@ local function get_max_stack(class)
 end
 
 local function have_scroll_of_id()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.name("qual") == "scroll of identify" then return true end
-  end
-  return false
+  local ID = "scroll of identify"
+  return util.exists(items.inventory(), function(i) return i.name("qual") == ID end)
 end
 
 local function have_unid_item()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if not inv.is_identified then return true end
-  end
-  return false
+  return util.exists(items.inventory(), function(i) return not i.is_identified end)
 end
 
 ---- Hook functions ----
@@ -4729,7 +4723,7 @@ function f_remind_id.ready()
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
       BRC.set_hotkey("read scroll of " .. BRC.text.white("identify"), function()
-        for inv in iter.invent_iterator:new(items.inventory()) do
+        for _, inv in ipairs(items.inventory()) do
           if inv.name("qual") == "scroll of identify" then
             BRC.util.do_cmd("CMD_READ")
             crawl.sendkeys(BRC.util.int2char(inv.slot))
@@ -4927,8 +4921,8 @@ end
 
 ---- Hook functions ----
 function f_safe_consumables.ready()
-  -- Remove the default "!r" and "!q" inscriptions after identify
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  -- Add / Remove inscriptions as appropriate
+  for _, inv in ipairs(items.inventory()) do
     local inv_class = inv.class(true)
     if inv_class == "scroll" then
       if inscription_needed(inv_class, inv.subtype()) then
@@ -5119,9 +5113,23 @@ local priorities_w = nil
 local slots_changed = nil
 
 ---- Local functions ----
+local function items_in_slot(slot)
+  return util.filter(function(inv) return inv.slot == slot end, items.inventory())
+end
+
 local function get_first_empty_slot()
-  for slot = 1, 52 do
-    if #BRC.get.items_in_slot(slot) == 0 then return slot end
+  -- First try to avoid same slot as a consumable, then find first empty equipment slot
+  local used_slots = {}
+  for _, inv in ipairs(items.inventory()) do
+    used_slots[inv.slot] = true
+  end
+
+  for slot = 0, 51 do
+    if not used_slots[slot] then return slot end
+  end
+
+  for slot = 0, 51 do
+    if not items.inslot(slot) then return slot end
   end
 end
 
@@ -5147,7 +5155,7 @@ local function generate_priorities()
   priorities_ab = { -1, -1, -1, -1, -1 }
   priorities_w = { -1, -1, -1, -1 }
 
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     local p = get_priority_w(inv)
     if p > 0 then
       if priorities_w[p] == -1 then
@@ -5169,8 +5177,7 @@ local function generate_priorities()
 end
 
 local function cleanup_ab(slot)
-  local inv_items = BRC.get.items_in_slot(slot)
-  for _, inv in ipairs(inv_items) do
+  for _, inv in ipairs(items_in_slot(slot)) do
     if inv.is_weapon then return end
   end
 
@@ -5186,8 +5193,7 @@ end
 
 local function cleanup_w()
   local slot_w = items.letter_to_index("w")
-  local inv_items = BRC.get.items_in_slot(slot_w)
-  for _, inv in ipairs(inv_items) do
+  for _, inv in ipairs(items_in_slot(slot_w)) do
     if inv.is_weapon then return end
   end
 
@@ -5218,19 +5224,10 @@ end
 function f_weapon_slots.c_assign_invletter(it)
   if not it.is_weapon then return end
 
-  for _, i in ipairs({ "a", "b", "w" }) do
-    local slot = items.letter_to_index(i)
-    local inv_items = BRC.get.items_in_slot(slot)
-    if #inv_items == 0 then return slot end
+  for _, s in ipairs({ "a", "b", "w" }) do
+    local slot = items.letter_to_index(s)
 
-    local any_are_weapon = false
-    for _, inv in ipairs(inv_items) do
-      if inv.is_weapon then
-        any_are_weapon = true
-        break
-      end
-    end
-    if not any_are_weapon then
+    if not util.exists(items_in_slot(slot), function(i) return i.is_weapon end) then
       items.swap_slots(slot, get_first_empty_slot())
       slots_changed = true
       return slot
@@ -5460,9 +5457,8 @@ function f_pickup_alert.autopickup(it, _)
     -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
     if not BRC.is.aux_armour(it) then return end
     local st = it.subtype()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      local inv_st = inv.subtype()
-      if inv_st and inv_st == st then
+    for _, inv in ipairs(items.inventory()) do
+      if inv.subtype() == st then
         unworn_aux_item = inv
         break
       end
@@ -5728,7 +5724,7 @@ end
 ---- Hook functions ----
 function f_pa_data.init()
   -- Update alerts & tables for starting items
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
   end
 end
@@ -5880,11 +5876,9 @@ local function pickup_aux_armour(it)
   local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
-    if #all_equipped == 0 and num_slots == 1 then
-      local st = it.subtype()
-      for inv in iter.invent_iterator:new(items.inventory()) do
-        if inv.subtype() == st then return false end
-      end
+    if num_slots == 1 then
+      local ST = it.subtype()
+      return not util.exists(items.inventory(), function(inv) return inv.subtype() == ST end)
     end
     return true
   end
@@ -6149,12 +6143,12 @@ end
 
 function f_pa_misc.is_unneeded_ring(it)
   if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true)
+  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true) > 0
   local st = it.subtype()
   local found_first = false
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if BRC.is.ring(inv) and inv.subtype() == st then
-      if found_first or (missing_hand > 0) then return true end
+      if found_first or missing_hand then return true end
       found_first = true
     end
   end
@@ -6498,13 +6492,9 @@ end
 
 ---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
-  -- Check if we need the first weapon of the game
   if need_first_weapon() then
     -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.is_weapon then return false end
-    end
-    return true
+    return not util.exists(items.inventory(), function(i) return i.is_weapon end)
   end
 
   if BRC.is.risky_item(it) then return false end
@@ -6545,7 +6535,7 @@ end
 
 function f_pa_weapons.ready()
   f_pa_weapons:init()
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.is_weapon and not BRC.is.magic_staff(inv) then
       _weapon_cache.add_weapon(inv)
       f_pa_data.update_high_scores(inv)

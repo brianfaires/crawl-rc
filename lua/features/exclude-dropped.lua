@@ -26,17 +26,13 @@ local function remove_exclusion(item_name)
 end
 
 local function enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if
-      inv.is_weapon
-      and not BRC.is.magic_staff(inv)
-      and inv.plus < 9
-      and (not inv.artefact or you.race() == "Mountain Dwarf")
-    then
-      return true
-    end
-  end
-  return false
+  return util.exists(items.inventory(), function(i)
+    return
+      i.is_weapon
+      and not BRC.is.magic_staff(i)
+      and i.plus < 9
+      and (not i.artefact or you.race() == "Mountain Dwarf")
+  end)
 end
 
 local function clean_item_text(text)
@@ -48,7 +44,9 @@ local function clean_item_text(text)
 end
 
 local function extract_jewellery_or_evoker(text)
-  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
+  local idx = text:find("ring of", 1, true)
+    or text:find("amulet of", 1, true)
+    or text:find("wand of", 1, true)
   if idx then return text:sub(idx, #text) end
 
   for _, item_name in ipairs(BRC.MISC_ITEMS) do
@@ -78,20 +76,26 @@ end
 --]]
 local function get_item_name(text)
   text = clean_item_text(text)
-  return extract_jewellery_or_evoker(text) or extract_missile(text) or extract_potion(text) or extract_scroll(text)
+  return extract_jewellery_or_evoker(text)
+    or extract_missile(text)
+    or extract_potion(text)
+    or extract_scroll(text)
 end
 
-local function should_exclude(item_name)
+local function should_exclude(item_name, full_msg)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-  local weap_scroll = item_name:contains("enchant weapon") or item_name:contains("brand weapon")
-  if f_exclude_dropped.Config.not_weapon_scrolls and weap_scroll and enchantable_weap_in_inv() then return false end
+  if (
+    f_exclude_dropped.Config.not_weapon_scrolls
+    and (item_name:contains("enchant weapon") or item_name:contains("brand weapon"))
+    and enchantable_weap_in_inv()
+  ) then return false end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.name("qual"):contains(item_name) then
-      if BRC.is.jewellery(inv) then return true end
-      local qty_str = string.format("ou drop %s %s", inv.quantity, item_name)
-      return inv.quantity == 1 or item_name:contains(qty_str)
+      return BRC.is.jewellery(inv)
+        or inv.quantity == 1
+        or full_msg:contains("ou drop " .. item_name .. " " .. inv.quantity)
     end
   end
 
@@ -116,7 +120,7 @@ function f_exclude_dropped.c_message(text, channel)
 
   if picked_up then
     remove_exclusion(item_name)
-  elseif should_exclude(item_name) then
+  elseif should_exclude(item_name, text) then
     add_exclusion(item_name)
   end
 end

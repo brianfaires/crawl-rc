@@ -138,11 +138,9 @@ local function pickup_aux_armour(it)
   local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
-    if #all_equipped == 0 and num_slots == 1 then
-      local st = it.subtype()
-      for inv in iter.invent_iterator:new(items.inventory()) do
-        if inv.subtype() == st then return false end
-      end
+    if num_slots == 1 then
+      local ST = it.subtype()
+      return not util.exists(items.inventory(), function(inv) return inv.subtype() == ST end)
     end
     return true
   end

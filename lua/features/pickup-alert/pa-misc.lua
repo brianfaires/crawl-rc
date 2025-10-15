@@ -74,12 +74,12 @@ end
 
 function f_pa_misc.is_unneeded_ring(it)
   if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true)
+  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true) > 0
   local st = it.subtype()
   local found_first = false
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if BRC.is.ring(inv) and inv.subtype() == st then
-      if found_first or (missing_hand > 0) then return true end
+      if found_first or missing_hand then return true end
       found_first = true
     end
   end

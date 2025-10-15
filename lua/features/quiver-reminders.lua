@@ -25,7 +25,7 @@ local Config = f_quiver_reminders.Config
 ---- Local functions ----
 local function quiver_missile_by_name(name)
   local slot = nil
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.name("qual") == name then
       slot = inv.slot
       break

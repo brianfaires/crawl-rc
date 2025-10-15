@@ -119,7 +119,7 @@ end
 ---- Hook functions ----
 function f_pa_data.init()
   -- Update alerts & tables for starting items
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
   end
 end

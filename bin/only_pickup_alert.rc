@@ -143,11 +143,9 @@ local function pickup_aux_armour(it)
   local all_equipped, num_slots = BRC.get.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
-    if #all_equipped == 0 and num_slots == 1 then
-      local st = it.subtype()
-      for inv in iter.invent_iterator:new(items.inventory()) do
-        if inv.subtype() == st then return false end
-      end
+    if num_slots == 1 then
+      local ST = it.subtype()
+      return not util.exists(items.inventory(), function(inv) return inv.subtype() == ST end)
     end
     return true
   end
@@ -662,13 +660,9 @@ end
 
 ---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
-  -- Check if we need the first weapon of the game
   if need_first_weapon() then
     -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.is_weapon then return false end
-    end
-    return true
+    return not util.exists(items.inventory(), function(i) return i.is_weapon end)
   end
 
   if BRC.is.risky_item(it) then return false end
@@ -709,7 +703,7 @@ end
 
 function f_pa_weapons.ready()
   f_pa_weapons:init()
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.is_weapon and not BRC.is.magic_staff(inv) then
       _weapon_cache.add_weapon(inv)
       f_pa_data.update_high_scores(inv)
@@ -800,12 +794,12 @@ end
 
 function f_pa_misc.is_unneeded_ring(it)
   if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true)
+  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true) > 0
   local st = it.subtype()
   local found_first = false
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if BRC.is.ring(inv) and inv.subtype() == st then
-      if found_first or (missing_hand > 0) then return true end
+      if found_first or missing_hand then return true end
       found_first = true
     end
   end
@@ -944,7 +938,7 @@ end
 ---- Hook functions ----
 function f_pa_data.init()
   -- Update alerts & tables for starting items
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     f_pa_data.remove(pa_OTA_items, inv)
   end
 end
@@ -1151,9 +1145,8 @@ function f_pickup_alert.autopickup(it, _)
     -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
     if not BRC.is.aux_armour(it) then return end
     local st = it.subtype()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      local inv_st = inv.subtype()
-      if inv_st and inv_st == st then
+    for _, inv in ipairs(items.inventory()) do
+      if inv.subtype() == st then
         unworn_aux_item = inv
         break
       end

@@ -75,7 +75,7 @@ function f_inscribe_stats.do_stat_inscription(it)
 end
 
 function f_inscribe_stats.ready()
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     f_inscribe_stats.do_stat_inscription(inv)
   end
 end

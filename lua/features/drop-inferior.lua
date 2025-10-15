@@ -35,18 +35,20 @@ function f_drop_inferior.c_assign_invletter(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if not (it.is_weapon or BRC.is.armour(it)) or BRC.is.risky_item(it) then return end
-  if BRC.get.num_equip_slots(it) > 1 then return end
+  if (
+    not (it.is_weapon or BRC.is.armour(it))
+    or BRC.is.risky_item(it)
+    or BRC.get.num_equip_slots(it) > 1
+  ) then return end
 
   local it_ego = BRC.get.ego(it)
   local marked_something = false
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     -- To be a clear upgrade: Not artefact, same subtype, and ego is same or a clear upgrade
     local inv_ego = BRC.get.ego(inv)
-    local ego_same_or_better = inv_ego == it_ego or not inv_ego or BRC.is.risky_item(inv)
-    if not inv.artefact and inv.subtype() == it.subtype() and ego_same_or_better then
+    local not_worse = inv_ego == it_ego or not inv_ego or BRC.is.risky_item(inv)
+    if not_worse and not inv.artefact and inv.subtype() == it.subtype() then
       if it.is_weapon then
-        if you.race() == "Coglin" then return end -- More trouble than it's worth
         if inv.plus <= (it.plus or 0) then
           inscribe_drop(inv)
           marked_something = true

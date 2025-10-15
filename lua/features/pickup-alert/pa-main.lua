@@ -193,9 +193,8 @@ function f_pickup_alert.autopickup(it, _)
     -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
     if not BRC.is.aux_armour(it) then return end
     local st = it.subtype()
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      local inv_st = inv.subtype()
-      if inv_st and inv_st == st then
+    for _, inv in ipairs(items.inventory()) do
+      if inv.subtype() == st then
         unworn_aux_item = inv
         break
       end

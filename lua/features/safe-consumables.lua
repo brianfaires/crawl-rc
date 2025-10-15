@@ -26,8 +26,8 @@ end
 
 ---- Hook functions ----
 function f_safe_consumables.ready()
-  -- Remove the default "!r" and "!q" inscriptions after identify
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  -- Add / Remove inscriptions as appropriate
+  for _, inv in ipairs(items.inventory()) do
     local inv_class = inv.class(true)
     if inv_class == "scroll" then
       if inscription_needed(inv_class, inv.subtype()) then

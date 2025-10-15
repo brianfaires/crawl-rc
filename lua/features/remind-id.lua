@@ -30,7 +30,7 @@ local do_remind_id_check = nil
 local function get_max_stack(class)
   local max_stack_size = 0
   local slot = nil
-  for inv in iter.invent_iterator:new(items.inventory()) do
+  for _, inv in ipairs(items.inventory()) do
     if inv.class(true) == class and not inv.is_identified then
       if inv.quantity > max_stack_size then
         max_stack_size = inv.quantity
@@ -44,17 +44,12 @@ local function get_max_stack(class)
 end
 
 local function have_scroll_of_id()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.name("qual") == "scroll of identify" then return true end
-  end
-  return false
+  local ID = "scroll of identify"
+  return util.exists(items.inventory(), function(i) return i.name("qual") == ID end)
 end
 
 local function have_unid_item()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if not inv.is_identified then return true end
-  end
-  return false
+  return util.exists(items.inventory(), function(i) return not i.is_identified end)
 end
 
 ---- Hook functions ----
@@ -112,7 +107,7 @@ function f_remind_id.ready()
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
       BRC.set_hotkey("read scroll of " .. BRC.text.white("identify"), function()
-        for inv in iter.invent_iterator:new(items.inventory()) do
+        for _, inv in ipairs(items.inventory()) do
           if inv.name("qual") == "scroll of identify" then
             BRC.util.do_cmd("CMD_READ")
             crawl.sendkeys(BRC.util.int2char(inv.slot))
