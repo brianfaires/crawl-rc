@@ -384,15 +384,18 @@ function BRC.ready()
   if not BRC.active then return end
   crawl.redraw_screen()
 
-  if you.turns() == turn_count then return end
-  turn_count = you.turns()
+  if you.turns() > turn_count then
+    turn_count = you.turns()
 
-  if you.depth() ~= depth and not you.have_orb() then
-    depth = you.depth()
-    BRC.Data.backup()
+    if you.depth() ~= depth and not you.have_orb() then
+      depth = you.depth()
+      BRC.Data.backup()
+    end
+
+    safe_call_all_hooks(HOOK_FUNCTIONS.ready)
   end
 
-  safe_call_all_hooks(HOOK_FUNCTIONS.ready)
+  -- Always do this, even if same turn
   BRC.mpr.consume_queue()
 end
 
