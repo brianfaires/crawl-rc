@@ -3,6 +3,8 @@
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
+1. redefine cntl-E macro as func, to work w/ orb on D:1
+1. Use crawl version for 0.33 support
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. Features:
   - Turncount profile: (disable autopickup, auto-display info for items in view)
@@ -12,9 +14,10 @@
   - On alert, prompt/offer to pickup item (or macro available)
 1. In-game guided menu (change config, save settings, etc...)
 
-### crawl PRs
+### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/pull/4830 -> remove "body armour" workaround
 https://github.com/crawl/crawl/pull/4814 -> remove cap on inscription colors
+https://github.com/crawl/crawl/issues/4789 -> drop_disables_autopickup overrides exclude-dropped
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal
