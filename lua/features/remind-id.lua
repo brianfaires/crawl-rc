@@ -63,7 +63,10 @@ function f_remind_id.init()
 end
 
 function f_remind_id.c_assign_invletter(it)
-  if not it.is_identified and have_scroll_of_id() or it.name("qual") == "scroll of identify" and have_unid_item() then
+  if (
+    not it.is_identified and have_scroll_of_id()
+    or it.name("qual") == "scroll of identify" and have_unid_item()
+  ) then
     you.stop_activity()
     do_remind_id_check = true
   end
@@ -78,20 +81,27 @@ function f_remind_id.c_message(text, channel)
       you.stop_activity()
       do_remind_id_check = true
     end
-  elseif not ri_found_scroll_of_id then
-    local pickup_info = BRC.text.get_pickup_info(text)
-    if not pickup_info then return end
-    local is_scroll = pickup_info.item:contains("scroll")
-    local is_potion = pickup_info.item:contains("potion")
+  else
+    local name, slot = BRC.text.get_pickup_info(text)
+    if not name then return end
+
+    local is_scroll = name:contains("scroll")
+    local is_potion = name:contains("potion")
     if not (is_scroll or is_potion) then return end
 
-    local num_scrolls, slot_scrolls = get_max_stack("scroll")
-    local num_pots, slot_pots = get_max_stack("potion")
-    if
-      is_scroll and num_scrolls >= Config.stop_on_scrolls_count and slot_scrolls == pickup_info.slot
-      or is_potion and num_pots >= Config.stop_on_pots_count and slot_pots == pickup_info.slot
-    then
-      you.stop_activity()
+    if ri_found_scroll_of_id then
+      -- Check for pickup unidentified consumable
+      if not name:contains(" of ") then do_remind_id_check = true end
+    else
+      -- Check if max stack size increased
+      local num_scrolls, slot_scrolls = get_max_stack("scroll")
+      local num_pots, slot_pots = get_max_stack("potion")
+      if
+        is_scroll and slot_scrolls == slot and num_scrolls >= Config.stop_on_scrolls_count
+        or is_potion and slot_pots == slot and num_pots >= Config.stop_on_pots_count
+      then
+        you.stop_activity()
+      end
     end
   end
 end
@@ -99,6 +109,17 @@ end
 function f_remind_id.ready()
   if do_remind_id_check then
     do_remind_id_check = false
-    if have_unid_item() and have_scroll_of_id() then BRC.mpr.stop(IDENTIFY_MSG) end
+    if have_unid_item() and have_scroll_of_id() then
+      BRC.mpr.stop(IDENTIFY_MSG)
+      BRC.set_hotkey("read scroll of " .. BRC.text.white("identify"), function()
+        for inv in iter.invent_iterator:new(items.inventory()) do
+          if inv.name("qual") == "scroll of identify" then
+            BRC.util.do_cmd("CMD_READ")
+            crawl.sendkeys(BRC.util.int2char(inv.slot))
+            return
+          end
+        end
+      end, 1)
+    end
   end
 end

@@ -448,14 +448,13 @@ end
 function BRC.text.contains(self, text)
   return self:find(text, 1, true) ~= nil
 end
-
 -- Connect string:contains() to BRC.text.contains()
 getmetatable("").__index.contains = BRC.text.contains
 
 function BRC.text.get_pickup_info(text)
   local cleaned = BRC.text.clean(text, false)
   if cleaned:sub(2, 4) ~= " - " then return nil end
-  return { slot = items.letter_to_index(cleaned:sub(1, 1)), item = cleaned:sub(5, #cleaned) }
+  return cleaned:sub(5, #cleaned), items.letter_to_index(cleaned:sub(1, 1))
 end
 
 ---------------------------------------------

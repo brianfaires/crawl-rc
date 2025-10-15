@@ -19,6 +19,13 @@ local Config = f_hotkey.Config
 local _actions = {}
 
 ---- Local functions ----
+local function display_next_message()
+  if #_actions == 0 then return end
+  BRC.mpr.que(string.format("Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
+  _actions[1].m = nil
+  _actions[1].t = _actions[1].t + you.turns()
+end
+
 local function c_assign_invletter_autoequip(it)
   if not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
   local TURNS = 1
@@ -39,6 +46,7 @@ end
 ---- Public API ----
 function BRC.set_hotkey(msg, func, turns)
   table.insert(_actions, { m = msg, f = func, t = turns or 1 })
+  if #_actions == 1 then display_next_message() end
 end
 
 function macro_f_hotkey()
@@ -62,9 +70,7 @@ end
 function f_hotkey.ready()
   if #_actions == 0 then return end
   if _actions[1].m then
-    BRC.mpr.que(string.format("Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
-    _actions[1].m = nil
-    _actions[1].t = _actions[1].t + you.turns()
+    display_next_message()
   elseif _actions[1].t <= you.turns() then
     table.remove(_actions, 1)
     f_hotkey.ready()
