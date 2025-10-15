@@ -2,7 +2,7 @@
 Feature: remind-id
 Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
+Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua, hotkey.lua
 --]]
 
 f_remind_id = {}
