@@ -151,7 +151,7 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   ARTEFACT = "💠",
   ORB = "🔮",
   TALISMAN = "🧬",
-  STAFF_RESISTANCE = "🔥",
+  STAFF_RES = "🔥",
 
   WEAPON = "⚔️",
   RANGED = "🏹",
