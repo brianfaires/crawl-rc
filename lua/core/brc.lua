@@ -34,7 +34,8 @@ local depth = nil
 
 ---- Local functions ----
 local function feature_is_disabled(f)
-  return f.Config and f.Config.disabled or BRC.Config[f.BRC_FEATURE_NAME] and BRC.Config[f.BRC_FEATURE_NAME].disabled
+  return f.Config and f.Config.disabled
+    or BRC.Config[f.BRC_FEATURE_NAME] and BRC.Config[f.BRC_FEATURE_NAME].disabled
 end
 
 local function handle_feature_error(feature_name, hook_name, result)
@@ -47,18 +48,18 @@ local function handle_feature_error(feature_name, hook_name, result)
 end
 
 local function handle_core_error(hook_name, result, ...)
-  local params = {}
+  local params = { hook_name }
   for i = 1, select("#", ...) do
     local param = select(i, ...)
-    if param and param.name and type(param.name) == "function" then
-      params[#params + 1] = param.name()
+    if param and type(param.name) == "function" then
+      params[#params + 1] = "[" .. param.name() .. "]"
     else
       params[#params + 1] = BRC.util.tostring(param, true)
     end
   end
-  local param_str = table.concat(params, ", ")
 
-  BRC.log.error("BRC failure in safe_call_all_hooks(" .. hook_name .. ", " .. param_str .. ")", result)
+  local msg = "BRC failure in safe_call_all_hooks(" .. table.concat(params, ", ") .. ")"
+  BRC.log.error(msg, result, true)
   if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLOR.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
@@ -145,7 +146,8 @@ local function call_all_hooks(hook_name, ...)
         handle_feature_error(hook_info.feature_name, hook_name, result)
       else
         if last_return_value and result and last_return_value ~= result then
-          BRC.log.warning(string.format("Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+          BRC.log.warning(string.format(
+              "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
               hook_name,
               returning_feature,
               BRC.util.tostring(last_return_value, true),
@@ -163,8 +165,7 @@ local function call_all_hooks(hook_name, ...)
   return last_return_value
 end
 
--- safe_call_all_hooks() - Errors in this function won't show up in crawl, so it's kept simple and safe.
--- Errors in call_all_hooks() or handle_core_error() are caught by this function.
+--- Errors in this function won't show up in crawl, so it's kept simple and safe.
 local function safe_call_all_hooks(hook_name, ...)
   if not (_hooks and _hooks[hook_name] and #_hooks[hook_name] > 0) then return end
 
@@ -175,7 +176,7 @@ local function safe_call_all_hooks(hook_name, ...)
   if success then return end
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
-  BRC.log.error("Failed to report BRC core error!", result)
+  BRC.log.error("Failed to handle BRC core error!", result, true)
   if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLOR.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
@@ -204,7 +205,7 @@ local function register_all_features()
     if success then
       loaded_count = loaded_count + 1
     elseif success == false then
-      BRC.log.error(string.format("Failed to register feature: %s. Aborting bulk registration.", name))
+      BRC.log.error("Failed to register feature: " .. name .. ". Aborting bulk registration.")
       return loaded_count
     end
   end
@@ -232,12 +233,12 @@ function BRC.register(f)
     BRC.dump.var(f)
     return false
   elseif _features[f.BRC_FEATURE_NAME] then
-    BRC.log.warning("Repeat registration of " .. f.BRC_FEATURE_NAME .. "! Will redo registration...")
+    BRC.log.warning(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .. " already registered! Repeating...")
     BRC.unregister(f.BRC_FEATURE_NAME)
   end
 
   if feature_is_disabled(f) then
-    BRC.log.debug(string.format("%s is disabled. Skipped registration.", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))
+    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .." is disabled. Skipped registration.")
     return nil
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
@@ -321,23 +322,19 @@ function BRC.init()
   BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
 
   BRC.log.debug("Verify persistent data reload...")
-  local success, failures = BRC.Data.verify_reinit()
-  if not success and failures and #failures > 0 then
-    if not BRC.Data.try_restore(failures) and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
+  local success = BRC.Data.handle_reinit_errors()
+  if success then
+    BRC.Data.backup() -- Only backup after a clean startup
+    local msg = string.format("Successfully initialized BRC v%s!%s", BRC.VERSION, suffix)
+    BRC.mpr.lightgreen("\n" .. BRC.text.wrap(msg, BRC.EMOJI.SUCCESS) .. "\n")
+  else
+    -- success == nil if errors were resolved, false if tried restore but failed
+    if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
       BRC.active = false
       BRC.mpr.lightred("\nBRC is off.\n")
       return false
     end
-  end
-
-  if success then
-    BRC.Data.backup() -- Only backup after a clean startup
-    local msg = string.format("Successfully initialized BRC v%s!", BRC.VERSION) .. suffix
-    if BRC.EMOJI.SUCCESS then msg = string.format("%s %s %s", BRC.EMOJI.SUCCESS, msg, BRC.EMOJI.SUCCESS) end
-    BRC.mpr.lightgreen(string.format("\n%s\n", msg))
-  else
-    local msg = string.format("Initialized BRC v%s with warnings", BRC.VERSION)
-    BRC.mpr.magenta(string.format("\n%s\n", msg .. suffix))
+    BRC.mpr.magenta(string.format("\nInitialized BRC v%s with warnings!%s\n", BRC.VERSION, suffix))
   end
 
   -- We're a go!

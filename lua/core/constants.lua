@@ -17,8 +17,9 @@ BRC.EMOJI = {
 
 ---- Items ----
 BRC.MISC_ITEMS = {
-  "box of beasts", "condenser vane", "figurine of a ziggurat", "Gell's gravitambourine", "horn of Geryon",
-  "lightning rod", "phantom mirror", "phial of floods", "sack of spiders", "tin of tremorstones",
+  "box of beasts", "condenser vane", "figurine of a ziggurat", "Gell's gravitambourine",
+  "horn of Geryon", "lightning rod", "phantom mirror", "phial of floods", "sack of spiders",
+  "tin of tremorstones",
 } -- BRC.MISC_ITEMS (do not remove this comment)
 
 -- This is checked against the full text of the pickup message, so use patterns to match
@@ -59,14 +60,16 @@ BRC.STAFF_SCHOOLS = {
 } -- BRC.STAFF_SCHOOLS (do not remove this comment)
 
 BRC.TRAINING_SKILLS = {
-  "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic", "Evocations", "Fighting",
-  "Fire Magic", "Forgecraft", "Hexes", "Ice Magic", "Invocations", "Long Blades", "Maces & Flails", "Necromancy",
-  "Polearms", "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting", "Staves", "Stealth",
-  "Summonings", "Translocations", "Unarmed Combat", "Throwing",
+  "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic",
+  "Evocations", "Fighting", "Fire Magic", "Forgecraft", "Hexes", "Ice Magic",
+  "Invocations", "Long Blades", "Maces & Flails", "Necromancy", "Polearms",
+  "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting", "Staves",
+  "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
 } -- BRC.TRAINING_SKILLS (do not remove this comment)
 
 BRC.WEAP_SCHOOLS = {
-  "axes", "maces & flails", "polearms", "long blades", "short blades", "staves", "unarmed combat", "ranged weapons",
+  "axes", "maces & flails", "polearms", "long blades", "short blades",
+  "staves", "unarmed combat", "ranged weapons",
 } -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 ---- Branches ----
@@ -77,9 +80,12 @@ BRC.PORTAL_NAMES = {
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
 ---- Egos + artefact properties ----
-BRC.BAD_ART_PROPS = { "Bane", "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele", "-Cast", "-Move", "-Tele", }
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous", }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
+BRC.BAD_ART_PROPS = {
+  "Bane", "-Cast", "-Move", "-Tele",
+  "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
+} -- BRC.BAD_ART_PROPS (do not remove this comment)
 
 ---- Other ----
 -- BRC.COLOR:Would prefer to use integer values, but they don't work in all menus
@@ -95,11 +101,5 @@ BRC.DMG_TYPE = {
   branded = 3, -- Include full brand dmg
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
-
-BRC.MUTATIONS = {
-  antennae = "antennae", augmentation = "augmentation", beak = "beak", claws = "claws", deformed = "deformed body",
-  demonic_touch = "demonic touch", hooves = "hooves", horns = "horns", missing_hand = "missing a hand",
-  pseudopods = "pseudopods", sharp_scales = "sharp scales", sturdy_frame = "sturdy frame", talons = "talons",
-} -- BRC.MUTATIONS (do not remove this comment)
 
 BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2, }

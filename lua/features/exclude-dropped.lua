@@ -36,7 +36,7 @@ local function enchantable_weap_in_inv()
 end
 
 local function clean_item_text(text)
-  text = BRC.text.clean(text, false) -- remove tags
+  text = BRC.text.clean(text)
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")

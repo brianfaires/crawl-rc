@@ -10,7 +10,7 @@ f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  inscribe_dps_type = BRC.DMG_TYPE.plain,
+  dmg_type = BRC.DMG_TYPE.plain,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local config alias ----
@@ -50,7 +50,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[Config.inscribe_dps_type])
+  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[Config.dmg_type])
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)

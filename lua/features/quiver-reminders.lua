@@ -73,7 +73,7 @@ function f_quiver_reminders.init()
 end
 
 function f_quiver_reminders.c_message(text, _)
-  local cleaned = BRC.text.clean(text, false)
+  local cleaned = BRC.text.clean(text)
   local prefix = "You throw a "
   if cleaned:sub(1, #prefix) == prefix then
     last_thrown = cleaned:sub(#prefix + 1, #cleaned-1):gsub(" {.*}", "")

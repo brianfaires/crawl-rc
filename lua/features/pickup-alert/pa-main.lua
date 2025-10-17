@@ -88,7 +88,7 @@ f_pickup_alert.Config.Tuning.Armour = {
     max_loss = 8.0,
     ignore_small = 5,
   },
-  encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+  encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
   early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
 } -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
 

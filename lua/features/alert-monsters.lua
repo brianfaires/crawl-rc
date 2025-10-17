@@ -37,7 +37,7 @@ Config.Alerts configures all alerts. Each table within it creates one alert, usi
         `int` alerts are active when you have < `cutoff` Int.
         `xl` alerts are active when your XL is < `cutoff`.
         `elec` alerts are active when you have no rElec and < `cutoff` HP.
-        `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20%
+        `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20% 
 --]]
 f_alert_monsters.Config.Alerts = {
   { name = "always_fm",

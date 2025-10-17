@@ -183,7 +183,7 @@ local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
     and _weapon_cache.is_empty()
     and you.skill("Unarmed Combat") == 0
-    and BRC.get.mut(BRC.MUTATIONS.claws, true) == 0
+    and BRC.get.mut("claws") == 0
 end
 
 -- Local functions: Alerting

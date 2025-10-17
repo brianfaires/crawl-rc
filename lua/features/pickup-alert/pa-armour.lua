@@ -48,15 +48,15 @@ local function aux_slot_is_impaired(it)
 
   -- Mutation interference
   if st == "gloves" then
-    return BRC.get.mut(BRC.MUTATIONS.demonic_touch, true) >= 3 and not BRC.you.free_offhand()
-        or BRC.get.mut(BRC.MUTATIONS.claws, true) > 0 and not items.equipped_at("weapon")
+    return BRC.get.mut("demonic touch") >= 3 and not BRC.you.free_offhand()
+        or BRC.get.mut("claws") > 0 and not items.equipped_at("weapon")
   elseif st == "boots" then
-    return BRC.get.mut(BRC.MUTATIONS.hooves, true) > 0
-        or BRC.get.mut(BRC.MUTATIONS.talons, true) > 0
+    return BRC.get.mut("hooves") > 0
+        or BRC.get.mut("talons") > 0
   elseif it.name("base"):contains("helmet") then
-    return BRC.get.mut(BRC.MUTATIONS.horns, true) > 0
-        or BRC.get.mut(BRC.MUTATIONS.beak, true) > 0
-        or BRC.get.mut(BRC.MUTATIONS.antennae, true) > 0
+    return BRC.get.mut("horns") > 0
+        or BRC.get.mut("beak") > 0
+        or BRC.get.mut("antennae") > 0
   end
 
   return false

@@ -1,4 +1,9 @@
--- luacheck configuration file for crawl-rc project
+-- luacheck config for https://github.com/brianfaires/crawl-rc
+
+max_line_length = 100
+
+-- Suppress specific warning types
+ignore = {}
 
 -- Allow reading these globals without defining them
 read_globals = {
@@ -98,10 +103,3 @@ globals = {
   "persistent_map",
 
 }
-
-
--- Suppress specific warning types
-ignore = {}
-
--- Set reasonable line length limit
-max_line_length = 120

@@ -53,15 +53,15 @@ local function aux_slot_is_impaired(it)
 
   -- Mutation interference
   if st == "gloves" then
-    return BRC.get.mut(BRC.MUTATIONS.demonic_touch, true) >= 3 and not BRC.you.free_offhand()
-        or BRC.get.mut(BRC.MUTATIONS.claws, true) > 0 and not items.equipped_at("weapon")
+    return BRC.get.mut("demonic touch") >= 3 and not BRC.you.free_offhand()
+        or BRC.get.mut("claws") > 0 and not items.equipped_at("weapon")
   elseif st == "boots" then
-    return BRC.get.mut(BRC.MUTATIONS.hooves, true) > 0
-        or BRC.get.mut(BRC.MUTATIONS.talons, true) > 0
+    return BRC.get.mut("hooves") > 0
+        or BRC.get.mut("talons") > 0
   elseif it.name("base"):contains("helmet") then
-    return BRC.get.mut(BRC.MUTATIONS.horns, true) > 0
-        or BRC.get.mut(BRC.MUTATIONS.beak, true) > 0
-        or BRC.get.mut(BRC.MUTATIONS.antennae, true) > 0
+    return BRC.get.mut("horns") > 0
+        or BRC.get.mut("beak") > 0
+        or BRC.get.mut("antennae") > 0
   end
 
   return false
@@ -519,7 +519,7 @@ local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
     and _weapon_cache.is_empty()
     and you.skill("Unarmed Combat") == 0
-    and BRC.get.mut(BRC.MUTATIONS.claws, true) == 0
+    and BRC.get.mut("claws") == 0
 end
 
 -- Local functions: Alerting
@@ -794,7 +794,7 @@ end
 
 function f_pa_misc.is_unneeded_ring(it)
   if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = BRC.get.mut(BRC.MUTATIONS.missing_hand, true) > 0
+  local missing_hand = BRC.get.mut("missing a hand") > 0
   local st = it.subtype()
   local found_first = false
   for _, inv in ipairs(items.inventory()) do
@@ -1040,7 +1040,7 @@ f_pickup_alert.Config.Tuning.Armour = {
     max_loss = 8.0,
     ignore_small = 5,
   },
-  encumb_penalty_weight = 0.7, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+  encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
   early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
 } -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
 

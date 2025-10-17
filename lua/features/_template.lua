@@ -17,7 +17,7 @@ f_template.Config = {
     key2 = 2,
     ["100"] = "value for key=100",
   }, -- Comment for safe parsing
-} -- f_template.Config (Always add a comment to a line only containing "}"), or crawl's RC parser will break
+} -- f_template.Config (Always add a comment to a line with only "}"). Or crawl's RC parser breaks
 
 ---- Persistent variables ---- (Defined globally, so give them unique names)
 persistent_int = BRC.Data.persist("persistent_int", 0)

@@ -5,8 +5,8 @@ Dependencies: (none)
 Usage:
   - Update BRC.config_to_use to load the corresponding config.
   - Update each config or create new ones.
-  - Values that aren't defined will first fall back to Configs.Default, then to the defaults defined in feature configs.
-  - Define `init = function() ... end` in a config to run code after it loads, and before overrides are applied.
+  - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
+  - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
   - If using config_memory == "full", the function needs to be saved as a string instead. --]]
   -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
 
@@ -84,8 +84,8 @@ BRC.Profiles.Custom = {
     },
 
     Alert = {
-      armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 = disable all armour alerts
-      weapon_sensitivity = 2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
+      armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
+      weapon_sensitivity = 2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
       orbs = true,
       staff_resists = true, -- When a staff gives a missing resistance
       talismans = true,
@@ -96,9 +96,10 @@ BRC.Profiles.Custom = {
         "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
         "broad axe", "executioner's axe",
         "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
-        "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+        "lajatang", "bardiche", "demon trident", "partisan", "trishula",
+        "hand cannon", "triple crossbow",
       },
-      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- One-time alert only when skill level >= this
+      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- No one_time if skill < this
 
       More = { -- Which alerts generate a force_more_message (some categories overlap)
         early_weap = false,       -- Good weapons found early
@@ -152,8 +153,8 @@ BRC.Profiles.Speed = {
     },
 
     Alert = {
-      armour_sensitivity = 1.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 = disable all armour alerts
-      weapon_sensitivity = 1.2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 = disable all weapon alerts
+      armour_sensitivity = 1.1, -- [0.5-2.0] Adjust all armour alerts; 0 to disable
+      weapon_sensitivity = 1.2, -- [0.5-2.0] Adjust all weapon alerts; 0 to disable
       orbs = false,
       staff_resists = false, -- When a staff gives a missing resistance
       talismans = false,
@@ -163,13 +164,13 @@ BRC.Profiles.Speed = {
         "gold dragon scales", "pearl dragon scales", "storm dragon scales",
         "broad axe", "demon whip", "eveningstar", "morningstar",
       },
-      OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- One-time alert only when skill level >= this
+      OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- No one_time if skill < this
 
       More = { }, -- All nil / false
     },
     Tuning = {
       Armour = {
-        encumb_penalty_weight = 0, -- Penalizes heavier armour when training spellcasting/ranged. 0 to disable
+        encumb_penalty_weight = 0, -- [0-2.0] Penalty to heavy armour when training magic/ranged
         early_xl = 0, -- Alert all usable runed body armour if XL <= `early_xl`
       },
     },
