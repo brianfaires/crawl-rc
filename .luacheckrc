@@ -30,12 +30,12 @@ globals = {
 
   -- BRC macro functions
   "macro_brc_dump_character",
-  "macro_f_fully_recover_explore",
-  "macro_f_hotkey",
-  "macro_f_misc_alerts_save_with_message",
-  "macro_f_quiver_reminders_fire",
-  "macro_f_safe_stairs_down",
-  "macro_f_safe_stairs_up",
+  "macro_brc_explore",
+  "macro_brc_hotkey",
+  "macro_brc_save",
+  "macro_brc_fire",
+  "macro_brc_downstairs",
+  "macro_brc_upstairs",
   
   -- BRC modules
   "BRC",

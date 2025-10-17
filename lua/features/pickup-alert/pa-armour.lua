@@ -89,8 +89,8 @@ local function is_new_ego(ego_change)
   return ego_change == GAIN or ego_change == DIFF
 end
 
-local function send_armour_alert(it, alert_type)
-  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, Config.Alert.More.body_armour)
+local function send_armour_alert(it, t_alert)
+  return f_pickup_alert.do_alert(it, t_alert.msg, t_alert.emoji, Config.Alert.More.body_armour)
 end
 
 -- Local functions: Pickup

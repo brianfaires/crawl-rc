@@ -58,7 +58,7 @@ function BRC.set_hotkey(msg, func, turns)
   end
 end
 
-function macro_f_hotkey()
+function macro_brc_hotkey()
   if #_actions > 0 then
     _actions[1].f()
     table.remove(_actions, 1)
@@ -69,7 +69,7 @@ end
 
 ---- Hook functions ----
 function f_hotkey.init()
-  BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_f_hotkey")
+  BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
 end
 
 function f_hotkey.c_assign_invletter(it)

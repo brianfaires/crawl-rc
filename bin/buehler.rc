@@ -3261,7 +3261,6 @@ function f_alert_monsters.ready()
 
   -- Load all stats before loop. Most of them are used multiple times.
   local hp, _ = you.hp()
-  local amulet = items.equipped_at("amulet")
   if you.spirit_shield() > 0 then
     local mp, _ = you.mp()
     hp = hp + mp
@@ -3596,7 +3595,7 @@ end
 {
 --[[
 Feature: color-inscribe
-Description: Colorizes inscriptions on items with appropriate colors for resistances, stats, and other properties
+Description: Colorizes inscriptions: resistances, stats, and other properties
 Author: buehler
 Dependencies: core/constants.lua, inscribe-stats.lua
 --]]
@@ -3751,9 +3750,8 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if f_drop_inferior.Config.msg_on_inscribe then
-    local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
-    local msg = string.format("%s You can drop: %s %s", BRC.EMOJI.CAUTION, item_name, BRC.EMOJI.CAUTION)
-    BRC.mpr.cyan(msg)
+    local item_name = BRC.text.yellow(BRC.util.int2char(it.slot) .. " - " .. it.name())
+    BRC.mpr.cyan(BRC.text.wrap("You can drop: " .. item_name, BRC.EMOJI.CAUTION))
   end
 end
 
@@ -3785,7 +3783,8 @@ function f_drop_inferior.c_assign_invletter(it)
           marked_something = true
         end
       else
-        if BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it) and inv.encumbrance >= it.encumbrance then
+        local not_more_ac = BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it)
+        if not_more_ac and inv.encumbrance >= it.encumbrance then
           inscribe_drop(inv)
           marked_something = true
         end
@@ -3903,7 +3902,9 @@ local function set_race_options()
     BRC.set.force_more_message("monster_warning:curare", true)
   end
 
-  if you.race() == "Gnoll" then BRC.set.message_mute("intrinsic_gain:skill increases to level", true) end
+  if you.race() == "Gnoll" then
+    BRC.set.message_mute("intrinsic_gain:skill increases to level", true)
+  end
 end
 
 local function set_xl_options()
@@ -3969,7 +3970,7 @@ end
 {
 --[[
 Feature: exclude-dropped
-Description: Automatically excludes dropped items from autopickup and removes exclusion when items are picked up
+Description: Excludes dropped items from autopickup, resumes on pickup.
 Author: buehler
 Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
@@ -3985,7 +3986,9 @@ ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})
 
 ---- Local functions ----
 local function add_exclusion(item_name)
-  if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
+  if not util.contains(ed_dropped_items, item_name) then
+    table.insert(ed_dropped_items, item_name)
+  end
   BRC.set.autopickup_exceptions(item_name, true)
 end
 
@@ -4103,7 +4106,7 @@ end
 {
 --[[
 Feature: fully-recover
-Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
+Description: Rests until no negative duration statuses. Doesn't stop on each status message.
 Author: buehler
 Dependencies: core/util.lua
 --]]
@@ -4192,7 +4195,7 @@ local function start_fully_recover()
 end
 
 ---- Macro function: Attach full recovery to auto-explore ----
-function macro_f_fully_recover_explore()
+function macro_brc_explore()
   if not BRC.active or f_fully_recover.Config.disabled then
     return BRC.util.do_cmd("CMD_EXPLORE")
   end
@@ -4218,7 +4221,7 @@ function f_fully_recover.init()
 
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)
-  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE") or "o", "macro_f_fully_recover_explore")
+  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE") or "o", "macro_brc_explore")
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -4284,7 +4287,8 @@ local _actions = {}
 ---- Local functions ----
 local function display_next_message()
   if #_actions == 0 then return end
-  BRC.mpr.que(string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
+  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m)
+  BRC.mpr.que(msg, BRC.COLOR.cyan)
   _actions[1].m = nil
 end
 
@@ -4294,13 +4298,18 @@ local function c_assign_invletter_autoequip(it)
   local name = it.name():gsub(" {.*}", "")
 
   BRC.set_hotkey("equip " .. BRC.text.white(name),  function()
-    local inv_items = util.filter(function(i) return i.name():gsub(" {.*}", "") == name end, items.inventory())
+    local inv_items = util.filter(
+      function(i) return i.name():gsub(" {.*}", "") == name end,
+      items.inventory()
+    )
+
     for i = 1, #inv_items do
       if not inv_items[i].equipped then
         inv_items[i]:equip()
         return
       end
     end
+
     BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory")
   end, TURNS)
 end
@@ -4315,7 +4324,7 @@ function BRC.set_hotkey(msg, func, turns)
   end
 end
 
-function macro_f_hotkey()
+function macro_brc_hotkey()
   if #_actions > 0 then
     _actions[1].f()
     table.remove(_actions, 1)
@@ -4326,7 +4335,7 @@ end
 
 ---- Hook functions ----
 function f_hotkey.init()
-  BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_f_hotkey")
+  BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
 end
 
 function f_hotkey.c_assign_invletter(it)
@@ -4355,7 +4364,7 @@ end
 {
 --[[
 Feature: inscribe-stats
-Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
+Description: Inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
 Author: buehler
 Dependencies: core/constants.lua, core/util.lua, color-inscribe.lua
 --]]
@@ -4392,13 +4401,18 @@ local function inscribe_armour_stats(it)
   else
     new_insc = ac_or_sh
     if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
-    if it.inscription and it.inscription ~= "" then new_insc = string.format("%s; %s", new_insc, it.inscription) end
+    if it.inscription and it.inscription ~= "" then
+      new_insc = string.format("%s; %s", new_insc, it.inscription)
+    end
   end
 
   it.inscribe(new_insc, false)
 
-  -- If enabled, update the colorized inscription
-  if sign_change and f_color_inscribe and not f_color_inscribe.Config.disabled and f_color_inscribe.colorize then
+  -- If f_color_inscribe is enabled, update the color
+  if sign_change
+    and f_color_inscribe and f_color_inscribe.Config and not f_color_inscribe.Config.disabled
+    and f_color_inscribe.colorize
+  then
     f_color_inscribe.colorize(it)
   end
 end
@@ -4411,7 +4425,9 @@ local function inscribe_weapon_stats(it)
   local idx = orig_inscr:find("DPS:", 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
-    if idx + #dps_inscr - 1 < #orig_inscr then suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr) end
+    if idx + #dps_inscr - 1 < #orig_inscr then
+      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
+    end
   elseif #orig_inscr > 0 then
     suffix = "; " .. orig_inscr
   end
@@ -4421,7 +4437,6 @@ end
 
 ---- Hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
-  -- NOTE: It's important that other features don't meddle with the inscription; e.g. inserting unexpected color tags
   if Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
   elseif Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
@@ -4480,8 +4495,8 @@ local function alert_low_hp()
     below_hp_threshold = hp ~= mhp
   elseif hp <= Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = string.format(" Dropped below %s%% HP ", 100 * Config.alert_low_hp_threshold)
-    BRC.mpr.que_optmore(true, BRC.EMOJI.EXCLAMATION .. BRC.text.magenta(low_hp_msg) .. BRC.EMOJI.EXCLAMATION)
+    local low_hp_msg = "Dropped below " .. 100 * Config.alert_low_hp_threshold .. "%% HP"
+    BRC.mpr.que_optmore(true, BRC.text.wrap(BRC.text.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
   end
 end
 
@@ -4516,7 +4531,7 @@ local function alert_spell_level_changes()
 end
 
 ---- Macro function: Save with message feature ----
-function macro_f_misc_alerts_save_with_message()
+function macro_brc_save()
   if not BRC.active or f_misc_alerts.Config.disabled then
     return BRC.util.do_cmd("CMD_SAVE_GAME")
   end
@@ -4537,7 +4552,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if Config.save_with_msg then
-    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_f_misc_alerts_save_with_message")
+    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil
@@ -4573,8 +4588,6 @@ f_quiver_reminders.Config = {
 
 } -- f_quiver_reminders.Config (do not remove this comment)
 
----- Persistent variables ----
-
 ---- Local variables ----
 local last_thrown = nil
 local last_thrown_turn = 0
@@ -4597,7 +4610,7 @@ local function quiver_missile_by_name(name)
 end
 
 ---- Macro function ----
-function macro_f_quiver_reminders_fire()
+function macro_brc_fire()
   if not BRC.active or Config.disabled then return BRC.util.do_cmd("CMD_FIRE") end
   local quivered = items.fired_item()
   if not quivered then return end
@@ -4606,16 +4619,18 @@ function macro_f_quiver_reminders_fire()
     local cls = quivered.class(true)
     if cls == "potion" or cls == "scroll" then
       local action = cls == "potion" and "drink" or "read"
-      local msg = "Really " .. action .. " " .. BRC.text.lightgreen(quivered.name()) .. " from quiver?"
+      local q = BRC.text.lightgreen(quivered.name())
+      local msg = string.format("Really %s %s from quiver?", action, q)
       if not BRC.mpr.yesno(msg) then return BRC.mpr.okay() end
     end
   end
 
   if you.turns() - last_thrown_turn <= Config.warn_diff_missile_turns then
     if last_thrown ~= quivered.name("qual") then
-      local msg = "Did you mean to throw " .. BRC.text.lightgreen(quivered.name("qual")) .. "?"
-      if not BRC.mpr.yesno(msg) then
-        if BRC.mpr.yesno("Quiver and throw " .. BRC.text.lightgreen(last_thrown) .. " instead?") then
+      local q = BRC.text.lightgreen(quivered.name("qual"))
+      if not BRC.mpr.yesno("Did you mean to throw " .. q .. "?") then
+        local t = BRC.text.lightgreen(last_thrown)
+        if BRC.mpr.yesno("Quiver and throw " .. t .. " instead?") then
           quiver_missile_by_name(last_thrown)
         else
           return BRC.mpr.okay()
@@ -4629,7 +4644,7 @@ end
 
 ---- Hook functions ----
 function f_quiver_reminders.init()
-  BRC.set.macro(BRC.get.command_key("CMD_FIRE") or "f", "macro_f_quiver_reminders_fire")
+  BRC.set.macro(BRC.get.command_key("CMD_FIRE") or "f", "macro_brc_fire")
 end
 
 function f_quiver_reminders.c_message(text, _)
@@ -4650,7 +4665,8 @@ end
 {
 --[[
 Feature: remind-id
-Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
+Description: Reminds to read ID scrolls.
+Before finding scroll of ID, stops exploration when largest un-ID'd stack sizes increase.
 Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua, hotkey.lua
 --]]
@@ -4804,7 +4820,10 @@ local Config = f_runrest_features.Config
 ---- Local constants / configuration ----
 local GAUNTLET_CONCAT_STRING = " && !!"
 local GAUNTLET_SEARCH_STRING = table.concat(
-  { "gauntlet", "gate leading", "a transporter", "gold piece", " trap", "translucent door", "translucent gate" },
+  {
+    "gauntlet", "gate leading", "a transporter", "gold piece",
+    " trap", "translucent door", "translucent gate"
+  },
   GAUNTLET_CONCAT_STRING
 )
 
@@ -4939,8 +4958,8 @@ f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
 
 ---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
-  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", "identify",
-  "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
+  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
+  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
 ---- Local functions ----
@@ -4961,14 +4980,14 @@ function f_safe_consumables.ready()
     if inv_class == "scroll" then
       if inscription_needed(inv_class, inv.subtype()) then
         if not inv.inscription:contains("!r") then inv.inscribe("!r") end
-      else
-        if inv.inscription:contains("!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
+      elseif inv.inscription:contains("!r") then
+        inv.inscribe(inv.inscription:gsub("%!r", ""), false)
       end
     elseif inv_class == "potion" then
       if inscription_needed(inv_class, inv.subtype()) then
         if not inv.inscription:contains("!q") then inv.inscribe("!q") end
-      else
-        if inv.inscription:contains("!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+      elseif inv.inscription:contains("!q") then
+        inv.inscribe(inv.inscription:gsub("%!q", ""), false)
       end
     end
   end
@@ -5011,7 +5030,9 @@ local function check_new_location(cmd)
 
   if Config.warn_backtracking and ss_prev_location ~= ss_cur_location then
     if cmd == "CMD_GO_DOWNSTAIRS" then
-      if not (feature:contains("down") or feature:contains("shaft")) then return BRC.util.do_cmd(cmd) end
+      if not (feature:contains("down") or feature:contains("shaft")) then
+        return BRC.util.do_cmd(cmd)
+      end
     elseif cmd == "CMD_GO_UPSTAIRS" then
       if not feature:contains("up") then return BRC.util.do_cmd(cmd) end
     else
@@ -5021,18 +5042,21 @@ local function check_new_location(cmd)
     if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
   end
 
-  if Config.warn_v5 and not ss_v5_warned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
-    if feature:contains("down") or feature:contains("shaft") then
-      if not BRC.mpr.yesno("Really go to Vaults:5?") then return BRC.mpr.okay() end
-      ss_v5_warned = true
-    end
+  if Config.warn_v5
+    and not ss_v5_warned
+    and ss_cur_location == "Vaults4"
+    and cmd == "CMD_GO_DOWNSTAIRS"
+    and (feature:contains("down") or feature:contains("shaft"))
+  then
+    if not BRC.mpr.yesno("Really go to Vaults:5?") then return BRC.mpr.okay() end
+    ss_v5_warned = true
   end
 
   BRC.util.do_cmd(cmd)
 end
 
 ---- Macro functions ----
-function macro_f_safe_stairs_down()
+function macro_brc_downstairs()
   if BRC.active and not f_safe_stairs.Config.disabled then
     check_new_location("CMD_GO_DOWNSTAIRS")
   else
@@ -5040,7 +5064,7 @@ function macro_f_safe_stairs_down()
   end
 end
 
-function macro_f_safe_stairs_up()
+function macro_brc_upstairs()
   if BRC.active and not f_safe_stairs.Config.disabled then
     check_new_location("CMD_GO_UPSTAIRS")
   else
@@ -5051,8 +5075,8 @@ end
 ---- Hook functions ----
 function f_safe_stairs.init()
   ss_cur_location = you.branch() .. you.depth()
-  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_f_safe_stairs_down")
-  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_f_safe_stairs_up")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
 end
 
 function f_safe_stairs.ready()
@@ -5132,7 +5156,7 @@ end
 {
 --[[
 Feature: weapon-slots
-Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
+Description: Automatically keeps weapons in slots a/b/w. Prioritizes slots by weapon type + skill.
 Author: buehler
 Dependencies: core/util.lua
 --]]
@@ -5855,8 +5879,8 @@ local function is_new_ego(ego_change)
   return ego_change == GAIN or ego_change == DIFF
 end
 
-local function send_armour_alert(it, alert_type)
-  return f_pickup_alert.do_alert(it, alert_type.msg, alert_type.emoji, Config.Alert.More.body_armour)
+local function send_armour_alert(it, t_alert)
+  return f_pickup_alert.do_alert(it, t_alert.msg, t_alert.emoji, Config.Alert.More.body_armour)
 end
 
 -- Local functions: Pickup

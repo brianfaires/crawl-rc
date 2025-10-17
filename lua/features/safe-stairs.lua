@@ -54,7 +54,7 @@ local function check_new_location(cmd)
 end
 
 ---- Macro functions ----
-function macro_f_safe_stairs_down()
+function macro_brc_downstairs()
   if BRC.active and not f_safe_stairs.Config.disabled then
     check_new_location("CMD_GO_DOWNSTAIRS")
   else
@@ -62,7 +62,7 @@ function macro_f_safe_stairs_down()
   end
 end
 
-function macro_f_safe_stairs_up()
+function macro_brc_upstairs()
   if BRC.active and not f_safe_stairs.Config.disabled then
     check_new_location("CMD_GO_UPSTAIRS")
   else
@@ -73,8 +73,8 @@ end
 ---- Hook functions ----
 function f_safe_stairs.init()
   ss_cur_location = you.branch() .. you.depth()
-  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_f_safe_stairs_down")
-  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_f_safe_stairs_up")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
+  BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
 end
 
 function f_safe_stairs.ready()

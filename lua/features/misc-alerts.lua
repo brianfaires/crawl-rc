@@ -72,7 +72,7 @@ local function alert_spell_level_changes()
 end
 
 ---- Macro function: Save with message feature ----
-function macro_f_misc_alerts_save_with_message()
+function macro_brc_save()
   if not BRC.active or f_misc_alerts.Config.disabled then
     return BRC.util.do_cmd("CMD_SAVE_GAME")
   end
@@ -93,7 +93,7 @@ function f_misc_alerts.init()
   below_hp_threshold = false
 
   if Config.save_with_msg then
-    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_f_misc_alerts_save_with_message")
+    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white(string.format("MESSAGE: %s", ma_saved_msg))
       ma_saved_msg = nil

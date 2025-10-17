@@ -13,8 +13,6 @@ f_quiver_reminders.Config = {
 
 } -- f_quiver_reminders.Config (do not remove this comment)
 
----- Persistent variables ----
-
 ---- Local variables ----
 local last_thrown = nil
 local last_thrown_turn = 0
@@ -37,7 +35,7 @@ local function quiver_missile_by_name(name)
 end
 
 ---- Macro function ----
-function macro_f_quiver_reminders_fire()
+function macro_brc_fire()
   if not BRC.active or Config.disabled then return BRC.util.do_cmd("CMD_FIRE") end
   local quivered = items.fired_item()
   if not quivered then return end
@@ -46,17 +44,18 @@ function macro_f_quiver_reminders_fire()
     local cls = quivered.class(true)
     if cls == "potion" or cls == "scroll" then
       local action = cls == "potion" and "drink" or "read"
-      local msg = "Really %s %s from quiver?"
-      msg = msg:format(action, BRC.text.lightgreen(quivered.name()))
+      local q = BRC.text.lightgreen(quivered.name())
+      local msg = string.format("Really %s %s from quiver?", action, q)
       if not BRC.mpr.yesno(msg) then return BRC.mpr.okay() end
     end
   end
 
   if you.turns() - last_thrown_turn <= Config.warn_diff_missile_turns then
     if last_thrown ~= quivered.name("qual") then
-      local msg = "Did you mean to throw " .. BRC.text.lightgreen(quivered.name("qual")) .. "?"
-      if not BRC.mpr.yesno(msg) then
-        if BRC.mpr.yesno("Quiver and throw " .. BRC.text.lightgreen(last_thrown) .. " instead?") then
+      local q = BRC.text.lightgreen(quivered.name("qual"))
+      if not BRC.mpr.yesno("Did you mean to throw " .. q .. "?") then
+        local t = BRC.text.lightgreen(last_thrown)
+        if BRC.mpr.yesno("Quiver and throw " .. t .. " instead?") then
           quiver_missile_by_name(last_thrown)
         else
           return BRC.mpr.okay()
@@ -70,7 +69,7 @@ end
 
 ---- Hook functions ----
 function f_quiver_reminders.init()
-  BRC.set.macro(BRC.get.command_key("CMD_FIRE") or "f", "macro_f_quiver_reminders_fire")
+  BRC.set.macro(BRC.get.command_key("CMD_FIRE") or "f", "macro_brc_fire")
 end
 
 function f_quiver_reminders.c_message(text, _)
