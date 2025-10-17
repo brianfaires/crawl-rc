@@ -6129,7 +6129,6 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, p
 f_pa_misc = {}
 
 ---- Local config alias ----
-local Config = f_pickup_alert.Config
 local Emoji = f_pickup_alert.Config.Emoji
 local Alert = f_pickup_alert.Config.Alert
 
@@ -6260,7 +6259,7 @@ local function get_score(it, no_brand_bonus)
   return BRC.get.weap_dps(it, dmg_type) + acc_bonus
 end
 
--- _weapon_cache: Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
+--- Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
 _weapon_cache = {}
 
 function _weapon_cache.get_primary_key(it)
@@ -6271,7 +6270,7 @@ function _weapon_cache.get_primary_key(it)
   return table.concat(tokens)
 end
 
--- Get all categories this weapon fits into (both its real category and any more-restrictive categories)
+--- Get all categories this weapon fits into (including more-restrictive categories)
 function _weapon_cache.get_keys(is_ranged, hands, is_branded)
   local ranged_types = is_ranged and { RANGED, MELEE } or { MELEE }
   local handed_types = hands == 1 and { "1", "2" } or { "2" }
@@ -6295,14 +6294,14 @@ function _weapon_cache.add_weapon(it)
   weap_data.is_weapon = it.is_weapon
   weap_data.basename = it.name("base")
   weap_data._subtype = it.subtype()
-  weap_data.subtype = function() return weap_data._subtype end -- For consistency with crawl.item.subtype()
+  weap_data.subtype = function() return weap_data._subtype end -- For consistency with crawl item
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end -- For consistency with crawl.item.ego()
+  weap_data.ego = function() return weap_data._ego end -- For consistency with crawl item
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -6354,7 +6353,8 @@ local function is_valid_upgrade(it, cur)
   return
     cur.is_ranged == it.is_ranged
     and BRC.is.polearm(cur) == BRC.is.polearm(it)
-    and (you.race() == "Gnoll" or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
+    and (you.race() == "Gnoll"
+      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
 end
 
 -- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
@@ -6421,7 +6421,7 @@ local function get_first_of_skill_alert(it, silent)
     -- Update lowest # hands alerted, and alert
     pa_lowest_hands_alerted[skill] = hands
     if silent then return end
-    local msg = string.format("First %s%s", string.sub(skill, 1, -2), hands == 1 and " (1-handed)" or "")
+    local msg = "First " .. string.sub(skill, 1, -2) .. (hands == 1 and " (1-handed)" or "")
     return make_alert(it, msg, Emoji.WEAPON, Config.Alert.More.early_weap)
   end
 end
@@ -6445,7 +6445,10 @@ local function get_early_weapon_alert(it)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
     local it_plus = it.plus or 0
-    if BRC.get.ego(it) or it_plus >= Heur.Alert.Early.branded_min_plus / Config.Alert.weapon_sensitivity then
+    if
+      BRC.get.ego(it)
+      or it_plus >= Heur.Alert.Early.branded_min_plus / Config.Alert.weapon_sensitivity
+    then
       return make_alert(it, "Early weapon", Emoji.WEAPON, Config.Alert.More.early_weap)
     end
   end
@@ -6462,10 +6465,11 @@ end
 
 local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   -- Alert: new egos, highest DPS or highest weap_score
-  local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy egos (only consider their DPS)
+  local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy (only consider their DPS)
   local cur_ego = BRC.get.ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
-    return make_alert(it, cur_ego and "Diff ego" or "Gain ego", Emoji.EGO, Config.Alert.More.weap_ego)
+    local change = cur_ego and "Diff ego" or "Gain ego"
+    return make_alert(it, change, Emoji.EGO, Config.Alert.More.weap_ego)
   else
     local s = Config.Alert.weapon_sensitivity
     if get_score(it) > best_score / s or BRC.get.weap_dps(it) > best_dps / s then
@@ -6474,10 +6478,8 @@ local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   end
 end
 
---[[
-get_inventory_upgrade_alert_sub() -> boolean : `cur` comes from _weapon_cache - it has some pre-computed values
-Check if weapon is worth alerting for, compared against one weapon currently in inventory
---]]
+--- Check if weapon is worth alerting for, compared against one weapon currently in inventory
+-- @param cur (weapon) comes from _weapon_cache - it has some pre-computed values
 local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Ensure the non-strict upgrade is checked, if not already done in pickup_weapon()
   if Config.Pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
@@ -6485,7 +6487,9 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   end
 
   if it.artefact then return make_alert(it, "Artefact weapon", Emoji.ARTEFACT) end
-  if cur.subtype() == it.subtype() then return get_upgrade_alert_same_type(it, cur, best_dps, best_score) end
+  if cur.subtype() == it.subtype() then
+    return get_upgrade_alert_same_type(it, cur, best_dps, best_score)
+  end
   if not is_valid_upgrade(it, cur) then return end
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
@@ -6515,7 +6519,11 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
     elseif ratio > Heur.Alert.AddHand.not_using then
       return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.Alert.More.upgrade_weap)
     end
-  elseif BRC.get.ego(it) and not BRC.get.ego(cur) and ratio > Heur.Alert.AddHand.add_ego_lose_sh then
+  elseif
+    BRC.get.ego(it)
+    and not BRC.get.ego(cur)
+    and ratio > Heur.Alert.AddHand.add_ego_lose_sh
+  then
     return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
   end
 end
@@ -6577,7 +6585,9 @@ function f_pa_weapons.init()
 
   -- Track max DPS by weapon category
   _weapon_cache.max_dps = {}
-  local keys = { "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b" }
+  local keys = {
+    "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b"
+  } -- weapon categories (do not remove this comment)
   for _, key in ipairs(keys) do
     _weapon_cache.max_dps[key] = { dps = 0, acc = 0 }
   end
