@@ -5797,10 +5797,11 @@ Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
 
 f_pa_armour = {}
 
----- Local config alias ----
-local Config = f_pickup_alert.Config
+---- Local config aliases ----
 local Heur = f_pickup_alert.Config.Tuning.Armour
 local Emoji = f_pickup_alert.Config.Emoji
+local Alert = f_pickup_alert.Config.Alert
+local More = f_pickup_alert.Config.Alert.More
 
 ---- Local constants / configuration ----
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
@@ -5880,7 +5881,7 @@ local function is_new_ego(ego_change)
 end
 
 local function send_armour_alert(it, t_alert)
-  return f_pickup_alert.do_alert(it, t_alert.msg, t_alert.emoji, Config.Alert.More.body_armour)
+  return f_pickup_alert.do_alert(it, t_alert.msg, t_alert.emoji, More.body_armour)
 end
 
 -- Local functions: Pickup
@@ -5960,20 +5961,21 @@ end
 -- Local functions: Alerting
 local function should_alert_body_armour(weight, gain, loss, ego_change)
   -- Check if armour stat trade-off meets configured ratio thresholds
-  local meets_ratio = loss <= 0 or (gain / loss > Heur[weight][ego_change] / Config.Alert.armour_sensitivity)
+  local meets_ratio = loss <= 0
+    or (gain / loss > Heur[weight][ego_change] / Alert.armour_sensitivity)
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if is_new_ego(ego_change) then
-    return loss <= Heur[weight].max_loss * Config.Alert.armour_sensitivity
+    return loss <= Heur[weight].max_loss * Alert.armour_sensitivity
   elseif ego_change == LOST then
-    return gain >= Heur[weight].min_gain / Config.Alert.armour_sensitivity
+    return gain >= Heur[weight].min_gain / Alert.armour_sensitivity
   end
 
   return true
 end
 
--- Alert when finding higher AC armour than previously seen, unless training spells/ranged and NOT armour
+-- Alert when finding higher AC than previously seen, unless training spells/ranged and NOT armour
 local function alert_highest_ac(it)
   if you.xl() > 12 then return false end
   local total_skill = you.skill("Spellcasting") + you.skill("Ranged Weapons")
@@ -5987,7 +5989,7 @@ local function alert_highest_ac(it)
     local itAC = BRC.get.armour_ac(it)
     if itAC > pa_high_score.ac then
       pa_high_score.ac = itAC
-      return f_pickup_alert.do_alert(it, "Highest AC", Emoji.STRONGEST, Config.Alert.More.high_score_armour)
+      return f_pickup_alert.do_alert(it, "Highest AC", Emoji.STRONGEST, More.high_score_armour)
     end
   end
 
@@ -6014,7 +6016,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Config.Alert.armour_sensitivity then
+    if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Alert.armour_sensitivity then
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -6040,7 +6042,7 @@ end
 
 local function alert_shield(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, Config.Alert.More.shields)
+    return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, More.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -6051,15 +6053,15 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
   if is_new_ego(ego_change) then
     local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-    return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, Config.Alert.More.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.shields)
   elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
-    return f_pickup_alert.do_alert(it, "Higher SH", Emoji.STRONGER, Config.Alert.More.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", Emoji.STRONGER, More.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, Config.Alert.More.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, More.aux_armour)
   end
 
   local all_equipped, num_slots = BRC.get.equipped_at(it)
@@ -6068,7 +6070,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return f_pickup_alert.do_alert(it, "Aux armour", BRC.EMOJI.EXCLAMATION, Config.Alert.More.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", BRC.EMOJI.EXCLAMATION, More.aux_armour)
     end
   end
 
@@ -6077,9 +6079,9 @@ local function alert_aux_armour(it, unworn_inv_item)
     local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
     if is_new_ego(ego_change) then
       local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
-      return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, Config.Alert.More.aux_armour)
+      return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.aux_armour)
     elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
-      return f_pickup_alert.do_alert(it, "Higher AC", Emoji.STRONGER, Config.Alert.More.aux_armour)
+      return f_pickup_alert.do_alert(it, "Higher AC", Emoji.STRONGER, More.aux_armour)
     end
   end
 end
@@ -6097,11 +6099,9 @@ function f_pa_armour.pickup_armour(it)
   end
 end
 
---[[
-    f_pa_armour.alert_armour() - Alerts armour items that didn't auto-pickup but are worth consideration.
-    This comes after pickup, so there will be no pure upgrades.
-    Optional `unworn_inv_item` param, to compare against an unworn aux armour item in inventory.
---]]
+--- Alerts armour items that didn't auto-pickup but are worth considering.
+--- This comes after pickup, so there will be no pure upgrades.
+-- @param unworn_inv_item (optional) to compare against an unworn aux armour item in inventory.
 function f_pa_armour.alert_armour(it, unworn_inv_item)
   if BRC.is.body_armour(it) then
     return alert_body_armour(it)
