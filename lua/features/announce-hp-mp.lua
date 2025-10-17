@@ -137,8 +137,10 @@ end
 
 local function last_msg_is_meter()
   local last_msg = crawl.messages(1)
-  local check = last_msg and #last_msg > METER_LENGTH + 4 and last_msg:sub(METER_LENGTH + 1, METER_LENGTH + 4)
-  return check and (check == " HP[" or check == " MP[")
+  if not (last_msg and #last_msg > METER_LENGTH + 4) then return false end
+
+  local s = last_msg:sub(METER_LENGTH + 1, METER_LENGTH + 4)
+  return s == " HP[" or s == " MP["
 end
 
 ---- Hook functions ----
