@@ -206,11 +206,11 @@ function f_announce_hp_mp.ready()
   if damage_taken >= mhp * Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
     if damage_taken >= (mhp * Config.dmg_fm_threshold) then
-      local msg = BRC.text.lightmagenta(" MASSIVE DAMAGE ")
-      BRC.mpr.que_optmore(true, BRC.EMOJI.EXCLAMATION_2 .. msg .. BRC.EMOJI.EXCLAMATION_2)
+      local msg = BRC.text.lightmagenta("MASSIVE DAMAGE")
+      BRC.mpr.que_optmore(true, BRC.text.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
     else
-      local msg = BRC.text.magenta(" BIG DAMAGE ")
-      BRC.mpr.que_optmore(false, BRC.EMOJI.EXCLAMATION .. msg .. BRC.EMOJI.EXCLAMATION)
+      local msg = BRC.text.magenta("BIG DAMAGE")
+      BRC.mpr.que_optmore(false, BRC.text.wrap(msg, BRC.EMOJI.EXCLAMATION))
     end
   end
 end

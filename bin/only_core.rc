@@ -583,7 +583,7 @@ function BRC.mpr.yesno(msg, color, capital_only)
   msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
 
   for i = 1, 10 do
-    crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
+    BRC.mpr.color(msg, color, "prompt")
     local res = crawl.getch()
     if res and res >= 0 and res <= 255 then
       local c = string.char(res)
@@ -1628,7 +1628,7 @@ end
 function BRC.Data.handle_reinit_errors()
   if #_failures == 0 then return true end
   local msg_pattern = "%s persistent variables did not restore: (%s)"
-  BRC.log.error(string.format(msg_pattern, #_failures, table.concat(_failures, ", ")), true)
+  BRC.log.error(msg_pattern:format(#_failures, table.concat(_failures, ", ")), true)
 
   for _ = 1, 5 do
     if BRC.mpr.yesno("Try restoring from backup?") then break end

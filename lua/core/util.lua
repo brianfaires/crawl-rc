@@ -261,7 +261,7 @@ function BRC.mpr.yesno(msg, color, capital_only)
   msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
 
   for i = 1, 10 do
-    crawl.formatted_mpr(BRC.text.color(color, msg), "prompt")
+    BRC.mpr.color(msg, color, "prompt")
     local res = crawl.getch()
     if res and res >= 0 and res <= 255 then
       local c = string.char(res)
