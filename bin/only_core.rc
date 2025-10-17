@@ -370,7 +370,7 @@ local function serialize_inventory()
     local base = inv.name("base") or "N/A"
     local cls = inv.class(true) or "N/A"
     local st = inv.subtype() or "N/A"
-    tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, it.name())
+    tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name())
     tokens[#tokens + 1] = string.format("  Base: %s Class: %s, Subtype: %s\n", base, cls, st)
   end
 
@@ -382,7 +382,7 @@ local function serialize_config()
   local tokens = {}
   tokens[#tokens + 1] = BRC.text.lightcyan("\n---BRC Config---\n")
   tokens[#tokens + 1] = BRC.util.tostring(BRC.Config, true)
-  
+
   local all_features = BRC.get_registered_features()
   local keys = util.keys(all_features)
   util.sort(keys)

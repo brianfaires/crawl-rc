@@ -1,6 +1,7 @@
 --[[
 Feature: alert-monsters
-Description: Dynamic force_more configuration for monsters based on player HP, xl, willpower, resistances, etc.
+Description: Dynamic force_more and flash_screen messages for monsters
+    Based on player HP, xl, willpower, resistances, etc.
     WARNINGS:
       - Never put a '}' on a line by itself. This breaks crawl's RC parser.
       - POSIX regex are required for this feature to use '|' in patterns.
@@ -13,7 +14,7 @@ f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 f_alert_monsters.Config = {
   sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   fm_on_uniques = true, -- Stop on all Uniques & Pan lords
-  pack_timeout = 10, -- # turns to wait before repeating an alert for a pack of monsters. 0 to disable
+  pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable
   disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
 } -- f_alert_monsters.Config (do not remove this comment)
@@ -22,22 +23,22 @@ f_alert_monsters.Config = {
 local Config = f_alert_monsters.Config
 
 --[[
-Config.Alerts configures all alerts. Each table within it creates one alert, using the following fields:
+Config.Alerts contains all alerts. Each table in it creates one alert, using the following fields:
   - `name` is for debugging.
-  - `pattern` is either a string or a table of monster names, that will file a force_more when they come into view.
+  - `pattern` is a string or list of monster names, will alert when one comes into view.
   - `is_pack` (optional) indicates the alert is for a pack of monsters.
     Packs only fire once every few turns - as defined in Config.pack_timeout (default 15).
-  - `flash_screen` (optional) indicates the alert should flash the screen instead of using force_more.
+  - `flash_screen` (optional) alert will flash the screen instead of using force_more.
   - `cutoff` sets the point when the alert is active (usually how much HP you have)
   - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
-      Ex:
-        `always` alerts are always on.
-        `hp` alerts are active when you have < `cutoff` HP.
-        `will` alerts are active when you have <= `cutoff` pips of willpower.
-        `int` alerts are active when you have < `cutoff` Int.
-        `xl` alerts are active when your XL is < `cutoff`.
-        `elec` alerts are active when you have no rElec and < `cutoff` HP.
-        `fire`, `cold`, etc are active < `cutoff` HP with no resistance. Pips of res reduce the cutoff to 50/33/20% 
+    Ex:
+      `always` alerts are always on.
+      `hp` alerts are active when you have < `cutoff` HP.
+      `will` alerts are active when you have <= `cutoff` pips of willpower.
+      `int` alerts are active when you have < `cutoff` Int.
+      `xl` alerts are active when your XL is < `cutoff`.
+      `elec` alerts are active when you have no rElec and < `cutoff` HP.
+      `fire`, `cold`, etc active < `cutoff` HP with no resistance. Pips lower cutoff to 50/33/20%
 --]]
 f_alert_monsters.Config.Alerts = {
   { name = "always_fm",
@@ -54,8 +55,7 @@ f_alert_monsters.Config.Alerts = {
       "apocalypse crab","catoblepas",
     } },
 
-  { name = "always_flash",
-    flash_screen = true,
+  { name = "always_flash", flash_screen = true,
     pattern = {
       -- Noteworthy abilities
       "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
@@ -66,9 +66,8 @@ f_alert_monsters.Config.Alerts = {
       "deep elf elementalist",
     } },
 
-  { name = "always_fm_pack",
-    is_pack = true,
-    pattern = { "boggart", "dream sheep", "floating eye", "shrike", } },
+  { name = "always_fm_pack", is_pack = true,
+    pattern = { "boggart", "dream sheep", "floating eye", "shrike" } },
 
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
   { name = "30hp", cond = "hp", cutoff = 30,
@@ -84,45 +83,48 @@ f_alert_monsters.Config.Alerts = {
   { name = "40hp", cond = "hp", cutoff = 40,
     pattern = { "orc priest" } },
   { name = "50hp", cond = "hp", cutoff = 50,
-    pattern = { "orc high priest", "manticore" } },
+    pattern = { "manticore", "orc high priest" } },
   { name = "60hp", cond = "hp", cutoff = 60,
-    pattern = { "yaktaur(?! captain)", "cyclops", "centaur(?! warrior)" } },
-  { name = "70hp_melai", cond = "hp", cutoff = 70,
-    is_pack = true,
+    pattern = { "centaur(?! warrior)", "cyclops", "yaktaur(?! captain)" } },
+  { name = "70hp_melai", cond = "hp", cutoff = 70, is_pack = true,
     pattern = "meliai" },
   { name = "80hp", cond = "hp", cutoff = 80,
     pattern = { "gargoyle" } },
   { name = "90hp", cond = "hp", cutoff = 90,
     pattern = { "deep elf archer", "tengu conjurer" } },
   { name = "110hp", cond = "hp", cutoff = 110,
-    pattern = { "centaur warrior", "yaktaur captain", "hellion", "eye of devastation",
-                "sun moth", "deep elf high priest", "deep troll earth mage",
-                "stone giant", "cacodemon" } },
+    pattern = { "cacodemon", "centaur warrior", "deep elf high priest",
+                "deep troll earth mage", "eye of devastation", "hellion", "stone giant",
+                "sun moth", "yaktaur captain" } },
   { name = "120hp", cond = "hp", cutoff = 120,
-    pattern = { "quicksilver (dragon|elemental)", "magenta draconian", "thorn hunter" } },
+    pattern = { "magenta draconian", "thorn hunter", "quicksilver (dragon|elemental)" } },
   { name = "160hp", cond = "hp", cutoff = 160,
-    pattern = { "brimstone fiend", "deep elf sorcererhell sentinal", "war gargoyle",
-                "draconian (knight|scorcher)" } },
+    pattern = { "brimstone fiend", "deep elf sorcererhell sentinal",
+                "draconian (knight|scorcher)", "war gargoyle" } },
   { name = "200hp", cond = "hp", cutoff = 200,
-    pattern = { "(draconian|deep elf) annihilator", "iron (dragon|elemental)" } },
+    pattern = { "(deep elf|draconian) annihilator", "iron (dragon|elemental)" } },
 
   -- Monsters that can crowd-control you without sufficient willpower
   -- Cutoff ~10% for most spells; lower for more significant spells like banish
   { name = "willpower2", cond = "will", cutoff = 2,
-    pattern = { "basilisk", "naga ritualist", "vampire(?! (bat|mage|mosquito))", "sphinx marauder" } },
+    pattern = { "basilisk", "naga ritualist", "vampire(?! (bat|mage|mosquito))",
+                "sphinx marauder" } },
   { name = "willpower3", cond = "will", cutoff = 3,
-    pattern = { "deep elf (demonologist|sorcerer|archer)", "occultist", "merfolk siren", "fenstrider witch",
-                "cacodemon", "imperial myrmidon", "guardian sphinx", "nagaraja", "draconian shifter",
-                "glowing orange brain", "orc sorcerer", "ogre mage", "satyr", "vault sentinel", "iron elemental",
-                "death knight", "vampire knight" } },
-  { name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3,
-    is_pack = true,
+    pattern = { "cacodemon", "death knight", "deep elf (demonologist|sorcerer|archer)",
+                "draconian shifter", "fenstrider witch", "glowing orange brain",
+                "guardian sphinx", "imperial myrmidon", "iron elemental", "occultist",
+                "merfolk siren", "nagaraja", "ogre mage", "orc sorcerer", "satyr",
+                "vampire knight", "vault sentinel" } },
+  { name = "willpower3_great_orb_of_eyes", cond = "will", cutoff = 3, is_pack = true,
     pattern = "great orb of eyes" },
-  { name = "willpower3_golden_eye", cond = "will", cutoff = 3,
-    is_pack = true,
+  { name = "willpower3_golden_eye", cond = "will", cutoff = 3, is_pack = true,
     pattern = "golden eye" },
   { name = "willpower4", cond = "will", cutoff = 4,
     pattern = { "merfolk avatar", "tainted leviathan", "nargun" } },
+
+  -- Mutators (only flash if immune)
+  { name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+    pattern = { "cacodemon", "neqoxec", "shining eye" } },
 
   -- Brain feed with low int
   { name = "brainfeed", cond = "int", cutoff = 6,
@@ -134,47 +136,50 @@ f_alert_monsters.Config.Alerts = {
   { name = "pois_80", cond = "pois", cutoff = 80,
     pattern = { "golden dragon", "green draconian", "swamp dragon" } },
   { name = "pois_120", cond = "pois", cutoff = 120,
-    pattern = { "green death", "naga mage", "nagaraja", "fenstrider witch" } },
+    pattern = { "fenstrider witch", "green death", "naga mage", "nagaraja" } },
   { name = "pois_140", cond = "pois", cutoff = 140,
     pattern = { "tengu reaver" } },
 
   { name = "elec_40", cond = "elec", cutoff = 40, is_pack = true,
     pattern = "electric eel" },
   { name = "elec_80", cond = "elec", cutoff = 80,
-    pattern = { "shock serpent", "raiju", "spark wasp" } },
+    pattern = { "raiju", "shock serpent", "spark wasp" } },
   { name = "elec_120", cond = "elec", cutoff = 120,
-    pattern = { "black draconian", "blizzard demon", "deep elf zephyrmancer", "storm dragon", "tengu conjurer" } },
+    pattern = { "black draconian", "blizzard demon", "deep elf zephyrmancer",
+                "storm dragon", "tengu conjurer" } },
   { name = "elec_140", cond = "elec", cutoff = 140,
-    pattern = { "electric golem", "titan", "servants? of whisper", "spriggan air mage",
-                "ball lightning", "tengu reaver" } },
-
+    pattern = { "electric golem", "servants? of whisper", "spriggan air mage",
+                "tengu reaver", "titan" } },
+  { name = "elec_140_pack", cond = "elec", cutoff = 140, is_pack = true,
+    pattern = { "ball lightning" } },
   { name = "corr_60", cond = "corr", cutoff = 60,
     pattern = { "acid dragon" } },
   { name = "corr_140", cond = "corr", cutoff = 140,
-    pattern = { "tengu reaver", "entropy weaver", "demonspawn corrupter", "moon troll" } },
+    pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
 
   { name = "fire_60", cond = "fire", cutoff = 60,
-    pattern = { "steam dragon", "lindwurm", "fire crab", "lava snake" } },
+    pattern = { "fire crab", "lava snake", "lindwurm", "steam dragon" } },
   { name = "fire_100", cond = "fire", cutoff = 100,
-    pattern = { "efreet", "deep elf pyromancer", "smoke demon", "sun moth" } },
+    pattern = { "deep elf pyromancer", "efreet", "smoke demon", "sun moth" } },
   { name = "fire_120", cond = "fire", cutoff = 120,
-    pattern = { "orc sorcerer", "hell hound", "demonspawn blood saint", "red draconian", "ogre mage",
-                "molten gargoyle", "hell knight" } },
+    pattern = { "demonspawn blood saint", "hell hound", "hell knight", "molten gargoyle",
+                "ogre mage", "orc sorcerer", "red draconian" } },
   { name = "fire_140", cond = "fire", cutoff = 140,
     pattern = { "balrug" } },
   { name = "fire_160", cond = "fire", cutoff = 160,
-    pattern = { "will-o-the-wisp", "ophan", "fire giant", "golden dragon", "fire dragon", "salamander tyrant",
-                "tengu reaver" } },
+    pattern = { "fire dragon", "fire giant", "golden dragon", "ophan", "salamander tyrant",
+                "tengu reaver", "will-o-the-wisp" } },
   { name = "fire_240", cond = "fire", cutoff = 240,
-    pattern = { "hellephant", "crystal (guardian|echidna)", "draconian scorcher" } },
+    pattern = { "crystal (guardian|echidna)", "draconian scorcher", "hellephant" } },
 
   { name = "cold_80", cond = "cold", cutoff = 80,
     pattern = { "rime drake" } },
   { name = "cold_120", cond = "cold", cutoff = 120,
-    pattern = { "blizzard demon", "bog body", "ironbound frostheart", "demonspawn blood saint",
-                "white draconian" } },
+    pattern = { "blizzard demon", "bog body", "demonspawn blood saint",
+               "ironbound frostheart", "white draconian" } },
   { name = "cold_160", cond = "cold", cutoff = 160,
-    pattern = { "golden dragon", "draconian knight", "frost giant", "ice dragon", "tengu reaver" } },
+    pattern = { "draconian knight", "frost giant", "golden dragon",
+                "ice dragon", "tengu reaver" } },
   { name = "cold_180", cond = "cold", cutoff = 180,
     pattern = { "(?<!dread)(?<!ancient) lich", "lich king" } },
   { name = "cold_240", cond = "cold", cutoff = 240,
@@ -185,7 +190,7 @@ f_alert_monsters.Config.Alerts = {
   { name = "drain_120", cond = "drain", cutoff = 120,
     pattern = { "necromancer" } },
   { name = "drain_150", cond = "drain", cutoff = 150,
-    pattern = { "revenant", "demonspawn blood saint" } },
+    pattern = { "demonspawn blood saint", "revenant" } },
   { name = "drain_190", cond = "drain", cutoff = 190,
     pattern = { "shadow dragon" } },
 } -- fm_patterns (do not remove this comment)
@@ -196,7 +201,7 @@ f_alert_monsters.Config.init = [[
     if not BRC.you.miasma_immune() then
       util.append(alert_list, {
         name = "miasma", cond = "always", cutoff = 0,
-        pattern = { "death drake", "tainted leviathan", "putrid mouth", }
+        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
       })
     end
 
@@ -204,22 +209,15 @@ f_alert_monsters.Config.init = [[
     if not you.torment_immune() then
       util.append(alert_list, {
         name = "torment", cond = "always", cutoff = 0,
-        pattern = { "tormentor", "curse (toe|skull)", "Fiend", "tzitzimi", "royal mummy",
-                    "mummy priest", "(dread|ancient) lich", "lurking horror", }
+        pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
+                    "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
       })
-    end
-
-    -- Set mutators to either flash (if undead) or a conditional fm
-    local mutator_str = "cacodemon|neqoxec|shining eye"
-    if BRC.you.mutation_immune() then
-      BRC.set.flash_screen_message("monster_warning:" .. mutator_str, true)
-    else
-      util.append(alert_list, { name = "malmutate", cond = "mut", cutoff = 1, pattern = mutator_str })
     end
 
     -- If configured, add fm for all uniques and pan lords
     if f_alert_monsters.Config.fm_on_uniques then
-      BRC.set.force_more_message("monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view", true)
+      local uniques_pattern = "monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view"
+      BRC.set.force_more_message(uniques_pattern, true)
     end
 ]]
 ------------------- End config section -------------------
@@ -246,16 +244,19 @@ local function update_pack_mutes()
     else
       BRC.set.force_more_message(v, false)
     end
-    if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Muted pack: %s", v)) end
+    if Config.debug_alert_monsters then BRC.mpr.blue("Muted pack: " .. v) end
   end
   patterns_to_mute = {}
 
   -- Remove expired mutes
   for _, v in ipairs(Config.Alerts) do
-    if v.is_pack and v.last_fm_turn ~= -1 and you.turns() >= v.last_fm_turn + Config.pack_timeout then
+    if v.is_pack
+      and v.last_fm_turn ~= -1
+      and you.turns() >= v.last_fm_turn + Config.pack_timeout
+    then
       v.last_fm_turn = -1
-      v.active_alert = false -- Set to false and let the main logic decide if it should reactivate it.
-      if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Unmuted pack: %s", v.pattern)) end
+      v.active_alert = false -- Let the main logic decide if/when to reactivate it.
+      if Config.debug_alert_monsters then BRC.mpr.blue("Unmuted pack: " .. v.pattern) end
     end
   end
 end
@@ -296,15 +297,17 @@ function f_alert_monsters.init()
 end
 
 function f_alert_monsters.c_message(text, channel)
-  if channel ~= "monster_warning" or not text:find("comes? into view") or Config.pack_timeout <= 0 then return end
+  if channel ~= "monster_warning" or not text:find("comes? into view") then return end
+  if Config.pack_timeout <= 0 then return end
+
   -- Identify when a mute should be turned on
   for _, v in ipairs(Config.Alerts) do
     if v.is_pack and v.regex:matches(text) then
       if v.last_fm_turn == -1 then
         patterns_to_mute[#patterns_to_mute + 1] = v.pattern
-        if Config.debug_alert_monsters then BRC.mpr.blue(string.format("To mute: %s", v.pattern)) end
+        if Config.debug_alert_monsters then BRC.mpr.blue("To mute: " .. v.pattern) end
       else
-        if Config.debug_alert_monsters then BRC.mpr.blue(string.format("Extending mute: %s", v.pattern)) end
+        if Config.debug_alert_monsters then BRC.mpr.blue("Extending mute: " .. v.pattern) end
       end
       v.last_fm_turn = you.turns()
     end
@@ -318,7 +321,7 @@ function f_alert_monsters.ready()
   -- Load all stats before loop. Most of them are used multiple times.
   local hp, _ = you.hp()
   local amulet = items.equipped_at("amulet")
-  if (you.race() == "Vine Stalker") or (amulet and amulet.name() == "amulet of guardian spirit") then
+  if you.spirit_shield() > 0 then
     local mp, _ = you.mp()
     hp = hp + mp
   end
@@ -383,8 +386,12 @@ function f_alert_monsters.ready()
   end
 
   if Config.debug_alert_monsters then
-    if #activated > 0 then BRC.mpr.blue(string.format("Activating f_m: %s", table.concat(activated, ", "))) end
-    if #deactivated > 0 then BRC.mpr.blue(string.format("Deactivating f_m: %s", table.concat(deactivated, ", "))) end
+    if #activated > 0 then
+      BRC.mpr.blue("Activating f_m: " .. table.concat(activated, ", "))
+    end
+    if #deactivated > 0 then
+      BRC.mpr.blue("Deactivating f_m: " .. table.concat(deactivated, ", "))
+    end
   end
 
   if Config.pack_timeout > 0 then update_pack_mutes() end
