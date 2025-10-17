@@ -25,13 +25,10 @@ local Config = f_runrest_features.Config
 
 ---- Local constants / configuration ----
 local GAUNTLET_CONCAT_STRING = " && !!"
-local GAUNTLET_SEARCH_STRING = table.concat(
-  {
-    "gauntlet", "gate leading", "a transporter", "gold piece",
-    " trap", "translucent door", "translucent gate"
-  },
-  GAUNTLET_CONCAT_STRING
-)
+local GAUNTLET_SEARCH_STRING = table.concat({
+  "gauntlet", "gate leading", "a transporter", "gold piece",
+  " trap", "translucent door", "translucent gate"
+  }, GAUNTLET_CONCAT_STRING)
 
 ---- Local variables ----
 local stop_on_altars = nil

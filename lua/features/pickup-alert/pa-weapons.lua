@@ -74,14 +74,18 @@ function _weapon_cache.add_weapon(it)
   weap_data.is_weapon = it.is_weapon
   weap_data.basename = it.name("base")
   weap_data._subtype = it.subtype()
-  weap_data.subtype = function() return weap_data._subtype end -- For consistency with crawl item
+  weap_data.subtype = function() -- For consistency with crawl item.subtype()
+    return weap_data._subtype
+  end
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end -- For consistency with crawl item
+  weap_data.ego = function() -- For consistency with crawl item.ego()
+    return weap_data._ego
+  end
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -130,11 +134,12 @@ end
 
 ---- Local functions ----
 local function is_valid_upgrade(it, cur)
-  return
-    cur.is_ranged == it.is_ranged
+  return cur.is_ranged == it.is_ranged
     and BRC.is.polearm(cur) == BRC.is.polearm(it)
-    and (you.race() == "Gnoll"
-      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
+    and (
+      you.race() == "Gnoll"
+      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill)
+    )
 end
 
 -- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
@@ -324,8 +329,7 @@ local function get_inventory_upgrade_alert(it)
 end
 
 local function get_weapon_alert(it)
-  return
-    get_inventory_upgrade_alert(it)
+  return get_inventory_upgrade_alert(it)
     or get_first_of_skill_alert(it)
     or get_early_weapon_alert(it)
     or get_weap_high_score_alert(it)

@@ -92,14 +92,15 @@ end
 function f_color_inscribe.c_assign_invletter(it)
   if it.artefact then return end
   -- If enabled, call inscribe stats before colorizing
-  if (
-    f_inscribe_stats and f_inscribe_stats.Config
+  if
+    f_inscribe_stats
+    and f_inscribe_stats.Config
     and not f_inscribe_stats.Config.disabled
     and f_inscribe_stats.do_stat_inscription
     and (
       it.is_weapon and f_inscribe_stats.Config.inscribe_weapons
       or BRC.is.armour(it) and f_inscribe_stats.Config.inscribe_armour
-    ))
+    )
   then
     f_inscribe_stats.do_stat_inscription(it)
   end

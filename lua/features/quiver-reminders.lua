@@ -10,7 +10,6 @@ f_quiver_reminders.BRC_FEATURE_NAME = "quiver-reminders"
 f_quiver_reminders.Config = {
   confirm_consumables = true,
   warn_diff_missile_turns = 10,
-
 } -- f_quiver_reminders.Config (do not remove this comment)
 
 ---- Local variables ----
@@ -76,7 +75,7 @@ function f_quiver_reminders.c_message(text, _)
   local cleaned = BRC.text.clean(text)
   local prefix = "You throw a "
   if cleaned:sub(1, #prefix) == prefix then
-    last_thrown = cleaned:sub(#prefix + 1, #cleaned-1):gsub(" {.*}", "")
+    last_thrown = cleaned:sub(#prefix + 1, #cleaned - 1):gsub(" {.*}", "")
     last_thrown_turn = you.turns()
   end
 end

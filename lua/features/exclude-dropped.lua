@@ -29,8 +29,7 @@ end
 
 local function enchantable_weap_in_inv()
   return util.exists(items.inventory(), function(i)
-    return
-      i.is_weapon
+    return i.is_weapon
       and not BRC.is.magic_staff(i)
       and i.plus < 9
       and (not i.artefact or you.race() == "Mountain Dwarf")
@@ -86,11 +85,13 @@ end
 
 local function should_exclude(item_name, full_msg)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-  if (
+  if
     f_exclude_dropped.Config.not_weapon_scrolls
     and (item_name:contains("enchant weapon") or item_name:contains("brand weapon"))
     and enchantable_weap_in_inv()
-  ) then return false end
+  then
+    return false
+  end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
   for _, inv in ipairs(items.inventory()) do

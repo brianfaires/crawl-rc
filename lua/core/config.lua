@@ -8,8 +8,7 @@ Usage:
   - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
   - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
   - If using config_memory == "full", the function needs to be saved as a string instead. --]]
-  -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
-
+-- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
 
 ---- Initialize BRC namespace and Public modules
 BRC = BRC or {}
@@ -22,7 +21,7 @@ BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
 } -- BRC.Profiles.Default (do not remove this comment)
-BRC.Config = BRC.Profiles.Default-- Always init to Default profile
+BRC.Config = BRC.Profiles.Default -- Always init to Default profile
 
 -- Testing Config Profile: Isolate and test specific features
 BRC.Profiles.Testing = {
@@ -85,9 +84,9 @@ BRC.Profiles.Custom = {
 
     Alert = {
       armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
-      weapon_sensitivity = 2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
+      weapon_sensitivity = 2,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
       orbs = true,
-      staff_resists = true, -- When a staff gives a missing resistance
+      staff_resists = true,     -- When a staff gives a missing resistance
       talismans = true,
 
       one_time = { -- Alert the first time each item is found
@@ -130,12 +129,12 @@ BRC.Profiles.Speed = {
   ["safe-stairs"] = { disabled = true },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
-    dmg_fm_threshold = 1,    -- Force more for losing this % of max HP
-    always_on_bottom = true,   -- Rewrite HP/MP meters after each turn with messages
+    dmg_fm_threshold = 1,       -- Force more for losing this % of max HP
+    always_on_bottom = true,    -- Rewrite HP/MP meters after each turn with messages
   },
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
-    save_with_msg = false, -- Shift-S to save and leave yourself a message
+    save_with_msg = false,      -- Shift-S to save and leave yourself a message
   },
   ["remind-id"] = {
     stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
@@ -166,7 +165,7 @@ BRC.Profiles.Speed = {
       },
       OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- No one_time if skill < this
 
-      More = { }, -- All nil / false
+      More = {}, -- All nil / false
     },
     Tuning = {
       Armour = {
@@ -194,5 +193,4 @@ BRC.Profiles.Streak = {
   ["alert-monsters"] = {
     sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
-
 } -- BRC.Profiles.Streak (do not remove this comment)

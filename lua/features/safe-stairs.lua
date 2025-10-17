@@ -40,7 +40,8 @@ local function check_new_location(cmd)
     if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
   end
 
-  if Config.warn_v5
+  if
+    Config.warn_v5
     and not ss_v5_warned
     and ss_cur_location == "Vaults4"
     and cmd == "CMD_GO_DOWNSTAIRS"

@@ -46,12 +46,12 @@ BRC.SPELLBOOKS = {
 } -- BRC.SPELLBOOKS (do not remove this comment)
 
 ---- Races ----
-BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant", }
-BRC.NONLIVING_RACES = { "Djinni", "Gargoyle", }
-BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant", }
-BRC.LITTLE_RACES = { "Spriggan", }
-BRC.SMALL_RACES = { "Kobold", }
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll", }
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
+BRC.NONLIVING_RACES = { "Djinni", "Gargoyle" }
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+BRC.LITTLE_RACES = { "Spriggan" }
+BRC.SMALL_RACES = { "Kobold" }
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
 BRC.STAFF_SCHOOLS = {
@@ -73,15 +73,15 @@ BRC.WEAP_SCHOOLS = {
 } -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 ---- Branches ----
-BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar", }
+BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
 BRC.PORTAL_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
 ---- Egos + artefact properties ----
-BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous", }
-BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
+BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
 BRC.BAD_ART_PROPS = {
   "Bane", "-Cast", "-Move", "-Tele",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
@@ -102,4 +102,4 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2, }
+BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }

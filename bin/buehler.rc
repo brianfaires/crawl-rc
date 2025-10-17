@@ -12,8 +12,7 @@ Usage:
   - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
   - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
   - If using config_memory == "full", the function needs to be saved as a string instead. --]]
-  -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
-
+-- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
 
 ---- Initialize BRC namespace and Public modules
 BRC = BRC or {}
@@ -26,7 +25,7 @@ BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
 } -- BRC.Profiles.Default (do not remove this comment)
-BRC.Config = BRC.Profiles.Default-- Always init to Default profile
+BRC.Config = BRC.Profiles.Default -- Always init to Default profile
 
 -- Testing Config Profile: Isolate and test specific features
 BRC.Profiles.Testing = {
@@ -89,9 +88,9 @@ BRC.Profiles.Custom = {
 
     Alert = {
       armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
-      weapon_sensitivity = 2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
+      weapon_sensitivity = 2,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
       orbs = true,
-      staff_resists = true, -- When a staff gives a missing resistance
+      staff_resists = true,     -- When a staff gives a missing resistance
       talismans = true,
 
       one_time = { -- Alert the first time each item is found
@@ -134,12 +133,12 @@ BRC.Profiles.Speed = {
   ["safe-stairs"] = { disabled = true },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
-    dmg_fm_threshold = 1,    -- Force more for losing this % of max HP
-    always_on_bottom = true,   -- Rewrite HP/MP meters after each turn with messages
+    dmg_fm_threshold = 1,       -- Force more for losing this % of max HP
+    always_on_bottom = true,    -- Rewrite HP/MP meters after each turn with messages
   },
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
-    save_with_msg = false, -- Shift-S to save and leave yourself a message
+    save_with_msg = false,      -- Shift-S to save and leave yourself a message
   },
   ["remind-id"] = {
     stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
@@ -170,7 +169,7 @@ BRC.Profiles.Speed = {
       },
       OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- No one_time if skill < this
 
-      More = { }, -- All nil / false
+      More = {}, -- All nil / false
     },
     Tuning = {
       Armour = {
@@ -198,7 +197,6 @@ BRC.Profiles.Streak = {
   ["alert-monsters"] = {
     sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
-
 } -- BRC.Profiles.Streak (do not remove this comment)
 
 }
@@ -1059,12 +1057,12 @@ BRC.SPELLBOOKS = {
 } -- BRC.SPELLBOOKS (do not remove this comment)
 
 ---- Races ----
-BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant", }
-BRC.NONLIVING_RACES = { "Djinni", "Gargoyle", }
-BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant", }
-BRC.LITTLE_RACES = { "Spriggan", }
-BRC.SMALL_RACES = { "Kobold", }
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll", }
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
+BRC.NONLIVING_RACES = { "Djinni", "Gargoyle" }
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+BRC.LITTLE_RACES = { "Spriggan" }
+BRC.SMALL_RACES = { "Kobold" }
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
 BRC.STAFF_SCHOOLS = {
@@ -1086,15 +1084,15 @@ BRC.WEAP_SCHOOLS = {
 } -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 ---- Branches ----
-BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar", }
+BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
 BRC.PORTAL_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
 ---- Egos + artefact properties ----
-BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous", }
-BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
+BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
 BRC.BAD_ART_PROPS = {
   "Bane", "-Cast", "-Move", "-Tele",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
@@ -1115,7 +1113,7 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2, }
+BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 
 }
 ############################### End lua/core/constants.lua ###############################
@@ -2129,8 +2127,8 @@ end
 function BRC.is.unusable_ego(ego)
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-      or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
-      or ego == "pain" and you.skill("Necromancy") == 0
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
 end
 
 -- Armour stats
@@ -2572,6 +2570,8 @@ local function safe_call_string(str, module_name)
 end
 
 local function override_feature_config_table(source, dest)
+  if type(source) ~= "table" then return end
+
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
@@ -2582,16 +2582,17 @@ local function override_feature_config_table(source, dest)
   end
 end
 
-local function override_feature_config(feature_name)
-  if not _features[feature_name].Config then _features[feature_name].Config = {} end
-  if type(_features[feature_name].Config.init) == "function" then
-    _features[feature_name].Config.init()
-  elseif type(_features[feature_name].Config.init) == "string" then
-    safe_call_string(_features[feature_name].Config.init, feature_name)
+local function process_feature_config(feature_name)
+  local f = _features[feature_name]
+  if not f.Config then
+    f.Config = {}
+  elseif type(f.Config.init) == "function" then
+    f.Config.init()
+  elseif type(f.Config.init) == "string" then
+    safe_call_string(f.Config.init, feature_name)
   end
 
-  if not BRC.Config[feature_name] then return end
-  override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
+  override_feature_config_table(BRC.Config[feature_name], f.Config)
 end
 
 -- Hook management
@@ -2610,14 +2611,16 @@ local function call_all_hooks(hook_name, ...)
         handle_feature_error(hook_info.feature_name, hook_name, result)
       else
         if last_return_value and result and last_return_value ~= result then
-          BRC.log.warning(string.format(
+          BRC.log.warning(
+            string.format(
               "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
               hook_name,
               returning_feature,
               BRC.util.tostring(last_return_value, true),
               hook_info.feature_name,
               BRC.util.tostring(result, true)
-          ))
+            )
+          )
         end
 
         last_return_value = result
@@ -2654,9 +2657,7 @@ local function register_all_features()
   -- Find all feature modules
   local feature_names = {}
   for name, value in pairs(_G) do
-    if BRC.is_feature_module(value) then
-      feature_names[#feature_names + 1] = name
-    end
+    if BRC.is_feature_module(value) then feature_names[#feature_names + 1] = name end
   end
 
   -- Sort alphabetically (for reproducable behavior)
@@ -2702,7 +2703,7 @@ function BRC.register(f)
   end
 
   if feature_is_disabled(f) then
-    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .." is disabled. Skipped registration.")
+    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .. " is disabled. Skipped registration.")
     return nil
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
@@ -2725,11 +2726,7 @@ function BRC.register(f)
     end
   end
 
-  -- Handle config init() and overrides
-  if type(f.Config) == "table" and type(f.Config.init) == "function" then
-    f.Config.init()
-  end
-  override_feature_config(f.BRC_FEATURE_NAME)
+  process_feature_config(f.BRC_FEATURE_NAME)
 
   return true
 end
@@ -2829,7 +2826,7 @@ function BRC.load_config(input_config)
     safe_call_string(BRC.Config.init, "BRC")
   end
   for name, _ in pairs(_features) do
-    override_feature_config(name)
+    process_feature_config(name)
   end
 
   BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(config_name)))
@@ -3191,7 +3188,8 @@ local function update_pack_mutes()
 
   -- Remove expired mutes
   for _, v in ipairs(Config.Alerts) do
-    if v.is_pack
+    if
+      v.is_pack
       and v.last_fm_turn ~= -1
       and you.turns() >= v.last_fm_turn + Config.pack_timeout
     then
@@ -3229,9 +3227,7 @@ function f_alert_monsters.init()
   for _, v in ipairs(Config.Alerts) do
     v.active_alert = false
     v.last_fm_turn = -1
-    if type(v.pattern) == "table" then
-      v.pattern = table.concat(v.pattern, "|")
-    end
+    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
     v.pattern = WARN_PREFIX .. v.pattern .. WARN_SUFFIX
     v.regex = crawl.regex(v.pattern:gsub("monster_warning:", ""))
   end
@@ -3687,14 +3683,15 @@ end
 function f_color_inscribe.c_assign_invletter(it)
   if it.artefact then return end
   -- If enabled, call inscribe stats before colorizing
-  if (
-    f_inscribe_stats and f_inscribe_stats.Config
+  if
+    f_inscribe_stats
+    and f_inscribe_stats.Config
     and not f_inscribe_stats.Config.disabled
     and f_inscribe_stats.do_stat_inscription
     and (
       it.is_weapon and f_inscribe_stats.Config.inscribe_weapons
       or BRC.is.armour(it) and f_inscribe_stats.Config.inscribe_armour
-    ))
+    )
   then
     f_inscribe_stats.do_stat_inscription(it)
   end
@@ -3764,11 +3761,13 @@ function f_drop_inferior.c_assign_invletter(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if (
+  if
     not (it.is_weapon or BRC.is.armour(it))
     or BRC.is.risky_item(it)
     or BRC.get.num_equip_slots(it) > 1
-  ) then return end
+  then
+    return
+  end
 
   local it_ego = BRC.get.ego(it)
   local marked_something = false
@@ -3793,7 +3792,7 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop then
-    BRC.set_hotkey("drop your useless items",function()
+    BRC.set_hotkey("drop your useless items", function()
       crawl.sendkeys(BRC.get.command_key("CMD_DROP") .. ",\r")
     end, 1)
   end
@@ -3999,8 +3998,7 @@ end
 
 local function enchantable_weap_in_inv()
   return util.exists(items.inventory(), function(i)
-    return
-      i.is_weapon
+    return i.is_weapon
       and not BRC.is.magic_staff(i)
       and i.plus < 9
       and (not i.artefact or you.race() == "Mountain Dwarf")
@@ -4056,11 +4054,13 @@ end
 
 local function should_exclude(item_name, full_msg)
   -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-  if (
+  if
     f_exclude_dropped.Config.not_weapon_scrolls
     and (item_name:contains("enchant weapon") or item_name:contains("brand weapon"))
     and enchantable_weap_in_inv()
-  ) then return false end
+  then
+    return false
+  end
 
   -- Don't exclude if we dropped partial stack (except for jewellery)
   for _, inv in ipairs(items.inventory()) do
@@ -4207,9 +4207,7 @@ function macro_brc_explore()
       BRC.util.do_cmd("CMD_EXPLORE")
     end
   else
-    if you.feel_safe() then
-      explore_after_recovery = true
-    end
+    if you.feel_safe() then explore_after_recovery = true end
     BRC.util.do_cmd("CMD_REST")
   end
 end
@@ -4274,7 +4272,7 @@ Dependencies: core/data.lua, core/util.lua
 f_hotkey = {}
 f_hotkey.BRC_FEATURE_NAME = "hotkey"
 f_hotkey.Config = {
-  key = { keycode = "13", name = "[Enter]", },
+  key = { keycode = "13", name = "[Enter]" },
   autoequip = true,
 } -- f_hotkey.Config (do not remove this comment)
 
@@ -4297,11 +4295,10 @@ local function c_assign_invletter_autoequip(it)
   local TURNS = 1
   local name = it.name():gsub(" {.*}", "")
 
-  BRC.set_hotkey("equip " .. BRC.text.white(name),  function()
-    local inv_items = util.filter(
-      function(i) return i.name():gsub(" {.*}", "") == name end,
-      items.inventory()
-    )
+  BRC.set_hotkey("equip " .. BRC.text.white(name), function()
+    local inv_items = util.filter(function(i)
+      return i.name():gsub(" {.*}", "") == name
+    end, items.inventory())
 
     for i = 1, #inv_items do
       if not inv_items[i].equipped then
@@ -4409,8 +4406,11 @@ local function inscribe_armour_stats(it)
   it.inscribe(new_insc, false)
 
   -- If f_color_inscribe is enabled, update the color
-  if sign_change
-    and f_color_inscribe and f_color_inscribe.Config and not f_color_inscribe.Config.disabled
+  if
+    sign_change
+    and f_color_inscribe
+    and f_color_inscribe.Config
+    and not f_color_inscribe.Config.disabled
     and f_color_inscribe.colorize
   then
     f_color_inscribe.colorize(it)
@@ -4585,7 +4585,6 @@ f_quiver_reminders.BRC_FEATURE_NAME = "quiver-reminders"
 f_quiver_reminders.Config = {
   confirm_consumables = true,
   warn_diff_missile_turns = 10,
-
 } -- f_quiver_reminders.Config (do not remove this comment)
 
 ---- Local variables ----
@@ -4651,7 +4650,7 @@ function f_quiver_reminders.c_message(text, _)
   local cleaned = BRC.text.clean(text)
   local prefix = "You throw a "
   if cleaned:sub(1, #prefix) == prefix then
-    last_thrown = cleaned:sub(#prefix + 1, #cleaned-1):gsub(" {.*}", "")
+    last_thrown = cleaned:sub(#prefix + 1, #cleaned - 1):gsub(" {.*}", "")
     last_thrown_turn = you.turns()
   end
 end
@@ -4710,12 +4709,15 @@ local function get_max_stack(class)
 end
 
 local function have_scroll_of_id()
-  local ID = "scroll of identify"
-  return util.exists(items.inventory(), function(i) return i.name("qual") == ID end)
+  return util.exists(items.inventory(), function(i)
+    return i.name("qual") == "scroll of identify"
+  end)
 end
 
 local function have_unid_item()
-  return util.exists(items.inventory(), function(i) return not i.is_identified end)
+  return util.exists(items.inventory(), function(i)
+    return not i.is_identified
+  end)
 end
 
 ---- Hook functions ----
@@ -4724,10 +4726,10 @@ function f_remind_id.init()
 end
 
 function f_remind_id.c_assign_invletter(it)
-  if (
+  if
     not it.is_identified and have_scroll_of_id()
     or it.name("qual") == "scroll of identify" and have_unid_item()
-  ) then
+  then
     you.stop_activity()
     do_remind_id_check = true
   end
@@ -4819,13 +4821,10 @@ local Config = f_runrest_features.Config
 
 ---- Local constants / configuration ----
 local GAUNTLET_CONCAT_STRING = " && !!"
-local GAUNTLET_SEARCH_STRING = table.concat(
-  {
-    "gauntlet", "gate leading", "a transporter", "gold piece",
-    " trap", "translucent door", "translucent gate"
-  },
-  GAUNTLET_CONCAT_STRING
-)
+local GAUNTLET_SEARCH_STRING = table.concat({
+  "gauntlet", "gate leading", "a transporter", "gold piece",
+  " trap", "translucent door", "translucent gate"
+  }, GAUNTLET_CONCAT_STRING)
 
 ---- Local variables ----
 local stop_on_altars = nil
@@ -5042,7 +5041,8 @@ local function check_new_location(cmd)
     if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
   end
 
-  if Config.warn_v5
+  if
+    Config.warn_v5
     and not ss_v5_warned
     and ss_cur_location == "Vaults4"
     and cmd == "CMD_GO_DOWNSTAIRS"
@@ -5107,10 +5107,15 @@ f_startup.Config = {
   auto_set_skill_targets = {
     { "Stealth", 2.0 }, -- First, focus stealth to 2.0
     { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
-     -- For non-spellcasters, add preferred weapon type as 3rd skill target
-     you.skill("Spellcasting") == 0 and
-    { BRC.get.preferred_weapon_type(), 8.0 } or nil,
   },
+
+  -- For non-spellcasters, add preferred weapon type as 3rd skill target
+  init = [[
+    if you.skill("Spellcasting") == 0 then
+      local t = BRC.Config.startup.auto_set_skill_targets
+      t[#t + 1] = { BRC.get.preferred_weapon_type(), 8.0 }
+    end
+  ]],
 } -- f_startup.Config (do not remove this comment)
 
 ---- Local config alias ----
@@ -5121,20 +5126,16 @@ function f_startup.ready()
   if you.turns() == 0 then
     -- Disable all skills by default
     for _, s in ipairs(BRC.TRAINING_SKILLS) do
-      if s ~= Config.auto_set_skill_targets[1][1] then
-        you.train_skill(s, 0)
-      end
+      if s ~= Config.auto_set_skill_targets[1][1] then you.train_skill(s, 0) end
     end
 
-     -- Auto-set skill targets
+    -- Auto-set skill targets
     if Config.auto_set_skill_targets and you.race() ~= "Gnoll" then
       for i, skill_target in ipairs(Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then
           you.set_training_target(skill, target)
-          if i == 1 or not Config.focus_one_skill then
-            you.train_skill(skill, 1)
-          end
+          if i == 1 or not Config.focus_one_skill then you.train_skill(skill, 1) end
           if not Config.set_all_targets then break end
         end
       end
@@ -5463,25 +5464,26 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
-  RARE_ITEM = "💎",
-  ARTEFACT = "💠",
-  ORB = "🔮",
-  TALISMAN = "🧬",
-  STAFF_RES = "🔥",
+f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
+  or {
+    RARE_ITEM = "💎",
+    ARTEFACT = "💠",
+    ORB = "🔮",
+    TALISMAN = "🧬",
+    STAFF_RES = "🔥",
 
-  WEAPON = "⚔️",
-  RANGED = "🏹",
-  POLEARM = "🔱",
-  TWO_HAND = "✋🤚",
+    WEAPON = "⚔️",
+    RANGED = "🏹",
+    POLEARM = "🔱",
+    TWO_HAND = "✋🤚",
 
-  EGO = "✨",
-  ACCURACY = "🎯",
-  STRONGER = "💪",
-  STRONGEST = "💪💪",
-  LIGHTER = "⏬",
-  HEAVIER = "⏫"
-} -- f_pickup_alert.Config.Emoji (do not remove this comment)
+    EGO = "✨",
+    ACCURACY = "🎯",
+    STRONGER = "💪",
+    STRONGEST = "💪💪",
+    LIGHTER = "⏬",
+    HEAVIER = "⏫",
+  } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
 ---- Local config alias ----
 local Config = f_pickup_alert.Config
@@ -5501,9 +5503,14 @@ end
 
 ---- Public API ----
 function f_pickup_alert.autopickup(it, _)
-  if not BRC.active or pause_pa_system or you.have_orb()
+  if
+    not BRC.active
+    or pause_pa_system
+    or you.have_orb()
     or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
-  then return end
+  then
+    return
+  end
 
   local unworn_aux_item = nil -- Track carried aux armour for mutation scenarios
   if it.is_useless then
@@ -6295,14 +6302,18 @@ function _weapon_cache.add_weapon(it)
   weap_data.is_weapon = it.is_weapon
   weap_data.basename = it.name("base")
   weap_data._subtype = it.subtype()
-  weap_data.subtype = function() return weap_data._subtype end -- For consistency with crawl item
+  weap_data.subtype = function() -- For consistency with crawl item.subtype()
+    return weap_data._subtype
+  end
   weap_data.weap_skill = it.weap_skill
   weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
   weap_data.hands = BRC.get.hands(it)
   weap_data.artefact = it.artefact
   weap_data._ego = BRC.get.ego(it)
-  weap_data.ego = function() return weap_data._ego end -- For consistency with crawl item
+  weap_data.ego = function() -- For consistency with crawl item.ego()
+    return weap_data._ego
+  end
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
@@ -6351,11 +6362,12 @@ end
 
 ---- Local functions ----
 local function is_valid_upgrade(it, cur)
-  return
-    cur.is_ranged == it.is_ranged
+  return cur.is_ranged == it.is_ranged
     and BRC.is.polearm(cur) == BRC.is.polearm(it)
-    and (you.race() == "Gnoll"
-      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill))
+    and (
+      you.race() == "Gnoll"
+      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill)
+    )
 end
 
 -- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
@@ -6545,8 +6557,7 @@ local function get_inventory_upgrade_alert(it)
 end
 
 local function get_weapon_alert(it)
-  return
-    get_inventory_upgrade_alert(it)
+  return get_inventory_upgrade_alert(it)
     or get_first_of_skill_alert(it)
     or get_early_weapon_alert(it)
     or get_weap_high_score_alert(it)

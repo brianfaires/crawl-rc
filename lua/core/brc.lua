@@ -108,6 +108,8 @@ local function safe_call_string(str, module_name)
 end
 
 local function override_feature_config_table(source, dest)
+  if type(source) ~= "table" then return end
+
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
@@ -118,16 +120,17 @@ local function override_feature_config_table(source, dest)
   end
 end
 
-local function override_feature_config(feature_name)
-  if not _features[feature_name].Config then _features[feature_name].Config = {} end
-  if type(_features[feature_name].Config.init) == "function" then
-    _features[feature_name].Config.init()
-  elseif type(_features[feature_name].Config.init) == "string" then
-    safe_call_string(_features[feature_name].Config.init, feature_name)
+local function process_feature_config(feature_name)
+  local f = _features[feature_name]
+  if not f.Config then
+    f.Config = {}
+  elseif type(f.Config.init) == "function" then
+    f.Config.init()
+  elseif type(f.Config.init) == "string" then
+    safe_call_string(f.Config.init, feature_name)
   end
 
-  if not BRC.Config[feature_name] then return end
-  override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
+  override_feature_config_table(BRC.Config[feature_name], f.Config)
 end
 
 -- Hook management
@@ -146,14 +149,16 @@ local function call_all_hooks(hook_name, ...)
         handle_feature_error(hook_info.feature_name, hook_name, result)
       else
         if last_return_value and result and last_return_value ~= result then
-          BRC.log.warning(string.format(
+          BRC.log.warning(
+            string.format(
               "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
               hook_name,
               returning_feature,
               BRC.util.tostring(last_return_value, true),
               hook_info.feature_name,
               BRC.util.tostring(result, true)
-          ))
+            )
+          )
         end
 
         last_return_value = result
@@ -190,9 +195,7 @@ local function register_all_features()
   -- Find all feature modules
   local feature_names = {}
   for name, value in pairs(_G) do
-    if BRC.is_feature_module(value) then
-      feature_names[#feature_names + 1] = name
-    end
+    if BRC.is_feature_module(value) then feature_names[#feature_names + 1] = name end
   end
 
   -- Sort alphabetically (for reproducable behavior)
@@ -238,7 +241,7 @@ function BRC.register(f)
   end
 
   if feature_is_disabled(f) then
-    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .." is disabled. Skipped registration.")
+    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .. " is disabled. Skipped registration.")
     return nil
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
@@ -261,11 +264,7 @@ function BRC.register(f)
     end
   end
 
-  -- Handle config init() and overrides
-  if type(f.Config) == "table" and type(f.Config.init) == "function" then
-    f.Config.init()
-  end
-  override_feature_config(f.BRC_FEATURE_NAME)
+  process_feature_config(f.BRC_FEATURE_NAME)
 
   return true
 end
@@ -365,7 +364,7 @@ function BRC.load_config(input_config)
     safe_call_string(BRC.Config.init, "BRC")
   end
   for name, _ in pairs(_features) do
-    override_feature_config(name)
+    process_feature_config(name)
   end
 
   BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(config_name)))

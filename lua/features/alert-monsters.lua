@@ -250,7 +250,8 @@ local function update_pack_mutes()
 
   -- Remove expired mutes
   for _, v in ipairs(Config.Alerts) do
-    if v.is_pack
+    if
+      v.is_pack
       and v.last_fm_turn ~= -1
       and you.turns() >= v.last_fm_turn + Config.pack_timeout
     then
@@ -288,9 +289,7 @@ function f_alert_monsters.init()
   for _, v in ipairs(Config.Alerts) do
     v.active_alert = false
     v.last_fm_turn = -1
-    if type(v.pattern) == "table" then
-      v.pattern = table.concat(v.pattern, "|")
-    end
+    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
     v.pattern = WARN_PREFIX .. v.pattern .. WARN_SUFFIX
     v.regex = crawl.regex(v.pattern:gsub("monster_warning:", ""))
   end

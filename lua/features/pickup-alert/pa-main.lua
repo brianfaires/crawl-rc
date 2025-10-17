@@ -147,25 +147,26 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
-  RARE_ITEM = "💎",
-  ARTEFACT = "💠",
-  ORB = "🔮",
-  TALISMAN = "🧬",
-  STAFF_RES = "🔥",
+f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
+  or {
+    RARE_ITEM = "💎",
+    ARTEFACT = "💠",
+    ORB = "🔮",
+    TALISMAN = "🧬",
+    STAFF_RES = "🔥",
 
-  WEAPON = "⚔️",
-  RANGED = "🏹",
-  POLEARM = "🔱",
-  TWO_HAND = "✋🤚",
+    WEAPON = "⚔️",
+    RANGED = "🏹",
+    POLEARM = "🔱",
+    TWO_HAND = "✋🤚",
 
-  EGO = "✨",
-  ACCURACY = "🎯",
-  STRONGER = "💪",
-  STRONGEST = "💪💪",
-  LIGHTER = "⏬",
-  HEAVIER = "⏫"
-} -- f_pickup_alert.Config.Emoji (do not remove this comment)
+    EGO = "✨",
+    ACCURACY = "🎯",
+    STRONGER = "💪",
+    STRONGEST = "💪💪",
+    LIGHTER = "⏬",
+    HEAVIER = "⏫",
+  } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
 ---- Local config alias ----
 local Config = f_pickup_alert.Config
@@ -185,9 +186,14 @@ end
 
 ---- Public API ----
 function f_pickup_alert.autopickup(it, _)
-  if not BRC.active or pause_pa_system or you.have_orb()
+  if
+    not BRC.active
+    or pause_pa_system
+    or you.have_orb()
     or not it.is_identified and (it.branded or it.artefact or BRC.is.magic_staff(it))
-  then return end
+  then
+    return
+  end
 
   local unworn_aux_item = nil -- Track carried aux armour for mutation scenarios
   if it.is_useless then

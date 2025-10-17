@@ -13,8 +13,7 @@ Usage:
   - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
   - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
   - If using config_memory == "full", the function needs to be saved as a string instead. --]]
-  -- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
-
+-- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
 
 ---- Initialize BRC namespace and Public modules
 BRC = BRC or {}
@@ -27,7 +26,7 @@ BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
 } -- BRC.Profiles.Default (do not remove this comment)
-BRC.Config = BRC.Profiles.Default-- Always init to Default profile
+BRC.Config = BRC.Profiles.Default -- Always init to Default profile
 
 -- Testing Config Profile: Isolate and test specific features
 BRC.Profiles.Testing = {
@@ -90,9 +89,9 @@ BRC.Profiles.Custom = {
 
     Alert = {
       armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
-      weapon_sensitivity = 2, -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
+      weapon_sensitivity = 2,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
       orbs = true,
-      staff_resists = true, -- When a staff gives a missing resistance
+      staff_resists = true,     -- When a staff gives a missing resistance
       talismans = true,
 
       one_time = { -- Alert the first time each item is found
@@ -135,12 +134,12 @@ BRC.Profiles.Speed = {
   ["safe-stairs"] = { disabled = true },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
-    dmg_fm_threshold = 1,    -- Force more for losing this % of max HP
-    always_on_bottom = true,   -- Rewrite HP/MP meters after each turn with messages
+    dmg_fm_threshold = 1,       -- Force more for losing this % of max HP
+    always_on_bottom = true,    -- Rewrite HP/MP meters after each turn with messages
   },
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
-    save_with_msg = false, -- Shift-S to save and leave yourself a message
+    save_with_msg = false,      -- Shift-S to save and leave yourself a message
   },
   ["remind-id"] = {
     stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
@@ -171,7 +170,7 @@ BRC.Profiles.Speed = {
       },
       OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- No one_time if skill < this
 
-      More = { }, -- All nil / false
+      More = {}, -- All nil / false
     },
     Tuning = {
       Armour = {
@@ -199,7 +198,6 @@ BRC.Profiles.Streak = {
   ["alert-monsters"] = {
     sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
-
 } -- BRC.Profiles.Streak (do not remove this comment)
 
 }
@@ -257,12 +255,12 @@ BRC.SPELLBOOKS = {
 } -- BRC.SPELLBOOKS (do not remove this comment)
 
 ---- Races ----
-BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant", }
-BRC.NONLIVING_RACES = { "Djinni", "Gargoyle", }
-BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant", }
-BRC.LITTLE_RACES = { "Spriggan", }
-BRC.SMALL_RACES = { "Kobold", }
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll", }
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
+BRC.NONLIVING_RACES = { "Djinni", "Gargoyle" }
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+BRC.LITTLE_RACES = { "Spriggan" }
+BRC.SMALL_RACES = { "Kobold" }
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
 BRC.STAFF_SCHOOLS = {
@@ -284,15 +282,15 @@ BRC.WEAP_SCHOOLS = {
 } -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 ---- Branches ----
-BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar", }
+BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
 BRC.PORTAL_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
 ---- Egos + artefact properties ----
-BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous", }
-BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect", }
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
+BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
 BRC.BAD_ART_PROPS = {
   "Bane", "-Cast", "-Move", "-Tele",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
@@ -313,7 +311,7 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2, }
+BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 
 }
 ############################### End lua/core/constants.lua ###############################
@@ -1327,8 +1325,8 @@ end
 function BRC.is.unusable_ego(ego)
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-      or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
-      or ego == "pain" and you.skill("Necromancy") == 0
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
 end
 
 -- Armour stats
@@ -1770,6 +1768,8 @@ local function safe_call_string(str, module_name)
 end
 
 local function override_feature_config_table(source, dest)
+  if type(source) ~= "table" then return end
+
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
@@ -1780,16 +1780,17 @@ local function override_feature_config_table(source, dest)
   end
 end
 
-local function override_feature_config(feature_name)
-  if not _features[feature_name].Config then _features[feature_name].Config = {} end
-  if type(_features[feature_name].Config.init) == "function" then
-    _features[feature_name].Config.init()
-  elseif type(_features[feature_name].Config.init) == "string" then
-    safe_call_string(_features[feature_name].Config.init, feature_name)
+local function process_feature_config(feature_name)
+  local f = _features[feature_name]
+  if not f.Config then
+    f.Config = {}
+  elseif type(f.Config.init) == "function" then
+    f.Config.init()
+  elseif type(f.Config.init) == "string" then
+    safe_call_string(f.Config.init, feature_name)
   end
 
-  if not BRC.Config[feature_name] then return end
-  override_feature_config_table(BRC.Config[feature_name], _features[feature_name].Config)
+  override_feature_config_table(BRC.Config[feature_name], f.Config)
 end
 
 -- Hook management
@@ -1808,14 +1809,16 @@ local function call_all_hooks(hook_name, ...)
         handle_feature_error(hook_info.feature_name, hook_name, result)
       else
         if last_return_value and result and last_return_value ~= result then
-          BRC.log.warning(string.format(
+          BRC.log.warning(
+            string.format(
               "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
               hook_name,
               returning_feature,
               BRC.util.tostring(last_return_value, true),
               hook_info.feature_name,
               BRC.util.tostring(result, true)
-          ))
+            )
+          )
         end
 
         last_return_value = result
@@ -1852,9 +1855,7 @@ local function register_all_features()
   -- Find all feature modules
   local feature_names = {}
   for name, value in pairs(_G) do
-    if BRC.is_feature_module(value) then
-      feature_names[#feature_names + 1] = name
-    end
+    if BRC.is_feature_module(value) then feature_names[#feature_names + 1] = name end
   end
 
   -- Sort alphabetically (for reproducable behavior)
@@ -1900,7 +1901,7 @@ function BRC.register(f)
   end
 
   if feature_is_disabled(f) then
-    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .." is disabled. Skipped registration.")
+    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .. " is disabled. Skipped registration.")
     return nil
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
@@ -1923,11 +1924,7 @@ function BRC.register(f)
     end
   end
 
-  -- Handle config init() and overrides
-  if type(f.Config) == "table" and type(f.Config.init) == "function" then
-    f.Config.init()
-  end
-  override_feature_config(f.BRC_FEATURE_NAME)
+  process_feature_config(f.BRC_FEATURE_NAME)
 
   return true
 end
@@ -2027,7 +2024,7 @@ function BRC.load_config(input_config)
     safe_call_string(BRC.Config.init, "BRC")
   end
   for name, _ in pairs(_features) do
-    override_feature_config(name)
+    process_feature_config(name)
   end
 
   BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(config_name)))

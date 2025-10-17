@@ -101,9 +101,7 @@ function macro_brc_explore()
       BRC.util.do_cmd("CMD_EXPLORE")
     end
   else
-    if you.feel_safe() then
-      explore_after_recovery = true
-    end
+    if you.feel_safe() then explore_after_recovery = true end
     BRC.util.do_cmd("CMD_REST")
   end
 end

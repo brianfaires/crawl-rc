@@ -8,7 +8,7 @@ Dependencies: core/data.lua, core/util.lua
 f_hotkey = {}
 f_hotkey.BRC_FEATURE_NAME = "hotkey"
 f_hotkey.Config = {
-  key = { keycode = "13", name = "[Enter]", },
+  key = { keycode = "13", name = "[Enter]" },
   autoequip = true,
 } -- f_hotkey.Config (do not remove this comment)
 
@@ -31,11 +31,10 @@ local function c_assign_invletter_autoequip(it)
   local TURNS = 1
   local name = it.name():gsub(" {.*}", "")
 
-  BRC.set_hotkey("equip " .. BRC.text.white(name),  function()
-    local inv_items = util.filter(
-      function(i) return i.name():gsub(" {.*}", "") == name end,
-      items.inventory()
-    )
+  BRC.set_hotkey("equip " .. BRC.text.white(name), function()
+    local inv_items = util.filter(function(i)
+      return i.name():gsub(" {.*}", "") == name
+    end, items.inventory())
 
     for i = 1, #inv_items do
       if not inv_items[i].equipped then

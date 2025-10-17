@@ -45,12 +45,15 @@ local function get_max_stack(class)
 end
 
 local function have_scroll_of_id()
-  local ID = "scroll of identify"
-  return util.exists(items.inventory(), function(i) return i.name("qual") == ID end)
+  return util.exists(items.inventory(), function(i)
+    return i.name("qual") == "scroll of identify"
+  end)
 end
 
 local function have_unid_item()
-  return util.exists(items.inventory(), function(i) return not i.is_identified end)
+  return util.exists(items.inventory(), function(i)
+    return not i.is_identified
+  end)
 end
 
 ---- Hook functions ----
@@ -59,10 +62,10 @@ function f_remind_id.init()
 end
 
 function f_remind_id.c_assign_invletter(it)
-  if (
+  if
     not it.is_identified and have_scroll_of_id()
     or it.name("qual") == "scroll of identify" and have_unid_item()
-  ) then
+  then
     you.stop_activity()
     do_remind_id_check = true
   end

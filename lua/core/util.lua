@@ -1003,8 +1003,8 @@ end
 function BRC.is.unusable_ego(ego)
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-      or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
-      or ego == "pain" and you.skill("Necromancy") == 0
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
 end
 
 -- Armour stats

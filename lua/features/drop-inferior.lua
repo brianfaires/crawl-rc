@@ -34,11 +34,13 @@ function f_drop_inferior.c_assign_invletter(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
-  if (
+  if
     not (it.is_weapon or BRC.is.armour(it))
     or BRC.is.risky_item(it)
     or BRC.get.num_equip_slots(it) > 1
-  ) then return end
+  then
+    return
+  end
 
   local it_ego = BRC.get.ego(it)
   local marked_something = false
@@ -63,7 +65,7 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop then
-    BRC.set_hotkey("drop your useless items",function()
+    BRC.set_hotkey("drop your useless items", function()
       crawl.sendkeys(BRC.get.command_key("CMD_DROP") .. ",\r")
     end, 1)
   end

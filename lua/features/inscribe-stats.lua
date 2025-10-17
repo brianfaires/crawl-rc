@@ -45,8 +45,11 @@ local function inscribe_armour_stats(it)
   it.inscribe(new_insc, false)
 
   -- If f_color_inscribe is enabled, update the color
-  if sign_change
-    and f_color_inscribe and f_color_inscribe.Config and not f_color_inscribe.Config.disabled
+  if
+    sign_change
+    and f_color_inscribe
+    and f_color_inscribe.Config
+    and not f_color_inscribe.Config.disabled
     and f_color_inscribe.colorize
   then
     f_color_inscribe.colorize(it)
