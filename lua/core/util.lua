@@ -87,7 +87,7 @@ function BRC.log.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COLOR.lightred)
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
   you.stop_activity()
   crawl.redraw_screen()
 
@@ -98,17 +98,17 @@ function BRC.log.error(message, context, skip_more)
 end
 
 function BRC.log.warning(message, context)
-  log_message(message, context, BRC.COLOR.yellow)
+  log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
 end
 
 function BRC.log.info(message, context)
-  log_message(message, context, BRC.COLOR.white)
+  log_message(message, context, BRC.COL.white)
 end
 
 function BRC.log.debug(message, context)
   if not BRC.Config.show_debug_messages then return end
-  log_message(message, context, BRC.COLOR.lightblue)
+  log_message(message, context, BRC.COL.lightblue)
 end
 
 ---------------------------------------------------
@@ -121,7 +121,7 @@ function BRC.text.clean(text)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.COLOR) do
+for k, v in pairs(BRC.COL) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -154,7 +154,7 @@ end
 BRC.mpr = {}
 
 --- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.COLOR) do
+for k, v in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.text.color(v, msg), channel)
     crawl.flush_prev_message()
@@ -242,7 +242,7 @@ function BRC.mpr.select(msg, options, color)
   for i, option in ipairs(options) do
     msg = msg .. string.format("%s: %s\n", i, BRC.text.white(option))
   end
-  BRC.mpr[color or BRC.COLOR.lightcyan](msg, "prompt")
+  BRC.mpr[color or BRC.COL.lightcyan](msg, "prompt")
   for _ = 1, 10 do
     local res = crawl.getch()
     if res then
@@ -592,7 +592,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLOR.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COL.lightcyan))
 end
 
 ----------------------------------------------

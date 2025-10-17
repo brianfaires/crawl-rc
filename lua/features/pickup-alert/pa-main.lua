@@ -24,16 +24,17 @@ f_pickup_alert.Config.Alert = {
   talismans = true,
 
   -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
-  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6, -- 27 for Shapeshifter, 6 for everyone else
+  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
 
   -- Each usable item is alerted once.
   one_time = {
-    "wand of digging", "buckler", "kite shield", "tower shield",
-    "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+    "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+    "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
     "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
     "broad axe", "executioner's axe",
     "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
-    "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+    "lajatang", "bardiche", "demon trident", "partisan", "trishula",
+    "hand cannon", "triple crossbow",
   },
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
@@ -66,8 +67,8 @@ f_pickup_alert.Config.Tuning = {}
   f_pickup_alert.Config.Tuning.Armour: Magic numbers for the armour pickup/alert system.
   For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
   Lower values mean more alerts. gain/diff/same/lose refers to egos.
-  min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
-  ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
+  min_gain/max_loss block alerts for new egos, when AC or EV delta is outside limits
+  ignore_small: if abs(AC+EV) <= this, ignore ratios and alert any gain/diff ego
 --]]
 f_pickup_alert.Config.Tuning.Armour = {
   Lighter = {
@@ -89,61 +90,61 @@ f_pickup_alert.Config.Tuning.Armour = {
     ignore_small = 5,
   },
   encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
-  early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
+  early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
 } -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
 
 --[[
-  f_pickup_alert.Config.Tuning.Weap: Magic numbers for the weapon pickup/alert system. Two common types of values:
+  f_pickup_alert.Config.Tuning.Weap: Magic numbers for the weapon pickup/alert system, namely:
     1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
     2. Cutoffs for when alerts are active (XL, skill_level)
   Pickup/alert system will try to upgrade ANY weapon in your inventory.
-  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS, brand, and accuracy.
+  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS/brand/accuracy.
 --]]
 f_pickup_alert.Config.Tuning.Weap = {}
 f_pickup_alert.Config.Tuning.Weap.Pickup = {
-  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
-  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
-  accuracy_weight = 0.25, -- Treat +1 Accuracy as +`accuracy_weight` DPS
+  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > add_ego
+  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > same_type_melee
+  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > same_type_ranged
+  accuracy_weight = 0.25, -- Treat +1 Accuracy as +accuracy_weight DPS
 } -- f_pickup_alert.Config.Tuning.Weap.Pickup (do not remove this comment)
 
 f_pickup_alert.Config.Tuning.Weap.Alert = {
   -- Alerts for weapons not requiring an extra hand
-  pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
-  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
-  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > `new_ego`
-  low_skill_penalty_damping = 8, -- Increase to penalize low-trained schools. Penalty = (skill+damp) / (top_skill+damp)
+  pure_dps = 1.0, -- Alert if DPS ratio > pure_dps
+  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > gain_ego
+  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > new_ego
+  low_skill_penalty_damping = 8, -- [0-20] Reduces penalty to weapons of lower-trained schools
 
   -- Alerts for 2-handed weapons, when carrying 1-handed
   AddHand = {
-    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < `ignore_sh_lvl`
-    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > `add_ego_lose_sh`
-    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > `not_using`
+    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < ignore_sh_lvl
+    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > add_ego_lose_sh
+    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > not_using
   },
 
   -- Alerts for good early weapons of all types
   Early = {
-    xl = 7, -- Alert early weapons if XL <= `xl`
-    skill = { factor = 1.5, offset = 2.0 }, -- Don't alert weapons with skill diff > XL * `factor` + `offset`
-    branded_min_plus = 4, -- Alert branded weapons with plus >= `branded_min_plus`
+    xl = 7, -- Alert early weapons if XL <= xl
+    skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons with skill_diff > XL*factor+offset
+    branded_min_plus = 4, -- Alert branded weapons with plus >= branded_min_plus
   },
 
   -- Alerts for particularly strong ranged weapons
   EarlyRanged = {
-    xl = 14, -- Alert strong ranged weapons if XL <= `xl`
-    min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
-    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
-    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= `max_shields`
+    xl = 14, -- Alert strong ranged weapons if XL <= xl
+    min_plus = 7, -- Alert ranged weapons with plus >= min_plus
+    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= branded_min_plus
+    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= max_shields
   },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {
-  weapon = { desc = BRC.COLOR.magenta, item = BRC.COLOR.yellow, stats = BRC.COLOR.lightgrey },
-  body_arm = { desc = BRC.COLOR.lightblue, item = BRC.COLOR.lightcyan, stats = BRC.COLOR.lightgrey },
-  aux_arm = { desc = BRC.COLOR.lightblue, item = BRC.COLOR.yellow },
-  orb = { desc = BRC.COLOR.green, item = BRC.COLOR.lightgreen },
-  talisman = { desc = BRC.COLOR.green, item = BRC.COLOR.lightgreen },
-  misc = { desc = BRC.COLOR.brown, item = BRC.COLOR.white },
+  weapon = { desc = BRC.COL.magenta, item = BRC.COL.yellow, stats = BRC.COL.lightgrey },
+  body_arm = { desc = BRC.COL.lightblue, item = BRC.COL.lightcyan, stats = BRC.COL.lightgrey },
+  aux_arm = { desc = BRC.COL.lightblue, item = BRC.COL.yellow },
+  orb = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
+  talisman = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
+  misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
 f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
@@ -178,8 +179,8 @@ local function has_configured_force_more(it)
     if Config.Alert.More.artefact then return true end
     if Config.Alert.More.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
   end
-  if Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it) then return true end
-  return false
+
+  return Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it)
 end
 
 ---- Public API ----
@@ -320,7 +321,7 @@ function f_pickup_alert.c_message(text, channel)
       for _, v in ipairs(pa_recent_alerts) do
         tokens[#tokens + 1] = string.format("\n  %s", v)
       end
-      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COLOR.magenta) end
+      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COL.magenta) end
       pa_recent_alerts = {}
     end
   end

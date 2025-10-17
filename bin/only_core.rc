@@ -299,12 +299,12 @@ BRC.BAD_ART_PROPS = {
 } -- BRC.BAD_ART_PROPS (do not remove this comment)
 
 ---- Other ----
--- BRC.COLOR:Would prefer to use integer values, but they don't work in all menus
-BRC.COLOR = {
+-- BRC.COL: Would prefer to use integer values, but they don't work in all menus
+BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COLOR (do not remove this comment)
+} -- BRC.COL (do not remove this comment)
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
@@ -411,7 +411,7 @@ function BRC.log.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COLOR.lightred)
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
   you.stop_activity()
   crawl.redraw_screen()
 
@@ -422,17 +422,17 @@ function BRC.log.error(message, context, skip_more)
 end
 
 function BRC.log.warning(message, context)
-  log_message(message, context, BRC.COLOR.yellow)
+  log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
 end
 
 function BRC.log.info(message, context)
-  log_message(message, context, BRC.COLOR.white)
+  log_message(message, context, BRC.COL.white)
 end
 
 function BRC.log.debug(message, context)
   if not BRC.Config.show_debug_messages then return end
-  log_message(message, context, BRC.COLOR.lightblue)
+  log_message(message, context, BRC.COL.lightblue)
 end
 
 ---------------------------------------------------
@@ -445,7 +445,7 @@ function BRC.text.clean(text)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.COLOR) do
+for k, v in pairs(BRC.COL) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -478,7 +478,7 @@ end
 BRC.mpr = {}
 
 --- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.COLOR) do
+for k, v in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.text.color(v, msg), channel)
     crawl.flush_prev_message()
@@ -566,7 +566,7 @@ function BRC.mpr.select(msg, options, color)
   for i, option in ipairs(options) do
     msg = msg .. string.format("%s: %s\n", i, BRC.text.white(option))
   end
-  BRC.mpr[color or BRC.COLOR.lightcyan](msg, "prompt")
+  BRC.mpr[color or BRC.COL.lightcyan](msg, "prompt")
   for _ = 1, 10 do
     local res = crawl.getch()
     if res then
@@ -916,7 +916,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLOR.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COL.lightcyan))
 end
 
 ----------------------------------------------
@@ -1702,7 +1702,7 @@ end
 
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLOR.yellow) then
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COL.yellow) then
     BRC.unregister(feature_name)
   else
     BRC.mpr.okay()
@@ -1722,7 +1722,7 @@ local function handle_core_error(hook_name, result, ...)
 
   local msg = "BRC failure in safe_call_all_hooks(" .. table.concat(params, ", ") .. ")"
   BRC.log.error(msg, result, true)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLOR.yellow) then
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COL.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
@@ -1839,7 +1839,7 @@ local function safe_call_all_hooks(hook_name, ...)
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
   BRC.log.error("Failed to handle BRC core error!", result, true)
-  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLOR.yellow) then
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COL.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)
@@ -1991,7 +1991,7 @@ function BRC.init()
     BRC.mpr.lightgreen("\n" .. BRC.text.wrap(msg, BRC.EMOJI.SUCCESS) .. "\n")
   else
     -- success == nil if errors were resolved, false if tried restore but failed
-    if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
+    if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COL.yellow) then
       BRC.active = false
       BRC.mpr.lightred("\nBRC is off.\n")
       return false

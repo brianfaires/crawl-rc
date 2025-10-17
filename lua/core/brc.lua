@@ -40,7 +40,7 @@ end
 
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLOR.yellow) then
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COL.yellow) then
     BRC.unregister(feature_name)
   else
     BRC.mpr.okay()
@@ -60,7 +60,7 @@ local function handle_core_error(hook_name, result, ...)
 
   local msg = "BRC failure in safe_call_all_hooks(" .. table.concat(params, ", ") .. ")"
   BRC.log.error(msg, result, true)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLOR.yellow) then
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COL.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
@@ -177,7 +177,7 @@ local function safe_call_all_hooks(hook_name, ...)
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
   BRC.log.error("Failed to handle BRC core error!", result, true)
-  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLOR.yellow) then
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COL.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)
@@ -329,7 +329,7 @@ function BRC.init()
     BRC.mpr.lightgreen("\n" .. BRC.text.wrap(msg, BRC.EMOJI.SUCCESS) .. "\n")
   else
     -- success == nil if errors were resolved, false if tried restore but failed
-    if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
+    if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COL.yellow) then
       BRC.active = false
       BRC.mpr.lightred("\nBRC is off.\n")
       return false

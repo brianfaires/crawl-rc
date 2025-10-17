@@ -46,7 +46,7 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" then return end
-      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COLOR.lightcyan)
+      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
       if Config.remove_faith_hotkey then
         BRC.set_hotkey("remove " .. BRC.text.white("amulet of faith"), function()
@@ -77,7 +77,7 @@ function macro_brc_save()
     return BRC.util.do_cmd("CMD_SAVE_GAME")
   end
 
-  if not BRC.mpr.yesno("Save game and exit?", BRC.COLOR.lightcyan) then
+  if not BRC.mpr.yesno("Save game and exit?", BRC.COL.lightcyan) then
     BRC.mpr.okay()
     return
   end

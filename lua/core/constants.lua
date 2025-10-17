@@ -88,12 +88,12 @@ BRC.BAD_ART_PROPS = {
 } -- BRC.BAD_ART_PROPS (do not remove this comment)
 
 ---- Other ----
--- BRC.COLOR:Would prefer to use integer values, but they don't work in all menus
-BRC.COLOR = {
+-- BRC.COL: Would prefer to use integer values, but they don't work in all menus
+BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COLOR (do not remove this comment)
+} -- BRC.COL (do not remove this comment)
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand

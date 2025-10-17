@@ -1101,12 +1101,12 @@ BRC.BAD_ART_PROPS = {
 } -- BRC.BAD_ART_PROPS (do not remove this comment)
 
 ---- Other ----
--- BRC.COLOR:Would prefer to use integer values, but they don't work in all menus
-BRC.COLOR = {
+-- BRC.COL: Would prefer to use integer values, but they don't work in all menus
+BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COLOR (do not remove this comment)
+} -- BRC.COL (do not remove this comment)
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
@@ -1213,7 +1213,7 @@ function BRC.log.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COLOR.lightred)
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
   you.stop_activity()
   crawl.redraw_screen()
 
@@ -1224,17 +1224,17 @@ function BRC.log.error(message, context, skip_more)
 end
 
 function BRC.log.warning(message, context)
-  log_message(message, context, BRC.COLOR.yellow)
+  log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
 end
 
 function BRC.log.info(message, context)
-  log_message(message, context, BRC.COLOR.white)
+  log_message(message, context, BRC.COL.white)
 end
 
 function BRC.log.debug(message, context)
   if not BRC.Config.show_debug_messages then return end
-  log_message(message, context, BRC.COLOR.lightblue)
+  log_message(message, context, BRC.COL.lightblue)
 end
 
 ---------------------------------------------------
@@ -1247,7 +1247,7 @@ function BRC.text.clean(text)
 end
 
 -- Wrap text in a color tag, Usage: BRC.text.blue("Hello"), or BRC.text["1"]("Hello")
-for k, v in pairs(BRC.COLOR) do
+for k, v in pairs(BRC.COL) do
   BRC.text[k] = function(text)
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
@@ -1280,7 +1280,7 @@ end
 BRC.mpr = {}
 
 --- Output message in color. Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello")
-for k, v in pairs(BRC.COLOR) do
+for k, v in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.text.color(v, msg), channel)
     crawl.flush_prev_message()
@@ -1368,7 +1368,7 @@ function BRC.mpr.select(msg, options, color)
   for i, option in ipairs(options) do
     msg = msg .. string.format("%s: %s\n", i, BRC.text.white(option))
   end
-  BRC.mpr[color or BRC.COLOR.lightcyan](msg, "prompt")
+  BRC.mpr[color or BRC.COL.lightcyan](msg, "prompt")
   for _ = 1, 10 do
     local res = crawl.getch()
     if res then
@@ -1718,7 +1718,7 @@ end
 
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
-  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COLOR.lightcyan))
+  BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COL.lightcyan))
 end
 
 ----------------------------------------------
@@ -2504,7 +2504,7 @@ end
 
 local function handle_feature_error(feature_name, hook_name, result)
   BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
-  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COLOR.yellow) then
+  if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COL.yellow) then
     BRC.unregister(feature_name)
   else
     BRC.mpr.okay()
@@ -2524,7 +2524,7 @@ local function handle_core_error(hook_name, result, ...)
 
   local msg = "BRC failure in safe_call_all_hooks(" .. table.concat(params, ", ") .. ")"
   BRC.log.error(msg, result, true)
-  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COLOR.yellow) then
+  if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COL.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
@@ -2641,7 +2641,7 @@ local function safe_call_all_hooks(hook_name, ...)
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
   BRC.log.error("Failed to handle BRC core error!", result, true)
-  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COLOR.yellow) then
+  if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COL.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
     pcall(BRC.dump.char, true)
@@ -2793,7 +2793,7 @@ function BRC.init()
     BRC.mpr.lightgreen("\n" .. BRC.text.wrap(msg, BRC.EMOJI.SUCCESS) .. "\n")
   else
     -- success == nil if errors were resolved, false if tried restore but failed
-    if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COLOR.yellow) then
+    if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COL.yellow) then
       BRC.active = false
       BRC.mpr.lightred("\nBRC is off.\n")
       return false
@@ -3429,15 +3429,15 @@ end
 local function format_ratio(cur, max)
   local color
   if cur <= (max * 0.25) then
-    color = BRC.COLOR.lightred
+    color = BRC.COL.lightred
   elseif cur <= (max * 0.50) then
-    color = BRC.COLOR.red
+    color = BRC.COL.red
   elseif cur <= (max * 0.75) then
-    color = BRC.COLOR.yellow
+    color = BRC.COL.yellow
   elseif cur < max then
-    color = BRC.COLOR.white
+    color = BRC.COL.white
   else
-    color = BRC.COLOR.green
+    color = BRC.COL.green
   end
 
   return BRC.text.color(color, string.format(" -> %s/%s", cur, max))
@@ -3604,34 +3604,34 @@ f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
 ---- Local constants / configuration ----
-local LOSS_COLOR = BRC.COLOR.brown
-local GAIN_COLOR = BRC.COLOR.white
+local LOSS_COLOR = BRC.COL.brown
+local GAIN_COLOR = BRC.COL.white
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
 local POS_WORN = ":%d+%.?%d*"
 local COLORIZE_TAGS = {
-  { "rF" .. MULTI_PLUS, BRC.COLOR.lightred },
+  { "rF" .. MULTI_PLUS, BRC.COL.lightred },
   { "rF" .. MULTI_MINUS, LOSS_COLOR },
-  { "rC" .. MULTI_PLUS, BRC.COLOR.lightblue },
+  { "rC" .. MULTI_PLUS, BRC.COL.lightblue },
   { "rC" .. MULTI_MINUS, LOSS_COLOR },
-  { "rN" .. MULTI_PLUS, BRC.COLOR.lightmagenta },
+  { "rN" .. MULTI_PLUS, BRC.COL.lightmagenta },
   { "rN" .. MULTI_MINUS, LOSS_COLOR },
-  { "rPois", BRC.COLOR.lightgreen },
-  { "rElec", BRC.COLOR.lightcyan },
-  { "rCorr", BRC.COLOR.yellow },
-  { "rMut", BRC.COLOR.yellow },
-  { "sInv", BRC.COLOR.magenta },
-  { "MRegen" .. MULTI_PLUS, BRC.COLOR.cyan },
-  { "^Regen" .. MULTI_PLUS, BRC.COLOR.green }, -- Avoiding "MRegen"
-  { " Regen" .. MULTI_PLUS, BRC.COLOR.green }, -- Avoiding "MRegen"
+  { "rPois", BRC.COL.lightgreen },
+  { "rElec", BRC.COL.lightcyan },
+  { "rCorr", BRC.COL.yellow },
+  { "rMut", BRC.COL.yellow },
+  { "sInv", BRC.COL.magenta },
+  { "MRegen" .. MULTI_PLUS, BRC.COL.cyan },
+  { "^Regen" .. MULTI_PLUS, BRC.COL.green }, -- Avoiding "MRegen"
+  { " Regen" .. MULTI_PLUS, BRC.COL.green }, -- Avoiding "MRegen"
   { "Stlth" .. MULTI_PLUS, GAIN_COLOR },
   { "%+Fly", GAIN_COLOR },
-  { "RMsl", BRC.COLOR.yellow },
-  { "Will" .. MULTI_PLUS, BRC.COLOR.blue },
+  { "RMsl", BRC.COL.yellow },
+  { "Will" .. MULTI_PLUS, BRC.COL.blue },
   { "Will" .. MULTI_MINUS, LOSS_COLOR },
-  { "Wiz" .. MULTI_PLUS, BRC.COLOR.cyan },
+  { "Wiz" .. MULTI_PLUS, BRC.COL.cyan },
   { "Wiz" .. MULTI_MINUS, LOSS_COLOR },
   { "Slay" .. POS_NUM, GAIN_COLOR },
   { "Slay" .. NEG_NUM, LOSS_COLOR },
@@ -3676,8 +3676,8 @@ function f_color_inscribe.colorize(it)
   local max_length = 80 - (it.is_melded and 32 or 25) - #it.name("plain", true) - 3
   if max_length < 0 then return end
   -- Try removing darkgrey and white, then just remove all
-  if #text > max_length then text = text:gsub("</?" .. BRC.COLOR.darkgrey .. ">", "") end
-  if #text > max_length then text = text:gsub("</?" .. BRC.COLOR.white .. ">", "") end
+  if #text > max_length then text = text:gsub("</?" .. BRC.COL.darkgrey .. ">", "") end
+  if #text > max_length then text = text:gsub("</?" .. BRC.COL.white .. ">", "") end
   if #text > max_length then text = text:gsub("<.->", "") end
 
   it.inscribe(text, false)
@@ -4288,7 +4288,7 @@ local _actions = {}
 local function display_next_message()
   if #_actions == 0 then return end
   local msg = string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m)
-  BRC.mpr.que(msg, BRC.COLOR.cyan)
+  BRC.mpr.que(msg, BRC.COL.cyan)
   _actions[1].m = nil
 end
 
@@ -4505,7 +4505,7 @@ local function alert_remove_faith()
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" then return end
-      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COLOR.lightcyan)
+      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
       if Config.remove_faith_hotkey then
         BRC.set_hotkey("remove " .. BRC.text.white("amulet of faith"), function()
@@ -4536,7 +4536,7 @@ function macro_brc_save()
     return BRC.util.do_cmd("CMD_SAVE_GAME")
   end
 
-  if not BRC.mpr.yesno("Save game and exit?", BRC.COLOR.lightcyan) then
+  if not BRC.mpr.yesno("Save game and exit?", BRC.COL.lightcyan) then
     BRC.mpr.okay()
     return
   end
@@ -5340,16 +5340,17 @@ f_pickup_alert.Config.Alert = {
   talismans = true,
 
   -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
-  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6, -- 27 for Shapeshifter, 6 for everyone else
+  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
 
   -- Each usable item is alerted once.
   one_time = {
-    "wand of digging", "buckler", "kite shield", "tower shield",
-    "crystal plate armour", "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+    "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+    "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
     "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
     "broad axe", "executioner's axe",
     "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
-    "lajatang", "bardiche", "demon trident", "partisan", "trishula", "hand cannon", "triple crossbow",
+    "lajatang", "bardiche", "demon trident", "partisan", "trishula",
+    "hand cannon", "triple crossbow",
   },
 
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
@@ -5382,8 +5383,8 @@ f_pickup_alert.Config.Tuning = {}
   f_pickup_alert.Config.Tuning.Armour: Magic numbers for the armour pickup/alert system.
   For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
   Lower values mean more alerts. gain/diff/same/lose refers to egos.
-  min_gain/max_loss check against the AC or EV delta when ego changes; skip alerts if delta outside limits
-  ignore_small: separate from AC/EV ratios, if absolute AC+EV loss is <= this, alert any gain/diff ego
+  min_gain/max_loss block alerts for new egos, when AC or EV delta is outside limits
+  ignore_small: if abs(AC+EV) <= this, ignore ratios and alert any gain/diff ego
 --]]
 f_pickup_alert.Config.Tuning.Armour = {
   Lighter = {
@@ -5405,61 +5406,61 @@ f_pickup_alert.Config.Tuning.Armour = {
     ignore_small = 5,
   },
   encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
-  early_xl = 6, -- Alert all usable runed body armour if XL <= `early_xl`
+  early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
 } -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
 
 --[[
-  f_pickup_alert.Config.Tuning.Weap: Magic numbers for the weapon pickup/alert system. Two common types of values:
+  f_pickup_alert.Config.Tuning.Weap: Magic numbers for the weapon pickup/alert system, namely:
     1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
     2. Cutoffs for when alerts are active (XL, skill_level)
   Pickup/alert system will try to upgrade ANY weapon in your inventory.
-  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS, brand, and accuracy.
+  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS/brand/accuracy.
 --]]
 f_pickup_alert.Config.Tuning.Weap = {}
 f_pickup_alert.Config.Tuning.Weap.Pickup = {
-  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > `add_ego`
-  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > `same_type_melee`
-  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > `same_type_ranged`
-  accuracy_weight = 0.25, -- Treat +1 Accuracy as +`accuracy_weight` DPS
+  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > add_ego
+  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > same_type_melee
+  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > same_type_ranged
+  accuracy_weight = 0.25, -- Treat +1 Accuracy as +accuracy_weight DPS
 } -- f_pickup_alert.Config.Tuning.Weap.Pickup (do not remove this comment)
 
 f_pickup_alert.Config.Tuning.Weap.Alert = {
   -- Alerts for weapons not requiring an extra hand
-  pure_dps = 1.0, -- Alert if DPS ratio > `pure_dps`
-  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > `gain_ego`
-  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > `new_ego`
-  low_skill_penalty_damping = 8, -- Increase to penalize low-trained schools. Penalty = (skill+damp) / (top_skill+damp)
+  pure_dps = 1.0, -- Alert if DPS ratio > pure_dps
+  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > gain_ego
+  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > new_ego
+  low_skill_penalty_damping = 8, -- [0-20] Reduces penalty to weapons of lower-trained schools
 
   -- Alerts for 2-handed weapons, when carrying 1-handed
   AddHand = {
-    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < `ignore_sh_lvl`
-    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > `add_ego_lose_sh`
-    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > `not_using`
+    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < ignore_sh_lvl
+    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > add_ego_lose_sh
+    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > not_using
   },
 
   -- Alerts for good early weapons of all types
   Early = {
-    xl = 7, -- Alert early weapons if XL <= `xl`
-    skill = { factor = 1.5, offset = 2.0 }, -- Don't alert weapons with skill diff > XL * `factor` + `offset`
-    branded_min_plus = 4, -- Alert branded weapons with plus >= `branded_min_plus`
+    xl = 7, -- Alert early weapons if XL <= xl
+    skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons with skill_diff > XL*factor+offset
+    branded_min_plus = 4, -- Alert branded weapons with plus >= branded_min_plus
   },
 
   -- Alerts for particularly strong ranged weapons
   EarlyRanged = {
-    xl = 14, -- Alert strong ranged weapons if XL <= `xl`
-    min_plus = 7, -- Alert ranged weapons with plus >= `min_plus`
-    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= `branded_min_plus`
-    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= `max_shields`
+    xl = 14, -- Alert strong ranged weapons if XL <= xl
+    min_plus = 7, -- Alert ranged weapons with plus >= min_plus
+    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= branded_min_plus
+    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= max_shields
   },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
 f_pickup_alert.Config.AlertColor = {
-  weapon = { desc = BRC.COLOR.magenta, item = BRC.COLOR.yellow, stats = BRC.COLOR.lightgrey },
-  body_arm = { desc = BRC.COLOR.lightblue, item = BRC.COLOR.lightcyan, stats = BRC.COLOR.lightgrey },
-  aux_arm = { desc = BRC.COLOR.lightblue, item = BRC.COLOR.yellow },
-  orb = { desc = BRC.COLOR.green, item = BRC.COLOR.lightgreen },
-  talisman = { desc = BRC.COLOR.green, item = BRC.COLOR.lightgreen },
-  misc = { desc = BRC.COLOR.brown, item = BRC.COLOR.white },
+  weapon = { desc = BRC.COL.magenta, item = BRC.COL.yellow, stats = BRC.COL.lightgrey },
+  body_arm = { desc = BRC.COL.lightblue, item = BRC.COL.lightcyan, stats = BRC.COL.lightgrey },
+  aux_arm = { desc = BRC.COL.lightblue, item = BRC.COL.yellow },
+  orb = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
+  talisman = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
+  misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
 f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
@@ -5494,8 +5495,8 @@ local function has_configured_force_more(it)
     if Config.Alert.More.artefact then return true end
     if Config.Alert.More.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
   end
-  if Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it) then return true end
-  return false
+
+  return Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it)
 end
 
 ---- Public API ----
@@ -5636,7 +5637,7 @@ function f_pickup_alert.c_message(text, channel)
       for _, v in ipairs(pa_recent_alerts) do
         tokens[#tokens + 1] = string.format("\n  %s", v)
       end
-      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COLOR.magenta) end
+      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COL.magenta) end
       pa_recent_alerts = {}
     end
   end

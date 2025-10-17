@@ -22,7 +22,7 @@ local _actions = {}
 local function display_next_message()
   if #_actions == 0 then return end
   local msg = string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m)
-  BRC.mpr.que(msg, BRC.COLOR.cyan)
+  BRC.mpr.que(msg, BRC.COL.cyan)
   _actions[1].m = nil
 end
 
