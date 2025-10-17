@@ -10,8 +10,8 @@ f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
 
 ---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
-  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon", "identify",
-  "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
+  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
+  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
 ---- Local functions ----
@@ -32,14 +32,14 @@ function f_safe_consumables.ready()
     if inv_class == "scroll" then
       if inscription_needed(inv_class, inv.subtype()) then
         if not inv.inscription:contains("!r") then inv.inscribe("!r") end
-      else
-        if inv.inscription:contains("!r") then inv.inscribe(inv.inscription:gsub("%!r", ""), false) end
+      elseif inv.inscription:contains("!r") then
+        inv.inscribe(inv.inscription:gsub("%!r", ""), false)
       end
     elseif inv_class == "potion" then
       if inscription_needed(inv_class, inv.subtype()) then
         if not inv.inscription:contains("!q") then inv.inscribe("!q") end
-      else
-        if inv.inscription:contains("!q") then inv.inscribe(inv.inscription:gsub("%!q", ""), false) end
+      elseif inv.inscription:contains("!q") then
+        inv.inscribe(inv.inscription:gsub("%!q", ""), false)
       end
     end
   end

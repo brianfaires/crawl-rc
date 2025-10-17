@@ -1,6 +1,7 @@
 --[[
 Feature: remind-id
-Description: Reminds to read ID scrolls, and stops explore on increased stack sizes before finding ID scrolls
+Description: Reminds to read ID scrolls.
+Before finding scroll of ID, stops exploration when largest un-ID'd stack sizes increase.
 Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua, hotkey.lua
 --]]

@@ -94,7 +94,9 @@ local function set_race_options()
     BRC.set.force_more_message("monster_warning:curare", true)
   end
 
-  if you.race() == "Gnoll" then BRC.set.message_mute("intrinsic_gain:skill increases to level", true) end
+  if you.race() == "Gnoll" then
+    BRC.set.message_mute("intrinsic_gain:skill increases to level", true)
+  end
 end
 
 local function set_xl_options()

@@ -28,7 +28,9 @@ local function check_new_location(cmd)
 
   if Config.warn_backtracking and ss_prev_location ~= ss_cur_location then
     if cmd == "CMD_GO_DOWNSTAIRS" then
-      if not (feature:contains("down") or feature:contains("shaft")) then return BRC.util.do_cmd(cmd) end
+      if not (feature:contains("down") or feature:contains("shaft")) then
+        return BRC.util.do_cmd(cmd)
+      end
     elseif cmd == "CMD_GO_UPSTAIRS" then
       if not feature:contains("up") then return BRC.util.do_cmd(cmd) end
     else
@@ -38,11 +40,14 @@ local function check_new_location(cmd)
     if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
   end
 
-  if Config.warn_v5 and not ss_v5_warned and ss_cur_location == "Vaults4" and cmd == "CMD_GO_DOWNSTAIRS" then
-    if feature:contains("down") or feature:contains("shaft") then
-      if not BRC.mpr.yesno("Really go to Vaults:5?") then return BRC.mpr.okay() end
-      ss_v5_warned = true
-    end
+  if Config.warn_v5
+    and not ss_v5_warned
+    and ss_cur_location == "Vaults4"
+    and cmd == "CMD_GO_DOWNSTAIRS"
+    and (feature:contains("down") or feature:contains("shaft"))
+  then
+    if not BRC.mpr.yesno("Really go to Vaults:5?") then return BRC.mpr.okay() end
+    ss_v5_warned = true
   end
 
   BRC.util.do_cmd(cmd)

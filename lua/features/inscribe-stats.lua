@@ -1,6 +1,6 @@
 --[[
 Feature: inscribe-stats
-Description: Automatically inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
+Description: Inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
 Author: buehler
 Dependencies: core/constants.lua, core/util.lua, color-inscribe.lua
 --]]
@@ -37,13 +37,18 @@ local function inscribe_armour_stats(it)
   else
     new_insc = ac_or_sh
     if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
-    if it.inscription and it.inscription ~= "" then new_insc = string.format("%s; %s", new_insc, it.inscription) end
+    if it.inscription and it.inscription ~= "" then
+      new_insc = string.format("%s; %s", new_insc, it.inscription)
+    end
   end
 
   it.inscribe(new_insc, false)
 
-  -- If enabled, update the colorized inscription
-  if sign_change and f_color_inscribe and not f_color_inscribe.Config.disabled and f_color_inscribe.colorize then
+  -- If f_color_inscribe is enabled, update the color
+  if sign_change
+    and f_color_inscribe and f_color_inscribe.Config and not f_color_inscribe.Config.disabled
+    and f_color_inscribe.colorize
+  then
     f_color_inscribe.colorize(it)
   end
 end
@@ -56,7 +61,9 @@ local function inscribe_weapon_stats(it)
   local idx = orig_inscr:find("DPS:", 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
-    if idx + #dps_inscr - 1 < #orig_inscr then suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr) end
+    if idx + #dps_inscr - 1 < #orig_inscr then
+      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
+    end
   elseif #orig_inscr > 0 then
     suffix = "; " .. orig_inscr
   end
@@ -66,7 +73,6 @@ end
 
 ---- Hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
-  -- NOTE: It's important that other features don't meddle with the inscription; e.g. inserting unexpected color tags
   if Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
   elseif Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then

@@ -20,9 +20,8 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if f_drop_inferior.Config.msg_on_inscribe then
-    local item_name = BRC.text.yellow(string.format("%s - %s", BRC.util.int2char(it.slot), it.name()))
-    local msg = string.format("%s You can drop: %s %s", BRC.EMOJI.CAUTION, item_name, BRC.EMOJI.CAUTION)
-    BRC.mpr.cyan(msg)
+    local item_name = BRC.text.yellow(BRC.util.int2char(it.slot) .. " - " .. it.name())
+    BRC.mpr.cyan(BRC.text.wrap("You can drop: " .. item_name, BRC.EMOJI.CAUTION))
   end
 end
 
@@ -54,7 +53,8 @@ function f_drop_inferior.c_assign_invletter(it)
           marked_something = true
         end
       else
-        if BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it) and inv.encumbrance >= it.encumbrance then
+        local not_more_ac = BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it)
+        if not_more_ac and inv.encumbrance >= it.encumbrance then
           inscribe_drop(inv)
           marked_something = true
         end

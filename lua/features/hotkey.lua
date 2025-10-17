@@ -21,7 +21,8 @@ local _actions = {}
 ---- Local functions ----
 local function display_next_message()
   if #_actions == 0 then return end
-  BRC.mpr.que(string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m), BRC.COLOR.cyan)
+  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m)
+  BRC.mpr.que(msg, BRC.COLOR.cyan)
   _actions[1].m = nil
 end
 
@@ -31,13 +32,18 @@ local function c_assign_invletter_autoequip(it)
   local name = it.name():gsub(" {.*}", "")
 
   BRC.set_hotkey("equip " .. BRC.text.white(name),  function()
-    local inv_items = util.filter(function(i) return i.name():gsub(" {.*}", "") == name end, items.inventory())
+    local inv_items = util.filter(
+      function(i) return i.name():gsub(" {.*}", "") == name end,
+      items.inventory()
+    )
+
     for i = 1, #inv_items do
       if not inv_items[i].equipped then
         inv_items[i]:equip()
         return
       end
     end
+
     BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory")
   end, TURNS)
 end

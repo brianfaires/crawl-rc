@@ -1,6 +1,6 @@
 --[[
 Feature: exclude-dropped
-Description: Automatically excludes dropped items from autopickup and removes exclusion when items are picked up
+Description: Excludes dropped items from autopickup, resumes on pickup.
 Author: buehler
 Dependencies: core/constants.lua, core/data.lua, core/util.lua
 --]]
@@ -16,7 +16,9 @@ ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})
 
 ---- Local functions ----
 local function add_exclusion(item_name)
-  if not util.contains(ed_dropped_items, item_name) then table.insert(ed_dropped_items, item_name) end
+  if not util.contains(ed_dropped_items, item_name) then
+    table.insert(ed_dropped_items, item_name)
+  end
   BRC.set.autopickup_exceptions(item_name, true)
 end
 

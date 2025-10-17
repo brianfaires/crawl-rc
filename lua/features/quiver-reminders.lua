@@ -46,7 +46,8 @@ function macro_f_quiver_reminders_fire()
     local cls = quivered.class(true)
     if cls == "potion" or cls == "scroll" then
       local action = cls == "potion" and "drink" or "read"
-      local msg = "Really " .. action .. " " .. BRC.text.lightgreen(quivered.name()) .. " from quiver?"
+      local msg = "Really %s %s from quiver?"
+      msg = msg:format(action, BRC.text.lightgreen(quivered.name()))
       if not BRC.mpr.yesno(msg) then return BRC.mpr.okay() end
     end
   end

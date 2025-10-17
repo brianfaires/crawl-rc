@@ -1,6 +1,6 @@
 --[[
 Feature: color-inscribe
-Description: Colorizes inscriptions on items with appropriate colors for resistances, stats, and other properties
+Description: Colorizes inscriptions: resistances, stats, and other properties
 Author: buehler
 Dependencies: core/constants.lua, inscribe-stats.lua
 --]]

@@ -320,7 +320,6 @@ function f_alert_monsters.ready()
 
   -- Load all stats before loop. Most of them are used multiple times.
   local hp, _ = you.hp()
-  local amulet = items.equipped_at("amulet")
   if you.spirit_shield() > 0 then
     local mp, _ = you.mp()
     hp = hp + mp

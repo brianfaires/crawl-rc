@@ -1,6 +1,6 @@
 --[[
 Feature: fully-recover
-Description: Automatically rests until fully recovered from negative statuses, with smart recovery logic
+Description: Rests until no negative duration statuses. Doesn't stop on each status message.
 Author: buehler
 Dependencies: core/util.lua
 --]]

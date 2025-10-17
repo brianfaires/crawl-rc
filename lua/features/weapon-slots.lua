@@ -1,6 +1,6 @@
 --[[
 Feature: weapon-slots
-Description: Automatically moves weapons to slots a, b, and w with intelligent priority-based organization
+Description: Automatically keeps weapons in slots a/b/w. Prioritizes slots by weapon type + skill.
 Author: buehler
 Dependencies: core/util.lua
 --]]
