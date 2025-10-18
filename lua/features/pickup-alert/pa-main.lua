@@ -247,13 +247,13 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
     f_pa_data.update_high_scores(it)
     alert_col = Config.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
-    item_name = item_name .. BRC.text.color(Config.AlertColor.weapon.stats, weapon_info)
+    item_name = item_name .. BRC.text[alert_col.stats](weapon_info)
   elseif BRC.is.body_armour(it) then
     f_pa_data.update_high_scores(it)
     alert_col = Config.AlertColor.body_arm
     local ac, ev = BRC.get.armour_stats(it)
     local armour_info = string.format(" {%s, %s}", ac, ev)
-    item_name = item_name .. BRC.text.color(Config.AlertColor.body_arm.stats, armour_info)
+    item_name = item_name .. BRC.text[alert_col.stats](armour_info)
   elseif BRC.is.armour(it) then
     alert_col = Config.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
@@ -265,9 +265,9 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   end
 
   local tokens = {}
-  tokens[1] = emoji and emoji or BRC.text.cyan("----")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
-  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
+  tokens[1] = emoji or BRC.text.cyan("----")
+  tokens[#tokens + 1] = BRC.text[alert_col.desc](" " .. alert_type .. ":")
+  tokens[#tokens + 1] = BRC.text[alert_col.item](" " .. item_name .. " ")
   tokens[#tokens + 1] = tokens[1]
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
 

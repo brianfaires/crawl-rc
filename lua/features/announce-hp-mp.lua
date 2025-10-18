@@ -94,7 +94,7 @@ local function format_ratio(cur, max)
     color = BRC.COL.green
   end
 
-  return BRC.text.color(color, string.format(" -> %s/%s", cur, max))
+  return BRC.text[color](string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)

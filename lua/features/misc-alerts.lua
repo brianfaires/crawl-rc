@@ -82,7 +82,7 @@ function macro_brc_save()
     return
   end
 
-  BRC.mpr.color("Leave a message: ", BRC.COL.white, "prompt")
+  BRC.mpr.white("Leave a message: ", "prompt")
   ma_saved_msg = crawl.c_input_line()
   BRC.util.do_cmd("CMD_SAVE_GAME_NOW")
 end
