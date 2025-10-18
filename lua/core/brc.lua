@@ -71,7 +71,7 @@ end
 -- Config management
 local function get_validated_config_name(input_name)
   if type(input_name) ~= "string" then
-    BRC.log.warning(string.format("Non-string config name: '%s'", tostring(input_name)))
+    BRC.log.warning("Non-string config name: " .. tostring(input_name))
   else
     local config_name = input_name:lower()
     if config_name == "ask" then
@@ -88,7 +88,7 @@ local function get_validated_config_name(input_name)
       for k, _ in pairs(BRC.Profiles) do
         if config_name == k:lower() then return k end
       end
-      BRC.log.warning(string.format("Could not load config: '%s'", tostring(input_name)))
+      BRC.log.warning("Could not load config: " .. tostring(input_name))
     end
   end
 
@@ -271,7 +271,7 @@ end
 
 function BRC.unregister(name)
   if not _features[name] then
-    BRC.log.error(string.format("%s is not registered. Cannot unregister.", BRC.text.yellow(name)))
+    BRC.log.error(BRC.text.yellow(name) .. " is not registered. Cannot unregister.")
     return false
   end
 
@@ -367,7 +367,7 @@ function BRC.load_config(input_config)
     process_feature_config(name)
   end
 
-  BRC.log.info(string.format("Using config: %s", BRC.text.lightcyan(config_name)))
+  BRC.log.info("Using config: " .. BRC.text.lightcyan(config_name))
   return config_name
 end
 

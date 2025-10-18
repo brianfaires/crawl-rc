@@ -24,7 +24,7 @@ end
 local function log_message(message, context, color)
   -- Avoid referencing BRC, to stay robust during startup
   color = color or "lightgrey"
-  local msg = string.format("[BRC] %s", tostring(message))
+  local msg = "[BRC] " .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
   crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
   crawl.flush_prev_message()
@@ -662,7 +662,7 @@ function BRC.util.tostring(var, pretty, _indents)
         tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, pretty, _indents + 1))
       end
       if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
-        return string.format("{ %s }", table.concat(tokens, ", "))
+        return "{ " .. table.concat(tokens, ", ") .. " }"
       else
         return "{\n" .. child_indent .. table.concat(tokens, list_sep) .. "\n" .. indent .. "}"
       end
@@ -683,7 +683,7 @@ function BRC.util.tostring(var, pretty, _indents)
           end
         end
         if #tokens <= 2 and not contains_table then
-          return string.format("{ %s }", table.concat(tokens, ", "))
+          return "{ " .. table.concat(tokens, ", ") .. " }"
         end
       else
         for k, v in pairs(var) do
@@ -939,7 +939,7 @@ function BRC.get.weapon_stats(it, dmg_type)
 
   local dps = format_dmg(dmg / delay)
   local acc = it.accuracy + (it.plus or 0)
-  if acc >= 0 then acc = string.format("+%s", acc) end
+  if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
   --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)

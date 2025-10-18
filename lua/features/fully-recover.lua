@@ -79,7 +79,7 @@ local function remove_statuses_from_config()
   end
   for _, s in ipairs(to_remove) do
     util.remove(Config.rest_off_statuses, s)
-    BRC.log.error(string.format("  Removed: %s", s))
+    BRC.log.error("  Removed: " .. s)
   end
 end
 

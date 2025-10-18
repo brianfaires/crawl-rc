@@ -65,7 +65,7 @@ local function alert_spell_level_changes()
     local avail = string.format(" (%s available)", new_spell_levels)
     BRC.mpr.lightcyan(msg .. BRC.text.cyan(avail))
   elseif new_spell_levels < ma_prev_spell_levels then
-    BRC.mpr.magenta(string.format("%s spell levels remaining", new_spell_levels))
+    BRC.mpr.magenta(new_spell_levels .. " spell levels remaining")
   end
 
   ma_prev_spell_levels = new_spell_levels
@@ -95,7 +95,7 @@ function f_misc_alerts.init()
   if Config.save_with_msg then
     BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
-      BRC.mpr.white(string.format("MESSAGE: %s", ma_saved_msg))
+      BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
       ma_saved_msg = nil
     end
   end

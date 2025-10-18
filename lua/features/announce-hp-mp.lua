@@ -72,7 +72,7 @@ end
 
 local function format_delta(delta)
   if delta > 0 then
-    return BRC.text.green(string.format("+%s", delta))
+    return BRC.text.green("+" .. delta)
   elseif delta < 0 then
     return BRC.text.red(delta)
   else

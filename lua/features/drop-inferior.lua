@@ -27,7 +27,7 @@ end
 
 ---- Hook functions ----
 function f_drop_inferior.init()
-  crawl.setopt(string.format("drop_filter += %s", DROP_KEY))
+  crawl.setopt("drop_filter += " .. DROP_KEY)
 end
 
 function f_drop_inferior.c_assign_invletter(it)
