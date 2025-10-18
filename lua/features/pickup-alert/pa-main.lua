@@ -178,7 +178,11 @@ local pause_pa_system = nil
 local function has_configured_force_more(it)
   if it.artefact then
     if Config.Alert.More.artefact then return true end
-    if Config.Alert.More.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
+    if Config.Alert.More.trained_artefacts then
+      -- Accept artefacts with any relevant training, or no training required
+      local s = BRC.get.skill_with(it)
+      if s == nil or s > 0 then return true end
+    end
   end
 
   return Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it)

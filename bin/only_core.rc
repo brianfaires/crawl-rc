@@ -681,7 +681,7 @@ function BRC.get.skill_with(it)
   if BRC.is.shield(it) then return BRC.get.skill("Shields") end
   if BRC.is.talisman(it) then return BRC.you.shapeshifting_skill() end
 
-  BRC.log.error("Unknown skill for item: " .. it.name())
+  return nil
 end
 
 function BRC.get.staff_school(it)

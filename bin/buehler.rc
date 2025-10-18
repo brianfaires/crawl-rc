@@ -467,6 +467,7 @@ msc ^= $m_warning:You are caught in .* web
 
 # Combat
 msc ^= $m_boring:does no damage
+msc ^= $m_boring:You block .* attack
 msc ^= $m_boring:fails to defend itself
 msc ^= $m_boring:No (reachable )?target in view
 msc ^= $m_boring:struggles against the net
@@ -1483,7 +1484,7 @@ function BRC.get.skill_with(it)
   if BRC.is.shield(it) then return BRC.get.skill("Shields") end
   if BRC.is.talisman(it) then return BRC.you.shapeshifting_skill() end
 
-  BRC.log.error("Unknown skill for item: " .. it.name())
+  return nil
 end
 
 function BRC.get.staff_school(it)
@@ -5497,7 +5498,11 @@ local pause_pa_system = nil
 local function has_configured_force_more(it)
   if it.artefact then
     if Config.Alert.More.artefact then return true end
-    if Config.Alert.More.trained_artefacts and BRC.get.skill_with(it) > 0 then return true end
+    if Config.Alert.More.trained_artefacts then
+      -- Accept artefacts with any relevant training, or no training required
+      local s = BRC.get.skill_with(it)
+      if s == nil or s > 0 then return true end
+    end
   end
 
   return Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it)

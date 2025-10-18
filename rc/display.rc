@@ -158,6 +158,7 @@ msc ^= $m_warning:You are caught in .* web
 
 # Combat
 msc ^= $m_boring:does no damage
+msc ^= $m_boring:You block .* attack
 msc ^= $m_boring:fails to defend itself
 msc ^= $m_boring:No (reachable )?target in view
 msc ^= $m_boring:struggles against the net
