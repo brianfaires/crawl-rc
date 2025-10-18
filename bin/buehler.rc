@@ -2416,8 +2416,8 @@ end
 -- @return true if no persist errors, false if failed restore, nil for user-accepted errors
 function BRC.Data.handle_reinit_errors()
   if #_failures == 0 then return true end
-  local msg_pattern = "%s persistent variables did not restore: (%s)"
-  BRC.log.error(msg_pattern:format(#_failures, table.concat(_failures, ", ")), true)
+  local msg = "%s persistent variables did not restore: (%s)"
+  BRC.log.error(msg:format(#_failures, table.concat(_failures, ", ")), true)
 
   for _ = 1, 5 do
     if BRC.mpr.yesno("Try restoring from backup?") then break end
@@ -4508,8 +4508,8 @@ local function alert_spell_level_changes()
   if new_spell_levels > ma_prev_spell_levels then
     local delta = new_spell_levels - ma_prev_spell_levels
     local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
-    local avail = string.format(" (%s available)", new_spell_levels)
-    BRC.mpr.lightcyan(msg .. BRC.text.cyan(avail))
+    local suffix = string.format(" (%s available)", new_spell_levels)
+    BRC.mpr.lightcyan(msg .. BRC.text.cyan(suffix))
   elseif new_spell_levels < ma_prev_spell_levels then
     BRC.mpr.magenta(new_spell_levels .. " spell levels remaining")
   end

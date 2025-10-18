@@ -62,8 +62,8 @@ local function alert_spell_level_changes()
   if new_spell_levels > ma_prev_spell_levels then
     local delta = new_spell_levels - ma_prev_spell_levels
     local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
-    local avail = string.format(" (%s available)", new_spell_levels)
-    BRC.mpr.lightcyan(msg .. BRC.text.cyan(avail))
+    local suffix = string.format(" (%s available)", new_spell_levels)
+    BRC.mpr.lightcyan(msg .. BRC.text.cyan(suffix))
   elseif new_spell_levels < ma_prev_spell_levels then
     BRC.mpr.magenta(new_spell_levels .. " spell levels remaining")
   end

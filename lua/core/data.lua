@@ -152,8 +152,8 @@ end
 -- @return true if no persist errors, false if failed restore, nil for user-accepted errors
 function BRC.Data.handle_reinit_errors()
   if #_failures == 0 then return true end
-  local msg_pattern = "%s persistent variables did not restore: (%s)"
-  BRC.log.error(msg_pattern:format(#_failures, table.concat(_failures, ", ")), true)
+  local msg = "%s persistent variables did not restore: (%s)"
+  BRC.log.error(msg:format(#_failures, table.concat(_failures, ", ")), true)
 
   for _ = 1, 5 do
     if BRC.mpr.yesno("Try restoring from backup?") then break end
