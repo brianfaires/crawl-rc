@@ -318,6 +318,17 @@ function BRC.get.equipped_at(it)
   return all_aux, num_slots
 end
 
+function BRC.get.items_in_slot(idx)
+  local res = {}
+  for _, inv in ipairs(items.inventory()) do
+    if inv.slot == idx then
+      res[#res + 1] = inv
+    end
+  end
+
+  return res
+end
+
 --- Get mutation level, explicitly specifying crawl's optional params
 -- @param bool innate_only (optional) - Exclude to include all mutations
 function BRC.get.mut(mutation, innate_only)

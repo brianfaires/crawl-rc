@@ -335,7 +335,7 @@ $i_warning := lightred
 $i_useful := lightblue
 $i_heal := green
 $i_emergency := lightcyan
-$i_rare := lightcyan
+$i_rare := yellow
 
 #### Assign item menu_colours
 ## Highest priority; always correct
@@ -1441,6 +1441,17 @@ function BRC.get.equipped_at(it)
   end
 
   return all_aux, num_slots
+end
+
+function BRC.get.items_in_slot(idx)
+  local res = {}
+  for _, inv in ipairs(items.inventory()) do
+    if inv.slot == idx then
+      res[#res + 1] = inv
+    end
+  end
+
+  return res
 end
 
 --- Get mutation level, explicitly specifying crawl's optional params
@@ -5716,11 +5727,12 @@ function f_pa_data.find(table_ref, it)
 end
 
 function f_pa_data.insert(table_ref, it)
+  local is_armour = BRC.is.armour(it, true)
+  if not (it.is_weapon or is_armour or BRC.is.talisman(it)) then return end
+
   if table_ref == pa_recent_alerts then
     pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
   else
-    local is_armour = BRC.is.armour(it, true)
-    if not (it.is_weapon or is_armour or BRC.is.talisman(it)) then return end
     local name, value = get_pa_keys(it)
     local cur_val = tonumber(table_ref[name])
     if not cur_val or value > cur_val then table_ref[name] = value end
@@ -5752,7 +5764,7 @@ end
 -- Get name with plus included and quotes removed; stored in pa_recent_alerts table
 function f_pa_data.get_keyname(it, use_plain_name)
   local name, value = get_pa_keys(it, use_plain_name)
-  if BRC.is.talisman(it) or BRC.is.orb(it) or BRC.is.magic_staff(it) then return name end
+  if not (BRC.is.armour(it) or it.is_weapon) then return name end
   if value >= 0 then value = string.format("+%s", value) end
   return string.format("%s %s", value, name)
 end

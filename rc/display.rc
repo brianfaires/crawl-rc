@@ -26,7 +26,7 @@ $i_warning := lightred
 $i_useful := lightblue
 $i_heal := green
 $i_emergency := lightcyan
-$i_rare := lightcyan
+$i_rare := yellow
 
 #### Assign item menu_colours
 ## Highest priority; always correct
