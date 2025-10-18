@@ -4287,14 +4287,21 @@ local function c_assign_invletter_autoequip(it)
       return i.name():gsub(" {.*}", "") == name
     end, items.inventory())
 
+    local already_eq = false
     for i = 1, #inv_items do
       if not inv_items[i].equipped then
         inv_items[i]:equip()
         return
+      else
+        already_eq = true
       end
     end
 
-    BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory")
+    if already_eq then
+      BRC.mpr.darkgrey("Already equipped.")
+    else
+      BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory.")
+    end
   end, TURNS)
 end
 
