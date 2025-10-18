@@ -19,7 +19,7 @@ f_startup.Config = {
   -- For non-spellcasters, add preferred weapon type as 3rd skill target
   init = [[
     if you.skill("Spellcasting") == 0 then
-      local t = BRC.Config.startup.auto_set_skill_targets
+      local t = f_startup.Config.auto_set_skill_targets
       t[#t + 1] = { BRC.get.preferred_weapon_type(), 8.0 }
     end
   ]],

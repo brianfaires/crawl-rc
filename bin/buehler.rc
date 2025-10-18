@@ -33,8 +33,8 @@ BRC.Profiles.Testing = {
   disable_other_features = false,
   ["pickup-alert"] = {
     Alert = {
-      armour_sensitivity = 0.1,
-      weapon_sensitivity = 0.1,
+      armour_sensitivity = 2,
+      weapon_sensitivity = 2,
     },
   },
   init = [[
@@ -5114,7 +5114,7 @@ f_startup.Config = {
   -- For non-spellcasters, add preferred weapon type as 3rd skill target
   init = [[
     if you.skill("Spellcasting") == 0 then
-      local t = BRC.Config.startup.auto_set_skill_targets
+      local t = f_startup.Config.auto_set_skill_targets
       t[#t + 1] = { BRC.get.preferred_weapon_type(), 8.0 }
     end
   ]],

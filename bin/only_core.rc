@@ -34,8 +34,8 @@ BRC.Profiles.Testing = {
   disable_other_features = false,
   ["pickup-alert"] = {
     Alert = {
-      armour_sensitivity = 0.1,
-      weapon_sensitivity = 0.1,
+      armour_sensitivity = 2,
+      weapon_sensitivity = 2,
     },
   },
   init = [[
