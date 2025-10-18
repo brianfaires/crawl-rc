@@ -2488,7 +2488,7 @@ local function feature_is_disabled(f)
 end
 
 local function handle_feature_error(feature_name, hook_name, result)
-  BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
+  BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result, true)
   if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COL.yellow) then
     BRC.unregister(feature_name)
   else
@@ -4230,7 +4230,7 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.log.error(string.format("fully-recover timed out after %s turns.", MAX_TURNS_TO_WAIT))
+      BRC.log.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
       BRC.log.error("f_fully_recover.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
@@ -5015,17 +5015,12 @@ local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
 
   if Config.warn_backtracking and ss_prev_location ~= ss_cur_location then
-    if cmd == "CMD_GO_DOWNSTAIRS" then
-      if not (feature:contains("down") or feature:contains("shaft")) then
-        return BRC.util.do_cmd(cmd)
-      end
-    elseif cmd == "CMD_GO_UPSTAIRS" then
-      if not feature:contains("up") then return BRC.util.do_cmd(cmd) end
-    else
-      return BRC.log.error("Invalid command: " .. cmd)
+    if
+      cmd == "CMD_GO_DOWNSTAIRS" and (feature:contains("down") or feature:contains("shaft"))
+      or cmd == "CMD_GO_UPSTAIRS" and feature:contains("up")
+    then
+      if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
     end
-
-    if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
   end
 
   if

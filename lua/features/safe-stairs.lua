@@ -27,17 +27,12 @@ local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
 
   if Config.warn_backtracking and ss_prev_location ~= ss_cur_location then
-    if cmd == "CMD_GO_DOWNSTAIRS" then
-      if not (feature:contains("down") or feature:contains("shaft")) then
-        return BRC.util.do_cmd(cmd)
-      end
-    elseif cmd == "CMD_GO_UPSTAIRS" then
-      if not feature:contains("up") then return BRC.util.do_cmd(cmd) end
-    else
-      return BRC.log.error("Invalid command: " .. cmd)
+    if
+      cmd == "CMD_GO_DOWNSTAIRS" and (feature:contains("down") or feature:contains("shaft"))
+      or cmd == "CMD_GO_UPSTAIRS" and feature:contains("up")
+    then
+      if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
     end
-
-    if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
   end
 
   if

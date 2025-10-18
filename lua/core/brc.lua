@@ -39,7 +39,7 @@ local function feature_is_disabled(f)
 end
 
 local function handle_feature_error(feature_name, hook_name, result)
-  BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result)
+  BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result, true)
   if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COL.yellow) then
     BRC.unregister(feature_name)
   else
