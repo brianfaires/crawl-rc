@@ -54,10 +54,10 @@ BRC.SMALL_RACES = { "Kobold" }
 BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
-BRC.STAFF_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", necromancy = "Necromancy",
-  earth = "Earth Magic", fire = "Fire Magic", conjuration = "Conjurations",
-} -- BRC.STAFF_SCHOOLS (do not remove this comment)
+BRC.MAGIC_SCHOOLS = {
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
+  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",   necromancy = "Necromancy",
+} -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.TRAINING_SKILLS = {
   "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic",

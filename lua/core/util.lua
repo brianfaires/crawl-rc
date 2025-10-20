@@ -374,7 +374,7 @@ function BRC.get.skill_with(it)
 end
 
 function BRC.get.staff_school(it)
-  for k, v in pairs(BRC.STAFF_SCHOOLS) do
+  for k, v in pairs(BRC.MAGIC_SCHOOLS) do
     if it.subtype() == k then return v end
   end
 end
@@ -978,6 +978,7 @@ end
 function BRC.get.ego(it, no_stat_only_egos)
   local ego = it.ego(true)
   if ego then
+    ego = ego:lower()
     if BRC.is.unusable_ego(ego) or (no_stat_only_egos and (ego == "speed" or ego == "heavy")) then
       return it.artefact and it.name() or nil
     end
@@ -1012,6 +1013,10 @@ function BRC.is.risky_item(it)
 end
 
 function BRC.is.unusable_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Data.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
     or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)

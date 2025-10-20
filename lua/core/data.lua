@@ -15,6 +15,7 @@ BRC.Data.Config = {
   max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
   skip_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 
+  unskilled_egos_usable = false,
   BrandBonus = {
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
     distort = { factor = 1.0, offset = 6.0 },
