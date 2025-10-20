@@ -128,6 +128,11 @@ for k, v in pairs(BRC.COL) do
   BRC.text[v] = BRC.text[k]
 end
 
+function BRC.text.capitalize(s)
+  if not s or s == "" then return s end
+  return string.upper(string.sub(s, 1, 1)) .. string.lower(string.sub(s, 2))
+end
+
 function BRC.text.color(color, text)
   return color and BRC.text[color](text) or tostring(text)
 end
@@ -971,7 +976,7 @@ function BRC.get.weapon_stats(it, dmg_type)
 end
 
 --- Get the ego of an item, with custom logic:
--- Treat unusable egos as no ego. Always lowercase egos.
+-- Treat unusable egos as no ego. Always lowercase ego in return value.
 -- Include armours with innate effects (except steam dragon scales)
 -- Artefacts return their normal ego if they have one, else their name
 -- @param no_stat_only_egos (optional bool) Exclude egos that only affect speed/damage

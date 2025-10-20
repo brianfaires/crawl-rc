@@ -30,7 +30,12 @@ BRC.Profiles.Testing = {
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.3,
-      weapon_sensitivity = 1,
+      weapon_sensitivity = 2,
+    },
+    Tuning = {
+      Armour = {
+        diff_body_ego_is_good = false,
+      },
     },
   },
   init = [[
@@ -83,8 +88,8 @@ BRC.Profiles.Custom = {
     },
 
     Alert = {
-      armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
-      weapon_sensitivity = 2,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
+      armour_sensitivity = 1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
+      weapon_sensitivity = 1,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
       orbs = true,
       staff_resists = true,     -- When a staff gives a missing resistance
       talismans = true,

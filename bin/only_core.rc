@@ -35,7 +35,12 @@ BRC.Profiles.Testing = {
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.3,
-      weapon_sensitivity = 1,
+      weapon_sensitivity = 2,
+    },
+    Tuning = {
+      Armour = {
+        diff_body_ego_is_good = false,
+      },
     },
   },
   init = [[
@@ -88,8 +93,8 @@ BRC.Profiles.Custom = {
     },
 
     Alert = {
-      armour_sensitivity = 0.1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
-      weapon_sensitivity = 2,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
+      armour_sensitivity = 1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
+      weapon_sensitivity = 1,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
       orbs = true,
       staff_resists = true,     -- When a staff gives a missing resistance
       talismans = true,
@@ -448,6 +453,11 @@ for k, v in pairs(BRC.COL) do
     return string.format("<%s>%s</%s>", v, tostring(text), v)
   end
   BRC.text[v] = BRC.text[k]
+end
+
+function BRC.text.capitalize(s)
+  if not s or s == "" then return s end
+  return string.upper(string.sub(s, 1, 1)) .. string.lower(string.sub(s, 2))
 end
 
 function BRC.text.color(color, text)
@@ -1293,7 +1303,7 @@ function BRC.get.weapon_stats(it, dmg_type)
 end
 
 --- Get the ego of an item, with custom logic:
--- Treat unusable egos as no ego. Always lowercase egos.
+-- Treat unusable egos as no ego. Always lowercase ego in return value.
 -- Include armours with innate effects (except steam dragon scales)
 -- Artefacts return their normal ego if they have one, else their name
 -- @param no_stat_only_egos (optional bool) Exclude egos that only affect speed/damage

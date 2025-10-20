@@ -12,6 +12,7 @@ pa_items_alerted = BRC.Data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.Data.persist("pa_recent_alerts", {})
 pa_OTA_items = BRC.Data.persist("pa_OTA_items", f_pickup_alert.Config.Alert.one_time)
 pa_high_score = BRC.Data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
+pa_egos_alerted = BRC.Data.persist("pa_egos_alerted", {})
 
 ---- Local functions ----
 local function get_pa_keys(it, use_plain_name)

@@ -73,7 +73,8 @@ f_pickup_alert.Config.Tuning = {}
 f_pickup_alert.Config.Tuning.Armour = {
   Lighter = {
     gain_ego = 0.6,
-    diff_ego = 0.8,
+    new_ego = 0.7,
+    diff_ego = 0.9,
     same_ego = 1.2,
     lost_ego = 2.0,
     min_gain = 3.0,
@@ -82,7 +83,8 @@ f_pickup_alert.Config.Tuning.Armour = {
   },
   Heavier = {
     gain_ego = 0.4,
-    diff_ego = 0.5,
+    new_ego = 0.5,
+    diff_ego = 0.6,
     same_ego = 0.7,
     lost_ego = 2.0,
     min_gain = 3.0,
@@ -91,6 +93,7 @@ f_pickup_alert.Config.Tuning.Armour = {
   },
   encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
   early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
+  diff_body_ego_is_good = false, -- More alerts for diff_ego in body armour (skips min_gain check)
 } -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
 
 --[[
@@ -252,18 +255,30 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
     alert_col = Config.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
     item_name = item_name .. BRC.text.color(Config.AlertColor.weapon.stats, weapon_info)
-  elseif BRC.is.body_armour(it) then
-    f_pa_data.update_high_scores(it)
-    alert_col = Config.AlertColor.body_arm
-    local ac, ev = BRC.get.armour_stats(it)
-    local armour_info = string.format(" {%s, %s}", ac, ev)
-    item_name = item_name .. BRC.text.color(Config.AlertColor.body_arm.stats, armour_info)
-  elseif BRC.is.armour(it) then
-    alert_col = Config.AlertColor.aux_arm
   elseif BRC.is.orb(it) then
     alert_col = Config.AlertColor.orb
   elseif BRC.is.talisman(it) then
     alert_col = Config.AlertColor.talisman
+  elseif BRC.is.armour(it) then
+    if BRC.is.body_armour(it) then
+      f_pa_data.update_high_scores(it)
+      alert_col = Config.AlertColor.body_arm
+      local ac, ev = BRC.get.armour_stats(it)
+      local armour_info = string.format(" {%s, %s}", ac, ev)
+      item_name = item_name .. BRC.text.color(Config.AlertColor.body_arm.stats, armour_info)
+    else
+      alert_col = Config.AlertColor.aux_arm
+    end
+
+    -- Unique egos tracked across all armour types
+    local ego = BRC.get.ego(it)
+    if
+      ego
+      and not util.contains(pa_egos_alerted, ego)
+      and not (it.artefact and BRC.is.risky_item(it))
+    then
+      pa_egos_alerted[#pa_egos_alerted+1] = ego
+    end
   else
     alert_col = Config.AlertColor.misc
   end

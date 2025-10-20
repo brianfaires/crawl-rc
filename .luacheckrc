@@ -83,6 +83,7 @@ globals = {
   "ma_alerted_max_piety",
   "ma_prev_spell_levels",
   "ma_saved_msg",
+  "pa_egos_alerted",
   "pa_high_score",
   "pa_items_alerted",
   "pa_lowest_hands_alerted",

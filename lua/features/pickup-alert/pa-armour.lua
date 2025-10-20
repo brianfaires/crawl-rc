@@ -2,7 +2,7 @@
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua
+Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua, pa-data.lua
 --]]
 
 f_pa_armour = {}
@@ -18,6 +18,7 @@ local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / EN
 local SAME = "same_ego"
 local LOST = "lost_ego"
 local GAIN = "gain_ego"
+local NEW = "new_ego"
 local DIFF = "diff_ego"
 local HEAVIER = "Heavier"
 local LIGHTER = "Lighter"
@@ -25,15 +26,18 @@ local LIGHTER = "Lighter"
 local ARMOUR_ALERT = {
   artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
   [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
+  [NEW] = { msg = "New ego", emoji = Emoji.EGO },
   [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
   [LIGHTER] = {
     [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
+    [NEW] = { msg = "New ego (Lighter armour)", emoji = Emoji.EGO },
     [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
     [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
     [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
   },
   [HEAVIER] = {
     [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
+    [NEW] = { msg = "New ego (Heavier armour)", emoji = Emoji.EGO },
     [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
     [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
     [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
@@ -81,13 +85,18 @@ local function get_ego_change_type(cur_ego, it_ego)
     return LOST
   elseif not cur_ego then
     return GAIN
+  elseif not util.contains(pa_egos_alerted, it_ego) then
+    return NEW
   else
     return DIFF
   end
 end
 
-local function is_new_ego(ego_change)
-  return ego_change == GAIN or ego_change == DIFF
+--- Decides if an ego change is good enough to skip the min_gain check.
+--- For DIFF egos (neutral change), true for Shields/Aux, configurable for body armour
+local function is_good_ego_change(ego_change, is_body_armour)
+  if ego_change == DIFF then return not is_body_armour or Heur.diff_body_ego_is_good end
+  return ego_change == GAIN or ego_change == NEW
 end
 
 local function send_armour_alert(it, t_alert)
@@ -176,13 +185,11 @@ local function should_alert_body_armour(weight, gain, loss, ego_change)
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
-  if is_new_ego(ego_change) then
+  if ego_change == SAME or is_good_ego_change(ego_change, true) then
     return loss <= Heur[weight].max_loss * Alert.armour_sensitivity
-  elseif ego_change == LOST then
+  else
     return gain >= Heur[weight].min_gain / Alert.armour_sensitivity
   end
-
-  return true
 end
 
 -- Alert when finding higher AC than previously seen, unless training spells/ranged and NOT armour
@@ -222,7 +229,7 @@ local function alert_body_armour(it)
   local encumb_delta = it.encumbrance - cur.encumbrance
 
   -- Alert new egos if same encumbrance, or small change to total (AC+EV)
-  if is_new_ego(ego_change) then
+  if is_good_ego_change(ego_change, true) then
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
@@ -264,8 +271,8 @@ local function alert_shield(it)
 
   -- Alert: New ego, Gain SH
   local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
-  if is_new_ego(ego_change) then
-    local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+  if is_good_ego_change(ego_change, false) then
+    local alert_msg = BRC.text.capitalize(ego_change):gsub("_", " ")
     return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.shields)
   elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
     return f_pickup_alert.do_alert(it, "Higher SH", Emoji.STRONGER, More.shields)
@@ -290,8 +297,8 @@ local function alert_aux_armour(it, unworn_inv_item)
   local it_ego = BRC.get.ego(it)
   for _, cur in ipairs(all_equipped) do
     local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
-    if is_new_ego(ego_change) then
-      local alert_msg = ego_change == DIFF and "Diff ego" or "Gain ego"
+    if is_good_ego_change(ego_change, false) then
+      local alert_msg = BRC.text.capitalize(ego_change):gsub("_", " ")
       return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.aux_armour)
     elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
       return f_pickup_alert.do_alert(it, "Higher AC", Emoji.STRONGER, More.aux_armour)
