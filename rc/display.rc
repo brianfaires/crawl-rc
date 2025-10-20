@@ -157,6 +157,7 @@ msc ^= $m_interesting:You disentangle yourself
 msc ^= $m_warning:You are caught in .* web
 
 # Combat
+msc ^= $m_boring:(T|t)he (bush|plant|fungus)
 msc ^= $m_boring:does no damage
 msc ^= $m_boring:You block .* attack
 msc ^= $m_boring:fails to defend itself
@@ -164,7 +165,7 @@ msc ^= $m_boring:No (reachable )?target in view
 msc ^= $m_boring:struggles against the net
 msc ^= $m_boring:You furiously retaliate
 msc ^= $m_boring:You swing at nothing
-msc ^= $m_boring:(T|t)he (bush|plant|fungus)
+msc ^= $m_boring:You hear a splash
 msc ^= $m_interesting:flickers and vanishes
 msc ^= $m_interesting:is touched by paradox
 msc ^= $m_interesting:seems to slow down

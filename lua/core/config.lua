@@ -29,8 +29,8 @@ BRC.Profiles.Testing = {
   disable_other_features = false,
   ["pickup-alert"] = {
     Alert = {
-      armour_sensitivity = 2,
-      weapon_sensitivity = 2,
+      armour_sensitivity = 0.3,
+      weapon_sensitivity = 1,
     },
   },
   init = [[
@@ -107,7 +107,7 @@ BRC.Profiles.Custom = {
         body_armour = false,
         shields = true,
         aux_armour = false,
-        armour_ego = true,        -- New or diff egos
+        armour_ego = false,        -- New or diff egos
         high_score_weap = false,  -- Highest damage found
         high_score_armour = true, -- Highest AC found
         one_time_alerts = true,
