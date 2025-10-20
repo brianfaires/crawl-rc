@@ -227,6 +227,7 @@ local function alert_body_armour(it)
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
     if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Alert.armour_sensitivity then
+      BRC.log.debug("small change: AC:" .. ac_delta .. ", EV:" .. ev_delta)
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -234,11 +235,13 @@ local function alert_body_armour(it)
   -- Check if lighter/heavier armour meets stat trade-off thresholds
   if encumb_delta < 0 then
     if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
+      BRC.log.debug("Lighter: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
       return send_armour_alert(it, ARMOUR_ALERT[LIGHTER][ego_change])
     end
   elseif encumb_delta > 0 then
     local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
     if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
+      BRC.log.debug("Heavier: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
       return send_armour_alert(it, ARMOUR_ALERT[HEAVIER][ego_change])
     end
   end

@@ -33,8 +33,8 @@ BRC.Profiles.Testing = {
   disable_other_features = false,
   ["pickup-alert"] = {
     Alert = {
-      armour_sensitivity = 2,
-      weapon_sensitivity = 2,
+      armour_sensitivity = 0.3,
+      weapon_sensitivity = 1,
     },
   },
   init = [[
@@ -111,7 +111,7 @@ BRC.Profiles.Custom = {
         body_armour = false,
         shields = true,
         aux_armour = false,
-        armour_ego = true,        -- New or diff egos
+        armour_ego = false,        -- New or diff egos
         high_score_weap = false,  -- Highest damage found
         high_score_armour = true, -- Highest AC found
         one_time_alerts = true,
@@ -466,6 +466,7 @@ msc ^= $m_interesting:You disentangle yourself
 msc ^= $m_warning:You are caught in .* web
 
 # Combat
+msc ^= $m_boring:(T|t)he (bush|plant|fungus)
 msc ^= $m_boring:does no damage
 msc ^= $m_boring:You block .* attack
 msc ^= $m_boring:fails to defend itself
@@ -473,7 +474,7 @@ msc ^= $m_boring:No (reachable )?target in view
 msc ^= $m_boring:struggles against the net
 msc ^= $m_boring:You furiously retaliate
 msc ^= $m_boring:You swing at nothing
-msc ^= $m_boring:(T|t)he (bush|plant|fungus)
+msc ^= $m_boring:You hear a splash
 msc ^= $m_interesting:flickers and vanishes
 msc ^= $m_interesting:is touched by paradox
 msc ^= $m_interesting:seems to slow down
@@ -1066,10 +1067,10 @@ BRC.SMALL_RACES = { "Kobold" }
 BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
-BRC.STAFF_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", necromancy = "Necromancy",
-  earth = "Earth Magic", fire = "Fire Magic", conjuration = "Conjurations",
-} -- BRC.STAFF_SCHOOLS (do not remove this comment)
+BRC.MAGIC_SCHOOLS = {
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
+  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",   necromancy = "Necromancy",
+} -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.TRAINING_SKILLS = {
   "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic",
@@ -1499,7 +1500,7 @@ function BRC.get.skill_with(it)
 end
 
 function BRC.get.staff_school(it)
-  for k, v in pairs(BRC.STAFF_SCHOOLS) do
+  for k, v in pairs(BRC.MAGIC_SCHOOLS) do
     if it.subtype() == k then return v end
   end
 end
@@ -2103,6 +2104,7 @@ end
 function BRC.get.ego(it, no_stat_only_egos)
   local ego = it.ego(true)
   if ego then
+    ego = ego:lower()
     if BRC.is.unusable_ego(ego) or (no_stat_only_egos and (ego == "speed" or ego == "heavy")) then
       return it.artefact and it.name() or nil
     end
@@ -2137,6 +2139,10 @@ function BRC.is.risky_item(it)
 end
 
 function BRC.is.unusable_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Data.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
     or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
@@ -2304,6 +2310,7 @@ BRC.Data.Config = {
   max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
   skip_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 
+  unskilled_egos_usable = false,
   BrandBonus = {
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
     distort = { factor = 1.0, offset = 6.0 },
@@ -6044,6 +6051,7 @@ local function alert_body_armour(it)
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
     if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Alert.armour_sensitivity then
+      BRC.log.debug("small change: AC:" .. ac_delta .. ", EV:" .. ev_delta)
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -6051,11 +6059,13 @@ local function alert_body_armour(it)
   -- Check if lighter/heavier armour meets stat trade-off thresholds
   if encumb_delta < 0 then
     if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
+      BRC.log.debug("Lighter: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
       return send_armour_alert(it, ARMOUR_ALERT[LIGHTER][ego_change])
     end
   elseif encumb_delta > 0 then
     local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
     if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
+      BRC.log.debug("Heavier: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
       return send_armour_alert(it, ARMOUR_ALERT[HEAVIER][ego_change])
     end
   end
@@ -6542,7 +6552,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
       end
     end
     if ratio > Heur.Alert.pure_dps then
-      return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
+      return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
     end
   elseif BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl) then
     local it_ego = BRC.get.ego(it)

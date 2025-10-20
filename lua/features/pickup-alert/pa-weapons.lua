@@ -295,7 +295,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
       end
     end
     if ratio > Heur.Alert.pure_dps then
-      return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
+      return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
     end
   elseif BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl) then
     local it_ego = BRC.get.ego(it)
