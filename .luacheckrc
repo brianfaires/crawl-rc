@@ -75,8 +75,7 @@ globals = {
   
   -- Persistent variables from BRC.Data.persist()
   "ad_prev",
-  "as_shaft_branch",
-  "as_shaft_depth",
+  "as_shaft_location",
   "brc_config_full",
   "brc_config_name",
   "ed_dropped_items",

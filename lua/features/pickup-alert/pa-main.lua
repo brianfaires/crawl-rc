@@ -293,6 +293,20 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   f_pa_data.insert(pa_recent_alerts, it)
   f_pa_data.insert(pa_items_alerted, it)
   you.stop_activity()
+
+  -- If standing on the item, put pickup on hotkey
+  local NAME = it.name()
+  if util.exists(you.floor_items(), function(fl) return fl.name() == NAME end) then
+    BRC.set_hotkey("pickup", NAME, function()
+      for _, fl in ipairs(you.floor_items()) do
+        if fl.name() == NAME then
+          items.pickup(fl)
+          break
+        end
+      end
+    end, 1)
+  end
+
   return true
 end
 

@@ -49,7 +49,7 @@ local function alert_remove_faith()
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
       if Config.remove_faith_hotkey then
-        BRC.set_hotkey("remove " .. BRC.text.white("amulet of faith"), function()
+        BRC.set_hotkey("remove", "amulet of faith", function()
           items.equipped_at("amulet"):remove()
         end, 1)
       end

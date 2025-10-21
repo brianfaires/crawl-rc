@@ -949,7 +949,7 @@ end
 
 --- Cntl-E (Go up closest stairs)
 function macro_brc_cntl_e()
-  if you.branch() == "D" and you.depth() == 1 and you.have_orb() then
+  if you.where() == "D:1" and you.have_orb() then
     crawl.sendkeys({ "X<\r", 27, "<" }) -- Throw in Esc (27) JIC standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
@@ -1735,7 +1735,7 @@ local HOOK_FUNCTIONS = {
 local _features = {}
 local _hooks = {}
 local turn_count = nil
-local depth = nil
+local cur_location = nil
 
 ---- Local functions ----
 local function feature_is_disabled(f)
@@ -2044,7 +2044,7 @@ function BRC.init()
 
   -- We're a go!
   turn_count = -1
-  depth = you.depth()
+  cur_location = you.where()
   BRC.active = true
   BRC.ready()
   return true
@@ -2089,8 +2089,8 @@ function BRC.ready()
   if you.turns() > turn_count then
     turn_count = you.turns()
 
-    if you.depth() ~= depth and not you.have_orb() then
-      depth = you.depth()
+    if you.where() ~= cur_location and not you.have_orb() then
+      cur_location = you.where()
       BRC.Data.backup()
     end
 

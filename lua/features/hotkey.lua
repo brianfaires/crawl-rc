@@ -29,11 +29,11 @@ end
 local function c_assign_invletter_autoequip(it)
   if not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
   local TURNS = 1
-  local name = it.name():gsub(" {.*}", "")
+  local NAME = it.name():gsub(" {.*}", "")
 
-  BRC.set_hotkey("equip " .. BRC.text.white(name), function()
+  BRC.set_hotkey("equip", NAME, function()
     local inv_items = util.filter(function(i)
-      return i.name():gsub(" {.*}", "") == name
+      return i.name():gsub(" {.*}", "") == NAME
     end, items.inventory())
 
     local already_eq = false
@@ -49,14 +49,21 @@ local function c_assign_invletter_autoequip(it)
     if already_eq then
       BRC.mpr.darkgrey("Already equipped.")
     else
-      BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory.")
+      BRC.log.error("Could not find unequipped item '" .. NAME .. "' in inventory.")
     end
   end, TURNS)
 end
 
 ---- Public API ----
-function BRC.set_hotkey(msg, func, turns)
-  local act = { m = msg, f = func, t = turns or 1 }
+--- Assign an action to the BRC hotkey
+--- @param msg_action string - The action (equip/pickup/read/etc)
+--- @param msg_suffix string - Printed after the action. Usually an item name
+--- @param func function - The function to call when the hotkey is pressed
+--- @param turns number - The number of turns to wait before skipping this action
+--- @return nil
+function BRC.set_hotkey(msg_action, msg_suffix, func, turns)
+  local act = { m = BRC.text.lightgreen(msg_action), f = func, t = turns or 1 }
+  if msg_suffix then act.m = act.m .. " " .. BRC.text.white(msg_suffix) end
   table.insert(_actions, act)
   if #_actions == 1 then
     display_next_message()

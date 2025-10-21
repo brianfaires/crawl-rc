@@ -1699,7 +1699,7 @@ end
 
 --- Cntl-E (Go up closest stairs)
 function macro_brc_cntl_e()
-  if you.branch() == "D" and you.depth() == 1 and you.have_orb() then
+  if you.where() == "D:1" and you.have_orb() then
     crawl.sendkeys({ "X<\r", 27, "<" }) -- Throw in Esc (27) JIC standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
@@ -2485,7 +2485,7 @@ local HOOK_FUNCTIONS = {
 local _features = {}
 local _hooks = {}
 local turn_count = nil
-local depth = nil
+local cur_location = nil
 
 ---- Local functions ----
 local function feature_is_disabled(f)
@@ -2794,7 +2794,7 @@ function BRC.init()
 
   -- We're a go!
   turn_count = -1
-  depth = you.depth()
+  cur_location = you.where()
   BRC.active = true
   BRC.ready()
   return true
@@ -2839,8 +2839,8 @@ function BRC.ready()
   if you.turns() > turn_count then
     turn_count = you.turns()
 
-    if you.depth() ~= depth and not you.have_orb() then
-      depth = you.depth()
+    if you.where() ~= cur_location and not you.have_orb() then
+      cur_location = you.where()
       BRC.Data.backup()
     end
 
@@ -2889,37 +2889,26 @@ f_after_shaft = {}
 f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
 ---- Persistent variables ----
-as_shaft_depth = BRC.Data.persist("as_shaft_depth", 0)
-as_shaft_branch = BRC.Data.persist("as_shaft_branch", "NA")
+as_shaft_location = BRC.Data.persist("as_shaft_location", nil)
 
 ---- Hook functions ----
 function f_after_shaft.init()
-  if you.turns() == 0 and you.class() == "Delver" then
-    as_shaft_depth = 1
-    as_shaft_branch = you.branch()
-  end
-
-  BRC.set.explore_stop("stairs", as_shaft_depth ~= 0)
+  if you.turns() == 0 and you.class() == "Delver" then as_shaft_location = "D:1" end
+  BRC.set.explore_stop("stairs", as_shaft_location ~= nil)
 end
 
 function f_after_shaft.c_message(text, channel)
-  if channel ~= "plain" or BRC.you.in_hell() then return end
-  if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
-
-  local text_fall = "ou fall into a shaft"
-  local text_sucked = "ou are sucked into a shaft"
-  if text:contains(text_fall) or text:contains(text_sucked) then
-    as_shaft_depth = you.depth()
-    as_shaft_branch = you.branch()
+  if channel ~= "plain" or as_shaft_location then return end
+  if text:contains("ou fall into a shaft") or text:contains("ou are sucked into a shaft") then
+    as_shaft_location = you.where()
     BRC.set.explore_stop("stairs", true)
   end
 end
 
 function f_after_shaft.ready()
-  if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
+  if you.where() == as_shaft_location then
     BRC.set.explore_stop("stairs", false)
-    as_shaft_depth = 0
-    as_shaft_branch = "NA"
+    as_shaft_location = nil
   end
 end
 
@@ -3786,7 +3775,7 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop then
-    BRC.set_hotkey("drop your useless items", function()
+    BRC.set_hotkey("drop", "your useless items", function()
       crawl.sendkeys(BRC.get.command_key("CMD_DROP") .. ",\r")
     end, 1)
   end
@@ -4290,11 +4279,11 @@ end
 local function c_assign_invletter_autoequip(it)
   if not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
   local TURNS = 1
-  local name = it.name():gsub(" {.*}", "")
+  local NAME = it.name():gsub(" {.*}", "")
 
-  BRC.set_hotkey("equip " .. BRC.text.white(name), function()
+  BRC.set_hotkey("equip", NAME, function()
     local inv_items = util.filter(function(i)
-      return i.name():gsub(" {.*}", "") == name
+      return i.name():gsub(" {.*}", "") == NAME
     end, items.inventory())
 
     local already_eq = false
@@ -4310,14 +4299,21 @@ local function c_assign_invletter_autoequip(it)
     if already_eq then
       BRC.mpr.darkgrey("Already equipped.")
     else
-      BRC.log.error("Could not find unequipped item '" .. name .. "' in inventory.")
+      BRC.log.error("Could not find unequipped item '" .. NAME .. "' in inventory.")
     end
   end, TURNS)
 end
 
 ---- Public API ----
-function BRC.set_hotkey(msg, func, turns)
-  local act = { m = msg, f = func, t = turns or 1 }
+--- Assign an action to the BRC hotkey
+--- @param msg_action string - The action (equip/pickup/read/etc)
+--- @param msg_suffix string - Printed after the action. Usually an item name
+--- @param func function - The function to call when the hotkey is pressed
+--- @param turns number - The number of turns to wait before skipping this action
+--- @return nil
+function BRC.set_hotkey(msg_action, msg_suffix, func, turns)
+  local act = { m = BRC.text.lightgreen(msg_action), f = func, t = turns or 1 }
+  if msg_suffix then act.m = act.m .. " " .. BRC.text.white(msg_suffix) end
   table.insert(_actions, act)
   if #_actions == 1 then
     display_next_message()
@@ -4512,7 +4508,7 @@ local function alert_remove_faith()
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
       if Config.remove_faith_hotkey then
-        BRC.set_hotkey("remove " .. BRC.text.white("amulet of faith"), function()
+        BRC.set_hotkey("remove", "amulet of faith", function()
           items.equipped_at("amulet"):remove()
         end, 1)
       end
@@ -4881,7 +4877,7 @@ function f_remind_id.ready()
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
-      BRC.set_hotkey("read scroll of " .. BRC.text.white("identify"), function()
+      BRC.set_hotkey("read", "scroll of identify", function()
         for _, inv in ipairs(items.inventory()) do
           if inv.name("qual") == "scroll of identify" then
             BRC.util.do_cmd("CMD_READ")
@@ -5121,7 +5117,7 @@ f_safe_stairs.Config = {
 } -- f_safe_stairs.Config (do not remove this comment)
 
 ---- Persistent variables ----
-ss_prev_location = BRC.Data.persist("ss_prev_location", you.branch() .. you.depth())
+ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
 ---- Local config alias ----
@@ -5146,7 +5142,7 @@ local function check_new_location(cmd)
   if
     Config.warn_v5
     and not ss_v5_warned
-    and ss_cur_location == "Vaults4"
+    and ss_cur_location == "Vaults:4"
     and cmd == "CMD_GO_DOWNSTAIRS"
     and (feature:contains("down") or feature:contains("shaft"))
   then
@@ -5176,14 +5172,14 @@ end
 
 ---- Hook functions ----
 function f_safe_stairs.init()
-  ss_cur_location = you.branch() .. you.depth()
+  ss_cur_location = you.where()
   BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
   BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
 end
 
 function f_safe_stairs.ready()
   ss_prev_location = ss_cur_location
-  ss_cur_location = you.branch() .. you.depth()
+  ss_cur_location = you.where()
 end
 
 }
@@ -5712,6 +5708,20 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   f_pa_data.insert(pa_recent_alerts, it)
   f_pa_data.insert(pa_items_alerted, it)
   you.stop_activity()
+
+  -- If standing on the item, put pickup on hotkey
+  local NAME = it.name()
+  if util.exists(you.floor_items(), function(fl) return fl.name() == NAME end) then
+    BRC.set_hotkey("pickup", NAME, function()
+      for _, fl in ipairs(you.floor_items()) do
+        if fl.name() == NAME then
+          items.pickup(fl)
+          break
+        end
+      end
+    end, 1)
+  end
+
   return true
 end
 

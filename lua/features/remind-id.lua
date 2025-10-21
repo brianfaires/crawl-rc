@@ -110,7 +110,7 @@ function f_remind_id.ready()
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
-      BRC.set_hotkey("read scroll of " .. BRC.text.white("identify"), function()
+      BRC.set_hotkey("read", "scroll of identify", function()
         for _, inv in ipairs(items.inventory()) do
           if inv.name("qual") == "scroll of identify" then
             BRC.util.do_cmd("CMD_READ")
