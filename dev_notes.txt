@@ -6,8 +6,8 @@
 1. Prompt for Auto-actions:
   - On alert, prompt/offer to pickup item (or macro available)
 1. Shorten BRC.util.tostring()
+1. BRC.Core file?  - macros, config, etc
 1. Standardize LDocs / file headers
-1. redefine cntl-E macro as func, to work w/ orb on D:1
 1. Pull crawl version for compatibility / 0.33 support
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. Features:

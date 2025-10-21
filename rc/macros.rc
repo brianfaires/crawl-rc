@@ -7,8 +7,6 @@ bindkey = [\{-222}] CMD_AUTOFIGHT_NOMOVE
 # Cntl-D (Go down closest stairs)
 macros += M \{4} \{7}>
 
-# Cntl-E (Go up closest stairs)
-macros += M \{5} \{7}<
 
 # Numpad keymaps
 macros += K \{-1019} f

@@ -300,7 +300,7 @@ function BRC.get.command_key(cmd)
   if not key then return nil end
   -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
   local char_key = key:sub(-1)
-  return key:contains("Ctrl") and BRC.util.control_key(char_key) or char_key
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
 end
 
 --[[
@@ -611,11 +611,20 @@ function macro_brc_dump_character()
   BRC.dump.char(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COL.lightcyan))
 end
 
+--- Cntl-E (Go up closest stairs)
+function macro_brc_cntl_e()
+  if you.branch() == "D" and you.depth() == 1 and you.have_orb() then
+    crawl.sendkeys({ "X<\r", 27, "<" }) -- Throw in Esc (27) JIC standing on stairs
+  else
+    crawl.sendkeys({ BRC.util.cntl("g"), "<" })
+  end
+end
+
 ----------------------------------------------
 ---- BRC.util - General utility functions ----
 BRC.util = {}
 
-function BRC.util.control_key(c)
+function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
 end
 

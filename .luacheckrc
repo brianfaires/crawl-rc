@@ -29,6 +29,7 @@ globals = {
   "ready",
 
   -- BRC macro functions
+  "macro_brc_cntl_e",
   "macro_brc_dump_character",
   "macro_brc_explore",
   "macro_brc_hotkey",
