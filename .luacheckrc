@@ -57,6 +57,7 @@ globals = {
   "f_hotkey",
   "f_inscribe_stats",
   "f_misc_alerts",
+  "f_mute_messages",
   "f_pa_armour",
   "f_pa_data",
   "f_pa_misc",

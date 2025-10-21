@@ -146,6 +146,9 @@ BRC.Profiles.Speed = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
     save_with_msg = false,      -- Shift-S to save and leave yourself a message
   },
+  ["mute-messages"] = {
+    mute_level = 3,
+  },
   ["remind-id"] = {
     stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 9,    -- Stop when largest un-ID'd potion stack increases and is >= this
@@ -196,12 +199,18 @@ BRC.Profiles.Turncount = {
   ["alert-monsters"] = {
     sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
+  ["mute-messages"] = {
+    mute_level = 1,
+  },
 } -- BRC.Profiles.Turncount (do not remove this comment)
 
 -- Streak Config Profile: For win streaks
 BRC.Profiles.Streak = {
   ["alert-monsters"] = {
     sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
+  },
+  ["mute-messages"] = {
+    mute_level = 1,
   },
 } -- BRC.Profiles.Streak (do not remove this comment)
 

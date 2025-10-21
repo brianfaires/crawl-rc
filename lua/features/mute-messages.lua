@@ -1,0 +1,95 @@
+--[[
+Feature: mute-messages
+Description: Mutes various crawl messages, with configurable levels of reduction
+Author: buehler
+Dependencies: core/util.lua
+--]]
+
+f_mute_messages = {}
+f_mute_messages.BRC_FEATURE_NAME = "mute-messages"
+f_mute_messages.Config = {
+  mute_level = 2,
+  messages = {
+    -- Light reduction; unnecessary messages
+    [1] = {
+
+      -- Unnecessary
+      "You now have .* runes",
+      "to see all the runes you have collected",
+      "A chill wind blows around you",
+      "An electric hum fills the air",
+      "You reach to attack",
+
+      -- Interface
+      "for a list of commands and other information",
+      "Marking area around",
+      "(Reduced|Removed|Placed new) exclusion",
+      "You can access your shopping list by pressing '\\$'",
+
+      -- Wielding weapons
+      "Your .* exudes an aura of protection",
+      "Your .* glows with a cold blue light",
+
+      -- Monsters /Allies / Neutrals
+      "dissolves into shadows",
+      "You swap places",
+      "Your spectral weapon disappears",
+
+      -- Spells
+      "Your foxfire dissipates",
+
+      -- Religion
+      "accepts your kill",
+      "is honoured by your kill",
+    },
+
+    -- Moderate reduction; potentially confusing but no info lost
+    [2] = {
+      -- Allies / monsters
+      "Ancestor HP restored",
+      "The (bush|fungus|plant) (looks sick|begins to die|is engulfed|is struck)",
+      "evades? a web",
+      "is (lightly|moderately|heavily|severely) (damaged|wounded)",
+      "is almost (dead|destroyed)",
+
+      -- Interface
+      "Use which ability\\?",
+      "Evoke which item\\?$",
+      "Shift\\-Dir \\- straight line",
+
+      -- Books
+      "You pick up (?!a manual).*and begin reading",
+      "Unfortunately\\, you learn nothing new",
+
+      -- Ground items / features
+      "There is a.*(door|gate|staircase|web).*here",
+      "You see here .*(corpse|skeleton)",
+      "You now have \\d+ gold piece",
+      "You enter the shallow water",
+      "Moving in this stuff is going to be slow",
+
+      -- Religion
+      "Your shadow attacks",
+    },
+
+    -- Heavily reduced messages for speed runs
+    [3] = {
+      "No target in view",
+      "You (headbutt|bite|kick)",
+      "You block",
+      "but do(es)? no damage",
+      "misses you",
+    },
+  },
+} -- f_mute_messages.Config (do not remove this comment)
+
+function f_mute_messages.init()
+  if f_mute_messages.Config.mute_level and f_mute_messages.Config.mute_level > 0 then
+    for i = 1, f_mute_messages.Config.mute_level do
+      if not f_mute_messages.Config.messages[i] then break end
+      for _, message in ipairs(f_mute_messages.Config.messages[i]) do
+        BRC.set.message_mute(message, true)
+      end
+    end
+  end
+end

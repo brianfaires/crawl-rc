@@ -114,6 +114,9 @@ function f_fully_recover.init()
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)
   BRC.set.macro(BRC.get.command_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+
+  BRC.set.message_mute("^HP restored", true)
+  BRC.set.message_mute("Magic restored", true)
 end
 
 function f_fully_recover.c_message(text, channel)

@@ -145,6 +145,9 @@ BRC.Profiles.Speed = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
     save_with_msg = false,      -- Shift-S to save and leave yourself a message
   },
+  ["mute-messages"] = {
+    mute_level = 3,
+  },
   ["remind-id"] = {
     stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 9,    -- Stop when largest un-ID'd potion stack increases and is >= this
@@ -195,12 +198,18 @@ BRC.Profiles.Turncount = {
   ["alert-monsters"] = {
     sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
+  ["mute-messages"] = {
+    mute_level = 1,
+  },
 } -- BRC.Profiles.Turncount (do not remove this comment)
 
 -- Streak Config Profile: For win streaks
 BRC.Profiles.Streak = {
   ["alert-monsters"] = {
     sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
+  },
+  ["mute-messages"] = {
+    mute_level = 1,
   },
 } -- BRC.Profiles.Streak (do not remove this comment)
 
@@ -494,60 +503,6 @@ msc ^= $m_boring:You unwield your
 
 # Bad things
 msc ^= $m_danger: delaying your translocation
-
-#############################################################################################################
-####### MUTES Be careful with these! They come last and use ^= (prepend), to override everything else #######
-# Replaced by fully-rest.lua
-msc ^= mute:(Ancestor )?HP restored
-msc ^= mute:Magic restored
-
-# Unnecessary
-msc ^= mute:You now have .* runes
-msc ^= mute:to see all the runes you have collected
-msc ^= mute:A chill wind blows around you
-msc ^= mute:An electric hum fills the air
-msc ^= mute:You reach to attack
-
-# Wielding weapons
-msc ^= mute:Your .* exudes an aura of protection
-msc ^= mute:Your .* glows with a cold blue light
-
-# Monsters /Allies / Neutrals
-msc ^= mute:evades? a web
-msc ^= mute:is (lightly|moderately|heavily|severely) (damaged|wounded)
-msc ^= mute:is almost (dead|destroyed)
-msc ^= mute:The (bush|fungus|plant) (looks sick|begins to die|is engulfed|is struck)
-msc ^= mute:dissolves into shadows
-msc ^= mute:You swap places
-msc ^= mute:Your spectral weapon disappears
-
-# Interface
-msc ^= mute:Use which ability\?
-msc ^= mute:Evoke which item\?$
-msc ^= mute:for a list of commands and other information
-msc ^= mute:Marking area around
-msc ^= mute:(Reduced|Removed|Placed new) exclusion
-msc ^= mute:Shift\-Dir \- straight line
-msc ^= mute:You can access your shopping list by pressing '\$'
-
-# Books
-msc ^= mute:You pick up (?!a manual).*and begin reading
-msc ^= mute:Unfortunately\, you learn nothing new
-
-# Spells
-msc ^= mute:Your foxfire dissipates
-
-# Religion
-msc ^= mute:accepts your kill
-msc ^= mute:is honoured by your kill
-msc ^= mute:Your shadow attacks
-
-# Ground items / features
-msc ^= mute:There is a.*(door|gate|staircase|web).*here
-msc ^= mute:You see here .*(corpse|skeleton)
-msc ^= mute:You now have .* gold piece
-msc ^= mute:You enter the shallow water
-msc ^= mute:Moving in this stuff is going to be slow
 
 ############################### End rc/display.rc ###############################
 ##########################################################################################
@@ -4249,6 +4204,9 @@ function f_fully_recover.init()
   BRC.set.runrest_ignore_message("recovery:.*", true)
   BRC.set.runrest_ignore_message("duration:.*", true)
   BRC.set.macro(BRC.get.command_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+
+  BRC.set.message_mute("^HP restored", true)
+  BRC.set.message_mute("Magic restored", true)
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -4604,6 +4562,109 @@ end
 
 }
 ############################### End lua/features/misc-alerts.lua ###############################
+##########################################################################################
+
+################################### Begin lua/features/mute-messages.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--[[
+Feature: mute-messages
+Description: Mutes various crawl messages, with configurable levels of reduction
+Author: buehler
+Dependencies: core/util.lua
+--]]
+
+f_mute_messages = {}
+f_mute_messages.BRC_FEATURE_NAME = "mute-messages"
+f_mute_messages.Config = {
+  mute_level = 2,
+  messages = {
+    -- Light reduction; unnecessary messages
+    [1] = {
+
+      -- Unnecessary
+      "You now have .* runes",
+      "to see all the runes you have collected",
+      "A chill wind blows around you",
+      "An electric hum fills the air",
+      "You reach to attack",
+
+      -- Interface
+      "for a list of commands and other information",
+      "Marking area around",
+      "(Reduced|Removed|Placed new) exclusion",
+      "You can access your shopping list by pressing '\\$'",
+
+      -- Wielding weapons
+      "Your .* exudes an aura of protection",
+      "Your .* glows with a cold blue light",
+
+      -- Monsters /Allies / Neutrals
+      "dissolves into shadows",
+      "You swap places",
+      "Your spectral weapon disappears",
+
+      -- Spells
+      "Your foxfire dissipates",
+
+      -- Religion
+      "accepts your kill",
+      "is honoured by your kill",
+    },
+
+    -- Moderate reduction; potentially confusing but no info lost
+    [2] = {
+      -- Allies / monsters
+      "Ancestor HP restored",
+      "The (bush|fungus|plant) (looks sick|begins to die|is engulfed|is struck)",
+      "evades? a web",
+      "is (lightly|moderately|heavily|severely) (damaged|wounded)",
+      "is almost (dead|destroyed)",
+
+      -- Interface
+      "Use which ability\\?",
+      "Evoke which item\\?$",
+      "Shift\\-Dir \\- straight line",
+
+      -- Books
+      "You pick up (?!a manual).*and begin reading",
+      "Unfortunately\\, you learn nothing new",
+
+      -- Ground items / features
+      "There is a.*(door|gate|staircase|web).*here",
+      "You see here .*(corpse|skeleton)",
+      "You now have \\d+ gold piece",
+      "You enter the shallow water",
+      "Moving in this stuff is going to be slow",
+
+      -- Religion
+      "Your shadow attacks",
+    },
+
+    -- Heavily reduced messages for speed runs
+    [3] = {
+      "No target in view",
+      "You (headbutt|bite|kick)",
+      "You block",
+      "but do(es)? no damage",
+      "misses you",
+    },
+  },
+} -- f_mute_messages.Config (do not remove this comment)
+
+function f_mute_messages.init()
+  if f_mute_messages.Config.mute_level and f_mute_messages.Config.mute_level > 0 then
+    for i = 1, f_mute_messages.Config.mute_level do
+      if not f_mute_messages.Config.messages[i] then break end
+      for _, message in ipairs(f_mute_messages.Config.messages[i]) do
+        BRC.set.message_mute(message, true)
+      end
+    end
+  end
+end
+
+}
+############################### End lua/features/mute-messages.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/features/quiver-reminders.lua ###################################
