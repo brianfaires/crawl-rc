@@ -381,6 +381,8 @@ menu += pickup:$i_wand:wand of
 menu += resists:$i_shade_artefact:artefact
 menu += resists:$i_ego:ego
 menu += resists:$i_plain:(armour|weapon|jewellery)
+menu += shop:$i_ego:(ego|(unidentified.*(glowing|runed|shiny|embroidered)|troll leather|dragon scales))
+
 
 ## Main item colours
 menu += $i_equipped:.*equipped.*(weapon|armour|jewellery)
