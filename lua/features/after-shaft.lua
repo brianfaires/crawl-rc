@@ -9,36 +9,25 @@ f_after_shaft = {}
 f_after_shaft.BRC_FEATURE_NAME = "after-shaft"
 
 ---- Persistent variables ----
-as_shaft_depth = BRC.Data.persist("as_shaft_depth", 0)
-as_shaft_branch = BRC.Data.persist("as_shaft_branch", "NA")
+as_shaft_location = BRC.Data.persist("as_shaft_location", nil)
 
 ---- Hook functions ----
 function f_after_shaft.init()
-  if you.turns() == 0 and you.class() == "Delver" then
-    as_shaft_depth = 1
-    as_shaft_branch = you.branch()
-  end
-
-  BRC.set.explore_stop("stairs", as_shaft_depth ~= 0)
+  if you.turns() == 0 and you.class() == "Delver" then as_shaft_location = "D:1" end
+  BRC.set.explore_stop("stairs", as_shaft_location ~= nil)
 end
 
 function f_after_shaft.c_message(text, channel)
-  if channel ~= "plain" or BRC.you.in_hell() then return end
-  if as_shaft_depth ~= 0 and you.branch() == as_shaft_branch then return end
-
-  local text_fall = "ou fall into a shaft"
-  local text_sucked = "ou are sucked into a shaft"
-  if text:contains(text_fall) or text:contains(text_sucked) then
-    as_shaft_depth = you.depth()
-    as_shaft_branch = you.branch()
+  if channel ~= "plain" or as_shaft_location then return end
+  if text:contains("ou fall into a shaft") or text:contains("ou are sucked into a shaft") then
+    as_shaft_location = you.where()
     BRC.set.explore_stop("stairs", true)
   end
 end
 
 function f_after_shaft.ready()
-  if you.depth() == as_shaft_depth and you.branch() == as_shaft_branch then
+  if you.where() == as_shaft_location then
     BRC.set.explore_stop("stairs", false)
-    as_shaft_depth = 0
-    as_shaft_branch = "NA"
+    as_shaft_location = nil
   end
 end

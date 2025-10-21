@@ -30,7 +30,7 @@ local HOOK_FUNCTIONS = {
 local _features = {}
 local _hooks = {}
 local turn_count = nil
-local depth = nil
+local cur_location = nil
 
 ---- Local functions ----
 local function feature_is_disabled(f)
@@ -339,7 +339,7 @@ function BRC.init()
 
   -- We're a go!
   turn_count = -1
-  depth = you.depth()
+  cur_location = you.where()
   BRC.active = true
   BRC.ready()
   return true
@@ -384,8 +384,8 @@ function BRC.ready()
   if you.turns() > turn_count then
     turn_count = you.turns()
 
-    if you.depth() ~= depth and not you.have_orb() then
-      depth = you.depth()
+    if you.where() ~= cur_location and not you.have_orb() then
+      cur_location = you.where()
       BRC.Data.backup()
     end
 

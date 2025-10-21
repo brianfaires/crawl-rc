@@ -13,7 +13,7 @@ f_safe_stairs.Config = {
 } -- f_safe_stairs.Config (do not remove this comment)
 
 ---- Persistent variables ----
-ss_prev_location = BRC.Data.persist("ss_prev_location", you.branch() .. you.depth())
+ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
 ---- Local config alias ----
@@ -38,7 +38,7 @@ local function check_new_location(cmd)
   if
     Config.warn_v5
     and not ss_v5_warned
-    and ss_cur_location == "Vaults4"
+    and ss_cur_location == "Vaults:4"
     and cmd == "CMD_GO_DOWNSTAIRS"
     and (feature:contains("down") or feature:contains("shaft"))
   then
@@ -68,12 +68,12 @@ end
 
 ---- Hook functions ----
 function f_safe_stairs.init()
-  ss_cur_location = you.branch() .. you.depth()
+  ss_cur_location = you.where()
   BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
   BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
 end
 
 function f_safe_stairs.ready()
   ss_prev_location = ss_cur_location
-  ss_cur_location = you.branch() .. you.depth()
+  ss_cur_location = you.where()
 end

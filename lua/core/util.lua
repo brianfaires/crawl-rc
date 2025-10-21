@@ -613,7 +613,7 @@ end
 
 --- Cntl-E (Go up closest stairs)
 function macro_brc_cntl_e()
-  if you.branch() == "D" and you.depth() == 1 and you.have_orb() then
+  if you.where() == "D:1" and you.have_orb() then
     crawl.sendkeys({ "X<\r", 27, "<" }) -- Throw in Esc (27) JIC standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
