@@ -3,17 +3,17 @@
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
+1. Prompt for Auto-actions:
+  - On alert, prompt/offer to pickup item (or macro available)
 1. Shorten BRC.util.tostring()
 1. Standardize LDocs / file headers
 1. redefine cntl-E macro as func, to work w/ orb on D:1
-1. Use crawl version for 0.33 support
+1. Pull crawl version for compatibility / 0.33 support
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. Features:
-  - Turncount profile: (disable autopickup, auto-display info for items in view)
   - Add macro to save skill targets & CONFIG values (by race or race+class)
+  - Turncount profile: (disable autopickup, auto-display info for items in view)
   - Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
-1. Prompt for Auto-actions:
-  - On alert, prompt/offer to pickup item (or macro available)
 1. In-game guided menu (change config, save settings, etc...)
 1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
 1. disable alert of branded items after artefact of same type
@@ -22,6 +22,7 @@
 https://github.com/crawl/crawl/pull/4830 -> remove "body armour" workaround
 https://github.com/crawl/crawl/pull/4814 -> remove cap on inscription colors
 https://github.com/crawl/crawl/issues/4789 -> drop_disables_autopickup overrides exclude-dropped
+resting statuses fails after 100 turns (blocks fully-recover.lua behavior)
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal
