@@ -8,13 +8,14 @@ ignore = {}
 -- Allow reading these globals without defining them
 read_globals = {
   -- Crawl game engine globals
-  "crawl",
   "add_autopickup_func",
-  "you",
+  "crawl",
   "items",
-  "view",
   "iter",
+  "travel",
   "util",
+  "view",
+  "you",
 }
 
 -- Suppress "unused global variable" warnings

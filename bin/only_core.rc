@@ -311,7 +311,8 @@ BRC.BAD_ART_PROPS = {
 } -- BRC.BAD_ART_PROPS (do not remove this comment)
 
 ---- Other ----
--- BRC.COL: Would prefer to use integer values, but they don't work in all menus
+BRC.KEYS = { ESC = 27 }
+
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
@@ -950,7 +951,7 @@ end
 --- Cntl-E (Go up closest stairs)
 function macro_brc_cntl_e()
   if you.where() == "D:1" and you.have_orb() then
-    crawl.sendkeys({ "X<\r", 27, "<" }) -- Throw in Esc (27) JIC standing on stairs
+    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- Throw in Esc (27) JIC standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
   end

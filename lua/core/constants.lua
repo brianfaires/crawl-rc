@@ -88,7 +88,8 @@ BRC.BAD_ART_PROPS = {
 } -- BRC.BAD_ART_PROPS (do not remove this comment)
 
 ---- Other ----
--- BRC.COL: Would prefer to use integer values, but they don't work in all menus
+BRC.KEYS = { ESC = 27 }
+
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",

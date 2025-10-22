@@ -174,10 +174,33 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
 ---- Local config alias ----
 local Config = f_pickup_alert.Config
 
+---- Local constants ----
+waypoints_muted = false
+local WAYPOINT_MSGS = {
+  "Assign waypoint to what number",
+  "Existing waypoints",
+  "Delete which waypoint",
+  "\\(\\d\\)",
+  "Okay\\, then\\.",
+} -- WAYPOINT_MSGS (do not remove this comment)
+
 ---- Local variables ----
 local pause_pa_system = nil
 
 ---- Local functions ----
+local function get_item_xy(item_name)
+  local r = you.los()
+  for dx = -r, r do
+    for dy = -r, r do
+      for _, fl in ipairs(items.get_items_at(dx, dy) or {}) do
+        if fl.name() == item_name then
+          return dx, dy
+        end
+      end
+    end
+  end
+end
+
 local function has_configured_force_more(it)
   if it.artefact then
     if Config.Alert.More.artefact then return true end
@@ -189,6 +212,59 @@ local function has_configured_force_more(it)
   end
 
   return Config.Alert.More.armour_ego and BRC.is.armour(it) and BRC.get.ego(it)
+end
+
+local function track_unique_egos(it)
+  local ego = BRC.get.ego(it)
+  if
+    ego
+    and not util.contains(pa_egos_alerted, ego)
+    and not (it.artefact and BRC.is.risky_item(it))
+  then
+    pa_egos_alerted[#pa_egos_alerted+1] = ego
+  end
+end
+
+local function set_pickup_hotkey(name)
+  BRC.set_hotkey("pickup", name, function()
+    for _, fl in ipairs(you.floor_items()) do
+      if fl.name() == name then
+        items.pickup(fl)
+        return
+      end
+    end
+    BRC.mpr.darkgrey(name .. " isn't here!")
+  end, 1)
+end
+
+local function set_waypoint_hotkey(name)
+  local x, y = get_item_xy(name)
+  if x == nil then
+    BRC.log.debug(name .. " not found in LOS")
+    return
+  end
+
+  local waynum = nil
+  for i = 9, 0, -1 do
+    if not travel.waypoint_delta(i) then
+      travel.set_waypoint(i, x, y)
+      waynum = i
+      break
+    end
+  end
+  if not waynum then
+    BRC.log.debug("No available waypoint slots")
+    return
+  end
+
+  BRC.set_hotkey("move to", name, function()
+    crawl.sendkeys({ BRC.get.command_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+
+    -- Delete waypoint after travel, muting the associated messages (unmuted in ready())
+    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), "\r" })
+    util.foreach(WAYPOINT_MSGS, function(m) BRC.set.message_mute(m, true) end)
+    waypoints_muted = true
+  end, 1)
 end
 
 ---- Public API ----
@@ -270,15 +346,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
       alert_col = Config.AlertColor.aux_arm
     end
 
-    -- Unique egos tracked across all armour types
-    local ego = BRC.get.ego(it)
-    if
-      ego
-      and not util.contains(pa_egos_alerted, ego)
-      and not (it.artefact and BRC.is.risky_item(it))
-    then
-      pa_egos_alerted[#pa_egos_alerted+1] = ego
-    end
+    track_unique_egos(it)
   else
     alert_col = Config.AlertColor.misc
   end
@@ -289,22 +357,16 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
   tokens[#tokens + 1] = tokens[1]
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
+  BRC.log.debug("alerted " .. item_name)
 
   f_pa_data.insert(pa_recent_alerts, it)
   f_pa_data.insert(pa_items_alerted, it)
   you.stop_activity()
 
-  -- If standing on the item, put pickup on hotkey
-  local NAME = it.name()
-  if util.exists(you.floor_items(), function(fl) return fl.name() == NAME end) then
-    BRC.set_hotkey("pickup", NAME, function()
-      for _, fl in ipairs(you.floor_items()) do
-        if fl.name() == NAME then
-          items.pickup(fl)
-          break
-        end
-      end
-    end, 1)
+  if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
+    set_pickup_hotkey(it.name())
+  elseif you.feel_safe() then
+    set_waypoint_hotkey(it.name())
   end
 
   return true
@@ -367,6 +429,10 @@ function f_pickup_alert.c_message(text, channel)
 end
 
 function f_pickup_alert.ready()
+  if waypoints_muted then
+    waypoints_muted = false
+    util.foreach(WAYPOINT_MSGS, function(m) BRC.set.message_mute(m, false) end)
+  end
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
