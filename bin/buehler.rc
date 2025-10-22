@@ -5598,6 +5598,7 @@ local Config = f_pickup_alert.Config
 
 ---- Local variables ----
 local pause_pa_system = nil
+local hold_alerts_for_next_turn = false
 
 ---- Local functions ----
 local function get_item_xy(item_name)
@@ -5671,6 +5672,7 @@ local function set_waypoint_hotkey(name)
   end
 
   BRC.set_hotkey("move to", name, function()
+    f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
     crawl.sendkeys({ BRC.get.command_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
 
     -- Delete waypoint after travel, silencing the associated messages
@@ -5687,6 +5689,10 @@ local function set_waypoint_hotkey(name)
 end
 
 ---- Public API ----
+function f_pickup_alert.pause_alerts()
+  hold_alerts_for_next_turn = true
+end
+
 function f_pickup_alert.autopickup(it, _)
   if
     not BRC.active
@@ -5745,6 +5751,7 @@ end
 function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local item_name = f_pa_data.get_keyname(it, true)
   local alert_col
+
   if it.is_weapon then
     f_pa_data.update_high_scores(it)
     alert_col = Config.AlertColor.weapon
@@ -5776,11 +5783,11 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
   tokens[#tokens + 1] = tokens[1]
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
-  BRC.log.debug("alerted " .. item_name)
 
   f_pa_data.insert(pa_recent_alerts, it)
   f_pa_data.insert(pa_items_alerted, it)
-  you.stop_activity()
+
+  if not hold_alerts_for_next_turn then you.stop_activity() end
 
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
     set_pickup_hotkey(it.name())
@@ -5848,6 +5855,7 @@ function f_pickup_alert.c_message(text, channel)
 end
 
 function f_pickup_alert.ready()
+  hold_alerts_for_next_turn = false
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
