@@ -297,7 +297,7 @@ end
 
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
-  if not key then return nil end
+  if not key or key == "NULL" then return nil end
   -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
   local char_key = key:sub(-1)
   return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
@@ -570,6 +570,11 @@ function BRC.set.runrest_stop_message(pattern, add_pattern)
   crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
 end
 
+function BRC.set.single_turn_mute(pattern)
+  BRC.set.message_mute(pattern, true)
+  BRC.single_turn_mutes[#BRC.single_turn_mutes + 1] = pattern
+end
+
 ------------------------------------------------------------------------------
 --- BRC.dump - Debugging messages for char dump or in-game lua interpreter ---
 BRC.dump = {}
@@ -614,7 +619,7 @@ end
 --- Cntl-E (Go up closest stairs)
 function macro_brc_cntl_e()
   if you.where() == "D:1" and you.have_orb() then
-    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- Throw in Esc (27) JIC standing on stairs
+    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
   end

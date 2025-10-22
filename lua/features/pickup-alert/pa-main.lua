@@ -174,16 +174,6 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
 ---- Local config alias ----
 local Config = f_pickup_alert.Config
 
----- Local constants ----
-waypoints_muted = false
-local WAYPOINT_MSGS = {
-  "Assign waypoint to what number",
-  "Existing waypoints",
-  "Delete which waypoint",
-  "\\(\\d\\)",
-  "Okay\\, then\\.",
-} -- WAYPOINT_MSGS (do not remove this comment)
-
 ---- Local variables ----
 local pause_pa_system = nil
 
@@ -247,6 +237,7 @@ local function set_waypoint_hotkey(name)
   local waynum = nil
   for i = 9, 0, -1 do
     if not travel.waypoint_delta(i) then
+      BRC.set.single_turn_mute("Waypoint \\d assigned")
       travel.set_waypoint(i, x, y)
       waynum = i
       break
@@ -260,10 +251,16 @@ local function set_waypoint_hotkey(name)
   BRC.set_hotkey("move to", name, function()
     crawl.sendkeys({ BRC.get.command_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
 
-    -- Delete waypoint after travel, muting the associated messages (unmuted in ready())
-    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), "\r" })
-    util.foreach(WAYPOINT_MSGS, function(m) BRC.set.message_mute(m, true) end)
-    waypoints_muted = true
+    -- Delete waypoint after travel, silencing the associated messages
+    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })
+    BRC.set.single_turn_mute("Assign waypoint to what number")
+    BRC.set.single_turn_mute("Existing waypoints")
+    BRC.set.single_turn_mute("Delete which waypoint")
+    BRC.set.single_turn_mute("\\(\\d\\) ")
+    BRC.set.single_turn_mute("All waypoints deleted")
+    BRC.set.single_turn_mute("You're already here!")
+    BRC.set.single_turn_mute("Okay\\, then\\.")
+    BRC.set.single_turn_mute("Unknown command")
   end, 1)
 end
 
@@ -429,10 +426,6 @@ function f_pickup_alert.c_message(text, channel)
 end
 
 function f_pickup_alert.ready()
-  if waypoints_muted then
-    waypoints_muted = false
-    util.foreach(WAYPOINT_MSGS, function(m) BRC.set.message_mute(m, false) end)
-  end
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))

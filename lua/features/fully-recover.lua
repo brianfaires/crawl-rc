@@ -19,7 +19,6 @@ local Config = f_fully_recover.Config
 
 ---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500
-local WAITING_MESSAGE = "You start waiting."
 
 ---- Local variables ----
 local recovery_start_turn = nil
@@ -29,7 +28,6 @@ local explore_after_recovery = nil
 local function abort_fully_recover()
   recovery_start_turn = 0
   explore_after_recovery = false
-  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 end
 
@@ -38,7 +36,6 @@ local function finish_fully_recover()
   BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
 
   recovery_start_turn = 0
-  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 
   if explore_after_recovery then
@@ -85,7 +82,7 @@ end
 
 local function start_fully_recover()
   recovery_start_turn = you.turns()
-  BRC.set.message_mute(WAITING_MESSAGE, true)
+  BRC.set.single_turn_mute("You start waiting.")
 end
 
 ---- Macro function: Attach full recovery to auto-explore ----
@@ -121,7 +118,7 @@ end
 
 function f_fully_recover.c_message(text, channel)
   if channel == "plain" then
-    if text:contains(WAITING_MESSAGE) or text:contains("ou start resting") then
+    if text:contains("ou start waiting") or text:contains("ou start resting") then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif recovery_start_turn > 0 then

@@ -11,6 +11,7 @@ Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
 BRC.active = nil
+BRC.single_turn_mutes = {}
 
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
@@ -383,6 +384,9 @@ function BRC.ready()
 
   if you.turns() > turn_count then
     turn_count = you.turns()
+
+    -- Unmute single-turn mutes
+    util.foreach(BRC.single_turn_mutes, function(m) BRC.set.message_mute(m, false) end)
 
     if you.where() ~= cur_location and not you.have_orb() then
       cur_location = you.where()

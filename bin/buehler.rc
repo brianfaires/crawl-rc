@@ -1384,7 +1384,7 @@ end
 
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
-  if not key then return nil end
+  if not key or key == "NULL" then return nil end
   -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
   local char_key = key:sub(-1)
   return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
@@ -1657,6 +1657,11 @@ function BRC.set.runrest_stop_message(pattern, add_pattern)
   crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
 end
 
+function BRC.set.single_turn_mute(pattern)
+  BRC.set.message_mute(pattern, true)
+  BRC.single_turn_mutes[#BRC.single_turn_mutes + 1] = pattern
+end
+
 ------------------------------------------------------------------------------
 --- BRC.dump - Debugging messages for char dump or in-game lua interpreter ---
 BRC.dump = {}
@@ -1701,7 +1706,7 @@ end
 --- Cntl-E (Go up closest stairs)
 function macro_brc_cntl_e()
   if you.where() == "D:1" and you.have_orb() then
-    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- Throw in Esc (27) JIC standing on stairs
+    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
   end
@@ -2467,6 +2472,7 @@ Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
 BRC.active = nil
+BRC.single_turn_mutes = {}
 
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
@@ -2839,6 +2845,9 @@ function BRC.ready()
 
   if you.turns() > turn_count then
     turn_count = you.turns()
+
+    -- Unmute single-turn mutes
+    util.foreach(BRC.single_turn_mutes, function(m) BRC.set.message_mute(m, false) end)
 
     if you.where() ~= cur_location and not you.have_orb() then
       cur_location = you.where()
@@ -4109,7 +4118,6 @@ local Config = f_fully_recover.Config
 
 ---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500
-local WAITING_MESSAGE = "You start waiting."
 
 ---- Local variables ----
 local recovery_start_turn = nil
@@ -4119,7 +4127,6 @@ local explore_after_recovery = nil
 local function abort_fully_recover()
   recovery_start_turn = 0
   explore_after_recovery = false
-  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 end
 
@@ -4128,7 +4135,6 @@ local function finish_fully_recover()
   BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
 
   recovery_start_turn = 0
-  BRC.set.message_mute(WAITING_MESSAGE, false)
   you.stop_activity()
 
   if explore_after_recovery then
@@ -4175,7 +4181,7 @@ end
 
 local function start_fully_recover()
   recovery_start_turn = you.turns()
-  BRC.set.message_mute(WAITING_MESSAGE, true)
+  BRC.set.single_turn_mute("You start waiting.")
 end
 
 ---- Macro function: Attach full recovery to auto-explore ----
@@ -4211,7 +4217,7 @@ end
 
 function f_fully_recover.c_message(text, channel)
   if channel == "plain" then
-    if text:contains(WAITING_MESSAGE) or text:contains("ou start resting") then
+    if text:contains("ou start waiting") or text:contains("ou start resting") then
       if not fully_recovered() then start_fully_recover() end
     end
   elseif recovery_start_turn > 0 then
@@ -5590,16 +5596,6 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
 ---- Local config alias ----
 local Config = f_pickup_alert.Config
 
----- Local constants ----
-waypoints_muted = false
-local WAYPOINT_MSGS = {
-  "Assign waypoint to what number",
-  "Existing waypoints",
-  "Delete which waypoint",
-  "\\(\\d\\)",
-  "Okay\\, then\\.",
-} -- WAYPOINT_MSGS (do not remove this comment)
-
 ---- Local variables ----
 local pause_pa_system = nil
 
@@ -5663,6 +5659,7 @@ local function set_waypoint_hotkey(name)
   local waynum = nil
   for i = 9, 0, -1 do
     if not travel.waypoint_delta(i) then
+      BRC.set.single_turn_mute("Waypoint \\d assigned")
       travel.set_waypoint(i, x, y)
       waynum = i
       break
@@ -5676,10 +5673,16 @@ local function set_waypoint_hotkey(name)
   BRC.set_hotkey("move to", name, function()
     crawl.sendkeys({ BRC.get.command_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
 
-    -- Delete waypoint after travel, muting the associated messages (unmuted in ready())
-    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), "\r" })
-    util.foreach(WAYPOINT_MSGS, function(m) BRC.set.message_mute(m, true) end)
-    waypoints_muted = true
+    -- Delete waypoint after travel, silencing the associated messages
+    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })
+    BRC.set.single_turn_mute("Assign waypoint to what number")
+    BRC.set.single_turn_mute("Existing waypoints")
+    BRC.set.single_turn_mute("Delete which waypoint")
+    BRC.set.single_turn_mute("\\(\\d\\) ")
+    BRC.set.single_turn_mute("All waypoints deleted")
+    BRC.set.single_turn_mute("You're already here!")
+    BRC.set.single_turn_mute("Okay\\, then\\.")
+    BRC.set.single_turn_mute("Unknown command")
   end, 1)
 end
 
@@ -5845,10 +5848,6 @@ function f_pickup_alert.c_message(text, channel)
 end
 
 function f_pickup_alert.ready()
-  if waypoints_muted then
-    waypoints_muted = false
-    util.foreach(WAYPOINT_MSGS, function(m) BRC.set.message_mute(m, false) end)
-  end
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
