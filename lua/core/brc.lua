@@ -28,10 +28,10 @@ local HOOK_FUNCTIONS = {
 } -- HOOK_FUNCTIONS (do not remove this comment)
 
 ---- Local variables ----
-local _features = {}
-local _hooks = {}
-local turn_count = nil
-local cur_location = nil
+local _features
+local _hooks
+local turn_count
+local cur_location
 
 ---- Local functions ----
 local function feature_is_disabled(f)
@@ -323,7 +323,7 @@ function BRC.init()
   BRC.set.macro("\\{5}", "macro_brc_cntl_e")
 
   BRC.log.debug("Verify persistent data reload...")
-  local success = BRC.Data.handle_reinit_errors()
+  local success = BRC.Data.handle_persist_errors()
   if success then
     BRC.Data.backup() -- Only backup after a clean startup
     local msg = string.format("Successfully initialized BRC v%s!%s", BRC.VERSION, suffix)

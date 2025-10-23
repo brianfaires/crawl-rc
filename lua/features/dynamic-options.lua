@@ -21,10 +21,10 @@ local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 ---- Local variables ----
-local cur_god = nil
-local ignore_all_magic = nil
-local ignore_advanced_magic = nil
-local xl_force_mores_active = nil
+local cur_god
+local ignore_all_magic
+local ignore_advanced_magic
+local xl_force_mores_active
 
 ---- Local functions ----
 local function set_class_options()

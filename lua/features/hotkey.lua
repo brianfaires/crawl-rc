@@ -30,8 +30,8 @@ local WAYPOINT_MUTES = {
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
-local action_queue = {}
-local cur_action = nil
+local action_queue
+local cur_action
 
 ---- Local functions ----
 local function load_next_action()
@@ -188,6 +188,9 @@ end
 
 ---- Hook functions ----
 function f_hotkey.init()
+  action_queue = {}
+  cur_action = nil
+
   BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
   BRC.set.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
 end

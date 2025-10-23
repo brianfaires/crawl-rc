@@ -29,12 +29,21 @@ persistent_map = BRC.Data.persist("persistent_map", {})
 local Config = f_template.Config
 
 ---- Local constants ----
+local CONSTANT_STRING = "Hand Weapons"
+
 ---- Local variables ----
+-- Declare locals, but initialize their values in init()
+local local_var
+local local_table
+
 ---- Local functions ----
 
 -- Public hook functions (Remove any hooks you don't use)
 function f_template.init()
   -- Called when game opens
+  local_var = CONSTANT_STRING
+  local_table = { local_var }
+
   persistent_int = persistent_int + 1
   persistent_map.num_startups = persistent_int
 
@@ -59,6 +68,6 @@ end
 
 function f_template.c_assign_invletter(it)
   -- Inventory letter assignment; fires on every pickup of a new item
-  if it.name() == "Item for slot d" then return 3 end
+  if util.contains(local_table, it.class()) then return 0 end -- Equipment slot 'a'
   return nil
 end

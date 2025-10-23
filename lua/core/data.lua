@@ -43,9 +43,11 @@ BRC.Data.Config = {
 local RESTORE_TABLE = "_brc_persist_restore_table"
 
 ---- Local variables ----
+-- Init in declaration, so persist() can be used before init()
 local _failures = {}
 local _persist_names = {}
-local pushed_restore_table_creation = false
+local _default_values = {}
+local pushed_restore_table_creation
 
 ---- Local functions ----
 local function is_usable_backup()
@@ -68,18 +70,17 @@ local function is_usable_backup()
   return true
 end
 
-local function try_restore()
+local function try_restore(failed_vars)
   if not is_usable_backup() then
     BRC.mpr.red("[BRC] Unable to restore from backup. Persistent data reset to defaults.")
     BRC.log.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
     return false
   end
 
-  for _, name in ipairs(_failures) do
+  for _, name in ipairs(failed_vars) do
     _G[name] = BRC.Data.persist(name, c_persist.BRC.Backup[name])
   end
   BRC.mpr.green("[BRC] Restored data from backup.")
-  _failures = {}
   return true
 end
 
@@ -96,6 +97,12 @@ function BRC.Data.persist(name, default_value)
     BRC.log.error(string.format("Cannot persist %s. Default value is of type %s", name, t))
     return default_value
   end
+
+  -- Keep default value for re-init
+  if _default_values[name] then
+    BRC.log.warning("Multiple calls to BRC.Data.persist(" .. name .. ", ...)")
+  end
+  _default_values[name] = default_value
 
   -- Try to restore from persistent restore table
   if you.turns() == 0 then
@@ -138,20 +145,18 @@ function BRC.Data.serialize()
   return table.concat(tokens)
 end
 
-function BRC.Data.erase()
+function BRC.Data.reset()
   if _persist_names then
     for _, name in ipairs(_persist_names) do
-      _G[name] = nil
+      _G[name] = _default_values[name]
     end
   end
 
-  _persist_names = {}
-  BRC.active = false
-  BRC.log.warning("Erased persistent data and disabled BRC. Restart crawl to reload defaults.")
+  BRC.log.warning("Reset all persistent data to default values.")
 end
 
 -- @return true if no persist errors, false if failed restore, nil for user-accepted errors
-function BRC.Data.handle_reinit_errors()
+function BRC.Data.handle_persist_errors()
   if #_failures == 0 then return true end
   local msg = "%s persistent variables did not restore: (%s)"
   BRC.log.error(msg:format(#_failures, table.concat(_failures, ", ")), true)
@@ -160,7 +165,11 @@ function BRC.Data.handle_reinit_errors()
     if BRC.mpr.yesno("Try restoring from backup?") then break end
     if BRC.mpr.yesno("Are you sure? Data will reset to defaults.") then return nil end
   end
-  if try_restore() then return nil end
+
+  -- Whether restore works or not, we should reset _failures
+  local failed_vars = _failures
+  _failures = {}
+  if try_restore(failed_vars) then return nil end
   return false
 end
 

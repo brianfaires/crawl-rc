@@ -21,8 +21,8 @@ local Config = f_fully_recover.Config
 local MAX_TURNS_TO_WAIT = 500
 
 ---- Local variables ----
-local recovery_start_turn = nil
-local explore_after_recovery = nil
+local recovery_start_turn
+local explore_after_recovery
 
 ---- Local functions ----
 local function abort_fully_recover()

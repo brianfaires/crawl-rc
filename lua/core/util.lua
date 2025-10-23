@@ -8,6 +8,7 @@ Dependencies: core/config.lua, core/constants.lua
 BRC = BRC or {}
 
 ---- Local variables ----
+-- Init in declaration, since there's no BRC.util.init()
 local _mpr_queue = {}
 
 ---- Local functions ----

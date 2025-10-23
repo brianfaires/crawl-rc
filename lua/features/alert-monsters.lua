@@ -223,7 +223,7 @@ f_alert_monsters.Config.init = [[
 ------------------- End config section -------------------
 
 ---- Local variables ----
-local patterns_to_mute = nil -- which packs to mute at next ready()
+local patterns_to_mute -- which packs to mute at next ready()
 
 ---- Local constants ----
 local WARN_PREFIX = "monster_warning:(?<!spectral )("
