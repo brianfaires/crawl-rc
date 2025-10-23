@@ -33,7 +33,7 @@ local function quiver_missile_by_name(name)
   crawl.sendkeys(BRC.get.command_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.util.int2char(slot))
 end
 
----- Macro function ----
+---- Macro function: Fire from quiver ----
 function macro_brc_fire()
   if not BRC.active or Config.disabled then return BRC.util.do_cmd("CMD_FIRE") end
   local quivered = items.fired_item()

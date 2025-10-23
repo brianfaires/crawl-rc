@@ -284,17 +284,6 @@ end
 ---- BRC.get - Functions to get non-boolean data ----
 BRC.get = {}
 
-function BRC.get.num_equip_slots(it)
-  local player_race = you.race()
-  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
-  if BRC.is.aux_armour(it) then
-    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
-    return player_race == "Poltergeist" and 6 or 1
-  end
-
-  return 1
-end
-
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
   if not key or key == "NULL" then return nil end
@@ -323,6 +312,19 @@ function BRC.get.equipped_at(it)
   return all_aux, num_slots
 end
 
+function BRC.get.item_xy(name, radius)
+  local r = radius or you.los()
+  for dx = -r, r do
+    for dy = -r, r do
+      for _, fl in ipairs(items.get_items_at(dx, dy) or {}) do
+        if fl.name() == name then
+          return dx, dy
+        end
+      end
+    end
+  end
+end
+
 function BRC.get.items_in_slot(idx)
   local res = {}
   for _, inv in ipairs(items.inventory()) do
@@ -338,6 +340,17 @@ end
 -- @param bool innate_only (optional) - Exclude to include all mutations
 function BRC.get.mut(mutation, innate_only)
   return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+  
+function BRC.get.num_equip_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.is.aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
 end
 
 function BRC.get.preferred_weapon_type()
