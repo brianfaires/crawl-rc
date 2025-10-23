@@ -3,9 +3,10 @@
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
+1. pickup-alert-config.lua
+1. _weapon_cache to its own file
 1. merge after-shaft.lua into runrest-features
-1. Prompt for Auto-actions:
-  - On alert, prompt/offer to pickup item (or macro available)
+1. stderr (text) (as part of BRC.log.debug?)
 1. Shorten BRC.util.tostring()
 1. BRC.Core file?  - macros, config, etc
 1. BRC.reset() - doesn't reset Configs (need to cache them on startup?)
