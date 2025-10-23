@@ -108,8 +108,12 @@ function BRC.log.info(message, context)
 end
 
 function BRC.log.debug(message, context)
-  if not BRC.Config.show_debug_messages then return end
-  log_message(message, context, BRC.COL.lightblue)
+  if BRC.Config.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.debug_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
 end
 
 ---------------------------------------------------

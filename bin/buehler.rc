@@ -24,6 +24,7 @@ BRC.config_memory = "name"
 BRC.Profiles.Default = {
   emojis = false, -- Use emojis in alerts and announcements
   show_debug_messages = false,
+  debug_to_stderr = true,
 } -- BRC.Profiles.Default (do not remove this comment)
 BRC.Config = BRC.Profiles.Default -- Always init to Default profile
 
@@ -1195,8 +1196,12 @@ function BRC.log.info(message, context)
 end
 
 function BRC.log.debug(message, context)
-  if not BRC.Config.show_debug_messages then return end
-  log_message(message, context, BRC.COL.lightblue)
+  if BRC.Config.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.debug_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
 end
 
 ---------------------------------------------------
