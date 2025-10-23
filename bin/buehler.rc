@@ -4281,6 +4281,7 @@ f_hotkey = {}
 f_hotkey.BRC_FEATURE_NAME = "hotkey"
 f_hotkey.Config = {
   key = { keycode = "13", name = "[Enter]" },
+  skip_keycode = BRC.KEYS.ESC,
   equip_hotkey = true,
 } -- f_hotkey.Config (do not remove this comment)
 
@@ -4339,6 +4340,15 @@ function macro_brc_hotkey()
     cur_action = nil
   else
     BRC.mpr.darkgrey("Unknown command (no actions assigned to BRC hotkey).")
+  end
+end
+
+function macro_brc_skip_hotkey()
+  if cur_action then
+    expire_cur_action()
+    if not cur_action then BRC.mpr.darkgrey("[BRC] Hotkey cleared.") end
+  else
+    crawl.sendkeys({ Config.skip_keycode })
   end
 end
 
@@ -4451,6 +4461,7 @@ end
 ---- Hook functions ----
 function f_hotkey.init()
   BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
+  BRC.set.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
 end
 
 function f_hotkey.c_assign_invletter(it)

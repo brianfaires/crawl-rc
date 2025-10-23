@@ -31,12 +31,13 @@ globals = {
 
   -- BRC macro functions
   "macro_brc_cntl_e",
+  "macro_brc_downstairs",
   "macro_brc_dump_character",
   "macro_brc_explore",
+  "macro_brc_fire",
   "macro_brc_hotkey",
   "macro_brc_save",
-  "macro_brc_fire",
-  "macro_brc_downstairs",
+  "macro_brc_skip_hotkey",
   "macro_brc_upstairs",
   
   -- BRC modules
