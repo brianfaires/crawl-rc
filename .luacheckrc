@@ -47,7 +47,6 @@ globals = {
   "_weapon_cache",
   
   -- Feature modules
-  "f_after_shaft",
   "f_alert_monsters",
   "f_announce_hp_mp",
   "f_answer_prompts",
@@ -77,7 +76,6 @@ globals = {
   
   -- Persistent variables from BRC.Data.persist()
   "ad_prev",
-  "as_shaft_location",
   "brc_config_full",
   "brc_config_name",
   "ed_dropped_items",
@@ -97,6 +95,7 @@ globals = {
   "ri_max_scroll_stack",
   "rr_autosearched_gauntlet",
   "rr_autosearched_temple",
+  "rr_shaft_location",
   "ss_cur_location",
   "ss_last_stair_turn",
   "ss_prev_location",

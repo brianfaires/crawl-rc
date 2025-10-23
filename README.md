@@ -49,10 +49,9 @@ _(See header of each feature's lua code for more detail)_
 - **quiver-reminders** - Alert before (f)iring from quiver: if a consumable, or after (F)iring a different ammo
 
 ### Exploration
-- **runrest-features** - Update travel stops based on location. Auto-search when entering temple/gauntlet
+- **runrest-features** - Update travel stops based on location/religion/recent shaft. Auto-search when entering temple/gauntlet
 - **safe-stairs** - Prevent accidental stair usage. Warn before entering V:5
 - **fully-recover** - Rest until negative status effects clear
-- **after-shaft** - Stop on stairs until you make it back
 
 ### Misc
 - **dynamic-options** - Change crawl settings based on XL, religion, etc

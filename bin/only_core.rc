@@ -134,7 +134,6 @@ BRC.Profiles.Custom = {
 
 -- Speed Config Profile: For speed runs
 BRC.Profiles.Speed = {
-  ["after-shaft"] = { disabled = true },
   ["alert-monsters"] = { disabled = true },
   ["safe-consumables"] = { disabled = true },
   ["safe-stairs"] = { disabled = true },
@@ -154,6 +153,7 @@ BRC.Profiles.Speed = {
     stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 9,    -- Stop when largest un-ID'd potion stack increases and is >= this
   },
+  ["runrest-features"] = { after_shaft = false },
   ["startup"] = {
     show_skills_on_startup = false, -- Open skills menu on startup
   },
@@ -196,10 +196,10 @@ BRC.Profiles.Speed = {
 
 -- Turncount Config Profile: For turncount runs
 BRC.Profiles.Turncount = {
-  ["after-shaft"] = { disabled = true },
   ["alert-monsters"] = {
     sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
+  ["runrest-features"] = { after_shaft = false },
   ["mute-messages"] = {
     mute_level = 1,
   },
