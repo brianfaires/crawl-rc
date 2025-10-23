@@ -266,6 +266,7 @@ Use the Lua interpreter (open with the `~` key) for these commands:
 ```lua
 -- BRC management
 BRC.active = false                    -- Disable entire BRC system
+BRC.reset()                           -- Reset everything and re-init
 BRC.Data.reset()                      -- Reset all persistent data
 BRC.load_config()                     -- Select a config from list and load it
 BRC.load_config("config-name")        -- Load a config by name

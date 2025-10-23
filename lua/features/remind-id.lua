@@ -25,7 +25,7 @@ local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
 if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
 
 ---- Local variables ----
-local do_remind_id_check = nil
+local do_remind_id_check
 
 ---- Local functions ----
 local function get_max_stack(class)

@@ -47,7 +47,7 @@ local RESTORE_TABLE = "_brc_persist_restore_table"
 local _failures = {}
 local _persist_names = {}
 local _default_values = {}
-local pushed_restore_table_creation
+local pushed_restore_table_creation = false
 
 ---- Local functions ----
 local function is_usable_backup()

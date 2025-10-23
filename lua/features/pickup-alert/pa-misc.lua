@@ -11,6 +11,7 @@ f_pa_misc = {}
 local Emoji = f_pickup_alert.Config.Emoji
 local Alert = f_pickup_alert.Config.Alert
 
+---- Public API ----
 function f_pa_misc.alert_orb(it)
   return f_pickup_alert.do_alert(it, "New orb", Emoji.ORB, Alert.More.orbs)
 end

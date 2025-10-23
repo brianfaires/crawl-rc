@@ -10,7 +10,7 @@ Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 ---- Initialize BRC namespace and non-persistent public variables
 BRC = BRC or {}
 BRC.VERSION = "1.2.0"
-BRC.active = nil
+BRC.active = false
 BRC.single_turn_mutes = {}
 
 ---- Persistent variables ----
@@ -295,6 +295,8 @@ end
 function BRC.init()
   _features = {}
   _hooks = {}
+  turn_count = -1
+  cur_location = you.where()
   if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
 
   BRC.log.debug("Load config...")
@@ -339,8 +341,6 @@ function BRC.init()
   end
 
   -- We're a go!
-  turn_count = -1
-  cur_location = you.where()
   BRC.active = true
   BRC.ready()
   return true
@@ -371,6 +371,13 @@ function BRC.load_config(input_config)
 
   BRC.log.info("Using config: " .. BRC.text.lightcyan(config_name))
   return config_name
+end
+
+function BRC.reset()
+  BRC.active = false
+  BRC.single_turn_mutes = {}
+  BRC.Data.reset()
+  BRC.init()
 end
 
 ---- Crawl hooks ----

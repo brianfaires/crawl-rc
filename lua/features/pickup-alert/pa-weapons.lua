@@ -22,13 +22,16 @@ local Emoji = f_pickup_alert.Config.Emoji
 local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
 local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
 local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
-local RANGED = "range_"
-local MELEE = "melee_"
+local RANGED_PREFIX = "range_"
+local MELEE_PREFIX = "melee_"
+local WEAP_CACHE_KEYS = {
+  "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b"
+}
 
 ---- Local variables ----
-local top_attack_skill = nil
+local top_attack_skill
 
--- Core logic: How weapon scores are calculated
+--- Local function - defines how weapons are scored (used by _weapon_cache)
 local function get_score(it, no_brand_bonus)
   if it.dps and it.acc then
     -- Handle cached /  high-score tuples in _weapon_cache
@@ -39,12 +42,12 @@ local function get_score(it, no_brand_bonus)
   return BRC.get.weap_dps(it, dmg_type) + acc_bonus
 end
 
---- Cache weapons in inventory each turn, so we don't recompute DPS on every autopickup call
+---- Weapon cache - Store info on inventory weapons to not recompute on every autopickup call ----
 _weapon_cache = {}
 
 function _weapon_cache.get_primary_key(it)
   local tokens = {}
-  tokens[1] = it.is_ranged and RANGED or MELEE
+  tokens[1] = it.is_ranged and RANGED_PREFIX or MELEE_PREFIX
   tokens[2] = tostring(it.hands)
   if BRC.get.ego(it) then tokens[3] = "b" end
   return table.concat(tokens)
@@ -52,7 +55,7 @@ end
 
 --- Get all categories this weapon fits into (including more-restrictive categories)
 function _weapon_cache.get_keys(is_ranged, hands, is_branded)
-  local ranged_types = is_ranged and { RANGED, MELEE } or { MELEE }
+  local ranged_types = is_ranged and { RANGED_PREFIX, MELEE_PREFIX } or { MELEE_PREFIX }
   local handed_types = hands == 1 and { "1", "2" } or { "2" }
   local branded_types = is_branded and { "b", "" } or { "" }
 
@@ -119,6 +122,31 @@ end
 
 function _weapon_cache.is_empty()
   return _weapon_cache.max_dps["melee_2"].dps == 0 -- The most restrictive category
+end
+
+function _weapon_cache.refresh()
+  _weapon_cache.weapons = {}
+  _weapon_cache.egos = {}
+
+  -- Can reuse max_dps table
+  if _weapon_cache.max_dps then
+    for _, key in ipairs(WEAP_CACHE_KEYS) do
+      _weapon_cache.max_dps[key].dps = 0
+      _weapon_cache.max_dps[key].acc = 0
+    end
+  else
+    _weapon_cache.max_dps = {}
+    for _, key in ipairs(WEAP_CACHE_KEYS) do
+      _weapon_cache.max_dps[key] = { dps = 0, acc = 0 }
+    end
+  end
+
+  for _, inv in ipairs(items.inventory()) do
+    if inv.is_weapon and not BRC.is.magic_staff(inv) then
+      _weapon_cache.add_weapon(inv)
+      f_pa_data.update_high_scores(inv)
+    end
+  end
 end
 
 function _weapon_cache.serialize()
@@ -364,28 +392,11 @@ end
 
 ---- Hook functions ----
 function f_pa_weapons.init()
-  _weapon_cache.weapons = {}
-  _weapon_cache.egos = {}
-
-  -- Track max DPS by weapon category
-  _weapon_cache.max_dps = {}
-  local keys = {
-    "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b"
-  } -- weapon categories (do not remove this comment)
-  for _, key in ipairs(keys) do
-    _weapon_cache.max_dps[key] = { dps = 0, acc = 0 }
-  end
-
-  -- Set top weapon skill
   top_attack_skill = BRC.get.preferred_weapon_type() or "Unarmed Combat"
+  _weapon_cache.refresh()
 end
 
 function f_pa_weapons.ready()
-  f_pa_weapons:init()
-  for _, inv in ipairs(items.inventory()) do
-    if inv.is_weapon and not BRC.is.magic_staff(inv) then
-      _weapon_cache.add_weapon(inv)
-      f_pa_data.update_high_scores(inv)
-    end
-  end
+  top_attack_skill = BRC.get.preferred_weapon_type() or "Unarmed Combat"
+  _weapon_cache.refresh()
 end

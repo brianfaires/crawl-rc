@@ -17,7 +17,6 @@ f_misc_alerts.Config = {
 
 ---- Persistent variables ----
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
-ma_prev_spell_levels = BRC.Data.persist("ma_prev_spell_levels", 0)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 
 ---- Local config alias ----
@@ -28,6 +27,7 @@ local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
 ---- Local variables ----
 local below_hp_threshold
+local prev_spell_levels
 
 ---- Local functions ----
 local function alert_low_hp()
@@ -59,16 +59,16 @@ end
 
 local function alert_spell_level_changes()
   local new_spell_levels = you.spell_levels()
-  if new_spell_levels > ma_prev_spell_levels then
-    local delta = new_spell_levels - ma_prev_spell_levels
+  if new_spell_levels > prev_spell_levels then
+    local delta = new_spell_levels - prev_spell_levels
     local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
     local suffix = string.format(" (%s available)", new_spell_levels)
     BRC.mpr.lightcyan(msg .. BRC.text.cyan(suffix))
-  elseif new_spell_levels < ma_prev_spell_levels then
+  elseif new_spell_levels < prev_spell_levels then
     BRC.mpr.magenta(new_spell_levels .. " spell levels remaining")
   end
 
-  ma_prev_spell_levels = new_spell_levels
+  prev_spell_levels = new_spell_levels
 end
 
 ---- Macro function: Save with message feature ----
@@ -89,8 +89,8 @@ end
 
 ---- Hook functions ----
 function f_misc_alerts.init()
-  ma_prev_spell_levels = you.spell_levels()
   below_hp_threshold = false
+  prev_spell_levels = you.spell_levels()
 
   if Config.save_with_msg then
     BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_brc_save")

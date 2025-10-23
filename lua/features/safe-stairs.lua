@@ -20,7 +20,7 @@ ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 local Config = f_safe_stairs.Config
 
 ---- Local variables ----
-local ss_cur_location = nil
+local ss_cur_location
 
 ---- Local functions ----
 local function check_new_location(cmd)
@@ -69,6 +69,7 @@ end
 ---- Hook functions ----
 function f_safe_stairs.init()
   ss_cur_location = you.where()
+
   BRC.set.macro(BRC.get.command_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
   BRC.set.macro(BRC.get.command_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
 end

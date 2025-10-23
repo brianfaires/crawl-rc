@@ -31,9 +31,9 @@ local GAUNTLET_SEARCH_STRING = table.concat({
   }, GAUNTLET_CONCAT_STRING)
 
 ---- Local variables ----
-local stop_on_altars = nil
-local stop_on_portals = nil
-local stop_on_stairs = nil
+local stop_on_altars
+local stop_on_portals
+local stop_on_stairs
 
 ---- Local functions ----
 local function is_explore_done_msg(text)

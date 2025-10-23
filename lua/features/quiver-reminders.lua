@@ -13,8 +13,8 @@ f_quiver_reminders.Config = {
 } -- f_quiver_reminders.Config (do not remove this comment)
 
 ---- Local variables ----
-local last_thrown = nil
-local last_thrown_turn = 0
+local last_thrown
+local last_thrown_turn
 
 ---- Local config alias ----
 local Config = f_quiver_reminders.Config
@@ -68,6 +68,8 @@ end
 
 ---- Hook functions ----
 function f_quiver_reminders.init()
+  last_thrown = nil
+  last_thrown_turn = -1
   BRC.set.macro(BRC.get.command_key("CMD_FIRE") or "f", "macro_brc_fire")
 end
 

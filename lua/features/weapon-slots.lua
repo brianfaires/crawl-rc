@@ -9,10 +9,10 @@ f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
 
 ---- Local variables ----
-local do_cleanup_weapon_slots = nil
-local priorities_ab = nil
-local priorities_w = nil
-local slots_changed = nil
+local do_cleanup_weapon_slots
+local slots_changed
+local priorities_ab
+local priorities_w
 
 ---- Local functions ----
 local function get_first_empty_slot()

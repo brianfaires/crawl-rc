@@ -175,8 +175,8 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
 local Config = f_pickup_alert.Config
 
 ---- Local variables ----
-local pause_pa_system = nil
-local hold_alerts_for_next_turn = false
+local pause_pa_system
+local hold_alerts_for_next_turn
 
 ---- Local functions ----
 local function has_configured_force_more(it)
@@ -260,25 +260,26 @@ end
 
 ---- Hook functions ----
 function f_pickup_alert.init()
-  BRC.log.debug("Initialize pickup-alert submodules...")
-  local indent = "  "
   pause_pa_system = false
+  hold_alerts_for_next_turn = false
+
+  BRC.log.debug("Initialize pickup-alert submodules...")
   f_pa_data.init()
-  BRC.log.debug(indent .. "pa-data loaded")
+  BRC.log.debug("  pa-data loaded")
 
   if f_pa_armour then
     if f_pa_armour.init then f_pa_armour.init() end
-    BRC.log.debug(indent .. "pa-armour loaded")
+    BRC.log.debug("  pa-armour loaded")
   end
 
   if f_pa_weapons then
     if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC.log.debug(indent .. "pa-weapons loaded")
+    BRC.log.debug("  pa-weapons loaded")
   end
 
   if f_pa_misc then
     if f_pa_misc.init then f_pa_misc.init() end
-    BRC.log.debug(indent .. "pa-misc loaded")
+    BRC.log.debug("  pa-misc loaded")
   end
 end
 
