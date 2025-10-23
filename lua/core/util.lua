@@ -217,23 +217,25 @@ function BRC.mpr.que_optmore(show_more, msg, color, channel)
   _mpr_queue[#_mpr_queue + 1] = { m = BRC.text.color(color, msg), ch = channel, more = show_more }
 end
 
--- Display queued messages and clear the queue
+--- Display queued messages and clear the queue
 function BRC.mpr.consume_queue()
-  local do_more = false
-  for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(tostring(msg.m), msg.ch)
-    crawl.flush_prev_message()
-    do_more = do_more or msg.more
-  end
-
+  local do_more = util.exists(_mpr_queue, function(q) return q.more end)
+  -- stop_activity() can generate more autopickups, and thus more queue'd messages
   if do_more then
     you.stop_activity()
     crawl.redraw_screen()
+  end
+
+  for _, msg in ipairs(_mpr_queue) do
+    crawl.mpr(tostring(msg.m), msg.ch)
+    crawl.flush_prev_message()
+  end
+  _mpr_queue = {}
+
+  if do_more then
     crawl.more()
     crawl.redraw_screen()
   end
-
-  _mpr_queue = {}
 end
 
 --- Get a selection from the user, from a list of options
@@ -341,7 +343,7 @@ end
 function BRC.get.mut(mutation, innate_only)
   return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
 end
-  
+
 function BRC.get.num_equip_slots(it)
   local player_race = you.race()
   if it.is_weapon then return player_race == "Coglin" and 2 or 1 end

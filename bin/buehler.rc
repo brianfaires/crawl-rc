@@ -1304,23 +1304,25 @@ function BRC.mpr.que_optmore(show_more, msg, color, channel)
   _mpr_queue[#_mpr_queue + 1] = { m = BRC.text.color(color, msg), ch = channel, more = show_more }
 end
 
--- Display queued messages and clear the queue
+--- Display queued messages and clear the queue
 function BRC.mpr.consume_queue()
-  local do_more = false
-  for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(tostring(msg.m), msg.ch)
-    crawl.flush_prev_message()
-    do_more = do_more or msg.more
-  end
-
+  local do_more = util.exists(_mpr_queue, function(q) return q.more end)
+  -- stop_activity() can generate more autopickups, and thus more queue'd messages
   if do_more then
     you.stop_activity()
     crawl.redraw_screen()
+  end
+
+  for _, msg in ipairs(_mpr_queue) do
+    crawl.mpr(tostring(msg.m), msg.ch)
+    crawl.flush_prev_message()
+  end
+  _mpr_queue = {}
+
+  if do_more then
     crawl.more()
     crawl.redraw_screen()
   end
-
-  _mpr_queue = {}
 end
 
 --- Get a selection from the user, from a list of options
@@ -1371,17 +1373,6 @@ end
 ---- BRC.get - Functions to get non-boolean data ----
 BRC.get = {}
 
-function BRC.get.num_equip_slots(it)
-  local player_race = you.race()
-  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
-  if BRC.is.aux_armour(it) then
-    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
-    return player_race == "Poltergeist" and 6 or 1
-  end
-
-  return 1
-end
-
 function BRC.get.command_key(cmd)
   local key = crawl.get_command(cmd)
   if not key or key == "NULL" then return nil end
@@ -1410,6 +1401,19 @@ function BRC.get.equipped_at(it)
   return all_aux, num_slots
 end
 
+function BRC.get.item_xy(name, radius)
+  local r = radius or you.los()
+  for dx = -r, r do
+    for dy = -r, r do
+      for _, fl in ipairs(items.get_items_at(dx, dy) or {}) do
+        if fl.name() == name then
+          return dx, dy
+        end
+      end
+    end
+  end
+end
+
 function BRC.get.items_in_slot(idx)
   local res = {}
   for _, inv in ipairs(items.inventory()) do
@@ -1425,6 +1429,17 @@ end
 -- @param bool innate_only (optional) - Exclude to include all mutations
 function BRC.get.mut(mutation, innate_only)
   return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+
+function BRC.get.num_equip_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.is.aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
 end
 
 function BRC.get.preferred_weapon_type()
@@ -2843,11 +2858,11 @@ function BRC.ready()
   if not BRC.active then return end
   crawl.redraw_screen()
 
+  -- Unmute single-turn mutes
+  util.foreach(BRC.single_turn_mutes, function(m) BRC.set.message_mute(m, false) end)
+
   if you.turns() > turn_count then
     turn_count = you.turns()
-
-    -- Unmute single-turn mutes
-    util.foreach(BRC.single_turn_mutes, function(m) BRC.set.message_mute(m, false) end)
 
     if you.where() ~= cur_location and not you.have_orb() then
       cur_location = you.where()
@@ -4266,40 +4281,124 @@ f_hotkey = {}
 f_hotkey.BRC_FEATURE_NAME = "hotkey"
 f_hotkey.Config = {
   key = { keycode = "13", name = "[Enter]" },
-  autoequip = true,
+  equip_hotkey = true,
 } -- f_hotkey.Config (do not remove this comment)
 
 ---- Config alias ----
 local Config = f_hotkey.Config
 
+---- Local constants ----
+local WAYPOINT_MUTES = {
+  "Assign waypoint to what number",
+  "Existing waypoints",
+  "Delete which waypoint",
+  "\\(\\d\\) ",
+  "All waypoints deleted",
+  "You're already here!",
+  "Okay\\, then\\.",
+  "Unknown command",
+  --"Waypoint \\d re-assigned",
+} -- WAYPOINT_MUTES (do not remove this comment)
+
 ---- Local variables ----
-local _actions = {}
+local action_queue = {}
+local cur_action = nil
 
 ---- Local functions ----
-local function display_next_message()
-  if #_actions == 0 then return end
-  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, _actions[1].m)
-  BRC.mpr.que(msg, BRC.COL.cyan)
-  _actions[1].m = nil
+local function load_next_action()
+  if #action_queue == 0 then return end
+  cur_action = action_queue[1]
+  cur_action.t = you.turns() + cur_action.t
+  table.remove(action_queue, 1)
+  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.m)
+  BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
-local function c_assign_invletter_autoequip(it)
+local function expire_cur_action()
+  if cur_action and cur_action.c then cur_action.c() end
+  cur_action = nil
+  load_next_action()
+end
+
+local function get_avail_waypoint()
+  for i = 9, 0, -1 do
+    if not travel.waypoint_delta(i) then return i end
+  end
+
+  BRC.log.debug("No available waypoint slots. Clearing them.")
+  util.foreach(WAYPOINT_MUTES, function(m) BRC.set.single_turn_mute(m) end)
+  crawl.sendkeys({ BRC.util.cntl("w"), "d", "*" })
+  crawl.flush_input()
+  return 9
+end
+
+---- Macro function: On BRC hotkey press ----
+function macro_brc_hotkey()
+  if cur_action then
+    cur_action.f()
+    cur_action = nil
+  else
+    BRC.mpr.darkgrey("Unknown command (no actions assigned to BRC hotkey).")
+  end
+end
+
+---- Public API ----
+--- Assign an action to the BRC hotkey
+-- @param msg_action string - The action (equip/pickup/read/etc)
+-- @param msg_suffix string - Printed after the action. Usually an item name
+-- @param func function - The function to call when the hotkey is pressed
+-- @param turns number - The number of turns to wait before skipping this action
+-- @param push_front boolean - Push the action to the front of the queue
+-- @param cleanup optional function - Function to call when the hotkey is not pressed
+-- @return nil
+function BRC.set_hotkey(msg_action, msg_suffix, func, turns, push_front, cleanup)
+  local act = { m = BRC.text.lightgreen(msg_action), f = func, t = turns or 1 }
+  if msg_suffix then act.m = act.m .. " " .. BRC.text.white(msg_suffix) end
+  if cleanup then act.c = cleanup end
+
+  if push_front then
+    table.insert(action_queue, 1, act)
+  else
+    table.insert(action_queue, act)
+  end
+
+  -- If possible, load the action on same turn as the alert that triggered it
+  if #action_queue == 1 and cur_action == nil then
+    act.t = act.t + 1
+    load_next_action()
+  end
+end
+
+function BRC.set_pickup_hotkey(name, push_front)
+  local do_pickup = function()
+    for _, fl in ipairs(you.floor_items()) do
+      if fl.name() == name then
+        items.pickup(fl)
+        return
+      end
+    end
+    BRC.mpr.darkgrey(name .. " isn't here!")
+  end
+
+  BRC.set_hotkey("pickup", name, do_pickup, 1, push_front)
+end
+
+function BRC.set_equip_hotkey(it, push_front)
   if not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
-  local TURNS = 1
   local NAME = it.name():gsub(" {.*}", "")
 
-  BRC.set_hotkey("equip", NAME, function()
+  local do_equip = function()
     local inv_items = util.filter(function(i)
       return i.name():gsub(" {.*}", "") == NAME
     end, items.inventory())
 
     local already_eq = false
     for i = 1, #inv_items do
-      if not inv_items[i].equipped then
+      if inv_items[i].equipped then
+        already_eq = true
+      else
         inv_items[i]:equip()
         return
-      else
-        already_eq = true
       end
     end
 
@@ -4308,33 +4407,45 @@ local function c_assign_invletter_autoequip(it)
     else
       BRC.log.error("Could not find unequipped item '" .. NAME .. "' in inventory.")
     end
-  end, TURNS)
+  end
+
+  BRC.set_hotkey("equip", NAME, do_equip, 1, push_front)
 end
 
----- Public API ----
---- Assign an action to the BRC hotkey
---- @param msg_action string - The action (equip/pickup/read/etc)
---- @param msg_suffix string - Printed after the action. Usually an item name
---- @param func function - The function to call when the hotkey is pressed
---- @param turns number - The number of turns to wait before skipping this action
---- @return nil
-function BRC.set_hotkey(msg_action, msg_suffix, func, turns)
-  local act = { m = BRC.text.lightgreen(msg_action), f = func, t = turns or 1 }
-  if msg_suffix then act.m = act.m .. " " .. BRC.text.white(msg_suffix) end
-  table.insert(_actions, act)
-  if #_actions == 1 then
-    display_next_message()
-    act.t = act.t + 1 -- Extra turn cause we're displaying msg a turn early
-  end
-end
+function BRC.set_waypoint_hotkey(name, push_front)
+  local x, y = BRC.get.item_xy(name)
+  if x == nil then return BRC.log.debug(name .. " not found in LOS") end
 
-function macro_brc_hotkey()
-  if #_actions > 0 then
-    _actions[1].f()
-    table.remove(_actions, 1)
-  else
-    BRC.mpr.darkgrey("Unknown command (no actions assigned to BRC hotkey).")
+  local waynum = get_avail_waypoint()
+  BRC.set.single_turn_mute("Waypoint \\d assigned")
+  travel.set_waypoint(waynum, x, y)
+
+  local clear_waypoint = function()
+    local keys = { BRC.util.cntl("w"), "d", tostring(waynum) }
+    -- If other waypoints exist, need to send ESC to exit the prompt
+    for i = 0, 9 do
+      if i ~= waynum and travel.waypoint_delta(i) then
+        keys[#keys + 1] = BRC.KEYS.ESC
+      end
+    end
+
+    util.foreach(WAYPOINT_MUTES, function(m) BRC.set.single_turn_mute(m) end)
+    crawl.sendkeys(keys)
+    crawl.flush_input()
   end
+
+  local move_to_waypoint = function()
+    f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
+    crawl.sendkeys({ BRC.get.command_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+
+    -- Delete waypoint after travel, silence the prompts, push a pickup hotkey
+    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })
+    util.foreach(WAYPOINT_MUTES, function(m) BRC.set.single_turn_mute(m) end)
+
+    BRC.set_pickup_hotkey(name, true)
+  end
+
+  BRC.set_hotkey("move to", name, move_to_waypoint, 1, push_front, clear_waypoint)
 end
 
 ---- Hook functions ----
@@ -4343,19 +4454,12 @@ function f_hotkey.init()
 end
 
 function f_hotkey.c_assign_invletter(it)
-  if Config.autoequip then c_assign_invletter_autoequip(it) end
+  if Config.equip_hotkey then BRC.set_equip_hotkey(it, true) end
 end
 
 function f_hotkey.ready()
-  if #_actions == 0 then return end
-  if _actions[1].m then
-    display_next_message()
-  else
-    _actions[1].t = _actions[1].t - 1
-    if _actions[1].t <= 0 then
-      table.remove(_actions, 1)
-      f_hotkey.ready()
-    end
+  if cur_action == nil or cur_action.t <= you.turns() then
+    expire_cur_action()
   end
 end
 
@@ -4718,7 +4822,7 @@ local function quiver_missile_by_name(name)
   crawl.sendkeys(BRC.get.command_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.util.int2char(slot))
 end
 
----- Macro function ----
+---- Macro function: Fire from quiver ----
 function macro_brc_fire()
   if not BRC.active or Config.disabled then return BRC.util.do_cmd("CMD_FIRE") end
   local quivered = items.fired_item()
@@ -5601,19 +5705,6 @@ local pause_pa_system = nil
 local hold_alerts_for_next_turn = false
 
 ---- Local functions ----
-local function get_item_xy(item_name)
-  local r = you.los()
-  for dx = -r, r do
-    for dy = -r, r do
-      for _, fl in ipairs(items.get_items_at(dx, dy) or {}) do
-        if fl.name() == item_name then
-          return dx, dy
-        end
-      end
-    end
-  end
-end
-
 local function has_configured_force_more(it)
   if it.artefact then
     if Config.Alert.More.artefact then return true end
@@ -5638,59 +5729,83 @@ local function track_unique_egos(it)
   end
 end
 
-local function set_pickup_hotkey(name)
-  BRC.set_hotkey("pickup", name, function()
-    for _, fl in ipairs(you.floor_items()) do
-      if fl.name() == name then
-        items.pickup(fl)
-        return
-      end
-    end
-    BRC.mpr.darkgrey(name .. " isn't here!")
-  end, 1)
-end
-
-local function set_waypoint_hotkey(name)
-  local x, y = get_item_xy(name)
-  if x == nil then
-    BRC.log.debug(name .. " not found in LOS")
-    return
-  end
-
-  local waynum = nil
-  for i = 9, 0, -1 do
-    if not travel.waypoint_delta(i) then
-      BRC.set.single_turn_mute("Waypoint \\d assigned")
-      travel.set_waypoint(i, x, y)
-      waynum = i
-      break
-    end
-  end
-  if not waynum then
-    BRC.log.debug("No available waypoint slots")
-    return
-  end
-
-  BRC.set_hotkey("move to", name, function()
-    f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
-    crawl.sendkeys({ BRC.get.command_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
-
-    -- Delete waypoint after travel, silencing the associated messages
-    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })
-    BRC.set.single_turn_mute("Assign waypoint to what number")
-    BRC.set.single_turn_mute("Existing waypoints")
-    BRC.set.single_turn_mute("Delete which waypoint")
-    BRC.set.single_turn_mute("\\(\\d\\) ")
-    BRC.set.single_turn_mute("All waypoints deleted")
-    BRC.set.single_turn_mute("You're already here!")
-    BRC.set.single_turn_mute("Okay\\, then\\.")
-    BRC.set.single_turn_mute("Unknown command")
-  end, 1)
-end
-
 ---- Public API ----
 function f_pickup_alert.pause_alerts()
   hold_alerts_for_next_turn = true
+end
+
+function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
+  local item_name = f_pa_data.get_keyname(it, true)
+  local alert_col
+
+  if it.is_weapon then
+    f_pa_data.update_high_scores(it)
+    alert_col = Config.AlertColor.weapon
+    local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
+    item_name = item_name .. BRC.text.color(Config.AlertColor.weapon.stats, weapon_info)
+  elseif BRC.is.orb(it) then
+    alert_col = Config.AlertColor.orb
+  elseif BRC.is.talisman(it) then
+    alert_col = Config.AlertColor.talisman
+  elseif BRC.is.armour(it) then
+    if BRC.is.body_armour(it) then
+      f_pa_data.update_high_scores(it)
+      alert_col = Config.AlertColor.body_arm
+      local ac, ev = BRC.get.armour_stats(it)
+      local armour_info = string.format(" {%s, %s}", ac, ev)
+      item_name = item_name .. BRC.text.color(Config.AlertColor.body_arm.stats, armour_info)
+    else
+      alert_col = Config.AlertColor.aux_arm
+    end
+
+    track_unique_egos(it)
+  else
+    alert_col = Config.AlertColor.misc
+  end
+
+  local tokens = {}
+  tokens[1] = emoji and emoji or BRC.text.cyan("----")
+  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
+  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
+  tokens[#tokens + 1] = tokens[1]
+  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
+
+  f_pa_data.insert(pa_recent_alerts, it)
+  f_pa_data.insert(pa_items_alerted, it)
+
+  if not hold_alerts_for_next_turn then you.stop_activity() end
+
+  if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
+    BRC.set_pickup_hotkey(it.name(), true)
+  elseif you.feel_safe() then
+    BRC.set_waypoint_hotkey(it.name())
+  end
+
+  return true
+end
+
+---- Hook functions ----
+function f_pickup_alert.init()
+  BRC.log.debug("Initialize pickup-alert submodules...")
+  local indent = "  "
+  pause_pa_system = false
+  f_pa_data.init()
+  BRC.log.debug(indent .. "pa-data loaded")
+
+  if f_pa_armour then
+    if f_pa_armour.init then f_pa_armour.init() end
+    BRC.log.debug(indent .. "pa-armour loaded")
+  end
+
+  if f_pa_weapons then
+    if f_pa_weapons.init then f_pa_weapons.init() end
+    BRC.log.debug(indent .. "pa-weapons loaded")
+  end
+
+  if f_pa_misc then
+    if f_pa_misc.init then f_pa_misc.init() end
+    BRC.log.debug(indent .. "pa-misc loaded")
+  end
 end
 
 function f_pickup_alert.autopickup(it, _)
@@ -5745,80 +5860,6 @@ function f_pickup_alert.autopickup(it, _)
     if f_pa_armour.alert_armour(it, unworn_aux_item) then return end
   elseif f_pa_weapons and Config.Alert.weapon_sensitivity > 0 and it.is_weapon then
     if f_pa_weapons.alert_weapon(it) then return end
-  end
-end
-
-function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
-  local item_name = f_pa_data.get_keyname(it, true)
-  local alert_col
-
-  if it.is_weapon then
-    f_pa_data.update_high_scores(it)
-    alert_col = Config.AlertColor.weapon
-    local weapon_info = string.format(" (%s)", BRC.get.weapon_stats(it))
-    item_name = item_name .. BRC.text.color(Config.AlertColor.weapon.stats, weapon_info)
-  elseif BRC.is.orb(it) then
-    alert_col = Config.AlertColor.orb
-  elseif BRC.is.talisman(it) then
-    alert_col = Config.AlertColor.talisman
-  elseif BRC.is.armour(it) then
-    if BRC.is.body_armour(it) then
-      f_pa_data.update_high_scores(it)
-      alert_col = Config.AlertColor.body_arm
-      local ac, ev = BRC.get.armour_stats(it)
-      local armour_info = string.format(" {%s, %s}", ac, ev)
-      item_name = item_name .. BRC.text.color(Config.AlertColor.body_arm.stats, armour_info)
-    else
-      alert_col = Config.AlertColor.aux_arm
-    end
-
-    track_unique_egos(it)
-  else
-    alert_col = Config.AlertColor.misc
-  end
-
-  local tokens = {}
-  tokens[1] = emoji and emoji or BRC.text.cyan("----")
-  tokens[#tokens + 1] = BRC.text.color(alert_col.desc, string.format(" %s:", alert_type))
-  tokens[#tokens + 1] = BRC.text.color(alert_col.item, string.format(" %s ", item_name))
-  tokens[#tokens + 1] = tokens[1]
-  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
-
-  f_pa_data.insert(pa_recent_alerts, it)
-  f_pa_data.insert(pa_items_alerted, it)
-
-  if not hold_alerts_for_next_turn then you.stop_activity() end
-
-  if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    set_pickup_hotkey(it.name())
-  elseif you.feel_safe() then
-    set_waypoint_hotkey(it.name())
-  end
-
-  return true
-end
-
----- Hook functions ----
-function f_pickup_alert.init()
-  BRC.log.debug("Initialize pickup-alert submodules...")
-  local indent = "  "
-  pause_pa_system = false
-  f_pa_data.init()
-  BRC.log.debug(indent .. "pa-data loaded")
-
-  if f_pa_armour then
-    if f_pa_armour.init then f_pa_armour.init() end
-    BRC.log.debug(indent .. "pa-armour loaded")
-  end
-
-  if f_pa_weapons then
-    if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC.log.debug(indent .. "pa-weapons loaded")
-  end
-
-  if f_pa_misc then
-    if f_pa_misc.init then f_pa_misc.init() end
-    BRC.log.debug(indent .. "pa-misc loaded")
   end
 end
 

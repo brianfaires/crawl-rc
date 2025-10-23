@@ -382,11 +382,11 @@ function BRC.ready()
   if not BRC.active then return end
   crawl.redraw_screen()
 
+  -- Unmute single-turn mutes
+  util.foreach(BRC.single_turn_mutes, function(m) BRC.set.message_mute(m, false) end)
+
   if you.turns() > turn_count then
     turn_count = you.turns()
-
-    -- Unmute single-turn mutes
-    util.foreach(BRC.single_turn_mutes, function(m) BRC.set.message_mute(m, false) end)
 
     if you.where() ~= cur_location and not you.have_orb() then
       cur_location = you.where()
