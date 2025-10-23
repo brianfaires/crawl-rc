@@ -1035,72 +1035,90 @@ function BRC.util.get_sorted_keys(map_or_list)
   return keys_vars
 end
 
+-- BRC.util.tostring() helpers
+local function tostr_string(var, pretty)
+  local s
+  if var:contains("\n") then
+    s = string.format("[[\n%s]]", var)
+  else
+    s = '"' .. var:gsub('"', "") .. '"'
+  end
+
+  if not pretty then return s end
+  -- Replace > and < to display the color tags instead of colored text
+  return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
+end
+
+local function tostr_list(var, pretty, indents)
+  local tokens = {}
+  for _, v in ipairs(var) do
+    tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, pretty, indents + 1))
+  end
+  if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
+    return "{ " .. table.concat(tokens, ", ") .. " }"
+  else
+    local INDENT = string.rep("  ", indents)
+    local CHILD_INDENT = string.rep("  ", indents + 1)
+    local LIST_SEP = ",\n" .. CHILD_INDENT
+    return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+  end
+end
+
+local function tostr_map(var, pretty, indents)
+  local tokens = {}
+
+  if pretty then
+    local keys = BRC.util.get_sorted_keys(var)
+    local contains_table = false
+    for i = 1, #keys do
+      local v = cap_lines(BRC.util.tostring(var[keys[i]], true, indents + 1))
+      if v then
+        if type(var[keys[i]]) == "table" then
+          contains_table = true
+          tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
+        else
+          tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
+        end
+      end
+    end
+    if #tokens <= 2 and not contains_table then
+      return "{ " .. table.concat(tokens, ", ") .. " }"
+    end
+  else
+    for k, v in pairs(var) do
+      tokens[#tokens + 1] = '["' .. k .. '"] = ' .. BRC.util.tostring(v, pretty, indents + 1)
+    end
+  end
+
+  local INDENT = string.rep("  ", indents)
+  local CHILD_INDENT = string.rep("  ", indents + 1)
+  local LIST_SEP = ",\n" .. CHILD_INDENT
+  return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+end
+
 --- Serializes a variable to a string, for chk_lua_save or data dumps.
 -- @param pretty (optional bool) format for human readability
 -- @param _indents (optional int) Used internally to format multi-line tables
 function BRC.util.tostring(var, pretty, _indents)
   local var_type = type(var)
   if var_type == "string" then
-    local s
-    if var:contains("\n") then
-      s = string.format("[[\n%s]]", var)
-    else
-      s = '"' .. var:gsub('"', "") .. '"'
-    end
-
-    if not pretty then return s end
-    -- Replace > and < to display the color tags instead of colored text
-    return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
+    return tostr_string(var, pretty)
   elseif var_type == "table" then
     _indents = _indents or 0
-    local indent = string.rep("  ", _indents)
-    local child_indent = string.rep("  ", _indents + 1)
-    local list_sep = ",\n" .. child_indent
-
     if BRC.is.list(var) then
-      local tokens = {}
-      for _, v in ipairs(var) do
-        tokens[#tokens + 1] = cap_lines(BRC.util.tostring(v, pretty, _indents + 1))
-      end
-      if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
-        return "{ " .. table.concat(tokens, ", ") .. " }"
-      else
-        return "{\n" .. child_indent .. table.concat(tokens, list_sep) .. "\n" .. indent .. "}"
-      end
+      return tostr_list(var, pretty, _indents)
     elseif BRC.is.map(var) then
-      local tokens = {}
-      if pretty then
-        local keys = BRC.util.get_sorted_keys(var)
-        local contains_table = false
-        for i = 1, #keys do
-          local v = cap_lines(BRC.util.tostring(var[keys[i]], true, _indents + 1))
-          if v then
-            if type(var[keys[i]]) == "table" then
-              contains_table = true
-              tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
-            else
-              tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
-            end
-          end
-        end
-        if #tokens <= 2 and not contains_table then
-          return "{ " .. table.concat(tokens, ", ") .. " }"
-        end
-      else
-        for k, v in pairs(var) do
-          tokens[#tokens + 1] = '["' .. k .. '"] = ' .. BRC.util.tostring(v, pretty, _indents + 1)
-        end
-      end
-      return "{\n" .. child_indent .. table.concat(tokens, list_sep) .. "\n" .. indent .. "}"
+      return tostr_map(var, pretty, _indents)
     else
       return "{}"
     end
-  else
-    if BRC.Data.Config.skip_pointers and (type(var) == "function" or type(var) == "userdata") then
-      return nil
-    end
-    return tostring(var)
   end
+
+  if BRC.Data.Config.omit_pointers and (var_type == "function" or var_type == "userdata") then
+    return nil
+  end
+
+  return tostring(var) -- fallback to tostring()
 end
 
 --[[
@@ -1559,7 +1577,7 @@ BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature for Config o
 -- Config values for data dumps
 BRC.Data.Config = {
   max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
-  skip_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
+  omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 
   unskilled_egos_usable = false,
   BrandBonus = {

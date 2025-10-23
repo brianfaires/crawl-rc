@@ -13,7 +13,7 @@ BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature for Config o
 -- Config values for data dumps
 BRC.Data.Config = {
   max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
-  skip_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
+  omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 
   unskilled_egos_usable = false,
   BrandBonus = {

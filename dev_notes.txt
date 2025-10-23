@@ -3,7 +3,6 @@
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
-1. Shorten BRC.util.tostring()
 1. BRC.Core file?  - macros, config, etc
 1. BRC.reset() - doesn't reset Configs (need to cache them on startup?)
 1. Standardize LDocs / file headers
