@@ -1695,7 +1695,7 @@ function BRC.dump.all(verbose, skip_mpr)
   if verbose then
     tokens[#tokens + 1] = serialize_chk_lua_save()
     tokens[#tokens + 1] = serialize_inventory()
-    tokens[#tokens + 1] = _weapon_cache.serialize()
+    tokens[#tokens + 1] = f_pa_weapons.serialize_weapon_cache()
     tokens[#tokens + 1] = serialize_config()
   end
 
@@ -6569,6 +6569,7 @@ local Emoji = f_pickup_alert.Config.Emoji
 local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
 local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
 local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
+-- Weapon cache constants
 local RANGED_PREFIX = "range_"
 local MELEE_PREFIX = "melee_"
 local WEAP_CACHE_KEYS = {
@@ -6577,8 +6578,9 @@ local WEAP_CACHE_KEYS = {
 
 ---- Local variables ----
 local top_attack_skill
+local _weapon_cache = {} -- Cache info for inventory weapons to avoid repeat calculations
 
---- Local function - defines how weapons are scored (used by _weapon_cache)
+---- Local functions ----
 local function get_score(it, no_brand_bonus)
   if it.dps and it.acc then
     -- Handle cached /  high-score tuples in _weapon_cache
@@ -6589,9 +6591,66 @@ local function get_score(it, no_brand_bonus)
   return BRC.get.weap_dps(it, dmg_type) + acc_bonus
 end
 
----- Weapon cache - Store info on inventory weapons to not recompute on every autopickup call ----
-_weapon_cache = {}
+local function is_valid_upgrade(it, cur)
+  return cur.is_ranged == it.is_ranged
+    and BRC.is.polearm(cur) == BRC.is.polearm(it)
+    and (
+      you.race() == "Gnoll"
+      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill)
+    )
+end
 
+-- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
+-- `cur` comes from _weapon_cache - it has some pre-computed values
+local function is_weapon_upgrade(it, cur, strict)
+  if not cur.allow_upgrade then return false end
+  if strict then
+    -- Pure upgrades only
+    if cur.artefact or it.subtype() ~= cur.subtype() then return false end
+    if it.artefact then return true end
+    local it_plus = it.plus or 0
+    local cur_ego = BRC.get.ego(cur)
+    if BRC.get.ego(it) == cur_ego then return it_plus > cur.plus end
+    return not cur_ego and it_plus >= cur.plus
+  end
+
+  -- Check if it's a very likely upgrade
+  if it.subtype() == cur.subtype() then
+    if it.artefact then return true end
+    if cur.artefact then return false end
+
+    local it_ego = BRC.get.ego(it)
+    local cur_ego = BRC.get.ego(cur)
+    if cur_ego and not it_ego then return false end
+    if it_ego and not cur_ego then return get_score(it) / cur.score > Heur.Pickup.add_ego end
+    return it_ego == cur_ego and (it.plus or 0) > cur.plus
+  elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
+    if BRC.get.hands(it) > cur.hands then return false end
+    if cur.is_ranged ~= it.is_ranged then return false end
+    if BRC.is.polearm(cur) ~= BRC.is.polearm(it) then return false end
+
+    if it.artefact then return true end
+    if cur.artefact then return false end
+
+    local min_ratio = it.is_ranged and Heur.Pickup.same_type_ranged or Heur.Pickup.same_type_melee
+    return get_score(it) / cur.score > min_ratio
+  end
+
+  return false
+end
+
+local function make_alert(it, msg, emoji, fm_option)
+  return { it = it, msg = msg, emoji = emoji, fm_option = fm_option }
+end
+
+local function need_first_weapon()
+  return you.xl() < FIRST_WEAPON_XL_CUTOFF
+    and _weapon_cache.is_empty()
+    and you.skill("Unarmed Combat") == 0
+    and BRC.get.mut("claws") == 0
+end
+
+-- Local functions: Weapon cache
 function _weapon_cache.get_primary_key(it)
   local tokens = {}
   tokens[1] = it.is_ranged and RANGED_PREFIX or MELEE_PREFIX
@@ -6672,6 +6731,9 @@ function _weapon_cache.is_empty()
 end
 
 function _weapon_cache.refresh()
+  local cur_turn = you.turn()
+  if _weapon_cache.turn and _weapon_cache.turn == cur_turn then return end
+  _weapon_cache.turn = cur_turn
   _weapon_cache.weapons = {}
   _weapon_cache.egos = {}
 
@@ -6694,77 +6756,6 @@ function _weapon_cache.refresh()
       f_pa_data.update_high_scores(inv)
     end
   end
-end
-
-function _weapon_cache.serialize()
-  local tokens = { BRC.text.cyan("\n---INVENTORY WEAPONS---") }
-  for _, weap in ipairs(_weapon_cache.weapons) do
-    tokens[#tokens + 1] = string.format("\n%s\n", weap.basename)
-    for k, v in pairs(weap) do
-      if k ~= "basename" then tokens[#tokens + 1] = string.format("  %s: %s\n", k, tostring(v)) end
-    end
-  end
-  return table.concat(tokens)
-end
-
----- Local functions ----
-local function is_valid_upgrade(it, cur)
-  return cur.is_ranged == it.is_ranged
-    and BRC.is.polearm(cur) == BRC.is.polearm(it)
-    and (
-      you.race() == "Gnoll"
-      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill)
-    )
-end
-
--- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
--- `cur` comes from _weapon_cache - it has some pre-computed values
-local function is_weapon_upgrade(it, cur, strict)
-  if not cur.allow_upgrade then return false end
-  if strict then
-    -- Pure upgrades only
-    if cur.artefact or it.subtype() ~= cur.subtype() then return false end
-    if it.artefact then return true end
-    local it_plus = it.plus or 0
-    local cur_ego = BRC.get.ego(cur)
-    if BRC.get.ego(it) == cur_ego then return it_plus > cur.plus end
-    return not cur_ego and it_plus >= cur.plus
-  end
-
-  -- Check if it's a very likely upgrade
-  if it.subtype() == cur.subtype() then
-    if it.artefact then return true end
-    if cur.artefact then return false end
-
-    local it_ego = BRC.get.ego(it)
-    local cur_ego = BRC.get.ego(cur)
-    if cur_ego and not it_ego then return false end
-    if it_ego and not cur_ego then return get_score(it) / cur.score > Heur.Pickup.add_ego end
-    return it_ego == cur_ego and (it.plus or 0) > cur.plus
-  elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
-    if BRC.get.hands(it) > cur.hands then return false end
-    if cur.is_ranged ~= it.is_ranged then return false end
-    if BRC.is.polearm(cur) ~= BRC.is.polearm(it) then return false end
-
-    if it.artefact then return true end
-    if cur.artefact then return false end
-
-    local min_ratio = it.is_ranged and Heur.Pickup.same_type_ranged or Heur.Pickup.same_type_melee
-    return get_score(it) / cur.score > min_ratio
-  end
-
-  return false
-end
-
-local function make_alert(it, msg, emoji, fm_option)
-  return { it = it, msg = msg, emoji = emoji, fm_option = fm_option }
-end
-
-local function need_first_weapon()
-  return you.xl() < FIRST_WEAPON_XL_CUTOFF
-    and _weapon_cache.is_empty()
-    and you.skill("Unarmed Combat") == 0
-    and BRC.get.mut("claws") == 0
 end
 
 -- Local functions: Alerting
@@ -6911,7 +6902,20 @@ local function get_weapon_alert(it)
 end
 
 ---- Public API ----
+function f_pa_weapons.serialize_weapon_cache()
+  _weapon_cache.refresh()
+  local tokens = { BRC.text.cyan("\n---INVENTORY WEAPONS---") }
+  for _, weap in ipairs(_weapon_cache.weapons) do
+    tokens[#tokens + 1] = string.format("\n%s\n", weap.basename)
+    for k, v in pairs(weap) do
+      if k ~= "basename" then tokens[#tokens + 1] = string.format("  %s: %s\n", k, tostring(v)) end
+    end
+  end
+  return table.concat(tokens)
+end
+
 function f_pa_weapons.pickup_weapon(it)
+  _weapon_cache.refresh()
   if need_first_weapon() then
     -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
     return not util.exists(items.inventory(), function(i) return i.is_weapon end)
@@ -6928,6 +6932,7 @@ function f_pa_weapons.pickup_weapon(it)
 end
 
 function f_pa_weapons.alert_weapon(it)
+  _weapon_cache.refresh()
   if get_weapon_alert(it) then
     -- Confirm after updating cache, to avoid spurious alerts from XP gain.
     f_pa_weapons.ready()
@@ -6945,7 +6950,6 @@ end
 
 function f_pa_weapons.ready()
   top_attack_skill = BRC.get.preferred_weapon_type() or "Unarmed Combat"
-  _weapon_cache.refresh()
 end
 
 }

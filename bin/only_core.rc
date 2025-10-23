@@ -945,7 +945,7 @@ function BRC.dump.all(verbose, skip_mpr)
   if verbose then
     tokens[#tokens + 1] = serialize_chk_lua_save()
     tokens[#tokens + 1] = serialize_inventory()
-    tokens[#tokens + 1] = _weapon_cache.serialize()
+    tokens[#tokens + 1] = f_pa_weapons.serialize_weapon_cache()
     tokens[#tokens + 1] = serialize_config()
   end
 
