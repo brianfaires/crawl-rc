@@ -2374,6 +2374,7 @@ local function try_restore(failed_vars)
   end
 
   for _, name in ipairs(failed_vars) do
+    _default_values[name] = nil -- Avoid re-init warnings
     _G[name] = BRC.Data.persist(name, c_persist.BRC.Backup[name])
   end
   BRC.mpr.green("[BRC] Restored data from backup.")
@@ -5560,19 +5561,17 @@ end
 
 ### Pickup and alert ###
 
-################################### Begin lua/features/pickup-alert/pa-main.lua ###################################
+################################### Begin lua/features/pickup-alert/pa-config.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
-Feature: pickup-alert
-Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
+Feature: pickup-alert-config
+Description: Configuration for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua,
-  pa-armour.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
+Dependencies: core/constants.lua
 --]]
 
-f_pickup_alert = {}
-f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
+f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.Config = {}
 f_pickup_alert.Config.Pickup = {
   armour = true,
@@ -5735,6 +5734,24 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
     LIGHTER = "⏬",
     HEAVIER = "⏫",
   } -- f_pickup_alert.Config.Emoji (do not remove this comment)
+
+}
+############################### End lua/features/pickup-alert/pa-config.lua ###############################
+##########################################################################################
+
+################################### Begin lua/features/pickup-alert/pa-main.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--[[
+Feature: pickup-alert
+Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
+Author: buehler
+Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua,
+  pa-armour.lua, pa-config.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
+--]]
+
+f_pickup_alert = f_pickup_alert or {}
+f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
 ---- Local config alias ----
 local Config = f_pickup_alert.Config
@@ -5953,7 +5970,7 @@ end
 Feature: pickup-alert-data
 Description: Data management and persistent storage for the pickup-alert system
 Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-config.lua
 --]]
 
 f_pa_data = {}
@@ -6088,7 +6105,8 @@ end
 Feature: pickup-alert-armour
 Description: Armour pickup logic and alert system for the pickup-alert system
 Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-main.lua, pa-data.lua
+Dependencies: core/config.lua, core/constants.lua, core/util.lua,
+  pa-config.lua, pa-data.lua, pa-main.lua
 --]]
 
 f_pa_armour = {}
@@ -6429,7 +6447,8 @@ end
 Feature: pickup-alert-misc
 Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
 Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua, pa-data.lua, pa-main.lua
+Dependencies: core/config.lua, core/constants.lua, core/util.lua
+  pa-config.lua, pa-data.lua, pa-main.lua
 --]]
 
 f_pa_misc = {}
@@ -6529,7 +6548,8 @@ end
 Feature: pickup-alert-weapons
 Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
 Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-data.lua, pa-main.lua
+Dependencies: core/constants.lua, core/data.lua, core/util.lua,
+  pa-config.lua, pa-data.lua, pa-main.lua
 --]]
 
 f_pa_weapons = {}

@@ -78,6 +78,7 @@ local function try_restore(failed_vars)
   end
 
   for _, name in ipairs(failed_vars) do
+    _default_values[name] = nil -- Avoid re-init warnings
     _G[name] = BRC.Data.persist(name, c_persist.BRC.Backup[name])
   end
   BRC.mpr.green("[BRC] Restored data from backup.")

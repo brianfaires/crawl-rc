@@ -75,6 +75,7 @@ lua_file = crawl-rc/lua/features/startup.lua
 lua_file = crawl-rc/lua/features/weapon-slots.lua
 
 ### Pickup and alert ###
+lua_file = crawl-rc/lua/features/pickup-alert/pa-config.lua
 lua_file = crawl-rc/lua/features/pickup-alert/pa-main.lua
 lua_file = crawl-rc/lua/features/pickup-alert/pa-data.lua
 lua_file = crawl-rc/lua/features/pickup-alert/pa-armour.lua
