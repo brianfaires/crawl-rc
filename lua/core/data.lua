@@ -48,6 +48,7 @@ local _failures = {}
 local _persist_names = {}
 local _default_values = {}
 local pushed_restore_table_creation = false
+local cur_location
 
 ---- Local functions ----
 local function is_usable_backup()
@@ -184,5 +185,18 @@ function BRC.Data.backup()
   c_persist.BRC.Backup.backup_turn = you.turns()
   for _, name in ipairs(_persist_names) do
     c_persist.BRC.Backup[name] = _G[name]
+  end
+end
+
+---- Hook functions ----
+function BRC.Data.init()
+  cur_location = you.where()
+  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
+end
+
+function BRC.Data.ready()
+  if you.where() ~= cur_location and not you.have_orb() then
+    cur_location = you.where()
+    BRC.Data.backup()
   end
 end

@@ -2362,6 +2362,7 @@ local _failures = {}
 local _persist_names = {}
 local _default_values = {}
 local pushed_restore_table_creation = false
+local cur_location
 
 ---- Local functions ----
 local function is_usable_backup()
@@ -2501,6 +2502,19 @@ function BRC.Data.backup()
   end
 end
 
+---- Hook functions ----
+function BRC.Data.init()
+  cur_location = you.where()
+  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
+end
+
+function BRC.Data.ready()
+  if you.where() ~= cur_location and not you.have_orb() then
+    cur_location = you.where()
+    BRC.Data.backup()
+  end
+end
+
 }
 ############################### End lua/core/data.lua ###############################
 ##########################################################################################
@@ -2541,7 +2555,6 @@ local HOOK_FUNCTIONS = {
 local _features
 local _hooks
 local turn_count
-local cur_location
 
 ---- Local functions ----
 local function feature_is_disabled(f)
@@ -2618,13 +2631,13 @@ local function safe_call_string(str, module_name)
   end
 end
 
-local function override_feature_config_table(source, dest)
+local function override_table(source, dest)
   if type(source) ~= "table" then return end
 
   for key, value in pairs(source) do
     if BRC.is.map(value) then
       if not dest[key] then dest[key] = {} end
-      override_feature_config_table(value, dest[key])
+      override_table(value, dest[key])
     elseif key ~= "init" then
       dest[key] = value
     end
@@ -2641,7 +2654,7 @@ local function process_feature_config(feature_name)
     safe_call_string(f.Config.init, feature_name)
   end
 
-  override_feature_config_table(BRC.Config[feature_name], f.Config)
+  override_table(BRC.Config[feature_name], f.Config)
 end
 
 -- Hook management
@@ -2702,6 +2715,7 @@ local function safe_call_all_hooks(hook_name, ...)
   end
 end
 
+-- Register all features in the global namespace
 local function register_all_features()
   -- Find all feature modules
   local feature_names = {}
@@ -2806,8 +2820,6 @@ function BRC.init()
   _features = {}
   _hooks = {}
   turn_count = -1
-  cur_location = you.where()
-  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
 
   BRC.log.debug("Load config...")
   local config_name
@@ -2822,7 +2834,7 @@ function BRC.init()
   brc_config_name = config_name
 
   BRC.log.debug("Register features...")
-  BRC.register(BRC.Data) -- Data must be the first feature registered (so it's last to initialize)
+  BRC.register(BRC.Data) -- Data must be the first feature registered
   register_all_features()
 
   BRC.log.debug("Initialize features...")
@@ -2904,16 +2916,10 @@ function BRC.ready()
 
   if you.turns() > turn_count then
     turn_count = you.turns()
-
-    if you.where() ~= cur_location and not you.have_orb() then
-      cur_location = you.where()
-      BRC.Data.backup()
-    end
-
     safe_call_all_hooks(HOOK_FUNCTIONS.ready)
   end
 
-  -- Always do this, even if same turn
+  -- Always display messages, even if same turn
   BRC.mpr.consume_queue()
 end
 
