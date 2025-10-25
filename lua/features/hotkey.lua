@@ -37,15 +37,18 @@ local cur_action
 ---- Local functions ----
 local function load_next_action()
   if #action_queue == 0 then return end
-  cur_action = action_queue[1]
-  cur_action.t = you.turns() + cur_action.t
-  table.remove(action_queue, 1)
-  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.m)
+  cur_action = table.remove(action_queue, 1)
+  if cur_action.cond and not cur_action.cond() then
+    cur_action = nil
+    return load_next_action()
+  end
+  cur_action.turn = you.turns() + cur_action.turn
+  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
 local function expire_cur_action()
-  if cur_action and cur_action.c then cur_action.c() end
+  if cur_action and cur_action.clean then cur_action.clean() end
   cur_action = nil
   load_next_action()
 end
@@ -77,7 +80,7 @@ end
 ---- Macro function: On BRC hotkey press ----
 function macro_brc_hotkey()
   if cur_action then
-    cur_action.f()
+    cur_action.act()
     cur_action = nil
   else
     BRC.mpr.darkgrey("Unknown command (no actions assigned to BRC hotkey).")
@@ -95,17 +98,22 @@ end
 
 ---- Public API ----
 --- Assign an action to the BRC hotkey
--- @param msg_action string - The action (equip/pickup/read/etc)
--- @param msg_suffix string - Printed after the action. Usually an item name
+-- @param prefix string - The action (equip/pickup/read/etc)
+-- @param suffix string - Printed after the action. Usually an item name
 -- @param func function - The function to call when the hotkey is pressed
 -- @param turns number - The number of turns to wait before skipping this action
 -- @param push_front boolean - Push the action to the front of the queue
+-- @param condition optional function - Function (return bool) - if the action is still valid
 -- @param cleanup optional function - Function to call when the hotkey is not pressed
 -- @return nil
-function BRC.set_hotkey(msg_action, msg_suffix, func, turns, push_front, cleanup)
-  local act = { m = BRC.txt.lightgreen(msg_action), f = func, t = turns or 1 }
-  if msg_suffix then act.m = act.m .. " " .. BRC.txt.white(msg_suffix) end
-  if cleanup then act.c = cleanup end
+function BRC.set_hotkey(prefix, suffix, action, turns, push_front, condition, cleanup)
+  local act = {
+    msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
+    act = action,
+    turn = turns or 1,
+    cond = condition,
+    clean = cleanup,
+  } -- act (do not remove this comment)
 
   if push_front then
     table.insert(action_queue, 1, act)
@@ -115,12 +123,17 @@ function BRC.set_hotkey(msg_action, msg_suffix, func, turns, push_front, cleanup
 
   -- If possible, load the action on same turn as the alert that triggered it
   if #action_queue == 1 and cur_action == nil then
-    act.t = act.t + 1
+    act.turn = act.turn + 1
     load_next_action()
   end
 end
 
+--- Pick up an item by name (Must use name, since item goes stale when called from equip hotkey)
 function BRC.set_pickup_hotkey(name, push_front)
+  local condition = function()
+    return util.exists(you.floor_items(), function(fl) return fl.name():contains(name) end)
+  end
+
   local do_pickup = function()
     for _, fl in ipairs(you.floor_items()) do
       -- Check with contains() in case ID'ing it appends to the name
@@ -132,16 +145,23 @@ function BRC.set_pickup_hotkey(name, push_front)
     BRC.mpr.darkgrey(name .. " isn't here!")
   end
 
-  BRC.set_hotkey("pickup", name, do_pickup, 1, push_front)
+  BRC.set_hotkey("pickup", name, do_pickup, 1, push_front, condition)
 end
 
 function BRC.set_equip_hotkey(it, push_front)
   if not (it.is_weapon or BRC.it.is_armour(it) or BRC.it.is_jewellery(it)) then return end
-  local NAME = it.name():gsub(" {.*}", "")
+  local name = it.name():gsub(" {.*}", "")
+
+  local condition = function()
+    local inv_items = util.filter(function(i)
+      return i.name():gsub(" {.*}", "") == name
+    end, items.inventory())
+    return util.exists(inv_items, function(i) return not i.equipped end)
+  end
 
   local do_equip = function()
     local inv_items = util.filter(function(i)
-      return i.name():gsub(" {.*}", "") == NAME
+      return i.name():gsub(" {.*}", "") == name
     end, items.inventory())
 
     local already_eq = false
@@ -157,11 +177,11 @@ function BRC.set_equip_hotkey(it, push_front)
     if already_eq then
       BRC.mpr.darkgrey("Already equipped.")
     else
-      BRC.mpr.error("Could not find unequipped item '" .. NAME .. "' in inventory.")
+      BRC.mpr.error("Could not find unequipped item '" .. name .. "' in inventory.")
     end
   end
 
-  BRC.set_hotkey("equip", NAME, do_equip, 1, push_front)
+  BRC.set_hotkey("equip", name, do_equip, 1, push_front, condition)
 end
 
 function BRC.set_waypoint_hotkey(name, push_front)
@@ -197,7 +217,7 @@ function BRC.set_waypoint_hotkey(name, push_front)
     BRC.set_pickup_hotkey(name, true)
   end
 
-  BRC.set_hotkey("move to", name, move_to_waypoint, 1, push_front, clear_waypoint)
+  BRC.set_hotkey("move to", name, move_to_waypoint, 1, push_front, nil, clear_waypoint)
 end
 
 ---- Hook functions ----
@@ -223,7 +243,7 @@ function f_hotkey.ready()
     waypoint_creation_queue = {}
   end
 
-  if cur_action == nil or cur_action.t <= you.turns() then
+  if cur_action == nil or cur_action.turn <= you.turns() then
     expire_cur_action()
   end
 end
