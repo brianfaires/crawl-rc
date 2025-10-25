@@ -74,7 +74,11 @@ function BRC.Data.persist(name, default_value)
   if _default_values[name] then
     BRC.mpr.warning("Multiple calls to BRC.Data.persist(" .. name .. ", ...)")
   end
-  _default_values[name] = default_value
+  if type(default_value) == "table" then
+    _default_values[name] = util.copy_table(default_value)
+  else
+    _default_values[name] = default_value
+  end
 
   -- Try to restore from persistent restore table
   if you.turns() == 0 then
