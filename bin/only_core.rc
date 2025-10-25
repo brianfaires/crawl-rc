@@ -6,7 +6,7 @@
 --[[
 BRC Configuration - Various configs, overriding default values in feature configs.
 Author: buehler
-Dependencies: (none)
+Dependencies: core/data.lua, core/util/*
 Usage:
   - Update BRC.use_config to load the corresponding config.
   - Update each config or create new ones.
@@ -18,11 +18,11 @@ Usage:
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
+-- Default Config Profile (defines default values for everything not in a feature config)
 
--- Default Config Profile (defines all non-feature values)
-BRC.Config = {
+BRC.Profiles.Default = {
+  emojis = BRC.Config.emojis, -- Follow the value in _header.lua
   mpr = {
-    emojis = false, -- Use emojis in alerts and announcements
     show_debug_messages = false,
     debug_to_stderr = false,
   },
@@ -57,7 +57,6 @@ BRC.Config = {
     },
   },
 } -- BRC.Profiles.Default (do not remove this comment)
-BRC.Config = BRC.Profiles.Default -- Always init to Default profile
 
 ---- Local functions ----
 local function get_validated_config_name(input_name)
@@ -195,7 +194,7 @@ end
 --[[
 BRC Constants - All constant definitions
 Author: buehler
-Dependencies: (none)
+Dependencies: BRC.Config.emojis
 --]]
 
 ---- Cosmetic settings
@@ -349,7 +348,7 @@ end
 local function try_restore(failed_vars)
   if not is_usable_backup() then
     BRC.mpr.red("[BRC] Unable to restore from backup. Persistent data reset to defaults.")
-    BRC.mpr.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
+    BRC.mpr.info("For detailed startup info, set BRC.Config.mpr.show_debug_messages=True.")
     return false
   end
 
@@ -726,8 +725,8 @@ function BRC.init()
   _hooks = {}
   turn_count = -1
 
-  BRC.mpr.debug("Load config...")
   BRC.load_config()
+  BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register features...")
   BRC.register(BRC.Data) -- Data must be the first feature registered

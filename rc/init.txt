@@ -1,8 +1,14 @@
 {
-  crawl.mpr("<yellow>Recommended to use buehler.rc instead. Only use multi-file for improved error messages.")
-  crawl.mpr("<yellow>If running BRC as multi-file, you must restart crawl after saving a game, to reset memory.")
-  crawl.more()
+  crawl.mpr("<red>Recommended to use buehler.rc instead. Only use multi-file for improved error messages.")
+  crawl.mpr("<red>If running BRC as multi-file, you must restart crawl after saving a game, to reset memory.")
 }
+
+lua_file = crawl-rc/lua/core/_header.lua
+lua_file = crawl-rc/lua/config/custom.lua
+lua_file = crawl-rc/lua/config/testing.lua
+lua_file = crawl-rc/lua/config/speed.lua
+lua_file = crawl-rc/lua/config/turncount.lua
+lua_file = crawl-rc/lua/config/streak.lua
 
 ### Mostly normal RC options ###
 include = crawl-rc/rc/main.rc
@@ -14,7 +20,6 @@ include = crawl-rc/rc/fm-messages.rc
 include = crawl-rc/rc/runrest.rc
 
 ### buehler.rc core files ###
-lua_file = crawl-rc/lua/core/_header.lua
 lua_file = crawl-rc/lua/core/constants.lua
 lua_file = crawl-rc/lua/util/util.lua
 lua_file = crawl-rc/lua/util/text.lua

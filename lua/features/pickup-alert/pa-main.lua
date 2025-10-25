@@ -88,7 +88,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if not hold_alerts_for_next_turn then you.stop_activity() end
 
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    BRC.opt.pickup_hotkey(it.name(), true)
+    BRC.set_pickup_hotkey(it.name(), true)
   elseif you.feel_safe() then
     BRC.set_waypoint_hotkey(it.name())
   end

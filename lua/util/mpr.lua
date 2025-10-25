@@ -97,10 +97,10 @@ function BRC.mpr.info(message, context)
 end
 
 function BRC.mpr.debug(message, context)
-  if BRC.Config.show_debug_messages then
+  if BRC.Config.mpr.show_debug_messages then
     log_message(message, context, BRC.COL.lightblue)
   end
-  if BRC.Config.debug_to_stderr then
+  if BRC.Config.mpr.debug_to_stderr then
     crawl.stderr("[BRC] (Debug) " .. message)
   end
 end

@@ -240,8 +240,8 @@ function BRC.init()
   _hooks = {}
   turn_count = -1
 
-  BRC.mpr.debug("Load config...")
   BRC.load_config()
+  BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register features...")
   BRC.register(BRC.Data) -- Data must be the first feature registered

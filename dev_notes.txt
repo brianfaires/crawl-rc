@@ -41,5 +41,6 @@ resting statuses fails after 100 turns (blocks fully-recover.lua behavior)
 1. level-specific fm ignores (eg vault warden on v:5)
 1. disable jewellery pickup after configurable xl
 
-### Design choices / simplifications
+### Known issues / Design choices
+1. Emojis load at startup based on BRC.Config.emojis; need a restart to change that setting
 1. Coglin DPS calcs for non-wielded weapons evaluate as if swapping out primary weapon (for artefact stat changes)

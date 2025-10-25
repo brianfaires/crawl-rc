@@ -1,7 +1,7 @@
 --[[
 BRC Configuration - Various configs, overriding default values in feature configs.
 Author: buehler
-Dependencies: (none)
+Dependencies: core/data.lua, core/util/*
 Usage:
   - Update BRC.use_config to load the corresponding config.
   - Update each config or create new ones.
@@ -13,11 +13,11 @@ Usage:
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
+-- Default Config Profile (defines default values for everything not in a feature config)
 
--- Default Config Profile (defines all non-feature values)
-BRC.Config = {
+BRC.Profiles.Default = {
+  emojis = BRC.Config.emojis, -- Follow the value in _header.lua
   mpr = {
-    emojis = false, -- Use emojis in alerts and announcements
     show_debug_messages = false,
     debug_to_stderr = false,
   },
@@ -52,7 +52,6 @@ BRC.Config = {
     },
   },
 } -- BRC.Profiles.Default (do not remove this comment)
-BRC.Config = BRC.Profiles.Default -- Always init to Default profile
 
 ---- Local functions ----
 local function get_validated_config_name(input_name)

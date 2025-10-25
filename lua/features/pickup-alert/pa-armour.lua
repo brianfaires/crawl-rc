@@ -146,7 +146,7 @@ end
 local function pickup_aux_armour(it)
   -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  local all_equipped, num_slots = BRC.get.equipped_at(it)
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
     if num_slots == 1 then
@@ -285,7 +285,7 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, More.aux_armour)
   end
 
-  local all_equipped, num_slots = BRC.get.equipped_at(it)
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
   if #all_equipped < num_slots then
     if unworn_inv_item then
       all_equipped[#all_equipped + 1] = unworn_inv_item

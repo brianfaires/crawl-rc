@@ -151,7 +151,7 @@ end
 local function pickup_aux_armour(it)
   -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  local all_equipped, num_slots = BRC.get.equipped_at(it)
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
     if num_slots == 1 then
@@ -290,7 +290,7 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, More.aux_armour)
   end
 
-  local all_equipped, num_slots = BRC.get.equipped_at(it)
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
   if #all_equipped < num_slots then
     if unworn_inv_item then
       all_equipped[#all_equipped + 1] = unworn_inv_item
@@ -532,7 +532,7 @@ function _weapon_cache.is_empty()
 end
 
 function _weapon_cache.refresh()
-  local cur_turn = you.turn()
+  local cur_turn = you.turns()
   if _weapon_cache.turn and _weapon_cache.turn == cur_turn then return end
   _weapon_cache.turn = cur_turn
   _weapon_cache.weapons = {}
@@ -646,7 +646,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Heur.Alert.low_skill_penalty_damping
-  local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
+  local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
   if BRC.eq.get_hands(it) <= cur.hands then
@@ -1074,7 +1074,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if not hold_alerts_for_next_turn then you.stop_activity() end
 
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    BRC.opt.pickup_hotkey(it.name(), true)
+    BRC.set_pickup_hotkey(it.name(), true)
   elseif you.feel_safe() then
     BRC.set_waypoint_hotkey(it.name())
   end

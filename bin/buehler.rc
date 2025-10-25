@@ -1,4 +1,258 @@
 
+################################### Begin lua/core/_header.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+BRC = {}
+BRC.Config = {}
+BRC.Profiles = {}
+
+---- High-level config settings ----
+BRC.Config.emojis = false -- Only defined here; can't be set in a config profile
+
+--- BRC.use_config: Specify which config to use, or how to select it.
+-- "<config name>": Use the named config
+-- "ask": Prompt at start of each new game
+-- "previous": Keep using the last config
+BRC.use_config = "ask"
+
+-- BRC.store_config: Each game tracks the config being used, ignoring changes in the RC.
+-- "none": Always reload "BRC.use_config" from current RC
+-- "name": Remember the config name, and reload its values from the RC
+-- "full": Remember the config and all of its values
+BRC.store_config = "none"
+
+}
+############################### End lua/core/_header.lua ###############################
+##########################################################################################
+
+################################### Begin lua/config/custom.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-- Custom Config Profile: Personalized settings
+
+BRC.Profiles.Custom = {
+  ["misc-alerts"] = {
+    alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  },
+  ["announce-hp-mp"] = {
+    dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+    dmg_fm_threshold = 0.30,    -- Force more for losing this % of max HP
+    always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
+  },
+  ["inscribe-stats"] = {
+    inscribe_weapons = true, -- Inscribe weapon stats on pickup and keep updated
+    inscribe_armour = true,  -- Inscribe armour stats on pickup and keep updated
+  },
+  ["remind-id"] = {
+    stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
+    stop_on_pots_count = 3,    -- Stop when largest un-ID'd potion stack increases and is >= this
+  },
+  ["runrest-features"] = {
+    ignore_portal_exits = true, -- don't stop explore on portal exits
+    temple_search = true,       -- on enter or explore, auto-search altars
+    gauntlet_search = true,     -- on enter or explore, auto-search gauntlet with filters
+  },
+  ["startup"] = {
+    show_skills_on_startup = false, -- Open skills menu on startup
+    auto_set_skill_targets = {
+      { "Stealth", 2.0 },  -- First, focus stealth to 2.0
+      { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+    },
+  },
+  ["pickup-alert"] = {
+    Pickup = {
+      armour = true,
+      staves = true,
+      weapons = true,
+      weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
+    },
+
+    Alert = {
+      armour_sensitivity = 1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
+      weapon_sensitivity = 1,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
+      orbs = true,
+      staff_resists = true,     -- When a staff gives a missing resistance
+      talismans = true,
+
+      one_time = { -- Alert the first time each item is found
+        "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+        "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+        "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
+        "broad axe", "executioner's axe",
+        "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+        "lajatang", "bardiche", "demon trident", "partisan", "trishula",
+        "hand cannon", "triple crossbow",
+      },
+      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- No one_time if skill < this
+
+      More = { -- Which alerts generate a force_more_message (some categories overlap)
+        early_weap = false,       -- Good weapons found early
+        upgrade_weap = false,     -- Better DPS / weapon_score
+        weap_ego = false,         -- New or diff egos
+        body_armour = false,
+        shields = true,
+        aux_armour = false,
+        armour_ego = false,        -- New or diff egos
+        high_score_weap = false,  -- Highest damage found
+        high_score_armour = true, -- Highest AC found
+        one_time_alerts = true,
+        artefact = false,         -- Any artefact
+        trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
+        orbs = false,
+        talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
+        staff_resists = false,
+      },
+    },
+  },
+} -- BRC.Profiles.Custom (do not remove this comment)
+
+}
+############################### End lua/config/custom.lua ###############################
+##########################################################################################
+
+################################### Begin lua/config/testing.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-- Testing Config Profile: Isolate and test specific features
+
+BRC.Profiles.Testing = {
+  show_debug_messages = true,
+  disable_other_features = false,
+  ["pickup-alert"] = {
+    Alert = {
+      armour_sensitivity = 0.3,
+      weapon_sensitivity = 2,
+    },
+    Tuning = {
+      Armour = {
+        diff_body_ego_is_good = false,
+      },
+    },
+  },
+  init = [[
+    if BRC.Config.disable_other_features then
+      for _, v in pairs(_G) do
+        if BRC.is_feature_module(v) and not BRC.Config[v.BRC_FEATURE_NAME] then
+          BRC.Config[v.BRC_FEATURE_NAME] = { disabled = true }
+        end
+      end
+    end
+  ]],
+} -- BRC.Profiles.Testing (do not remove this comment)
+
+}
+############################### End lua/config/testing.lua ###############################
+##########################################################################################
+
+################################### Begin lua/config/speed.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-- Speed Config Profile: For speed runs
+
+BRC.Profiles.Speed = {
+  ["alert-monsters"] = { disabled = true },
+  ["safe-consumables"] = { disabled = true },
+  ["safe-stairs"] = { disabled = true },
+  ["announce-hp-mp"] = {
+    dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+    dmg_fm_threshold = 1,       -- Force more for losing this % of max HP
+    always_on_bottom = true,    -- Rewrite HP/MP meters after each turn with messages
+  },
+  ["misc-alerts"] = {
+    alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
+    save_with_msg = false,      -- Shift-S to save and leave yourself a message
+  },
+  ["mute-messages"] = {
+    mute_level = 3,
+  },
+  ["remind-id"] = {
+    stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
+    stop_on_pots_count = 9,    -- Stop when largest un-ID'd potion stack increases and is >= this
+  },
+  ["runrest-features"] = { after_shaft = false },
+  ["startup"] = {
+    show_skills_on_startup = false, -- Open skills menu on startup
+  },
+  ["pickup-alert"] = {
+    Pickup = {
+      armour = true,
+      staves = false,
+      weapons = true,
+      weapons_pure_upgrades_only = false, -- Only pick up better versions of same exact weapon
+    },
+
+    Alert = {
+      armour_sensitivity = 1.1, -- [0.5-2.0] Adjust all armour alerts; 0 to disable
+      weapon_sensitivity = 1.2, -- [0.5-2.0] Adjust all weapon alerts; 0 to disable
+      orbs = false,
+      staff_resists = false, -- When a staff gives a missing resistance
+      talismans = false,
+
+      one_time = { -- Alert the first time each item is found
+        "kite shield", "tower shield", "crystal plate armour",
+        "gold dragon scales", "pearl dragon scales", "storm dragon scales",
+        "broad axe", "demon whip", "eveningstar", "morningstar",
+      },
+      OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- No one_time if skill < this
+
+      More = {}, -- All nil / false
+    },
+    Tuning = {
+      Armour = {
+        encumb_penalty_weight = 0, -- [0-2.0] Penalty to heavy armour when training magic/ranged
+        early_xl = 0, -- Alert all usable runed body armour if XL <= `early_xl`
+      },
+    },
+  },
+
+  init = [[
+    BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
+  ]],
+} -- BRC.Profiles.Speed (do not remove this comment)
+
+}
+############################### End lua/config/speed.lua ###############################
+##########################################################################################
+
+################################### Begin lua/config/turncount.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-- Turncount Config Profile: For turncount runs
+
+BRC.Profiles.Turncount = {
+  ["alert-monsters"] = {
+    sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
+  },
+  ["runrest-features"] = { after_shaft = false },
+  ["mute-messages"] = {
+    mute_level = 1,
+  },
+} -- BRC.Profiles.Turncount (do not remove this comment)
+
+}
+############################### End lua/config/turncount.lua ###############################
+##########################################################################################
+
+################################### Begin lua/config/streak.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-- Streak Config Profile: For win streaks
+
+BRC.Profiles.Streak = {
+  ["alert-monsters"] = {
+    sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
+  },
+  ["mute-messages"] = {
+    mute_level = 1,
+  },
+} -- BRC.Profiles.Streak (do not remove this comment)
+
+}
+############################### End lua/config/streak.lua ###############################
+##########################################################################################
+
+## (Resuming rc/init.txt) ##
+
 ### Mostly normal RC options ###
 
 ################################### Begin rc/main.rc ###################################
@@ -746,36 +1000,13 @@ ignore += mindless puppets stay behind to rot
 
 ### buehler.rc core files ###
 
-################################### Begin lua/core/_header.lua ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-{
-BRC = {}
-BRC.Config = {}
-BRC.Profiles = {}
-
---- BRC.use_config: Specify which config to use, or how to select it.
--- "<config name>": Use the named config
--- "ask": Prompt at start of each new game
--- "previous": Keep using the last config
-BRC.use_config = "ask"
-
--- BRC.store_config: Each game tracks the config being used, ignoring changes in the RC.
--- "none": Always reload "BRC.use_config" from current RC
--- "name": Remember the config name, and reload its values from the RC
--- "full": Remember the config and all of its values
-BRC.store_config = "none"
-
-}
-############################### End lua/core/_header.lua ###############################
-##########################################################################################
-
 ################################### Begin lua/core/constants.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 --[[
 BRC Constants - All constant definitions
 Author: buehler
-Dependencies: (none)
+Dependencies: BRC.Config.emojis
 --]]
 
 ---- Cosmetic settings
@@ -1031,10 +1262,10 @@ end
 
 ---- BRC.txt.tostr() local helper functions ----
 local function limit_lines(str)
-  if BRC.Config.max_lines_per_table and BRC.Config.max_lines_per_table > 0 then
+  if BRC.Config.dump.max_lines_per_table and BRC.Config.dump.max_lines_per_table > 0 then
     local lines = 1
     str:gsub("\n", function() lines = lines + 1 end)
-    if lines > BRC.Config.max_lines_per_table then
+    if lines > BRC.Config.dump.max_lines_per_table then
       return string.format("{ %s lines... }", lines)
     end
   end
@@ -1120,7 +1351,7 @@ function BRC.txt.tostr(var, pretty, _indents)
     end
   end
 
-  if BRC.Config.omit_pointers and (var_type == "function" or var_type == "userdata") then
+  if BRC.Config.dump.omit_pointers and (var_type == "function" or var_type == "userdata") then
     return nil
   end
 
@@ -1233,10 +1464,10 @@ function BRC.mpr.info(message, context)
 end
 
 function BRC.mpr.debug(message, context)
-  if BRC.Config.show_debug_messages then
+  if BRC.Config.mpr.show_debug_messages then
     log_message(message, context, BRC.COL.lightblue)
   end
-  if BRC.Config.debug_to_stderr then
+  if BRC.Config.mpr.debug_to_stderr then
     crawl.stderr("[BRC] (Debug) " .. message)
   end
 end
@@ -1561,7 +1792,7 @@ end
 
 function BRC.you.skill_with(it)
   if BRC.it.is_magic_staff(it) then
-    return math.max(BRC.get.skill(BRC.it.get_staff_school(it)), BRC.you.skill("Staves"))
+    return math.max(BRC.you.skill(BRC.it.get_staff_school(it)), BRC.you.skill("Staves"))
   end
   if it.is_weapon then return BRC.you.skill(it.weap_skill) end
   if BRC.it.is_body_armour(it) then return BRC.you.skill("Armour") end
@@ -2033,15 +2264,6 @@ function BRC.clear_single_turn_mutes()
   util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
 end
 
---- Get key assigned to a crawl command (e.g. "CMD_EXPLORE")
-function BRC.opt.cmd_key(cmd)
-  local key = crawl.get_command(cmd)
-  if not key or key == "NULL" then return nil end
-  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
-  local char_key = key:sub(-1)
-  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
-end
-
 ---- crawl.setopt() wrappers ----
 function BRC.opt.autopickup_exceptions(pattern, create)
   local op = create and "^=" or "-="
@@ -2152,7 +2374,7 @@ end
 local function try_restore(failed_vars)
   if not is_usable_backup() then
     BRC.mpr.red("[BRC] Unable to restore from backup. Persistent data reset to defaults.")
-    BRC.mpr.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
+    BRC.mpr.info("For detailed startup info, set BRC.Config.mpr.show_debug_messages=True.")
     return false
   end
 
@@ -2290,7 +2512,7 @@ end
 --[[
 BRC Configuration - Various configs, overriding default values in feature configs.
 Author: buehler
-Dependencies: (none)
+Dependencies: core/data.lua, core/util/*
 Usage:
   - Update BRC.use_config to load the corresponding config.
   - Update each config or create new ones.
@@ -2302,11 +2524,11 @@ Usage:
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
+-- Default Config Profile (defines default values for everything not in a feature config)
 
--- Default Config Profile (defines all non-feature values)
-BRC.Config = {
+BRC.Profiles.Default = {
+  emojis = BRC.Config.emojis, -- Follow the value in _header.lua
   mpr = {
-    emojis = false, -- Use emojis in alerts and announcements
     show_debug_messages = false,
     debug_to_stderr = false,
   },
@@ -2341,7 +2563,6 @@ BRC.Config = {
     },
   },
 } -- BRC.Profiles.Default (do not remove this comment)
-BRC.Config = BRC.Profiles.Default -- Always init to Default profile
 
 ---- Local functions ----
 local function get_validated_config_name(input_name)
@@ -2718,8 +2939,8 @@ function BRC.init()
   _hooks = {}
   turn_count = -1
 
-  BRC.mpr.debug("Load config...")
   BRC.load_config()
+  BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register features...")
   BRC.register(BRC.Data) -- Data must be the first feature registered
@@ -3690,7 +3911,7 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop then
-    BRC.opt.hotkey("drop", "your useless items", function()
+    BRC.set_hotkey("drop", "your useless items", function()
       crawl.sendkeys(BRC.util.get_cmd_key("CMD_DROP") .. ",\r")
     end, 1)
   end
@@ -4192,6 +4413,7 @@ local WAYPOINT_MUTES = {
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
+local waypoint_creation_queue -- Necessary because crawl doesn't update player position mid-turn
 local action_queue
 local cur_action
 
@@ -4211,16 +4433,28 @@ local function expire_cur_action()
   load_next_action()
 end
 
-local function get_avail_waypoint()
+--- Get the highest available waypoint slot
+-- @param is_retry boolean - Internal use only: Prevent infinite recursion
+local function get_avail_waypoint(is_retry)
   for i = 9, 0, -1 do
-    if not travel.waypoint_delta(i) then return i end
+    if
+       not travel.waypoint_delta(i)
+       and not util.exists(waypoint_creation_queue, function(wp) return wp.waynum == i end)
+    then
+      return i
+    end
+  end
+
+  if is_retry then
+    BRC.mpr.error("Either this is an error or you found 11 items in one turn. Congrats!?", true)
+    return nil
   end
 
   BRC.mpr.debug("No available waypoint slots. Clearing them.")
   util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
   crawl.sendkeys({ BRC.util.cntl("w"), "d", "*" })
   crawl.flush_input()
-  return 9
+  return get_avail_waypoint(true)
 end
 
 ---- Macro function: On BRC hotkey press ----
@@ -4272,7 +4506,8 @@ end
 function BRC.set_pickup_hotkey(name, push_front)
   local do_pickup = function()
     for _, fl in ipairs(you.floor_items()) do
-      if fl.name() == name then
+      -- Check with contains() in case ID'ing it appends to the name
+      if fl.name():contains(name) then
         items.pickup(fl)
         return
       end
@@ -4317,8 +4552,8 @@ function BRC.set_waypoint_hotkey(name, push_front)
   if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
 
   local waynum = get_avail_waypoint()
-  BRC.opt.single_turn_mute("Waypoint \\d assigned")
-  travel.set_waypoint(waynum, x, y)
+  if not waynum then return end
+  waypoint_creation_queue[#waypoint_creation_queue + 1] = { waynum = waynum, x = x, y = y }
 
   local clear_waypoint = function()
     local keys = { BRC.util.cntl("w"), "d", tostring(waynum) }
@@ -4350,6 +4585,7 @@ end
 
 ---- Hook functions ----
 function f_hotkey.init()
+  waypoint_creation_queue = {}
   action_queue = {}
   cur_action = nil
 
@@ -4362,6 +4598,14 @@ function f_hotkey.c_assign_invletter(it)
 end
 
 function f_hotkey.ready()
+  if #waypoint_creation_queue > 0 then
+    BRC.opt.single_turn_mute("Waypoint \\d assigned")
+    util.foreach(waypoint_creation_queue, function(wp)
+      travel.set_waypoint(wp.waynum, wp.x, wp.y)
+    end)
+    waypoint_creation_queue = {}
+  end
+
   if cur_action == nil or cur_action.t <= you.turns() then
     expire_cur_action()
   end
@@ -4523,7 +4767,7 @@ local function alert_remove_faith()
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
       if Config.remove_faith_hotkey then
-        BRC.opt.hotkey("remove", "amulet of faith", function()
+        BRC.set_hotkey("remove", "amulet of faith", function()
           items.equipped_at("amulet"):remove()
         end, 1)
       end
@@ -4894,7 +5138,7 @@ function f_remind_id.ready()
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
-      BRC.opt.hotkey("read", "scroll of identify", function()
+      BRC.set_hotkey("read", "scroll of identify", function()
         for _, inv in ipairs(items.inventory()) do
           if inv.name("qual") == "scroll of identify" then
             BRC.util.do_cmd("CMD_READ")
@@ -5718,7 +5962,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if not hold_alerts_for_next_turn then you.stop_activity() end
 
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    BRC.opt.pickup_hotkey(it.name(), true)
+    BRC.set_pickup_hotkey(it.name(), true)
   elseif you.feel_safe() then
     BRC.set_waypoint_hotkey(it.name())
   end
@@ -6135,7 +6379,7 @@ end
 local function pickup_aux_armour(it)
   -- Pickup: Anything if the slot is empty, unless downside from mutation
   if aux_slot_is_impaired(it) then return false end
-  local all_equipped, num_slots = BRC.get.equipped_at(it)
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
   if #all_equipped < num_slots then
     -- If we're carrying one (implying a blocking mutation), don't pickup another
     if num_slots == 1 then
@@ -6274,7 +6518,7 @@ local function alert_aux_armour(it, unworn_inv_item)
     return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, More.aux_armour)
   end
 
-  local all_equipped, num_slots = BRC.get.equipped_at(it)
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
   if #all_equipped < num_slots then
     if unworn_inv_item then
       all_equipped[#all_equipped + 1] = unworn_inv_item
@@ -6617,7 +6861,7 @@ function _weapon_cache.is_empty()
 end
 
 function _weapon_cache.refresh()
-  local cur_turn = you.turn()
+  local cur_turn = you.turns()
   if _weapon_cache.turn and _weapon_cache.turn == cur_turn then return end
   _weapon_cache.turn = cur_turn
   _weapon_cache.weapons = {}
@@ -6731,7 +6975,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Heur.Alert.low_skill_penalty_damping
-  local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
+  local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
   if BRC.eq.get_hands(it) <= cur.hands then

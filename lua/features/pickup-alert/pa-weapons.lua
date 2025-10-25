@@ -185,7 +185,7 @@ function _weapon_cache.is_empty()
 end
 
 function _weapon_cache.refresh()
-  local cur_turn = you.turn()
+  local cur_turn = you.turns()
   if _weapon_cache.turn and _weapon_cache.turn == cur_turn then return end
   _weapon_cache.turn = cur_turn
   _weapon_cache.weapons = {}
@@ -299,7 +299,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Heur.Alert.low_skill_penalty_damping
-  local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
+  local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
   if BRC.eq.get_hands(it) <= cur.hands then

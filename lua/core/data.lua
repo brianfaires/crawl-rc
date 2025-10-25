@@ -44,7 +44,7 @@ end
 local function try_restore(failed_vars)
   if not is_usable_backup() then
     BRC.mpr.red("[BRC] Unable to restore from backup. Persistent data reset to defaults.")
-    BRC.mpr.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
+    BRC.mpr.info("For detailed startup info, set BRC.Config.mpr.show_debug_messages=True.")
     return false
   end
 

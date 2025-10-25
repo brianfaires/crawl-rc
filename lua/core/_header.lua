@@ -2,6 +2,9 @@ BRC = {}
 BRC.Config = {}
 BRC.Profiles = {}
 
+---- High-level config settings ----
+BRC.Config.emojis = false -- Only defined here; can't be set in a config profile
+
 --- BRC.use_config: Specify which config to use, or how to select it.
 -- "<config name>": Use the named config
 -- "ask": Prompt at start of each new game

@@ -79,10 +79,10 @@ end
 
 ---- BRC.txt.tostr() local helper functions ----
 local function limit_lines(str)
-  if BRC.Config.max_lines_per_table and BRC.Config.max_lines_per_table > 0 then
+  if BRC.Config.dump.max_lines_per_table and BRC.Config.dump.max_lines_per_table > 0 then
     local lines = 1
     str:gsub("\n", function() lines = lines + 1 end)
-    if lines > BRC.Config.max_lines_per_table then
+    if lines > BRC.Config.dump.max_lines_per_table then
       return string.format("{ %s lines... }", lines)
     end
   end
@@ -168,7 +168,7 @@ function BRC.txt.tostr(var, pretty, _indents)
     end
   end
 
-  if BRC.Config.omit_pointers and (var_type == "function" or var_type == "userdata") then
+  if BRC.Config.dump.omit_pointers and (var_type == "function" or var_type == "userdata") then
     return nil
   end
 

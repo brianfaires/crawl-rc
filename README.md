@@ -274,7 +274,7 @@ BRC.unregister("feature-name")        -- Disable a feature
 -- Debugging
 BRC.dump()                        -- Print all persistent data
 BRC.dump(1)                       -- Print a lot more debugging info
-BRC.Config.show_debug_messages = true -- Enable debug output
+BRC.Config.mpr.show_debug_messages = true -- Enable debug output
 ```
 
 ### Troubleshooting

@@ -1,7 +1,7 @@
 --[[
 BRC Constants - All constant definitions
 Author: buehler
-Dependencies: (none)
+Dependencies: BRC.Config.emojis
 --]]
 
 ---- Cosmetic settings

@@ -131,7 +131,7 @@ end
 
 function BRC.you.skill_with(it)
   if BRC.it.is_magic_staff(it) then
-    return math.max(BRC.get.skill(BRC.it.get_staff_school(it)), BRC.you.skill("Staves"))
+    return math.max(BRC.you.skill(BRC.it.get_staff_school(it)), BRC.you.skill("Staves"))
   end
   if it.is_weapon then return BRC.you.skill(it.weap_skill) end
   if BRC.it.is_body_armour(it) then return BRC.you.skill("Armour") end

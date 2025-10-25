@@ -14,15 +14,6 @@ function BRC.clear_single_turn_mutes()
   util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
 end
 
---- Get key assigned to a crawl command (e.g. "CMD_EXPLORE")
-function BRC.opt.cmd_key(cmd)
-  local key = crawl.get_command(cmd)
-  if not key or key == "NULL" then return nil end
-  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
-  local char_key = key:sub(-1)
-  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
-end
-
 ---- crawl.setopt() wrappers ----
 function BRC.opt.autopickup_exceptions(pattern, create)
   local op = create and "^=" or "-="
