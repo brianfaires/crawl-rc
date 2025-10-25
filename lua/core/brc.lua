@@ -27,9 +27,9 @@ local turn_count
 local function char_dump(add_debug_info)
   if add_debug_info then
     crawl.take_note(BRC.dump(true, true))
-    BRC.mpr.lightgrey("[BRC] Debug info added to character dump.")
+    BRC.mpr.info("Debug info added to character dump.")
   else
-    BRC.mpr.darkgrey("[BRC] No debug info added.")
+    BRC.mpr.info("No debug info added.")
   end
 
   BRC.util.do_cmd("CMD_CHARACTER_DUMP")
@@ -224,7 +224,7 @@ function BRC.unregister(name)
     end
   end
 
-  BRC.mpr.info(string.format("Unregistered %s.", BRC.txt.lightcyan(name)))
+  BRC.mpr.info(string.format("Unregistered %s.", name))
   BRC.mpr.debug(string.format("Unregistered hooks: (%s)", table.concat(hooks_removed, ", ")))
   return true
 end

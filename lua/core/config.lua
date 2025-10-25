@@ -128,7 +128,7 @@ local function load_profile(input_config)
     BRC.process_feature_config(name)
   end
 
-  BRC.mpr.info("Using config: " .. BRC.txt.lightcyan(config_name))
+  BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(config_name))
   return config_name
 end
 

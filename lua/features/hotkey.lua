@@ -21,7 +21,7 @@ local WAYPOINT_MUTES = {
   "Assign waypoint to what number",
   "Existing waypoints",
   "Delete which waypoint",
-  "\\(\\d\\) ",
+  "(\\(\\d\\) )",
   "All waypoints deleted",
   "You're already here!",
   "Okay\\, then\\.",
@@ -83,14 +83,14 @@ function macro_brc_hotkey()
     cur_action.act()
     cur_action = nil
   else
-    BRC.mpr.darkgrey("Unknown command (no actions assigned to BRC hotkey).")
+    BRC.mpr.info("Unknown command (no action assigned to hotkey).")
   end
 end
 
 function macro_brc_skip_hotkey()
   if cur_action then
     expire_cur_action()
-    if not cur_action then BRC.mpr.darkgrey("[BRC] Hotkey cleared.") end
+    if not cur_action then BRC.mpr.info("Hotkey cleared.") end
   else
     crawl.sendkeys({ Config.skip_keycode })
   end
@@ -142,7 +142,7 @@ function BRC.set_pickup_hotkey(name, push_front)
         return
       end
     end
-    BRC.mpr.darkgrey(name .. " isn't here!")
+    BRC.mpr.info(name .. " isn't here!")
   end
 
   BRC.set_hotkey("pickup", name, do_pickup, 1, push_front, condition)
@@ -152,12 +152,7 @@ function BRC.set_equip_hotkey(it, push_front)
   if not (it.is_weapon or BRC.it.is_armour(it) or BRC.it.is_jewellery(it)) then return end
   local name = it.name():gsub(" {.*}", "")
 
-  local condition = function()
-    local inv_items = util.filter(function(i)
-      return i.name():gsub(" {.*}", "") == name
-    end, items.inventory())
-    return util.exists(inv_items, function(i) return not i.equipped end)
-  end
+  local condition = function() return not it.equipped end
 
   local do_equip = function()
     local inv_items = util.filter(function(i)
@@ -175,7 +170,7 @@ function BRC.set_equip_hotkey(it, push_front)
     end
 
     if already_eq then
-      BRC.mpr.darkgrey("Already equipped.")
+      BRC.mpr.info("Already equipped.")
     else
       BRC.mpr.error("Could not find unequipped item '" .. name .. "' in inventory.")
     end
