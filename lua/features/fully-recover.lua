@@ -76,13 +76,13 @@ local function remove_statuses_from_config()
   end
   for _, s in ipairs(to_remove) do
     util.remove(Config.rest_off_statuses, s)
-    BRC.log.error("  Removed: " .. s)
+    BRC.mpr.error("  Removed: " .. s)
   end
 end
 
 local function start_fully_recover()
   recovery_start_turn = you.turns()
-  BRC.set.single_turn_mute("You start waiting.")
+  BRC.opt.single_turn_mute("You start waiting.")
 end
 
 ---- Macro function: Attach full recovery to auto-explore ----
@@ -108,12 +108,12 @@ function f_fully_recover.init()
   recovery_start_turn = 0
   explore_after_recovery = false
 
-  BRC.set.runrest_ignore_message("recovery:.*", true)
-  BRC.set.runrest_ignore_message("duration:.*", true)
-  BRC.set.macro(BRC.get.command_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.runrest_ignore_message("recovery:.*", true)
+  BRC.opt.runrest_ignore_message("duration:.*", true)
+  BRC.opt.macro(BRC.opt.cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
 
-  BRC.set.message_mute("^HP restored", true)
-  BRC.set.message_mute("Magic restored", true)
+  BRC.opt.message_mute("^HP restored", true)
+  BRC.opt.message_mute("Magic restored", true)
 end
 
 function f_fully_recover.c_message(text, channel)
@@ -137,8 +137,8 @@ function f_fully_recover.ready()
     elseif not you.feel_safe() then
       abort_fully_recover()
     elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.log.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
-      BRC.log.error("f_fully_recover.Config.rest_off_statuses:")
+      BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
+      BRC.mpr.error("f_fully_recover.Config.rest_off_statuses:")
       remove_statuses_from_config()
       abort_fully_recover()
     else

@@ -37,7 +37,7 @@ local function alert_low_hp()
   elseif hp <= Config.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
     local low_hp_msg = "Dropped below " .. 100 * Config.alert_low_hp_threshold .. "%% HP"
-    BRC.mpr.que_optmore(true, BRC.text.wrap(BRC.text.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
+    BRC.mpr.que_optmore(true, BRC.txt.wrap(BRC.txt.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
   end
 end
 
@@ -49,7 +49,7 @@ local function alert_remove_faith()
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
       if Config.remove_faith_hotkey then
-        BRC.set_hotkey("remove", "amulet of faith", function()
+        BRC.opt.hotkey("remove", "amulet of faith", function()
           items.equipped_at("amulet"):remove()
         end, 1)
       end
@@ -63,7 +63,7 @@ local function alert_spell_level_changes()
     local delta = new_spell_levels - prev_spell_levels
     local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
     local suffix = string.format(" (%s available)", new_spell_levels)
-    BRC.mpr.lightcyan(msg .. BRC.text.cyan(suffix))
+    BRC.mpr.lightcyan(msg .. BRC.txt.cyan(suffix))
   elseif new_spell_levels < prev_spell_levels then
     BRC.mpr.magenta(new_spell_levels .. " spell levels remaining")
   end
@@ -93,7 +93,7 @@ function f_misc_alerts.init()
   prev_spell_levels = you.spell_levels()
 
   if Config.save_with_msg then
-    BRC.set.macro(BRC.get.command_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
+    BRC.opt.macro(BRC.opt.cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
       ma_saved_msg = nil

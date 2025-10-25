@@ -18,9 +18,9 @@ pa_egos_alerted = BRC.Data.persist("pa_egos_alerted", {})
 local function get_pa_keys(it, use_plain_name)
   if it.class(true) == "bauble" then
     return it.name("qual"):gsub('"', ""), 0
-  elseif BRC.is.talisman(it) or BRC.is.orb(it) then
+  elseif BRC.it.is_talisman(it) or BRC.it.is_orb(it) then
     return it.name():gsub('"', ""), 0
-  elseif BRC.is.magic_staff(it) then
+  elseif BRC.it.is_magic_staff(it) then
     return it.name("base"):gsub('"', ""), 0
   else
     local name = it.name(use_plain_name and "plain" or "base"):gsub('"', "")
@@ -45,8 +45,8 @@ function f_pa_data.find(table_ref, it)
 end
 
 function f_pa_data.insert(table_ref, it)
-  local is_armour = BRC.is.armour(it, true)
-  if not (it.is_weapon or is_armour or BRC.is.talisman(it)) then return end
+  local is_armour = BRC.it.is_armour(it, true)
+  if not (it.is_weapon or is_armour or BRC.it.is_talisman(it)) then return end
 
   if table_ref == pa_recent_alerts then
     pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
@@ -56,7 +56,7 @@ function f_pa_data.insert(table_ref, it)
     if not cur_val or value > cur_val then table_ref[name] = value end
 
     -- For armour with good brand, also add the unbranded version to the table
-    if is_armour and it.branded and not (it.artefact or BRC.is.risky_item(it)) then
+    if is_armour and it.branded and not (it.artefact or BRC.eq.is_risky(it)) then
       name = it.name("qual")
       cur_val = tonumber(table_ref[name])
       if not cur_val or value > cur_val then table_ref[name] = value end
@@ -82,7 +82,7 @@ end
 -- Get name with plus included and quotes removed; stored in pa_recent_alerts table
 function f_pa_data.get_keyname(it, use_plain_name)
   local name, value = get_pa_keys(it, use_plain_name)
-  if not (BRC.is.armour(it) or it.is_weapon) then return name end
+  if not (BRC.it.is_armour(it) or it.is_weapon) then return name end
   if value >= 0 then value = string.format("+%s", value) end
   return string.format("%s %s", value, name)
 end
@@ -92,23 +92,23 @@ function f_pa_data.update_high_scores(it)
   if not it then return end
   local ret_val = nil
 
-  if BRC.is.armour(it) then
-    local ac = BRC.get.armour_ac(it)
+  if BRC.it.is_armour(it) then
+    local ac = BRC.eq.get_ac(it)
     if ac > pa_high_score.ac then
       pa_high_score.ac = ac
       if not ret_val then ret_val = "Highest AC" end
     end
   elseif it.is_weapon then
     -- Don't alert for unusable weapons
-    if BRC.get.hands(it) == 2 and not BRC.you.free_offhand() then return end
+    if BRC.eq.get_hands(it) == 2 and not BRC.you.free_offhand() then return end
 
-    local dmg = BRC.get.weap_damage(it, BRC.DMG_TYPE.branded)
+    local dmg = BRC.eq.get_dmg(it, BRC.DMG_TYPE.branded)
     if dmg > pa_high_score.weapon then
       pa_high_score.weapon = dmg
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    dmg = BRC.get.weap_damage(it, BRC.DMG_TYPE.plain)
+    dmg = BRC.eq.get_dmg(it, BRC.DMG_TYPE.plain)
     if dmg > pa_high_score.plain_dmg then
       pa_high_score.plain_dmg = dmg
       if not ret_val then ret_val = "Highest plain damage" end

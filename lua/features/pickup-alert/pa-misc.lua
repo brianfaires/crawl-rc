@@ -23,7 +23,7 @@ function f_pa_misc.alert_OTA(it)
 
   local do_alert = true
 
-  if BRC.is.shield(it) then
+  if BRC.it.is_shield(it) then
     if you.skill("Shields") < Alert.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
@@ -33,7 +33,7 @@ function f_pa_misc.alert_OTA(it)
       local sh = items.equipped_at("offhand")
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
-  elseif BRC.is.armour(it) then
+  elseif BRC.it.is_armour(it) then
     if you.skill("Armour") < Alert.OTA_require_skill.armour then return end
   elseif it.is_weapon then
     if you.skill(it.weap_skill) < Alert.OTA_require_skill.weapon then return end
@@ -69,18 +69,18 @@ function f_pa_misc.alert_talisman(it)
   if it.artefact then
     return f_pickup_alert.do_alert(it, "Artefact talisman", Emoji.TALISMAN, Alert.More.talismans)
   end
-  local required_skill = BRC.get.talisman_min_level(it) - Alert.talisman_lvl_diff
+  local required_skill = BRC.it.get_talisman_min_level(it) - Alert.talisman_lvl_diff
   if required_skill > BRC.you.shapeshifting_skill() then return false end
   return f_pickup_alert.do_alert(it, "New talisman", Emoji.TALISMAN, Alert.More.talismans)
 end
 
 function f_pa_misc.is_unneeded_ring(it)
-  if not BRC.is.ring(it) or it.artefact or you.race() == "Octopode" then return false end
-  local missing_hand = BRC.get.mut("missing a hand") > 0
+  if not BRC.it.is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
+  local missing_hand = BRC.you.mut_lvl("missing a hand") > 0
   local st = it.subtype()
   local found_first = false
   for _, inv in ipairs(items.inventory()) do
-    if BRC.is.ring(inv) and inv.subtype() == st then
+    if BRC.it.is_ring(inv) and inv.subtype() == st then
       if found_first or missing_hand then return true end
       found_first = true
     end
@@ -89,5 +89,5 @@ function f_pa_misc.is_unneeded_ring(it)
 end
 
 function f_pa_misc.pickup_staff(it)
-  return BRC.get.skill(BRC.get.staff_school(it)) > 0
+  return BRC.you.skill(BRC.it.get_staff_school(it)) > 0
 end

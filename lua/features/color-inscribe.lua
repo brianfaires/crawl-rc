@@ -99,7 +99,7 @@ function f_color_inscribe.c_assign_invletter(it)
     and f_inscribe_stats.do_stat_inscription
     and (
       it.is_weapon and f_inscribe_stats.Config.inscribe_weapons
-      or BRC.is.armour(it) and f_inscribe_stats.Config.inscribe_armour
+      or BRC.it.is_armour(it) and f_inscribe_stats.Config.inscribe_armour
     )
   then
     f_inscribe_stats.do_stat_inscription(it)
@@ -118,7 +118,7 @@ function f_color_inscribe.c_message(text, _)
   text = colorize_subtext(text)
   if text == orig_text then return end
 
-  local cleaned = BRC.text.clean(text)
+  local cleaned = BRC.txt.clean(text)
   if cleaned:sub(2, 4) == " - " then
     text = " " .. text
   end

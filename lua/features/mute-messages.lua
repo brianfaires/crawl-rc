@@ -88,7 +88,7 @@ function f_mute_messages.init()
     for i = 1, f_mute_messages.Config.mute_level do
       if not f_mute_messages.Config.messages[i] then break end
       for _, message in ipairs(f_mute_messages.Config.messages[i]) do
-        BRC.set.message_mute(message, true)
+        BRC.opt.message_mute(message, true)
       end
     end
   end

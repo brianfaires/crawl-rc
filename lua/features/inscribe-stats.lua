@@ -10,7 +10,7 @@ f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = BRC.DMG_TYPE.plain,
+  dmg_type = BRC.DMG_TYPE.unbranded,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local config alias ----
@@ -21,8 +21,8 @@ local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
 ---- Local functions ----
 local function inscribe_armour_stats(it)
-  local abbr = BRC.is.shield(it) and "SH" or "AC"
-  local ac_or_sh, ev = BRC.get.armour_stats(it)
+  local abbr = BRC.it.is_shield(it) and "SH" or "AC"
+  local ac_or_sh, ev = BRC.eq.arm_stats(it)
   local sign_change = false
 
   local new_insc
@@ -58,7 +58,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.get.weapon_stats(it, BRC.DMG_TYPE[Config.dmg_type])
+  local dps_inscr = BRC.eq.wpn_stats(it, BRC.DMG_TYPE[Config.dmg_type])
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
@@ -78,7 +78,7 @@ end
 function f_inscribe_stats.do_stat_inscription(it)
   if Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif Config.inscribe_armour and BRC.is.armour(it) and not BRC.is.scarf(it) then
+  elseif Config.inscribe_armour and BRC.it.is_armour(it) and not BRC.it.is_scarf(it) then
     inscribe_armour_stats(it)
   end
 end

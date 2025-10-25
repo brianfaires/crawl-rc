@@ -4,9 +4,6 @@ Author: buehler
 Dependencies: (none)
 --]]
 
----- Initialize BRC namespace
-BRC = BRC or {}
-
 ---- Cosmetic settings
 BRC.EMOJI = {
   CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
@@ -98,7 +95,7 @@ BRC.COL = {
 
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
-  plain = 2, -- Include brand dmg with no associated damage type
+  plain = 2, -- Include brand dmg for non-elemental brands
   branded = 3, -- Include full brand dmg
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)

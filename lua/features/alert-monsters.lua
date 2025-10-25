@@ -217,7 +217,7 @@ f_alert_monsters.Config.init = [[
     -- If configured, add fm for all uniques and pan lords
     if f_alert_monsters.Config.fm_on_uniques then
       local uniques_pattern = "monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view"
-      BRC.set.force_more_message(uniques_pattern, true)
+      BRC.opt.force_more_message(uniques_pattern, true)
     end
 ]]
 ------------------- End config section -------------------
@@ -240,9 +240,9 @@ local function update_pack_mutes()
   -- Put pending mutes into effect
   for _, v in ipairs(patterns_to_mute) do
     if v.flash_screen then
-      BRC.set.flash_screen_message(v, false)
+      BRC.opt.flash_screen_message(v, false)
     else
-      BRC.set.force_more_message(v, false)
+      BRC.opt.force_more_message(v, false)
     end
     if Config.debug_alert_monsters then BRC.mpr.blue("Muted pack: " .. v) end
   end
@@ -368,9 +368,9 @@ function f_alert_monsters.ready()
     if should_be_active ~= v.active_alert then
       v.active_alert = should_be_active
       if v.flash_screen then
-        BRC.set.flash_screen_message(v.pattern, should_be_active)
+        BRC.opt.flash_screen_message(v.pattern, should_be_active)
       else
-        BRC.set.force_more_message(v.pattern, should_be_active)
+        BRC.opt.force_more_message(v.pattern, should_be_active)
       end
 
       if Config.debug_alert_monsters then

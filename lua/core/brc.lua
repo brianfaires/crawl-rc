@@ -7,17 +7,8 @@ Author: buehler
 Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
 --]]
 
----- Initialize BRC namespace and non-persistent public variables
-BRC = BRC or {}
-BRC.VERSION = "1.2.0"
-BRC.active = false
-BRC.single_turn_mutes = {}
-
----- Persistent variables ----
-brc_config_full = BRC.Data.persist("brc_config_full", nil)
-brc_config_name = BRC.Data.persist("brc_config_name", nil)
-
 ---- Local constants ----
+BRC.VERSION = "1.2.0"
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
   c_answer_prompt = "c_answer_prompt",
@@ -33,13 +24,24 @@ local _hooks
 local turn_count
 
 ---- Local functions ----
+local function char_dump(add_debug_info)
+  if add_debug_info then
+    crawl.take_note(BRC.dump(true, true))
+    BRC.mpr.lightgrey("[BRC] Debug info added to character dump.")
+  else
+    BRC.mpr.darkgrey("[BRC] No debug info added.")
+  end
+
+  BRC.util.do_cmd("CMD_CHARACTER_DUMP")
+end
+
 local function feature_is_disabled(f)
   return f.Config and f.Config.disabled
     or BRC.Config[f.BRC_FEATURE_NAME] and BRC.Config[f.BRC_FEATURE_NAME].disabled
 end
 
 local function handle_feature_error(feature_name, hook_name, result)
-  BRC.log.error(string.format("Failure in %s.%s", feature_name, hook_name), result, true)
+  BRC.mpr.error(string.format("Failure in %s.%s", feature_name, hook_name), result, true)
   if BRC.mpr.yesno(string.format("Deactivate %s?", feature_name), BRC.COL.yellow) then
     BRC.unregister(feature_name)
   else
@@ -54,83 +56,18 @@ local function handle_core_error(hook_name, result, ...)
     if param and type(param.name) == "function" then
       params[#params + 1] = "[" .. param.name() .. "]"
     else
-      params[#params + 1] = BRC.util.tostring(param, true)
+      params[#params + 1] = BRC.txt.tostr(param, true)
     end
   end
 
   local msg = "BRC failure in safe_call_all_hooks(" .. table.concat(params, ", ") .. ")"
-  BRC.log.error(msg, result, true)
+  BRC.mpr.error(msg, result, true)
   if BRC.mpr.yesno("Deactivate BRC." .. hook_name .. "?", BRC.COL.yellow) then
     _hooks[hook_name] = nil
     BRC.mpr.brown("Unregistered hook: " .. tostring(hook_name))
   else
     BRC.mpr.okay("Returning nil to " .. hook_name .. ".")
   end
-end
-
--- Config management
-local function get_validated_config_name(input_name)
-  if type(input_name) ~= "string" then
-    BRC.log.warning("Non-string config name: " .. tostring(input_name))
-  else
-    local config_name = input_name:lower()
-    if config_name == "ask" then
-      if you.turns() > 0 and brc_config_name then
-        return get_validated_config_name(brc_config_name)
-      end
-    elseif config_name == "previous" then
-      if c_persist.BRC and c_persist.BRC.current_config then
-        return get_validated_config_name(c_persist.BRC.current_config)
-      else
-        BRC.log.warning("No previous config found.")
-      end
-    else
-      for k, _ in pairs(BRC.Profiles) do
-        if config_name == k:lower() then return k end
-      end
-      BRC.log.warning("Could not load config: " .. tostring(input_name))
-    end
-  end
-
-  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
-end
-
-local function safe_call_string(str, module_name)
-  local chunk, err = loadstring(str)
-  if not chunk then
-    BRC.log.error("Error loading " .. module_name .. ".Config.init string: ", err)
-  else
-    local success, result = pcall(chunk)
-    if not success then
-      BRC.log.error("Error executing " .. module_name .. ".Config.init string: ", result)
-    end
-  end
-end
-
-local function override_table(source, dest)
-  if type(source) ~= "table" then return end
-
-  for key, value in pairs(source) do
-    if BRC.is.map(value) then
-      if not dest[key] then dest[key] = {} end
-      override_table(value, dest[key])
-    elseif key ~= "init" then
-      dest[key] = value
-    end
-  end
-end
-
-local function process_feature_config(feature_name)
-  local f = _features[feature_name]
-  if not f.Config then
-    f.Config = {}
-  elseif type(f.Config.init) == "function" then
-    f.Config.init()
-  elseif type(f.Config.init) == "string" then
-    safe_call_string(f.Config.init, feature_name)
-  end
-
-  override_table(BRC.Config[feature_name], f.Config)
 end
 
 -- Hook management
@@ -142,21 +79,21 @@ local function call_all_hooks(hook_name, ...)
     local hook_info = _hooks[hook_name][i]
     if not feature_is_disabled(_features[hook_info.feature_name]) then
       if hook_name == HOOK_FUNCTIONS.init then
-        BRC.log.debug(string.format("Initialize %s...", BRC.text.lightcyan(hook_info.feature_name)))
+        BRC.mpr.debug(string.format("Initialize %s...", BRC.txt.lightcyan(hook_info.feature_name)))
       end
       local success, result = pcall(hook_info.func, ...)
       if not success then
         handle_feature_error(hook_info.feature_name, hook_name, result)
       else
         if last_return_value and result and last_return_value ~= result then
-          BRC.log.warning(
+          BRC.mpr.warning(
             string.format(
               "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
               hook_name,
               returning_feature,
-              BRC.util.tostring(last_return_value, true),
+              BRC.txt.tostr(last_return_value, true),
               hook_info.feature_name,
-              BRC.util.tostring(result, true)
+              BRC.txt.tostr(result, true)
             )
           )
         end
@@ -181,11 +118,11 @@ local function safe_call_all_hooks(hook_name, ...)
   if success then return end
 
   -- This is a serious error. Failed in the hook, and when we tried to report it.
-  BRC.log.error("Failed to handle BRC core error!", result, true)
+  BRC.mpr.error("Failed to handle BRC core error!", result, true)
   if BRC.mpr.yesno("Dump char and deactivate BRC?", BRC.COL.yellow) then
     BRC.active = false
     BRC.mpr.brown("BRC deactivated.", "Error in hook: " .. tostring(hook_name))
-    pcall(BRC.dump.char, true)
+    pcall(char_dump, true)
   else
     BRC.mpr.okay()
   end
@@ -209,13 +146,14 @@ local function register_all_features()
     if success then
       loaded_count = loaded_count + 1
     elseif success == false then
-      BRC.log.error("Failed to register feature: " .. name .. ". Aborting bulk registration.")
+      BRC.mpr.error("Failed to register feature: " .. name .. ". Aborting bulk registration.")
       return loaded_count
     end
   end
 
   return loaded_count
 end
+
 
 ---- Public API ----
 function BRC.get_registered_features()
@@ -233,16 +171,15 @@ end
 -- BRC.register(): Return true if success, false if error, nil if feature is disabled
 function BRC.register(f)
   if not BRC.is_feature_module(f) then
-    BRC.log.error("Tried to register a non-feature module! Module contents:")
-    BRC.dump.var(f)
+    BRC.mpr.error("Tried to register a non-feature module! Module contents:\n" .. BRC.txt.tostr(f))
     return false
   elseif _features[f.BRC_FEATURE_NAME] then
-    BRC.log.warning(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .. " already registered! Repeating...")
+    BRC.mpr.warning(BRC.txt.lightcyan(f.BRC_FEATURE_NAME) .. " already registered! Repeating...")
     BRC.unregister(f.BRC_FEATURE_NAME)
   end
 
   if feature_is_disabled(f) then
-    BRC.log.debug(BRC.text.lightcyan(f.BRC_FEATURE_NAME) .. " is disabled. Skipped registration.")
+    BRC.mpr.debug(BRC.txt.lightcyan(f.BRC_FEATURE_NAME) .. " is disabled. Skipped registration.")
     return nil
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
@@ -250,7 +187,7 @@ function BRC.register(f)
     f.Config.disabled = false
   end
 
-  BRC.log.debug(string.format("Registering %s...", BRC.text.lightcyan(f.BRC_FEATURE_NAME)))
+  BRC.mpr.debug(string.format("Registering %s...", BRC.txt.lightcyan(f.BRC_FEATURE_NAME)))
   _features[f.BRC_FEATURE_NAME] = f
 
   -- Register hooks
@@ -265,14 +202,14 @@ function BRC.register(f)
     end
   end
 
-  process_feature_config(f.BRC_FEATURE_NAME)
+  BRC.process_feature_config(f.BRC_FEATURE_NAME)
 
   return true
 end
 
 function BRC.unregister(name)
   if not _features[name] then
-    BRC.log.error(BRC.text.yellow(name) .. " is not registered. Cannot unregister.")
+    BRC.mpr.error(BRC.txt.yellow(name) .. " is not registered. Cannot unregister.")
     return false
   end
 
@@ -287,9 +224,15 @@ function BRC.unregister(name)
     end
   end
 
-  BRC.log.info(string.format("Unregistered %s.", BRC.text.lightcyan(name)))
-  BRC.log.debug(string.format("Unregistered hooks: (%s)", table.concat(hooks_removed, ", ")))
+  BRC.mpr.info(string.format("Unregistered %s.", BRC.txt.lightcyan(name)))
+  BRC.mpr.debug(string.format("Unregistered hooks: (%s)", table.concat(hooks_removed, ", ")))
   return true
+end
+
+function BRC.reset()
+  BRC.active = false
+  BRC.Data.reset()
+  BRC.init()
 end
 
 function BRC.init()
@@ -297,37 +240,28 @@ function BRC.init()
   _hooks = {}
   turn_count = -1
 
-  BRC.log.debug("Load config...")
-  local config_name
-  if BRC.config_memory and BRC.config_memory:lower() == "full" then
-    config_name = BRC.load_config(brc_config_full or brc_config_name or BRC.config_to_use)
-    brc_config_full = BRC.Config
-  elseif BRC.config_memory and BRC.config_memory:lower() == "name" then
-    config_name = BRC.load_config(brc_config_name or BRC.config_to_use)
-  else
-    config_name = BRC.load_config(BRC.config_to_use)
-  end
-  brc_config_name = config_name
+  BRC.mpr.debug("Load config...")
+  BRC.load_config()
 
-  BRC.log.debug("Register features...")
+  BRC.mpr.debug("Register features...")
   BRC.register(BRC.Data) -- Data must be the first feature registered
   register_all_features()
 
-  BRC.log.debug("Initialize features...")
+  BRC.mpr.debug("Initialize features...")
   safe_call_all_hooks(HOOK_FUNCTIONS.init)
-  local suffix = BRC.text.blue(string.format(" (%s features)", #util.keys(_features)))
+  local suffix = BRC.txt.blue(string.format(" (%s features)", #util.keys(_features)))
 
-  BRC.log.debug("Add non-feature hooks...")
+  BRC.mpr.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
-  BRC.set.macro(BRC.get.command_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
-  BRC.set.macro("\\{5}", "macro_brc_cntl_e")
+  BRC.opt.macro(BRC.opt.cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  BRC.opt.macro("\\{5}", "macro_brc_cntl_e")
 
-  BRC.log.debug("Verify persistent data reload...")
+  BRC.mpr.debug("Verify persistent data reload...")
   local success = BRC.Data.handle_persist_errors()
   if success then
     BRC.Data.backup() -- Only backup after a clean startup
     local msg = string.format("Successfully initialized BRC v%s!%s", BRC.VERSION, suffix)
-    BRC.mpr.lightgreen("\n" .. BRC.text.wrap(msg, BRC.EMOJI.SUCCESS) .. "\n")
+    BRC.mpr.lightgreen("\n" .. BRC.txt.wrap(msg, BRC.EMOJI.SUCCESS) .. "\n")
   else
     -- success == nil if errors were resolved, false if tried restore but failed
     if success == false and BRC.mpr.yesno("Deactivate BRC?" .. suffix, BRC.COL.yellow) then
@@ -344,64 +278,41 @@ function BRC.init()
   return true
 end
 
-function BRC.load_config(input_config)
-  local config_name
-  if type(input_config) == "table" then
-    BRC.Config = input_config
-    config_name = brc_config_name or "Unknown"
-  else
-    config_name = get_validated_config_name(input_config)
-    BRC.Config = util.copy_table(BRC.Profiles.Default)
-    for k, v in pairs(BRC.Profiles[config_name]) do
-      BRC.Config[k] = v
-    end
+--- Pull debug info. Print to mpr() and return as string
+-- @param skip_mpr (optional bool) Used in char_dump to just return the string
+function BRC.dump(verbose, skip_mpr)
+  local tokens = {}
+  tokens[#tokens + 1] = BRC.Data.serialize()
+  if verbose then
+    tokens[#tokens + 1] = BRC.txt.serialize_chk_lua_save()
+    tokens[#tokens + 1] = BRC.txt.serialize_inventory()
+    tokens[#tokens + 1] = BRC.serialize_config()
   end
 
-  -- Do config init() and feature overrides
-  if type(BRC.Config.init) == "function" then
-    BRC.Config.init()
-  elseif type(BRC.Config.init) == "string" then
-    safe_call_string(BRC.Config.init, "BRC")
-  end
-  for name, _ in pairs(_features) do
-    process_feature_config(name)
-  end
+  local text = table.concat(tokens, "\n")
+  if not skip_mpr then BRC.mpr.white(text) end
 
-  BRC.log.info("Using config: " .. BRC.text.lightcyan(config_name))
-  return config_name
+  return text
 end
 
-function BRC.reset()
-  BRC.active = false
-  BRC.single_turn_mutes = {}
-  BRC.Data.reset()
-  BRC.init()
+---- Macros ----
+function macro_brc_dump_character()
+  if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
+  char_dump(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COL.lightcyan))
+end
+
+--- Go up the closest stairs (Cntl-E)
+function macro_brc_cntl_e()
+  if you.where() == "D:1" and you.have_orb() then
+    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
+  else
+    crawl.sendkeys({ BRC.util.cntl("g"), "<" })
+  end
 end
 
 ---- Crawl hooks ----
 function BRC.autopickup(it, _)
   return safe_call_all_hooks(HOOK_FUNCTIONS.autopickup, it)
-end
-
-function BRC.ready()
-  if not BRC.active then return end
-  crawl.redraw_screen()
-
-  -- Unmute single-turn mutes
-  util.foreach(BRC.single_turn_mutes, function(m) BRC.set.message_mute(m, false) end)
-
-  if you.turns() > turn_count then
-    turn_count = you.turns()
-    safe_call_all_hooks(HOOK_FUNCTIONS.ready)
-  end
-
-  -- Always display messages, even if same turn
-  BRC.mpr.consume_queue()
-end
-
-function BRC.c_message(text, channel)
-  if not BRC.active then return end
-  safe_call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
 end
 
 function BRC.c_answer_prompt(prompt)
@@ -413,4 +324,23 @@ end
 function BRC.c_assign_invletter(it)
   if not BRC.active then return end
   return safe_call_all_hooks(HOOK_FUNCTIONS.c_assign_invletter, it)
+end
+
+function BRC.c_message(text, channel)
+  if not BRC.active then return end
+  safe_call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
+end
+
+function BRC.ready()
+  if not BRC.active then return end
+  crawl.redraw_screen()
+  BRC.clear_single_turn_mutes()
+
+  if you.turns() > turn_count then
+    turn_count = you.turns()
+    safe_call_all_hooks(HOOK_FUNCTIONS.ready)
+  end
+
+  -- Always display messages, even if same turn
+  BRC.mpr.consume_queue()
 end

@@ -20,8 +20,8 @@ local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
   it.inscribe(new_inscr, false)
   if f_drop_inferior.Config.msg_on_inscribe then
-    local item_name = BRC.text.yellow(BRC.util.int2char(it.slot) .. " - " .. it.name())
-    BRC.mpr.cyan(BRC.text.wrap("You can drop: " .. item_name, BRC.EMOJI.CAUTION))
+    local item_name = BRC.txt.yellow(BRC.txt.int2char(it.slot) .. " - " .. it.name())
+    BRC.mpr.cyan(BRC.txt.wrap("You can drop: " .. item_name, BRC.EMOJI.CAUTION))
   end
 end
 
@@ -35,19 +35,19 @@ function f_drop_inferior.c_assign_invletter(it)
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
 
   if
-    not (it.is_weapon or BRC.is.armour(it))
-    or BRC.is.risky_item(it)
-    or BRC.get.num_equip_slots(it) > 1
+    not (it.is_weapon or BRC.it.is_armour(it))
+    or BRC.eq.is_risky(it)
+    or BRC.you.num_eq_slots(it) > 1
   then
     return
   end
 
-  local it_ego = BRC.get.ego(it)
+  local it_ego = BRC.eq.get_ego(it)
   local marked_something = false
   for _, inv in ipairs(items.inventory()) do
     -- To be a clear upgrade: Not artefact, same subtype, and ego is same or a clear upgrade
-    local inv_ego = BRC.get.ego(inv)
-    local not_worse = inv_ego == it_ego or not inv_ego or BRC.is.risky_item(inv)
+    local inv_ego = BRC.eq.get_ego(inv)
+    local not_worse = inv_ego == it_ego or not inv_ego or BRC.eq.is_risky(inv)
     if not_worse and not inv.artefact and inv.subtype() == it.subtype() then
       if it.is_weapon then
         if inv.plus <= (it.plus or 0) then
@@ -55,7 +55,7 @@ function f_drop_inferior.c_assign_invletter(it)
           marked_something = true
         end
       else
-        local not_more_ac = BRC.get.armour_ac(inv) <= BRC.get.armour_ac(it)
+        local not_more_ac = BRC.eq.get_ac(inv) <= BRC.eq.get_ac(it)
         if not_more_ac and inv.encumbrance >= it.encumbrance then
           inscribe_drop(inv)
           marked_something = true
@@ -65,8 +65,8 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop then
-    BRC.set_hotkey("drop", "your useless items", function()
-      crawl.sendkeys(BRC.get.command_key("CMD_DROP") .. ",\r")
+    BRC.opt.hotkey("drop", "your useless items", function()
+      crawl.sendkeys(BRC.opt.cmd_key("CMD_DROP") .. ",\r")
     end, 1)
   end
 end

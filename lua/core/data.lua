@@ -6,48 +6,18 @@ Dependencies: core/constants.lua, core/util.lua
 --]]
 
 ---- Initialize BRC namespace and Data module
-BRC = BRC or {}
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature for Config override
-
--- Config values for data dumps
-BRC.Data.Config = {
-  max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
-  omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
-
-  unskilled_egos_usable = false,
-  BrandBonus = {
-    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
-    distort = { factor = 1.0, offset = 6.0 },
-    drain = { factor = 1.25, offset = 2.0 },
-    elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
-    flame = { factor = 1.25, offset = 0 },
-    freeze = { factor = 1.25, offset = 0 },
-    heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
-    pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
-    spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
-    venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
-
-    subtle = { -- Values estimated for weapon comparisons
-      antimagic = { factor = 1.1, offset = 0 },
-      holy = { factor = 1.15, offset = 0 },
-      penet = { factor = 1.3, offset = 0 },
-      protect = { factor = 1.15, offset = 0 },
-      reap = { factor = 1.3, offset = 0 },
-      vamp = { factor = 1.2, offset = 0 },
-    },
-  },
-} -- BRC.Data.Config (do not remove this comment)
 
 ---- Local constants ----
 local RESTORE_TABLE = "_brc_persist_restore_table"
 
 ---- Local variables ----
--- Init in declaration, so persist() can be used before init()
+-- Init tables in declaration, so persist() can be called before init()
 local _failures = {}
 local _persist_names = {}
 local _default_values = {}
-local pushed_restore_table_creation = false
+local pushed_restore_table_creation
 local cur_location
 
 ---- Local functions ----
@@ -74,7 +44,7 @@ end
 local function try_restore(failed_vars)
   if not is_usable_backup() then
     BRC.mpr.red("[BRC] Unable to restore from backup. Persistent data reset to defaults.")
-    BRC.log.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
+    BRC.mpr.info("For detailed startup info, set BRC.Config.show_debug_messages=True.")
     return false
   end
 
@@ -96,13 +66,13 @@ end
 function BRC.Data.persist(name, default_value)
   local t = type(default_value)
   if not util.contains({ "table", "string", "number", "boolean", "nil" }, t) then
-    BRC.log.error(string.format("Cannot persist %s. Default value is of type %s", name, t))
+    BRC.mpr.error(string.format("Cannot persist %s. Default value is of type %s", name, t))
     return default_value
   end
 
   -- Keep default value for re-init
   if _default_values[name] then
-    BRC.log.warning("Multiple calls to BRC.Data.persist(" .. name .. ", ...)")
+    BRC.mpr.warning("Multiple calls to BRC.Data.persist(" .. name .. ", ...)")
   end
   _default_values[name] = default_value
 
@@ -115,7 +85,7 @@ function BRC.Data.persist(name, default_value)
   elseif default_value ~= nil and not util.contains(_failures, name) then -- avoid inf loop
     _G[name] = default_value
     _failures[#_failures + 1] = name
-    BRC.log.debug(BRC.text.red(name .. " failed to restore from chk_lua_save."))
+    BRC.mpr.debug(BRC.txt.red(name .. " failed to restore from chk_lua_save."))
   end
 
   -- Create persistent restore table on next startup
@@ -131,7 +101,7 @@ function BRC.Data.persist(name, default_value)
     _persist_names[#_persist_names + 1] = name
     table.insert(chk_lua_save, function()
       if _G[name] == nil then return "" end
-      return RESTORE_TABLE .. "." .. name .. " = " .. BRC.util.tostring(_G[name]) .. "\n"
+      return RESTORE_TABLE .. "." .. name .. " = " .. BRC.txt.tostr(_G[name]) .. "\n"
     end)
   end
 
@@ -139,10 +109,10 @@ function BRC.Data.persist(name, default_value)
 end
 
 function BRC.Data.serialize()
-  local tokens = { BRC.text.lightmagenta("\n---PERSISTENT VARIABLES---\n") }
+  local tokens = { BRC.txt.lightmagenta("\n---PERSISTENT VARIABLES---\n") }
   local sorted_keys = BRC.util.get_sorted_keys(_persist_names)
   for _, key in ipairs(sorted_keys) do
-    tokens[#tokens + 1] = string.format("%s = %s\n", key, BRC.util.tostring(_G[key], true))
+    tokens[#tokens + 1] = string.format("%s = %s\n", key, BRC.txt.tostr(_G[key], true))
   end
   return table.concat(tokens)
 end
@@ -154,14 +124,14 @@ function BRC.Data.reset()
     end
   end
 
-  BRC.log.warning("Reset all persistent data to default values.")
+  BRC.mpr.warning("Reset all persistent data to default values.")
 end
 
 -- @return true if no persist errors, false if failed restore, nil for user-accepted errors
 function BRC.Data.handle_persist_errors()
   if #_failures == 0 then return true end
   local msg = "%s persistent variables did not restore: (%s)"
-  BRC.log.error(msg:format(#_failures, table.concat(_failures, ", ")), true)
+  BRC.mpr.error(msg:format(#_failures, table.concat(_failures, ", ")), true)
 
   for _ = 1, 5 do
     if BRC.mpr.yesno("Try restoring from backup?") then break end
@@ -190,6 +160,7 @@ end
 
 ---- Hook functions ----
 function BRC.Data.init()
+  pushed_restore_table_creation = false
   cur_location = you.where()
   if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
 end

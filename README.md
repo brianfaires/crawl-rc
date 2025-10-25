@@ -71,7 +71,7 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 - **Smart** - adjusts behavior to your inventory and character progression
 - **Configurable** - lots of config values for which alerts are active, when they fire, and when to do a force_more.
   - In `f_pickup_alert.Config.Alert`, see `armour_sensitivity` and `weapon_sensitivity` to adjust the overall frequency of alerts.
-  - _(Advanced)_ See `f_pickup_alert.Config.Tuning` and `BRC.Data.Config.BrandBonus` for several heuristics that define when alerts fire.
+  - _(Advanced)_ See `f_pickup_alert.Config.Tuning` and `BRC.Config.BrandBonus` for several heuristics that define when alerts fire.
 
 ### Alerts
 - **`pa-armour.lua`**
@@ -125,13 +125,13 @@ BRC comes with several pre-built configs, stored in `BRC.Profiles`. You can add/
   - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
   - **Streak**: For win streaks (extra caution)
 
-**Use a different config** by editing `BRC.config_to_use` at the top of the config section:
+**Use a different config** by editing `BRC.use_config` at the top of the config section:
 ```lua
 -- Found at the start of config
-BRC.config_to_use = "Turncount"
+BRC.use_config = "Turncount"
 
--- BRC.config_to_use = "ask" will prompt you to pick a profile at the start of each game.
--- BRC.config_to_use = "previous" will keep using whichever profile was used last.
+-- BRC.use_config = "ask" will prompt you to pick a profile at the start of each game.
+-- BRC.use_config = "previous" will keep using whichever profile was used last.
 ```
 The resulting profile is loaded into `BRC.Config`.
 
@@ -147,7 +147,7 @@ The resulting profile is loaded into `BRC.Config`.
 
 Follow the pattern of other configs:
 ```lua
-BRC.config_to_use = "MyConfig"
+BRC.use_config = "MyConfig"
 BRC.Profiles.MyConfig = {
   ["feature-name"] = {
     feature_config_var = "override" -- any var in feature.Config
@@ -157,12 +157,12 @@ BRC.Profiles.MyConfig = {
 
 **Character-specific configs**
 
-If you're playing locally with multiple characters, and want different settings in each game, use `BRC.config_memory`:
+If you're playing locally with multiple characters, and want different settings in each game, use `BRC.store_config`:
 
 ```lua
-BRC.config_memory = "name" -- Remember the profile name, and load it from the RC on each startup
-BRC.config_memory = "full" -- Remember all of BRC.Config, and ignore any changes to it in the RC. (Feature default values are always reloaded from RC)
-BRC.config_memory = "none" or "anything_else" or nil -- Always check BRC.config_to_use and load it from the RC
+BRC.store_config = "name" -- Remember the profile name, and load it from the RC on each startup
+BRC.store_config = "full" -- Remember all of BRC.Config, and ignore any changes to it in the RC. (Feature default values are always reloaded from RC)
+BRC.store_config = "none" or "anything_else" or nil -- Always check BRC.use_config and load it from the RC
 ```
 
 ### 4. Add Your Own Features
@@ -267,13 +267,13 @@ Use the Lua interpreter (open with the `~` key) for these commands:
 BRC.active = false                    -- Disable entire BRC system
 BRC.reset()                           -- Reset everything and re-init
 BRC.Data.reset()                      -- Reset all persistent data
-BRC.load_config()                     -- Select a config from list and load it
-BRC.load_config("config-name")        -- Load a config by name
+BRC.load_profile()                     -- Select a config from list and load it
+BRC.load_profile("config-name")        -- Load a config by name
 BRC.unregister("feature-name")        -- Disable a feature
 
 -- Debugging
-BRC.dump.all()                        -- Print all persistent data
-BRC.dump.all(1)                       -- Print a lot more debugging info
+BRC.dump()                        -- Print all persistent data
+BRC.dump(1)                       -- Print a lot more debugging info
 BRC.Config.show_debug_messages = true -- Enable debug output
 ```
 

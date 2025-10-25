@@ -1,0 +1,50 @@
+----------------------------------------------
+---- BRC.util - General utility functions ----
+BRC.util = {}
+
+--- Get the keycode for Cntl+char
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
+--- Tries sendkeys() first, fallback to do_commands() (which isn't always immediate)
+-- @param cmd (string) The command to execute like "CMD_EXPLORE"
+function BRC.util.do_cmd(cmd)
+  local key = BRC.opt.cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+---- Lua table helpers ----
+--- Sorts the keys of a dictionary/map: vars before tables, then alphabetically by key
+-- If a list is passed, will assume it's a list of global variable names
+function BRC.util.get_sorted_keys(map_or_list)
+  local keys_vars = {}
+  local keys_tables = {}
+
+  if BRC.util.is_map(map_or_list) then
+    for key, v in pairs(map_or_list) do
+      table.insert(type(v) == "table" and keys_tables or keys_vars, key)
+    end
+  else
+    for _, key in ipairs(map_or_list) do
+      table.insert(type(_G[key]) == "table" and keys_tables or keys_vars, key)
+    end
+  end
+
+  util.sort(keys_vars)
+  util.sort(keys_tables)
+  util.append(keys_vars, keys_tables)
+  return keys_vars
+end
+
+function BRC.util.is_list(value)
+  return value and type(value) == "table" and #value > 0
+end
+
+function BRC.util.is_map(value)
+  return value and type(value) == "table" and next(value) ~= nil and #value == 0
+end

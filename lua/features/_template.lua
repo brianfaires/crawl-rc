@@ -47,7 +47,7 @@ function f_template.init()
   persistent_int = persistent_int + 1
   persistent_map.num_startups = persistent_int
 
-  if Config.example_boolean then BRC.log.debug("Template feature initialized.") end
+  if Config.example_boolean then BRC.mpr.debug("Template feature initialized.") end
 end
 
 function f_template.ready()

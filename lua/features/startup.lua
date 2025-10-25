@@ -20,7 +20,7 @@ f_startup.Config = {
   init = [[
     if you.skill("Spellcasting") == 0 then
       local t = f_startup.Config.auto_set_skill_targets
-      t[#t + 1] = { BRC.get.preferred_weapon_type(), 8.0 }
+      t[#t + 1] = { BRC.you.top_wpn_skill(), 8.0 }
     end
   ]],
 } -- f_startup.Config (do not remove this comment)

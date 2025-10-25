@@ -54,8 +54,8 @@ local function get_avail_waypoint()
     if not travel.waypoint_delta(i) then return i end
   end
 
-  BRC.log.debug("No available waypoint slots. Clearing them.")
-  util.foreach(WAYPOINT_MUTES, function(m) BRC.set.single_turn_mute(m) end)
+  BRC.mpr.debug("No available waypoint slots. Clearing them.")
+  util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
   crawl.sendkeys({ BRC.util.cntl("w"), "d", "*" })
   crawl.flush_input()
   return 9
@@ -90,8 +90,8 @@ end
 -- @param cleanup optional function - Function to call when the hotkey is not pressed
 -- @return nil
 function BRC.set_hotkey(msg_action, msg_suffix, func, turns, push_front, cleanup)
-  local act = { m = BRC.text.lightgreen(msg_action), f = func, t = turns or 1 }
-  if msg_suffix then act.m = act.m .. " " .. BRC.text.white(msg_suffix) end
+  local act = { m = BRC.txt.lightgreen(msg_action), f = func, t = turns or 1 }
+  if msg_suffix then act.m = act.m .. " " .. BRC.txt.white(msg_suffix) end
   if cleanup then act.c = cleanup end
 
   if push_front then
@@ -122,7 +122,7 @@ function BRC.set_pickup_hotkey(name, push_front)
 end
 
 function BRC.set_equip_hotkey(it, push_front)
-  if not (it.is_weapon or BRC.is.armour(it) or BRC.is.jewellery(it)) then return end
+  if not (it.is_weapon or BRC.it.is_armour(it) or BRC.it.is_jewellery(it)) then return end
   local NAME = it.name():gsub(" {.*}", "")
 
   local do_equip = function()
@@ -143,7 +143,7 @@ function BRC.set_equip_hotkey(it, push_front)
     if already_eq then
       BRC.mpr.darkgrey("Already equipped.")
     else
-      BRC.log.error("Could not find unequipped item '" .. NAME .. "' in inventory.")
+      BRC.mpr.error("Could not find unequipped item '" .. NAME .. "' in inventory.")
     end
   end
 
@@ -151,11 +151,11 @@ function BRC.set_equip_hotkey(it, push_front)
 end
 
 function BRC.set_waypoint_hotkey(name, push_front)
-  local x, y = BRC.get.item_xy(name)
-  if x == nil then return BRC.log.debug(name .. " not found in LOS") end
+  local x, y = BRC.it.get_xy(name)
+  if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
 
   local waynum = get_avail_waypoint()
-  BRC.set.single_turn_mute("Waypoint \\d assigned")
+  BRC.opt.single_turn_mute("Waypoint \\d assigned")
   travel.set_waypoint(waynum, x, y)
 
   local clear_waypoint = function()
@@ -167,18 +167,18 @@ function BRC.set_waypoint_hotkey(name, push_front)
       end
     end
 
-    util.foreach(WAYPOINT_MUTES, function(m) BRC.set.single_turn_mute(m) end)
+    util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
     crawl.flush_input()
   end
 
   local move_to_waypoint = function()
     f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
-    crawl.sendkeys({ BRC.get.command_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+    crawl.sendkeys({ BRC.opt.cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
 
     -- Delete waypoint after travel, silence the prompts, push a pickup hotkey
     crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })
-    util.foreach(WAYPOINT_MUTES, function(m) BRC.set.single_turn_mute(m) end)
+    util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
 
     BRC.set_pickup_hotkey(name, true)
   end
@@ -191,8 +191,8 @@ function f_hotkey.init()
   action_queue = {}
   cur_action = nil
 
-  BRC.set.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
-  BRC.set.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
+  BRC.opt.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
+  BRC.opt.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
 end
 
 function f_hotkey.c_assign_invletter(it)

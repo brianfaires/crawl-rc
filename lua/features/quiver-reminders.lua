@@ -30,7 +30,7 @@ local function quiver_missile_by_name(name)
   end
 
   if not slot then return end
-  crawl.sendkeys(BRC.get.command_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.util.int2char(slot))
+  crawl.sendkeys(BRC.opt.cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
 end
 
 ---- Macro function: Fire from quiver ----
@@ -43,7 +43,7 @@ function macro_brc_fire()
     local cls = quivered.class(true)
     if cls == "potion" or cls == "scroll" then
       local action = cls == "potion" and "drink" or "read"
-      local q = BRC.text.lightgreen(quivered.name())
+      local q = BRC.txt.lightgreen(quivered.name())
       local msg = string.format("Really %s %s from quiver?", action, q)
       if not BRC.mpr.yesno(msg) then return BRC.mpr.okay() end
     end
@@ -51,9 +51,9 @@ function macro_brc_fire()
 
   if you.turns() - last_thrown_turn <= Config.warn_diff_missile_turns then
     if last_thrown ~= quivered.name("qual") then
-      local q = BRC.text.lightgreen(quivered.name("qual"))
+      local q = BRC.txt.lightgreen(quivered.name("qual"))
       if not BRC.mpr.yesno("Did you mean to throw " .. q .. "?") then
-        local t = BRC.text.lightgreen(last_thrown)
+        local t = BRC.txt.lightgreen(last_thrown)
         if BRC.mpr.yesno("Quiver and throw " .. t .. " instead?") then
           quiver_missile_by_name(last_thrown)
         else
@@ -70,11 +70,11 @@ end
 function f_quiver_reminders.init()
   last_thrown = nil
   last_thrown_turn = -1
-  BRC.set.macro(BRC.get.command_key("CMD_FIRE") or "f", "macro_brc_fire")
+  BRC.opt.macro(BRC.opt.cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
 end
 
 function f_quiver_reminders.c_message(text, _)
-  local cleaned = BRC.text.clean(text)
+  local cleaned = BRC.txt.clean(text)
   local prefix = "You throw a "
   if cleaned:sub(1, #prefix) == prefix then
     last_thrown = cleaned:sub(#prefix + 1, #cleaned - 1):gsub(" {.*}", "")

@@ -42,15 +42,15 @@ local function get_score(it, no_brand_bonus)
   end
   local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
   local acc_bonus = (it.accuracy + (it.plus or 0)) * Heur.Pickup.accuracy_weight
-  return BRC.get.weap_dps(it, dmg_type) + acc_bonus
+  return BRC.eq.get_dps(it, dmg_type) + acc_bonus
 end
 
 local function is_valid_upgrade(it, cur)
   return cur.is_ranged == it.is_ranged
-    and BRC.is.polearm(cur) == BRC.is.polearm(it)
+    and BRC.it.is_polearm(cur) == BRC.it.is_polearm(it)
     and (
       you.race() == "Gnoll"
-      or BRC.get.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.get.skill(cur.weap_skill)
+      or BRC.you.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.you.skill(cur.weap_skill)
     )
 end
 
@@ -63,8 +63,8 @@ local function is_weapon_upgrade(it, cur, strict)
     if cur.artefact or it.subtype() ~= cur.subtype() then return false end
     if it.artefact then return true end
     local it_plus = it.plus or 0
-    local cur_ego = BRC.get.ego(cur)
-    if BRC.get.ego(it) == cur_ego then return it_plus > cur.plus end
+    local cur_ego = BRC.eq.get_ego(cur)
+    if BRC.eq.get_ego(it) == cur_ego then return it_plus > cur.plus end
     return not cur_ego and it_plus >= cur.plus
   end
 
@@ -73,15 +73,15 @@ local function is_weapon_upgrade(it, cur, strict)
     if it.artefact then return true end
     if cur.artefact then return false end
 
-    local it_ego = BRC.get.ego(it)
-    local cur_ego = BRC.get.ego(cur)
+    local it_ego = BRC.eq.get_ego(it)
+    local cur_ego = BRC.eq.get_ego(cur)
     if cur_ego and not it_ego then return false end
     if it_ego and not cur_ego then return get_score(it) / cur.score > Heur.Pickup.add_ego end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
-    if BRC.get.hands(it) > cur.hands then return false end
+    if BRC.eq.get_hands(it) > cur.hands then return false end
     if cur.is_ranged ~= it.is_ranged then return false end
-    if BRC.is.polearm(cur) ~= BRC.is.polearm(it) then return false end
+    if BRC.it.is_polearm(cur) ~= BRC.it.is_polearm(it) then return false end
 
     if it.artefact then return true end
     if cur.artefact then return false end
@@ -101,7 +101,7 @@ local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
     and _weapon_cache.is_empty()
     and you.skill("Unarmed Combat") == 0
-    and BRC.get.mut("claws") == 0
+    and BRC.you.mut_lvl("claws") == 0
 end
 
 -- Local functions: Weapon cache
@@ -109,7 +109,7 @@ function _weapon_cache.get_primary_key(it)
   local tokens = {}
   tokens[1] = it.is_ranged and RANGED_PREFIX or MELEE_PREFIX
   tokens[2] = tostring(it.hands)
-  if BRC.get.ego(it) then tokens[3] = "b" end
+  if BRC.eq.get_ego(it) then tokens[3] = "b" end
   return table.concat(tokens)
 end
 
@@ -141,18 +141,18 @@ function _weapon_cache.add_weapon(it)
     return weap_data._subtype
   end
   weap_data.weap_skill = it.weap_skill
-  weap_data.skill_lvl = BRC.get.skill(it.weap_skill)
+  weap_data.skill_lvl = BRC.you.skill(it.weap_skill)
   weap_data.is_ranged = it.is_ranged
-  weap_data.hands = BRC.get.hands(it)
+  weap_data.hands = BRC.eq.get_hands(it)
   weap_data.artefact = it.artefact
-  weap_data._ego = BRC.get.ego(it)
+  weap_data._ego = BRC.eq.get_ego(it)
   weap_data.ego = function() -- For consistency with crawl item.ego()
     return weap_data._ego
   end
   weap_data.plus = it.plus or 0
   weap_data.acc = it.accuracy + weap_data.plus
   weap_data.damage = it.damage
-  weap_data.dps = BRC.get.weap_dps(it)
+  weap_data.dps = BRC.eq.get_dps(it)
   weap_data.score = get_score(it)
   weap_data.unbranded_score = get_score(it, true)
 
@@ -205,7 +205,7 @@ function _weapon_cache.refresh()
   end
 
   for _, inv in ipairs(items.inventory()) do
-    if inv.is_weapon and not BRC.is.magic_staff(inv) then
+    if inv.is_weapon and not BRC.it.is_magic_staff(inv) then
       _weapon_cache.add_weapon(inv)
       f_pa_data.update_high_scores(inv)
     end
@@ -217,7 +217,7 @@ local function get_first_of_skill_alert(it, silent)
   local skill = it.weap_skill
   if not pa_lowest_hands_alerted[skill] then return end
 
-  local hands = BRC.get.hands(it)
+  local hands = BRC.eq.get_hands(it)
   if pa_lowest_hands_alerted[skill] > hands then
     -- Some early checks to skip alerts
     if hands == 2 and BRC.you.have_shield() then return end
@@ -234,10 +234,10 @@ end
 local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
   if it.is_ranged and you.xl() <= Heur.Alert.EarlyRanged.xl then
-    local min_plus = Heur.Alert.EarlyRanged[BRC.get.ego(it) and "branded_min_plus" or "min_plus"]
+    local min_plus = Heur.Alert.EarlyRanged[BRC.eq.get_ego(it) and "branded_min_plus" or "min_plus"]
     if (it.plus or 0) >= min_plus / Config.Alert.weapon_sensitivity then
       local low_shield_training = you.skill("Shields") <= Heur.Alert.EarlyRanged.max_shields
-      if BRC.get.hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
+      if BRC.eq.get_hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
         return make_alert(it, "Ranged weapon", Emoji.RANGED, Config.Alert.More.early_weap)
       end
     end
@@ -246,12 +246,12 @@ local function get_early_weapon_alert(it)
   if you.xl() <= Heur.Alert.Early.xl then
     -- Ignore items if we're clearly going another route
     local skill_setting = Heur.Alert.Early.skill
-    local skill_diff = BRC.get.skill(top_attack_skill) - BRC.get.skill(it.weap_skill)
+    local skill_diff = BRC.you.skill(top_attack_skill) - BRC.you.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
     local it_plus = it.plus or 0
     if
-      BRC.get.ego(it)
+      BRC.eq.get_ego(it)
       or it_plus >= Heur.Alert.Early.branded_min_plus / Config.Alert.weapon_sensitivity
     then
       return make_alert(it, "Early weapon", Emoji.WEAPON, Config.Alert.More.early_weap)
@@ -270,14 +270,14 @@ end
 
 local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   -- Alert: new egos, highest DPS or highest weap_score
-  local it_ego = BRC.get.ego(it, true) -- Don't overvalue speed/heavy (only consider their DPS)
-  local cur_ego = BRC.get.ego(cur)
+  local it_ego = BRC.eq.get_ego(it, true) -- Don't overvalue speed/heavy (only consider their DPS)
+  local cur_ego = BRC.eq.get_ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
     local change = cur_ego and "Diff ego" or "Gain ego"
     return make_alert(it, change, Emoji.EGO, Config.Alert.More.weap_ego)
   else
     local s = Config.Alert.weapon_sensitivity
-    if get_score(it) > best_score / s or BRC.get.weap_dps(it) > best_dps / s then
+    if get_score(it) > best_score / s or BRC.eq.get_dps(it) > best_dps / s then
       return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
     end
   end
@@ -302,11 +302,11 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   local penalty = (BRC.get.skill(it.weap_skill) + damp) / (BRC.get.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
-  if BRC.get.hands(it) <= cur.hands then
+  if BRC.eq.get_hands(it) <= cur.hands then
     if cur.artefact then return false end
-    if BRC.get.ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
-      local it_ego = BRC.get.ego(it)
-      if not BRC.get.ego(cur) then
+    if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
+      local it_ego = BRC.eq.get_ego(it)
+      if not BRC.eq.get_ego(cur) then
         if ratio > Heur.Alert.gain_ego then
           return make_alert(it, "Gain ego", Emoji.EGO, Config.Alert.More.weap_ego)
         end
@@ -318,15 +318,15 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
       return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
     end
   elseif BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl) then
-    local it_ego = BRC.get.ego(it)
+    local it_ego = BRC.eq.get_ego(it)
     if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
       return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.Alert.More.weap_ego)
     elseif ratio > Heur.Alert.AddHand.not_using then
       return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.Alert.More.upgrade_weap)
     end
   elseif
-    BRC.get.ego(it)
-    and not BRC.get.ego(cur)
+    BRC.eq.get_ego(it)
+    and not BRC.eq.get_ego(cur)
     and ratio > Heur.Alert.AddHand.add_ego_lose_sh
   then
     return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
@@ -356,18 +356,6 @@ local function get_weapon_alert(it)
 end
 
 ---- Public API ----
-function f_pa_weapons.serialize_weapon_cache()
-  _weapon_cache.refresh()
-  local tokens = { BRC.text.cyan("\n---INVENTORY WEAPONS---") }
-  for _, weap in ipairs(_weapon_cache.weapons) do
-    tokens[#tokens + 1] = string.format("\n%s\n", weap.basename)
-    for k, v in pairs(weap) do
-      if k ~= "basename" then tokens[#tokens + 1] = string.format("  %s: %s\n", k, tostring(v)) end
-    end
-  end
-  return table.concat(tokens)
-end
-
 function f_pa_weapons.pickup_weapon(it)
   _weapon_cache.refresh()
   if need_first_weapon() then
@@ -375,7 +363,7 @@ function f_pa_weapons.pickup_weapon(it)
     return not util.exists(items.inventory(), function(i) return i.is_weapon end)
   end
 
-  if BRC.is.risky_item(it) then return false end
+  if BRC.eq.is_risky(it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
     if is_weapon_upgrade(it, inv, Config.Pickup.weapons_pure_upgrades_only) then
       -- Confirm after updating cache, to avoid spurious alerts from XP gain.
@@ -398,10 +386,10 @@ end
 
 ---- Hook functions ----
 function f_pa_weapons.init()
-  top_attack_skill = BRC.get.preferred_weapon_type() or "Unarmed Combat"
+  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
   _weapon_cache.refresh()
 end
 
 function f_pa_weapons.ready()
-  top_attack_skill = BRC.get.preferred_weapon_type() or "Unarmed Combat"
+  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
 end

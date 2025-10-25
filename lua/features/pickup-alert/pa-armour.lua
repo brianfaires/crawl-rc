@@ -54,15 +54,15 @@ local function aux_slot_is_impaired(it)
 
   -- Mutation interference
   if st == "gloves" then
-    return BRC.get.mut("demonic touch") >= 3 and not BRC.you.free_offhand()
-        or BRC.get.mut("claws") > 0 and not items.equipped_at("weapon")
+    return BRC.you.mut_lvl("demonic touch") >= 3 and not BRC.you.free_offhand()
+        or BRC.you.mut_lvl("claws") > 0 and not items.equipped_at("weapon")
   elseif st == "boots" then
-    return BRC.get.mut("hooves") > 0
-        or BRC.get.mut("talons") > 0
+    return BRC.you.mut_lvl("hooves") > 0
+        or BRC.you.mut_lvl("talons") > 0
   elseif it.name("base"):contains("helmet") then
-    return BRC.get.mut("horns") > 0
-        or BRC.get.mut("beak") > 0
-        or BRC.get.mut("antennae") > 0
+    return BRC.you.mut_lvl("horns") > 0
+        or BRC.you.mut_lvl("beak") > 0
+        or BRC.you.mut_lvl("antennae") > 0
   end
 
   return false
@@ -115,12 +115,12 @@ local function pickup_body_armour(it)
   -- No pickup if adding encumbrance or losing AC
   local encumb_delta = it.encumbrance - cur.encumbrance
   if encumb_delta > 0 then return false end
-  local ac_delta = BRC.get.armour_ac(it) - BRC.get.armour_ac(cur)
+  local ac_delta = BRC.eq.get_ac(it) - BRC.eq.get_ac(cur)
   if ac_delta < 0 then return false end
 
   -- Pickup: Pure upgrades
-  local it_ego = BRC.get.ego(it)
-  local cur_ego = BRC.get.ego(cur)
+  local it_ego = BRC.eq.get_ego(it)
+  local cur_ego = BRC.eq.get_ego(cur)
   if it_ego == cur_ego then return (ac_delta > 0 or encumb_delta < 0) end
   return not cur_ego and (ac_delta >= 0 or encumb_delta <= 0)
 end
@@ -128,7 +128,7 @@ end
 local function pickup_shield(it)
   -- Don't replace these
   local cur = items.equipped_at("offhand")
-  if not BRC.is.shield(cur) then return false end
+  if not BRC.it.is_shield(cur) then return false end
   if cur.encumbrance ~= it.encumbrance then return false end
   if cur.artefact then return false end
 
@@ -137,8 +137,8 @@ local function pickup_shield(it)
 
   -- Pickup: Pure upgrades
   local it_plus = it.plus or 0
-  local it_ego = BRC.get.ego(it)
-  local cur_ego = BRC.get.ego(cur)
+  local it_ego = BRC.eq.get_ego(it)
+  local cur_ego = BRC.eq.get_ego(cur)
   if it_ego == cur_ego then return it_plus > cur.plus end
   return not cur_ego and it_plus >= cur.plus
 end
@@ -164,11 +164,11 @@ local function pickup_aux_armour(it)
   if it.artefact then return true end
 
   -- Pickup: Pure upgrades
-  local it_ac = BRC.get.armour_ac(it)
-  local it_ego = BRC.get.ego(it)
+  local it_ac = BRC.eq.get_ac(it)
+  local it_ego = BRC.eq.get_ego(it)
   for _, cur in ipairs(all_equipped) do
-    local cur_ac = BRC.get.armour_ac(cur)
-    local cur_ego = BRC.get.ego(cur)
+    local cur_ac = BRC.eq.get_ac(cur)
+    local cur_ego = BRC.eq.get_ego(cur)
     if it_ego == cur_ego then
       if it_ac > cur_ac then return true end
     elseif not cur_ego then
@@ -202,9 +202,9 @@ local function alert_highest_ac(it)
   if pa_high_score.ac == 0 then
     local worn = items.equipped_at("armour")
     if not worn then return false end
-    pa_high_score.ac = BRC.get.armour_ac(worn)
+    pa_high_score.ac = BRC.eq.get_ac(worn)
   else
-    local itAC = BRC.get.armour_ac(it)
+    local itAC = BRC.eq.get_ac(it)
     if itAC > pa_high_score.ac then
       pa_high_score.ac = itAC
       return f_pickup_alert.do_alert(it, "Highest AC", Emoji.STRONGEST, More.high_score_armour)
@@ -222,11 +222,11 @@ local function alert_body_armour(it)
   if it.artefact then return send_armour_alert(it, ARMOUR_ALERT.artefact) end
 
   -- Get changes to ego, AC, EV, encumbrance
-  local it_ego = BRC.get.ego(it)
-  local cur_ego = BRC.get.ego(cur)
+  local it_ego = BRC.eq.get_ego(it)
+  local cur_ego = BRC.eq.get_ego(cur)
   local ego_change = get_ego_change_type(cur_ego, it_ego)
-  local ac_delta = BRC.get.armour_ac(it) - BRC.get.armour_ac(cur)
-  local ev_delta = BRC.get.armour_ev(it) - BRC.get.armour_ev(cur)
+  local ac_delta = BRC.eq.get_ac(it) - BRC.eq.get_ac(cur)
+  local ev_delta = BRC.eq.get_ev(it) - BRC.eq.get_ev(cur)
   local encumb_delta = it.encumbrance - cur.encumbrance
 
   -- Alert new egos if same encumbrance, or small change to total (AC+EV)
@@ -235,7 +235,7 @@ local function alert_body_armour(it)
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
     if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Alert.armour_sensitivity then
-      BRC.log.debug("small change: AC:" .. ac_delta .. ", EV:" .. ev_delta)
+      BRC.mpr.debug("small change: AC:" .. ac_delta .. ", EV:" .. ev_delta)
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
   end
@@ -243,13 +243,13 @@ local function alert_body_armour(it)
   -- Check if lighter/heavier armour meets stat trade-off thresholds
   if encumb_delta < 0 then
     if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
-      BRC.log.debug("Lighter: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
+      BRC.mpr.debug("Lighter: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
       return send_armour_alert(it, ARMOUR_ALERT[LIGHTER][ego_change])
     end
   elseif encumb_delta > 0 then
     local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
     if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
-      BRC.log.debug("Heavier: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
+      BRC.mpr.debug("Heavier: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
       return send_armour_alert(it, ARMOUR_ALERT[HEAVIER][ego_change])
     end
   end
@@ -268,14 +268,14 @@ local function alert_shield(it)
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
   local cur = items.equipped_at("offhand")
-  if not BRC.is.shield(cur) then return false end
+  if not BRC.it.is_shield(cur) then return false end
 
   -- Alert: New ego, Gain SH
-  local ego_change = get_ego_change_type(BRC.get.ego(cur), BRC.get.ego(it))
+  local ego_change = get_ego_change_type(BRC.eq.get_ego(cur), BRC.eq.get_ego(it))
   if is_good_ego_change(ego_change, false) then
-    local alert_msg = BRC.text.capitalize(ego_change):gsub("_", " ")
+    local alert_msg = BRC.txt.capitalize(ego_change):gsub("_", " ")
     return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.shields)
-  elseif BRC.get.shield_sh(it) > BRC.get.shield_sh(cur) then
+  elseif BRC.eq.get_sh(it) > BRC.eq.get_sh(cur) then
     return f_pickup_alert.do_alert(it, "Higher SH", Emoji.STRONGER, More.shields)
   end
 end
@@ -295,13 +295,13 @@ local function alert_aux_armour(it, unworn_inv_item)
     end
   end
 
-  local it_ego = BRC.get.ego(it)
+  local it_ego = BRC.eq.get_ego(it)
   for _, cur in ipairs(all_equipped) do
-    local ego_change = get_ego_change_type(BRC.get.ego(cur), it_ego)
+    local ego_change = get_ego_change_type(BRC.eq.get_ego(cur), it_ego)
     if is_good_ego_change(ego_change, false) then
-      local alert_msg = BRC.text.capitalize(ego_change):gsub("_", " ")
+      local alert_msg = BRC.txt.capitalize(ego_change):gsub("_", " ")
       return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.aux_armour)
-    elseif BRC.get.armour_ac(it) > BRC.get.armour_ac(cur) then
+    elseif BRC.eq.get_ac(it) > BRC.eq.get_ac(cur) then
       return f_pickup_alert.do_alert(it, "Higher AC", Emoji.STRONGER, More.aux_armour)
     end
   end
@@ -309,11 +309,11 @@ end
 
 ---- Public API ----
 function f_pa_armour.pickup_armour(it)
-  if BRC.is.risky_item(it) then return false end
+  if BRC.eq.is_risky(it) then return false end
 
-  if BRC.is.body_armour(it) then
+  if BRC.it.is_body_armour(it) then
     return pickup_body_armour(it)
-  elseif BRC.is.shield(it) then
+  elseif BRC.it.is_shield(it) then
     return pickup_shield(it)
   else
     return pickup_aux_armour(it)
@@ -324,9 +324,9 @@ end
 --- This comes after pickup, so there will be no pure upgrades.
 -- @param unworn_inv_item (optional) to compare against an unworn aux armour item in inventory.
 function f_pa_armour.alert_armour(it, unworn_inv_item)
-  if BRC.is.body_armour(it) then
+  if BRC.it.is_body_armour(it) then
     return alert_body_armour(it)
-  elseif BRC.is.shield(it) then
+  elseif BRC.it.is_shield(it) then
     return alert_shield(it)
   else
     return alert_aux_armour(it, unworn_inv_item)

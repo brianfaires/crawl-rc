@@ -39,7 +39,7 @@ local stop_on_stairs
 
 ---- Local functions ----
 local function is_explore_done_msg(text)
-  local cleaned = BRC.text.clean(text)
+  local cleaned = BRC.txt.clean(text)
   return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
 end
 
@@ -50,10 +50,10 @@ local function set_stairs_stop_state()
 
   if stop_on_stairs and not should_be_active then
     stop_on_stairs = false
-    BRC.set.explore_stop("stairs", false)
+    BRC.opt.explore_stop("stairs", false)
   elseif not stop_on_stairs and should_be_active then
     stop_on_stairs = true
-    BRC.set.explore_stop("stairs", true)
+    BRC.opt.explore_stop("stairs", true)
   end
 end
 
@@ -68,16 +68,16 @@ end
 local function ready_ignore_altars()
   if stop_on_altars and religion_is_handled() then
     stop_on_altars = false
-    BRC.set.explore_stop("altars", false)
+    BRC.opt.explore_stop("altars", false)
   elseif not stop_on_altars and not religion_is_handled() then
     stop_on_altars = true
-    BRC.set.explore_stop("altars", true)
+    BRC.opt.explore_stop("altars", true)
   end
 end
 
 -- Temple functions
 local function search_altars()
-  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
+  local cmd_key = BRC.opt.cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, "altar", "\r" })
 end
 
@@ -97,7 +97,7 @@ end
 
 -- Gauntlet functions
 local function search_gauntlet()
-  local cmd_key = BRC.get.command_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
+  local cmd_key = BRC.opt.cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
 end
 
@@ -119,10 +119,10 @@ end
 local function ready_ignore_portals()
   if stop_on_portals and util.contains(BRC.PORTAL_NAMES, you.branch()) then
     stop_on_portals = false
-    BRC.set.explore_stop("portals", false)
+    BRC.opt.explore_stop("portals", false)
   elseif not stop_on_portals and not util.contains(BRC.PORTAL_NAMES, you.branch()) then
     stop_on_portals = true
-    BRC.set.explore_stop("portals", true)
+    BRC.opt.explore_stop("portals", true)
   end
 end
 

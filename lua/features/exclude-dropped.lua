@@ -19,25 +19,25 @@ local function add_exclusion(item_name)
   if not util.contains(ed_dropped_items, item_name) then
     table.insert(ed_dropped_items, item_name)
   end
-  BRC.set.autopickup_exceptions(item_name, true)
+  BRC.opt.autopickup_exceptions(item_name, true)
 end
 
 local function remove_exclusion(item_name)
   util.remove(ed_dropped_items, item_name)
-  BRC.set.autopickup_exceptions(item_name, false)
+  BRC.opt.autopickup_exceptions(item_name, false)
 end
 
 local function enchantable_weap_in_inv()
   return util.exists(items.inventory(), function(i)
     return i.is_weapon
-      and not BRC.is.magic_staff(i)
+      and not BRC.it.is_magic_staff(i)
       and i.plus < 9
       and (not i.artefact or you.race() == "Mountain Dwarf")
   end)
 end
 
 local function clean_item_text(text)
-  text = BRC.text.clean(text)
+  text = BRC.txt.clean(text)
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")
@@ -96,7 +96,7 @@ local function should_exclude(item_name, full_msg)
   -- Don't exclude if we dropped partial stack (except for jewellery)
   for _, inv in ipairs(items.inventory()) do
     if inv.name("qual"):contains(item_name) then
-      return BRC.is.jewellery(inv)
+      return BRC.it.is_jewellery(inv)
         or inv.quantity == 1
         or full_msg:contains("ou drop " .. item_name .. " " .. inv.quantity)
     end
@@ -115,7 +115,7 @@ end
 function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
 
-  local picked_up = BRC.text.get_pickup_info(text)
+  local picked_up = BRC.txt.get_pickup_info(text)
   if not picked_up and not text:contains("ou drop ") then return end
 
   local item_name = get_item_name(text)

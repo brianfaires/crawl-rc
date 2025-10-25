@@ -11,7 +11,7 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.text.magenta("?"),
+  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
 } -- f_remind_id.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -21,7 +21,7 @@ ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 local Config = f_remind_id.Config
 
 ---- Local constants / configuration ----
-local IDENTIFY_MSG = BRC.text.magenta(" You have something to identify. ")
+local IDENTIFY_MSG = BRC.txt.magenta(" You have something to identify. ")
 if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
 
 ---- Local variables ----
@@ -81,7 +81,7 @@ function f_remind_id.c_message(text, channel)
       do_remind_id_check = true
     end
   else
-    local name, slot = BRC.text.get_pickup_info(text)
+    local name, slot = BRC.txt.get_pickup_info(text)
     if not name then return end
 
     local is_scroll = name:contains("scroll")
@@ -110,11 +110,11 @@ function f_remind_id.ready()
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
-      BRC.set_hotkey("read", "scroll of identify", function()
+      BRC.opt.hotkey("read", "scroll of identify", function()
         for _, inv in ipairs(items.inventory()) do
           if inv.name("qual") == "scroll of identify" then
             BRC.util.do_cmd("CMD_READ")
-            crawl.sendkeys(BRC.util.int2char(inv.slot))
+            crawl.sendkeys(BRC.txt.int2char(inv.slot))
             return
           end
         end

@@ -24,17 +24,17 @@ f_announce_hp_mp.Config = {
   },
 
   HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-    BORDER = BRC.text.white("|"),
-    FULL = BRC.text.lightgreen("+"),
-    PART = BRC.text.lightgrey("+"),
-    EMPTY = BRC.text.darkgrey("-"),
+    BORDER = BRC.txt.white("|"),
+    FULL = BRC.txt.lightgreen("+"),
+    PART = BRC.txt.lightgrey("+"),
+    EMPTY = BRC.txt.darkgrey("-"),
   },
 
   MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-    BORDER = BRC.text.white("|"),
-    FULL = BRC.text.lightblue("+"),
-    PART = BRC.text.lightgrey("+"),
-    EMPTY = BRC.text.darkgrey("-"),
+    BORDER = BRC.txt.white("|"),
+    FULL = BRC.txt.lightblue("+"),
+    PART = BRC.txt.lightgrey("+"),
+    EMPTY = BRC.txt.darkgrey("-"),
   },
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
@@ -46,7 +46,7 @@ local Config = f_announce_hp_mp.Config
 
 ---- Local constants ----
 local PIPS_PER_METER = 5
-local METER_LENGTH = PIPS_PER_METER + 2 * #BRC.text.clean(Config.HP_METER.BORDER or "")
+local METER_LENGTH = PIPS_PER_METER + 2 * #BRC.txt.clean(Config.HP_METER.BORDER or "")
 local ALWAYS_BOTTOM_SETTINGS = {
   hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
@@ -72,11 +72,11 @@ end
 
 local function format_delta(delta)
   if delta > 0 then
-    return BRC.text.green("+" .. delta)
+    return BRC.txt.green("+" .. delta)
   elseif delta < 0 then
-    return BRC.text.red(delta)
+    return BRC.txt.red(delta)
   else
-    return BRC.text.darkgrey("+0")
+    return BRC.txt.darkgrey("+0")
   end
 end
 
@@ -94,23 +94,23 @@ local function format_ratio(cur, max)
     color = BRC.COL.green
   end
 
-  return BRC.text[color](string.format(" -> %s/%s", cur, max))
+  return BRC.txt[color](string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, Config.HP_METER)
-  msg_tokens[#msg_tokens + 1] = BRC.text.white(string.format(" HP[%s]", format_delta(hp_delta)))
+  msg_tokens[#msg_tokens + 1] = BRC.txt.white(string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
 
   if mhp_delta ~= 0 then
     local text = string.format(" (%s max HP)", format_delta(mhp_delta))
-    msg_tokens[#msg_tokens + 1] = BRC.text.lightgrey(text)
+    msg_tokens[#msg_tokens + 1] = BRC.txt.lightgrey(text)
   end
 
   if not Config.Announce.same_line and hp == mhp then
-    msg_tokens[#msg_tokens + 1] = BRC.text.white(" (Full HP)")
+    msg_tokens[#msg_tokens + 1] = BRC.txt.white(" (Full HP)")
   end
 
   return table.concat(msg_tokens)
@@ -120,16 +120,16 @@ local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
   msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, Config.MP_METER)
-  msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
+  msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
 
   if mmp_delta ~= 0 then
     local tok = string.format(" (%s max MP)", format_delta(mmp_delta))
-    msg_tokens[#msg_tokens + 1] = BRC.text.cyan(tok)
+    msg_tokens[#msg_tokens + 1] = BRC.txt.cyan(tok)
   end
 
   if not Config.Announce.same_line and mp == mmp then
-    msg_tokens[#msg_tokens + 1] = BRC.text.lightcyan(" (Full MP)")
+    msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(" (Full MP)")
   end
 
   return table.concat(msg_tokens)
@@ -153,7 +153,7 @@ function f_announce_hp_mp.init()
   if Config.always_on_bottom then Config.Announce = ALWAYS_BOTTOM_SETTINGS end
 
   if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
-    BRC.set.message_mute("Ouch! That really hurt!", true)
+    BRC.opt.message_mute("Ouch! That really hurt!", true)
   end
 end
 
@@ -206,11 +206,11 @@ function f_announce_hp_mp.ready()
   if damage_taken >= mhp * Config.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
     if damage_taken >= (mhp * Config.dmg_fm_threshold) then
-      local msg = BRC.text.lightmagenta("MASSIVE DAMAGE")
-      BRC.mpr.que_optmore(true, BRC.text.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
+      local msg = BRC.txt.lightmagenta("MASSIVE DAMAGE")
+      BRC.mpr.que_optmore(true, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
     else
-      local msg = BRC.text.magenta("BIG DAMAGE")
-      BRC.mpr.que_optmore(false, BRC.text.wrap(msg, BRC.EMOJI.EXCLAMATION))
+      local msg = BRC.txt.magenta("BIG DAMAGE")
+      BRC.mpr.que_optmore(false, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION))
     end
   end
 end

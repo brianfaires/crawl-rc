@@ -35,17 +35,17 @@ local function get_priority_ab(it)
   if not it.is_weapon then return -1 end
   if it.equipped then return 1 end
 
-  if BRC.is.magic_staff(it) then return 3 end
+  if BRC.it.is_magic_staff(it) then return 3 end
   if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
-  if BRC.is.polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
+  if BRC.it.is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
   return 2
 end
 
 local function get_priority_w(it)
   if not it.is_weapon then return -1 end
   if it.is_ranged then return 1 end
-  if BRC.is.polearm(it) then return 2 end
-  if BRC.is.magic_staff(it) then return 3 end
+  if BRC.it.is_polearm(it) then return 2 end
+  if BRC.it.is_magic_staff(it) then return 3 end
   return 4
 end
 
