@@ -93,7 +93,7 @@ function f_misc_alerts.init()
   prev_spell_levels = you.spell_levels()
 
   if Config.save_with_msg then
-    BRC.opt.macro(BRC.opt.cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
+    BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
       ma_saved_msg = nil

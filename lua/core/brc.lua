@@ -253,7 +253,7 @@ function BRC.init()
 
   BRC.mpr.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
   BRC.opt.macro("\\{5}", "macro_brc_cntl_e")
 
   BRC.mpr.debug("Verify persistent data reload...")

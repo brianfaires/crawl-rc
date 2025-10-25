@@ -174,7 +174,7 @@ function BRC.set_waypoint_hotkey(name, push_front)
 
   local move_to_waypoint = function()
     f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
-    crawl.sendkeys({ BRC.opt.cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+    crawl.sendkeys({ BRC.util.get_cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
 
     -- Delete waypoint after travel, silence the prompts, push a pickup hotkey
     crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })

@@ -1,195 +1,8 @@
 
-################################### Begin lua/core/config.lua ###################################
+### Mostly normal RC options ###
+
+################################### Begin rc/main.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
-{
---[[
-BRC Configuration - Various configs, overriding default values in feature configs.
-Author: buehler
-Dependencies: (none)
-Usage:
-  - Update BRC.use_config to load the corresponding config.
-  - Update each config or create new ones.
-  - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
-  - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
-  - If using config_memory == "full", the function needs to be saved as a string instead. --]]
--- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
-
----- Persistent variables ----
-brc_config_full = BRC.Data.persist("brc_config_full", nil)
-brc_config_name = BRC.Data.persist("brc_config_name", nil)
-
--- Default Config Profile (defines all non-feature values)
-BRC.Config = {
-  mpr = {
-    emojis = false, -- Use emojis in alerts and announcements
-    show_debug_messages = false,
-    debug_to_stderr = false,
-  },
-
-  dump = {
-    max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
-    omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
-  },
-
-  unskilled_egos_usable = false, -- Does "Armour of <MagicSkill>" have an ego when skill is 0?
-
-  --- How weapon damage is calculated for inscriptions+pickup/alert: (factor * DMG + offset)
-  BrandBonus = {
-    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
-    distort = { factor = 1.0, offset = 6.0 },
-    drain = { factor = 1.25, offset = 2.0 },
-    elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
-    flame = { factor = 1.25, offset = 0 },
-    freeze = { factor = 1.25, offset = 0 },
-    heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
-    pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
-    spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
-    venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
-
-    subtle = { -- Values to use for weapon "scores" (not damage)
-      antimagic = { factor = 1.1, offset = 0 },
-      holy = { factor = 1.15, offset = 0 },
-      penet = { factor = 1.3, offset = 0 },
-      protect = { factor = 1.15, offset = 0 },
-      reap = { factor = 1.3, offset = 0 },
-      vamp = { factor = 1.2, offset = 0 },
-    },
-  },
-} -- BRC.Profiles.Default (do not remove this comment)
-BRC.Config = BRC.Profiles.Default -- Always init to Default profile
-
----- Local functions ----
-local function get_validated_config_name(input_name)
-  if type(input_name) ~= "string" then
-    BRC.mpr.warning("Non-string config name: " .. tostring(input_name))
-  else
-    local config_name = input_name:lower()
-    if config_name == "ask" then
-      if you.turns() > 0 and brc_config_name then
-        return get_validated_config_name(brc_config_name)
-      end
-    elseif config_name == "previous" then
-      if c_persist.BRC and c_persist.BRC.current_config then
-        return get_validated_config_name(c_persist.BRC.current_config)
-      else
-        BRC.mpr.warning("No previous config found.")
-      end
-    else
-      for k, _ in pairs(BRC.Profiles) do
-        if config_name == k:lower() then return k end
-      end
-      BRC.mpr.warning("Could not load config: " .. tostring(input_name))
-    end
-  end
-
-  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
-end
-
-local function safe_call_string(str, module_name)
-  local chunk, err = loadstring(str)
-  if not chunk then
-    BRC.mpr.error("Error loading " .. module_name .. ".Config.init string: ", err)
-  else
-    local success, result = pcall(chunk)
-    if not success then
-      BRC.mpr.error("Error executing " .. module_name .. ".Config.init string: ", result)
-    end
-  end
-end
-
-local function override_table(source, dest)
-  if type(source) ~= "table" then return end
-
-  for key, value in pairs(source) do
-    if BRC.util.is_map(value) then
-      if not dest[key] then dest[key] = {} end
-      override_table(value, dest[key])
-    elseif key ~= "init" then
-      dest[key] = value
-    end
-  end
-end
-
-local function load_profile(input_config)
-  local config_name
-  if type(input_config) == "table" then
-    BRC.Config = input_config
-    config_name = brc_config_name or "Unknown"
-  else
-    config_name = get_validated_config_name(input_config)
-    BRC.Config = util.copy_table(BRC.Profiles.Default)
-    for k, v in pairs(BRC.Profiles[config_name]) do
-      BRC.Config[k] = v
-    end
-  end
-
-  -- Do config init() and feature overrides
-  if type(BRC.Config.init) == "function" then
-    BRC.Config.init()
-  elseif type(BRC.Config.init) == "string" then
-    safe_call_string(BRC.Config.init, "BRC")
-  end
-  for name, _ in pairs(BRC.get_registered_features()) do
-    BRC.process_feature_config(name)
-  end
-
-  BRC.mpr.info("Using config: " .. BRC.txt.lightcyan(config_name))
-  return config_name
-end
-
----- Public API ----
-function BRC.load_config()
-  if BRC.store_config and BRC.store_config:lower() == "full" then
-    brc_config_name = load_profile(brc_config_full or brc_config_name or BRC.use_config)
-    brc_config_full = BRC.Config
-  elseif BRC.store_config and BRC.store_config:lower() == "name" then
-    brc_config_name = load_profile(brc_config_name or BRC.use_config)
-  else
-    brc_config_name = load_profile(BRC.use_config)
-  end
-end
-
-function BRC.process_feature_config(feature_name)
-  local f = BRC.get_registered_features()[feature_name]
-  if not f.Config then
-    f.Config = {}
-  elseif type(f.Config.init) == "function" then
-    f.Config.init()
-  elseif type(f.Config.init) == "string" then
-    safe_call_string(f.Config.init, feature_name)
-  end
-
-  override_table(BRC.Config[feature_name], f.Config)
-end
-
---- Stringify BRC.Config and all feature configs, including headers
-function BRC.serialize_config()
-  local tokens = {}
-  tokens[#tokens + 1] = BRC.txt.lightcyan("\n---BRC Config---\n")
-  tokens[#tokens + 1] = BRC.txt.tostr(BRC.Config, true)
-
-  local all_features = BRC.get_registered_features()
-  local keys = util.keys(all_features)
-  util.sort(keys)
-
-  for i = 1, #keys do
-    local name = keys[i]
-    local feature = all_features[name]
-    if feature.Config then
-      local header = BRC.txt.cyan("\n\n---Feature Config: " .. name .. "---\n")
-      tokens[#tokens + 1] = header .. BRC.txt.tostr(feature.Config, true)
-    end
-  end
-
-  return table.concat(tokens)
-end
-
-}
-############################### End lua/core/config.lua ###############################
-##########################################################################################
-
-## (Resuming rc/init.txt) ##
-
 ####### Main options #######
 easy_confirm = all
 show_more = false
@@ -217,17 +30,223 @@ travel_delay = -1
 rest_delay = -1
 view_delay = 100
 show_travel_trail = true
-
-explore_stop = altars,branches,portals,runed_doors,greedy_pickup_smart
+explore_stop = altars, branches, portals, runed_doors, greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang, javelin
 
 
-### Mostly normal RC options ###
+####### Autopickup exceptions #######
+ae := autopickup_exceptions
+ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
+ae ^= <scrolls? of immolation, <scrolls? of poison
+ae ^= <missile, <misc, <bauble
+ae ^= >staff of.*, >useless_item
+
+############################### End rc/main.rc ###############################
+##########################################################################################
+
+################################### Begin rc/macros.rc ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+# Remap ~ to Lua interpreter (CMD_GAME_MENU is still on F1)
+bindkey = [~] CMD_LUA_CONSOLE
+
+# Cntl-Tab
+bindkey = [\{-222}] CMD_AUTOFIGHT_NOMOVE
+
+# Cntl-D (Go down closest stairs)
+macros += M \{4} \{7}>
+
+
+# Numpad keymaps
+macros += K \{-1019} f
+macros += K \{-1018} 3
+macros += K \{-1016} \{9}
+macros += K \{-1015} 2
+macros += K \{-1012} 1
+macros += K \{-1010} o
+macros += K \{-1000} .
+macros += K \{-247} 5
+macros += K2 \{-1019} .
+
+# Spellcasting macros
+macros += M 1 za
+macros += M 2 zb
+macros += M 3 zc
+macros += M 4 zd
+macros += M 6 zf
+macros += M 7 zg
+macros += M 8 zh
+macros += M 9 zi
+macros += M 0 zj
+
+# Confirm targeting with same keys as spellcasting
+macros += K2 \{-1018} \{13}
+macros += K2 \{-1015} \{13}
+macros += K2 \{-1012} \{13}
+macros += K2 1 \{13}
+macros += K2 2 \{13}
+macros += K2 3 \{13}
+macros += K2 4 \{13}
+macros += K2 6 \{13}
+macros += K2 7 \{13}
+macros += K2 8 \{13}
+macros += K2 9 \{13}
+macros += K2 0 \{13}
+
+############################### End rc/macros.rc ###############################
+##########################################################################################
+
+################################### Begin rc/slot-defaults.rc ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+####### Item Slots #########
+# Rings to P/p for easy swapping
+item_slot += ring of:Pp
+
+# ignored: moonshine, noise
+# unassigned slots: d, e, F
+item_slot ^= scroll of acquirement:q
+item_slot ^= scroll of amnesia:E
+item_slot ^= scroll of blinking:B
+item_slot ^= scroll of brand weapon:D
+item_slot ^= scroll of butterflies:s
+item_slot ^= scroll of enchant armour:u
+item_slot ^= scroll of enchant weapon:W
+item_slot ^= scroll of fear:f
+item_slot ^= scroll of fog:F
+item_slot ^= scroll of identify:i
+item_slot ^= scroll of immolation:o
+item_slot ^= scroll of revelation:j
+item_slot ^= scroll of poison:y
+item_slot ^= scroll of silence:S
+item_slot ^= scroll of summoning:s
+item_slot ^= scroll of teleportation:t
+item_slot ^= scroll of torment:k
+item_slot ^= scroll of vulnerability:v
+
+item_slot ^= potion of ambrosia:A
+item_slot ^= potion of attraction:n
+item_slot ^= potion of berserk rage:z
+item_slot ^= potion of brilliance:R
+item_slot ^= potion of cancellation:C
+item_slot ^= potion of curing:c
+item_slot ^= potion of experience:x
+item_slot ^= potion of enlightenment:g
+item_slot ^= potion of haste:H
+item_slot ^= potion of heal wounds:h
+item_slot ^= potion of invisibility:I
+item_slot ^= potion of lignification:l
+item_slot ^= potion of magic:M
+item_slot ^= potion of might:m
+item_slot ^= potion of resistance:r
+item_slot ^= potion of mutation:U
+
+item_slot ^= condenser vane:V
+item_slot ^= phial of floods:O
+item_slot ^= phantom mirror:N
+item_slot ^= box of beasts:X
+item_slot ^= tin of tremorstones:T
+item_slot ^= lightning rod:L
+
+item_slot ^= wand of digging:K
+item_slot ^= wand of flame:Q
+item_slot ^= wand of mindburst:Y
+item_slot ^= wand of acid:G
+item_slot ^= wand of light:G
+item_slot ^= wand of quicksilver:G
+item_slot ^= wand of iceblast:Z
+item_slot ^= wand of roots:Z
+item_slot ^= wand of charming:J
+item_slot ^= wand of paralysis:J
+
+
+
+######## Spell Slots #########
+spell_slot ^= Alistair's Intoxication:AITX
+spell_slot ^= Alistair’s Walking Alembic:AWKLMBSTEI
+spell_slot ^= Anguish:ANGUISH
+spell_slot ^= Animate Armour:ANMT
+spell_slot ^= Animate Dead:ADNMT
+spell_slot ^= Arcjolt:AJCOLT
+spell_slot ^= Blink:BLNK
+spell_slot ^= Borgnjor's Revivification:BRVF
+spell_slot ^= Call Canine Familiar:CFN
+spell_slot ^= Call Imp:ICMP
+spell_slot ^= Cause Fear:CFSUR
+spell_slot ^= Chain Lightning:LCHGNT
+spell_slot ^= Cigotuvi's Dreadful Rot:CDRVT
+spell_slot ^= Confusing Touch:CTF
+spell_slot ^= Conjure Ball Lightning:BLCTN
+spell_slot ^= Construct Spike Launcher:CSLPKNRAUE
+spell_slot ^= Corpse Rot:CRPS
+spell_slot ^= Death Channel:DCNL
+spell_slot ^= Death's Door:DROTHEA
+spell_slot ^= Detonation Catalyst:DCTNYTSAEO
+spell_slot ^= Diamond Sawblades:DSWBLNIAO
+spell_slot ^= Discord:DISCORD
+spell_slot ^= Disjunction:DJNIS
+spell_slot ^= Dispersal:DPLIS
+spell_slot ^= Dragon's Call:DCRGN
+spell_slot ^= Forge Monarch Bomb:FMBONRCHGEA
+spell_slot ^= Forge Phalanx Beetle:FPBENXORG
+spell_slot ^= Fortress Blast:FBRTSLA
+spell_slot ^= Foxfire:FXOIRE
+spell_slot ^= Fugue of the Fallen:FUGALNE
+spell_slot ^= Fulsome Fusillade:FLSOMADE
+spell_slot ^= Gloom:GLOM
+spell_slot ^= Hoarfrost Cannonade:HCORFND
+spell_slot ^= Ice Form:IFORM
+spell_slot ^= Ignite Poison:IPOSN
+spell_slot ^= Ignition:IGNTO
+spell_slot ^= Infestation:INFESTAON
+spell_slot ^= Irradiate:IRADTE
+spell_slot ^= Iskenderun's Battlespehere:BSI
+spell_slot ^= Iskenderun's Mystic Blast:IMB
+spell_slot ^= Jinxbite:JNXBITE
+spell_slot ^= Leda's Liquefaction:LQFND
+spell_slot ^= Malign Gateway:MGWTN
+spell_slot ^= Manifold Assault:MANFT
+spell_slot ^= Martyr's Knell:MKNARTYEL
+spell_slot ^= Maxwell's Capacitive Coupling:MCXW
+spell_slot ^= Metabolic Englaciation:MENC
+spell_slot ^= Monstrous Menagerie:MNGR
+spell_slot ^= Nazja’s Percussive Tempering:NPTZJACUE
+spell_slot ^= Olgreb's Toxic Radiance:TOR
+spell_slot ^= Ozocubu's Armour:OAMR
+spell_slot ^= Ozocubu's Refrigeration:ROZFG
+spell_slot ^= Permafrost Eruption:PERUTFMAOSTIN
+spell_slot ^= Platinum Paragon:PLTGNMAO
+spell_slot ^= Polar Vortex:PVXT
+spell_slot ^= Rending Blade:RBENDALG
+spell_slot ^= Scorch:SCORH
+spell_slot ^= Shatter:SHTR
+spell_slot ^= Sigil of Binding:SBGILDNG
+spell_slot ^= Silence:SICL
+spell_slot ^= Spellspark Servitor:SVFR
+spell_slot ^= Sphinx Sisters:SPHINXR
+spell_slot ^= Starburst:SBUT
+spell_slot ^= Static Discharge:DSCGT
+spell_slot ^= Sublimation of Blood:SBLM
+spell_slot ^= Summon Blazeheart Golem:SBGLZOM
+spell_slot ^= Summon Cactus Giant:CGS
+spell_slot ^= Summon Forest:FSRTM
+spell_slot ^= Summon Horrible Things:HST
+spell_slot ^= Summon Hydra:HYDRA
+spell_slot ^= Summon Ice Beast:ISB
+spell_slot ^= Summon Lightning Spire:SMLIRNG
+spell_slot ^= Summon Mana Viper:MSV
+spell_slot ^= Summon Seismosaurus Egg:EGSMIEOAU
+spell_slot ^= Summon Small Mammal:SMLAUON
+spell_slot ^= Swiftness:SWIFT
+spell_slot ^= Volatile Blastmotes:VBOLMASTE
+:if you.class() == "Summoner" then
+  spell_slot ^= (summon|call):abcdefgh
+:end
+
+############################### End rc/slot-defaults.rc ###############################
+##########################################################################################
 
 ################################### Begin rc/autoinscribe.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 # See safe-consumables.lua for consumable inscriptions
-
 ai := autoinscribe
 
 # General
@@ -276,18 +295,6 @@ ai += staff of fire:rF+
 ai += staff of poison:rPois
 
 ############################### End rc/autoinscribe.rc ###############################
-##########################################################################################
-
-################################### Begin rc/autopickup.rc ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-####### Autopickup exceptions #######
-ae := autopickup_exceptions
-ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
-ae ^= <scrolls? of immolation, <scrolls? of poison
-ae ^= <missile, <misc, <bauble
-ae ^= >staff of.*, >useless_item
-
-############################### End rc/autopickup.rc ###############################
 ##########################################################################################
 
 ################################### Begin rc/display.rc ###################################
@@ -647,57 +654,6 @@ more += god:will now cure all your mutations
 ############################### End rc/fm-messages.rc ###############################
 ##########################################################################################
 
-################################### Begin rc/macros.rc ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-# Remap ~ to Lua interpreter (CMD_GAME_MENU is still on F1)
-bindkey = [~] CMD_LUA_CONSOLE
-
-# Cntl-Tab
-bindkey = [\{-222}] CMD_AUTOFIGHT_NOMOVE
-
-# Cntl-D (Go down closest stairs)
-macros += M \{4} \{7}>
-
-
-# Numpad keymaps
-macros += K \{-1019} f
-macros += K \{-1018} 3
-macros += K \{-1016} \{9}
-macros += K \{-1015} 2
-macros += K \{-1012} 1
-macros += K \{-1010} o
-macros += K \{-1000} .
-macros += K \{-247} 5
-macros += K2 \{-1019} .
-
-# Spellcasting macros
-macros += M 1 za
-macros += M 2 zb
-macros += M 3 zc
-macros += M 4 zd
-macros += M 6 zf
-macros += M 7 zg
-macros += M 8 zh
-macros += M 9 zi
-macros += M 0 zj
-
-# Confirm targeting with same keys as spellcasting
-macros += K2 \{-1018} \{13}
-macros += K2 \{-1015} \{13}
-macros += K2 \{-1012} \{13}
-macros += K2 1 \{13}
-macros += K2 2 \{13}
-macros += K2 3 \{13}
-macros += K2 4 \{13}
-macros += K2 6 \{13}
-macros += K2 7 \{13}
-macros += K2 8 \{13}
-macros += K2 9 \{13}
-macros += K2 0 \{13}
-
-############################### End rc/macros.rc ###############################
-##########################################################################################
-
 ################################### Begin rc/runrest.rc ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 # Aliases
@@ -786,158 +742,32 @@ ignore += mindless puppets stay behind to rot
 ############################### End rc/runrest.rc ###############################
 ##########################################################################################
 
-################################### Begin rc/slot-defaults.rc ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-####### Item Slots #########
-# Rings to P/p for easy swapping
-item_slot += ring of:Pp
-
-# ignored: moonshine, noise
-# unassigned slots: d, e, F
-item_slot ^= scroll of acquirement:q
-item_slot ^= scroll of amnesia:E
-item_slot ^= scroll of blinking:B
-item_slot ^= scroll of brand weapon:D
-item_slot ^= scroll of butterflies:s
-item_slot ^= scroll of enchant armour:u
-item_slot ^= scroll of enchant weapon:W
-item_slot ^= scroll of fear:f
-item_slot ^= scroll of fog:F
-item_slot ^= scroll of identify:i
-item_slot ^= scroll of immolation:o
-item_slot ^= scroll of revelation:j
-item_slot ^= scroll of poison:y
-item_slot ^= scroll of silence:S
-item_slot ^= scroll of summoning:s
-item_slot ^= scroll of teleportation:t
-item_slot ^= scroll of torment:k
-item_slot ^= scroll of vulnerability:v
-
-item_slot ^= potion of ambrosia:A
-item_slot ^= potion of attraction:n
-item_slot ^= potion of berserk rage:z
-item_slot ^= potion of brilliance:R
-item_slot ^= potion of cancellation:C
-item_slot ^= potion of curing:c
-item_slot ^= potion of experience:x
-item_slot ^= potion of enlightenment:g
-item_slot ^= potion of haste:H
-item_slot ^= potion of heal wounds:h
-item_slot ^= potion of invisibility:I
-item_slot ^= potion of lignification:l
-item_slot ^= potion of magic:M
-item_slot ^= potion of might:m
-item_slot ^= potion of resistance:r
-item_slot ^= potion of mutation:U
-
-item_slot ^= condenser vane:V
-item_slot ^= phial of floods:O
-item_slot ^= phantom mirror:N
-item_slot ^= box of beasts:X
-item_slot ^= tin of tremorstones:T
-item_slot ^= lightning rod:L
-
-item_slot ^= wand of digging:K
-item_slot ^= wand of flame:Q
-item_slot ^= wand of mindburst:Y
-item_slot ^= wand of acid:G
-item_slot ^= wand of light:G
-item_slot ^= wand of quicksilver:G
-item_slot ^= wand of iceblast:Z
-item_slot ^= wand of roots:Z
-item_slot ^= wand of charming:J
-item_slot ^= wand of paralysis:J
-
-
-
-######## Spell Slots #########
-spell_slot ^= Alistair's Intoxication:AITX
-spell_slot ^= Alistair’s Walking Alembic:AWKLMBSTEI
-spell_slot ^= Anguish:ANGUISH
-spell_slot ^= Animate Armour:ANMT
-spell_slot ^= Animate Dead:ADNMT
-spell_slot ^= Arcjolt:AJCOLT
-spell_slot ^= Blink:BLNK
-spell_slot ^= Borgnjor's Revivification:BRVF
-spell_slot ^= Call Canine Familiar:CFN
-spell_slot ^= Call Imp:ICMP
-spell_slot ^= Cause Fear:CFSUR
-spell_slot ^= Chain Lightning:LCHGNT
-spell_slot ^= Cigotuvi's Dreadful Rot:CDRVT
-spell_slot ^= Confusing Touch:CTF
-spell_slot ^= Conjure Ball Lightning:BLCTN
-spell_slot ^= Construct Spike Launcher:CSLPKNRAUE
-spell_slot ^= Corpse Rot:CRPS
-spell_slot ^= Death Channel:DCNL
-spell_slot ^= Death's Door:DROTHEA
-spell_slot ^= Detonation Catalyst:DCTNYTSAEO
-spell_slot ^= Diamond Sawblades:DSWBLNIAO
-spell_slot ^= Discord:DISCORD
-spell_slot ^= Disjunction:DJNIS
-spell_slot ^= Dispersal:DPLIS
-spell_slot ^= Dragon's Call:DCRGN
-spell_slot ^= Forge Monarch Bomb:FMBONRCHGEA
-spell_slot ^= Forge Phalanx Beetle:FPBENXORG
-spell_slot ^= Fortress Blast:FBRTSLA
-spell_slot ^= Foxfire:FXOIRE
-spell_slot ^= Fugue of the Fallen:FUGALNE
-spell_slot ^= Fulsome Fusillade:FLSOMADE
-spell_slot ^= Gloom:GLOM
-spell_slot ^= Hoarfrost Cannonade:HCORFND
-spell_slot ^= Ice Form:IFORM
-spell_slot ^= Ignite Poison:IPOSN
-spell_slot ^= Ignition:IGNTO
-spell_slot ^= Infestation:INFESTAON
-spell_slot ^= Irradiate:IRADTE
-spell_slot ^= Iskenderun's Battlespehere:BSI
-spell_slot ^= Iskenderun's Mystic Blast:IMB
-spell_slot ^= Jinxbite:JNXBITE
-spell_slot ^= Leda's Liquefaction:LQFND
-spell_slot ^= Malign Gateway:MGWTN
-spell_slot ^= Manifold Assault:MANFT
-spell_slot ^= Martyr's Knell:MKNARTYEL
-spell_slot ^= Maxwell's Capacitive Coupling:MCXW
-spell_slot ^= Metabolic Englaciation:MENC
-spell_slot ^= Monstrous Menagerie:MNGR
-spell_slot ^= Nazja’s Percussive Tempering:NPTZJACUE
-spell_slot ^= Olgreb's Toxic Radiance:TOR
-spell_slot ^= Ozocubu's Armour:OAMR
-spell_slot ^= Ozocubu's Refrigeration:ROZFG
-spell_slot ^= Permafrost Eruption:PERUTFMAOSTIN
-spell_slot ^= Platinum Paragon:PLTGNMAO
-spell_slot ^= Polar Vortex:PVXT
-spell_slot ^= Rending Blade:RBENDALG
-spell_slot ^= Scorch:SCORH
-spell_slot ^= Shatter:SHTR
-spell_slot ^= Sigil of Binding:SBGILDNG
-spell_slot ^= Silence:SICL
-spell_slot ^= Spellspark Servitor:SVFR
-spell_slot ^= Sphinx Sisters:SPHINXR
-spell_slot ^= Starburst:SBUT
-spell_slot ^= Static Discharge:DSCGT
-spell_slot ^= Sublimation of Blood:SBLM
-spell_slot ^= Summon Blazeheart Golem:SBGLZOM
-spell_slot ^= Summon Cactus Giant:CGS
-spell_slot ^= Summon Forest:FSRTM
-spell_slot ^= Summon Horrible Things:HST
-spell_slot ^= Summon Hydra:HYDRA
-spell_slot ^= Summon Ice Beast:ISB
-spell_slot ^= Summon Lightning Spire:SMLIRNG
-spell_slot ^= Summon Mana Viper:MSV
-spell_slot ^= Summon Seismosaurus Egg:EGSMIEOAU
-spell_slot ^= Summon Small Mammal:SMLAUON
-spell_slot ^= Swiftness:SWIFT
-spell_slot ^= Volatile Blastmotes:VBOLMASTE
-:if you.class() == "Summoner" then
-  spell_slot ^= (summon|call):abcdefgh
-:end
-
-############################### End rc/slot-defaults.rc ###############################
-##########################################################################################
-
 ## (Resuming rc/init.txt) ##
 
 ### buehler.rc core files ###
+
+################################### Begin lua/core/_header.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+BRC = {}
+BRC.Config = {}
+BRC.Profiles = {}
+
+--- BRC.use_config: Specify which config to use, or how to select it.
+-- "<config name>": Use the named config
+-- "ask": Prompt at start of each new game
+-- "previous": Keep using the last config
+BRC.use_config = "ask"
+
+-- BRC.store_config: Each game tracks the config being used, ignoring changes in the RC.
+-- "none": Always reload "BRC.use_config" from current RC
+-- "name": Remember the config name, and reload its values from the RC
+-- "full": Remember the config and all of its values
+BRC.store_config = "none"
+
+}
+############################### End lua/core/_header.lua ###############################
+##########################################################################################
 
 ################################### Begin lua/core/constants.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
@@ -1049,9 +879,1229 @@ BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 }
 ############################### End lua/core/constants.lua ###############################
 ##########################################################################################
-lua_file = crawl-rc/lua/core/util.lua
-## (Resuming rc/init.txt) ##
 
+################################### Begin lua/util/util.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+----------------------------------------------
+---- BRC.util - General utility functions ----
+BRC.util = {}
+
+--- Get the keycode for Cntl+char
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
+--- Get key assigned to a crawl command (e.g. "CMD_EXPLORE")
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+--- Tries sendkeys() first, fallback to do_commands() (which isn't always immediate)
+-- @param cmd (string) The command to execute like "CMD_EXPLORE"
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+---- Lua table helpers ----
+--- Sorts the keys of a dictionary/map: vars before tables, then alphabetically by key
+-- If a list is passed, will assume it's a list of global variable names
+function BRC.util.get_sorted_keys(map_or_list)
+  local keys_vars = {}
+  local keys_tables = {}
+
+  if BRC.util.is_map(map_or_list) then
+    for key, v in pairs(map_or_list) do
+      table.insert(type(v) == "table" and keys_tables or keys_vars, key)
+    end
+  else
+    for _, key in ipairs(map_or_list) do
+      table.insert(type(_G[key]) == "table" and keys_tables or keys_vars, key)
+    end
+  end
+
+  util.sort(keys_vars)
+  util.sort(keys_tables)
+  util.append(keys_vars, keys_tables)
+  return keys_vars
+end
+
+function BRC.util.is_list(value)
+  return value and type(value) == "table" and #value > 0
+end
+
+function BRC.util.is_map(value)
+  return value and type(value) == "table" and next(value) ~= nil and #value == 0
+end
+
+}
+############################### End lua/util/util.lua ###############################
+##########################################################################################
+
+################################### Begin lua/util/text.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-------------------------------------------
+---- BRC.txt - Text + String functions ----
+BRC.txt = {}
+
+---- Text parsing ----
+--- Create string:contains() for all strings
+function BRC.txt.contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+-- Connect string:contains() to BRC.txt.contains()
+getmetatable("").__index.contains = BRC.txt.contains
+
+--- Parse the slot and item name from an item pickup message (e.g. "w - a +0 short sword")
+-- @return (string, int) The item name and slot index
+function BRC.txt.get_pickup_info(text)
+  local cleaned = BRC.txt.clean(text)
+  if cleaned:sub(2, 4) ~= " - " then return nil end
+  return cleaned:sub(5, #cleaned), items.letter_to_index(cleaned:sub(1, 1))
+end
+
+
+---- Color functions - Usage: BRC.txt.white("Hello"), or BRC.txt["15"]("Hello") ----
+for k, v in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", v, tostring(text), v)
+  end
+  BRC.txt[v] = BRC.txt[k]
+end
+
+function BRC.txt.color(color, text)
+  return color and BRC.txt[color](text) or tostring(text)
+end
+
+
+---- String manipulation ----
+function BRC.txt.capitalize(s)
+  if not s or s == "" then return s end
+  return string.upper(string.sub(s, 1, 1)) .. string.lower(string.sub(s, 2))
+end
+
+--- Remove newlines and tags from text
+function BRC.txt.clean(text)
+  return text:gsub("\n", ""):gsub("<[^>]*>", "")
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
+
+---- Conversion to string ----
+function BRC.txt.int2char(num)
+  return string.char(string.byte("a") + num)
+end
+
+function BRC.txt.serialize_chk_lua_save()
+  local tokens = { BRC.txt.lightblue("\n---CHK_LUA_SAVE---") }
+  for _, func in ipairs(chk_lua_save) do
+    local result = func()
+    if result and #result > 0 then tokens[#tokens + 1] = util.trim(result) end
+  end
+
+  return table.concat(tokens, "\n")
+end
+
+function BRC.txt.serialize_inventory()
+  local tokens = { BRC.txt.lightcyan("\n---INVENTORY---\n") }
+  for _, inv in ipairs(items.inventory()) do
+    local base = inv.name("base") or "N/A"
+    local cls = inv.class(true) or "N/A"
+    local st = inv.subtype() or "N/A"
+    tokens[#tokens + 1] = string.format("%s: (%s) Qual: %s", inv.slot, inv.quantity, inv.name())
+    tokens[#tokens + 1] = string.format("  Base: %s Class: %s, Subtype: %s\n", base, cls, st)
+  end
+
+  return table.concat(tokens)
+end
+
+---- BRC.txt.tostr() local helper functions ----
+local function limit_lines(str)
+  if BRC.Config.max_lines_per_table and BRC.Config.max_lines_per_table > 0 then
+    local lines = 1
+    str:gsub("\n", function() lines = lines + 1 end)
+    if lines > BRC.Config.max_lines_per_table then
+      return string.format("{ %s lines... }", lines)
+    end
+  end
+
+  return str
+end
+
+local function tostr_string(var, pretty)
+  local s
+  if var:contains("\n") then
+    s = string.format("[[\n%s]]", var)
+  else
+    s = '"' .. var:gsub('"', "") .. '"'
+  end
+
+  if not pretty then return s end
+  -- Replace > and < to display the color tags instead of colored text
+  return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
+end
+
+local function tostr_list(var, pretty, indents)
+  local tokens = {}
+  for _, v in ipairs(var) do
+    tokens[#tokens + 1] = limit_lines(BRC.txt.tostr(v, pretty, indents + 1))
+  end
+  if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
+    return "{ " .. table.concat(tokens, ", ") .. " }"
+  else
+    local INDENT = string.rep("  ", indents)
+    local CHILD_INDENT = string.rep("  ", indents + 1)
+    local LIST_SEP = ",\n" .. CHILD_INDENT
+    return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+  end
+end
+
+local function tostr_map(var, pretty, indents)
+  local tokens = {}
+
+  if pretty then
+    local keys = BRC.util.get_sorted_keys(var)
+    local contains_table = false
+    for i = 1, #keys do
+      local v = limit_lines(BRC.txt.tostr(var[keys[i]], true, indents + 1))
+      if v then
+        if type(var[keys[i]]) == "table" then
+          contains_table = true
+          tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
+        else
+          tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
+        end
+      end
+    end
+    if #tokens <= 2 and not contains_table then
+      return "{ " .. table.concat(tokens, ", ") .. " }"
+    end
+  else
+    for k, v in pairs(var) do
+      tokens[#tokens + 1] = '["' .. k .. '"] = ' .. BRC.txt.tostr(v, pretty, indents + 1)
+    end
+  end
+
+  local INDENT = string.rep("  ", indents)
+  local CHILD_INDENT = string.rep("  ", indents + 1)
+  local LIST_SEP = ",\n" .. CHILD_INDENT
+  return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+end
+
+--- Serializes a variable to a string, for chk_lua_save or data dumps.
+-- @param pretty (optional bool) format for human readability
+-- @param _indents (optional int) Used internally to format multi-line tables
+function BRC.txt.tostr(var, pretty, _indents)
+  local var_type = type(var)
+  if var_type == "string" then
+    return tostr_string(var, pretty)
+  elseif var_type == "table" then
+    _indents = _indents or 0
+    if BRC.util.is_list(var) then
+      return tostr_list(var, pretty, _indents)
+    elseif BRC.util.is_map(var) then
+      return tostr_map(var, pretty, _indents)
+    else
+      return "{}"
+    end
+  end
+
+  if BRC.Config.omit_pointers and (var_type == "function" or var_type == "userdata") then
+    return nil
+  end
+
+  return tostring(var) -- fallback to tostring()
+end
+
+}
+############################### End lua/util/text.lua ###############################
+##########################################################################################
+
+################################### Begin lua/util/mpr.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--------------------------------------------------------------------
+---- BRC.mpr - Wrappers around crawl.mpr - for message printing ----
+BRC.mpr = {}
+
+---- mpr queue (displayed after all other messages for the turn) ----
+local _mpr_queue = {}
+
+--- Queue a message to dispay at the end of ready()
+function BRC.mpr.que(msg, color, channel)
+  BRC.mpr.que_optmore(false, msg, color, channel)
+end
+
+--- Queue msg w/ conditional force_more_message
+function BRC.mpr.que_optmore(show_more, msg, color, channel)
+  for _, q in ipairs(_mpr_queue) do
+    if q.m == msg and q.ch == channel and q.more == show_more then return end
+  end
+  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt.color(color, msg), ch = channel, more = show_more }
+end
+
+--- Display queued messages and clear the queue
+function BRC.mpr.consume_queue()
+  local do_more = util.exists(_mpr_queue, function(q) return q.more end)
+  -- stop_activity() can generate more autopickups, and thus more queue'd messages
+  if do_more then
+    you.stop_activity()
+    crawl.redraw_screen()
+  end
+
+  for _, msg in ipairs(_mpr_queue) do
+    crawl.mpr(tostring(msg.m), msg.ch)
+    crawl.flush_prev_message()
+  end
+  _mpr_queue = {}
+
+  if do_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+end
+
+
+---- Color functions - Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello") ----
+for k, v in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt.color(v, msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[v] = BRC.mpr[k]
+end
+
+function BRC.mpr.color(msg, color, channel)
+  if color then
+    BRC.mpr[color](msg, channel)
+  else
+    crawl.mpr(tostring(msg), channel)
+    crawl.flush_prev_message()
+  end
+end
+
+
+---- Pre-formatted logging functions ----
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+--- Primary function for displaying errors. Includes a force_more_message by default.
+-- @param context (optional) Additional context. No context if params are (string, bool).
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+end
+
+function BRC.mpr.warning(message, context)
+  log_message(message, context, BRC.COL.yellow)
+  you.stop_activity()
+end
+
+function BRC.mpr.info(message, context)
+  log_message(message, context, BRC.COL.white)
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.debug_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.okay(suffix)
+  BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
+end
+
+--- Print a variable's stringified value
+function BRC.mpr.tostr(v)
+  crawl.mpr(BRC.txt.tostr(v, true))
+end
+
+---- Messages with stop or force_more ----
+--- Message plus stop travel/activity
+function BRC.mpr.stop(msg, color, channel)
+  BRC.mpr.color(msg, color, channel)
+  you.stop_activity()
+end
+
+--- Message as a force_more_message
+function BRC.mpr.more(msg, color, channel)
+  BRC.mpr.color(msg, color, channel)
+  you.stop_activity()
+  crawl.redraw_screen()
+  crawl.more()
+  crawl.redraw_screen()
+end
+
+--- Conditional force_more_message
+function BRC.mpr.optmore(show_more, msg, color, channel)
+  if show_more then
+    BRC.mpr.more(msg, color, channel)
+  else
+    BRC.mpr.color(msg, color, channel)
+  end
+end
+
+
+---- Prompts for user input ----
+--- Get a selection from the user, from a list of options
+function BRC.mpr.select(msg, options, color)
+  if not (type(options) == "table" and #options > 0) then
+    BRC.mpr.error("No options provided for BRC.mpr.select")
+    return false
+  end
+
+  msg = msg .. ":\n"
+  for i, option in ipairs(options) do
+    msg = msg .. string.format("%s: %s\n", i, BRC.txt.white(option))
+  end
+  BRC.mpr[color or BRC.COL.lightcyan](msg, "prompt")
+  for _ = 1, 10 do
+    local res = crawl.getch()
+    if res then
+      local num = res - string.byte("0")
+      if num > 0 and num <= #options then return options[num] end
+    end
+    BRC.mpr.magenta("Invalid option, try again.")
+  end
+
+  BRC.mpr.lightmagenta("Fine then. Using option 1: " .. options[1])
+  return options[1]
+end
+
+--- Get a yes/no response
+function BRC.mpr.yesno(msg, color, capital_only)
+  msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
+
+  for i = 1, 10 do
+    BRC.mpr.color(msg, color, "prompt")
+    local res = crawl.getch()
+    if res and res >= 0 and res <= 255 then
+      local c = string.char(res)
+      if c == "Y" or c == "y" and not capital_only then return true end
+      if c == "N" or c == "n" and not capital_only then return false end
+    end
+    if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
+  end
+
+  BRC.mpr.lightmagenta("Feels like a no.")
+  return false
+end
+
+
+}
+############################### End lua/util/mpr.lua ###############################
+##########################################################################################
+
+################################### Begin lua/util/item.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+----------------------------------
+---- BRC.it - Item attributes ----
+BRC.it = {}
+
+function BRC.it.get_xy(name, radius)
+  local r = radius or you.los()
+  for dx = -r, r do
+    for dy = -r, r do
+      for _, fl in ipairs(items.get_items_at(dx, dy) or {}) do
+        if fl.name() == name then
+          return dx, dy
+        end
+      end
+    end
+  end
+end
+
+function BRC.it.get_staff_school(it)
+  for k, v in pairs(BRC.MAGIC_SCHOOLS) do
+    if it.subtype() == k then return v end
+  end
+end
+
+function BRC.it.get_talisman_min_level(it)
+  if it.name() == "protean talisman" then return 6 end
+
+  -- Parse the item description
+  local tokens = crawl.split(it.description, "\n")
+  for _, v in ipairs(tokens) do
+    if v:sub(1, 4) == "Min " then
+      local start_pos = v:find("%d", 4)
+      if start_pos then
+        local end_pos = v:find("[^%d]", start_pos)
+        return tonumber(v:sub(start_pos, end_pos - 1))
+      end
+    end
+  end
+
+  BRC.mpr.error("Failed to find skill required for: " .. it.name())
+  return -1
+end
+
+
+---- Simple boolean checks ----
+function BRC.it.is_amulet(it)
+  return it and it.name("base") == "amulet"
+end
+
+function BRC.it.is_armour(it, include_orbs)
+  return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
+end
+
+function BRC.it.is_aux_armour(it)
+  return BRC.it.is_armour(it) and not (BRC.it.is_body_armour(it) or BRC.it.is_shield(it))
+end
+
+function BRC.it.is_body_armour(it)
+  return it and it.subtype() == "body"
+end
+
+function BRC.it.is_jewellery(it)
+  return it and it.class(true) == "jewellery"
+end
+
+function BRC.it.is_magic_staff(it)
+  return it and it.class and it.class(true) == "magical staff"
+end
+
+function BRC.it.is_ring(it)
+  return it and it.name("base") == "ring"
+end
+
+function BRC.it.is_scarf(it)
+  return BRC.it.is_armour(it) and it.subtype() == "cloak" and it.name():contains("scarf")
+end
+
+function BRC.it.is_shield(it)
+  return it and it.is_shield()
+end
+
+function BRC.it.is_talisman(it)
+  return it and it.class(true) == "talisman"
+end
+
+function BRC.it.is_orb(it)
+  return it and it.subtype() == "offhand" and not it.is_shield()
+end
+
+function BRC.it.is_polearm(it)
+  return it and it.weap_skill:contains("Polearms")
+end
+
+}
+############################### End lua/util/item.lua ###############################
+##########################################################################################
+
+################################### Begin lua/util/you.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+----------------------------------------
+---- BRC.you - Character attributes ----
+BRC.you = {}
+
+--- Get mutation level, explicitly specifying crawl's optional params
+-- @param bool innate_only (optional) - Exclude to include all mutations
+function BRC.you.mut_lvl(mutation, innate_only)
+  return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+
+
+---- Boolean attributes ----
+function BRC.you.by_slimy_wall()
+  for x = -1, 1 do
+    for y = -1, 1 do
+      if view.feature_at(x, y) == "slimy_wall" then return true end
+    end
+  end
+  return false
+end
+
+function BRC.you.free_offhand()
+  if BRC.you.mut_lvl("missing a hand") > 0 then return true end
+  return not items.equipped_at("offhand")
+end
+
+function BRC.you.have_shield()
+  return BRC.it.is_shield(items.equipped_at("offhand"))
+end
+
+function BRC.you.in_hell(exclude_vestibule)
+  local branch = you.branch()
+  if exclude_vestibule and branch == "Hell" then return false end
+  return util.contains(BRC.HELL_BRANCHES, branch)
+end
+
+function BRC.you.miasma_immune()
+  if util.contains(BRC.UNDEAD_RACES, you.race()) then return true end
+  if util.contains(BRC.NONLIVING_RACES, you.race()) then return true end
+  return false
+end
+
+function BRC.you.mutation_immune()
+  return util.contains(BRC.UNDEAD_RACES, you.race())
+end
+
+function BRC.you.shapeshifting_skill()
+  local skill = you.skill("Shapeshifting")
+  local AMU = "amulet of wildshape"
+  if util.exists(items.inventory(), function(i) return i.name("qual") == AMU end) then
+    return skill + 5
+  end
+  return skill
+end
+
+function BRC.you.zero_stat()
+  return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
+
+---- Equipment slot functions ----
+--- The number of equipment slots available for the item (usually 1)
+function BRC.you.num_eq_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.it.is_aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
+end
+
+--- Get all equipped items in the slot type for the item
+-- @return (table, int) - items, and num_slots (max size the list can be)
+-- This is usually a list of length 1, with num_slots==1
+function BRC.you.equipped_at(it)
+  local all_aux = {}
+  local num_slots = BRC.you.num_eq_slots(it)
+  local slot_name = it.is_weapon and "weapon"
+    or BRC.it.is_body_armour(it) and "armour"
+    or it.subtype()
+
+  for i = 1, num_slots do
+    local eq = items.equipped_at(slot_name, i)
+    all_aux[#all_aux + 1] = eq
+  end
+
+  return all_aux, num_slots
+end
+
+--- Returns all items whose slot matches idx
+function BRC.you.items_in_slot(idx)
+  local res = {}
+  for _, inv in ipairs(items.inventory()) do
+    if inv.slot == idx then
+      res[#res + 1] = inv
+    end
+  end
+
+  return res
+end
+
+
+---- Skill attributes ----
+function BRC.you.top_wpn_skill()
+  local max_weap_skill = 0
+  local pref = nil
+  for _, v in ipairs(BRC.WEAP_SCHOOLS) do
+    if BRC.you.skill(v) > max_weap_skill then
+      max_weap_skill = BRC.you.skill(v)
+      pref = v
+    end
+  end
+  return pref
+end
+
+function BRC.you.skill(skill)
+  if skill and not skill:contains(",") then return you.skill(skill) end
+
+  local skills = crawl.split(skill, ",")
+  local sum = 0
+  local count = 0
+  for _, s in ipairs(skills) do
+    sum = sum + you.skill(s)
+    count = count + 1
+  end
+
+  return sum / count
+end
+
+function BRC.you.skill_with(it)
+  if BRC.it.is_magic_staff(it) then
+    return math.max(BRC.get.skill(BRC.it.get_staff_school(it)), BRC.you.skill("Staves"))
+  end
+  if it.is_weapon then return BRC.you.skill(it.weap_skill) end
+  if BRC.it.is_body_armour(it) then return BRC.you.skill("Armour") end
+  if BRC.it.is_shield(it) then return BRC.you.skill("Shields") end
+  if BRC.it.is_talisman(it) then return BRC.you.shapeshifting_skill() end
+
+  return nil
+end
+
+}
+############################### End lua/util/you.lua ###############################
+##########################################################################################
+
+################################### Begin lua/util/equipment.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--[[
+These functions aren't as generalizable as other util functions. They contain many design choices.
+Examples: Weapon DPS calculation, treating dragon scales as branded, what a "risky item" is, etc.
+--]]
+BRC.eq = {}
+
+---- Local functions (Mostly mirroring crawl calculations) ----
+-- Last verified against: dcss v0.33.1
+local function get_size_penalty()
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
+end
+
+local function get_unadjusted_armour_pen(encumb)
+  local pen = encumb - 2 * BRC.you.mut_lvl("sturdy frame")
+  if pen > 0 then return pen end
+  return 0
+end
+
+local function get_adjusted_armour_pen(encumb, str)
+  local base_pen = get_unadjusted_armour_pen(encumb)
+  return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
+end
+
+local function get_adjusted_dodge_bonus(encumb, str, dex)
+  local size_factor = -2 * get_size_penalty()
+  local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
+  local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
+  if armour_dodge_penalty <= 0 then return dodge_bonus end
+
+  if armour_dodge_penalty >= str then return dodge_bonus * str / (armour_dodge_penalty * 2) end
+  return dodge_bonus - dodge_bonus * armour_dodge_penalty / (str * 2)
+end
+
+local function get_shield_penalty(sh)
+  return 2 * sh.encumbrance * sh.encumbrance
+    * (27 - you.skill("Shields")) / 27
+    / (25 + 5 * you.strength())
+end
+
+local function get_branded_delay(delay, ego)
+  if not ego then return delay end
+  if ego == "speed" then
+    return delay * 2 / 3
+  elseif ego == "heavy" then
+    return delay * 1.5
+  end
+  return delay
+end
+
+local function get_weap_min_delay(it)
+  -- This is an abbreviated version of the actual calculation.
+  -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
+  if it.artefact and it.name("qual"):contains("woodcutter's axe") then return it.delay end
+
+  local min_delay = math.floor(it.delay / 2)
+  if it.weap_skill == "Short Blades" then return 5 end
+  if it.is_ranged then
+    local basename = it.name("base")
+    local is_2h_ranged = basename:contains("crossbow") or basename:contains("arbalest")
+    if is_2h_ranged then return math.max(min_delay, 10) end
+  end
+
+  return math.min(min_delay, 7)
+end
+
+local function get_weap_delay(it)
+  local delay = it.delay - BRC.you.skill(it.weap_skill) / 2
+  delay = math.max(delay, get_weap_min_delay(it))
+  delay = get_branded_delay(delay, BRC.eq.get_ego(it))
+  delay = math.max(delay, 3)
+
+  local sh = items.equipped_at("offhand")
+  if BRC.it.is_shield(sh) then delay = delay + get_shield_penalty(sh) end
+
+  if it.is_ranged then
+    local worn = items.equipped_at("armour")
+    if worn then
+      local str = you.strength()
+
+      local cur = items.equipped_at("weapon")
+      if cur and cur ~= it and cur.artefact then
+        if it.artefact and it.artprops["Str"] then str = str + it.artprops["Str"] end
+        if cur.artefact and cur.artprops["Str"] then str = str - cur.artprops["Str"] end
+      end
+
+      delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
+    end
+  end
+
+  return delay / 10
+end
+
+local function get_slay_bonuses()
+  local sum = 0
+
+  -- Slots can go as high as 18 afaict
+  for i = 0, 20 do
+    local inv = items.equipped_at(i)
+    if inv then
+      if BRC.it.is_ring(inv) then
+        if inv.artefact then
+          local name = inv.name()
+          local idx = name:find("Slay", 1, true)
+          if idx then
+            local slay = tonumber(name:sub(idx + 5, idx + 5))
+            if slay == 1 then
+              local next_digit = tonumber(name:sub(idx + 6, idx + 6))
+              if next_digit then slay = 10 + next_digit end
+            end
+
+            if name:sub(idx + 4, idx + 4) == "+" then
+              sum = sum + slay
+            else
+              sum = sum - slay
+            end
+          end
+        elseif BRC.eq.get_ego(inv) == "Slay" then
+          sum = sum + inv.plus
+        end
+      elseif inv.artefact and (BRC.it.is_armour(inv, true) or BRC.it.is_amulet(inv)) then
+        local slay = inv.artprops["Slay"]
+        if slay then sum = sum + slay end
+      end
+    end
+  end
+
+  if you.race() == "Demonspawn" then
+    sum = sum + 3 * BRC.you.mut_lvl("augmentation")
+    sum = sum + BRC.you.mut_lvl("sharp scales")
+  end
+
+  return sum
+end
+
+local function get_staff_bonus_dmg(it, dmg_type)
+  if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
+  if dmg_type == BRC.DMG_TYPE.plain then
+    local basename = it.name("base")
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
+  end
+
+  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
+  local evo_skill = you.skill("Evocations")
+
+  local chance = (2 * evo_skill + spell_skill) / 30
+  if chance > 1 then chance = 1 end
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
+  return avg_dmg * chance
+end
+
+
+---- Formatting stats for alerts & inscriptions ----
+--- Format damage values for consistent display width (4 characters)
+local function format_dmg(dmg)
+  if dmg < 10 then return string.format("%.2f", dmg) end
+  if dmg > 99.9 then return ">100" end
+  return string.format("%.1f", dmg)
+end
+
+--- Format stat string for display or inscription
+local function format_stat(abbr, val, is_worn)
+  local stat_str = string.format("%.1f", val)
+  if val < 0 then
+    return string.format("%s%s", abbr, stat_str)
+  elseif is_worn then
+    return string.format("%s:%s", abbr, stat_str)
+  else
+    return string.format("%s+%s", abbr, stat_str)
+  end
+end
+
+--- Get the armour stats as strings
+-- @return (string, string) AC or SH, and EV.  If not worn, returns deltas from the worn item stats
+function BRC.eq.arm_stats(it)
+  if not BRC.it.is_armour(it) then return "", "" end
+
+  local equip_type = it.equip_type
+  if equip_type == "body armour" then equip_type = "armour" end
+  local cur = items.equipped_at(equip_type)
+  local is_worn = it.equipped or (it.ininventory and cur and cur.slot == it.slot)
+  local cur_ac = 0
+  local cur_sh = 0
+  local cur_ev = 0
+
+  -- Show as delta if wearing a different item (and only one equip slot)
+  if cur and not is_worn and BRC.you.num_eq_slots(it) == 1 then
+    if BRC.it.is_shield(cur) then
+      cur_sh = BRC.eq.get_sh(cur)
+      cur_ev = -get_shield_penalty(cur)
+    else
+      cur_ac = BRC.eq.get_ac(cur)
+      cur_ev = BRC.eq.get_ev(cur)
+    end
+  end
+
+  if BRC.it.is_shield(it) then
+    local sh_str = format_stat("SH", BRC.eq.get_sh(it) - cur_sh, is_worn)
+    local ev_str = format_stat("EV", -get_shield_penalty(it) - cur_ev, is_worn)
+    return sh_str, ev_str
+  else
+    local ac_str = format_stat("AC", BRC.eq.get_ac(it) - cur_ac, is_worn)
+    if not BRC.it.is_body_armour(it) then return ac_str end
+    local ev_str = format_stat("EV", BRC.eq.get_ev(it) - cur_ev, is_worn)
+    return ac_str, ev_str
+  end
+end
+
+--- Get the weapon stats as a string
+-- @return (string) DPS, damage, delay, and accuracy
+function BRC.eq.wpn_stats(it, dmg_type)
+  if not it.is_weapon then return end
+  if not dmg_type then
+    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
+      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    else
+      dmg_type = BRC.DMG_TYPE.plain
+    end
+  end
+
+  local dmg = format_dmg(BRC.eq.get_dmg(it, dmg_type))
+  local delay = get_weap_delay(it)
+  local delay_str = string.format("%.1f", delay)
+  if delay < 1 then
+    delay_str = string.format("%.2f", delay)
+    delay_str = delay_str:sub(2, #delay_str)
+  end
+
+  local dps = format_dmg(dmg / delay)
+  local acc = it.accuracy + (it.plus or 0)
+  if acc >= 0 then acc = "+" .. acc end
+
+  --TODO: This would be nice if it worked in all UIs
+  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
+  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+end
+
+
+---- Armour stats ----
+function BRC.eq.get_ac(it)
+  local it_plus = it.plus or 0
+
+  if it.artefact and it.is_identified then
+    local art_ac = it.artprops["AC"]
+    if art_ac then it_plus = it_plus + art_ac end
+  end
+
+  local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
+  if not BRC.it.is_body_armour(it) then return ac end
+
+  if BRC.you.mut_lvl("deformed body") + BRC.you.mut_lvl("pseudopods") > 0 then ac = ac * 0.6 end
+
+  return ac
+end
+
+function BRC.eq.get_ev(it)
+  -- This function computes the armour-based component to standard EV (not paralysed, etc)
+  -- Factors in stat changes from this armour and removing current one
+  local str = you.strength()
+  local dex = you.dexterity()
+  local no_art_str = str
+  local no_art_dex = dex
+  local art_ev = 0
+
+  -- Adjust str/dex/EV for artefact stat changes
+  local worn = items.equipped_at("armour")
+  if worn and worn.artefact then
+    if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
+    if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
+    if worn.artprops["EV"] then art_ev = art_ev - worn.artprops["EV"] end
+  end
+
+  if it.artefact then
+    if it.artprops["Str"] then str = str + it.artprops["Str"] end
+    if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
+    if it.artprops["EV"] then art_ev = art_ev + it.artprops["EV"] end
+  end
+
+  if str <= 0 then str = 1 end
+
+  local dodge_bonus = get_adjusted_dodge_bonus(it.encumbrance, str, dex)
+  local naked_dodge_bonus = get_adjusted_dodge_bonus(0, no_art_str, no_art_dex)
+  return (dodge_bonus - naked_dodge_bonus) + art_ev - get_adjusted_armour_pen(it.encumbrance, str)
+end
+
+function BRC.eq.get_sh(it)
+  local dex = you.dexterity()
+  if it.artefact and it.is_identified then
+    local art_dex = it.artprops["Dex"]
+    if art_dex then dex = dex + art_dex end
+  end
+
+  local cur = items.equipped_at("offhand")
+  if BRC.it.is_shield(cur) and cur.artefact and cur.slot ~= it.slot then
+    local art_dex = cur.artprops["Dex"]
+    if art_dex then dex = dex - art_dex end
+  end
+
+  local it_plus = it.plus or 0
+
+  local base_sh = it.ac * 2
+  local shield = base_sh * (50 + you.skill("Shields") * 5 / 2)
+  shield = shield + 200 * it_plus
+  shield = shield + 38 * (you.skill("Shields") + 3 + dex * (base_sh + 13) / 26)
+  return shield / 200
+end
+
+
+---- Weapon stats ----
+function BRC.eq.get_dps(it, dmg_type)
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+  return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
+end
+
+function BRC.eq.get_dmg(it, dmg_type)
+  -- Returns an adjusted weapon damage = damage * speed
+  -- Includes stat/slay changes between weapon and the one currently wielded
+  -- Aux attacks not included
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+  local it_plus = it.plus or 0
+  -- Adjust str/dex/slay from artefacts
+  local str = you.strength()
+  local dex = you.dexterity()
+
+  -- Adjust str/dex/EV for artefact stat changes
+  if not it.equipped then
+    local wielded = items.equipped_at("weapon")
+    if wielded and wielded.artefact then
+      if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
+      if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
+      if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
+    end
+
+    if it.artefact and it.is_identified then
+      if it.artprops["Str"] then str = str + it.artprops["Str"] end
+      if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
+      if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
+    end
+  end
+
+  local stat = str
+  if it.is_ranged or it.weap_skill:contains("Blades") then stat = dex end
+
+  local stat_mod = 0.75 + 0.025 * stat
+  local skill_mod = (1 + BRC.you.skill(it.weap_skill) / 50) * (1 + you.skill("Fighting") / 60)
+
+  it_plus = it_plus + get_slay_bonuses()
+
+  local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
+  local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
+
+  if BRC.it.is_magic_staff(it) then return pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type) end
+
+  local ego = BRC.eq.get_ego(it)
+  if ego and (
+      dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
+      or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
+      or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
+      or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
+    )
+  then
+    local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
+    return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
+  end
+
+  return pre_brand_dmg
+end
+
+
+---- Item properties ----
+--- Get the ego of an item, with custom logic:
+-- Treat unusable egos as no ego. Always lowercase ego in return value.
+-- Include armours with innate effects (except steam dragon scales)
+-- Artefacts return their normal ego if they have one, else their name
+-- @param no_stat_only_egos (optional bool) Exclude egos that only affect speed/damage
+function BRC.eq.get_ego(it, no_stat_only_egos)
+  local ego = it.ego(true)
+  if ego then
+    ego = ego:lower()
+    if BRC.eq.is_useless_ego(ego) or (no_stat_only_egos and (ego == "speed" or ego == "heavy")) then
+      return it.artefact and it.name() or nil
+    end
+    return ego
+  end
+
+  if BRC.it.is_body_armour(it) then
+    local name = it.name("qual")
+    local good_scales = name:contains("dragon scales") and not name:contains("steam")
+    if name:contains("troll leather") or good_scales then return name end
+  end
+
+  return it.artefact and it.name() or nil
+end
+
+function BRC.eq.get_hands(it)
+  if you.race() ~= "Formicid" then return it.hands end
+  local st = it.subtype()
+  if st == "giant club" or st == "giant spiked club" then return 2 end
+  return 1
+end
+
+function BRC.eq.is_risky(it)
+  if it.artefact then
+    for k, v in pairs(it.artprops) do
+      if util.contains(BRC.BAD_ART_PROPS, k) or v < 0 then return true end
+    end
+  end
+
+  local ego_name = BRC.eq.get_ego(it)
+  return ego_name and util.contains(BRC.RISKY_EGOS, ego_name)
+end
+
+function BRC.eq.is_useless_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
+end
+
+}
+############################### End lua/util/equipment.lua ###############################
+##########################################################################################
+
+################################### Begin lua/util/options.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+-----------------------------------------------
+---- BRC.opt - Functions for Crawl options ----
+BRC.opt = {}
+
+---- Single turn mutes: Mute a message for the current turn only ----
+local _single_turn_mutes = {}
+
+function BRC.opt.single_turn_mute(pattern)
+  BRC.opt.message_mute(pattern, true)
+  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
+end
+
+function BRC.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+end
+
+--- Get key assigned to a crawl command (e.g. "CMD_EXPLORE")
+function BRC.opt.cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+---- crawl.setopt() wrappers ----
+function BRC.opt.autopickup_exceptions(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
+end
+
+function BRC.opt.explore_stop(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("explore_stop %s %s", op, pattern))
+end
+
+function BRC.opt.explore_stop_pickup_ignore(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("explore_stop_pickup_ignore %s %s", op, pattern))
+end
+
+function BRC.opt.flash_screen_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
+end
+
+function BRC.opt.force_more_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
+end
+
+-- Bind a macro to a key. Function must be global and not a member of a module.
+function BRC.opt.macro(key, function_name)
+  if type(_G[function_name]) ~= "function" then
+    BRC.mpr.error("Function %s is not a global function", function_name)
+    return
+  end
+  BRC.mpr.debug(
+    string.format(
+      "Assigning macro: %s to key: %s",
+      BRC.txt.magenta(function_name .. "()"),
+      BRC.txt.lightred("<<< '" .. key .. "' >>")
+    )
+  )
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+function BRC.opt.runrest_ignore_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
+end
+
+function BRC.opt.runrest_stop_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
+end
+
+}
+############################### End lua/util/options.lua ###############################
+##########################################################################################
 
 ################################### Begin lua/core/data.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
@@ -1060,7 +2110,7 @@ lua_file = crawl-rc/lua/core/util.lua
 BRC.Data - Persistent data management module
 Manages persistent data across games and saves
 Author: buehler
-Dependencies: core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/util/*
 --]]
 
 ---- Initialize BRC namespace and Data module
@@ -1232,6 +2282,195 @@ end
 
 }
 ############################### End lua/core/data.lua ###############################
+##########################################################################################
+
+################################### Begin lua/core/config.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--[[
+BRC Configuration - Various configs, overriding default values in feature configs.
+Author: buehler
+Dependencies: (none)
+Usage:
+  - Update BRC.use_config to load the corresponding config.
+  - Update each config or create new ones.
+  - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
+  - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
+  - If using config_memory == "full", the function needs to be saved as a string instead. --]]
+-- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
+
+---- Persistent variables ----
+brc_config_full = BRC.Data.persist("brc_config_full", nil)
+brc_config_name = BRC.Data.persist("brc_config_name", nil)
+
+-- Default Config Profile (defines all non-feature values)
+BRC.Config = {
+  mpr = {
+    emojis = false, -- Use emojis in alerts and announcements
+    show_debug_messages = false,
+    debug_to_stderr = false,
+  },
+
+  dump = {
+    max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
+    omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
+  },
+
+  unskilled_egos_usable = false, -- Does "Armour of <MagicSkill>" have an ego when skill is 0?
+
+  --- How weapon damage is calculated for inscriptions+pickup/alert: (factor * DMG + offset)
+  BrandBonus = {
+    chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
+    distort = { factor = 1.0, offset = 6.0 },
+    drain = { factor = 1.25, offset = 2.0 },
+    elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
+    flame = { factor = 1.25, offset = 0 },
+    freeze = { factor = 1.25, offset = 0 },
+    heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
+    pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
+    spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
+    venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
+
+    subtle = { -- Values to use for weapon "scores" (not damage)
+      antimagic = { factor = 1.1, offset = 0 },
+      holy = { factor = 1.15, offset = 0 },
+      penet = { factor = 1.3, offset = 0 },
+      protect = { factor = 1.15, offset = 0 },
+      reap = { factor = 1.3, offset = 0 },
+      vamp = { factor = 1.2, offset = 0 },
+    },
+  },
+} -- BRC.Profiles.Default (do not remove this comment)
+BRC.Config = BRC.Profiles.Default -- Always init to Default profile
+
+---- Local functions ----
+local function get_validated_config_name(input_name)
+  if type(input_name) ~= "string" then
+    BRC.mpr.warning("Non-string config name: " .. tostring(input_name))
+  else
+    local config_name = input_name:lower()
+    if config_name == "ask" then
+      if you.turns() > 0 and brc_config_name then
+        return get_validated_config_name(brc_config_name)
+      end
+    elseif config_name == "previous" then
+      if c_persist.BRC and c_persist.BRC.current_config then
+        return get_validated_config_name(c_persist.BRC.current_config)
+      else
+        BRC.mpr.warning("No previous config found.")
+      end
+    else
+      for k, _ in pairs(BRC.Profiles) do
+        if config_name == k:lower() then return k end
+      end
+      BRC.mpr.warning("Could not load config: " .. tostring(input_name))
+    end
+  end
+
+  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
+end
+
+local function safe_call_string(str, module_name)
+  local chunk, err = loadstring(str)
+  if not chunk then
+    BRC.mpr.error("Error loading " .. module_name .. ".Config.init string: ", err)
+  else
+    local success, result = pcall(chunk)
+    if not success then
+      BRC.mpr.error("Error executing " .. module_name .. ".Config.init string: ", result)
+    end
+  end
+end
+
+local function override_table(source, dest)
+  if type(source) ~= "table" then return end
+
+  for key, value in pairs(source) do
+    if BRC.util.is_map(value) then
+      if not dest[key] then dest[key] = {} end
+      override_table(value, dest[key])
+    elseif key ~= "init" then
+      dest[key] = value
+    end
+  end
+end
+
+local function load_profile(input_config)
+  local config_name
+  if type(input_config) == "table" then
+    BRC.Config = input_config
+    config_name = brc_config_name or "Unknown"
+  else
+    config_name = get_validated_config_name(input_config)
+    BRC.Config = util.copy_table(BRC.Profiles.Default)
+    for k, v in pairs(BRC.Profiles[config_name]) do
+      BRC.Config[k] = v
+    end
+  end
+
+  -- Do config init() and feature overrides
+  if type(BRC.Config.init) == "function" then
+    BRC.Config.init()
+  elseif type(BRC.Config.init) == "string" then
+    safe_call_string(BRC.Config.init, "BRC")
+  end
+  for name, _ in pairs(BRC.get_registered_features()) do
+    BRC.process_feature_config(name)
+  end
+
+  BRC.mpr.info("Using config: " .. BRC.txt.lightcyan(config_name))
+  return config_name
+end
+
+---- Public API ----
+function BRC.load_config()
+  if BRC.store_config and BRC.store_config:lower() == "full" then
+    brc_config_name = load_profile(brc_config_full or brc_config_name or BRC.use_config)
+    brc_config_full = BRC.Config
+  elseif BRC.store_config and BRC.store_config:lower() == "name" then
+    brc_config_name = load_profile(brc_config_name or BRC.use_config)
+  else
+    brc_config_name = load_profile(BRC.use_config)
+  end
+end
+
+function BRC.process_feature_config(feature_name)
+  local f = BRC.get_registered_features()[feature_name]
+  if not f.Config then
+    f.Config = {}
+  elseif type(f.Config.init) == "function" then
+    f.Config.init()
+  elseif type(f.Config.init) == "string" then
+    safe_call_string(f.Config.init, feature_name)
+  end
+
+  override_table(BRC.Config[feature_name], f.Config)
+end
+
+--- Stringify BRC.Config and all feature configs, including headers
+function BRC.serialize_config()
+  local tokens = {}
+  tokens[#tokens + 1] = BRC.txt.lightcyan("\n---BRC Config---\n")
+  tokens[#tokens + 1] = BRC.txt.tostr(BRC.Config, true)
+
+  local all_features = BRC.get_registered_features()
+  local keys = util.keys(all_features)
+  util.sort(keys)
+
+  for i = 1, #keys do
+    local name = keys[i]
+    local feature = all_features[name]
+    if feature.Config then
+      local header = BRC.txt.cyan("\n\n---Feature Config: " .. name .. "---\n")
+      tokens[#tokens + 1] = header .. BRC.txt.tostr(feature.Config, true)
+    end
+  end
+
+  return table.concat(tokens)
+end
+
+}
+############################### End lua/core/config.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/core/brc.lua ###################################
@@ -1492,7 +2731,7 @@ function BRC.init()
 
   BRC.mpr.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
   BRC.opt.macro("\\{5}", "macro_brc_cntl_e")
 
   BRC.mpr.debug("Verify persistent data reload...")
@@ -2452,7 +3691,7 @@ function f_drop_inferior.c_assign_invletter(it)
 
   if marked_something and f_drop_inferior.Config.hotkey_drop then
     BRC.opt.hotkey("drop", "your useless items", function()
-      crawl.sendkeys(BRC.opt.cmd_key("CMD_DROP") .. ",\r")
+      crawl.sendkeys(BRC.util.get_cmd_key("CMD_DROP") .. ",\r")
     end, 1)
   end
 end
@@ -2875,7 +4114,7 @@ function f_fully_recover.init()
 
   BRC.opt.runrest_ignore_message("recovery:.*", true)
   BRC.opt.runrest_ignore_message("duration:.*", true)
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
 
   BRC.opt.message_mute("^HP restored", true)
   BRC.opt.message_mute("Magic restored", true)
@@ -3097,7 +4336,7 @@ function BRC.set_waypoint_hotkey(name, push_front)
 
   local move_to_waypoint = function()
     f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
-    crawl.sendkeys({ BRC.opt.cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+    crawl.sendkeys({ BRC.util.get_cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
 
     -- Delete waypoint after travel, silence the prompts, push a pickup hotkey
     crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })
@@ -3328,7 +4567,7 @@ function f_misc_alerts.init()
   prev_spell_levels = you.spell_levels()
 
   if Config.save_with_msg then
-    BRC.opt.macro(BRC.opt.cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
+    BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
       ma_saved_msg = nil
@@ -3484,7 +4723,7 @@ local function quiver_missile_by_name(name)
   end
 
   if not slot then return end
-  crawl.sendkeys(BRC.opt.cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
+  crawl.sendkeys(BRC.util.get_cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
 end
 
 ---- Macro function: Fire from quiver ----
@@ -3524,7 +4763,7 @@ end
 function f_quiver_reminders.init()
   last_thrown = nil
   last_thrown_turn = -1
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
 end
 
 function f_quiver_reminders.c_message(text, _)
@@ -3754,7 +4993,7 @@ end
 
 -- Temple functions
 local function search_altars()
-  local cmd_key = BRC.opt.cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
+  local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, "altar", "\r" })
 end
 
@@ -3774,7 +5013,7 @@ end
 
 -- Gauntlet functions
 local function search_gauntlet()
-  local cmd_key = BRC.opt.cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
+  local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
 end
 
@@ -3971,8 +5210,8 @@ end
 function f_safe_stairs.init()
   ss_cur_location = you.where()
 
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
 end
 
 function f_safe_stairs.ready()

@@ -3,53 +3,28 @@
   crawl.mpr("<yellow>If running BRC as multi-file, you must restart crawl after saving a game, to reset memory.")
   crawl.more()
 }
-lua_file = crawl-rc/lua/core/config.lua
-
-####### Main options #######
-easy_confirm = all
-show_more = false
-small_more = true
-mouse_input = false
-tile_web_mouse_control = false
-default_manual_training = true
-autofight_caught = true
-rest_wait_both = true
-rest_wait_ancestor = true
-
-autofight_stop = 40
-hp_warning = 20
-item_stack_summary_minimum = 8
-fail_severity_to_confirm = 4
-
-sort_menus = true:equipped,art,ego,basename,identified,qualname,>qty
-drop_filter += useless_item, forbidden
-fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, dart, stone
-
-
-####### Explore options #######
-explore_delay = -1
-travel_delay = -1
-rest_delay = -1
-view_delay = 100
-show_travel_trail = true
-
-explore_stop = altars,branches,portals,runed_doors,greedy_pickup_smart
-explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang, javelin
-
 
 ### Mostly normal RC options ###
+include = crawl-rc/rc/main.rc
+include = crawl-rc/rc/macros.rc
+include = crawl-rc/rc/slot-defaults.rc
 include = crawl-rc/rc/autoinscribe.rc
-include = crawl-rc/rc/autopickup.rc
 include = crawl-rc/rc/display.rc
 include = crawl-rc/rc/fm-messages.rc
-include = crawl-rc/rc/macros.rc
 include = crawl-rc/rc/runrest.rc
-include = crawl-rc/rc/slot-defaults.rc
 
 ### buehler.rc core files ###
+lua_file = crawl-rc/lua/core/_header.lua
 lua_file = crawl-rc/lua/core/constants.lua
-lua_file = crawl-rc/lua/core/util.lua
+lua_file = crawl-rc/lua/util/util.lua
+lua_file = crawl-rc/lua/util/text.lua
+lua_file = crawl-rc/lua/util/mpr.lua
+lua_file = crawl-rc/lua/util/item.lua
+lua_file = crawl-rc/lua/util/you.lua
+lua_file = crawl-rc/lua/util/equipment.lua
+lua_file = crawl-rc/lua/util/options.lua
 lua_file = crawl-rc/lua/core/data.lua
+lua_file = crawl-rc/lua/core/config.lua
 lua_file = crawl-rc/lua/core/brc.lua
 
 ### Lua feature files ###

@@ -7,10 +7,19 @@ function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
 end
 
+--- Get key assigned to a crawl command (e.g. "CMD_EXPLORE")
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
 --- Tries sendkeys() first, fallback to do_commands() (which isn't always immediate)
 -- @param cmd (string) The command to execute like "CMD_EXPLORE"
 function BRC.util.do_cmd(cmd)
-  local key = BRC.opt.cmd_key(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
   if key then
     crawl.sendkeys({ key })
   else

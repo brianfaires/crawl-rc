@@ -1,5 +1,4 @@
 # See safe-consumables.lua for consumable inscriptions
-
 ai := autoinscribe
 
 # General

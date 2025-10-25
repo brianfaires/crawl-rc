@@ -70,8 +70,8 @@ end
 function f_safe_stairs.init()
   ss_cur_location = you.where()
 
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
 end
 
 function f_safe_stairs.ready()

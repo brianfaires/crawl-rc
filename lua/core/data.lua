@@ -2,7 +2,7 @@
 BRC.Data - Persistent data management module
 Manages persistent data across games and saves
 Author: buehler
-Dependencies: core/constants.lua, core/util.lua
+Dependencies: core/constants.lua, core/util/*
 --]]
 
 ---- Initialize BRC namespace and Data module

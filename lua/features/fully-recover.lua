@@ -110,7 +110,7 @@ function f_fully_recover.init()
 
   BRC.opt.runrest_ignore_message("recovery:.*", true)
   BRC.opt.runrest_ignore_message("duration:.*", true)
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
 
   BRC.opt.message_mute("^HP restored", true)
   BRC.opt.message_mute("Magic restored", true)

@@ -30,7 +30,7 @@ local function quiver_missile_by_name(name)
   end
 
   if not slot then return end
-  crawl.sendkeys(BRC.opt.cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
+  crawl.sendkeys(BRC.util.get_cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
 end
 
 ---- Macro function: Fire from quiver ----
@@ -70,7 +70,7 @@ end
 function f_quiver_reminders.init()
   last_thrown = nil
   last_thrown_turn = -1
-  BRC.opt.macro(BRC.opt.cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
 end
 
 function f_quiver_reminders.c_message(text, _)
