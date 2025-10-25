@@ -286,13 +286,16 @@ function BRC.dump(verbose, skip_mpr)
   if verbose then
     tokens[#tokens + 1] = BRC.txt.serialize_chk_lua_save()
     tokens[#tokens + 1] = BRC.txt.serialize_inventory()
-    tokens[#tokens + 1] = BRC.serialize_config()
+    util.append(tokens, BRC.serialize_config())
   end
 
-  local text = table.concat(tokens, "\n")
-  if not skip_mpr then BRC.mpr.white(text) end
+  if not skip_mpr then
+    for _, token in ipairs(tokens) do
+      BRC.mpr.white(token)
+    end
+  end
 
-  return text
+  return table.concat(tokens, "\n")
 end
 
 ---- Macros ----

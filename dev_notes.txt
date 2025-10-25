@@ -23,6 +23,7 @@ https://github.com/crawl/crawl/pull/4830 -> remove "body armour" workaround
 https://github.com/crawl/crawl/pull/4814 -> remove cap on inscription colors
 https://github.com/crawl/crawl/issues/4789 -> drop_disables_autopickup overrides exclude-dropped
 resting statuses fails after 100 turns (blocks fully-recover.lua behavior)
+Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
 
 ### TODO - requiring crawl PR?
 1. Wait for allies to fully heal

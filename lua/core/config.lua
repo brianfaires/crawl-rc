@@ -157,11 +157,11 @@ function BRC.process_feature_config(feature_name)
   override_table(BRC.Config[feature_name], f.Config)
 end
 
---- Stringify BRC.Config and all feature configs, including headers
+--- Stringify BRC.Config and each feature config, with headers
+-- @return table of strings, one for each config section (1 big string will overflow crawl.mpr())
 function BRC.serialize_config()
   local tokens = {}
-  tokens[#tokens + 1] = BRC.txt.lightcyan("\n---BRC Config---\n")
-  tokens[#tokens + 1] = BRC.txt.tostr(BRC.Config, true)
+  tokens[#tokens + 1] = BRC.txt.lightcyan("\n---BRC Config---\n") .. BRC.txt.tostr(BRC.Config, true)
 
   local all_features = BRC.get_registered_features()
   local keys = util.keys(all_features)
@@ -176,5 +176,5 @@ function BRC.serialize_config()
     end
   end
 
-  return table.concat(tokens)
+  return tokens
 end
