@@ -49,15 +49,6 @@ for k, v in pairs(BRC.COL) do
   BRC.mpr[v] = BRC.mpr[k]
 end
 
-function BRC.mpr.color(msg, color, channel)
-  if color then
-    BRC.mpr[color](msg, channel)
-  else
-    crawl.mpr(tostring(msg), channel)
-    crawl.flush_prev_message()
-  end
-end
-
 
 ---- Pre-formatted logging functions ----
 local function log_message(message, context, color)
@@ -123,7 +114,7 @@ end
 
 --- Message as a force_more_message
 function BRC.mpr.more(msg, color, channel)
-  BRC.mpr.color(msg, color, channel)
+  BRC.mpr[color](msg, channel)
   you.stop_activity()
   crawl.redraw_screen()
   crawl.more()
@@ -135,7 +126,7 @@ function BRC.mpr.optmore(show_more, msg, color, channel)
   if show_more then
     BRC.mpr.more(msg, color, channel)
   else
-    BRC.mpr.color(msg, color, channel)
+    BRC.mpr[color](msg, channel)
   end
 end
 
@@ -171,7 +162,7 @@ function BRC.mpr.yesno(msg, color, capital_only)
   msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
 
   for i = 1, 10 do
-    BRC.mpr.color(msg, color, "prompt")
+    BRC.mpr[color](msg, "prompt")
     local res = crawl.getch()
     if res and res >= 0 and res <= 255 then
       local c = string.char(res)
