@@ -379,6 +379,8 @@ function BRC.Data.persist(name, default_value)
     BRC.mpr.warning("Multiple calls to BRC.Data.persist(" .. name .. ", ...)")
   end
   if type(default_value) == "table" then
+    -- Preserve the user's original table (may be in a config, etc)
+    default_value = util.copy_table(default_value)
     _default_values[name] = util.copy_table(default_value)
   else
     _default_values[name] = default_value
@@ -428,7 +430,11 @@ end
 function BRC.Data.reset()
   if _persist_names then
     for _, name in ipairs(_persist_names) do
-      _G[name] = _default_values[name]
+      if type(_default_values[name]) == "table" then
+        _G[name] = util.copy_table(_default_values[name])
+      else
+        _G[name] = _default_values[name]
+      end
     end
   end
 
