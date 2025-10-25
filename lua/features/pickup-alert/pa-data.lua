@@ -45,9 +45,7 @@ function f_pa_data.find(table_ref, it)
 end
 
 function f_pa_data.insert(table_ref, it)
-  local is_armour = BRC.it.is_armour(it, true)
-  if not (it.is_weapon or is_armour or BRC.it.is_talisman(it)) then return end
-
+  if not (it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_talisman(it)) then return end
   if table_ref == pa_recent_alerts then
     pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
   else
@@ -56,7 +54,7 @@ function f_pa_data.insert(table_ref, it)
     if not cur_val or value > cur_val then table_ref[name] = value end
 
     -- For armour with good brand, also add the unbranded version to the table
-    if is_armour and it.branded and not (it.artefact or BRC.eq.is_risky(it)) then
+    if BRC.it.is_armour(it) and it.branded and not (it.artefact or BRC.eq.is_risky(it)) then
       name = it.name("qual")
       cur_val = tonumber(table_ref[name])
       if not cur_val or value > cur_val then table_ref[name] = value end
@@ -116,12 +114,4 @@ function f_pa_data.update_high_scores(it)
   end
 
   return ret_val
-end
-
----- Hook functions ----
-function f_pa_data.init()
-  -- Update alerts & tables for starting items
-  for _, inv in ipairs(items.inventory()) do
-    f_pa_data.remove(pa_OTA_items, inv)
-  end
 end
