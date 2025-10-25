@@ -102,7 +102,7 @@ function f_pickup_alert.init()
   hold_alerts_for_next_turn = false
 
   BRC.mpr.debug("Initialize pickup-alert submodules...")
-  f_pa_data.init()
+  if f_pa_data.init then f_pa_data.init() end
   BRC.mpr.debug("  pa-data loaded")
 
   if f_pa_armour then
@@ -118,6 +118,12 @@ function f_pickup_alert.init()
   if f_pa_misc then
     if f_pa_misc.init then f_pa_misc.init() end
     BRC.mpr.debug("  pa-misc loaded")
+  end
+
+  -- Don't alert for starting items
+  for _, inv in ipairs(items.inventory()) do
+    f_pa_data.insert(pa_items_alerted, inv)
+    f_pa_data.remove(pa_OTA_items, inv)
   end
 end
 

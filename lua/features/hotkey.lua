@@ -30,7 +30,6 @@ local WAYPOINT_MUTES = {
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
-local waypoint_creation_queue -- Necessary because crawl doesn't update player position mid-turn
 local action_queue
 local cur_action
 
@@ -42,7 +41,7 @@ local function load_next_action()
     cur_action = nil
     return load_next_action()
   end
-  cur_action.turn = you.turns() + cur_action.turn
+  cur_action.turn = you.turns() + 1
   local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
@@ -57,12 +56,7 @@ end
 -- @param is_retry boolean - Internal use only: Prevent infinite recursion
 local function get_avail_waypoint(is_retry)
   for i = 9, 0, -1 do
-    if
-       not travel.waypoint_delta(i)
-       and not util.exists(waypoint_creation_queue, function(wp) return wp.waynum == i end)
-    then
-      return i
-    end
+    if not travel.waypoint_delta(i) then return i end
   end
 
   if is_retry then
@@ -106,11 +100,10 @@ end
 -- @param condition optional function - Function (return bool) - if the action is still valid
 -- @param cleanup optional function - Function to call when the hotkey is not pressed
 -- @return nil
-function BRC.set_hotkey(prefix, suffix, action, turns, push_front, condition, cleanup)
+function BRC.set_hotkey(prefix, suffix, action, push_front, condition, cleanup)
   local act = {
     msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
     act = action,
-    turn = turns or 1,
     cond = condition,
     clean = cleanup,
   } -- act (do not remove this comment)
@@ -119,12 +112,6 @@ function BRC.set_hotkey(prefix, suffix, action, turns, push_front, condition, cl
     table.insert(action_queue, 1, act)
   else
     table.insert(action_queue, act)
-  end
-
-  -- If possible, load the action on same turn as the alert that triggered it
-  if #action_queue == 1 and cur_action == nil then
-    act.turn = act.turn + 1
-    load_next_action()
   end
 end
 
@@ -145,14 +132,19 @@ function BRC.set_pickup_hotkey(name, push_front)
     BRC.mpr.info(name .. " isn't here!")
   end
 
-  BRC.set_hotkey("pickup", name, do_pickup, 1, push_front, condition)
+  BRC.set_hotkey("pickup", name, do_pickup, push_front, condition)
 end
 
 function BRC.set_equip_hotkey(it, push_front)
   if not (it.is_weapon or BRC.it.is_armour(it) or BRC.it.is_jewellery(it)) then return end
   local name = it.name():gsub(" {.*}", "")
 
-  local condition = function() return not it.equipped end
+  local condition = function()
+    local inv_items = util.filter(function(i)
+      return i.name():gsub(" {.*}", "") == name
+    end, items.inventory())
+    return util.exists(inv_items, function(i) return not i.equipped end)
+  end
 
   local do_equip = function()
     local inv_items = util.filter(function(i)
@@ -176,16 +168,19 @@ function BRC.set_equip_hotkey(it, push_front)
     end
   end
 
-  BRC.set_hotkey("equip", name, do_equip, 1, push_front, condition)
+  BRC.set_hotkey("equip", name, do_equip, push_front, condition)
 end
 
+--- Set hotkey as 'move to <name>'
+--- Finds the item, but jumps through some hoops to account for calling this mid-turn
 function BRC.set_waypoint_hotkey(name, push_front)
   local x, y = BRC.it.get_xy(name)
   if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
 
   local waynum = get_avail_waypoint()
   if not waynum then return end
-  waypoint_creation_queue[#waypoint_creation_queue + 1] = { waynum = waynum, x = x, y = y }
+  BRC.opt.single_turn_mute("Waypoint " .. waynum .. " assigned")
+  travel.set_waypoint(waynum, x, y)
 
   local clear_waypoint = function()
     local keys = { BRC.util.cntl("w"), "d", tostring(waynum) }
@@ -212,12 +207,11 @@ function BRC.set_waypoint_hotkey(name, push_front)
     BRC.set_pickup_hotkey(name, true)
   end
 
-  BRC.set_hotkey("move to", name, move_to_waypoint, 1, push_front, nil, clear_waypoint)
+  BRC.set_hotkey("move to", name, move_to_waypoint, push_front, nil, clear_waypoint)
 end
 
 ---- Hook functions ----
 function f_hotkey.init()
-  waypoint_creation_queue = {}
   action_queue = {}
   cur_action = nil
 
@@ -230,14 +224,6 @@ function f_hotkey.c_assign_invletter(it)
 end
 
 function f_hotkey.ready()
-  if #waypoint_creation_queue > 0 then
-    BRC.opt.single_turn_mute("Waypoint \\d assigned")
-    util.foreach(waypoint_creation_queue, function(wp)
-      travel.set_waypoint(wp.waynum, wp.x, wp.y)
-    end)
-    waypoint_creation_queue = {}
-  end
-
   if cur_action == nil or cur_action.turn <= you.turns() then
     expire_cur_action()
   end
