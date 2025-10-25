@@ -1484,7 +1484,7 @@ end
 ---- Messages with stop or force_more ----
 --- Message plus stop travel/activity
 function BRC.mpr.stop(msg, color, channel)
-  BRC.mpr.color(msg, color, channel)
+  BRC.mpr[color](msg, channel)
   you.stop_activity()
 end
 
@@ -5491,8 +5491,11 @@ f_startup.Config = {
   -- For non-spellcasters, add preferred weapon type as 3rd skill target
   init = [[
     if you.skill("Spellcasting") == 0 then
-      local t = f_startup.Config.auto_set_skill_targets
-      t[#t + 1] = { BRC.you.top_wpn_skill(), 8.0 }
+      local wpn_skill = BRC.you.top_wpn_skill()
+      if wpn_skill then
+        local t = f_startup.Config.auto_set_skill_targets
+        t[#t + 1] = { wpn_skill, 8.0 }
+      end
     end
   ]],
 } -- f_startup.Config (do not remove this comment)
@@ -5963,6 +5966,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
     BRC.set_pickup_hotkey(it.name(), true)
+    if it.name():contains("digging") then crawl.more() end
   elseif you.feel_safe() then
     BRC.set_waypoint_hotkey(it.name())
   end

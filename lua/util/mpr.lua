@@ -117,7 +117,7 @@ end
 ---- Messages with stop or force_more ----
 --- Message plus stop travel/activity
 function BRC.mpr.stop(msg, color, channel)
-  BRC.mpr.color(msg, color, channel)
+  BRC.mpr[color](msg, channel)
   you.stop_activity()
 end
 
