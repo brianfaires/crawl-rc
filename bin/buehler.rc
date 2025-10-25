@@ -1420,15 +1420,6 @@ for k, v in pairs(BRC.COL) do
   BRC.mpr[v] = BRC.mpr[k]
 end
 
-function BRC.mpr.color(msg, color, channel)
-  if color then
-    BRC.mpr[color](msg, channel)
-  else
-    crawl.mpr(tostring(msg), channel)
-    crawl.flush_prev_message()
-  end
-end
-
 
 ---- Pre-formatted logging functions ----
 local function log_message(message, context, color)

@@ -79,6 +79,7 @@ end
 
 ---- BRC.txt.tostr() local helper functions ----
 local function limit_lines(str)
+  if not str or str == "" then return str end
   if BRC.Config.dump.max_lines_per_table and BRC.Config.dump.max_lines_per_table > 0 then
     local lines = 1
     str:gsub("\n", function() lines = lines + 1 end)
@@ -140,7 +141,10 @@ local function tostr_map(var, pretty, indents)
     end
   else
     for k, v in pairs(var) do
-      tokens[#tokens + 1] = '["' .. k .. '"] = ' .. BRC.txt.tostr(v, pretty, indents + 1)
+      local val_str = BRC.txt.tostr(v, pretty, indents + 1)
+      if val_str then
+        tokens[#tokens + 1] = '["' .. k .. '"] = ' .. val_str
+      end
     end
   end
 
