@@ -2976,9 +2976,8 @@ function BRC.init()
     BRC.mpr.magenta(string.format("\nInitialized BRC v%s with warnings!%s\n", BRC.VERSION, suffix))
   end
 
-  -- We're a go!
-  BRC.active = true
-  BRC.ready()
+  -- Avoid weird effects from autopickup before first turn
+  BRC.active = you.turns() > 0
   return true
 end
 
@@ -3039,6 +3038,7 @@ function BRC.c_message(text, channel)
 end
 
 function BRC.ready()
+  if you.turns() == 0 then BRC.active = true end
   if not BRC.active then return end
   crawl.redraw_screen()
   BRC.clear_single_turn_mutes()
@@ -4439,8 +4439,8 @@ local function load_next_action()
     cur_action = nil
     return load_next_action()
   end
-  cur_action.turn = you.turns() + 1
   display_cur_message()
+  expire_when_safe = you.feel_safe() or not Config.wait_for_safety
 end
 
 local function expire_cur_action()
@@ -4611,7 +4611,7 @@ end
 function f_hotkey.init()
   action_queue = {}
   cur_action = nil
-  expire_when_safe = false
+  expire_when_safe = true
 
   BRC.opt.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
   BRC.opt.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
@@ -4624,20 +4624,16 @@ end
 function f_hotkey.ready()
   if cur_action == nil then
     load_next_action()
-  elseif cur_action.turn > you.turns() then
-    return
-  elseif not (Config.wait_for_safety and cur_action.cond()) then
+  elseif not Config.wait_for_safety or not cur_action.cond() then
     expire_cur_action()
-  elseif you.feel_safe() then
-    if expire_when_safe then
-      expire_cur_action()
-    else
-      expire_when_safe = true
-      display_cur_message()
-      return
-    end
+  elseif not you.feel_safe() then
+    expire_when_safe = false
+  elseif expire_when_safe then
+    expire_cur_action()
+  else
+    display_cur_message()
+    expire_when_safe = true
   end
-  expire_when_safe = false
 end
 
 }
@@ -5995,7 +5991,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
     BRC.set_pickup_hotkey(it.name(), true)
-  elseif you.feel_safe() then
+  else
     BRC.set_waypoint_hotkey(it.name())
   end
 

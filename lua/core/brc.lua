@@ -272,9 +272,8 @@ function BRC.init()
     BRC.mpr.magenta(string.format("\nInitialized BRC v%s with warnings!%s\n", BRC.VERSION, suffix))
   end
 
-  -- We're a go!
-  BRC.active = true
-  BRC.ready()
+  -- Avoid weird effects from autopickup before first turn
+  BRC.active = you.turns() > 0
   return true
 end
 
@@ -335,6 +334,7 @@ function BRC.c_message(text, channel)
 end
 
 function BRC.ready()
+  if you.turns() == 0 then BRC.active = true end
   if not BRC.active then return end
   crawl.redraw_screen()
   BRC.clear_single_turn_mutes()
