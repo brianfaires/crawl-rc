@@ -65,8 +65,8 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop then
-    BRC.set_hotkey("drop", "your useless items", function()
+    BRC.set_hotkey("drop", "your useless items", false, function()
       crawl.sendkeys(BRC.util.get_cmd_key("CMD_DROP") .. ",\r")
-    end, 1)
+    end)
   end
 end

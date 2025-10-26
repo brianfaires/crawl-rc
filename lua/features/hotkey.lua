@@ -10,7 +10,8 @@ f_hotkey.BRC_FEATURE_NAME = "hotkey"
 f_hotkey.Config = {
   key = { keycode = "13", name = "[Enter]" },
   skip_keycode = BRC.KEYS.ESC,
-  equip_hotkey = true,
+  equip_hotkey = true, -- Offer to equip after picking up equipment
+  wait_for_safety = true, -- Don't expire the hotkey with monsters in view
 } -- f_hotkey.Config (do not remove this comment)
 
 ---- Config alias ----
@@ -32,8 +33,14 @@ local WAYPOINT_MUTES = {
 ---- Local variables ----
 local action_queue
 local cur_action
+local expire_when_safe
 
 ---- Local functions ----
+local function display_cur_message()
+  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.msg)
+  BRC.mpr.que(msg, BRC.COL.darkgrey)
+end
+
 local function load_next_action()
   if #action_queue == 0 then return end
   cur_action = table.remove(action_queue, 1)
@@ -42,8 +49,7 @@ local function load_next_action()
     return load_next_action()
   end
   cur_action.turn = you.turns() + 1
-  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.msg)
-  BRC.mpr.que(msg, BRC.COL.darkgrey)
+  display_cur_message()
 end
 
 local function expire_cur_action()
@@ -75,7 +81,6 @@ end
 function macro_brc_hotkey()
   if cur_action then
     cur_action.act()
-    cur_action = nil
   else
     BRC.mpr.info("Unknown command (no action assigned to hotkey).")
   end
@@ -100,7 +105,7 @@ end
 -- @param condition optional function - Function (return bool) - if the action is still valid
 -- @param cleanup optional function - Function to call when the hotkey is not pressed
 -- @return nil
-function BRC.set_hotkey(prefix, suffix, action, push_front, condition, cleanup)
+function BRC.set_hotkey(prefix, suffix, push_front, action, condition, cleanup)
   local act = {
     msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
     act = action,
@@ -132,7 +137,7 @@ function BRC.set_pickup_hotkey(name, push_front)
     BRC.mpr.info(name .. " isn't here!")
   end
 
-  BRC.set_hotkey("pickup", name, do_pickup, push_front, condition)
+  BRC.set_hotkey("pickup", name, push_front, do_pickup, condition)
 end
 
 function BRC.set_equip_hotkey(it, push_front)
@@ -168,7 +173,7 @@ function BRC.set_equip_hotkey(it, push_front)
     end
   end
 
-  BRC.set_hotkey("equip", name, do_equip, push_front, condition)
+  BRC.set_hotkey("equip", name, push_front, do_equip, condition)
 end
 
 --- Set hotkey as 'move to <name>'
@@ -182,6 +187,16 @@ function BRC.set_waypoint_hotkey(name, push_front)
   BRC.opt.single_turn_mute("Waypoint " .. waynum .. " assigned")
   travel.set_waypoint(waynum, x, y)
 
+  local not_there = function()
+    local dx, dy = travel.waypoint_delta(waynum)
+    return dx ~= 0 or dy ~= 0
+  end
+
+  local move_to_waypoint = function()
+    f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
+    crawl.sendkeys({ BRC.util.get_cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+  end
+
   local clear_waypoint = function()
     local keys = { BRC.util.cntl("w"), "d", tostring(waynum) }
     -- If other waypoints exist, need to send ESC to exit the prompt
@@ -194,26 +209,18 @@ function BRC.set_waypoint_hotkey(name, push_front)
     util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
     crawl.flush_input()
-  end
-
-  local move_to_waypoint = function()
-    f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
-    crawl.sendkeys({ BRC.util.get_cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
-
-    -- Delete waypoint after travel, silence the prompts, push a pickup hotkey
-    crawl.sendkeys({ BRC.util.cntl("w"), "d", tostring(waynum), BRC.KEYS.ESC })
-    util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
 
     BRC.set_pickup_hotkey(name, true)
   end
 
-  BRC.set_hotkey("move to", name, move_to_waypoint, push_front, nil, clear_waypoint)
+  BRC.set_hotkey("move to", name, push_front, move_to_waypoint, not_there, clear_waypoint)
 end
 
 ---- Hook functions ----
 function f_hotkey.init()
   action_queue = {}
   cur_action = nil
+  expire_when_safe = false
 
   BRC.opt.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
   BRC.opt.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
@@ -224,7 +231,20 @@ function f_hotkey.c_assign_invletter(it)
 end
 
 function f_hotkey.ready()
-  if cur_action == nil or cur_action.turn <= you.turns() then
+  if cur_action == nil then
+    load_next_action()
+  elseif cur_action.turn > you.turns() then
+    return
+  elseif not (Config.wait_for_safety and cur_action.cond()) then
     expire_cur_action()
+  elseif you.feel_safe() then
+    if expire_when_safe then
+      expire_cur_action()
+    else
+      expire_when_safe = true
+      display_cur_message()
+      return
+    end
   end
+  expire_when_safe = false
 end
