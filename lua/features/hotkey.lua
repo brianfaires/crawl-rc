@@ -44,16 +44,17 @@ end
 local function load_next_action()
   if #action_queue == 0 then return end
   cur_action = table.remove(action_queue, 1)
-  if cur_action.cond and not cur_action.cond() then
+  if not cur_action.condition() then
     cur_action = nil
     return load_next_action()
   end
   cur_action.turn = you.turns() + 1
   display_cur_message()
+  expire_when_safe = true
 end
 
 local function expire_cur_action()
-  if cur_action and cur_action.clean then cur_action.clean() end
+  if cur_action then cur_action.cleanup() end
   cur_action = nil
   load_next_action()
 end
@@ -80,14 +81,14 @@ end
 ---- Macro function: On BRC hotkey press ----
 function macro_brc_hotkey()
   if cur_action then
-    cur_action.act()
+    cur_action.action()
   else
     BRC.mpr.info("Unknown command (no action assigned to hotkey).")
   end
 end
 
 function macro_brc_skip_hotkey()
-  if cur_action then
+  if cur_action and (you.feel_safe() or not Config.wait_for_safety) then
     expire_cur_action()
     if not cur_action then BRC.mpr.info("Hotkey cleared.") end
   else
@@ -99,18 +100,17 @@ end
 --- Assign an action to the BRC hotkey
 -- @param prefix string - The action (equip/pickup/read/etc)
 -- @param suffix string - Printed after the action. Usually an item name
--- @param func function - The function to call when the hotkey is pressed
--- @param turns number - The number of turns to wait before skipping this action
 -- @param push_front boolean - Push the action to the front of the queue
--- @param condition optional function - Function (return bool) - if the action is still valid
--- @param cleanup optional function - Function to call when the hotkey is not pressed
+-- @param f_action function - The function to call when the hotkey is pressed
+-- @param f_condition optional function (return bool) - If the action is still valid
+-- @param f_cleanup optional function - Function to call after hotkey pressed or skipped
 -- @return nil
-function BRC.set_hotkey(prefix, suffix, push_front, action, condition, cleanup)
+function BRC.set_hotkey(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
   local act = {
     msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
-    act = action,
-    cond = condition,
-    clean = cleanup,
+    action = f_action,
+    condition = f_condition or function() return true end,
+    cleanup = f_cleanup or function() end,
   } -- act (do not remove this comment)
 
   if push_front then
@@ -220,7 +220,6 @@ end
 function f_hotkey.init()
   action_queue = {}
   cur_action = nil
-  expire_when_safe = false
 
   BRC.opt.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
   BRC.opt.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
@@ -233,18 +232,18 @@ end
 function f_hotkey.ready()
   if cur_action == nil then
     load_next_action()
+    --expire_when_safe = false -- TODO; can set to true and make this a separate if statemet?
   elseif cur_action.turn > you.turns() then
     return
-  elseif not (Config.wait_for_safety and cur_action.cond()) then
+  elseif not (Config.wait_for_safety and cur_action.condition()) then
     expire_cur_action()
-  elseif you.feel_safe() then
-    if expire_when_safe then
-      expire_cur_action()
-    else
-      expire_when_safe = true
-      display_cur_message()
-      return
-    end
+  elseif not you.feel_safe() then
+    expire_when_safe = false
+  elseif expire_when_safe then
+    expire_cur_action()
+  else
+    expire_when_safe = true
+    display_cur_message()
+    return
   end
-  expire_when_safe = false
 end

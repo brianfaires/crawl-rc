@@ -89,7 +89,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
     BRC.set_pickup_hotkey(it.name(), true)
-  elseif you.feel_safe() then
+  else
     BRC.set_waypoint_hotkey(it.name())
   end
 
