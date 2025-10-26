@@ -12,6 +12,7 @@ f_hotkey.Config = {
   skip_keycode = BRC.KEYS.ESC,
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view
+  explore_clears_queue = true, -- Clear the hotkey queue on explore
 } -- f_hotkey.Config (do not remove this comment)
 
 ---- Config alias ----
@@ -27,7 +28,7 @@ local WAYPOINT_MUTES = {
   "You're already here!",
   "Okay\\, then\\.",
   "Unknown command",
-  --"Waypoint \\d re-assigned",
+  "Waypoint \\d re-assigned",
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
@@ -44,13 +45,14 @@ end
 local function load_next_action()
   if #action_queue == 0 then return end
   cur_action = table.remove(action_queue, 1)
-  if not cur_action.condition() then
+  if cur_action.condition() then
+    cur_action.turn = you.turns() + 1
+    display_cur_message()
+    delay_expire = false
+  else
     cur_action = nil
-    return load_next_action()
+    load_next_action()
   end
-  cur_action.turn = you.turns() + 1
-  display_cur_message()
-  delay_expire = false
 end
 
 local function expire_cur_action()
@@ -60,22 +62,15 @@ local function expire_cur_action()
 end
 
 --- Get the highest available waypoint slot
--- @param is_retry boolean - Internal use only: Prevent infinite recursion
-local function get_avail_waypoint(is_retry)
+local function get_avail_waypoint()
   for i = 9, 0, -1 do
     if not travel.waypoint_delta(i) then return i end
   end
 
-  if is_retry then
-    BRC.mpr.error("Either this is an error or you found 11 items in one turn. Congrats!?", true)
-    return nil
-  end
-
-  BRC.mpr.debug("No available waypoint slots. Clearing them.")
+  BRC.mpr.debug("No available waypoint slots. Clearing them all.")
   util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
   crawl.sendkeys({ BRC.util.cntl("w"), "d", "*" })
   crawl.flush_input()
-  return get_avail_waypoint(true)
 end
 
 ---- Macro function: On BRC hotkey press ----
@@ -187,9 +182,9 @@ function BRC.set_waypoint_hotkey(name, push_front)
   BRC.opt.single_turn_mute("Waypoint " .. waynum .. " assigned")
   travel.set_waypoint(waynum, x, y)
 
-  local not_there = function()
+  local is_valid = function()
     local dx, dy = travel.waypoint_delta(waynum)
-    return dx ~= 0 or dy ~= 0
+    return dx and not(dx == 0 and dy == 0)
   end
 
   local move_to_waypoint = function()
@@ -213,7 +208,7 @@ function BRC.set_waypoint_hotkey(name, push_front)
     BRC.set_pickup_hotkey(name, true)
   end
 
-  BRC.set_hotkey("move to", name, push_front, move_to_waypoint, not_there, clear_waypoint)
+  BRC.set_hotkey("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
 end
 
 ---- Hook functions ----
@@ -229,19 +224,24 @@ function f_hotkey.c_assign_invletter(it)
   if Config.equip_hotkey then BRC.set_equip_hotkey(it, true) end
 end
 
+function f_hotkey.ch_start_running(kind)
+  if Config.explore_clears_queue and kind:contains("explore") then
+    action_queue = {}
+    cur_action = nil
+  end
+end
+
 function f_hotkey.ready()
   if cur_action == nil then
     load_next_action()
   elseif cur_action.turn > you.turns() then
     return
-  elseif not (Config.wait_for_safety and cur_action.condition()) then
-    expire_cur_action()
-  elseif not you.feel_safe() then
+  elseif Config.wait_for_safety and not you.feel_safe() and cur_action.condition() then
     delay_expire = true
-  elseif not delay_expire then
-    expire_cur_action()
-  else
+  elseif delay_expire and you.feel_safe() then
     delay_expire = false
     display_cur_message()
+  else
+    expire_cur_action()
   end
 end

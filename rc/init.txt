@@ -64,10 +64,6 @@ lua_file = crawl-rc/lua/features/pickup-alert/pa-weapons.lua
 
 ############## Lua Hook Functions ##############
 {
-function ready()
-  BRC.ready()
-end
-
 function c_message(text, channel)
   BRC.c_message(text, channel)
 end
@@ -80,6 +76,13 @@ function c_assign_invletter(it)
   return BRC.c_assign_invletter(it)
 end
 
+function ch_start_running(kind)
+  BRC.ch_start_running(kind)
+end
+
+function ready()
+  BRC.ready()
+end
 
 BRC.init()
 }

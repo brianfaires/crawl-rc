@@ -14,6 +14,7 @@ local HOOK_FUNCTIONS = {
   c_answer_prompt = "c_answer_prompt",
   c_assign_invletter = "c_assign_invletter",
   c_message = "c_message",
+  ch_start_running = "ch_start_running",
   init = "init",
   ready = "ready",
 } -- HOOK_FUNCTIONS (do not remove this comment)
@@ -331,6 +332,11 @@ end
 function BRC.c_message(text, channel)
   if not BRC.active then return end
   safe_call_all_hooks(HOOK_FUNCTIONS.c_message, text, channel)
+end
+
+function BRC.ch_start_running(kind)
+  if not BRC.active then return end
+  safe_call_all_hooks(HOOK_FUNCTIONS.ch_start_running, kind)
 end
 
 function BRC.ready()

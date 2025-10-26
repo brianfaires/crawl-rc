@@ -218,9 +218,11 @@ If you define `my_feature.init()`, it will be called when BRC starts up. This is
 
 These crawl hooks are currently implemented:
 - ready()
-- c_message(text, channel)
+- autopickup(it)
 - c_answer_prompt(prompt)
 - c_assign_invletter(it)
+- c_message(text, channel)
+- ch_start_running(kind)
 
 Define them in your feature and they will be automatically hooked to crawl. Example:
 ```lua
