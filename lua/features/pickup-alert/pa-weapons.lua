@@ -386,6 +386,8 @@ end
 
 ---- Hook functions ----
 function f_pa_weapons.init()
+  if not Config.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
+  if not Config.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
   _weapon_cache.refresh()
 end

@@ -20,6 +20,8 @@ f_pickup_alert.Config.Alert = {
   orbs = true,
   staff_resists = true,
   talismans = true,
+  first_ranged = true,
+  first_polearm = true,
 
   -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
   talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
