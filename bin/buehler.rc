@@ -4424,7 +4424,7 @@ local WAYPOINT_MUTES = {
 ---- Local variables ----
 local action_queue
 local cur_action
-local expire_when_safe
+local delay_expire
 
 ---- Local functions ----
 local function display_cur_message()
@@ -4441,7 +4441,7 @@ local function load_next_action()
   end
   cur_action.turn = you.turns() + 1
   display_cur_message()
-  expire_when_safe = true
+  delay_expire = false
 end
 
 local function expire_cur_action()
@@ -4623,19 +4623,17 @@ end
 function f_hotkey.ready()
   if cur_action == nil then
     load_next_action()
-    --expire_when_safe = false -- TODO; can set to true and make this a separate if statemet?
   elseif cur_action.turn > you.turns() then
     return
   elseif not (Config.wait_for_safety and cur_action.condition()) then
     expire_cur_action()
   elseif not you.feel_safe() then
-    expire_when_safe = false
-  elseif expire_when_safe then
+    delay_expire = true
+  elseif not delay_expire then
     expire_cur_action()
   else
-    expire_when_safe = true
+    delay_expire = false
     display_cur_message()
-    return
   end
 end
 
