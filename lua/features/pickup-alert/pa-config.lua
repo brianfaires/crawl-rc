@@ -84,6 +84,7 @@ f_pickup_alert.Config.Tuning.Armour = {
     max_loss = 4.0,
     ignore_small = 3.5,
   },
+
   Heavier = {
     gain_ego = 0.4,
     new_ego = 0.5,
@@ -94,6 +95,7 @@ f_pickup_alert.Config.Tuning.Armour = {
     max_loss = 8.0,
     ignore_small = 5,
   },
+
   encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
   early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
   diff_body_ego_is_good = false, -- More alerts for diff_ego in body armour (skips min_gain check)
@@ -153,23 +155,22 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {}
-  or {
-    RARE_ITEM = "💎",
-    ARTEFACT = "💠",
-    ORB = "🔮",
-    TALISMAN = "🧬",
-    STAFF_RES = "🔥",
+f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+  RARE_ITEM = "💎",
+  ARTEFACT = "💠",
+  ORB = "🔮",
+  TALISMAN = "🧬",
+  STAFF_RES = "🔥",
 
-    WEAPON = "⚔️",
-    RANGED = "🏹",
-    POLEARM = "🔱",
-    TWO_HAND = "✋🤚",
+  WEAPON = "⚔️",
+  RANGED = "🏹",
+  POLEARM = "🔱",
+  TWO_HAND = "✋🤚",
 
-    EGO = "✨",
-    ACCURACY = "🎯",
-    STRONGER = "💪",
-    STRONGEST = "💪💪",
-    LIGHTER = "⏬",
-    HEAVIER = "⏫",
-  } -- f_pickup_alert.Config.Emoji (do not remove this comment)
+  EGO = "✨",
+  ACCURACY = "🎯",
+  STRONGER = "💪",
+  STRONGEST = "💪💪",
+  LIGHTER = "⏬",
+  HEAVIER = "⏫",
+} -- f_pickup_alert.Config.Emoji (do not remove this comment)
