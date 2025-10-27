@@ -4,7 +4,6 @@
 {
 BRC = {}
 BRC.Config = {}
-BRC.Profiles = {}
 
 ---- High-level config settings ----
 BRC.Config.emojis = false -- Only defined here; can't be set in a config profile
@@ -32,7 +31,9 @@ BRC.store_config = "none"
 -- Aims to list the most commonly adjusted config settings.
 -- See feature config sections, or Profiles.Explicit for more settings.
 
-BRC.Profiles.Custom = {
+brc_config_custom = {
+  BRC_CONFIG_NAME = "Custom",
+
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
   },
@@ -106,7 +107,7 @@ BRC.Profiles.Custom = {
       },
     },
   },
-} -- BRC.Profiles.Custom (do not remove this comment)
+} -- brc_config_custom (do not remove this comment)
 
 }
 ############################### End lua/config/custom.lua ###############################
@@ -117,7 +118,9 @@ BRC.Profiles.Custom = {
 {
 -- Testing Config Profile: Isolate and test specific features
 
-BRC.Profiles.Testing = {
+brc_config_testing = {
+  BRC_CONFIG_NAME = "Testing",
+
   show_debug_messages = true,
   disable_other_features = false,
   ["pickup-alert"] = {
@@ -140,7 +143,7 @@ BRC.Profiles.Testing = {
       end
     end
   ]],
-} -- BRC.Profiles.Testing (do not remove this comment)
+} -- brc_config_testing (do not remove this comment)
 
 }
 ############################### End lua/config/testing.lua ###############################
@@ -151,7 +154,9 @@ BRC.Profiles.Testing = {
 {
 -- Speed Config Profile: For speed runs
 
-BRC.Profiles.Speed = {
+brc_config_speed = {
+  BRC_CONFIG_NAME = "Speed",
+
   ["alert-monsters"] = { disabled = true },
   ["safe-consumables"] = { disabled = true },
   ["safe-stairs"] = { disabled = true },
@@ -210,7 +215,7 @@ BRC.Profiles.Speed = {
   init = [[
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
   ]],
-} -- BRC.Profiles.Speed (do not remove this comment)
+} -- brc_config_speed (do not remove this comment)
 
 }
 ############################### End lua/config/speed.lua ###############################
@@ -221,7 +226,9 @@ BRC.Profiles.Speed = {
 {
 -- Turncount Config Profile: For turncount runs
 
-BRC.Profiles.Turncount = {
+brc_config_turncount = {
+  BRC_CONFIG_NAME = "Turncount",
+
   ["alert-monsters"] = {
     sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
@@ -229,7 +236,7 @@ BRC.Profiles.Turncount = {
   ["mute-messages"] = {
     mute_level = 1,
   },
-} -- BRC.Profiles.Turncount (do not remove this comment)
+} -- brc_config_turncount (do not remove this comment)
 
 }
 ############################### End lua/config/turncount.lua ###############################
@@ -240,14 +247,16 @@ BRC.Profiles.Turncount = {
 {
 -- Streak Config Profile: For win streaks
 
-BRC.Profiles.Streak = {
+brc_config_streak = {
+  BRC_CONFIG_NAME = "Streak",
+
   ["alert-monsters"] = {
     sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
   ["mute-messages"] = {
     mute_level = 1,
   },
-} -- BRC.Profiles.Streak (do not remove this comment)
+} -- brc_config_streak (do not remove this comment)
 
 }
 ############################### End lua/config/streak.lua ###############################
@@ -260,7 +269,9 @@ BRC.Profiles.Streak = {
 -- Large feature config sections are at the end
 -- Any feature config can define "disabled = true" to disable it entirely
 
-BRC.Profiles.Explicit = {
+brc_config_explicit = {
+  BRC_CONFIG_NAME = "Explicit",
+
   ---- BRC Core values ----
   mpr = {
     show_debug_messages = false,
@@ -875,7 +886,7 @@ BRC.Profiles.Explicit = {
     ]]
   }, -- alert-monsters
 
-} -- BRC.Profiles.Explicit (do not remove this comment)
+} -- brc_config_explicit (do not remove this comment)
 
 }
 ############################### End lua/config/explicit.lua ###############################
@@ -3156,8 +3167,10 @@ Usage:
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
--- Default Config Profile (defines default values for everything not in a feature config)
 
+--- BRC Default Profile - (defines default values for everything not in a feature config)
+-- Profile configs are applied on top of this, so changes here are applied to all config profiles.
+BRC.Profiles = {}
 BRC.Profiles.Default = {
   emojis = BRC.Config.emojis, -- Follow the value in _header.lua
   mpr = {
@@ -3275,8 +3288,23 @@ local function load_profile(input_config)
   return config_name
 end
 
+local function is_profile_module(p)
+  return p
+    and type(p) == "table"
+    and p.BRC_CONFIG_NAME
+    and type(p.BRC_CONFIG_NAME) == "string"
+    and #p.BRC_CONFIG_NAME > 0
+end
+
+local function load_all_profiles()
+  for _, c in pairs(_G) do
+    if is_profile_module(c) then BRC.Profiles[c.BRC_CONFIG_NAME] = c end
+  end
+end
+
 ---- Public API ----
 function BRC.load_config()
+  load_all_profiles()
   if BRC.store_config and BRC.store_config:lower() == "full" then
     brc_config_name = load_profile(brc_config_full or brc_config_name or BRC.use_config)
     brc_config_full = BRC.Config
@@ -3725,7 +3753,7 @@ local function register_all_features()
   end
 
   -- Sort alphabetically (for reproducable behavior)
-  table.sort(feature_names)
+  util.sort(feature_names)
 
   -- Register features
   local loaded_count = 0

@@ -2,7 +2,9 @@
 -- Aims to list the most commonly adjusted config settings.
 -- See feature config sections, or Profiles.Explicit for more settings.
 
-BRC.Profiles.Custom = {
+brc_config_custom = {
+  BRC_CONFIG_NAME = "Custom",
+
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
   },
@@ -76,4 +78,4 @@ BRC.Profiles.Custom = {
       },
     },
   },
-} -- BRC.Profiles.Custom (do not remove this comment)
+} -- brc_config_custom (do not remove this comment)

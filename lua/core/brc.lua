@@ -138,7 +138,7 @@ local function register_all_features()
   end
 
   -- Sort alphabetically (for reproducable behavior)
-  table.sort(feature_names)
+  util.sort(feature_names)
 
   -- Register features
   local loaded_count = 0

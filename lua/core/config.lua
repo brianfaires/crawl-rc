@@ -13,8 +13,10 @@ Usage:
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
 brc_config_name = BRC.Data.persist("brc_config_name", nil)
--- Default Config Profile (defines default values for everything not in a feature config)
 
+--- BRC Default Profile - (defines default values for everything not in a feature config)
+-- Profile configs are applied on top of this, so changes here are applied to all config profiles.
+BRC.Profiles = {}
 BRC.Profiles.Default = {
   emojis = BRC.Config.emojis, -- Follow the value in _header.lua
   mpr = {
@@ -132,8 +134,23 @@ local function load_profile(input_config)
   return config_name
 end
 
+local function is_profile_module(p)
+  return p
+    and type(p) == "table"
+    and p.BRC_CONFIG_NAME
+    and type(p.BRC_CONFIG_NAME) == "string"
+    and #p.BRC_CONFIG_NAME > 0
+end
+
+local function load_all_profiles()
+  for _, c in pairs(_G) do
+    if is_profile_module(c) then BRC.Profiles[c.BRC_CONFIG_NAME] = c end
+  end
+end
+
 ---- Public API ----
 function BRC.load_config()
+  load_all_profiles()
   if BRC.store_config and BRC.store_config:lower() == "full" then
     brc_config_name = load_profile(brc_config_full or brc_config_name or BRC.use_config)
     brc_config_full = BRC.Config

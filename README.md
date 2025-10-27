@@ -118,14 +118,15 @@ BRC.Config["inscribe-stats"] = {
 
 BRC comes with several pre-built configs, stored in `BRC.Profiles`. You can add/remove/edit any of them:
 - **Default**: All default values, plus whatever you add to `BRC.Config`.
-- **Custom**: Intended as the main profile for customizing BRC.
+- **Custom**: Intended as the main profile for customizing BRC. Lists commonly adjusted config fields.
 - **Testing**: Turns on debug messages, and disables any features not explicitly configured.
+- **Explicit**: A big file with all fields and their default values. Functionally identical to the Default profile.
 - _**Others**_:
+  - **Streak**: For win streaks (extra caution)
   - **Speed**: For speed runs (reduced prompts + alerts)
   - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
-  - **Streak**: For win streaks (extra caution)
 
-**Use a different config** by editing `BRC.use_config` at the top of the config section:
+**Use a different config** by editing `BRC.use_config` at the top of the RC:
 ```lua
 -- Found at the start of config
 BRC.use_config = "Turncount"
@@ -136,19 +137,21 @@ BRC.use_config = "Turncount"
 The resulting profile is loaded into `BRC.Config`.
 
 **Detailed behavior**
-1. Values from `<Feature>.Config` are loaded.
-2. Values from `BRC.Profiles.Default` are added, potentially overwriting previous values.
-3. Values from `BRC.Config` are added, potentially overwriting previous values.
+1. Default values from each `<Feature>.Config` are loaded.
+2. Default values from `BRC.Profiles.Default` are added for non-feature fields.
+3. Any values specified in the config profile are added, overwriting default values.
 
 **Switch profiles in-game**
 - TODO
 
 **Create your own config/profile**
 
-Follow the pattern of other configs:
+Follow the pattern of other configs. Any module that includes `BRC_CONFIG_NAME` will be treated as a profile.
 ```lua
 BRC.use_config = "MyConfig"
-BRC.Profiles.MyConfig = {
+use_a_unique_name_here = {
+  BRC_CONFIG_NAME = "MyConfig",
+
   ["feature-name"] = {
     feature_config_var = "override" -- any var in feature.Config
   },

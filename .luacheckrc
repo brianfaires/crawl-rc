@@ -40,12 +40,17 @@ globals = {
   "macro_brc_skip_hotkey",
   "macro_brc_upstairs",
   
-  -- BRC modules
+  -- BRC global modules
   "BRC",
-  "CONFIG",
-  "TUNING",
-  "_weapon_cache",
-  
+
+  -- BRC config profiles
+  "brc_config_custom",
+  "brc_config_explicit",
+  "brc_config_speed",
+  "brc_config_streak",
+  "brc_config_testing",
+  "brc_config_turncount",
+
   -- Feature modules
   "f_alert_monsters",
   "f_announce_hp_mp",

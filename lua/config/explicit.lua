@@ -2,7 +2,9 @@
 -- Large feature config sections are at the end
 -- Any feature config can define "disabled = true" to disable it entirely
 
-BRC.Profiles.Explicit = {
+brc_config_explicit = {
+  BRC_CONFIG_NAME = "Explicit",
+
   ---- BRC Core values ----
   mpr = {
     show_debug_messages = false,
@@ -617,4 +619,4 @@ BRC.Profiles.Explicit = {
     ]]
   }, -- alert-monsters
 
-} -- BRC.Profiles.Explicit (do not remove this comment)
+} -- brc_config_explicit (do not remove this comment)

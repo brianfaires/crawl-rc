@@ -1,6 +1,8 @@
 -- Speed Config Profile: For speed runs
 
-BRC.Profiles.Speed = {
+brc_config_speed = {
+  BRC_CONFIG_NAME = "Speed",
+
   ["alert-monsters"] = { disabled = true },
   ["safe-consumables"] = { disabled = true },
   ["safe-stairs"] = { disabled = true },
@@ -59,4 +61,4 @@ BRC.Profiles.Speed = {
   init = [[
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
   ]],
-} -- BRC.Profiles.Speed (do not remove this comment)
+} -- brc_config_speed (do not remove this comment)

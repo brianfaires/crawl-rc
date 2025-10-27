@@ -1,6 +1,5 @@
 BRC = {}
 BRC.Config = {}
-BRC.Profiles = {}
 
 ---- High-level config settings ----
 BRC.Config.emojis = false -- Only defined here; can't be set in a config profile

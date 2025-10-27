@@ -1,6 +1,8 @@
 -- Turncount Config Profile: For turncount runs
 
-BRC.Profiles.Turncount = {
+brc_config_turncount = {
+  BRC_CONFIG_NAME = "Turncount",
+
   ["alert-monsters"] = {
     sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
@@ -8,4 +10,4 @@ BRC.Profiles.Turncount = {
   ["mute-messages"] = {
     mute_level = 1,
   },
-} -- BRC.Profiles.Turncount (do not remove this comment)
+} -- brc_config_turncount (do not remove this comment)

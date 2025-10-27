@@ -1,6 +1,8 @@
 -- Testing Config Profile: Isolate and test specific features
 
-BRC.Profiles.Testing = {
+brc_config_testing = {
+  BRC_CONFIG_NAME = "Testing",
+
   show_debug_messages = true,
   disable_other_features = false,
   ["pickup-alert"] = {
@@ -23,4 +25,4 @@ BRC.Profiles.Testing = {
       end
     end
   ]],
-} -- BRC.Profiles.Testing (do not remove this comment)
+} -- brc_config_testing (do not remove this comment)
