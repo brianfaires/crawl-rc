@@ -79,6 +79,7 @@ end
 local function search_altars()
   local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, "altar", "\r" })
+  crawl.flush_input()
 end
 
 local function ready_temple_macro()
@@ -99,6 +100,7 @@ end
 local function search_gauntlet()
   local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
+  crawl.flush_input()
 end
 
 local function ready_gauntlet_macro()

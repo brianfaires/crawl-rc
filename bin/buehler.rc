@@ -1138,6 +1138,7 @@ function BRC.util.do_cmd(cmd)
   local key = BRC.util.get_cmd_key(cmd)
   if key then
     crawl.sendkeys({ key })
+    crawl.flush_input()
   else
     crawl.do_commands({ cmd })
   end
@@ -3007,11 +3008,16 @@ end
 
 --- Go up the closest stairs (Cntl-E)
 function macro_brc_cntl_e()
-  if you.where() == "D:1" and you.have_orb() then
+  local where = you.where()
+  if where == "D:1" and you.have_orb()
+    or where == "Temple"
+    or util.contains(BRC.PORTAL_NAMES, you.branch())
+  then
     crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
   end
+  crawl.flush_input()
 end
 
 ---- Crawl hooks ----
@@ -3921,9 +3927,10 @@ function f_drop_inferior.c_assign_invletter(it)
     end
   end
 
-  if marked_something and f_drop_inferior.Config.hotkey_drop then
+  if marked_something and f_drop_inferior.Config.hotkey_drop and BRC.set_hotkey then
     BRC.set_hotkey("drop", "your useless items", false, function()
       crawl.sendkeys(BRC.util.get_cmd_key("CMD_DROP") .. ",\r")
+      crawl.flush_input()
     end)
   end
 end
@@ -4482,6 +4489,7 @@ function macro_brc_skip_hotkey()
     if not cur_action then BRC.mpr.info("Hotkey cleared.") end
   else
     crawl.sendkeys({ Config.skip_keycode })
+    crawl.flush_input()
   end
 end
 
@@ -4584,6 +4592,7 @@ function BRC.set_waypoint_hotkey(name, push_front)
   local move_to_waypoint = function()
     f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
     crawl.sendkeys({ BRC.util.get_cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+    crawl.flush_input()
   end
 
   local clear_waypoint = function()
@@ -4795,7 +4804,7 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
-      if Config.remove_faith_hotkey then
+      if Config.remove_faith_hotkey and BRC.set_hotkey then
         BRC.set_hotkey("remove", "amulet of faith", false, function()
           items.equipped_at("amulet"):remove()
         end)
@@ -4997,6 +5006,7 @@ local function quiver_missile_by_name(name)
 
   if not slot then return end
   crawl.sendkeys(BRC.util.get_cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
+  crawl.flush_input()
 end
 
 ---- Macro function: Fire from quiver ----
@@ -5069,6 +5079,7 @@ f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
   emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
+  read_id_hotkey = true, -- Put read ID on hotkey
 } -- f_remind_id.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -5167,15 +5178,18 @@ function f_remind_id.ready()
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
-      BRC.set_hotkey("read", "scroll of identify", false, function()
-        for _, inv in ipairs(items.inventory()) do
-          if inv.name("qual") == "scroll of identify" then
-            BRC.util.do_cmd("CMD_READ")
-            crawl.sendkeys(BRC.txt.int2char(inv.slot))
-            return
+      if Config.read_id_hotkey and BRC.set_hotkey then
+        BRC.set_hotkey("read", "scroll of identify", false, function()
+          for _, inv in ipairs(items.inventory()) do
+            if inv.name("qual") == "scroll of identify" then
+              BRC.util.do_cmd("CMD_READ")
+              crawl.sendkeys(BRC.txt.int2char(inv.slot))
+              crawl.flush_input()
+              return
+            end
           end
-        end
-      end)
+        end)
+      end
     end
   end
 end
@@ -5268,6 +5282,7 @@ end
 local function search_altars()
   local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, "altar", "\r" })
+  crawl.flush_input()
 end
 
 local function ready_temple_macro()
@@ -5288,6 +5303,7 @@ end
 local function search_gauntlet()
   local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
   crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
+  crawl.flush_input()
 end
 
 local function ready_gauntlet_macro()
@@ -5751,6 +5767,9 @@ f_pickup_alert.Config.Alert = {
   first_ranged = true,
   first_polearm = true,
 
+  hotkey_travel = true,
+  hotkey_pickup = true,
+
   -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
   talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
 
@@ -5995,10 +6014,15 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   if not hold_alerts_for_next_turn then you.stop_activity() end
 
+  -- Set hotkeys
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    BRC.set_pickup_hotkey(it.name(), true)
+    if Config.Alert.hotkey_pickup and BRC.set_pickup_hotkey then
+      BRC.set_pickup_hotkey(it.name(), true)
+    end
   else
-    BRC.set_waypoint_hotkey(it.name())
+    if Config.Alert.hotkey_travel and BRC.set_waypoint_hotkey then
+      BRC.set_waypoint_hotkey(it.name())
+    end
   end
 
   return true

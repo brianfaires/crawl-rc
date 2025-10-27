@@ -31,6 +31,7 @@ local function quiver_missile_by_name(name)
 
   if not slot then return end
   crawl.sendkeys(BRC.util.get_cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
+  crawl.flush_input()
 end
 
 ---- Macro function: Fire from quiver ----

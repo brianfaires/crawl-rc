@@ -306,11 +306,16 @@ end
 
 --- Go up the closest stairs (Cntl-E)
 function macro_brc_cntl_e()
-  if you.where() == "D:1" and you.have_orb() then
+  local where = you.where()
+  if where == "D:1" and you.have_orb()
+    or where == "Temple"
+    or util.contains(BRC.PORTAL_NAMES, you.branch())
+  then
     crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else
     crawl.sendkeys({ BRC.util.cntl("g"), "<" })
   end
+  crawl.flush_input()
 end
 
 ---- Crawl hooks ----

@@ -88,6 +88,7 @@ function macro_brc_skip_hotkey()
     if not cur_action then BRC.mpr.info("Hotkey cleared.") end
   else
     crawl.sendkeys({ Config.skip_keycode })
+    crawl.flush_input()
   end
 end
 
@@ -190,6 +191,7 @@ function BRC.set_waypoint_hotkey(name, push_front)
   local move_to_waypoint = function()
     f_pickup_alert.pause_alerts() -- Don't interrupt hotkey travel with new alerts
     crawl.sendkeys({ BRC.util.get_cmd_key("CMD_INTERLEVEL_TRAVEL"), tostring(waynum) })
+    crawl.flush_input()
   end
 
   local clear_waypoint = function()

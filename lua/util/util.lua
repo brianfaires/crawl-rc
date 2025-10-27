@@ -22,6 +22,7 @@ function BRC.util.do_cmd(cmd)
   local key = BRC.util.get_cmd_key(cmd)
   if key then
     crawl.sendkeys({ key })
+    crawl.flush_input()
   else
     crawl.do_commands({ cmd })
   end

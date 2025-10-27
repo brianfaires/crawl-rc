@@ -12,6 +12,7 @@ f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
   emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
+  read_id_hotkey = true, -- Put read ID on hotkey
 } -- f_remind_id.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -110,15 +111,18 @@ function f_remind_id.ready()
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
       BRC.mpr.stop(IDENTIFY_MSG)
-      BRC.set_hotkey("read", "scroll of identify", false, function()
-        for _, inv in ipairs(items.inventory()) do
-          if inv.name("qual") == "scroll of identify" then
-            BRC.util.do_cmd("CMD_READ")
-            crawl.sendkeys(BRC.txt.int2char(inv.slot))
-            return
+      if Config.read_id_hotkey and BRC.set_hotkey then
+        BRC.set_hotkey("read", "scroll of identify", false, function()
+          for _, inv in ipairs(items.inventory()) do
+            if inv.name("qual") == "scroll of identify" then
+              BRC.util.do_cmd("CMD_READ")
+              crawl.sendkeys(BRC.txt.int2char(inv.slot))
+              crawl.flush_input()
+              return
+            end
           end
-        end
-      end)
+        end)
+      end
     end
   end
 end
