@@ -1,4 +1,6 @@
--- Custom Config Profile: Personalized settings
+--- Custom Config Profile: Personalized settings
+-- Aims to list the most commonly adjusted config settings.
+-- See feature config sections, or Profiles.Explicit for more settings.
 
 BRC.Profiles.Custom = {
   ["misc-alerts"] = {
