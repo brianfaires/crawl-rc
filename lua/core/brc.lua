@@ -245,7 +245,7 @@ function BRC.init()
   BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register features...")
-  BRC.register(BRC.Data) -- Data must be the first feature registered
+  BRC.register(BRC.Data)
   register_all_features()
 
   BRC.mpr.debug("Initialize features...")

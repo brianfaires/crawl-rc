@@ -17,7 +17,7 @@ local RESTORE_TABLE = "_brc_persist_restore_table"
 local _failures = {}
 local _persist_names = {}
 local _default_values = {}
-local pushed_restore_table_creation
+local pushed_restore_table_creation = false -- Set this on file load, not on init()
 local cur_location
 
 ---- Local functions ----
@@ -170,7 +170,6 @@ end
 
 ---- Hook functions ----
 function BRC.Data.init()
-  pushed_restore_table_creation = false
   cur_location = you.where()
   if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
 end
