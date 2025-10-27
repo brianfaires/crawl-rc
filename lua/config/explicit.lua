@@ -41,7 +41,7 @@ BRC.Profiles.Explicit = {
 
   hotkey = {
     key = { keycode = "13", name = "[Enter]" },
-    skip_keycode = BRC.KEYS.ESC,
+    skip_keycode = 27, -- ESC keycode
     equip_hotkey = true, -- Offer to equip after picking up equipment
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
     explore_clears_queue = true, -- Clear the hotkey queue on explore
@@ -65,17 +65,17 @@ BRC.Profiles.Explicit = {
     },
 
     HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-      BORDER = BRC.txt.white("|"),
-      FULL = BRC.txt.lightgreen("+"),
-      PART = BRC.txt.lightgrey("+"),
-      EMPTY = BRC.txt.darkgrey("-"),
+      BORDER = "<white>|</white>",
+      FULL = "<lightgreen>+</lightgreen>",
+      PART = "<lightgrey>+</lightgrey>",
+      EMPTY = "<darkgrey>-</darkgrey>",
     },
 
     MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-      BORDER = BRC.txt.white("|"),
-      FULL = BRC.txt.lightblue("+"),
-      PART = BRC.txt.lightgrey("+"),
-      EMPTY = BRC.txt.darkgrey("-"),
+      BORDER = "<white>|</white>",
+      FULL = "<lightblue>+</lightblue>",
+      PART = "<lightgrey>+</lightgrey>",
+      EMPTY = "<darkgrey>-</darkgrey>",
     },
   },
 
@@ -110,7 +110,7 @@ BRC.Profiles.Explicit = {
   ["inscribe-stats"] = {
     inscribe_weapons = true, -- Inscribe weapon stats on pickup
     inscribe_armour = true, -- Inscribe armour stats on pickup
-    dmg_type = BRC.DMG_TYPE.unbranded,
+    dmg_type = 1, -- unbranded
   },
 
   ["misc-alerts"] = {
@@ -129,7 +129,7 @@ BRC.Profiles.Explicit = {
   ["remind-id"] = {
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-    emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
+    emoji = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>",
     read_id_hotkey = true, -- Put read ID on hotkey
   },
 
@@ -396,12 +396,12 @@ BRC.Profiles.Explicit = {
     }, -- Tuning
 
     AlertColor = {
-      weapon = { desc = BRC.COL.magenta, item = BRC.COL.yellow, stats = BRC.COL.lightgrey },
-      body_arm = { desc = BRC.COL.lightblue, item = BRC.COL.lightcyan, stats = BRC.COL.lightgrey },
-      aux_arm = { desc = BRC.COL.lightblue, item = BRC.COL.yellow },
-      orb = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
-      talisman = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
-      misc = { desc = BRC.COL.brown, item = BRC.COL.white },
+      weapon = { desc = "magenta", item = "yellow", stats = "lightgrey" },
+      body_arm = { desc = "lightblue", item = "lightcyan", stats = "lightgrey" },
+      aux_arm = { desc = "lightblue", item = "yellow" },
+      orb = { desc = "green", item = "lightgreen" },
+      talisman = { desc = "green", item = "lightgreen" },
+      misc = { desc = "brown", item = "white" },
     }, -- AlertColor
 
     Emoji = not BRC.Config.emojis and {} or {
@@ -514,10 +514,6 @@ BRC.Profiles.Explicit = {
       { name = "willpower4", cond = "will", cutoff = 4,
         pattern = { "merfolk avatar", "tainted leviathan", "nargun" } },
 
-      -- Mutators (only flash if immune)
-      { name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-        pattern = { "cacodemon", "neqoxec", "shining eye" } },
-
       -- Brain feed with low int
       { name = "brainfeed", cond = "int", cutoff = 6,
         pattern = { "glowing orange brain", "neqoxec" } },
@@ -589,6 +585,13 @@ BRC.Profiles.Explicit = {
 
     init = [[
         local alert_list = f_alert_monsters.Config.Alerts
+
+        -- Mutators (only flash if immune)
+        util.append(alert_list, {
+          name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+          pattern = { "cacodemon", "neqoxec", "shining eye" }
+        })
+
         -- Conditionally add miasma monsters
         if not BRC.you.miasma_immune() then
           util.append(alert_list, {

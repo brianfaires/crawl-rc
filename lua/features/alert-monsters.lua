@@ -122,10 +122,6 @@ f_alert_monsters.Config.Alerts = {
   { name = "willpower4", cond = "will", cutoff = 4,
     pattern = { "merfolk avatar", "tainted leviathan", "nargun" } },
 
-  -- Mutators (only flash if immune)
-  { name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-    pattern = { "cacodemon", "neqoxec", "shining eye" } },
-
   -- Brain feed with low int
   { name = "brainfeed", cond = "int", cutoff = 6,
     pattern = { "glowing orange brain", "neqoxec" } },
@@ -197,6 +193,13 @@ f_alert_monsters.Config.Alerts = {
 
 f_alert_monsters.Config.init = [[
     local alert_list = f_alert_monsters.Config.Alerts
+
+    -- Mutators (only flash if immune)
+    util.append(alert_list, {
+      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+      pattern = { "cacodemon", "neqoxec", "shining eye" }
+    })
+
     -- Conditionally add miasma monsters
     if not BRC.you.miasma_immune() then
       util.append(alert_list, {
