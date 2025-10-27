@@ -56,7 +56,6 @@ globals = {
   "f_exclude_dropped",
   "f_fm_disable",
   "f_fully_recover",
-  "f_hotkey",
   "f_inscribe_stats",
   "f_misc_alerts",
   "f_mute_messages",

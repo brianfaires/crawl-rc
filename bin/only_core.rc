@@ -738,8 +738,11 @@ function BRC.init()
   BRC.load_config()
   BRC.mpr.debug("Config loaded.")
 
-  BRC.mpr.debug("Register features...")
+  BRC.mpr.debug("Register core features...")
   BRC.register(BRC.Data)
+  BRC.register(BRC.Hotkey)
+
+  BRC.mpr.debug("Register features...")
   register_all_features()
 
   BRC.mpr.debug("Initialize features...")

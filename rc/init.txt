@@ -30,6 +30,7 @@ lua_file = crawl-rc/lua/util/equipment.lua
 lua_file = crawl-rc/lua/util/options.lua
 lua_file = crawl-rc/lua/core/data.lua
 lua_file = crawl-rc/lua/core/config.lua
+lua_file = crawl-rc/lua/core/hotkey.lua
 lua_file = crawl-rc/lua/core/brc.lua
 
 ### Lua feature files ###
@@ -41,7 +42,6 @@ lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
 lua_file = crawl-rc/lua/features/fully-recover.lua
-lua_file = crawl-rc/lua/features/hotkey.lua
 lua_file = crawl-rc/lua/features/inscribe-stats.lua
 lua_file = crawl-rc/lua/features/misc-alerts.lua
 lua_file = crawl-rc/lua/features/mute-messages.lua

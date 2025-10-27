@@ -5,18 +5,18 @@ Author: buehler
 Dependencies: core/data.lua, core/util.lua
 --]]
 
-f_hotkey = {}
-f_hotkey.BRC_FEATURE_NAME = "hotkey"
-f_hotkey.Config = {
+BRC.Hotkey = {}
+BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"
+BRC.Hotkey.Config = {
   key = { keycode = "13", name = "[Enter]" },
   skip_keycode = BRC.KEYS.ESC,
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view
   explore_clears_queue = true, -- Clear the hotkey queue on explore
-} -- f_hotkey.Config (do not remove this comment)
+} -- BRC.Hotkey.Config (do not remove this comment)
 
 ---- Config alias ----
-local Config = f_hotkey.Config
+local Config = BRC.Hotkey.Config
 
 ---- Local constants ----
 local WAYPOINT_MUTES = {
@@ -101,7 +101,7 @@ end
 -- @param f_condition optional function (return bool) - If the action is still valid
 -- @param f_cleanup optional function - Function to call after hotkey pressed or skipped
 -- @return nil
-function BRC.set_hotkey(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
+function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
   local act = {
     msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
     action = f_action,
@@ -116,27 +116,7 @@ function BRC.set_hotkey(prefix, suffix, push_front, f_action, f_condition, f_cle
   end
 end
 
---- Pick up an item by name (Must use name, since item goes stale when called from equip hotkey)
-function BRC.set_pickup_hotkey(name, push_front)
-  local condition = function()
-    return util.exists(you.floor_items(), function(fl) return fl.name():contains(name) end)
-  end
-
-  local do_pickup = function()
-    for _, fl in ipairs(you.floor_items()) do
-      -- Check with contains() in case ID'ing it appends to the name
-      if fl.name():contains(name) then
-        items.pickup(fl)
-        return
-      end
-    end
-    BRC.mpr.info(name .. " isn't here!")
-  end
-
-  BRC.set_hotkey("pickup", name, push_front, do_pickup, condition)
-end
-
-function BRC.set_equip_hotkey(it, push_front)
+function BRC.Hotkey.equip(it, push_front)
   if not (it.is_weapon or BRC.it.is_armour(it) or BRC.it.is_jewellery(it)) then return end
   local name = it.name():gsub(" {.*}", "")
 
@@ -169,12 +149,31 @@ function BRC.set_equip_hotkey(it, push_front)
     end
   end
 
-  BRC.set_hotkey("equip", name, push_front, do_equip, condition)
+  BRC.Hotkey.set("equip", name, push_front, do_equip, condition)
 end
 
---- Set hotkey as 'move to <name>'
---- Finds the item, but jumps through some hoops to account for calling this mid-turn
-function BRC.set_waypoint_hotkey(name, push_front)
+--- Pick up an item by name (Must use name, since item goes stale when called from equip hotkey)
+function BRC.Hotkey.pickup(name, push_front)
+  local condition = function()
+    return util.exists(you.floor_items(), function(fl) return fl.name():contains(name) end)
+  end
+
+  local do_pickup = function()
+    for _, fl in ipairs(you.floor_items()) do
+      -- Check with contains() in case ID'ing it appends to the name
+      if fl.name():contains(name) then
+        items.pickup(fl)
+        return
+      end
+    end
+    BRC.mpr.info(name .. " isn't here!")
+  end
+
+  BRC.Hotkey.set("pickup", name, push_front, do_pickup, condition)
+end
+
+--- Set hotkey as 'move to <name>'; searches for the item by name in LOS
+function BRC.Hotkey.waypoint(name, push_front)
   local x, y = BRC.it.get_xy(name)
   if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
 
@@ -207,14 +206,14 @@ function BRC.set_waypoint_hotkey(name, push_front)
     crawl.sendkeys(keys)
     crawl.flush_input()
 
-    BRC.set_pickup_hotkey(name, true)
+    BRC.Hotkey.pickup(name, true)
   end
 
-  BRC.set_hotkey("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
+  BRC.Hotkey.set("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
 end
 
 ---- Hook functions ----
-function f_hotkey.init()
+function BRC.Hotkey.init()
   action_queue = {}
   cur_action = nil
 
@@ -222,18 +221,18 @@ function f_hotkey.init()
   BRC.opt.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
 end
 
-function f_hotkey.c_assign_invletter(it)
-  if Config.equip_hotkey then BRC.set_equip_hotkey(it, true) end
+function BRC.Hotkey.c_assign_invletter(it)
+  if Config.equip_hotkey then BRC.Hotkey.equip(it, true) end
 end
 
-function f_hotkey.ch_start_running(kind)
+function BRC.Hotkey.ch_start_running(kind)
   if Config.explore_clears_queue and kind:contains("explore") then
     action_queue = {}
     cur_action = nil
   end
 end
 
-function f_hotkey.ready()
+function BRC.Hotkey.ready()
   if cur_action == nil then
     load_next_action()
   elseif cur_action.turn > you.turns() then
