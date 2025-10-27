@@ -6,7 +6,7 @@ BRC.Profiles.Testing = {
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.3,
-      weapon_sensitivity = 2,
+      weapon_sensitivity = 1,
     },
     Tuning = {
       Armour = {

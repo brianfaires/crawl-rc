@@ -184,9 +184,9 @@ function _weapon_cache.is_empty()
   return _weapon_cache.max_dps["melee_2"].dps == 0 -- The most restrictive category
 end
 
-function _weapon_cache.refresh()
+function _weapon_cache.refresh(skip_turn_check)
   local cur_turn = you.turns()
-  if _weapon_cache.turn and _weapon_cache.turn == cur_turn then return end
+  if _weapon_cache.turn and _weapon_cache.turn == cur_turn and not skip_turn_check then return end
   _weapon_cache.turn = cur_turn
   _weapon_cache.weapons = {}
   _weapon_cache.egos = {}
@@ -213,7 +213,7 @@ function _weapon_cache.refresh()
 end
 
 -- Local functions: Alerting
-local function get_first_of_skill_alert(it, silent)
+local function get_first_of_skill_alert(it)
   local skill = it.weap_skill
   if not pa_lowest_hands_alerted[skill] then return end
 
@@ -225,7 +225,6 @@ local function get_first_of_skill_alert(it, silent)
 
     -- Update lowest # hands alerted, and alert
     pa_lowest_hands_alerted[skill] = hands
-    if silent then return end
     local msg = "First " .. string.sub(skill, 1, -2) .. (hands == 1 and " (1-handed)" or "")
     return make_alert(it, msg, Emoji.WEAPON, Config.Alert.More.early_weap)
   end
@@ -367,7 +366,7 @@ function f_pa_weapons.pickup_weapon(it)
   for _, inv in ipairs(_weapon_cache.weapons) do
     if is_weapon_upgrade(it, inv, Config.Pickup.weapons_pure_upgrades_only) then
       -- Confirm after updating cache, to avoid spurious alerts from XP gain.
-      f_pa_weapons.ready()
+      _weapon_cache.refresh(true)
       if is_weapon_upgrade(it, inv, Config.Pickup.weapons_pure_upgrades_only) then return true end
     end
   end
@@ -377,7 +376,7 @@ function f_pa_weapons.alert_weapon(it)
   _weapon_cache.refresh()
   if get_weapon_alert(it) then
     -- Confirm after updating cache, to avoid spurious alerts from XP gain.
-    f_pa_weapons.ready()
+    _weapon_cache.refresh(true)
     local a = get_weapon_alert(it)
     if a then return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option) end
   end
@@ -389,7 +388,7 @@ function f_pa_weapons.init()
   if not Config.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
   if not Config.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
-  _weapon_cache.refresh()
+  _weapon_cache.refresh(true)
 end
 
 function f_pa_weapons.ready()
