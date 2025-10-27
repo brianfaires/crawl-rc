@@ -20,15 +20,11 @@ end
 
 
 ---- Color functions - Usage: BRC.txt.white("Hello"), or BRC.txt["15"]("Hello") ----
-for k, v in pairs(BRC.COL) do
+for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", v, tostring(text), v)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
   end
-  BRC.txt[v] = BRC.txt[k]
-end
-
-function BRC.txt.color(color, text)
-  return color and BRC.txt[color](text) or tostring(text)
+  BRC.txt[color] = BRC.txt[k]
 end
 
 

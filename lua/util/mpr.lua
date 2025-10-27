@@ -15,7 +15,8 @@ function BRC.mpr.que_optmore(show_more, msg, color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
-  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt.color(color, msg), ch = channel, more = show_more }
+  color = color or BRC.COL.lightgrey
+  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
 end
 
 --- Display queued messages and clear the queue
@@ -41,12 +42,12 @@ end
 
 
 ---- Color functions - Usage: BRC.mpr.white("Hello"), or BRC.mpr["15"]("Hello") ----
-for k, v in pairs(BRC.COL) do
+for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt.color(v, msg), channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
     crawl.flush_prev_message()
   end
-  BRC.mpr[v] = BRC.mpr[k]
+  BRC.mpr[color] = BRC.mpr[k]
 end
 
 
@@ -108,13 +109,13 @@ end
 ---- Messages with stop or force_more ----
 --- Message plus stop travel/activity
 function BRC.mpr.stop(msg, color, channel)
-  BRC.mpr[color](msg, channel)
+  BRC.mpr[color or BRC.COL.lightgrey](msg, channel)
   you.stop_activity()
 end
 
 --- Message as a force_more_message
 function BRC.mpr.more(msg, color, channel)
-  BRC.mpr[color](msg, channel)
+  BRC.mpr[color or BRC.COL.lightgrey](msg, channel)
   you.stop_activity()
   crawl.redraw_screen()
   crawl.more()
@@ -126,7 +127,7 @@ function BRC.mpr.optmore(show_more, msg, color, channel)
   if show_more then
     BRC.mpr.more(msg, color, channel)
   else
-    BRC.mpr[color](msg, channel)
+    BRC.mpr[color or BRC.COL.lightgrey](msg, channel)
   end
 end
 
@@ -162,7 +163,7 @@ function BRC.mpr.yesno(msg, color, capital_only)
   msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
 
   for i = 1, 10 do
-    BRC.mpr[color](msg, "prompt")
+    BRC.mpr[color or BRC.COL.lightgrey](msg, "prompt")
     local res = crawl.getch()
     if res and res >= 0 and res <= 255 then
       local c = string.char(res)
