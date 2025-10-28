@@ -139,7 +139,7 @@ local function load_profile(input_config)
   return config_name
 end
 
-local function is_profile_module(p)
+local function is_config_module(p)
   return p
     and type(p) == "table"
     and p.BRC_CONFIG_NAME
@@ -149,7 +149,7 @@ end
 
 local function load_all_profiles()
   for _, c in pairs(_G) do
-    if is_profile_module(c) then BRC.Profiles[c.BRC_CONFIG_NAME] = c end
+    if is_config_module(c) then BRC.Profiles[c.BRC_CONFIG_NAME] = c end
   end
 end
 
@@ -168,14 +168,26 @@ end
 
 function BRC.process_feature_config(feature_name)
   local f = BRC.get_registered_features()[feature_name]
-  if not f.Config then
-    f.Config = {}
-  elseif type(f.Config.init) == "function" then
-    f.Config.init()
-  elseif type(f.Config.init) == "string" then
-    safe_call_string(f.Config.init, feature_name)
+
+  -- Save feature config default values, in case we need to re-init later.
+  if f.ConfigDefaults then
+    crawl.mpr(f.BRC_FEATURE_NAME .. " BEFORE:")
+    BRC.mpr.tostr(f.Config)
+    f.Config = util.copy_table(f.ConfigDefaults)
+    crawl.mpr(f.BRC_FEATURE_NAME .. " AFTER:")
+    BRC.mpr.tostr(f.Config)
+  else
+    if not f.Config then
+      f.Config = {}
+    elseif type(f.Config.init) == "function" then
+      f.Config.init()
+    elseif type(f.Config.init) == "string" then
+      safe_call_string(f.Config.init, feature_name)
+    end
+    f.ConfigDefaults = util.copy_table(f.Config)
   end
 
+  -- Feature configs are overridden in place by profiles
   override_table(BRC.Config[feature_name], f.Config)
 end
 
