@@ -89,19 +89,6 @@ function BRC.you.equipped_at(it)
   return all_aux, num_slots
 end
 
---- Returns all items whose slot matches idx
-function BRC.you.items_in_slot(idx)
-  local res = {}
-  for _, inv in ipairs(items.inventory()) do
-    if inv.slot == idx then
-      res[#res + 1] = inv
-    end
-  end
-
-  return res
-end
-
-
 ---- Skill attributes ----
 function BRC.you.top_wpn_skill()
   local max_weap_skill = 0
