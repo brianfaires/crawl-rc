@@ -4,9 +4,7 @@
 
 ### To do list
 1. Standardize LDocs / file headers
-1. disable alert of branded items after non-risky artefact of same type
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
-1. Pull crawl version for compatibility / 0.33 support
 1. Features:
   - Rebind cntl-E and low radius for fast orb run
   - Add macro to save skill targets & CONFIG values (by race or race+class)
@@ -14,7 +12,7 @@
   - Turncount: (disable autopickup, auto-display info for items in view)
     - Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
   - Speedrun: (display realtime; you.time()?)
-1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
+1. Pull crawl version for compatibility / 0.33 support
 1. In-game menu (change config, save settings, etc...)
 
 ### crawl PRs / issues affecting BRC
@@ -37,6 +35,8 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
 1. Ancestor reappear; stop rest, but not explore
 
 ### Won't do - random ideas
+1. feature ready() option to fire every turn, or every ready()
+1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
 1. disable jewellery pickup after configurable xl
