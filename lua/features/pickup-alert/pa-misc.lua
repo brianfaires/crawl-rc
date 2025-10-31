@@ -18,7 +18,7 @@ function f_pa_misc.alert_orb(it)
 end
 
 function f_pa_misc.alert_OTA(it)
-  local ota_item = f_pa_data.find(pa_OTA_items, it)
+  local ota_item = f_pa_data.find_OTA(it)
   if not ota_item then return end
 
   local do_alert = true
@@ -39,7 +39,7 @@ function f_pa_misc.alert_OTA(it)
     if you.skill(it.weap_skill) < Alert.OTA_require_skill.weapon then return end
   end
 
-  f_pa_data.remove(pa_OTA_items, it)
+  f_pa_data.remove_OTA(it)
   if not do_alert then return false end
   return f_pickup_alert.do_alert(it, "Found first", Emoji.RARE_ITEM, Alert.More.one_time_alerts)
 end

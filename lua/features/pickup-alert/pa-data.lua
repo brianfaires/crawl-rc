@@ -31,53 +31,68 @@ local function get_pa_keys(it, use_plain_name)
 end
 
 ---- Public API ----
--- Return name of first entry found in item name, or nil if not found
-function f_pa_data.find(table_ref, it)
-  if table_ref == pa_OTA_items then
-    local qualname = it.name("qual")
-    for _, v in ipairs(pa_OTA_items) do
-      if v and qualname:find(v) then return v end
-    end
-  else
-    local name, value = get_pa_keys(it)
-    if table_ref[name] ~= nil and tonumber(table_ref[name]) >= value then return name end
+function f_pa_data.already_alerted(it)
+  local name, value = get_pa_keys(it)
+  if pa_items_alerted[name] ~= nil and tonumber(pa_items_alerted[name]) >= value then
+    return name
   end
 end
 
-function f_pa_data.insert(table_ref, it)
+function f_pa_data.remember_alert(it)
   if not (it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_talisman(it)) then return end
-  if table_ref == pa_recent_alerts then
-    pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
-  else
-    local name, value = get_pa_keys(it)
-    local cur_val = tonumber(table_ref[name])
-    if not cur_val or value > cur_val then table_ref[name] = value end
+  local name, value = get_pa_keys(it)
+  local cur_val = tonumber(pa_items_alerted[name])
+  if not cur_val or value > cur_val then pa_items_alerted[name] = value end
 
-    -- For armour with good brand, also add the unbranded version to the table
-    if BRC.it.is_armour(it) and it.branded and not (it.artefact or BRC.eq.is_risky(it)) then
+  -- Also add the unbranded version to the table
+  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) then
+    if BRC.it.is_armour(it) then
       name = it.name("qual")
-      cur_val = tonumber(table_ref[name])
-      if not cur_val or value > cur_val then table_ref[name] = value end
+      cur_val = tonumber(pa_items_alerted[name])
+      if not cur_val or value > cur_val then pa_items_alerted[name] = value end
+      local verbose_ego = it.ego(false)
+      if verbose_ego and it.artefact then
+        -- TODO: Add branded version
+      end
+    elseif it.is_weapon then
+      if it.artefact then
+        -- TODO: Add branded version
+      end
     end
   end
 end
 
-function f_pa_data.remove(table_ref, it)
-  if table_ref == pa_OTA_items then
-    repeat
-      local item_name = f_pa_data.find(pa_OTA_items, it)
-      if item_name == nil then return end
-      util.remove(pa_OTA_items, item_name)
-    until item_name == nil
-  elseif table_ref == pa_recent_alerts then
-    util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
-  else
-    local name, _ = get_pa_keys(it)
-    table_ref[name] = nil
+function f_pa_data.forget_alert(it)
+  local name, _ = get_pa_keys(it)
+  pa_items_alerted[name] = nil
+end
+
+function f_pa_data.add_recent_alert(it)
+  if it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_talisman(it) then
+    pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
   end
 end
 
--- Get name with plus included and quotes removed; stored in pa_recent_alerts table
+function f_pa_data.remove_recent_alert(it)
+  util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
+end
+
+function f_pa_data.find_OTA(it)
+  local qualname = it.name("qual")
+  for _, v in ipairs(pa_OTA_items) do
+    if v and qualname:find(v) then return v end
+  end
+end
+
+function f_pa_data.remove_OTA(it)
+  repeat
+    local item_name = f_pa_data.find_OTA(it)
+    if item_name == nil then return end
+    util.remove(pa_OTA_items, item_name)
+  until item_name == nil
+end
+
+--- Return name with plus included and quotes removed; used as key in tables
 function f_pa_data.get_keyname(it, use_plain_name)
   local name, value = get_pa_keys(it, use_plain_name)
   if not (BRC.it.is_armour(it) or it.is_weapon) then return name end
@@ -85,7 +100,7 @@ function f_pa_data.get_keyname(it, use_plain_name)
   return string.format("%s %s", value, name)
 end
 
--- Returns a string of the high score type if item sets a new high score, else nil
+--- Return string of the high score type if item sets a new high score, else nil
 function f_pa_data.update_high_scores(it)
   if not it then return end
   local ret_val = nil

@@ -82,8 +82,8 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   tokens[#tokens + 1] = tokens[1]
   BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
 
-  f_pa_data.insert(pa_recent_alerts, it)
-  f_pa_data.insert(pa_items_alerted, it)
+  f_pa_data.add_recent_alert(it)
+  f_pa_data.remember_alert(it)
 
   if not hold_alerts_for_next_turn then you.stop_activity() end
 
@@ -123,8 +123,8 @@ function f_pickup_alert.init()
 
   -- Don't alert for starting items
   for _, inv in ipairs(items.inventory()) do
-    f_pa_data.insert(pa_items_alerted, inv)
-    f_pa_data.remove(pa_OTA_items, inv)
+    f_pa_data.remember_alert(inv)
+    f_pa_data.remove_OTA(inv)
   end
 end
 
@@ -164,7 +164,7 @@ function f_pickup_alert.autopickup(it, _)
   end
 
   -- Item not picked up - check if it should trigger alerts
-  if f_pa_data.find(pa_items_alerted, it) then return end
+  if f_pa_data.already_alerted(it) then return end
 
   if f_pa_misc and Config.Alert.one_time and #Config.Alert.one_time > 0 then
     if f_pa_misc.alert_OTA(it) then return end
@@ -185,10 +185,10 @@ end
 
 function f_pickup_alert.c_assign_invletter(it)
   f_pa_misc.alert_OTA(it)
-  f_pa_data.remove(pa_recent_alerts, it)
+  f_pa_data.remove_recent_alert(it)
 
   -- Re-enable the alert, iff we are able to use another one
-  if BRC.you.num_eq_slots(it) > 1 then f_pa_data.remove(pa_items_alerted, it) end
+  if BRC.you.num_eq_slots(it) > 1 then f_pa_data.forget_alert(it) end
 
   -- Ensure we always stop for these autopickup types
   if it.is_weapon or BRC.it.is_armour(it) then
