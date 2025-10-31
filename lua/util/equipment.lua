@@ -411,7 +411,7 @@ end
 function BRC.eq.is_risky(it)
   if it.artefact then
     for k, v in pairs(it.artprops) do
-      if util.contains(BRC.BAD_ART_PROPS, k) or v < 0 then return true end
+      if util.contains(BRC.ARTPROPS_BAD, k) or v < 0 then return true end
     end
   end
 

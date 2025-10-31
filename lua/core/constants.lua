@@ -76,13 +76,25 @@ BRC.PORTAL_NAMES = {
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
----- Egos + artefact properties ----
+---- Egos ----
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
-BRC.BAD_ART_PROPS = {
+BRC.ADJECTIVE_EGOS = {
+  antimagic = "antimagic", heavy = "heavy", spectralising = "spectral", vampirism = "vampiric"
+} -- BRC.ADJECTIVE_EGOS (do not remove this comment)
+
+---- Artefact properties ----
+BRC.ARTPROPS_BAD = {
   "Bane", "-Cast", "-Move", "-Tele",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
-} -- BRC.BAD_ART_PROPS (do not remove this comment)
+} -- BRC.ARTPROPS_BAD (do not remove this comment)
+
+BRC.ARTPROPS_EGO = { -- Corresponding ego
+  rF = "fire resistance", rC = "cold resistance", rPois = "poison resistance",
+  rN = "positive energy", rCorr = "corrosion resistance",
+  Archmagi = "the Archmagi", Rampage = "rampaging", Will = "willpower",
+  Air = "air", Earth = "earth", Fire = "fire", Ice = "ice", Necro = "death", Summ = "command",
+} -- BRC.ARTPROPS_EGO (do not remove this comment)
 
 ---- Other ----
 BRC.KEYS = { ESC = 27 }

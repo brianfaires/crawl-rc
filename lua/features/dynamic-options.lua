@@ -73,10 +73,10 @@ local function set_god_options()
   end
 
   if new_god == "Trog" then
-    util.remove(BRC.BAD_ART_PROPS, "-Cast")
+    util.remove(BRC.ARTPROPS_BAD, "-Cast")
     util.remove(BRC.RISKY_EGOS, "antimagic")
   elseif prev_god == "Trog" then
-    BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
+    BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
     BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
   end
 
@@ -116,10 +116,10 @@ local function set_skill_options()
     ignore_all_magic = no_spells
     BRC.opt.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)
     if no_spells then
-      util.remove(BRC.BAD_ART_PROPS, "-Cast")
+      util.remove(BRC.ARTPROPS_BAD, "-Cast")
       util.remove(BRC.RISKY_EGOS, "antimagic")
     else
-      BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
+      BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
       BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
     end
   end

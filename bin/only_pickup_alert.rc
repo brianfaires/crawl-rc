@@ -896,19 +896,34 @@ function f_pa_data.remember_alert(it)
   local cur_val = tonumber(pa_items_alerted[name])
   if not cur_val or value > cur_val then pa_items_alerted[name] = value end
 
-  -- Also add the unbranded version to the table
-  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) then
-    if BRC.it.is_armour(it) then
-      name = it.name("qual")
-      cur_val = tonumber(pa_items_alerted[name])
-      if not cur_val or value > cur_val then pa_items_alerted[name] = value end
-      local verbose_ego = it.ego(false)
-      if verbose_ego and it.artefact then
-        -- TODO: Add branded version
+  -- Add lesser versions of same item, to avoid alerting an inferior item
+  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
+    -- Add plain unbranded version
+    name = it.name("db")
+    cur_val = tonumber(pa_items_alerted[name])
+    if not cur_val or value > cur_val then pa_items_alerted[name] = value end
+
+    -- For branded artefact, add the plain branded version
+    local verbose_ego = it.ego(false)
+    if it.artefact and verbose_ego then
+      local branded_name
+      if BRC.ADJECTIVE_EGOS[verbose_ego] then
+        branded_name = BRC.ADJECTIVE_EGOS[verbose_ego] .. " " .. name
+      else
+        branded_name = name .. " of " .. verbose_ego
       end
-    elseif it.is_weapon then
-      if it.artefact then
-        -- TODO: Add branded version
+      cur_val = tonumber(pa_items_alerted[name])
+      if not cur_val or value > cur_val then pa_items_alerted[branded_name] = value end
+    end
+
+    -- Armour may hit multiple egos based on artefact properties. Add each plain branded version.
+    if it.artefact and BRC.it.is_armour(it) then
+      for k, v in pairs(it.artprops) do
+        if v > 0 and BRC.ARTPROPS_EGO[k] then
+          local branded_name = name .. " of " .. BRC.ARTPROPS_EGO[k]
+          cur_val = tonumber(pa_items_alerted[branded_name])
+          if not cur_val or value > cur_val then pa_items_alerted[branded_name] = value end
+        end
       end
     end
   end

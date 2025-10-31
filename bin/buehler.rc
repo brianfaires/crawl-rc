@@ -1722,13 +1722,25 @@ BRC.PORTAL_NAMES = {
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
----- Egos + artefact properties ----
+---- Egos ----
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
-BRC.BAD_ART_PROPS = {
+BRC.ADJECTIVE_EGOS = {
+  antimagic = "antimagic", heavy = "heavy", spectralising = "spectral", vampirism = "vampiric"
+} -- BRC.ADJECTIVE_EGOS (do not remove this comment)
+
+---- Artefact properties ----
+BRC.ARTPROPS_BAD = {
   "Bane", "-Cast", "-Move", "-Tele",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
-} -- BRC.BAD_ART_PROPS (do not remove this comment)
+} -- BRC.ARTPROPS_BAD (do not remove this comment)
+
+BRC.ARTPROPS_EGO = { -- Corresponding ego
+  rF = "fire resistance", rC = "cold resistance", rPois = "poison resistance",
+  rN = "positive energy", rCorr = "corrosion resistance",
+  Archmagi = "the Archmagi", Rampage = "rampaging", Will = "willpower",
+  Air = "air", Earth = "earth", Fire = "fire", Ice = "ice", Necro = "death", Summ = "command",
+} -- BRC.ARTPROPS_EGO (do not remove this comment)
 
 ---- Other ----
 BRC.KEYS = { ESC = 27 }
@@ -2856,7 +2868,7 @@ end
 function BRC.eq.is_risky(it)
   if it.artefact then
     for k, v in pairs(it.artprops) do
-      if util.contains(BRC.BAD_ART_PROPS, k) or v < 0 then return true end
+      if util.contains(BRC.ARTPROPS_BAD, k) or v < 0 then return true end
     end
   end
 
@@ -4948,10 +4960,10 @@ local function set_god_options()
   end
 
   if new_god == "Trog" then
-    util.remove(BRC.BAD_ART_PROPS, "-Cast")
+    util.remove(BRC.ARTPROPS_BAD, "-Cast")
     util.remove(BRC.RISKY_EGOS, "antimagic")
   elseif prev_god == "Trog" then
-    BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
+    BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
     BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
   end
 
@@ -4991,10 +5003,10 @@ local function set_skill_options()
     ignore_all_magic = no_spells
     BRC.opt.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)
     if no_spells then
-      util.remove(BRC.BAD_ART_PROPS, "-Cast")
+      util.remove(BRC.ARTPROPS_BAD, "-Cast")
       util.remove(BRC.RISKY_EGOS, "antimagic")
     else
-      BRC.BAD_ART_PROPS[#BRC.BAD_ART_PROPS + 1] = "-Cast"
+      BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
       BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
     end
   end
@@ -6877,19 +6889,34 @@ function f_pa_data.remember_alert(it)
   local cur_val = tonumber(pa_items_alerted[name])
   if not cur_val or value > cur_val then pa_items_alerted[name] = value end
 
-  -- Also add the unbranded version to the table
-  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) then
-    if BRC.it.is_armour(it) then
-      name = it.name("qual")
-      cur_val = tonumber(pa_items_alerted[name])
-      if not cur_val or value > cur_val then pa_items_alerted[name] = value end
-      local verbose_ego = it.ego(false)
-      if verbose_ego and it.artefact then
-        -- TODO: Add branded version
+  -- Add lesser versions of same item, to avoid alerting an inferior item
+  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
+    -- Add plain unbranded version
+    name = it.name("db")
+    cur_val = tonumber(pa_items_alerted[name])
+    if not cur_val or value > cur_val then pa_items_alerted[name] = value end
+
+    -- For branded artefact, add the plain branded version
+    local verbose_ego = it.ego(false)
+    if it.artefact and verbose_ego then
+      local branded_name
+      if BRC.ADJECTIVE_EGOS[verbose_ego] then
+        branded_name = BRC.ADJECTIVE_EGOS[verbose_ego] .. " " .. name
+      else
+        branded_name = name .. " of " .. verbose_ego
       end
-    elseif it.is_weapon then
-      if it.artefact then
-        -- TODO: Add branded version
+      cur_val = tonumber(pa_items_alerted[name])
+      if not cur_val or value > cur_val then pa_items_alerted[branded_name] = value end
+    end
+
+    -- Armour may hit multiple egos based on artefact properties. Add each plain branded version.
+    if it.artefact and BRC.it.is_armour(it) then
+      for k, v in pairs(it.artprops) do
+        if v > 0 and BRC.ARTPROPS_EGO[k] then
+          local branded_name = name .. " of " .. BRC.ARTPROPS_EGO[k]
+          cur_val = tonumber(pa_items_alerted[branded_name])
+          if not cur_val or value > cur_val then pa_items_alerted[branded_name] = value end
+        end
       end
     end
   end
