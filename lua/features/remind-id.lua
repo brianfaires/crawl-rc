@@ -77,7 +77,9 @@ function f_remind_id.c_message(text, channel)
 
   if text:find("scrolls? of identify") then
     ri_found_scroll_of_id = true
-    if not text:contains("ou drop ") and have_unid_item() then
+    -- Don't re-trigger on dropping or on hotkey notification
+    text = BRC.txt.clean(text)
+    if not text:contains("ou drop ") and not text:contains("to read ") and have_unid_item() then
       you.stop_activity()
       do_remind_id_check = true
     end
