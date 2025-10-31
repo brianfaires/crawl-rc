@@ -123,7 +123,8 @@ function f_weapon_slots.c_assign_invletter(it)
   for _, s in ipairs({ "a", "b", "w" }) do
     local slot = items.letter_to_index(s)
     local inv = items.inslot(slot)
-    if not (inv and inv.is_weapon) then
+    if not inv then return slot end
+    if not inv.is_weapon then
       items.swap_slots(slot, get_first_empty_slot())
       slots_changed = true
       return slot
@@ -141,7 +142,7 @@ function f_weapon_slots.ready()
     do_cleanup_weapon_slots = false
   end
   if slots_changed then
-    BRC.mpr.info("Weapon slots updated (ab+w).")
+    BRC.mpr.debug("Weapon slots updated (ab+w).")
     crawl.redraw_screen()
     slots_changed = false
   end
