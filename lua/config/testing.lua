@@ -3,7 +3,11 @@
 brc_config_testing = {
   BRC_CONFIG_NAME = "Testing",
 
-  show_debug_messages = true,
+  mpr = {
+    show_debug_messages = true,
+    debug_to_stderr = true,
+  },
+
   disable_other_features = false,
   ["pickup-alert"] = {
     Alert = {
