@@ -6715,6 +6715,37 @@ local function get_alert_color_for_item(it)
   return Config.AlertColor.misc
 end
 
+local function should_skip_pickup_check(it)
+  return not BRC.active
+    or pause_pa_system
+    or you.have_orb()
+    or (not it.is_identified and (it.branded or it.artefact or BRC.it.is_magic_staff(it)))
+end
+
+local function check_and_trigger_alerts(it, unworn_aux_item)
+  if f_pa_data.already_alerted(it) then return true end
+
+  -- One-time alerts
+  if f_pa_misc and Config.Alert.one_time and #Config.Alert.one_time > 0 then
+    if f_pa_misc.alert_OTA(it) then return true end
+  end
+
+  -- Item-specific alerts
+  if BRC.it.is_magic_staff(it) and f_pa_misc and Config.Alert.staff_resists then
+    if f_pa_misc.alert_staff(it) then return true end
+  elseif BRC.it.is_orb(it) and f_pa_misc and Config.Alert.orbs then
+    if f_pa_misc.alert_orb(it) then return true end
+  elseif BRC.it.is_talisman(it) and f_pa_misc and Config.Alert.talismans then
+    if f_pa_misc.alert_talisman(it) then return true end
+  elseif BRC.it.is_armour(it) and f_pa_armour and Config.Alert.armour_sensitivity > 0 then
+    if f_pa_armour.alert_armour(it, unworn_aux_item) then return true end
+  elseif it.is_weapon and f_pa_weapons and Config.Alert.weapon_sensitivity > 0 then
+    if f_pa_weapons.alert_weapon(it) then return true end
+  end
+
+  return false
+end
+
 ---- Public API ----
 function f_pickup_alert.pause_alerts()
   hold_alerts_for_next_turn = true
@@ -6793,14 +6824,7 @@ function f_pickup_alert.init()
 end
 
 function f_pickup_alert.autopickup(it, _)
-  if
-    not BRC.active
-    or pause_pa_system
-    or you.have_orb()
-    or not it.is_identified and (it.branded or it.artefact or BRC.it.is_magic_staff(it))
-  then
-    return
-  end
+  if should_skip_pickup_check(it) then return end
 
   local unworn_aux_item = nil -- Track carried aux armour for mutation scenarios
   if it.is_useless then
@@ -6828,23 +6852,7 @@ function f_pickup_alert.autopickup(it, _)
   end
 
   -- Item not picked up - check if it should trigger alerts
-  if f_pa_data.already_alerted(it) then return end
-
-  if f_pa_misc and Config.Alert.one_time and #Config.Alert.one_time > 0 then
-    if f_pa_misc.alert_OTA(it) then return end
-  end
-
-  if f_pa_misc and Config.Alert.staff_resists and BRC.it.is_magic_staff(it) then
-    if f_pa_misc.alert_staff(it) then return end
-  elseif f_pa_misc and Config.Alert.orbs and BRC.it.is_orb(it) then
-    if f_pa_misc.alert_orb(it) then return end
-  elseif f_pa_misc and Config.Alert.talismans and BRC.it.is_talisman(it) then
-    if f_pa_misc.alert_talisman(it) then return end
-  elseif f_pa_armour and Config.Alert.armour_sensitivity > 0 and BRC.it.is_armour(it) then
-    if f_pa_armour.alert_armour(it, unworn_aux_item) then return end
-  elseif f_pa_weapons and Config.Alert.weapon_sensitivity > 0 and it.is_weapon then
-    if f_pa_weapons.alert_weapon(it) then return end
-  end
+  if check_and_trigger_alerts(it, unworn_aux_item) then return end
 end
 
 function f_pickup_alert.c_assign_invletter(it)
