@@ -3,6 +3,9 @@
 -- @module BRC.Profiles
 -- Manages config profiles and feature config overrides.
 --
+-- TL;DR: Each feature defines its own config, including default values for each field.
+--   Define the same fields in a config profile to override the default value.
+--
 -- When a config profile loads, it is applied on top of BRC.Profiles.Default.
 -- If a profile defines a field, that value is used.
 --   If not defined in the profile, the value in BRC.Profiles.Default is used.
@@ -14,13 +17,14 @@
 --     ["color-inscribe"] = { disabled = true }
 ---------------------------------------------------------------------------------------------------
 
+BRC.Profiles = {}
+
 ---- Persistent variables ----
-brc_config_full = BRC.Data.persist("brc_config_full", nil)
-brc_config_name = BRC.Data.persist("brc_config_name", nil)
+brc_full_persistant_config = BRC.Data.persist("brc_full_persistant_config", nil)
+brc_profile_name = BRC.Data.persist("brc_profile_name", nil)
 
 --- BRC Default Profile - (defines default values for everything not in a feature config)
--- Profile configs are applied on top of this, so changes here are applied to all config profiles.
-BRC.Profiles = {}
+-- Profile configs are applied on top of this.
 BRC.Profiles.Default = {
   emojis = BRC.Config.emojis, -- Follow the value in _header.lua
   mpr = {
@@ -60,33 +64,43 @@ BRC.Profiles.Default = {
 } -- BRC.Profiles.Default (do not remove this comment)
 
 ---- Local functions ----
-local function get_validated_config_name(input_name)
+--- Accept a profile name, or a method to obtain a config name.
+-- @return string a valid name of a config profile
+local function get_validated_profile_name(input_name)
   if type(input_name) ~= "string" then
     BRC.mpr.warning("Non-string config name: " .. tostring(input_name))
   else
     local config_name = input_name:lower()
     if config_name == "ask" then
-      -- Restore saved config name, or fall through to selection
-      if you.turns() > 0 and brc_config_name then
-        return get_validated_config_name(brc_config_name)
+      -- If game has started, restore the previously saved profile name
+      if you.turns() > 0 and brc_profile_name then
+        return get_validated_profile_name(brc_profile_name)
       end
     elseif config_name == "previous" then
-      -- Restore saved config, or display warning and fall through to selection
+      -- Restore profile name from c_persist (cross-game persistence), or display warning
       if c_persist.BRC and c_persist.BRC.current_config then
-        return get_validated_config_name(c_persist.BRC.current_config)
+        return get_validated_profile_name(c_persist.BRC.current_config)
       else
-        BRC.mpr.warning("No previous config found.")
+        BRC.mpr.warning("No previous config profile found.")
       end
     else
-      -- Find by name in BRC.Profiles, or display warning and fall through to selection
+      -- Find by name in BRC.Profiles, or display warning
       for k, _ in pairs(BRC.Profiles) do
         if config_name == k:lower() then return k end
       end
-      BRC.mpr.warning("Could not load config: " .. tostring(input_name))
+      BRC.mpr.warning("Could not load config profile: " .. tostring(input_name))
     end
   end
 
-  return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
+  return BRC.mpr.select("Select a config profile", util.keys(BRC.Profiles))
+end
+
+local function is_config_module(p)
+  return p
+    and type(p) == "table"
+    and p.BRC_CONFIG_NAME
+    and type(p.BRC_CONFIG_NAME) == "string"
+    and #p.BRC_CONFIG_NAME > 0
 end
 
 local function safe_call_string(str, module_name)
@@ -101,6 +115,16 @@ local function safe_call_string(str, module_name)
   end
 end
 
+local function execute_config_init(config, module_name)
+  if type(config) ~= "table" then return end
+  if type(config.init) == "function" then
+    config.init()
+  elseif type(config.init) == "string" then
+    safe_call_string(config.init, module_name)
+  end
+end
+
+--- Override values in dest, with values from source. Take care not to clear existing tables.
 local function override_table(source, dest)
   if type(source) ~= "table" then return end
 
@@ -114,39 +138,28 @@ local function override_table(source, dest)
   end
 end
 
+--- Load a config profile, either from a table or from a name.
+-- @param input_config table of config values, or string name of a profile
 local function load_profile(input_config)
-  local config_name
   if type(input_config) == "table" then
     BRC.Config = input_config
-    config_name = brc_config_name or "Unknown"
   else
-    config_name = get_validated_config_name(input_config)
+    local profile_name = get_validated_profile_name(input_config)
     BRC.Config = util.copy_table(BRC.Profiles.Default)
-    for k, v in pairs(BRC.Profiles[config_name]) do
+    for k, v in pairs(BRC.Profiles[profile_name]) do
       BRC.Config[k] = v
     end
+    execute_config_init(BRC.Config, "BRC")
   end
 
-  -- Do config init() and feature overrides
-  if type(BRC.Config.init) == "function" then
-    BRC.Config.init()
-  elseif type(BRC.Config.init) == "string" then
-    safe_call_string(BRC.Config.init, "BRC")
-  end
-  for name, _ in pairs(BRC.get_registered_features()) do
-    BRC.process_feature_config(name)
+  brc_profile_name = BRC.Config.BRC_CONFIG_NAME
+
+  -- Init all features and apply any overrides from the profile
+  for _ , value in pairs(BRC.get_registered_features()) do
+    BRC.process_feature_config(value)
   end
 
-  BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(config_name))
-  return config_name
-end
-
-local function is_config_module(p)
-  return p
-    and type(p) == "table"
-    and p.BRC_CONFIG_NAME
-    and type(p.BRC_CONFIG_NAME) == "string"
-    and #p.BRC_CONFIG_NAME > 0
+  BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME))
 end
 
 local function load_all_profiles()
@@ -155,42 +168,40 @@ local function load_all_profiles()
   end
 end
 
----- Public API ----
-function BRC.load_config()
-  load_all_profiles()
-  if BRC.store_config and BRC.store_config:lower() == "full" then
-    brc_config_name = load_profile(brc_config_full or brc_config_name or BRC.use_config)
-    brc_config_full = BRC.Config
-  elseif BRC.store_config and BRC.store_config:lower() == "name" then
-    brc_config_name = load_profile(brc_config_name or BRC.use_config)
+--- Determine which config input to use based on store_config setting
+-- @return table of config values, or string name of a profile
+local function get_config_input()
+  local store_mode = BRC.store_config and BRC.store_config:lower() or nil
+  if store_mode == "full" then
+    return brc_full_persistant_config or brc_profile_name or BRC.use_config
+  elseif store_mode == "name" then
+    return brc_profile_name or BRC.use_config
   else
-    brc_config_name = load_profile(BRC.use_config)
+    return BRC.use_config
   end
 end
 
-function BRC.process_feature_config(feature_name)
-  local f = BRC.get_registered_features()[feature_name]
-
-  -- Save feature config default values, in case we need to re-init later.
-  if f.ConfigDefaults then
-    crawl.mpr(f.BRC_FEATURE_NAME .. " BEFORE:")
-    BRC.mpr.tostr(f.Config)
-    f.Config = util.copy_table(f.ConfigDefaults)
-    crawl.mpr(f.BRC_FEATURE_NAME .. " AFTER:")
-    BRC.mpr.tostr(f.Config)
-  else
-    if not f.Config then
-      f.Config = {}
-    elseif type(f.Config.init) == "function" then
-      f.Config.init()
-    elseif type(f.Config.init) == "string" then
-      safe_call_string(f.Config.init, feature_name)
-    end
-    f.ConfigDefaults = util.copy_table(f.Config)
+---- Public API ----
+--- Main config loading entry point
+function BRC.load_config()
+  load_all_profiles()
+  local config_input = get_config_input()
+  load_profile(config_input)
+  if BRC.store_config and BRC.store_config:lower() == "full" then
+    brc_full_persistant_config = BRC.Config
   end
+end
 
-  -- Feature configs are overridden in place by profiles
-  override_table(BRC.Config[feature_name], f.Config)
+--- Process a feature config: Ensure default values, init(), then override with profile values
+function BRC.process_feature_config(feature)
+  if type(feature.ConfigDefaults) == "table" then
+    feature.Config = util.copy_table(feature.ConfigDefaults)
+  else
+    feature.Config = feature.Config or {}
+    execute_config_init(feature.Config, feature.BRC_FEATURE_NAME)
+    feature.ConfigDefaults = util.copy_table(feature.Config)
+  end
+  override_table(BRC.Config[feature.BRC_FEATURE_NAME], feature.Config)
 end
 
 --- Stringify BRC.Config and each feature config, with headers
