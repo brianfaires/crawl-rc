@@ -316,58 +316,64 @@ function BRC.eq.get_dps(it, dmg_type)
   return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
 end
 
-function BRC.eq.get_dmg(it, dmg_type)
-  -- Returns an adjusted weapon damage = damage * speed
-  -- Includes stat/slay changes between weapon and the one currently wielded
-  -- Aux attacks not included
-  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
-  local it_plus = it.plus or 0
-  -- Adjust str/dex/slay from artefacts
+--- @return (number, number, number) str, dex, it.plus+artefact slaying
+local function get_stats_for_damage(it)
+  local it_plus = (it.plus or 0) + get_slay_bonuses()
   local str = you.strength()
   local dex = you.dexterity()
 
-  -- Adjust str/dex/EV for artefact stat changes
-  if not it.equipped then
-    local wielded = items.equipped_at("weapon")
-    if wielded and wielded.artefact then
-      if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
-      if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
-      if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
-    end
+  if it.equipped then return str, dex, it_plus end
 
-    if it.artefact and it.is_identified then
-      if it.artprops["Str"] then str = str + it.artprops["Str"] end
-      if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-      if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
-    end
+  local wielded = items.equipped_at("weapon")
+  if wielded and wielded.artefact then
+    if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
+    if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
+    if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
   end
 
-  local stat = str
-  if it.is_ranged or it.weap_skill:contains("Blades") then stat = dex end
+  if it.artefact and it.is_identified then
+    if it.artprops["Str"] then str = str + it.artprops["Str"] end
+    if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
+    if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
+  end
 
+  return str, dex, it_plus
+end
+
+local function apply_brand_bonus(ego, base_dmg, it_plus, dmg_type)
+  if not ego then return base_dmg + it_plus end
+
+  -- Check if brand should apply based on damage type
+  local should_apply = (
+    dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
+    or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
+    or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
+    or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
+  )
+
+  if not should_apply then return nil end
+
+  local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
+  return bonus.factor * base_dmg + it_plus + bonus.offset
+end
+
+--- Get weapon final damage, including stat/slay changes when swapping for current weapon.
+-- Aux attacks not included
+function BRC.eq.get_dmg(it, dmg_type)
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+
+  local str, dex, it_plus = get_stats_for_damage(it)
+  local stat = (it.is_ranged or it.weap_skill:contains("Blades")) and dex or str
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + BRC.you.skill(it.weap_skill) / 50) * (1 + you.skill("Fighting") / 60)
 
-  it_plus = it_plus + get_slay_bonuses()
+  local base_dmg = it.damage * stat_mod * skill_mod
 
-  local pre_brand_dmg_no_plus = it.damage * stat_mod * skill_mod
-  local pre_brand_dmg = pre_brand_dmg_no_plus + it_plus
-
-  if BRC.it.is_magic_staff(it) then return pre_brand_dmg + get_staff_bonus_dmg(it, dmg_type) end
-
-  local ego = BRC.eq.get_ego(it)
-  if ego and (
-      dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
-      or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
-      or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
-      or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
-    )
-  then
-    local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
-    return bonus.factor * pre_brand_dmg_no_plus + it_plus + bonus.offset
+  if BRC.it.is_magic_staff(it) then
+    return base_dmg + it_plus + get_staff_bonus_dmg(it, dmg_type)
   end
 
-  return pre_brand_dmg
+  return apply_brand_bonus(BRC.eq.get_ego(it), base_dmg, it_plus, dmg_type)
 end
 
 
