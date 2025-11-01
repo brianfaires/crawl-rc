@@ -40,6 +40,15 @@ local function track_unique_egos(it)
   end
 end
 
+local function get_alert_color_for_item(it)
+  if it.is_weapon then return Config.AlertColor.weapon end
+  if BRC.it.is_orb(it) then return Config.AlertColor.orb end
+  if BRC.it.is_talisman(it) then return Config.AlertColor.talisman end
+  if BRC.it.is_body_armour(it) then return Config.AlertColor.body_arm end
+  if BRC.it.is_armour(it) then return Config.AlertColor.aux_arm end
+  return Config.AlertColor.misc
+end
+
 ---- Public API ----
 function f_pickup_alert.pause_alerts()
   hold_alerts_for_next_turn = true
@@ -47,31 +56,21 @@ end
 
 function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local item_name = f_pa_data.get_keyname(it, true)
-  local alert_col
+  local alert_col = get_alert_color_for_item(it)
 
+  -- Handle special formatting for weapons and body armour
   if it.is_weapon then
     f_pa_data.update_high_scores(it)
-    alert_col = Config.AlertColor.weapon
     local weapon_info = string.format(" (%s)", BRC.eq.wpn_stats(it))
     item_name = item_name .. BRC.txt[Config.AlertColor.weapon.stats](weapon_info)
-  elseif BRC.it.is_orb(it) then
-    alert_col = Config.AlertColor.orb
-  elseif BRC.it.is_talisman(it) then
-    alert_col = Config.AlertColor.talisman
   elseif BRC.it.is_armour(it) then
+    track_unique_egos(it)
     if BRC.it.is_body_armour(it) then
       f_pa_data.update_high_scores(it)
-      alert_col = Config.AlertColor.body_arm
       local ac, ev = BRC.eq.arm_stats(it)
       local armour_info = string.format(" {%s, %s}", ac, ev)
       item_name = item_name .. BRC.txt[Config.AlertColor.body_arm.stats](armour_info)
-    else
-      alert_col = Config.AlertColor.aux_arm
     end
-
-    track_unique_egos(it)
-  else
-    alert_col = Config.AlertColor.misc
   end
 
   local tokens = {}

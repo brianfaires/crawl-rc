@@ -359,6 +359,7 @@ BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature for Config o
 
 ---- Local constants ----
 local RESTORE_TABLE = "_brc_persist_restore_table"
+local MAX_RESTORE_RETRIES = 5  -- Maximum number of retry prompts for data restoration
 
 ---- Local variables ----
 -- Init tables in declaration, so persist() can be called before init()
@@ -382,7 +383,7 @@ local function is_usable_backup()
 
   local turn_diff = you.turns() - c_persist.BRC.Backup.backup_turn
   if turn_diff == 0 then return true end
-  for _ = 1, 5 do
+  for _ = 1, MAX_RESTORE_RETRIES do
     if BRC.mpr.yesno("Use backup from " .. turn_diff .. " turns ago?") then return true end
     if BRC.mpr.yesno("Are you sure? Data will reset to defaults.") then return false end
   end
@@ -490,7 +491,7 @@ function BRC.Data.handle_persist_errors()
   local msg = "%s persistent variables did not restore: (%s)"
   BRC.mpr.error(msg:format(#_failures, table.concat(_failures, ", ")), true)
 
-  for _ = 1, 5 do
+  for _ = 1, MAX_RESTORE_RETRIES do
     if BRC.mpr.yesno("Try restoring from backup?") then break end
     if BRC.mpr.yesno("Are you sure? Data will reset to defaults.") then return nil end
   end
