@@ -266,7 +266,50 @@ local function get_weap_high_score_alert(it)
   return make_alert(it, category, Emoji.WEAPON, Config.Alert.More.high_score_weap)
 end
 
-local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
+-- get_upgrade_alert() subroutines
+local function can_use_2h_without_losing_shield()
+  return BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl)
+end
+
+local function check_upgrade_free_offhand(it, ratio)
+  local it_ego = BRC.eq.get_ego(it)
+  if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
+    return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.Alert.More.weap_ego)
+  elseif ratio > Heur.Alert.AddHand.not_using then
+    return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.Alert.More.upgrade_weap)
+  end
+  return false
+end
+
+local function check_upgrade_lose_shield(it, cur, ratio)
+  if BRC.eq.get_ego(it) and not BRC.eq.get_ego(cur) and ratio > Heur.Alert.AddHand.add_ego_lose_sh then
+    return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
+  end
+  return false
+end
+
+local function check_upgrade_no_hand_loss(it, cur, ratio)
+  if cur.artefact then return false end
+  
+  if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
+    local it_ego = BRC.eq.get_ego(it)
+    if not BRC.eq.get_ego(cur) then
+      if ratio > Heur.Alert.gain_ego then
+        return make_alert(it, "Gain ego", Emoji.EGO, Config.Alert.More.weap_ego)
+      end
+    elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
+      return make_alert(it, "New ego", Emoji.EGO, Config.Alert.More.weap_ego)
+    end
+  end
+  
+  if ratio > Heur.Alert.pure_dps then
+    return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
+  end
+  
+  return false
+end
+
+local function check_upgrade_same_subtype(it, cur, best_dps, best_score)
   -- Alert: new egos, highest DPS or highest weap_score
   local it_ego = BRC.eq.get_ego(it, true) -- Don't overvalue speed/heavy (only consider their DPS)
   local cur_ego = BRC.eq.get_ego(cur)
@@ -291,7 +334,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
 
   if it.artefact then return make_alert(it, "Artefact weapon", Emoji.ARTEFACT) end
   if cur.subtype() == it.subtype() then
-    return get_upgrade_alert_same_type(it, cur, best_dps, best_score)
+    return check_upgrade_same_subtype(it, cur, best_dps, best_score)
   end
   if not is_valid_upgrade(it, cur) then return end
 
@@ -300,34 +343,12 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
-  if BRC.eq.get_hands(it) <= cur.hands then
-    if cur.artefact then return false end
-    if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
-      local it_ego = BRC.eq.get_ego(it)
-      if not BRC.eq.get_ego(cur) then
-        if ratio > Heur.Alert.gain_ego then
-          return make_alert(it, "Gain ego", Emoji.EGO, Config.Alert.More.weap_ego)
-        end
-      elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
-        return make_alert(it, "New ego", Emoji.EGO, Config.Alert.More.weap_ego)
-      end
-    end
-    if ratio > Heur.Alert.pure_dps then
-      return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
-    end
-  elseif BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl) then
-    local it_ego = BRC.eq.get_ego(it)
-    if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
-      return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.Alert.More.weap_ego)
-    elseif ratio > Heur.Alert.AddHand.not_using then
-      return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.Alert.More.upgrade_weap)
-    end
-  elseif
-    BRC.eq.get_ego(it)
-    and not BRC.eq.get_ego(cur)
-    and ratio > Heur.Alert.AddHand.add_ego_lose_sh
-  then
-    return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
+  if BRC.eq.get_hands(it) <= BRC.eq.get_hands(cur) then
+    return check_upgrade_no_hand_loss(it, cur, ratio)
+  elseif can_use_2h_without_losing_shield() then
+    return check_upgrade_free_offhand(it, ratio)
+  else
+    return check_upgrade_lose_shield(it, cur, ratio)
   end
 end
 
