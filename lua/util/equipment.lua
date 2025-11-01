@@ -157,7 +157,7 @@ end
 --- Gets the updated stats after equipping an item
 -- @param stats (table) Keys are artefact properties, values are the current values
 -- If multiple equip slots available, assumes no item is removed.
--- @return nil - updates stats table in place
+-- @return (table) New stats table with updated values (original table is not modified)
 local function get_stats_with_item(it, stats)
   local new_stats = util.copy_table(stats)
   local cur = items.equipped_at(it.equip_type)
@@ -208,7 +208,7 @@ end
 --   (2) plain: Include non-elemental damaging brands
 --   (3) branded: Include all damaging brands
 --   (4) scoring: Include heuristics from 'subtle' brands
-local function apply_brand_bonus(ego, base_dmg, it_plus, dmg_type)
+local function get_dmg_with_brand_bonus(ego, base_dmg, it_plus, dmg_type)
   if not ego then return base_dmg + it_plus end
 
   -- Check if brand should apply based on damage type
@@ -222,6 +222,8 @@ local function apply_brand_bonus(ego, base_dmg, it_plus, dmg_type)
   if should_apply then
     local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
     return bonus.factor * base_dmg + it_plus + bonus.offset
+  else
+    return base_dmg + it_plus
   end
 end
 
@@ -356,7 +358,7 @@ function BRC.eq.get_dmg(it, dmg_type)
   if BRC.it.is_magic_staff(it) then
     return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
   else
-    return apply_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
+    return get_dmg_with_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
   end
 end
 

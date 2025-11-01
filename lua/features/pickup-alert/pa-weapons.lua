@@ -349,7 +349,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
-  if BRC.eq.get_hands(it) <= BRC.eq.get_hands(cur) then
+  if BRC.eq.get_hands(it) <= cur.hands then
     return check_upgrade_no_hand_loss(it, cur, ratio)
   elseif can_use_2h_without_losing_shield() then
     return check_upgrade_free_offhand(it, ratio)
