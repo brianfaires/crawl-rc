@@ -154,7 +154,78 @@ local function get_staff_bonus_dmg(it, dmg_type)
 end
 
 
----- Formatting stats for alerts & inscriptions ----
+--- Gets the updated stats after equipping an item
+-- @param stats (table) Keys are artefact properties, values are the current values
+-- If multiple equip slots available, assumes no item is removed.
+-- @return nil - updates stats table in place
+local function get_stats_with_item(it, stats)
+  local new_stats = util.copy_table(stats)
+  local cur = items.equipped_at(it.equip_type)
+  if not cur or it.equipped then return new_stats end
+
+  if cur.artefact and BRC.you.num_eq_slots(it) == 1 then
+    for k, _ in pairs(new_stats) do
+      new_stats[k] = new_stats[k] - (cur.artprops[k] or 0)
+    end
+  end
+
+  if it.artefact then
+    for k, _ in pairs(new_stats) do
+      new_stats[k] = new_stats[k] + (it.artprops[k] or 0)
+    end
+  end
+
+  return new_stats
+end
+
+--- Get change in SH and EV when switching to shield
+local function get_delta_sh_ev(it)
+  local it_sh = BRC.eq.get_sh(it)
+  local it_ev = -get_shield_penalty(it)
+  local cur = items.equipped_at(it.equip_type)
+  if not cur or it.equipped then
+    return it_sh, it_ev
+  else
+    return it_sh - BRC.eq.get_sh(cur), it_ev + get_shield_penalty(cur)
+  end
+end
+
+--- Get change in AC and EV when switching to armour
+local function get_delta_ac_ev(it)
+  local it_ac = BRC.eq.get_ac(it)
+  local it_ev = BRC.eq.get_armour_ev(it)
+  local cur = items.equipped_at(it.equip_type)
+  if not cur or it.equipped or BRC.you.num_eq_slots(it) > 1 then
+    return it_ac, it_ev
+  else
+    return it_ac - BRC.eq.get_ac(cur), it_ev - BRC.eq.get_armour_ev(cur)
+  end
+end
+
+--- Calculate weapon damage using the brand bonuses in BRC.Config.BrandBonus
+-- @param dmg_type int Matches a damage type defined in BRC.DMG_TYPE:
+--   (1) unbranded: Only "heavy" is included
+--   (2) plain: Include non-elemental damaging brands
+--   (3) branded: Include all damaging brands
+--   (4) scoring: Include heuristics from 'subtle' brands
+local function apply_brand_bonus(ego, base_dmg, it_plus, dmg_type)
+  if not ego then return base_dmg + it_plus end
+
+  -- Check if brand should apply based on damage type
+  local should_apply = (
+    dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
+    or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
+    or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
+    or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
+  )
+
+  if should_apply then
+    local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
+    return bonus.factor * base_dmg + it_plus + bonus.offset
+  end
+end
+
+---- Stat formatting functions ----
 --- Format damage values for consistent display width (4 characters)
 local function format_dmg(dmg)
   if dmg < 10 then return string.format("%.2f", dmg) end
@@ -174,43 +245,26 @@ local function format_stat(abbr, val, is_worn)
   end
 end
 
---- Get the armour stats as strings
+--- Get armour stats as strings
 -- @return (string, string) AC or SH, and EV.  If not worn, returns deltas from the worn item stats
 function BRC.eq.arm_stats(it)
   if not BRC.it.is_armour(it) then return "", "" end
 
-  local equip_type = it.equip_type
-  if equip_type == "body armour" then equip_type = "armour" end
-  local cur = items.equipped_at(equip_type)
-  local is_worn = it.equipped or (it.ininventory and cur and cur.slot == it.slot)
-  local cur_ac = 0
-  local cur_sh = 0
-  local cur_ev = 0
-
-  -- Show as delta if wearing a different item (and only one equip slot)
-  if cur and not is_worn and BRC.you.num_eq_slots(it) == 1 then
-    if BRC.it.is_shield(cur) then
-      cur_sh = BRC.eq.get_sh(cur)
-      cur_ev = -get_shield_penalty(cur)
-    else
-      cur_ac = BRC.eq.get_ac(cur)
-      cur_ev = BRC.eq.get_ev(cur)
-    end
-  end
-
   if BRC.it.is_shield(it) then
-    local sh_str = format_stat("SH", BRC.eq.get_sh(it) - cur_sh, is_worn)
-    local ev_str = format_stat("EV", -get_shield_penalty(it) - cur_ev, is_worn)
+    local sh_delta, ev_delta = get_delta_sh_ev(it)
+    local sh_str = format_stat("SH", sh_delta, it.equipped)
+    local ev_str = format_stat("EV", ev_delta, it.equipped)
     return sh_str, ev_str
   else
-    local ac_str = format_stat("AC", BRC.eq.get_ac(it) - cur_ac, is_worn)
+    local ac_delta, ev_delta = get_delta_ac_ev(it)
+    local ac_str = format_stat("AC", ac_delta, it.equipped)
     if not BRC.it.is_body_armour(it) then return ac_str end
-    local ev_str = format_stat("EV", BRC.eq.get_ev(it) - cur_ev, is_worn)
+    local ev_str = format_stat("EV", ev_delta, it.equipped)
     return ac_str, ev_str
   end
 end
 
---- Get the weapon stats as a string
+--- Get weapon stats as a string
 -- @return (string) DPS, damage, delay, and accuracy
 function BRC.eq.wpn_stats(it, dmg_type)
   if not it.is_weapon then return end
@@ -244,7 +298,7 @@ end
 function BRC.eq.get_ac(it)
   local it_plus = it.plus or 0
 
-  if it.artefact and it.is_identified then
+  if it.artefact then
     local art_ac = it.artprops["AC"]
     if art_ac then it_plus = it_plus + art_ac end
   end
@@ -257,123 +311,58 @@ function BRC.eq.get_ac(it)
   return ac
 end
 
-function BRC.eq.get_ev(it)
-  -- This function computes the armour-based component to standard EV (not paralysed, etc)
-  -- Factors in stat changes from this armour and removing current one
-  local str = you.strength()
-  local dex = you.dexterity()
-  local no_art_str = str
-  local no_art_dex = dex
-  local art_ev = 0
+--- Compute an armour's impact on EV, including stat changes from wearing/removing artefacts
+function BRC.eq.get_armour_ev(it)
+  local cur = { Str = you.strength(), Dex = you.dexterity(), EV = 0 }
+  local worn = get_stats_with_item(it, cur)
 
-  -- Adjust str/dex/EV for artefact stat changes
-  local worn = items.equipped_at("armour")
-  if worn and worn.artefact then
-    if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
-    if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
-    if worn.artprops["EV"] then art_ev = art_ev - worn.artprops["EV"] end
-  end
+  if worn.Str <= 0 then worn.Str = 1 end
+  local dodge_bonus = get_adjusted_dodge_bonus(it.encumbrance, worn.Str, worn.Dex)
 
-  if it.artefact then
-    if it.artprops["Str"] then str = str + it.artprops["Str"] end
-    if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-    if it.artprops["EV"] then art_ev = art_ev + it.artprops["EV"] end
-  end
+  if cur.Str <= 0 then cur.Str = 1 end
+  local naked_dodge_bonus = get_adjusted_dodge_bonus(0, cur.Str, cur.Dex)
 
-  if str <= 0 then str = 1 end
-
-  local dodge_bonus = get_adjusted_dodge_bonus(it.encumbrance, str, dex)
-  local naked_dodge_bonus = get_adjusted_dodge_bonus(0, no_art_str, no_art_dex)
-  return (dodge_bonus - naked_dodge_bonus) + art_ev - get_adjusted_armour_pen(it.encumbrance, str)
+  return dodge_bonus - naked_dodge_bonus + worn.EV - get_adjusted_armour_pen(it.encumbrance, worn.Str)
 end
 
 function BRC.eq.get_sh(it)
-  local dex = you.dexterity()
-  if it.artefact and it.is_identified then
-    local art_dex = it.artprops["Dex"]
-    if art_dex then dex = dex + art_dex end
-  end
-
-  local cur = items.equipped_at("offhand")
-  if BRC.it.is_shield(cur) and cur.artefact and cur.slot ~= it.slot then
-    local art_dex = cur.artprops["Dex"]
-    if art_dex then dex = dex - art_dex end
-  end
-
+  local stats = get_stats_with_item(it, { Dex = you.dexterity() })
   local it_plus = it.plus or 0
+  local sh_skill = you.skill("Shields")
 
   local base_sh = it.ac * 2
-  local shield = base_sh * (50 + you.skill("Shields") * 5 / 2)
+  local shield = base_sh * (50 + sh_skill * 5 / 2)
   shield = shield + 200 * it_plus
-  shield = shield + 38 * (you.skill("Shields") + 3 + dex * (base_sh + 13) / 26)
+  shield = shield + 38 * (sh_skill + 3 + stats.Dex * (base_sh + 13) / 26)
   return shield / 200
 end
 
 
 ---- Weapon stats ----
-function BRC.eq.get_dps(it, dmg_type)
-  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
-  return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
-end
-
---- @return (number, number, number) str, dex, it.plus+artefact slaying
-local function get_stats_for_damage(it)
-  local it_plus = (it.plus or 0) + get_slay_bonuses()
-  local str = you.strength()
-  local dex = you.dexterity()
-
-  if it.equipped then return str, dex, it_plus end
-
-  local wielded = items.equipped_at("weapon")
-  if wielded and wielded.artefact then
-    if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
-    if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
-    if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
-  end
-
-  if it.artefact and it.is_identified then
-    if it.artprops["Str"] then str = str + it.artprops["Str"] end
-    if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-    if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
-  end
-
-  return str, dex, it_plus
-end
-
-local function apply_brand_bonus(ego, base_dmg, it_plus, dmg_type)
-  if not ego then return base_dmg + it_plus end
-
-  -- Check if brand should apply based on damage type
-  local should_apply = (
-    dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
-    or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
-    or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
-    or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
-  )
-
-  if not should_apply then return nil end
-
-  local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
-  return bonus.factor * base_dmg + it_plus + bonus.offset
-end
-
---- Get weapon final damage, including stat/slay changes when swapping for current weapon.
+--- Get weapon damage, including stat/slay changes when swapping from current weapon.
 -- Aux attacks not included
 function BRC.eq.get_dmg(it, dmg_type)
-  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+  dmg_type = dmg_type or BRC.DMG_TYPE.scoring
 
-  local str, dex, it_plus = get_stats_for_damage(it)
-  local stat = (it.is_ranged or it.weap_skill:contains("Blades")) and dex or str
+  local it_plus = (it.plus or 0) + get_slay_bonuses()
+  local stats = { Str = you.strength(), Dex = you.dexterity(), Slay = it_plus }
+  stats = get_stats_with_item(it, stats)
+
+  local stat = (it.is_ranged or it.weap_skill:contains("Blades")) and stats.Dex or stats.Str
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + BRC.you.skill(it.weap_skill) / 50) * (1 + you.skill("Fighting") / 60)
-
   local base_dmg = it.damage * stat_mod * skill_mod
 
   if BRC.it.is_magic_staff(it) then
-    return base_dmg + it_plus + get_staff_bonus_dmg(it, dmg_type)
+    return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
+  else
+    return apply_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
   end
+end
 
-  return apply_brand_bonus(BRC.eq.get_ego(it), base_dmg, it_plus, dmg_type)
+function BRC.eq.get_dps(it, dmg_type)
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+  return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
 end
 
 

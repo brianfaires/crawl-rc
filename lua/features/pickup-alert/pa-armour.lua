@@ -225,7 +225,7 @@ local function alert_body_armour(it)
   local cur_ego = BRC.eq.get_ego(cur)
   local ego_change = get_ego_change_type(cur_ego, it_ego)
   local ac_delta = BRC.eq.get_ac(it) - BRC.eq.get_ac(cur)
-  local ev_delta = BRC.eq.get_ev(it) - BRC.eq.get_ev(cur)
+  local ev_delta = BRC.eq.get_armour_ev(it) - BRC.eq.get_armour_ev(cur)
   local encumb_delta = it.encumbrance - cur.encumbrance
 
   -- Alert new egos if same encumbrance, or small change to total (AC+EV)
