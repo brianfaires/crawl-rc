@@ -3,7 +3,6 @@
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
-1. Standardize LDocs / file headers
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. Features:
   - Rebind cntl-E and low radius for fast orb run

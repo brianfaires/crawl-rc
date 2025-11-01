@@ -3,17 +3,21 @@
 ################################### Begin lua/core/config.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC Configuration - Various configs, overriding default values in feature configs.
-Author: buehler
-Dependencies: core/data.lua, core/util/*
-Usage:
-  - Update BRC.use_config to load the corresponding config.
-  - Update each config or create new ones.
-  - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
-  - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
-  - If using config_memory == "full", the function needs to be saved as a string instead. --]]
--- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC.Profiles
+-- Manages config profiles and feature config overrides.
+--
+-- When a config profile loads, it is applied on top of BRC.Profiles.Default.
+-- If a profile defines a field, that value is used.
+--   If not defined in the profile, the value in BRC.Profiles.Default is used.
+--   If not defined in either, the default value from the feature config is used.
+-- @warning BRC.Profiles.Default defines all fields not in a feature config. Do not remove them.
+--
+-- @usage: Adding a field in BRC.Profiles.Default will apply to all config profiles.
+--   Ex: To disable the color-inscribe feature in all profiles, add this to BRC.Profiles.Default:
+--     ["color-inscribe"] = { disabled = true }
+---------------------------------------------------------------------------------------------------
 
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
@@ -220,11 +224,11 @@ end
 ################################### Begin lua/core/constants.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC Constants - All constant definitions
-Author: buehler
-Dependencies: BRC.Config.emojis
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC
+-- Constants and definitions used throughout BRC.
+---------------------------------------------------------------------------------------------------
 
 ---- Cosmetic settings
 BRC.EMOJI = {
@@ -301,7 +305,7 @@ BRC.PORTAL_NAMES = {
 ---- Egos ----
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
-BRC.ADJECTIVE_EGOS = {
+BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
   antimagic = "antimagic", heavy = "heavy", spectralising = "spectral", vampirism = "vampiric"
 } -- BRC.ADJECTIVE_EGOS (do not remove this comment)
 
@@ -343,14 +347,13 @@ BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 ################################### Begin lua/core/data.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC.Data - Persistent data management module
-Manages persistent data across games and saves
-Author: buehler
-Dependencies: core/constants.lua, core/util/*
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core feature: data-manager
+-- @module BRC.Data
+-- Provides functions and maintenance for persistent variables that survive game restarts.
+-- Handles backup/restore functionality and error handling.
+---------------------------------------------------------------------------------------------------
 
----- Initialize BRC namespace and Data module
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature for Config override
 
@@ -404,10 +407,9 @@ end
 ---- Public API ----
 
 --- Creates a persistent global variable or table, that retains its value through restarts.
--- Use this pattern to make the global definition obvious: `var = BRC.Data.persist("var", value)`
--- After restarting, the variable/table will not exist until this is called.
--- @param default_value - Variable set to this if it doesn't exist yet
--- @return The current value (whether default or persisted)
+-- @usage `var = BRC.Data.persist("var", value)`
+-- @warning After restarting, the variable/table will not exist until this is called.
+-- @return any The current value (whether default or persisted)
 function BRC.Data.persist(name, default_value)
   local t = type(default_value)
   if not util.contains({ "table", "string", "number", "boolean", "nil" }, t) then
@@ -482,7 +484,7 @@ function BRC.Data.reset()
   BRC.mpr.warning("Reset all persistent data to default values.")
 end
 
--- @return true if no persist errors, false if failed restore, nil for user-accepted errors
+--- @return boolean|nil true if no persist errors, false if failed restore, nil if handled errors
 function BRC.Data.handle_persist_errors()
   if #_failures == 0 then return true end
   local msg = "%s persistent variables did not restore: (%s)"
@@ -533,14 +535,14 @@ end
 ################################### Begin lua/core/brc.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC (Buehler RC) Core Module
-This module serves as the central coordinator for all feature modules
-It automatically loads any global module/table that defines `BRC_FEATURE_NAME`
-It then manages the feature's lifecycle and hook dispatching
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC
+-- @author buehler
+-- Serves as the central coordinator for all feature modules.
+-- Automatically loads any global module/table that defines `BRC_FEATURE_NAME`
+-- and manages the feature's lifecycle and hook dispatching.
+---------------------------------------------------------------------------------------------------
 
 ---- Local constants ----
 BRC.VERSION = "1.2.0"

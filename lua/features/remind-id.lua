@@ -1,10 +1,9 @@
---[[
-Feature: remind-id
-Description: Reminds to read ID scrolls.
-Before finding scroll of ID, stops exploration when largest un-ID'd stack sizes increase.
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua, hotkey.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: remind-id
+-- @module f_remind_id
+-- Alerts a reminder to read scroll of ID, when carrying unidentified items.
+-- Before finding scroll of ID, stops explore when largest stack of un-ID'd scrolls/pots increases.
+---------------------------------------------------------------------------------------------------
 
 f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"

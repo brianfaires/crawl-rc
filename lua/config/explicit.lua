@@ -1,6 +1,5 @@
 --- Explicit config profile: All config values from all features listed explicitly, set to defaults
 -- Large feature config sections are at the end
--- Any feature config can define "disabled = true" to disable it entirely
 
 brc_config_explicit = {
   BRC_CONFIG_NAME = "Explicit",
@@ -51,6 +50,7 @@ brc_config_explicit = {
 
   ---- Feature configs ----
   ["announce-hp-mp"] = {
+    disabled = false,
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
     always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
@@ -82,27 +82,33 @@ brc_config_explicit = {
   },
 
   ["answer-prompts"] = {
+    disabled = false,
     -- No config; See answer-prompts.lua for Questions/Answers
   },
 
   ["color-inscribe"] = {
+    disabled = false,
     -- No config; See color-inscribe.lua for COLORIZE_TAGS
   },
 
   ["drop-inferior"] = {
+    disabled = false,
     msg_on_inscribe = true, -- Show a message when an item is marked for drop
     hotkey_drop = true, -- BRC hotkey drops all items on the drop list
   },
 
   ["dynamic-options"] = {
+    disabled = false,
     -- No config; See dynamic-options.lua for specifics
   },
 
   ["exclude-dropped"] = {
+    disabled = false,
     not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding enchantable weapon
   },
 
   ["fully-recover"] = {
+    disabled = false,
     rest_off_statuses = { -- Keep resting until these statuses are gone
       "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
       "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
@@ -110,12 +116,14 @@ brc_config_explicit = {
   },
 
   ["inscribe-stats"] = {
+    disabled = false,
     inscribe_weapons = true, -- Inscribe weapon stats on pickup
     inscribe_armour = true, -- Inscribe armour stats on pickup
     dmg_type = 1, -- unbranded
   },
 
   ["misc-alerts"] = {
+    disabled = false,
     save_with_msg = true, -- Shift-S to save and leave yourself a message
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
     alert_spell_level_changes = true, -- Alert when you gain additional spell levels
@@ -124,11 +132,13 @@ brc_config_explicit = {
   },
 
   ["quiver-reminders"] = {
+    disabled = false,
     confirm_consumables = true,
     warn_diff_missile_turns = 10,
   },
 
   ["remind-id"] = {
+    disabled = false,
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
     emoji = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>",
@@ -136,6 +146,7 @@ brc_config_explicit = {
   },
 
   ["runrest-features"] = {
+    disabled = false,
     after_shaft = true, -- stop on stairs after being shafted, until returned to original floor
     ignore_altars = true, -- when you don't need a god
     ignore_portal_exits = true, -- don't stop explore on portal exits
@@ -146,15 +157,18 @@ brc_config_explicit = {
   },
 
   ["safe-consumables"] = {
+    disabled = false,
     -- No config;See safe-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
   },
 
   ["safe-stairs"] = {
+    disabled = false,
     warn_backtracking = true, -- Warn if immediately taking stairs twice in a row
     warn_v5 = true, -- Prompt before entering Vaults:5
   },
 
   ["startup"] = {
+    disabled = false,
     show_skills_menu = false, -- Show skills menu on startup
     set_all_targets = true, -- Set all targets, even if only focusing one
     focus_one_skill = true, -- Focus one skill at a time, even if setting all targets
@@ -176,11 +190,13 @@ brc_config_explicit = {
   },
 
   ["weapon-slots"] = {
+    disabled = false,
     -- No config
   },
 
   ---- Large config sections ----
   ["mute-messages"] = {
+    disabled = false,
     mute_level = 2,
     messages = {
       -- Light reduction; unnecessary messages
@@ -257,6 +273,7 @@ brc_config_explicit = {
   }, -- mute-messages
 
   ["pickup-alert"] = {
+    disabled = false,
     Pickup = {
       armour = true,
       weapons = true,
@@ -428,6 +445,7 @@ brc_config_explicit = {
   }, -- pickup-alert
 
   ["alert-monsters"] = {
+    disabled = false,
     sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
     fm_on_uniques = true, -- Stop on all Uniques & Pan lords
     pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable

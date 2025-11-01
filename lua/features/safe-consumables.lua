@@ -1,9 +1,8 @@
---[[
-Feature: safe-consumables
-Description: Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-consumables
+-- @module f_safe_consumables
+-- Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
+---------------------------------------------------------------------------------------------------
 
 f_safe_consumables = {}
 f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"

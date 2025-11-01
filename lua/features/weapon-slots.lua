@@ -1,9 +1,8 @@
---[[
-Feature: weapon-slots
-Description: Automatically keeps weapons in slots a/b/w. Prioritizes slots by weapon type + skill.
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: weapon-slots
+-- @module f_weapon_slots
+-- Automatically keeps weapons in slots a/b/w. Prioritizes slots by weapon type + skill.
+---------------------------------------------------------------------------------------------------
 
 f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"

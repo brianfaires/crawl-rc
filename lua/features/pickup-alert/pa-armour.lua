@@ -1,10 +1,9 @@
---[[
-Feature: pickup-alert-armour
-Description: Armour pickup logic and alert system for the pickup-alert system
-Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/constants.lua, core/util.lua,
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-armour
+-- @submodule f_pa_armour
+-- @author Medar, gammafunk, buehler
+-- Armour pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_armour = {}
 

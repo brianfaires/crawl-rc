@@ -1,9 +1,9 @@
---[[
-Feature: misc-alerts
-Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
-Author: orig save w/msg by gammafunk, buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua, hotkey.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: misc-alerts
+-- @module f_misc_alerts
+-- @author gammafunk (save game w/ msg), buehler
+-- Various single-purpose alerts: save game w/ msg, low HP, faith amulet, spell level changes.
+---------------------------------------------------------------------------------------------------
 
 f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"

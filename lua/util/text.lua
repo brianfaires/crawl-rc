@@ -1,13 +1,19 @@
--------------------------------------------
----- BRC.txt - Text + String functions ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.txt
+-- Text and string functions.
+-- Creates string:contains() for all strings
+---------------------------------------------------------------------------------------------------
+
 BRC.txt = {}
 
 ---- Text parsing ----
---- Create string:contains() for all strings
+--- Search for text within a string, without Lua pattern matching.
+-- @return (bool) True if text is found, false otherwise.
 function BRC.txt.contains(self, text)
   return self:find(text, 1, true) ~= nil
 end
--- Connect string:contains() to BRC.txt.contains()
+--- Connect string:contains() to BRC.txt.contains()
 getmetatable("").__index.contains = BRC.txt.contains
 
 --- Parse the slot and item name from an item pickup message (e.g. "w - a +0 short sword")

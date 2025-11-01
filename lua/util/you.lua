@@ -1,9 +1,13 @@
-----------------------------------------
----- BRC.you - Character attributes ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.you
+-- Utilities for checking character attributes and state
+---------------------------------------------------------------------------------------------------
+
 BRC.you = {}
 
---- Get mutation level, explicitly specifying crawl's optional params
--- @param bool innate_only (optional) - Exclude to include all mutations
+--- Get mutation level, explicitly specifying crawl's optional params.
+-- @param innate_only boolean (optional) True to count only innate mutations, else count all.
 function BRC.you.mut_lvl(mutation, innate_only)
   return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
 end
@@ -51,6 +55,18 @@ function BRC.you.shapeshifting_skill()
     return skill + 5
   end
   return skill
+end
+
+function BRC.you.size_penalty()
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
 end
 
 function BRC.you.zero_stat()

@@ -1,14 +1,12 @@
---[[
-Feature: alert-monsters
-Description: Dynamic force_more and flash_screen messages for monsters
-    Based on player HP, xl, willpower, resistances, etc.
-    WARNINGS:
-      - Never put a '}' on a line by itself. This breaks crawl's RC parser.
-      - POSIX regex are required for this feature to use '|' in patterns.
-Author: original by gammafunk, extended by buehler
-Dependencies: core/util.lua
---]]
-
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: alert-monsters
+-- @module f_alert_monsters
+-- @author gammafunk, buehler
+-- Dynamic force_more and flash_screen messages for monsters.
+-- Alerts are active/inactive based on player HP, XL, willpower, resistances, etc.
+--
+-- @warning Never put a '}' on a line by itself. This breaks crawl's RC parser.
+---------------------------------------------------------------------------------------------------
 f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 f_alert_monsters.Config = {

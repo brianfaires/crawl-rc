@@ -1,22 +1,17 @@
---[[
-These functions aren't as generalizable as other util functions. They contain many design choices.
-Examples: Weapon DPS calculation, treating dragon scales as branded, what a "risky item" is, etc.
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.eq
+-- This module contains 2 main types of functions:
+--   1. Mirroring crawl calculations, like weapon damage, armour penalty, etc.
+--   2. Design choices that aren't as generalizable as other util functions.
+--     Ex: Dragon scales are always considered branded, DPS calculation is an approximation, etc.
+--     Ex: is_risky(), is_useless_ego(), get_ego(), get_hands(), etc.
+---------------------------------------------------------------------------------------------------
+
 BRC.eq = {}
 
 ---- Local functions (Mostly mirroring crawl calculations) ----
 -- Last verified against: dcss v0.33.1
-local function get_size_penalty()
-  if util.contains(BRC.LITTLE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.SMALL_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.LARGE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LARGE
-  else
-    return BRC.SIZE_PENALTY.NORMAL
-  end
-end
 
 local function get_unadjusted_armour_pen(encumb)
   local pen = encumb - 2 * BRC.you.mut_lvl("sturdy frame")
@@ -30,7 +25,7 @@ local function get_adjusted_armour_pen(encumb, str)
 end
 
 local function get_adjusted_dodge_bonus(encumb, str, dex)
-  local size_factor = -2 * get_size_penalty()
+  local size_factor = -2 * BRC.you.size_penalty()
   local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
   if armour_dodge_penalty <= 0 then return dodge_bonus end

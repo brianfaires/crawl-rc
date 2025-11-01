@@ -1,9 +1,8 @@
---[[
-Feature: dynamic-options
-Description: Changes options based on game state: xl, class, race, god, skills
-Author: buehler
-Dependencies: core/constants.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: dynamic-options
+-- @module f_dynamic_options
+-- Contains options that change based on game state: xl, class, race, god, skills.
+---------------------------------------------------------------------------------------------------
 
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"

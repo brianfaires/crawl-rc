@@ -1,11 +1,11 @@
---[[
-Feature: template_feature
-Description: Brief description of what this feature does
-Author: Your Name
-Dependencies: List any dependencies (e.g., core/data.lua)
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: template_feature
+-- @module f_template
+-- @author Your Name
+-- Description of what this feature does.
+---------------------------------------------------------------------------------------------------
 
--- Global definitions: feature module, name, and config
+-- Core definitions: module, feature name, and config
 f_template = {}
 f_template.BRC_FEATURE_NAME = "template_feature"
 f_template.Config = {
@@ -16,7 +16,7 @@ f_template.Config = {
     key1 = 1,
     key2 = 2,
     ["100"] = "value for key=100",
-  }, -- Comment for safe parsing
+  }, -- Include comma or comment after a lone "}" to avoid RC parser errors
 } -- f_template.Config (Always add a comment to a line with only "}"). Or crawl's RC parser breaks
 
 ---- Persistent variables ---- (Defined globally, so give them unique names)

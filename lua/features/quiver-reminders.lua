@@ -1,9 +1,8 @@
---[[
-Feature: quiver-reminders
-Description: A handful of useful quiver-related reminders
-Author: buehler
-Dependencies: core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: quiver-reminders
+-- @module f_quiver_reminders
+-- A handful of useful quiver-related reminders. (AKA things I often screw up.)
+---------------------------------------------------------------------------------------------------
 
 f_quiver_reminders = {}
 f_quiver_reminders.BRC_FEATURE_NAME = "quiver-reminders"

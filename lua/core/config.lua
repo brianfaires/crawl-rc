@@ -1,14 +1,18 @@
---[[
-BRC Configuration - Various configs, overriding default values in feature configs.
-Author: buehler
-Dependencies: core/data.lua, core/util/*
-Usage:
-  - Update BRC.use_config to load the corresponding config.
-  - Update each config or create new ones.
-  - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
-  - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
-  - If using config_memory == "full", the function needs to be saved as a string instead. --]]
--- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC.Profiles
+-- Manages config profiles and feature config overrides.
+--
+-- When a config profile loads, it is applied on top of BRC.Profiles.Default.
+-- If a profile defines a field, that value is used.
+--   If not defined in the profile, the value in BRC.Profiles.Default is used.
+--   If not defined in either, the default value from the feature config is used.
+-- @warning BRC.Profiles.Default defines all fields not in a feature config. Do not remove them.
+--
+-- @usage: Adding a field in BRC.Profiles.Default will apply to all config profiles.
+--   Ex: To disable the color-inscribe feature in all profiles, add this to BRC.Profiles.Default:
+--     ["color-inscribe"] = { disabled = true }
+---------------------------------------------------------------------------------------------------
 
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)

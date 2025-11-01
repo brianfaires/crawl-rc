@@ -1,9 +1,8 @@
---[[
-Feature: color-inscribe
-Description: Colorizes inscriptions: resistances, stats, and other properties
-Author: buehler
-Dependencies: core/constants.lua, inscribe-stats.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: color-inscribe
+-- @module f_color_inscribe
+-- Adds color to key terms in inscriptions (resistances, stats, etc).
+---------------------------------------------------------------------------------------------------
 
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"

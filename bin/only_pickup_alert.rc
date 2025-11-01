@@ -3,13 +3,12 @@
 ################################### Begin lua/features/pickup-alert/pa-armour.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-armour
-Description: Armour pickup logic and alert system for the pickup-alert system
-Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/constants.lua, core/util.lua,
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-armour
+-- @submodule f_pa_armour
+-- @author Medar, gammafunk, buehler
+-- Armour pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_armour = {}
 
@@ -345,13 +344,12 @@ end
 ################################### Begin lua/features/pickup-alert/pa-weapons.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-weapons
-Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua,
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-weapons
+-- @submodule f_pa_weapons
+-- Weapon pickup and alert functions for the pickup-alert feature.
+-- _weapon_cache table stores info about inventory weapons, to avoid repeat calculations.
+---------------------------------------------------------------------------------------------------
 
 f_pa_weapons = {}
 
@@ -749,13 +747,11 @@ end
 ################################### Begin lua/features/pickup-alert/pa-misc.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-misc
-Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-misc
+-- @submodule f_pa_misc
+-- Miscellaneous item pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_misc = {}
 
@@ -850,12 +846,11 @@ end
 ################################### Begin lua/features/pickup-alert/pa-data.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-data
-Description: Data management and persistent storage for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-config.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-data
+-- @submodule f_pa_data
+-- Persistent data management and alert tracking for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_data = {}
 
@@ -1005,13 +1000,12 @@ end
 ################################### Begin lua/features/pickup-alert/pa-main.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert
-Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua,
-  pa-armour.lua, pa-config.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert
+-- @module f_pickup_alert
+-- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
+-- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
+---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"

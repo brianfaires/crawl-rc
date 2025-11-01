@@ -1,9 +1,8 @@
---[[
-Feature: pickup-alert-config
-Description: Configuration for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-config
+-- @submodule f_pickup_alert.Config
+-- Configuration and in-depth tuning heuristics for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.Config = {}

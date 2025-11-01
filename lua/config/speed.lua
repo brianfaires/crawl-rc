@@ -1,4 +1,4 @@
--- Speed Config Profile: For speed runs
+--- Speed Config Profile: For speed runs
 
 brc_config_speed = {
   BRC_CONFIG_NAME = "Speed",

@@ -1,9 +1,9 @@
---[[
-Feature: announce-hp-mp
-Description: Announces changes in HP/MP with visual meters and damage warnings
-Author: magus, buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: announce-hp-mp
+-- @module f_announce_hp_mp
+-- @author magus, buehler
+-- Announce changes in HP/MP, with visual meters and additional warnings for severe damage.
+---------------------------------------------------------------------------------------------------
 
 f_announce_hp_mp = {}
 f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"

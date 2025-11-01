@@ -1,10 +1,9 @@
---[[
-Feature: pickup-alert
-Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua,
-  pa-armour.lua, pa-config.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert
+-- @module f_pickup_alert
+-- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
+-- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
+---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"

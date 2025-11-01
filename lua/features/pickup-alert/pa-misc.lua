@@ -1,10 +1,8 @@
---[[
-Feature: pickup-alert-misc
-Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-misc
+-- @submodule f_pa_misc
+-- Miscellaneous item pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_misc = {}
 

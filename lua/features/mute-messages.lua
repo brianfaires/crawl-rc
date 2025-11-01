@@ -1,9 +1,7 @@
---[[
-Feature: mute-messages
-Description: Mutes various crawl messages, with configurable levels of reduction
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: mute-messages
+-- @module f_mute_messages
+-- Mutes various crawl messages, with configurable levels of reduction.
 
 f_mute_messages = {}
 f_mute_messages.BRC_FEATURE_NAME = "mute-messages"

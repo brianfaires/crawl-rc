@@ -1,9 +1,8 @@
---[[
-Feature: hotkey
-Description: Configures a BRC hotkey that features can assign actions to
-Author: buehler
-Dependencies: core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core feature: hotkey
+-- @module BRC.Hotkey
+-- Manages the BRC hotkey, and provides functions to add actions to it.
+---------------------------------------------------------------------------------------------------
 
 BRC.Hotkey = {}
 BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"

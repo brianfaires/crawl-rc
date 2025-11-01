@@ -1,9 +1,10 @@
---[[
-Feature: exclude-dropped
-Description: Excludes dropped items from autopickup, resumes on pickup.
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: exclude-dropped
+-- @module f_exclude_dropped
+-- Excludes dropped items from autopickup, pickup resumes autopickup.
+-- @todo Can remove when crawl's drop_disables_autopickup setting reaches feature parity.
+--    (Configurable/optional, dropping partial stack does not exclude, pickup resumes autopickup)
+---------------------------------------------------------------------------------------------------
 
 f_exclude_dropped = {}
 f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"

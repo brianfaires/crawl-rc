@@ -1,5 +1,9 @@
------------------------------------------------
----- BRC.opt - Functions for Crawl options ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.opt
+-- Functions for setting crawl options and macros.
+---------------------------------------------------------------------------------------------------
+
 BRC.opt = {}
 
 ---- Single turn mutes: Mute a message for the current turn only ----

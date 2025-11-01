@@ -1,9 +1,8 @@
---[[
-Feature: pickup-alert-data
-Description: Data management and persistent storage for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-config.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-data
+-- @submodule f_pa_data
+-- Persistent data management and alert tracking for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_data = {}
 

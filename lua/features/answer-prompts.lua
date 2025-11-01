@@ -1,9 +1,8 @@
---[[
-Feature: answer-prompts
-Description: Automatically answer crawl prompts
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: answer-prompts
+-- @module f_answer_prompts
+-- Automatically answer crawl prompts.
+---------------------------------------------------------------------------------------------------
 
 f_answer_prompts = {}
 f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"

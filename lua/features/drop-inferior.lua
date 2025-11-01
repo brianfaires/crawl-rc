@@ -1,9 +1,9 @@
---[[
-Feature: drop-inferior
-Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
-Author: buehler
-Dependencies: core/config.lua, core/util.lua, hotkey.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: drop-inferior
+-- @module f_drop_inferior
+-- When picking up an item, inscribes inferior items with "~~DROP_ME" and alerts you.
+-- Items with "~~DROP_ME" are added to the drop list, and can be quickly selected with `,`
+---------------------------------------------------------------------------------------------------
 
 f_drop_inferior = {}
 f_drop_inferior.BRC_FEATURE_NAME = "drop-inferior"

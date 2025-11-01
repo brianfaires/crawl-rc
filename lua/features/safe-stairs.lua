@@ -1,9 +1,9 @@
---[[
-Feature: safe-stairs
-Description: Prevent accidental stairs use and warn for Vaults:5 entry
-Author: buehler, rypofalem (V5 warning idea)
-Dependencies: core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-stairs
+-- @module f_safe_stairs
+-- @author rypofalem (V:5 warning idea), buehler
+-- Prevent accidental stairs use and warn for Vaults:5 entry.
+---------------------------------------------------------------------------------------------------
 
 f_safe_stairs = {}
 f_safe_stairs.BRC_FEATURE_NAME = "safe-stairs"

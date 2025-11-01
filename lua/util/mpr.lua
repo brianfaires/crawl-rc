@@ -1,5 +1,9 @@
---------------------------------------------------------------------
----- BRC.mpr - Wrappers around crawl.mpr - for message printing ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.mpr
+-- Wrappers around crawl.mpr for message printing : Colors, formatted messages, message queue, etc.
+---------------------------------------------------------------------------------------------------
+
 BRC.mpr = {}
 
 ---- mpr queue (displayed after all other messages for the turn) ----

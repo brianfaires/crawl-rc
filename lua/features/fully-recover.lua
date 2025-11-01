@@ -1,9 +1,9 @@
---[[
-Feature: fully-recover
-Description: Rests until no negative duration statuses. Doesn't stop on each status message.
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: fully-recover
+-- @module f_fully_recover
+-- Rests until no negative duration statuses. Doesn't stop rest on each status expiration.
+-- @todo Can remove when crawl's explore_auto_rest_status setting reaches feature parity.
+---------------------------------------------------------------------------------------------------
 
 f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"

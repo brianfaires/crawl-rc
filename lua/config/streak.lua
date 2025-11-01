@@ -1,4 +1,4 @@
--- Streak Config Profile: For win streaks
+--- Streak Config Profile: For win streaks
 
 brc_config_streak = {
   BRC_CONFIG_NAME = "Streak",

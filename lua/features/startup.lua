@@ -1,9 +1,9 @@
---[[
-Feature: startup
-Description: Handles startup features like skill menu display and auto-setting skill targets
-Author: rwbarton, buehler
-Dependencies: core/constants.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: startup
+-- @module f_startup
+-- @author rwbarton (display skills menu), buehler
+-- Handles startup actions, like displaying skills menu and auto-setting skill targets.
+---------------------------------------------------------------------------------------------------
 
 f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"

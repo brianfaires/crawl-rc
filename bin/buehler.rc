@@ -116,7 +116,7 @@ brc_config_custom = {
 ################################### Begin lua/config/testing.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
--- Testing Config Profile: Isolate and test specific features
+--- Testing Config Profile: Isolate and test specific features
 
 brc_config_testing = {
   BRC_CONFIG_NAME = "Testing",
@@ -156,7 +156,7 @@ brc_config_testing = {
 ################################### Begin lua/config/speed.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
--- Speed Config Profile: For speed runs
+--- Speed Config Profile: For speed runs
 
 brc_config_speed = {
   BRC_CONFIG_NAME = "Speed",
@@ -228,7 +228,7 @@ brc_config_speed = {
 ################################### Begin lua/config/turncount.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
--- Turncount Config Profile: For turncount runs
+--- Turncount Config Profile: For turncount runs
 
 brc_config_turncount = {
   BRC_CONFIG_NAME = "Turncount",
@@ -249,7 +249,7 @@ brc_config_turncount = {
 ################################### Begin lua/config/streak.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
--- Streak Config Profile: For win streaks
+--- Streak Config Profile: For win streaks
 
 brc_config_streak = {
   BRC_CONFIG_NAME = "Streak",
@@ -271,7 +271,6 @@ brc_config_streak = {
 {
 --- Explicit config profile: All config values from all features listed explicitly, set to defaults
 -- Large feature config sections are at the end
--- Any feature config can define "disabled = true" to disable it entirely
 
 brc_config_explicit = {
   BRC_CONFIG_NAME = "Explicit",
@@ -322,6 +321,7 @@ brc_config_explicit = {
 
   ---- Feature configs ----
   ["announce-hp-mp"] = {
+    disabled = false,
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
     always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
@@ -353,27 +353,33 @@ brc_config_explicit = {
   },
 
   ["answer-prompts"] = {
+    disabled = false,
     -- No config; See answer-prompts.lua for Questions/Answers
   },
 
   ["color-inscribe"] = {
+    disabled = false,
     -- No config; See color-inscribe.lua for COLORIZE_TAGS
   },
 
   ["drop-inferior"] = {
+    disabled = false,
     msg_on_inscribe = true, -- Show a message when an item is marked for drop
     hotkey_drop = true, -- BRC hotkey drops all items on the drop list
   },
 
   ["dynamic-options"] = {
+    disabled = false,
     -- No config; See dynamic-options.lua for specifics
   },
 
   ["exclude-dropped"] = {
+    disabled = false,
     not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding enchantable weapon
   },
 
   ["fully-recover"] = {
+    disabled = false,
     rest_off_statuses = { -- Keep resting until these statuses are gone
       "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
       "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
@@ -381,12 +387,14 @@ brc_config_explicit = {
   },
 
   ["inscribe-stats"] = {
+    disabled = false,
     inscribe_weapons = true, -- Inscribe weapon stats on pickup
     inscribe_armour = true, -- Inscribe armour stats on pickup
     dmg_type = 1, -- unbranded
   },
 
   ["misc-alerts"] = {
+    disabled = false,
     save_with_msg = true, -- Shift-S to save and leave yourself a message
     alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
     alert_spell_level_changes = true, -- Alert when you gain additional spell levels
@@ -395,11 +403,13 @@ brc_config_explicit = {
   },
 
   ["quiver-reminders"] = {
+    disabled = false,
     confirm_consumables = true,
     warn_diff_missile_turns = 10,
   },
 
   ["remind-id"] = {
+    disabled = false,
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
     emoji = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>",
@@ -407,6 +417,7 @@ brc_config_explicit = {
   },
 
   ["runrest-features"] = {
+    disabled = false,
     after_shaft = true, -- stop on stairs after being shafted, until returned to original floor
     ignore_altars = true, -- when you don't need a god
     ignore_portal_exits = true, -- don't stop explore on portal exits
@@ -417,15 +428,18 @@ brc_config_explicit = {
   },
 
   ["safe-consumables"] = {
+    disabled = false,
     -- No config;See safe-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
   },
 
   ["safe-stairs"] = {
+    disabled = false,
     warn_backtracking = true, -- Warn if immediately taking stairs twice in a row
     warn_v5 = true, -- Prompt before entering Vaults:5
   },
 
   ["startup"] = {
+    disabled = false,
     show_skills_menu = false, -- Show skills menu on startup
     set_all_targets = true, -- Set all targets, even if only focusing one
     focus_one_skill = true, -- Focus one skill at a time, even if setting all targets
@@ -447,11 +461,13 @@ brc_config_explicit = {
   },
 
   ["weapon-slots"] = {
+    disabled = false,
     -- No config
   },
 
   ---- Large config sections ----
   ["mute-messages"] = {
+    disabled = false,
     mute_level = 2,
     messages = {
       -- Light reduction; unnecessary messages
@@ -528,6 +544,7 @@ brc_config_explicit = {
   }, -- mute-messages
 
   ["pickup-alert"] = {
+    disabled = false,
     Pickup = {
       armour = true,
       weapons = true,
@@ -699,6 +716,7 @@ brc_config_explicit = {
   }, -- pickup-alert
 
   ["alert-monsters"] = {
+    disabled = false,
     sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
     fm_on_uniques = true, -- Stop on all Uniques & Pan lords
     pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable
@@ -1648,11 +1666,11 @@ ignore += mindless puppets stay behind to rot
 ################################### Begin lua/core/constants.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC Constants - All constant definitions
-Author: buehler
-Dependencies: BRC.Config.emojis
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC
+-- Constants and definitions used throughout BRC.
+---------------------------------------------------------------------------------------------------
 
 ---- Cosmetic settings
 BRC.EMOJI = {
@@ -1729,7 +1747,7 @@ BRC.PORTAL_NAMES = {
 ---- Egos ----
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
-BRC.ADJECTIVE_EGOS = {
+BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
   antimagic = "antimagic", heavy = "heavy", spectralising = "spectral", vampirism = "vampiric"
 } -- BRC.ADJECTIVE_EGOS (do not remove this comment)
 
@@ -1771,8 +1789,12 @@ BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 ################################### Begin lua/util/util.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
-----------------------------------------------
----- BRC.util - General utility functions ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.util
+-- General utility functions.
+---------------------------------------------------------------------------------------------------
+
 BRC.util = {}
 
 --- Get the keycode for Cntl+char
@@ -1839,16 +1861,22 @@ end
 ################################### Begin lua/util/text.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
--------------------------------------------
----- BRC.txt - Text + String functions ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.txt
+-- Text and string functions.
+-- Creates string:contains() for all strings
+---------------------------------------------------------------------------------------------------
+
 BRC.txt = {}
 
 ---- Text parsing ----
---- Create string:contains() for all strings
+--- Search for text within a string, without Lua pattern matching.
+-- @return (bool) True if text is found, false otherwise.
 function BRC.txt.contains(self, text)
   return self:find(text, 1, true) ~= nil
 end
--- Connect string:contains() to BRC.txt.contains()
+--- Connect string:contains() to BRC.txt.contains()
 getmetatable("").__index.contains = BRC.txt.contains
 
 --- Parse the slot and item name from an item pickup message (e.g. "w - a +0 short sword")
@@ -2023,8 +2051,12 @@ end
 ################################### Begin lua/util/mpr.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---------------------------------------------------------------------
----- BRC.mpr - Wrappers around crawl.mpr - for message printing ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.mpr
+-- Wrappers around crawl.mpr for message printing : Colors, formatted messages, message queue, etc.
+---------------------------------------------------------------------------------------------------
+
 BRC.mpr = {}
 
 ---- mpr queue (displayed after all other messages for the turn) ----
@@ -2210,8 +2242,12 @@ end
 ################################### Begin lua/util/item.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
-----------------------------------
----- BRC.it - Item attributes ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.it
+-- Utilities for checking item types/attributes, and retrieving item-related information.
+---------------------------------------------------------------------------------------------------
+
 BRC.it = {}
 
 function BRC.it.get_xy(name, radius)
@@ -2252,16 +2288,9 @@ function BRC.it.get_talisman_min_level(it)
   return -1
 end
 
---- Returns all items whose slot is idx
+--- @return table All items whose slot is idx
 function BRC.it.all_inslot(idx)
-  local res = {}
-  for _, inv in ipairs(items.inventory()) do
-    if inv.slot == idx then
-      res[#res + 1] = inv
-    end
-  end
-
-  return res
+  return util.filter(function(i) return i.slot == idx end, items.inventory())
 end
 
 ---- Simple boolean checks ----
@@ -2320,12 +2349,16 @@ end
 ################################### Begin lua/util/you.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
-----------------------------------------
----- BRC.you - Character attributes ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.you
+-- Utilities for checking character attributes and state
+---------------------------------------------------------------------------------------------------
+
 BRC.you = {}
 
---- Get mutation level, explicitly specifying crawl's optional params
--- @param bool innate_only (optional) - Exclude to include all mutations
+--- Get mutation level, explicitly specifying crawl's optional params.
+-- @param innate_only boolean (optional) True to count only innate mutations, else count all.
 function BRC.you.mut_lvl(mutation, innate_only)
   return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
 end
@@ -2373,6 +2406,18 @@ function BRC.you.shapeshifting_skill()
     return skill + 5
   end
   return skill
+end
+
+function BRC.you.size_penalty()
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
 end
 
 function BRC.you.zero_stat()
@@ -2457,25 +2502,20 @@ end
 ################################### Begin lua/util/equipment.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-These functions aren't as generalizable as other util functions. They contain many design choices.
-Examples: Weapon DPS calculation, treating dragon scales as branded, what a "risky item" is, etc.
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.eq
+-- This module contains 2 main types of functions:
+--   1. Mirroring crawl calculations, like weapon damage, armour penalty, etc.
+--   2. Design choices that aren't as generalizable as other util functions.
+--     Ex: Dragon scales are always considered branded, DPS calculation is an approximation, etc.
+--     Ex: is_risky(), is_useless_ego(), get_ego(), get_hands(), etc.
+---------------------------------------------------------------------------------------------------
+
 BRC.eq = {}
 
 ---- Local functions (Mostly mirroring crawl calculations) ----
 -- Last verified against: dcss v0.33.1
-local function get_size_penalty()
-  if util.contains(BRC.LITTLE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LITTLE
-  elseif util.contains(BRC.SMALL_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.SMALL
-  elseif util.contains(BRC.LARGE_RACES, you.race()) then
-    return BRC.SIZE_PENALTY.LARGE
-  else
-    return BRC.SIZE_PENALTY.NORMAL
-  end
-end
 
 local function get_unadjusted_armour_pen(encumb)
   local pen = encumb - 2 * BRC.you.mut_lvl("sturdy frame")
@@ -2489,7 +2529,7 @@ local function get_adjusted_armour_pen(encumb, str)
 end
 
 local function get_adjusted_dodge_bonus(encumb, str, dex)
-  local size_factor = -2 * get_size_penalty()
+  local size_factor = -2 * BRC.you.size_penalty()
   local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
   local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
   if armour_dodge_penalty <= 0 then return dodge_bonus end
@@ -2896,8 +2936,12 @@ end
 ################################### Begin lua/util/options.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
------------------------------------------------
----- BRC.opt - Functions for Crawl options ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.opt
+-- Functions for setting crawl options and macros.
+---------------------------------------------------------------------------------------------------
+
 BRC.opt = {}
 
 ---- Single turn mutes: Mute a message for the current turn only ----
@@ -2976,14 +3020,13 @@ end
 ################################### Begin lua/core/data.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC.Data - Persistent data management module
-Manages persistent data across games and saves
-Author: buehler
-Dependencies: core/constants.lua, core/util/*
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core feature: data-manager
+-- @module BRC.Data
+-- Provides functions and maintenance for persistent variables that survive game restarts.
+-- Handles backup/restore functionality and error handling.
+---------------------------------------------------------------------------------------------------
 
----- Initialize BRC namespace and Data module
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature for Config override
 
@@ -3037,10 +3080,9 @@ end
 ---- Public API ----
 
 --- Creates a persistent global variable or table, that retains its value through restarts.
--- Use this pattern to make the global definition obvious: `var = BRC.Data.persist("var", value)`
--- After restarting, the variable/table will not exist until this is called.
--- @param default_value - Variable set to this if it doesn't exist yet
--- @return The current value (whether default or persisted)
+-- @usage `var = BRC.Data.persist("var", value)`
+-- @warning After restarting, the variable/table will not exist until this is called.
+-- @return any The current value (whether default or persisted)
 function BRC.Data.persist(name, default_value)
   local t = type(default_value)
   if not util.contains({ "table", "string", "number", "boolean", "nil" }, t) then
@@ -3115,7 +3157,7 @@ function BRC.Data.reset()
   BRC.mpr.warning("Reset all persistent data to default values.")
 end
 
--- @return true if no persist errors, false if failed restore, nil for user-accepted errors
+--- @return boolean|nil true if no persist errors, false if failed restore, nil if handled errors
 function BRC.Data.handle_persist_errors()
   if #_failures == 0 then return true end
   local msg = "%s persistent variables did not restore: (%s)"
@@ -3166,17 +3208,21 @@ end
 ################################### Begin lua/core/config.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC Configuration - Various configs, overriding default values in feature configs.
-Author: buehler
-Dependencies: core/data.lua, core/util/*
-Usage:
-  - Update BRC.use_config to load the corresponding config.
-  - Update each config or create new ones.
-  - Undefined values first fall back to Configs.Default, then defaults in feature.Config.
-  - `init` (function or multi-line comment of lua) executes after config loads, before overrides.
-  - If using config_memory == "full", the function needs to be saved as a string instead. --]]
--- To do this, just replace `function()` and `end` with double square brackets: [[ ... ]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC.Profiles
+-- Manages config profiles and feature config overrides.
+--
+-- When a config profile loads, it is applied on top of BRC.Profiles.Default.
+-- If a profile defines a field, that value is used.
+--   If not defined in the profile, the value in BRC.Profiles.Default is used.
+--   If not defined in either, the default value from the feature config is used.
+-- @warning BRC.Profiles.Default defines all fields not in a feature config. Do not remove them.
+--
+-- @usage: Adding a field in BRC.Profiles.Default will apply to all config profiles.
+--   Ex: To disable the color-inscribe feature in all profiles, add this to BRC.Profiles.Default:
+--     ["color-inscribe"] = { disabled = true }
+---------------------------------------------------------------------------------------------------
 
 ---- Persistent variables ----
 brc_config_full = BRC.Data.persist("brc_config_full", nil)
@@ -3383,12 +3429,11 @@ end
 ################################### Begin lua/core/hotkey.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: hotkey
-Description: Configures a BRC hotkey that features can assign actions to
-Author: buehler
-Dependencies: core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core feature: hotkey
+-- @module BRC.Hotkey
+-- Manages the BRC hotkey, and provides functions to add actions to it.
+---------------------------------------------------------------------------------------------------
 
 BRC.Hotkey = {}
 BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"
@@ -3639,14 +3684,14 @@ end
 ################################### Begin lua/core/brc.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-BRC (Buehler RC) Core Module
-This module serves as the central coordinator for all feature modules
-It automatically loads any global module/table that defines `BRC_FEATURE_NAME`
-It then manages the feature's lifecycle and hook dispatching
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC
+-- @author buehler
+-- Serves as the central coordinator for all feature modules.
+-- Automatically loads any global module/table that defines `BRC_FEATURE_NAME`
+-- and manages the feature's lifecycle and hook dispatching.
+---------------------------------------------------------------------------------------------------
 
 ---- Local constants ----
 BRC.VERSION = "1.2.0"
@@ -4014,17 +4059,15 @@ end
 ################################### Begin lua/features/alert-monsters.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: alert-monsters
-Description: Dynamic force_more and flash_screen messages for monsters
-    Based on player HP, xl, willpower, resistances, etc.
-    WARNINGS:
-      - Never put a '}' on a line by itself. This breaks crawl's RC parser.
-      - POSIX regex are required for this feature to use '|' in patterns.
-Author: original by gammafunk, extended by buehler
-Dependencies: core/util.lua
---]]
-
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: alert-monsters
+-- @module f_alert_monsters
+-- @author gammafunk, buehler
+-- Dynamic force_more and flash_screen messages for monsters.
+-- Alerts are active/inactive based on player HP, XL, willpower, resistances, etc.
+--
+-- @warning Never put a '}' on a line by itself. This breaks crawl's RC parser.
+---------------------------------------------------------------------------------------------------
 f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 f_alert_monsters.Config = {
@@ -4421,12 +4464,12 @@ end
 ################################### Begin lua/features/announce-hp-mp.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: announce-hp-mp
-Description: Announces changes in HP/MP with visual meters and damage warnings
-Author: magus, buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: announce-hp-mp
+-- @module f_announce_hp_mp
+-- @author magus, buehler
+-- Announce changes in HP/MP, with visual meters and additional warnings for severe damage.
+---------------------------------------------------------------------------------------------------
 
 f_announce_hp_mp = {}
 f_announce_hp_mp.BRC_FEATURE_NAME = "announce-hp-mp"
@@ -4645,12 +4688,11 @@ end
 ################################### Begin lua/features/answer-prompts.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: answer-prompts
-Description: Automatically answer crawl prompts
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: answer-prompts
+-- @module f_answer_prompts
+-- Automatically answer crawl prompts.
+---------------------------------------------------------------------------------------------------
 
 f_answer_prompts = {}
 f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"
@@ -4670,12 +4712,11 @@ end
 ################################### Begin lua/features/color-inscribe.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: color-inscribe
-Description: Colorizes inscriptions: resistances, stats, and other properties
-Author: buehler
-Dependencies: core/constants.lua, inscribe-stats.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: color-inscribe
+-- @module f_color_inscribe
+-- Adds color to key terms in inscriptions (resistances, stats, etc).
+---------------------------------------------------------------------------------------------------
 
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
@@ -4806,12 +4847,12 @@ end
 ################################### Begin lua/features/drop-inferior.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: drop-inferior
-Description: Auto-tags inferior items and adds them to the drop list for quick dropping with ","
-Author: buehler
-Dependencies: core/config.lua, core/util.lua, hotkey.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: drop-inferior
+-- @module f_drop_inferior
+-- When picking up an item, inscribes inferior items with "~~DROP_ME" and alerts you.
+-- Items with "~~DROP_ME" are added to the drop list, and can be quickly selected with `,`
+---------------------------------------------------------------------------------------------------
 
 f_drop_inferior = {}
 f_drop_inferior.BRC_FEATURE_NAME = "drop-inferior"
@@ -4887,12 +4928,11 @@ end
 ################################### Begin lua/features/dynamic-options.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: dynamic-options
-Description: Changes options based on game state: xl, class, race, god, skills
-Author: buehler
-Dependencies: core/constants.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: dynamic-options
+-- @module f_dynamic_options
+-- Contains options that change based on game state: xl, class, race, god, skills.
+---------------------------------------------------------------------------------------------------
 
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
@@ -5049,12 +5089,13 @@ end
 ################################### Begin lua/features/exclude-dropped.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: exclude-dropped
-Description: Excludes dropped items from autopickup, resumes on pickup.
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: exclude-dropped
+-- @module f_exclude_dropped
+-- Excludes dropped items from autopickup, pickup resumes autopickup.
+-- @todo Can remove when crawl's drop_disables_autopickup setting reaches feature parity.
+--    (Configurable/optional, dropping partial stack does not exclude, pickup resumes autopickup)
+---------------------------------------------------------------------------------------------------
 
 f_exclude_dropped = {}
 f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
@@ -5186,12 +5227,12 @@ end
 ################################### Begin lua/features/fully-recover.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: fully-recover
-Description: Rests until no negative duration statuses. Doesn't stop on each status message.
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: fully-recover
+-- @module f_fully_recover
+-- Rests until no negative duration statuses. Doesn't stop rest on each status expiration.
+-- @todo Can remove when crawl's explore_auto_rest_status setting reaches feature parity.
+---------------------------------------------------------------------------------------------------
 
 f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
@@ -5344,12 +5385,11 @@ end
 ################################### Begin lua/features/inscribe-stats.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: inscribe-stats
-Description: Inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
-Author: buehler
-Dependencies: core/constants.lua, core/util.lua, color-inscribe.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: inscribe-stats
+-- @module f_inscribe_stats
+-- Inscribes and updates weapon DPS/dmg/delay, and armour AC/EV/SH, for items in inventory.
+---------------------------------------------------------------------------------------------------
 
 f_inscribe_stats = {}
 f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
@@ -5442,12 +5482,12 @@ end
 ################################### Begin lua/features/misc-alerts.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: misc-alerts
-Description: Provides various single-purpose alerts: low HP, faith amulet, and spell level changes
-Author: orig save w/msg by gammafunk, buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua, hotkey.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: misc-alerts
+-- @module f_misc_alerts
+-- @author gammafunk (save game w/ msg), buehler
+-- Various single-purpose alerts: save game w/ msg, low HP, faith amulet, spell level changes.
+---------------------------------------------------------------------------------------------------
 
 f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
@@ -5558,12 +5598,10 @@ end
 ################################### Begin lua/features/mute-messages.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: mute-messages
-Description: Mutes various crawl messages, with configurable levels of reduction
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: mute-messages
+-- @module f_mute_messages
+-- Mutes various crawl messages, with configurable levels of reduction.
 
 f_mute_messages = {}
 f_mute_messages.BRC_FEATURE_NAME = "mute-messages"
@@ -5661,12 +5699,11 @@ end
 ################################### Begin lua/features/quiver-reminders.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: quiver-reminders
-Description: A handful of useful quiver-related reminders
-Author: buehler
-Dependencies: core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: quiver-reminders
+-- @module f_quiver_reminders
+-- A handful of useful quiver-related reminders. (AKA things I often screw up.)
+---------------------------------------------------------------------------------------------------
 
 f_quiver_reminders = {}
 f_quiver_reminders.BRC_FEATURE_NAME = "quiver-reminders"
@@ -5753,13 +5790,12 @@ end
 ################################### Begin lua/features/remind-id.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: remind-id
-Description: Reminds to read ID scrolls.
-Before finding scroll of ID, stops exploration when largest un-ID'd stack sizes increase.
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua, hotkey.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: remind-id
+-- @module f_remind_id
+-- Alerts a reminder to read scroll of ID, when carrying unidentified items.
+-- Before finding scroll of ID, stops explore when largest stack of un-ID'd scrolls/pots increases.
+---------------------------------------------------------------------------------------------------
 
 f_remind_id = {}
 f_remind_id.BRC_FEATURE_NAME = "remind-id"
@@ -5891,12 +5927,11 @@ end
 ################################### Begin lua/features/runrest-features.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: runrest-features
-Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: runrest-features
+-- @module f_runrest_features
+-- Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc.
+---------------------------------------------------------------------------------------------------
 
 f_runrest_features = {}
 f_runrest_features.BRC_FEATURE_NAME = "runrest-features"
@@ -6063,12 +6098,11 @@ end
 ################################### Begin lua/features/safe-consumables.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: safe-consumables
-Description: Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-consumables
+-- @module f_safe_consumables
+-- Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
+---------------------------------------------------------------------------------------------------
 
 f_safe_consumables = {}
 f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
@@ -6117,12 +6151,12 @@ end
 ################################### Begin lua/features/safe-stairs.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: safe-stairs
-Description: Prevent accidental stairs use and warn for Vaults:5 entry
-Author: buehler, rypofalem (V5 warning idea)
-Dependencies: core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-stairs
+-- @module f_safe_stairs
+-- @author rypofalem (V:5 warning idea), buehler
+-- Prevent accidental stairs use and warn for Vaults:5 entry.
+---------------------------------------------------------------------------------------------------
 
 f_safe_stairs = {}
 f_safe_stairs.BRC_FEATURE_NAME = "safe-stairs"
@@ -6205,12 +6239,12 @@ end
 ################################### Begin lua/features/startup.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: startup
-Description: Handles startup features like skill menu display and auto-setting skill targets
-Author: rwbarton, buehler
-Dependencies: core/constants.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: startup
+-- @module f_startup
+-- @author rwbarton (display skills menu), buehler
+-- Handles startup actions, like displaying skills menu and auto-setting skill targets.
+---------------------------------------------------------------------------------------------------
 
 f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
@@ -6272,12 +6306,11 @@ end
 ################################### Begin lua/features/weapon-slots.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: weapon-slots
-Description: Automatically keeps weapons in slots a/b/w. Prioritizes slots by weapon type + skill.
-Author: buehler
-Dependencies: core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: weapon-slots
+-- @module f_weapon_slots
+-- Automatically keeps weapons in slots a/b/w. Prioritizes slots by weapon type + skill.
+---------------------------------------------------------------------------------------------------
 
 f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
@@ -6433,12 +6466,11 @@ end
 ################################### Begin lua/features/pickup-alert/pa-config.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-config
-Description: Configuration for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-config
+-- @submodule f_pickup_alert.Config
+-- Configuration and in-depth tuning heuristics for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.Config = {}
@@ -6617,13 +6649,12 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
 ################################### Begin lua/features/pickup-alert/pa-main.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert
-Description: Comprehensive pickup and alert system for weapons, armour, and miscellaneous items
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/data.lua, core/util.lua,
-  pa-armour.lua, pa-config.lua, pa-data.lua, pa-misc.lua, pa-weapons.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert
+-- @module f_pickup_alert
+-- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
+-- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
+---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
@@ -6848,12 +6879,11 @@ end
 ################################### Begin lua/features/pickup-alert/pa-data.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-data
-Description: Data management and persistent storage for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua, pa-config.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-data
+-- @submodule f_pa_data
+-- Persistent data management and alert tracking for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_data = {}
 
@@ -7003,13 +7033,12 @@ end
 ################################### Begin lua/features/pickup-alert/pa-armour.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-armour
-Description: Armour pickup logic and alert system for the pickup-alert system
-Author: Original Equipment autopickup by Medar, gammafunk, and various others. Extended by buehler.
-Dependencies: core/config.lua, core/constants.lua, core/util.lua,
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-armour
+-- @submodule f_pa_armour
+-- @author Medar, gammafunk, buehler
+-- Armour pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_armour = {}
 
@@ -7345,13 +7374,11 @@ end
 ################################### Begin lua/features/pickup-alert/pa-misc.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-misc
-Description: Miscellaneous item pickup logic and alert system for the pickup-alert system
-Author: buehler
-Dependencies: core/config.lua, core/constants.lua, core/util.lua
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-misc
+-- @submodule f_pa_misc
+-- Miscellaneous item pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
 
 f_pa_misc = {}
 
@@ -7446,13 +7473,12 @@ end
 ################################### Begin lua/features/pickup-alert/pa-weapons.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---[[
-Feature: pickup-alert-weapons
-Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua,
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-weapons
+-- @submodule f_pa_weapons
+-- Weapon pickup and alert functions for the pickup-alert feature.
+-- _weapon_cache table stores info about inventory weapons, to avoid repeat calculations.
+---------------------------------------------------------------------------------------------------
 
 f_pa_weapons = {}
 

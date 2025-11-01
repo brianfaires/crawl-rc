@@ -1,8 +1,8 @@
---[[
-BRC Constants - All constant definitions
-Author: buehler
-Dependencies: BRC.Config.emojis
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core module
+-- @module BRC
+-- Constants and definitions used throughout BRC.
+---------------------------------------------------------------------------------------------------
 
 ---- Cosmetic settings
 BRC.EMOJI = {
@@ -79,7 +79,7 @@ BRC.PORTAL_NAMES = {
 ---- Egos ----
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
-BRC.ADJECTIVE_EGOS = {
+BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
   antimagic = "antimagic", heavy = "heavy", spectralising = "spectral", vampirism = "vampiric"
 } -- BRC.ADJECTIVE_EGOS (do not remove this comment)
 

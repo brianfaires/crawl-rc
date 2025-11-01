@@ -1,5 +1,9 @@
-----------------------------------
----- BRC.it - Item attributes ----
+---------------------------------------------------------------------------------------------------
+-- BRC utility module
+-- @module BRC.it
+-- Utilities for checking item types/attributes, and retrieving item-related information.
+---------------------------------------------------------------------------------------------------
+
 BRC.it = {}
 
 function BRC.it.get_xy(name, radius)
@@ -40,16 +44,9 @@ function BRC.it.get_talisman_min_level(it)
   return -1
 end
 
---- Returns all items whose slot is idx
+--- @return table All items whose slot is idx
 function BRC.it.all_inslot(idx)
-  local res = {}
-  for _, inv in ipairs(items.inventory()) do
-    if inv.slot == idx then
-      res[#res + 1] = inv
-    end
-  end
-
-  return res
+  return util.filter(function(i) return i.slot == idx end, items.inventory())
 end
 
 ---- Simple boolean checks ----

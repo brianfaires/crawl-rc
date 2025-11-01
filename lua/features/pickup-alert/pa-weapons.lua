@@ -1,10 +1,9 @@
---[[
-Feature: pickup-alert-weapons
-Description: Weapon pickup logic, caching, and alert system for the pickup-alert system
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua,
-  pa-config.lua, pa-data.lua, pa-main.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-weapons
+-- @submodule f_pa_weapons
+-- Weapon pickup and alert functions for the pickup-alert feature.
+-- _weapon_cache table stores info about inventory weapons, to avoid repeat calculations.
+---------------------------------------------------------------------------------------------------
 
 f_pa_weapons = {}
 

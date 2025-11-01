@@ -1,9 +1,8 @@
---[[
-Feature: inscribe-stats
-Description: Inscribes+updates weapon DPS/dmg/delay, or armour AC/EV/SH, on items in inventory
-Author: buehler
-Dependencies: core/constants.lua, core/util.lua, color-inscribe.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: inscribe-stats
+-- @module f_inscribe_stats
+-- Inscribes and updates weapon DPS/dmg/delay, and armour AC/EV/SH, for items in inventory.
+---------------------------------------------------------------------------------------------------
 
 f_inscribe_stats = {}
 f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"

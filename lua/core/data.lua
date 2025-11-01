@@ -1,11 +1,10 @@
---[[
-BRC.Data - Persistent data management module
-Manages persistent data across games and saves
-Author: buehler
-Dependencies: core/constants.lua, core/util/*
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC core feature: data-manager
+-- @module BRC.Data
+-- Provides functions and maintenance for persistent variables that survive game restarts.
+-- Handles backup/restore functionality and error handling.
+---------------------------------------------------------------------------------------------------
 
----- Initialize BRC namespace and Data module
 BRC.Data = {}
 BRC.Data.BRC_FEATURE_NAME = "data-manager" -- Included as a feature for Config override
 
@@ -59,10 +58,9 @@ end
 ---- Public API ----
 
 --- Creates a persistent global variable or table, that retains its value through restarts.
--- Use this pattern to make the global definition obvious: `var = BRC.Data.persist("var", value)`
--- After restarting, the variable/table will not exist until this is called.
--- @param default_value - Variable set to this if it doesn't exist yet
--- @return The current value (whether default or persisted)
+-- @usage `var = BRC.Data.persist("var", value)`
+-- @warning After restarting, the variable/table will not exist until this is called.
+-- @return any The current value (whether default or persisted)
 function BRC.Data.persist(name, default_value)
   local t = type(default_value)
   if not util.contains({ "table", "string", "number", "boolean", "nil" }, t) then
@@ -137,7 +135,7 @@ function BRC.Data.reset()
   BRC.mpr.warning("Reset all persistent data to default values.")
 end
 
--- @return true if no persist errors, false if failed restore, nil for user-accepted errors
+--- @return boolean|nil true if no persist errors, false if failed restore, nil if handled errors
 function BRC.Data.handle_persist_errors()
   if #_failures == 0 then return true end
   local msg = "%s persistent variables did not restore: (%s)"

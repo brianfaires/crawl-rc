@@ -1,9 +1,8 @@
---[[
-Feature: runrest-features
-Description: Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc
-Author: buehler
-Dependencies: core/constants.lua, core/data.lua, core/util.lua
---]]
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: runrest-features
+-- @module f_runrest_features
+-- Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc.
+---------------------------------------------------------------------------------------------------
 
 f_runrest_features = {}
 f_runrest_features.BRC_FEATURE_NAME = "runrest-features"

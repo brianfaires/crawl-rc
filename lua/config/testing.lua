@@ -1,4 +1,4 @@
--- Testing Config Profile: Isolate and test specific features
+--- Testing Config Profile: Isolate and test specific features
 
 brc_config_testing = {
   BRC_CONFIG_NAME = "Testing",
