@@ -317,12 +317,12 @@ function BRC.eq.get_armour_ev(it)
   local worn = get_stats_with_item(it, cur)
 
   if worn.Str <= 0 then worn.Str = 1 end
-  local dodge_bonus = get_adjusted_dodge_bonus(it.encumbrance, worn.Str, worn.Dex)
+  local bonus = get_adjusted_dodge_bonus(it.encumbrance, worn.Str, worn.Dex)
 
   if cur.Str <= 0 then cur.Str = 1 end
-  local naked_dodge_bonus = get_adjusted_dodge_bonus(0, cur.Str, cur.Dex)
+  local naked_bonus = get_adjusted_dodge_bonus(0, cur.Str, cur.Dex)
 
-  return dodge_bonus - naked_dodge_bonus + worn.EV - get_adjusted_armour_pen(it.encumbrance, worn.Str)
+  return bonus - naked_bonus + worn.EV - get_adjusted_armour_pen(it.encumbrance, worn.Str)
 end
 
 function BRC.eq.get_sh(it)

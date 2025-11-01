@@ -66,16 +66,19 @@ local function get_validated_config_name(input_name)
   else
     local config_name = input_name:lower()
     if config_name == "ask" then
+      -- Restore saved config name, or fall through to selection
       if you.turns() > 0 and brc_config_name then
         return get_validated_config_name(brc_config_name)
       end
     elseif config_name == "previous" then
+      -- Restore saved config, or display warning and fall through to selection
       if c_persist.BRC and c_persist.BRC.current_config then
         return get_validated_config_name(c_persist.BRC.current_config)
       else
         BRC.mpr.warning("No previous config found.")
       end
     else
+      -- Find by name in BRC.Profiles, or display warning and fall through to selection
       for k, _ in pairs(BRC.Profiles) do
         if config_name == k:lower() then return k end
       end

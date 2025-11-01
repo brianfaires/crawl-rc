@@ -2658,24 +2658,28 @@ local function get_staff_bonus_dmg(it, dmg_type)
 end
 
 
----- Formatting stats for alerts & inscriptions ----
---- Format damage values for consistent display width (4 characters)
-local function format_dmg(dmg)
-  if dmg < 10 then return string.format("%.2f", dmg) end
-  if dmg > 99.9 then return ">100" end
-  return string.format("%.1f", dmg)
-end
+--- Gets the updated stats after equipping an item
+-- @param stats (table) Keys are artefact properties, values are the current values
+-- If multiple equip slots available, assumes no item is removed.
+-- @return nil - updates stats table in place
+local function get_stats_with_item(it, stats)
+  local new_stats = util.copy_table(stats)
+  local cur = items.equipped_at(it.equip_type)
+  if not cur or it.equipped then return new_stats end
 
---- Format stat string for display or inscription
-local function format_stat(abbr, val, is_worn)
-  local stat_str = string.format("%.1f", val)
-  if val < 0 then
-    return string.format("%s%s", abbr, stat_str)
-  elseif is_worn then
-    return string.format("%s:%s", abbr, stat_str)
-  else
-    return string.format("%s+%s", abbr, stat_str)
+  if cur.artefact and BRC.you.num_eq_slots(it) == 1 then
+    for k, _ in pairs(new_stats) do
+      new_stats[k] = new_stats[k] - (cur.artprops[k] or 0)
+    end
   end
+
+  if it.artefact then
+    for k, _ in pairs(new_stats) do
+      new_stats[k] = new_stats[k] + (it.artprops[k] or 0)
+    end
+  end
+
+  return new_stats
 end
 
 --- Get change in SH and EV when switching to shield
@@ -2702,7 +2706,50 @@ local function get_delta_ac_ev(it)
   end
 end
 
---- Get the armour stats as strings
+--- Calculate weapon damage using the brand bonuses in BRC.Config.BrandBonus
+-- @param dmg_type int Matches a damage type defined in BRC.DMG_TYPE:
+--   (1) unbranded: Only "heavy" is included
+--   (2) plain: Include non-elemental damaging brands
+--   (3) branded: Include all damaging brands
+--   (4) scoring: Include heuristics from 'subtle' brands
+local function apply_brand_bonus(ego, base_dmg, it_plus, dmg_type)
+  if not ego then return base_dmg + it_plus end
+
+  -- Check if brand should apply based on damage type
+  local should_apply = (
+    dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
+    or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
+    or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
+    or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
+  )
+
+  if should_apply then
+    local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
+    return bonus.factor * base_dmg + it_plus + bonus.offset
+  end
+end
+
+---- Stat formatting functions ----
+--- Format damage values for consistent display width (4 characters)
+local function format_dmg(dmg)
+  if dmg < 10 then return string.format("%.2f", dmg) end
+  if dmg > 99.9 then return ">100" end
+  return string.format("%.1f", dmg)
+end
+
+--- Format stat string for display or inscription
+local function format_stat(abbr, val, is_worn)
+  local stat_str = string.format("%.1f", val)
+  if val < 0 then
+    return string.format("%s%s", abbr, stat_str)
+  elseif is_worn then
+    return string.format("%s:%s", abbr, stat_str)
+  else
+    return string.format("%s+%s", abbr, stat_str)
+  end
+end
+
+--- Get armour stats as strings
 -- @return (string, string) AC or SH, and EV.  If not worn, returns deltas from the worn item stats
 function BRC.eq.arm_stats(it)
   if not BRC.it.is_armour(it) then return "", "" end
@@ -2721,7 +2768,7 @@ function BRC.eq.arm_stats(it)
   end
 end
 
---- Get the weapon stats as a string
+--- Get weapon stats as a string
 -- @return (string) DPS, damage, delay, and accuracy
 function BRC.eq.wpn_stats(it, dmg_type)
   if not it.is_weapon then return end
@@ -2768,138 +2815,58 @@ function BRC.eq.get_ac(it)
   return ac
 end
 
---- Get str/dex/ev_change when switching to armour
-local function get_stats_with_armour(it)
-  local str = you.strength()
-  local dex = you.dexterity()
-  local ev = 0
-  local worn = items.equipped_at("armour")
-  if worn and worn.artefact then
-    if worn.artprops["Str"] then str = str - worn.artprops["Str"] end
-    if worn.artprops["Dex"] then dex = dex - worn.artprops["Dex"] end
-    if worn.artprops["EV"] then ev = ev - worn.artprops["EV"] end
-  end
-
-  if it.artefact then
-    if it.artprops["Str"] then str = str + it.artprops["Str"] end
-    if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-    if it.artprops["EV"] then ev = ev + it.artprops["EV"] end
-  end
-
-  return str, dex, ev
-end
-
 --- Compute an armour's impact on EV, including stat changes from wearing/removing artefacts
 function BRC.eq.get_armour_ev(it)
-  local str, dex, ev = get_stats_with_armour(it)
-  if str <= 0 then str = 1 end
-  local dodge_bonus = get_adjusted_dodge_bonus(it.encumbrance, str, dex)
+  local cur = { Str = you.strength(), Dex = you.dexterity(), EV = 0 }
+  local worn = get_stats_with_item(it, cur)
 
-  local naked_dex = you.dexterity()
-  local naked_str = you.strength()
-  if naked_str <= 0 then naked_str = 1 end
-  local naked_dodge_bonus = get_adjusted_dodge_bonus(0, naked_str, naked_dex)
+  if worn.Str <= 0 then worn.Str = 1 end
+  local bonus = get_adjusted_dodge_bonus(it.encumbrance, worn.Str, worn.Dex)
 
-  return dodge_bonus - naked_dodge_bonus + ev - get_adjusted_armour_pen(it.encumbrance, str)
-end
+  if cur.Str <= 0 then cur.Str = 1 end
+  local naked_bonus = get_adjusted_dodge_bonus(0, cur.Str, cur.Dex)
 
-local function get_dex_with_shield(it)
-  local dex = you.dexterity()
-
-  local cur = items.equipped_at("offhand")
-  if not BRC.it.is_shield(cur) or cur.slot == it.slot then return dex end
-
-  if it.artefact then
-    local art_dex = it.artprops["Dex"]
-    if art_dex then dex = dex + art_dex end
-  end
-
-  if cur.artefact then
-    local art_dex = cur.artprops["Dex"]
-    if art_dex then dex = dex - art_dex end
-  end
-
-  return dex
+  return bonus - naked_bonus + worn.EV - get_adjusted_armour_pen(it.encumbrance, worn.Str)
 end
 
 function BRC.eq.get_sh(it)
-  local dex = get_dex_with_shield(it)
+  local stats = get_stats_with_item(it, { Dex = you.dexterity() })
   local it_plus = it.plus or 0
   local sh_skill = you.skill("Shields")
 
   local base_sh = it.ac * 2
   local shield = base_sh * (50 + sh_skill * 5 / 2)
   shield = shield + 200 * it_plus
-  shield = shield + 38 * (sh_skill + 3 + dex * (base_sh + 13) / 26)
+  shield = shield + 38 * (sh_skill + 3 + stats.Dex * (base_sh + 13) / 26)
   return shield / 200
 end
 
 
 ---- Weapon stats ----
-function BRC.eq.get_dps(it, dmg_type)
-  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
-  return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
-end
-
---- Get str/dex/slay_change when switching to weapon
--- @return (number, number, number) str, dex, it.plus+artefact slaying
-local function get_stats_with_weapon(it)
-  local it_plus = (it.plus or 0) + get_slay_bonuses()
-  local str = you.strength()
-  local dex = you.dexterity()
-
-  if it.equipped then return str, dex, it_plus end
-
-  local wielded = items.equipped_at("weapon")
-  if wielded and wielded.artefact then
-    if wielded.artprops["Str"] then str = str - wielded.artprops["Str"] end
-    if wielded.artprops["Dex"] then dex = dex - wielded.artprops["Dex"] end
-    if wielded.artprops["Slay"] then it_plus = it_plus - wielded.artprops["Slay"] end
-  end
-
-  if it.artefact then
-    if it.artprops["Str"] then str = str + it.artprops["Str"] end
-    if it.artprops["Dex"] then dex = dex + it.artprops["Dex"] end
-    if it.artprops["Slay"] then it_plus = it_plus + it.artprops["Slay"] end
-  end
-
-  return str, dex, it_plus
-end
-
-local function apply_brand_bonus(ego, base_dmg, it_plus, dmg_type)
-  if not ego then return base_dmg + it_plus end
-
-  -- Check if brand should apply based on damage type
-  local should_apply = (
-    dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
-    or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
-    or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
-    or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
-  )
-
-  if should_apply then
-    local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
-    return bonus.factor * base_dmg + it_plus + bonus.offset
-  end
-end
-
---- Get weapon final damage, including stat/slay changes when swapping for current weapon.
+--- Get weapon damage, including stat/slay changes when swapping from current weapon.
 -- Aux attacks not included
 function BRC.eq.get_dmg(it, dmg_type)
-  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+  dmg_type = dmg_type or BRC.DMG_TYPE.scoring
 
-  local str, dex, it_plus = get_stats_with_weapon(it)
-  local stat = (it.is_ranged or it.weap_skill:contains("Blades")) and dex or str
+  local it_plus = (it.plus or 0) + get_slay_bonuses()
+  local stats = { Str = you.strength(), Dex = you.dexterity(), Slay = it_plus }
+  stats = get_stats_with_item(it, stats)
+
+  local stat = (it.is_ranged or it.weap_skill:contains("Blades")) and stats.Dex or stats.Str
   local stat_mod = 0.75 + 0.025 * stat
   local skill_mod = (1 + BRC.you.skill(it.weap_skill) / 50) * (1 + you.skill("Fighting") / 60)
-
   local base_dmg = it.damage * stat_mod * skill_mod
 
   if BRC.it.is_magic_staff(it) then
-    return base_dmg + it_plus + get_staff_bonus_dmg(it, dmg_type)
+    return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
+  else
+    return apply_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
   end
+end
 
-  return apply_brand_bonus(BRC.eq.get_ego(it), base_dmg, it_plus, dmg_type)
+function BRC.eq.get_dps(it, dmg_type)
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+  return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
 end
 
 
@@ -3299,47 +3266,30 @@ BRC.Profiles.Default = {
 } -- BRC.Profiles.Default (do not remove this comment)
 
 ---- Local functions ----
-local function handle_ask_config()
-  if you.turns() > 0 and brc_config_name then
-    return get_validated_config_name(brc_config_name)
-  end
-  return nil
-end
-
-local function handle_previous_config()
-  if c_persist.BRC and c_persist.BRC.current_config then
-    return get_validated_config_name(c_persist.BRC.current_config)
-  else
-    BRC.mpr.warning("No previous config found.")
-    return nil
-  end
-end
-
-local function find_config_by_name(config_name)
-  for k, _ in pairs(BRC.Profiles) do
-    if config_name == k:lower() then return k end
-  end
-  return nil
-end
-
 local function get_validated_config_name(input_name)
   if type(input_name) ~= "string" then
     BRC.mpr.warning("Non-string config name: " .. tostring(input_name))
-    return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
-  end
-
-  local config_name = input_name:lower()
-  
-  if config_name == "ask" then
-    local result = handle_ask_config()
-    if result then return result end
-  elseif config_name == "previous" then
-    local result = handle_previous_config()
-    if result then return result end
   else
-    local found = find_config_by_name(config_name)
-    if found then return found end
-    BRC.mpr.warning("Could not load config: " .. tostring(input_name))
+    local config_name = input_name:lower()
+    if config_name == "ask" then
+      -- Restore saved config name, or fall through to selection
+      if you.turns() > 0 and brc_config_name then
+        return get_validated_config_name(brc_config_name)
+      end
+    elseif config_name == "previous" then
+      -- Restore saved config, or display warning and fall through to selection
+      if c_persist.BRC and c_persist.BRC.current_config then
+        return get_validated_config_name(c_persist.BRC.current_config)
+      else
+        BRC.mpr.warning("No previous config found.")
+      end
+    else
+      -- Find by name in BRC.Profiles, or display warning and fall through to selection
+      for k, _ in pairs(BRC.Profiles) do
+        if config_name == k:lower() then return k end
+      end
+      BRC.mpr.warning("Could not load config: " .. tostring(input_name))
+    end
   end
 
   return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
@@ -7805,7 +7755,56 @@ local function get_weap_high_score_alert(it)
   return make_alert(it, category, Emoji.WEAPON, Config.Alert.More.high_score_weap)
 end
 
-local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
+-- get_upgrade_alert() subroutines
+local function can_use_2h_without_losing_shield()
+  return BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl)
+end
+
+local function check_upgrade_free_offhand(it, ratio)
+  local it_ego = BRC.eq.get_ego(it)
+  if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
+    return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.Alert.More.weap_ego)
+  elseif ratio > Heur.Alert.AddHand.not_using then
+    return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.Alert.More.upgrade_weap)
+  end
+  return false
+end
+
+local function check_upgrade_lose_shield(it, cur, ratio)
+  if (
+      BRC.eq.get_ego(it)
+      and not BRC.eq.get_ego(cur)
+      and ratio > Heur.Alert.AddHand.add_ego_lose_sh
+    )
+  then
+    return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
+  end
+
+  return false
+end
+
+local function check_upgrade_no_hand_loss(it, cur, ratio)
+  if cur.artefact then return false end
+
+  if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
+    local it_ego = BRC.eq.get_ego(it)
+    if not BRC.eq.get_ego(cur) then
+      if ratio > Heur.Alert.gain_ego then
+        return make_alert(it, "Gain ego", Emoji.EGO, Config.Alert.More.weap_ego)
+      end
+    elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
+      return make_alert(it, "New ego", Emoji.EGO, Config.Alert.More.weap_ego)
+    end
+  end
+
+  if ratio > Heur.Alert.pure_dps then
+    return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
+  end
+
+  return false
+end
+
+local function check_upgrade_same_subtype(it, cur, best_dps, best_score)
   -- Alert: new egos, highest DPS or highest weap_score
   local it_ego = BRC.eq.get_ego(it, true) -- Don't overvalue speed/heavy (only consider their DPS)
   local cur_ego = BRC.eq.get_ego(cur)
@@ -7820,48 +7819,6 @@ local function get_upgrade_alert_same_type(it, cur, best_dps, best_score)
   end
 end
 
-local function check_same_hand_count_alerts(it, cur, ratio)
-  if cur.artefact then return false end
-  
-  if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
-    local it_ego = BRC.eq.get_ego(it)
-    if not BRC.eq.get_ego(cur) then
-      if ratio > Heur.Alert.gain_ego then
-        return make_alert(it, "Gain ego", Emoji.EGO, Config.Alert.More.weap_ego)
-      end
-    elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
-      return make_alert(it, "New ego", Emoji.EGO, Config.Alert.More.weap_ego)
-    end
-  end
-  
-  if ratio > Heur.Alert.pure_dps then
-    return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
-  end
-  
-  return false
-end
-
-local function can_use_2h_without_losing_shield()
-  return BRC.you.free_offhand() or (you.skill("Shields") < Heur.Alert.AddHand.ignore_sh_lvl)
-end
-
-local function check_free_offhand_alerts(it, ratio)
-  local it_ego = BRC.eq.get_ego(it)
-  if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
-    return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.Alert.More.weap_ego)
-  elseif ratio > Heur.Alert.AddHand.not_using then
-    return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.Alert.More.upgrade_weap)
-  end
-  return false
-end
-
-local function check_gain_ego_lose_shield_alerts(it, cur, ratio)
-  if BRC.eq.get_ego(it) and not BRC.eq.get_ego(cur) and ratio > Heur.Alert.AddHand.add_ego_lose_sh then
-    return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
-  end
-  return false
-end
-
 --- Check if weapon is worth alerting for, compared against one weapon currently in inventory
 -- @param cur (weapon) comes from _weapon_cache - it has some pre-computed values
 local function get_upgrade_alert(it, cur, best_dps, best_score)
@@ -7872,7 +7829,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
 
   if it.artefact then return make_alert(it, "Artefact weapon", Emoji.ARTEFACT) end
   if cur.subtype() == it.subtype() then
-    return get_upgrade_alert_same_type(it, cur, best_dps, best_score)
+    return check_upgrade_same_subtype(it, cur, best_dps, best_score)
   end
   if not is_valid_upgrade(it, cur) then return end
 
@@ -7881,15 +7838,12 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
 
-  local it_hands = BRC.eq.get_hands(it)
-  local cur_hands = cur.hands
-
-  if it_hands <= cur_hands then
-    return check_same_hand_count_alerts(it, cur, ratio)
+  if BRC.eq.get_hands(it) <= BRC.eq.get_hands(cur) then
+    return check_upgrade_no_hand_loss(it, cur, ratio)
   elseif can_use_2h_without_losing_shield() then
-    return check_free_offhand_alerts(it, ratio)
+    return check_upgrade_free_offhand(it, ratio)
   else
-    return check_gain_ego_lose_shield_alerts(it, cur, ratio)
+    return check_upgrade_lose_shield(it, cur, ratio)
   end
 end
 

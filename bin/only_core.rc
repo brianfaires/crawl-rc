@@ -65,47 +65,30 @@ BRC.Profiles.Default = {
 } -- BRC.Profiles.Default (do not remove this comment)
 
 ---- Local functions ----
-local function handle_ask_config()
-  if you.turns() > 0 and brc_config_name then
-    return get_validated_config_name(brc_config_name)
-  end
-  return nil
-end
-
-local function handle_previous_config()
-  if c_persist.BRC and c_persist.BRC.current_config then
-    return get_validated_config_name(c_persist.BRC.current_config)
-  else
-    BRC.mpr.warning("No previous config found.")
-    return nil
-  end
-end
-
-local function find_config_by_name(config_name)
-  for k, _ in pairs(BRC.Profiles) do
-    if config_name == k:lower() then return k end
-  end
-  return nil
-end
-
 local function get_validated_config_name(input_name)
   if type(input_name) ~= "string" then
     BRC.mpr.warning("Non-string config name: " .. tostring(input_name))
-    return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))
-  end
-
-  local config_name = input_name:lower()
-  
-  if config_name == "ask" then
-    local result = handle_ask_config()
-    if result then return result end
-  elseif config_name == "previous" then
-    local result = handle_previous_config()
-    if result then return result end
   else
-    local found = find_config_by_name(config_name)
-    if found then return found end
-    BRC.mpr.warning("Could not load config: " .. tostring(input_name))
+    local config_name = input_name:lower()
+    if config_name == "ask" then
+      -- Restore saved config name, or fall through to selection
+      if you.turns() > 0 and brc_config_name then
+        return get_validated_config_name(brc_config_name)
+      end
+    elseif config_name == "previous" then
+      -- Restore saved config, or display warning and fall through to selection
+      if c_persist.BRC and c_persist.BRC.current_config then
+        return get_validated_config_name(c_persist.BRC.current_config)
+      else
+        BRC.mpr.warning("No previous config found.")
+      end
+    else
+      -- Find by name in BRC.Profiles, or display warning and fall through to selection
+      for k, _ in pairs(BRC.Profiles) do
+        if config_name == k:lower() then return k end
+      end
+      BRC.mpr.warning("Could not load config: " .. tostring(input_name))
+    end
   end
 
   return BRC.mpr.select("Select a config", util.keys(BRC.Profiles))

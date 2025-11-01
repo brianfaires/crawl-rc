@@ -282,15 +282,21 @@ local function check_upgrade_free_offhand(it, ratio)
 end
 
 local function check_upgrade_lose_shield(it, cur, ratio)
-  if BRC.eq.get_ego(it) and not BRC.eq.get_ego(cur) and ratio > Heur.Alert.AddHand.add_ego_lose_sh then
+  if (
+      BRC.eq.get_ego(it)
+      and not BRC.eq.get_ego(cur)
+      and ratio > Heur.Alert.AddHand.add_ego_lose_sh
+    )
+  then
     return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
   end
+
   return false
 end
 
 local function check_upgrade_no_hand_loss(it, cur, ratio)
   if cur.artefact then return false end
-  
+
   if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
     local it_ego = BRC.eq.get_ego(it)
     if not BRC.eq.get_ego(cur) then
@@ -301,11 +307,11 @@ local function check_upgrade_no_hand_loss(it, cur, ratio)
       return make_alert(it, "New ego", Emoji.EGO, Config.Alert.More.weap_ego)
     end
   end
-  
+
   if ratio > Heur.Alert.pure_dps then
     return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
   end
-  
+
   return false
 end
 
