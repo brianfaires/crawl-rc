@@ -4292,11 +4292,29 @@ local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 
 ---- Local functions ----
-local function check_alert_three_pip(hp, dmg_threshold, resistance)
+--- Check if player HP is below threshold, accounting for 0-3 pips of resistance.
+-- @return true if player HP is below threshold, and alert should be active.
+local function is_active_3pip(hp, dmg_threshold, resistance)
   -- Dmg taken is 1/1; 1/2; 1/3; 1/5 (for 0; 1; 2; 3 resistance)
   if resistance >= 3 then return hp < dmg_threshold / 5 end
   return hp < dmg_threshold / (resistance + 1)
 end
+
+--- Dispatch table for condition handler functions; checking if alerts should be active or not.
+-- Each handler takes (alert, stats) and returns true if the alert should be active.
+local CONDITION_HANDLERS = {
+  xl = function(a, s) return s.xl < a.cutoff * Config.sensitivity end,
+  hp = function(a, s) return s.hp < a.cutoff * Config.sensitivity end,
+  int = function(a, s) return s.int < a.cutoff * Config.sensitivity end,
+  will = function(a, s) return s.will < a.cutoff * Config.sensitivity end,
+  mut = function(_, s) return s.rMut == 0 end,
+  pois = function(a, s) return s.rPois == 0 and s.hp < a.cutoff * Config.sensitivity end,
+  elec = function(a, s) return s.rElec == 0 and s.hp < a.cutoff * Config.sensitivity end,
+  corr = function(a, s) return not s.rCorr and s.hp < a.cutoff * Config.sensitivity end,
+  fire = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rF) end,
+  cold = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rC) end,
+  drain = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rN) end,
+} -- CONDITION_HANDLERS (do not remove this comment)
 
 local function update_pack_mutes()
   -- Put pending mutes into effect
@@ -4385,46 +4403,36 @@ function f_alert_monsters.ready()
     local mp, _ = you.mp()
     hp = hp + mp
   end
-  local xl = you.xl()
-  local int = you.intelligence()
-  local willpower = you.willpower()
-  local res_mut = you.res_mutation()
-  local res_pois = you.res_poison()
-  local res_elec = you.res_shock()
-  local res_corr = you.res_corr()
-  local res_fire = you.res_fire()
-  local res_cold = you.res_cold()
-  local res_drain = you.res_draining()
+
+  -- Collect stats into a table for handlers
+  local stats = {
+    hp = hp,
+    xl = you.xl(),
+    int = you.intelligence(),
+    will = you.willpower(),
+    rMut = you.res_mutation(),
+    rPois = you.res_poison(),
+    rElec = you.res_shock(),
+    rCorr = you.res_corr(),
+    rF = you.res_fire(),
+    rC = you.res_cold(),
+    rN = you.res_draining(),
+  } -- stats (do not remove this comment)
 
   for _, v in ipairs(Config.Alerts) do
-    local should_be_active = nil
+    local should_be_active = false
 
     if Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
       should_be_active = false
     elseif not v.cond then
       should_be_active = true
-    elseif v.cond == "xl" then
-      should_be_active = xl < v.cutoff * Config.sensitivity
-    elseif v.cond == "hp" then
-      should_be_active = hp < v.cutoff * Config.sensitivity
-    elseif v.cond == "int" then
-      should_be_active = int < v.cutoff * Config.sensitivity
-    elseif v.cond == "will" then
-      should_be_active = willpower < v.cutoff * Config.sensitivity
-    elseif v.cond == "mut" then
-      should_be_active = res_mut == 0
-    elseif v.cond == "pois" then
-      should_be_active = res_pois == 0 and hp < v.cutoff * Config.sensitivity
-    elseif v.cond == "elec" then
-      should_be_active = res_elec == 0 and hp < v.cutoff * Config.sensitivity
-    elseif v.cond == "corr" then
-      should_be_active = not res_corr and hp < v.cutoff * Config.sensitivity
-    elseif v.cond == "fire" then
-      should_be_active = check_alert_three_pip(hp, v.cutoff * Config.sensitivity, res_fire)
-    elseif v.cond == "cold" then
-      should_be_active = check_alert_three_pip(hp, v.cutoff * Config.sensitivity, res_cold)
-    elseif v.cond == "drain" then
-      should_be_active = check_alert_three_pip(hp, v.cutoff * Config.sensitivity, res_drain)
+    else
+      local handler = CONDITION_HANDLERS[v.cond]
+      if handler then
+        should_be_active = handler(v, stats)
+      else
+        BRC.mpr.error("Unknown condition in alert-monsters: " .. v.cond)
+      end
     end
 
     if should_be_active ~= v.active_alert then
