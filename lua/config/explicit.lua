@@ -1,4 +1,4 @@
---- Explicit config profile: All config values from all features listed explicitly, set to defaults
+--- Explicit config: All config values from all features listed explicitly, set to defaults
 -- Large feature config sections are at the end
 
 brc_config_explicit = {

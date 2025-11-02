@@ -43,7 +43,7 @@ globals = {
   -- BRC global modules
   "BRC",
 
-  -- BRC config profiles
+  -- BRC config modules
   "brc_config_custom",
   "brc_config_explicit",
   "brc_config_speed",
@@ -80,7 +80,7 @@ globals = {
   
   -- Persistent variables from BRC.Data.persist()
   "ad_prev",
-  "brc_config_full",
+  "brc_full_persistant_config",
   "brc_config_name",
   "ed_dropped_items",
   "fr_explore_after",

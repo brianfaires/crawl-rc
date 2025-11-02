@@ -95,82 +95,68 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 
 **Method 2 (Flexible): Disable via config**
 
-- In the config section (at the top of `buehler.rc`), set the feature's disabled flag:
+- Config is at the top of `buehler.rc`. Add `disabled = true` to the section for that feature.
   ```lua
-  BRC.Config["misc-alerts"].disabled = true
+  ["alert-monsters"] = { disabled = true }
   ```
 
 ### 2. Configuring Features
 
-Each feature defines a `Config` with default values. You can change the default values there, or override them in the main BRC config (recommended).
+Each feature defines its own `Config` table, including default values. You can scroll down to a feature and change the values there,
+or just use the config at the top of `buehler.rc`.
 
-For example, the `inscribe-stats` feature maintains each item's current stats (AC, EV, DPS, ...) in the inscription. To disable this for weapons, add the following to the config:
+For example, the `inscribe-stats` feature inscribes items with their current stats (AC, EV, DPS, ...).
+To disable this for weapons, add the following to the config:
 
 ```lua
-BRC.Config["inscribe-stats"] = {
-    inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
-    inscribe_armour = true,  -- This line is redundant, since the default value is true
-  }
+["inscribe-stats"] = {
+  inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
+  inscribe_armour = true,  -- This line is redundant, since the default value is true
+},
 ```
-**Note**: The main config (at the top of `buehler.rc`) overrides the default config values defined in each feature. If something is not included in `BRC.Config`, the default value is used.
+**Note**: Any value in the main config (at the top of `buehler.rc`) overrides the default value in the feature config.
+If you don't specify a value in the main config, the default value from the feature config is used.
 
-### 3. Config Profiles
+### 3. User-defined Configs
 
-BRC comes with several pre-built configs, stored in `BRC.Profiles`. You can add/remove/edit any of them:
-- **Default**: All default values, plus whatever you add to `BRC.Config`.
-- **Custom**: Intended as the main profile for customizing BRC. Lists commonly adjusted config fields.
+BRC includes several pre-built configs. You can edit/remove any of them or create new ones.
+Any table that includes `BRC_CONFIG_NAME = <config_name>` will be available as a config.
+
+Included configs:
+- **Custom**: Intended as the main config for customizing BRC. Includes commonly adjusted fields.
 - **Testing**: Turns on debug messages, and disables any features not explicitly configured.
-- **Explicit**: A big file with all fields and their default values. Functionally identical to the Default profile.
+- **Explicit**: A big config with every field defined, set to default values.
 - _**Others**_:
   - **Streak**: For win streaks (extra caution)
   - **Speed**: For speed runs (reduced prompts + alerts)
   - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
 
-**Use a different config** by editing `BRC.use_config` at the top of the RC:
-```lua
--- Found at the start of config
-BRC.use_config = "Turncount"
-
--- BRC.use_config = "ask" will prompt you to pick a profile at the start of each game.
--- BRC.use_config = "previous" will keep using whichever profile was used last.
-```
-The resulting profile is loaded into `BRC.Config`.
-
-**Detailed behavior**
-1. Default values from each `<Feature>.Config` are loaded.
-2. Default values from `BRC.Profiles.Default` are added for non-feature fields.
-3. Any values specified in the config profile are added, overwriting default values.
-
-**Switch profiles in-game**
-- TODO
-
-**Create your own config/profile**
-
-Follow the pattern of other configs. Any module that includes `BRC_CONFIG_NAME` will be treated as a profile.
-```lua
-BRC.use_config = "MyConfig"
-use_a_unique_name_here = {
-  BRC_CONFIG_NAME = "MyConfig",
-
-  ["feature-name"] = {
-    feature_config_var = "override" -- any var in feature.Config
-  },
-}
-```
-
-**Character-specific configs**
-
-If you're playing locally with multiple characters, and want different settings in each game, use `BRC.store_config`:
+**High-level config settings**
+`BRC.Config` is at the top of `buehler.rc` with 3 settings. You can't remove these settings, but you can add others.
+Anything added to `BRC.Config` will apply to all other configs.
 
 ```lua
-BRC.store_config = "name" -- Remember the profile name, and load it from the RC on each startup
-BRC.store_config = "full" -- Remember all of BRC.Config, and ignore any changes to it in the RC. (Feature default values are always reloaded from RC)
-BRC.store_config = "none" or "anything_else" or nil -- Always check BRC.use_config and load it from the RC
+--- All other configs start with these values
+BRC.Config = {
+  emojis = true, -- Include emojis in alerts
+
+  --- Specify which config (defined below) to use, or how to choose one.
+  --   "<config name>": Use the named config
+  --   "ask": Prompt at start of each new game
+  --   "previous": Keep using the last config
+  use_config = "Speed",
+
+  --- For local games, use store_config to a different configs across multiple characters.
+  --   "none": Normal behavior: Read use_config, and load it from the RC.
+  --   "name": Remember the config name and reload it from the RC. Ignore new values of use_config.
+  --   "full": Remember the config and all of its values. Ignore RC changes.
+  store_config = "none",
+} -- BRC.Config
 ```
 
 ### 4. Add Your Own Features
 
-BRC will find and load any global lua table that contains a `BRC_FEATURE_NAME`. Just define a table anywhere in your RC and everything else will happen automatically.
+BRC will find and load any global table that contains a `BRC_FEATURE_NAME`. Just define a table anywhere in your RC and everything else will happen automatically.
 
 **Step 1: Define your feature**
 
@@ -237,14 +223,16 @@ end
 **Step 4: Advanced config** (optional):
 
 Each config can define `my_feature.Config.init`, which will execute after the config is created.
-- Setting `init = function()` will execute the function
-- Setting `init = [[ string ]]` will execute the string as a series of lua commands. _(This is required for `config_memory = "full"`, since functions cannot be persisted)_
+This allows a Config to alter itself, conditionally add values, or define things based on earlier values in the Config.
+`BRC.Config.init` and `my_feature.init` both execute before BRC.Config values override feature configs.
 
-This allows a Config to alter itself or do things based on earlier values in the Config. `init` executes after the Config is created, but before the main config overrides results. To execute code after the main config (`BRC.Config`) loads, use the feature's init function `my_feature.init()`.
+`init` can be a function or a multi-line string:
+- `init = function()` will execute the function
+- `init = [[ string ]]` executes the string as a series of lua commands. _(This is required for `config_memory = "full"`, since functions cannot be persisted)_
 
-**Example** _(From BRC.Profiles.Testing)_: Disable all features that aren't currently defined in the profile.
+**Example** _(From BRC.Configs.Testing)_: Disable all features that aren't currently defined in the config.
 ```lua
-BRC.Profiles.Testing = {
+BRC.Configs.Testing = {
   disable_other_features = true,
   ...,
 
@@ -257,7 +245,7 @@ BRC.Profiles.Testing = {
       end
     end
   ]],
-} -- BRC.Profiles.Testing
+} -- BRC.Configs.Testing
 ```
 
 
@@ -270,10 +258,9 @@ Use the Lua interpreter (open with the `~` key) for these commands:
 ```lua
 -- BRC management
 BRC.active = false                    -- Disable entire BRC system
+BRC.reset("config-name")              -- Reset data, load config-name, and re-init
 BRC.reset()                           -- Reset everything and re-init
-BRC.Data.reset()                      -- Reset all persistent data
-BRC.load_profile()                     -- Select a config from list and load it
-BRC.load_profile("config-name")        -- Load a config by name
+BRC.Data.reset()                      -- Reset persistent data
 BRC.unregister("feature-name")        -- Disable a feature
 
 -- Debugging
@@ -305,17 +292,18 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
   - **Regex issues**: Some regular expression patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
   - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT MacOS doesn't, so I configure `BRC.Config.emojis = false` locally.
   If you have one, define it in `rc/display.rc`, and LMK!
-  - **Switching between characters** uses the same lua environment (at least on MacOS). Nothing gets reset except what's in init() Things get duplicated, including crawl's own autopickup functions.
-  BRC checks for this and warns you to restart. It appears to be harmless but I usually restart anyway.
+  - **Switching between characters** does not re-execute lua files. As long as you initialize all locals in `init()`,
+  this should not cause problems. But it never hurts to restart crawl when switching between characters.
 
 **RC syntax errors**: When editing the RC, a single character out of place can break the whole thing. 
-If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character.
+If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You may be prompted to restore data from backup.
 
 **Data backup in `c_persist`**: BRC keeps a backup of persistent data in crawl's `c_persist` table. Backup data is only available for the most recent character opened. It'll automatically restore if no turns have passed since the backup was taken. Otherwise it'll ask for confirmation.
 
 ### Other Error Handling prompts
 - When a feature throws an error, BRC will offer to disable the feature.
-- If errors occur in the core code (rare), BRC may offer to disable a hook. This would impact all features using that hook, so it's recommended to determine the feature causing the error and disable it.
+- If errors occur in the core code (rare), BRC may offer to disable a hook. This would impact all features using that hook,
+so it's recommended to determine the feature causing the error and disable it.
 - In both cases, it's probably worth saying No once, then disabling things if the error persists. Restarting crawl will re-enable all features and hooks.
 
 ## Resources

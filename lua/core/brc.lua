@@ -203,7 +203,7 @@ function BRC.register(f)
     end
   end
 
-  BRC.process_feature_config(f.BRC_FEATURE_NAME)
+  BRC.process_feature_config(f)
 
   return true
 end
@@ -230,18 +230,21 @@ function BRC.unregister(name)
   return true
 end
 
-function BRC.reset()
+--- @param config_name (optional string) Name of the config to use.
+function BRC.reset(config_name)
   BRC.active = false
   BRC.Data.reset()
-  BRC.init()
+  BRC.init(config_name)
 end
 
-function BRC.init()
+--- @param config_name (optional string) Name of the config to use.
+function BRC.init(config_name)
+  BRC.active = false
   _features = {}
   _hooks = {}
   turn_count = -1
 
-  BRC.load_config()
+  BRC.init_config(config_name)
   BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register core features...")
