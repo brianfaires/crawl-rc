@@ -11,7 +11,7 @@
 BRC.eq = {}
 
 ---- Local functions (Mostly mirroring crawl calculations) ----
--- Last verified against: dcss v0.33.1
+-- Last verified against: current crawl master branch (0.34-a0-786-ge5b59a6c5f)
 
 local function get_unadjusted_armour_pen(encumb)
   local pen = encumb - 2 * BRC.you.mut_lvl("sturdy frame")
@@ -278,7 +278,7 @@ function BRC.eq.wpn_stats(it, dmg_type)
     end
   end
 
-  local dmg = format_dmg(BRC.eq.get_dmg(it, dmg_type))
+  local dmg = format_dmg(BRC.eq.get_avg_dmg(it, dmg_type))
   local delay = get_weap_delay(it)
   local delay_str = string.format("%.1f", delay)
   if delay < 1 then
@@ -341,9 +341,9 @@ end
 
 
 ---- Weapon stats ----
---- Get weapon damage, including stat/slay changes when swapping from current weapon.
+--- Get weapon damage (average), including stat/slay changes when swapping from current weapon.
 -- Aux attacks not included
-function BRC.eq.get_dmg(it, dmg_type)
+function BRC.eq.get_avg_dmg(it, dmg_type)
   dmg_type = dmg_type or BRC.DMG_TYPE.scoring
 
   local it_plus = (it.plus or 0) + get_slay_bonuses()
@@ -364,7 +364,7 @@ end
 
 function BRC.eq.get_dps(it, dmg_type)
   if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
-  return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
+  return BRC.eq.get_avg_dmg(it, dmg_type) / get_weap_delay(it)
 end
 
 
