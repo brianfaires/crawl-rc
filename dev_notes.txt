@@ -1,21 +1,27 @@
 ### 0.34 changes needed
-1. Confirm damage / AC calcs haven't changed
 1. Items get auto-"inscribed" now in resists menu (using new terse name)
 
 ### To do list
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. Features:
   - Rebind cntl-E and low radius for fast orb run
+    - (runrest_ignore_monster ^= .*:2) above X% HP
+    - (runrest_ignore_monster ^= .*:3) above Y% HP
+    - ... up to 6
   - Add macro to save skill targets & CONFIG values (by race or race+class)
 1. Profile features:
-  - Turncount: (disable autopickup, auto-display info for items in view)
+  - Turncount:
+    - show_game_time = false
+    - disable autopickup
+    - auto-print name+qty when gold or item comes into view that would have been picked up
     - Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
-  - Speedrun: (display realtime; you.time()?)
+  - Speedrun:
+    - Display realtime
 1. Pull crawl version for compatibility / 0.33 support
 1. In-game menu (change config, save settings, etc...)
+1. Update all RC files to be lua and use crawl.setopt()
 
 ### crawl PRs / issues affecting BRC
-https://github.com/crawl/crawl/pull/4830 -> remove "body armour" workaround
 https://github.com/crawl/crawl/pull/4814 -> remove cap on inscription colors
 https://github.com/crawl/crawl/issues/4789 -> drop_disables_autopickup overrides exclude-dropped
 resting statuses fails after 100 turns (blocks fully-recover.lua behavior)
