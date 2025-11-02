@@ -71,7 +71,7 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 - **Smart** - adjusts behavior to your inventory and character progression
 - **Configurable** - lots of config values for which alerts are active, when they fire, and when to do a force_more.
   - In `f_pickup_alert.Config.Alert`, see `armour_sensitivity` and `weapon_sensitivity` to adjust the overall frequency of alerts.
-  - _(Advanced)_ See `f_pickup_alert.Config.Tuning` and `BRC.Config.BrandBonus` for several heuristics that define when alerts fire.
+  - _(Advanced)_ See `f_pickup_alert.Config.Tuning` and `BRC.Configs.Default.BrandBonus` for several heuristics that define when alerts fire.
 
 ### Alerts
 - **`pa-armour.lua`**
@@ -95,27 +95,29 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 
 **Method 2 (Flexible): Disable via config**
 
-- Config is at the top of `buehler.rc`. Add `disabled = true` to the section for that feature.
-  ```lua
+- Config is at the top of `buehler.rc`.
+Add `disabled = true` to the corresponding feature section of your config.
+```lua
   ["alert-monsters"] = { disabled = true }
-  ```
+  ...
+```
 
 ### 2. Configuring Features
 
-Each feature defines its own `Config` table, including default values. You can scroll down to a feature and change the values there,
-or just use the config at the top of `buehler.rc`.
+Each feature defines a `Config` table, including default values.
+The main config section at the top of `buehler.rc` is used to override those default values.
+You can set any feature config value from the main config section. Otherwise the default value is used.
+*(See all available config values in `config/Explicit.lua`, or in each feature definition)*
 
-For example, the `inscribe-stats` feature inscribes items with their current stats (AC, EV, DPS, ...).
-To disable this for weapons, add the following to the config:
+**Ex:** The `inscribe-stats` feature inscribes items with their current stats (AC, EV, DPS, ...).
+To disable this for weapons, add this to your config:
 
 ```lua
-["inscribe-stats"] = {
-  inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
-  inscribe_armour = true,  -- This line is redundant, since the default value is true
-},
+  ["inscribe-stats"] = {
+    inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
+    inscribe_armour = true,  -- This line is redundant, since the default value is true
+  },
 ```
-**Note**: Any value in the main config (at the top of `buehler.rc`) overrides the default value in the feature config.
-If you don't specify a value in the main config, the default value from the feature config is used.
 
 ### 3. User-defined Configs
 
@@ -132,8 +134,7 @@ Included configs:
   - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
 
 **High-level config settings**
-`BRC.Config` is at the top of `buehler.rc` with 3 settings. You can't remove these settings, but you can add others.
-Anything added to `BRC.Config` will apply to all other configs.
+`BRC.Config` is at the top of `buehler.rc` (and `lua/core/_header.lua`) with 3 settings. You can't remove these settings, but you can add others.
 
 ```lua
 --- All other configs start with these values
@@ -146,7 +147,7 @@ BRC.Config = {
   --   "previous": Keep using the last config
   use_config = "Speed",
 
-  --- For local games, use store_config to a different configs across multiple characters.
+  --- For local games, use store_config to use different configs across multiple characters.
   --   "none": Normal behavior: Read use_config, and load it from the RC.
   --   "name": Remember the config name and reload it from the RC. Ignore new values of use_config.
   --   "full": Remember the config and all of its values. Ignore RC changes.
@@ -222,13 +223,13 @@ end
 
 **Step 4: Advanced config** (optional):
 
-Each config can define `my_feature.Config.init`, which will execute after the config is created.
-This allows a Config to alter itself, conditionally add values, or define things based on earlier values in the Config.
-`BRC.Config.init` and `my_feature.init` both execute before BRC.Config values override feature configs.
+Each config can define an `init` field, which will execute after the config is created.
+This allows a config to alter itself, conditionally add values, or define things based on earlier values in the config.
+`BRC.Config.init` and `<feature>.init` both execute before BRC.Config values override feature configs.
 
 `init` can be a function or a multi-line string:
 - `init = function()` will execute the function
-- `init = [[ string ]]` executes the string as a series of lua commands. _(This is required for `config_memory = "full"`, since functions cannot be persisted)_
+- `init = [[ string ]]` executes the string as a series of lua commands. _(This is required for `store_config = "full"`, since functions cannot be persisted)_
 
 **Example** _(From BRC.Configs.Testing)_: Disable all features that aren't currently defined in the config.
 ```lua
