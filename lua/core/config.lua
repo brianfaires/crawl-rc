@@ -23,6 +23,7 @@ brc_config_name = BRC.Data.persist("brc_config_name", nil)
 -- Define config fields that aren't feature-specific, and set their default values
 
 BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
+BRC.Configs.Default.BRC_CONFIG_NAME = "Default"
 
 -- Bind key to the "go up closest stairs" macro
 BRC.Configs.Default.go_up_macro_key = BRC.util.cntl("e")
@@ -134,13 +135,13 @@ end
 
 --- Override values in dest, with values from source. Take care not to clear existing tables.
 -- Does not override "init"
-local function override_table(source, dest)
+local function override_table(dest, source)
   if type(source) ~= "table" then return end
 
   for key, value in pairs(source) do
     if BRC.util.is_map(value) then
       if not dest[key] then dest[key] = {} end
-      override_table(value, dest[key])
+      override_table(dest[key], value)
     elseif key ~= "init" then
       dest[key] = value
     end
@@ -148,14 +149,14 @@ local function override_table(source, dest)
 end
 
 --- Load a config, either from a table or from a name.
--- @param input_config table of config values, or string name of a config
-local function load_specific_config(input_config)
-  if type(input_config) == "table" then
-    BRC.Config = input_config
+-- @param config table of config values, or string name of a config
+local function load_specific_config(config)
+  BRC.Config = util.copy_table(BRC.Configs.Default)
+  if type(config) == "table" then
+    override_table(BRC.Config, config)
   else
-    local name = get_valid_config_name(input_config)
-    BRC.Config = util.copy_table(BRC.Configs.Default)
-    override_table(BRC.Configs[name], BRC.Config)
+    local name = get_valid_config_name(config)
+    override_table(BRC.Config, BRC.Configs[name])
     execute_config_init(BRC.Config, "BRC")
   end
 
@@ -175,11 +176,12 @@ end
 
 ---- Public API ----
 --- Main config loading entry point
-function BRC.init_config(config_name)
+-- @param config table of config values, or string name of a config
+function BRC.init_config(config)
   find_config_modules()
 
-  if config_name then
-    load_specific_config(config_name)
+  if config then
+    load_specific_config(config)
   else
     local store_mode = BRC.Config.store_config and BRC.Config.store_config:lower() or nil
     if store_mode == "full" then
@@ -202,7 +204,7 @@ function BRC.process_feature_config(feature)
     feature.ConfigDefaults = util.copy_table(feature.Config)
   end
 
-  override_table(BRC.Config[feature.BRC_FEATURE_NAME], feature.Config)
+  override_table(feature.Config, BRC.Config[feature.BRC_FEATURE_NAME])
 end
 
 --- Stringify BRC.Config and each feature config, with headers

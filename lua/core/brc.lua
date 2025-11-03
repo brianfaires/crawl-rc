@@ -22,7 +22,7 @@ local HOOK_FUNCTIONS = {
 ---- Local variables ----
 local _features
 local _hooks
-local turn_count
+local turn_count = -1 -- Do not reset this in init()
 
 ---- Local functions ----
 local function char_dump(add_debug_info)
@@ -215,36 +215,35 @@ function BRC.unregister(name)
   end
 
   _features[name] = nil
-  local hooks_removed = {}
+  local removed = {}
   for hook_name, hooks in pairs(_hooks) do
     for i = #hooks, 1, -1 do
       if hooks[i].feature_name == name then
         table.remove(hooks, i)
-        hooks_removed[#hooks_removed + 1] = hook_name
+        removed[#removed + 1] = hook_name
       end
     end
   end
 
   BRC.mpr.info(string.format("Unregistered %s.", name))
-  BRC.mpr.debug(string.format("Unregistered hooks: (%s)", table.concat(hooks_removed, ", ")))
+  BRC.mpr.debug(string.format("Unregistered %s hooks: (%s)", name, table.concat(removed, ", ")))
   return true
 end
 
---- @param config_name (optional string) Name of the config to use.
-function BRC.reset(config_name)
+-- @param config table of config values, or string name of a config
+function BRC.reset(config)
   BRC.active = false
   BRC.Data.reset()
-  BRC.init(config_name)
+  BRC.init(config)
 end
 
---- @param config_name (optional string) Name of the config to use.
-function BRC.init(config_name)
+-- @param config table of config values, or string name of a config
+function BRC.init(config)
   BRC.active = false
   _features = {}
   _hooks = {}
-  turn_count = -1
 
-  BRC.init_config(config_name)
+  BRC.init_config(config)
   BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register core features...")

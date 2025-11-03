@@ -169,13 +169,15 @@ brc_config_explicit = {
 
   ["startup"] = {
     disabled = false,
-    -- Race+class training targets. When this successfully loads targets, skip remaining startup.
-    use_saved_training_targets = true, -- Allow save/load of race+class training targets
-    save_targets_keycode = BRC.util.cntl("t"), -- Keycode to save training targets
-    allow_race_only_targets = true, -- Also save targets for just race (always prompts before loading)
-    allow_class_only_targets = true, -- Also save targets for just class (always prompts before loading)
-    prompt_before_load = false, -- Prompt before loading training targets for race+class combo
+    -- Save current training targets and config, for race/class
+    save_skills_and_config_key = 20, -- (Cntl-T) Keycode to save training targets and config
+    use_saved_training = true, -- Allow save/load of race/class training targets
+    use_saved_config = true, -- Allow save/load of BRC config
+    prompt_before_load = true, -- Prompt before loading in a new game with same race+class
+    allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
+    allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
 
+    -- Remaining values only used if no training targets were loaded by race/class
     show_skills_menu = false, -- Show skills menu on startup
 
     -- Settings to set skill targets, regardless of race/class

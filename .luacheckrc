@@ -37,7 +37,7 @@ globals = {
   "macro_brc_fire",
   "macro_brc_hotkey",
   "macro_brc_save",
-  "macro_brc_save_training_targets",
+  "macro_brc_save_skills_and_config",
   "macro_brc_skip_hotkey",
   "macro_brc_upstairs",
   
@@ -63,6 +63,7 @@ globals = {
   "f_fm_disable",
   "f_fully_recover",
   "f_inscribe_stats",
+  "f_fix_artefact_inscriptions",
   "f_misc_alerts",
   "f_mute_messages",
   "f_pa_armour",

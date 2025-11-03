@@ -51,16 +51,23 @@ function BRC.opt.macro(key, function_name)
     BRC.mpr.error("Function %s is not a global function", function_name)
     return
   end
+
+  -- Format msg for debugging and keycode for crawl.setopt()
+  local key_str = "<<< '" .. key .. "' >>"
+  if type(key) == "number" then
+    key = "\\{" .. key .. "}"
+    key_str = "<<< \\" .. key .. " >>"
+  end
+
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+
   BRC.mpr.debug(
     string.format(
-      "Assigning macro: %s to key: %s",
+      "Assigned macro: %s to key: %s",
       BRC.txt.magenta(function_name .. "()"),
-      BRC.txt.lightred("<<< '" .. key .. "' >>")
+      BRC.txt.lightred(key_str)
     )
   )
-
-  if type(key) == "number" then key = "\\{" .. key .. "}" end
-  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
 function BRC.opt.message_mute(pattern, create)
