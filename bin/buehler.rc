@@ -12,7 +12,7 @@ BRC.Config = {
   --   "<config name>": Use the named config
   --   "ask": Prompt at start of each new game
   --   "previous": Keep using the last config
-  use_config = "ask",
+  use_config = "Testing",
 
   --- For local games, use store_config to use different configs across multiple characters.
   --   "none": Normal behavior: Read use_config, and load it from the RC.
@@ -2516,7 +2516,7 @@ end
 BRC.eq = {}
 
 ---- Local functions (Mostly mirroring crawl calculations) ----
--- Last verified against: dcss v0.33.1
+-- Last verified against: current crawl master branch (0.34-a0-786-ge5b59a6c5f)
 
 local function get_unadjusted_armour_pen(encumb)
   local pen = encumb - 2 * BRC.you.mut_lvl("sturdy frame")
@@ -2783,7 +2783,7 @@ function BRC.eq.wpn_stats(it, dmg_type)
     end
   end
 
-  local dmg = format_dmg(BRC.eq.get_dmg(it, dmg_type))
+  local dmg = format_dmg(BRC.eq.get_avg_dmg(it, dmg_type))
   local delay = get_weap_delay(it)
   local delay_str = string.format("%.1f", delay)
   if delay < 1 then
@@ -2846,9 +2846,9 @@ end
 
 
 ---- Weapon stats ----
---- Get weapon damage, including stat/slay changes when swapping from current weapon.
+--- Get weapon damage (average), including stat/slay changes when swapping from current weapon.
 -- Aux attacks not included
-function BRC.eq.get_dmg(it, dmg_type)
+function BRC.eq.get_avg_dmg(it, dmg_type)
   dmg_type = dmg_type or BRC.DMG_TYPE.scoring
 
   local it_plus = (it.plus or 0) + get_slay_bonuses()
@@ -2869,7 +2869,7 @@ end
 
 function BRC.eq.get_dps(it, dmg_type)
   if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
-  return BRC.eq.get_dmg(it, dmg_type) / get_weap_delay(it)
+  return BRC.eq.get_avg_dmg(it, dmg_type) / get_weap_delay(it)
 end
 
 
@@ -2980,7 +2980,8 @@ function BRC.opt.force_more_message(pattern, create)
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
 end
 
--- Bind a macro to a key. Function must be global and not a member of a module.
+--- Bind a macro to a key. Function must be global and not a member of a module.
+-- If key is a number, it is converted to a keycode string.
 function BRC.opt.macro(key, function_name)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
@@ -2993,6 +2994,8 @@ function BRC.opt.macro(key, function_name)
       BRC.txt.lightred("<<< '" .. key .. "' >>")
     )
   )
+
+  if type(key) == "number" then key = "\\{" .. key .. "}" end
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
@@ -3233,6 +3236,12 @@ brc_config_name = BRC.Data.persist("brc_config_name", nil)
 
 BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
 
+-- Bind key to the "go up closest stairs" macro
+BRC.Configs.Default.go_up_macro_key = BRC.util.cntl("e")
+
+-- Does "Armour of <MagicSkill>" have an ego when skill is 0?
+BRC.Configs.Default.unskilled_egos_usable = false
+
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
   debug_to_stderr = false,
@@ -3242,9 +3251,6 @@ BRC.Configs.Default.dump = {
     max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
     omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 } -- BRC.Configs.Default.dump (do not remove this comment)
-
--- Does "Armour of <MagicSkill>" have an ego when skill is 0?
-BRC.Configs.Default.unskilled_egos_usable = false
 
 --- How weapon damage is calculated for inscriptions+pickup/alert: (factor * DMG + offset)
 BRC.Configs.Default.BrandBonus = {
@@ -3658,8 +3664,8 @@ function BRC.Hotkey.init()
   action_queue = {}
   cur_action = nil
 
-  BRC.opt.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
-  BRC.opt.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
+  BRC.opt.macro(Config.key.keycode, "macro_brc_hotkey")
+  BRC.opt.macro(Config.skip_keycode, "macro_brc_skip_hotkey")
 end
 
 function BRC.Hotkey.c_assign_invletter(it)
@@ -3958,7 +3964,7 @@ function BRC.init(config_name)
   BRC.mpr.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
-  BRC.opt.macro("\\{5}", "macro_brc_cntl_e")
+  BRC.opt.macro(BRC.Config.go_up_macro_key, "macro_brc_go_up")
 
   BRC.mpr.debug("Verify persistent data reload...")
   local success = BRC.Data.handle_persist_errors()
@@ -4008,7 +4014,7 @@ function macro_brc_dump_character()
 end
 
 --- Go up the closest stairs (Cntl-E)
-function macro_brc_cntl_e()
+function macro_brc_go_up()
   local where = you.where()
   if where == "D:1" and you.have_orb()
     or where == "Temple"
@@ -6264,14 +6270,22 @@ end
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: startup
 -- @module f_startup
--- @author rwbarton (display skills menu), buehler
+-- @author rwbarton (display skills menu), gammafunk (training targets), buehler
 -- Handles startup actions, like displaying skills menu and auto-setting skill targets.
 ---------------------------------------------------------------------------------------------------
 
 f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
 f_startup.Config = {
+  -- Race+class training targets. When this successfully loads targets, other features are skipped.
+  use_saved_training_targets = true, -- Allow save/load of race+class training targets
+  save_targets_keycode = BRC.util.cntl("t"), -- Keycode to save training targets
+  allow_race_only_targets = true, -- Also save targets for just race
+  allow_class_only_targets = true, -- Also save targets for just class
+
   show_skills_menu = false, -- Show skills menu on startup
+
+  -- Settings to set skill targets, regardless of race/class
   set_all_targets = true, -- Set all targets, even if only focusing one
   focus_one_skill = true, -- Focus one skill at a time, even if setting all targets
   auto_set_skill_targets = {
@@ -6294,16 +6308,119 @@ f_startup.Config = {
 ---- Local config alias ----
 local Config = f_startup.Config
 
+---- Local functions ----
+local function ensure_training_targets_table()
+  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
+  if type(c_persist.BRC.training_targets) ~= "table" then c_persist.BRC.training_targets = {} end
+end
+
+local function get_current_skill_table()
+  local skill_table = {}
+  for _, skill_name in ipairs(BRC.TRAINING_SKILLS) do
+    local training_level = you.train_skill(skill_name)
+    local target = you.get_training_target(skill_name)
+    skill_table[skill_name] = {
+      training_level = training_level,
+      target = target,
+    }
+  end
+  return skill_table
+end
+
+local function apply_skill_table(skill_table)
+  for skill_name, data in pairs(skill_table) do
+    you.train_skill(skill_name, data.training_level)
+    you.set_training_target(skill_name, data.target)
+  end
+end
+
+local function load_training_targets(key, require_confirmation)
+  ensure_training_targets_table()
+  local saved = c_persist.BRC.training_targets[key]
+  if saved and type(saved) == "table" then
+    if require_confirmation then
+      if not BRC.mpr.yesno(string.format("Load training for %s?", key)) then
+        return false
+      end
+    end
+    apply_skill_table(saved)
+    BRC.mpr.green(string.format("Loaded training targets for %s", key))
+    return true
+  end
+  return false
+end
+
+local function load_saved_training_targets()
+  if not Config.use_saved_training_targets then return false end
+  ensure_training_targets_table()
+  local race = you.race()
+  local class = you.class()
+  local race_class_key = race .. "+" .. class
+
+  return load_training_targets(race_class_key, false)
+    or (Config.allow_race_only_targets and load_training_targets(race, true))
+    or (Config.allow_class_only_targets and load_training_targets(class, true))
+end
+
+---- Macro function: Save current skill targets (training levels and targets) for race/class ----
+function macro_brc_save_training_targets()
+  if not BRC.active or Config.disabled then
+    BRC.mpr.info("BRC not active, or startup feature is disabled. Training targets not saved.")
+    return
+  end
+
+  ensure_training_targets_table()
+  local race = you.race()
+  local class = you.class()
+  local race_class_key = race .. "+" .. class
+  
+  local skill_table = get_current_skill_table()
+  
+  -- Always save to race+class
+  c_persist.BRC.training_targets[race_class_key] = util.copy_table(skill_table)
+  BRC.mpr.green(string.format("Saved training targets for %s", race_class_key))
+  
+  -- For just race: auto-save if doesn't exist, ask if it does
+  if not c_persist.BRC.training_targets[race] then
+    c_persist.BRC.training_targets[race] = util.copy_table(skill_table)
+    BRC.mpr.green(string.format("Saved training targets for %s", race))
+  elseif BRC.mpr.yesno(string.format("Overwrite saved training targets for %s?", race)) then
+    c_persist.BRC.training_targets[race] = util.copy_table(skill_table)
+    BRC.mpr.magenta(string.format("Updated training targets for %s", race))
+  end
+  
+  -- For just class: auto-save if doesn't exist, ask if it does
+  if not c_persist.BRC.training_targets[class] then
+    c_persist.BRC.training_targets[class] = util.copy_table(skill_table)
+    BRC.mpr.green(string.format("Saved training targets for %s", class))
+  elseif BRC.mpr.yesno(string.format("Overwrite saved training targets for %s?", class)) then
+    c_persist.BRC.training_targets[class] = util.copy_table(skill_table)
+    BRC.mpr.magenta(string.format("Updated training targets for %s", class))
+  end
+end
+
 ---- Hook functions ----
+function f_startup.init()
+  if Config.use_saved_training_targets and Config.save_targets_keycode then
+    local keycode = "\\{" .. Config.save_targets_keycode .. "}"
+    BRC.opt.macro(keycode, "macro_brc_save_training_targets")
+  end
+end
+
 function f_startup.ready()
   if you.turns() == 0 then
-    -- Disable all skills by default
-    for _, s in ipairs(BRC.TRAINING_SKILLS) do
-      if s ~= Config.auto_set_skill_targets[1][1] then you.train_skill(s, 0) end
+    if you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
+      if load_saved_training_targets() then return end
     end
 
-    -- Auto-set skill targets
+    -- If no saved targets were loaded, use default config
     if Config.auto_set_skill_targets and you.race() ~= "Gnoll" then
+      -- Disable all skills by default
+      for _, s in ipairs(BRC.TRAINING_SKILLS) do
+        if s ~= Config.auto_set_skill_targets[1][1] then you.train_skill(s, 0) end
+      end
+
+      -- Auto-set skill targets
       for i, skill_target in ipairs(Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then
@@ -7038,13 +7155,13 @@ function f_pa_data.update_high_scores(it)
     -- Don't alert for unusable weapons
     if BRC.eq.get_hands(it) == 2 and not BRC.you.free_offhand() then return end
 
-    local dmg = BRC.eq.get_dmg(it, BRC.DMG_TYPE.branded)
+    local dmg = BRC.eq.get_avg_dmg(it, BRC.DMG_TYPE.branded)
     if dmg > pa_high_score.weapon then
       pa_high_score.weapon = dmg
       if not ret_val then ret_val = "Highest damage" end
     end
 
-    dmg = BRC.eq.get_dmg(it, BRC.DMG_TYPE.plain)
+    dmg = BRC.eq.get_avg_dmg(it, BRC.DMG_TYPE.plain)
     if dmg > pa_high_score.plain_dmg then
       pa_high_score.plain_dmg = dmg
       if not ret_val then ret_val = "Highest plain damage" end

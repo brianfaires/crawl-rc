@@ -37,6 +37,7 @@ globals = {
   "macro_brc_fire",
   "macro_brc_hotkey",
   "macro_brc_save",
+  "macro_brc_save_training_targets",
   "macro_brc_skip_hotkey",
   "macro_brc_upstairs",
   
