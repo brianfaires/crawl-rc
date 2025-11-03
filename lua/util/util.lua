@@ -33,6 +33,15 @@ function BRC.util.do_cmd(cmd)
 end
 
 ---- Lua table helpers ----
+--- Add or remove an item from a list
+function BRC.util.add_or_remove(list, item, add)
+  if add then
+    list[#list + 1] = item
+  else
+    util.remove(list, item)
+  end
+end
+
 --- Sorts the keys of a dictionary/map: vars before tables, then alphabetically by key
 -- If a list is passed, will assume it's a list of global variable names
 function BRC.util.get_sorted_keys(map_or_list)

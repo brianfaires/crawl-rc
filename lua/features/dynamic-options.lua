@@ -6,100 +6,115 @@
 
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
+f_dynamic_options.Config = {}
 
----- Local constants / configuration ----
-local XL_FORCE_MORES = {
+-- XL-based force more messages: active when XL <= specified level
+f_dynamic_options.Config.xl_force_mores = {
   { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
   { pattern = "You.*re more poisoned", xl = 7 },
   { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
   { pattern = "danger:goes berserk", xl = 18 },
   { pattern = "monster_warning:carrying a wand of", xl = 15 },
-} -- XL_FORCE_MORES (do not remove this comment)
+} -- xl_force_mores (do not remove this comment)
 
+---- God dispatch table ----
+f_dynamic_options.Config.god_handlers = {
+  ["No God"] = function(joined)
+    BRC.opt.force_more_message("Found.*the Ecumenical Temple", not joined)
+    BRC.opt.flash_screen_message("Found.*the Ecumenical Temple", joined)
+    BRC.opt.runrest_stop_message("Found.*the Ecumenical Temple", joined)
+  end,
+  Beogh = function(joined)
+    BRC.opt.runrest_ignore_message("no longer looks.*", joined)
+    BRC.opt.force_more_message("Your orc.*dies", joined)
+  end,
+  Cheibriados = function(joined)
+    BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)
+  end,
+  Jiyva = function(joined)
+    BRC.opt.flash_screen_message("god:splits in two", joined)
+    BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", joined)
+  end,
+  Lugonu = function(joined)
+    BRC.util.add_or_remove(BRC.RISKY_EGOS, "distort", not joined)
+  end,
+  Trog = function(joined)
+    BRC.util.add_or_remove(BRC.ARTPROPS_BAD, "-Cast", not joined)
+    BRC.util.add_or_remove(BRC.RISKY_EGOS, "antimagic", not joined)
+  end,
+  Xom = function(joined)
+    BRC.opt.flash_screen_message("god:", joined)
+  end,
+}
+
+---- Race dispatch table ----
+f_dynamic_options.Config.race_options = {
+  Gnoll = function()
+    BRC.opt.message_mute("intrinsic_gain:skill increases to level", true)
+  end,
+}
+
+---- Class dispatch table ----
+f_dynamic_options.Config.class_options = {
+  Hunter = function()
+    crawl.setopt("view_delay = 30")
+  end,
+  Shapeshifter = function()
+    BRC.opt.autopickup_exceptions("<flux bauble", true)
+  end,
+}
+
+---- Local constants ----
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 ---- Local variables ----
+local Config
 local cur_god
 local ignore_all_magic
 local ignore_advanced_magic
 local xl_force_mores_active
 
----- Local functions ----
-local function set_class_options()
-  if you.class() == "Hunter" then
-    crawl.setopt("view_delay = 30")
-  elseif you.class() == "Shapeshifter" then
-    BRC.opt.autopickup_exceptions("<flux bauble", true)
+---- Initialization ----
+function f_dynamic_options.init()
+  Config = f_dynamic_options.Config
+
+  cur_god = "No God"
+  ignore_advanced_magic = false
+  ignore_all_magic = false
+  xl_force_mores_active = {}
+
+  -- Class options
+  local handler = Config.class_options[you.class()]
+  if handler then handler() end
+
+  -- Race options
+  local race = you.race()
+  handler = Config.race_options[race]
+  if handler then handler() end
+  if util.contains(BRC.UNDEAD_RACES, race) then
+    BRC.opt.force_more_message("monster_warning:wielding.*of holy wrath", true)
+  end
+  if not util.contains(BRC.POIS_RES_RACES, race) then
+    BRC.opt.force_more_message("monster_warning:curare", true)
   end
 end
 
+---- Local functions ----
 local function set_god_options()
   if cur_god == you.god() then return end
   local prev_god = cur_god
-  local new_god = you.god()
-  cur_god = new_god
+  cur_god = you.god()
 
-  if prev_god == "No God" or new_god == "No God" then
-    local abandoned_god = new_god == "No God"
-    BRC.opt.force_more_message("Found.*the Ecumenical Temple", abandoned_god)
-    BRC.opt.flash_screen_message("Found.*the Ecumenical Temple", not abandoned_god)
-    BRC.opt.runrest_stop_message("Found.*the Ecumenical Temple", not abandoned_god)
-  end
+  local abandoned = Config.god_handlers[prev_god]
+  if abandoned then abandoned(false) end
 
-  if new_god == "Beogh" or prev_god == "Beogh" then
-    local joined_beogh = new_god == "Beogh"
-    BRC.opt.runrest_ignore_message("no longer looks.*", joined_beogh)
-    BRC.opt.force_more_message("Your orc.*dies", joined_beogh)
-  end
-
-  if new_god == "Cheibriados" then
-    util.remove(BRC.RISKY_EGOS, "Ponderous")
-  elseif prev_god == "Cheibriados" then
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "Ponderous"
-  end
-
-  if new_god == "Jiyva" or prev_god == "Jiyva" then
-    local joined_jiyva = new_god == "Jiyva"
-    BRC.opt.flash_screen_message("god:splits in two", joined_jiyva)
-    BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", joined_jiyva)
-  end
-
-  if new_god == "Lugonu" then
-    util.remove(BRC.RISKY_EGOS, "distort")
-  elseif prev_god == "Lugonu" then
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "distort"
-  end
-
-  if new_god == "Trog" then
-    util.remove(BRC.ARTPROPS_BAD, "-Cast")
-    util.remove(BRC.RISKY_EGOS, "antimagic")
-  elseif prev_god == "Trog" then
-    BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
-  end
-
-  if new_god == "Xom" or prev_god == "Xom" then
-    BRC.opt.flash_screen_message("god:", new_god == "Xom")
-  end
-end
-
-local function set_race_options()
-  if util.contains(BRC.UNDEAD_RACES, you.race()) then
-    BRC.opt.force_more_message("monster_warning:wielding.*of holy wrath", true)
-  end
-
-  if not util.contains(BRC.POIS_RES_RACES, you.race()) then
-    BRC.opt.force_more_message("monster_warning:curare", true)
-  end
-
-  if you.race() == "Gnoll" then
-    BRC.opt.message_mute("intrinsic_gain:skill increases to level", true)
-  end
+  local joined = Config.god_handlers[cur_god]
+  if joined then joined(true) end
 end
 
 local function set_xl_options()
-  for i, v in ipairs(XL_FORCE_MORES) do
+  for i, v in ipairs(Config.xl_force_mores) do
     local should_be_active = you.xl() <= v.xl
     if xl_force_mores_active[i] ~= should_be_active then
       xl_force_mores_active[i] = should_be_active
@@ -114,13 +129,8 @@ local function set_skill_options()
   if ignore_all_magic ~= no_spells then
     ignore_all_magic = no_spells
     BRC.opt.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)
-    if no_spells then
-      util.remove(BRC.ARTPROPS_BAD, "-Cast")
-      util.remove(BRC.RISKY_EGOS, "antimagic")
-    else
-      BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
-      BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
-    end
+    BRC.util.add_or_remove(BRC.ARTPROPS_BAD, "-Cast", not no_spells)
+    BRC.util.add_or_remove(BRC.RISKY_EGOS, "antimagic", not no_spells)
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
@@ -134,18 +144,7 @@ local function set_skill_options()
   end
 end
 
----- Hook functions ----
-function f_dynamic_options.init()
-  cur_god = "No God"
-  ignore_advanced_magic = false
-  ignore_all_magic = false
-  xl_force_mores_active = {}
-
-  set_race_options()
-  set_class_options()
-  set_god_options()
-end
-
+---- Crawl hook functions ----
 function f_dynamic_options.ready()
   set_god_options()
   set_xl_options()
