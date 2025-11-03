@@ -119,18 +119,18 @@ local function load_saved_config()
     or (Config.allow_class_only_saves and load_config(you.class(), true))
 end
 
---- Save obj to table, under keys: race/class/combo
-local function save_race_class(desc, table, obj)
+--- Save obj to storage_table, under keys: race/class/combo
+local function save_race_class(desc, parent, child)
   local keys = { }
   keys[1] = you.race() .. " " .. you.class() -- Always save combo
   if Config.allow_race_only_saves then keys[#keys + 1] = you.race() end
   if Config.allow_class_only_saves then keys[#keys + 1] = you.class() end
   for i, key in ipairs(keys) do
     if i == 1 -- don't prompt for combo
-      or not table[key] -- don't prompt if empty
+      or not parent[key] -- don't prompt if empty
       or BRC.mpr.yesno(string.format("Overwrite saved %s for %s?", desc, BRC.txt.lightcyan(key)))
     then
-      table[key] = type(obj) == "table" and util.copy_table(obj) or obj
+      parent[key] = type(child) == "table" and util.copy_table(child) or child
       BRC.mpr.green(string.format("Saved %s for %s", desc, BRC.txt.lightcyan(key)))
     end
   end
@@ -167,16 +167,17 @@ local function strip_defaults_from_map(config, defaults)
         local stripped_map = strip_defaults_from_map(v, defaults[k])
         if next(stripped_map) then stripped[k] = stripped_map end
       elseif BRC.util.is_list(v) then
-        local is_same = #v == #defaults[k]
+        local default_list = defaults[k]
+        local is_same = type(default_list) == "table" and #v == #default_list
         if is_same then
           for i = 1, #v do
-            if v[i] ~= defaults[k][i] then
+            if v[i] ~= default_list[i] then
               is_same = false
               break
             end
           end
         end
-        if is_same then stripped[k] = v end
+        if not is_same then stripped[k] = v end
       end
     elseif v ~= defaults[k] then
       stripped[k] = v

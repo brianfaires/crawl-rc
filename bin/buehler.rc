@@ -5016,6 +5016,65 @@ local XL_FORCE_MORES = {
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
+---- God dispatch tables ----
+local GOD_JOIN_HANDLERS = {
+  Beogh = function()
+    BRC.opt.runrest_ignore_message("no longer looks.*", true)
+    BRC.opt.force_more_message("Your orc.*dies", true)
+  end,
+  Cheibriados = function()
+    util.remove(BRC.RISKY_EGOS, "Ponderous")
+  end,
+  Jiyva = function()
+    BRC.opt.flash_screen_message("god:splits in two", true)
+    BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", true)
+  end,
+  Lugonu = function()
+    util.remove(BRC.RISKY_EGOS, "distort")
+  end,
+  Trog = function()
+    util.remove(BRC.ARTPROPS_BAD, "-Cast")
+    util.remove(BRC.RISKY_EGOS, "antimagic")
+  end,
+  Xom = function()
+    BRC.opt.flash_screen_message("god:", true)
+  end,
+}
+
+local GOD_ABANDON_HANDLERS = {
+  Beogh = function()
+    BRC.opt.runrest_ignore_message("no longer looks.*", false)
+    BRC.opt.force_more_message("Your orc.*dies", false)
+  end,
+  Cheibriados = function()
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "Ponderous"
+  end,
+  Jiyva = function()
+    BRC.opt.flash_screen_message("god:splits in two", false)
+    BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", false)
+  end,
+  Lugonu = function()
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "distort"
+  end,
+  Trog = function()
+    BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
+    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
+  end,
+  Xom = function()
+    BRC.opt.flash_screen_message("god:", false)
+  end,
+}
+
+---- Class dispatch table ----
+local CLASS_OPTIONS = {
+  Hunter = function()
+    crawl.setopt("view_delay = 30")
+  end,
+  Shapeshifter = function()
+    BRC.opt.autopickup_exceptions("<flux bauble", true)
+  end,
+}
+
 ---- Local variables ----
 local cur_god
 local ignore_all_magic
@@ -5024,10 +5083,10 @@ local xl_force_mores_active
 
 ---- Local functions ----
 local function set_class_options()
-  if you.class() == "Hunter" then
-    crawl.setopt("view_delay = 30")
-  elseif you.class() == "Shapeshifter" then
-    BRC.opt.autopickup_exceptions("<flux bauble", true)
+  local class = you.class()
+  local handler = CLASS_OPTIONS[class]
+  if handler then
+    handler()
   end
 end
 
@@ -5037,6 +5096,7 @@ local function set_god_options()
   local new_god = you.god()
   cur_god = new_god
 
+  -- Handle temple messages when joining/abandoning any god
   if prev_god == "No God" or new_god == "No God" then
     local abandoned_god = new_god == "No God"
     BRC.opt.force_more_message("Found.*the Ecumenical Temple", abandoned_god)
@@ -5044,40 +5104,20 @@ local function set_god_options()
     BRC.opt.runrest_stop_message("Found.*the Ecumenical Temple", not abandoned_god)
   end
 
-  if new_god == "Beogh" or prev_god == "Beogh" then
-    local joined_beogh = new_god == "Beogh"
-    BRC.opt.runrest_ignore_message("no longer looks.*", joined_beogh)
-    BRC.opt.force_more_message("Your orc.*dies", joined_beogh)
+  -- Call abandon handler for previous god (if not "No God")
+  if prev_god ~= "No God" then
+    local abandon_handler = GOD_ABANDON_HANDLERS[prev_god]
+    if abandon_handler then
+      abandon_handler()
+    end
   end
 
-  if new_god == "Cheibriados" then
-    util.remove(BRC.RISKY_EGOS, "Ponderous")
-  elseif prev_god == "Cheibriados" then
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "Ponderous"
-  end
-
-  if new_god == "Jiyva" or prev_god == "Jiyva" then
-    local joined_jiyva = new_god == "Jiyva"
-    BRC.opt.flash_screen_message("god:splits in two", joined_jiyva)
-    BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", joined_jiyva)
-  end
-
-  if new_god == "Lugonu" then
-    util.remove(BRC.RISKY_EGOS, "distort")
-  elseif prev_god == "Lugonu" then
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "distort"
-  end
-
-  if new_god == "Trog" then
-    util.remove(BRC.ARTPROPS_BAD, "-Cast")
-    util.remove(BRC.RISKY_EGOS, "antimagic")
-  elseif prev_god == "Trog" then
-    BRC.ARTPROPS_BAD[#BRC.ARTPROPS_BAD + 1] = "-Cast"
-    BRC.RISKY_EGOS[#BRC.RISKY_EGOS + 1] = "antimagic"
-  end
-
-  if new_god == "Xom" or prev_god == "Xom" then
-    BRC.opt.flash_screen_message("god:", new_god == "Xom")
+  -- Call join handler for new god (if not "No God")
+  if new_god ~= "No God" then
+    local join_handler = GOD_JOIN_HANDLERS[new_god]
+    if join_handler then
+      join_handler()
+    end
   end
 end
 
@@ -6427,18 +6467,18 @@ local function load_saved_config()
     or (Config.allow_class_only_saves and load_config(you.class(), true))
 end
 
---- Save obj to table, under keys: race/class/combo
-local function save_race_class(desc, table, obj)
+--- Save obj to storage_table, under keys: race/class/combo
+local function save_race_class(desc, parent, child)
   local keys = { }
   keys[1] = you.race() .. " " .. you.class() -- Always save combo
   if Config.allow_race_only_saves then keys[#keys + 1] = you.race() end
   if Config.allow_class_only_saves then keys[#keys + 1] = you.class() end
   for i, key in ipairs(keys) do
     if i == 1 -- don't prompt for combo
-      or not table[key] -- don't prompt if empty
+      or not parent[key] -- don't prompt if empty
       or BRC.mpr.yesno(string.format("Overwrite saved %s for %s?", desc, BRC.txt.lightcyan(key)))
     then
-      table[key] = type(obj) == "table" and util.copy_table(obj) or obj
+      parent[key] = type(child) == "table" and util.copy_table(child) or child
       BRC.mpr.green(string.format("Saved %s for %s", desc, BRC.txt.lightcyan(key)))
     end
   end
@@ -6475,16 +6515,17 @@ local function strip_defaults_from_map(config, defaults)
         local stripped_map = strip_defaults_from_map(v, defaults[k])
         if next(stripped_map) then stripped[k] = stripped_map end
       elseif BRC.util.is_list(v) then
-        local is_same = #v == #defaults[k]
+        local default_list = defaults[k]
+        local is_same = type(default_list) == "table" and #v == #default_list
         if is_same then
           for i = 1, #v do
-            if v[i] ~= defaults[k][i] then
+            if v[i] ~= default_list[i] then
               is_same = false
               break
             end
           end
         end
-        if is_same then stripped[k] = v end
+        if not is_same then stripped[k] = v end
       end
     elseif v ~= defaults[k] then
       stripped[k] = v
