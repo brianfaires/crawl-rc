@@ -8,11 +8,12 @@
 f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
 f_startup.Config = {
-  -- Race+class training targets. When this successfully loads targets, other features are skipped.
+  -- Race+class training targets. When this successfully loads targets, skip remaining startup
   use_saved_training_targets = true, -- Allow save/load of race+class training targets
   save_targets_keycode = BRC.util.cntl("t"), -- Keycode to save training targets
-  allow_race_only_targets = true, -- Also save targets for just race
-  allow_class_only_targets = true, -- Also save targets for just class
+  allow_race_only_targets = true, -- Also save targets for just race (always prompts before loading)
+  allow_class_only_targets = true, -- Also save targets for just class (always prompts before loading)
+  prompt_before_load = false, -- Prompt before loading training targets for race+class combo
 
   show_skills_menu = false, -- Show skills menu on startup
 
@@ -30,7 +31,7 @@ f_startup.Config = {
       local wpn_skill = BRC.you.top_wpn_skill()
       if wpn_skill then
         local t = f_startup.Config.auto_set_skill_targets
-        t[#t + 1] = { wpn_skill, 8.0 }
+        t[#t + 1] = { wpn_skill, 6.0 }
       end
     end
   ]],
@@ -45,20 +46,26 @@ local function ensure_training_targets_table()
   if type(c_persist.BRC.training_targets) ~= "table" then c_persist.BRC.training_targets = {} end
 end
 
-local function get_current_skill_table()
+local function clear_skill_targets()
+  for _, s in ipairs(BRC.TRAINING_SKILLS) do
+    you.train_skill(s, 0)
+  end
+end
+
+local function create_skill_table()
   local skill_table = {}
   for _, skill_name in ipairs(BRC.TRAINING_SKILLS) do
     local training_level = you.train_skill(skill_name)
     local target = you.get_training_target(skill_name)
-    skill_table[skill_name] = {
-      training_level = training_level,
-      target = target,
-    }
+    if training_level > 0 or target > 0 then
+      skill_table[skill_name] = { training_level = training_level, target = target, }
+    end
   end
   return skill_table
 end
 
 local function apply_skill_table(skill_table)
+  clear_skill_targets()
   for skill_name, data in pairs(skill_table) do
     you.train_skill(skill_name, data.training_level)
     you.set_training_target(skill_name, data.target)
@@ -66,36 +73,30 @@ local function apply_skill_table(skill_table)
 end
 
 local function load_training_targets(key, require_confirmation)
-  ensure_training_targets_table()
   local saved = c_persist.BRC.training_targets[key]
-  if saved and type(saved) == "table" then
-    if require_confirmation then
-      if not BRC.mpr.yesno(string.format("Load training for %s?", key)) then
-        return false
-      end
-    end
-    apply_skill_table(saved)
-    BRC.mpr.green(string.format("Loaded training targets for %s", key))
-    return true
+  if type(saved) ~= "table" then return false end
+  if require_confirmation
+    and not BRC.mpr.yesno("Load training targets for " .. BRC.txt.lightcyan(key) .. "?")
+  then
+    return false
   end
-  return false
+  apply_skill_table(saved)
+  BRC.mpr.green("Loaded training targets for "  .. BRC.txt.lightcyan(key))
+  return true
 end
 
 local function load_saved_training_targets()
   if not Config.use_saved_training_targets then return false end
   ensure_training_targets_table()
-  local race = you.race()
-  local class = you.class()
-  local race_class_key = race .. "+" .. class
 
-  return load_training_targets(race_class_key, false)
-    or (Config.allow_race_only_targets and load_training_targets(race, true))
-    or (Config.allow_class_only_targets and load_training_targets(class, true))
+  return load_training_targets(you.race() .. " " .. you.class(), Config.prompt_before_load)
+    or (Config.allow_race_only_targets and load_training_targets(you.race(), true))
+    or (Config.allow_class_only_targets and load_training_targets(you.class(), true))
 end
 
 ---- Macro function: Save current skill targets (training levels and targets) for race/class ----
 function macro_brc_save_training_targets()
-  if not BRC.active or Config.disabled then
+  if not BRC.active or Config.disabled or you.race() == "Gnoll" then
     BRC.mpr.info("BRC not active, or startup feature is disabled. Training targets not saved.")
     return
   end
@@ -103,9 +104,9 @@ function macro_brc_save_training_targets()
   ensure_training_targets_table()
   local race = you.race()
   local class = you.class()
-  local race_class_key = race .. "+" .. class
+  local race_class_key = race .. " " .. class
 
-  local skill_table = get_current_skill_table()
+  local skill_table = create_skill_table()
 
   -- Always save to race+class
   c_persist.BRC.training_targets[race_class_key] = util.copy_table(skill_table)
@@ -146,17 +147,17 @@ function f_startup.ready()
 
     -- If no saved targets were loaded, use default config
     if Config.auto_set_skill_targets and you.race() ~= "Gnoll" then
-      -- Disable all skills by default
-      for _, s in ipairs(BRC.TRAINING_SKILLS) do
-        if s ~= Config.auto_set_skill_targets[1][1] then you.train_skill(s, 0) end
-      end
+      clear_skill_targets()
 
-      -- Auto-set skill targets
+      local set_first = false
       for i, skill_target in ipairs(Config.auto_set_skill_targets) do
         local skill, target = unpack(skill_target)
         if you.skill(skill) < target then
           you.set_training_target(skill, target)
-          if i == 1 or not Config.focus_one_skill then you.train_skill(skill, 1) end
+          if not set_first or not Config.focus_one_skill then
+            you.train_skill(skill, 1)
+            set_first = true
+          end
           if not Config.set_all_targets then break end
         end
       end

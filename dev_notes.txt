@@ -8,7 +8,7 @@
     - (runrest_ignore_monster ^= .*:2) above X% HP
     - (runrest_ignore_monster ^= .*:3) above Y% HP
     - ... up to 6
-  - Add macro to save skill targets & CONFIG values (by race or race+class)
+  - Add macro to save CONFIG values (by race or race+class)
 1. Profile features:
   - Turncount:
     - show_game_time = false

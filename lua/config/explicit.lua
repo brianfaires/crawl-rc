@@ -169,7 +169,16 @@ brc_config_explicit = {
 
   ["startup"] = {
     disabled = false,
+    -- Race+class training targets. When this successfully loads targets, skip remaining startup.
+    use_saved_training_targets = true, -- Allow save/load of race+class training targets
+    save_targets_keycode = BRC.util.cntl("t"), -- Keycode to save training targets
+    allow_race_only_targets = true, -- Also save targets for just race (always prompts before loading)
+    allow_class_only_targets = true, -- Also save targets for just class (always prompts before loading)
+    prompt_before_load = false, -- Prompt before loading training targets for race+class combo
+
     show_skills_menu = false, -- Show skills menu on startup
+
+    -- Settings to set skill targets, regardless of race/class
     set_all_targets = true, -- Set all targets, even if only focusing one
     focus_one_skill = true, -- Focus one skill at a time, even if setting all targets
     auto_set_skill_targets = {
@@ -183,7 +192,7 @@ brc_config_explicit = {
         local wpn_skill = BRC.you.top_wpn_skill()
         if wpn_skill then
           local t = f_startup.Config.auto_set_skill_targets
-          t[#t + 1] = { wpn_skill, 8.0 }
+          t[#t + 1] = { wpn_skill, 6.0 }
         end
       end
     ]],
