@@ -53,11 +53,22 @@ function BRC.opt.macro(key, function_name)
   end
 
   -- Format msg for debugging and keycode for crawl.setopt()
-  local key_str = "<<< '" .. key .. "' >>"
+  local key_str = nil
   if type(key) == "number" then
+    -- Try to convert to key name for better debug msg
+    for k, v in pairs(BRC.KEYS) do
+      if v == key then
+        key_str = "<<< " .. k .. " >>"
+        break
+      end
+    end
+    -- Format keycode string for crawl.setopt()
     key = "\\{" .. key .. "}"
-    key_str = "<<< \\" .. key .. " >>"
+    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
   end
+
+  -- The << >> formatting protects against crawl thinking '<' is a tag
+  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
 
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 

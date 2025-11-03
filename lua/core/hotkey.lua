@@ -7,7 +7,7 @@
 BRC.Hotkey = {}
 BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"
 BRC.Hotkey.Config = {
-  key = { keycode = 13, name = "[Enter]" },
+  key = { keycode = BRC.KEYS.ENTER, name = "[Enter]" },
   skip_keycode = BRC.KEYS.ESC,
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view

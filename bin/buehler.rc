@@ -272,6 +272,8 @@ brc_config_streak = {
 {
 --- Explicit config: All config values from all features listed explicitly, set to defaults
 -- Large feature config sections are at the end
+-- @warning Since this lives at the top of the RC, it can't reference constants.lua or util/*.lua
+--   So it must hardcode values like keycodes, where feature configs get to use BRC.KEYS, etc
 
 brc_config_explicit = {
   BRC_CONFIG_NAME = "Explicit",
@@ -313,7 +315,7 @@ brc_config_explicit = {
   },
 
   hotkey = {
-    key = { keycode = "13", name = "[Enter]" },
+    key = { keycode = 13, name = "[Enter]" },
     skip_keycode = 27, -- ESC keycode
     equip_hotkey = true, -- Offer to equip after picking up equipment
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
@@ -1777,7 +1779,7 @@ BRC.ARTPROPS_EGO = { -- Corresponding ego
 } -- BRC.ARTPROPS_EGO (do not remove this comment)
 
 ---- Other ----
-BRC.KEYS = { ESC = 27 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
@@ -3007,11 +3009,22 @@ function BRC.opt.macro(key, function_name)
   end
 
   -- Format msg for debugging and keycode for crawl.setopt()
-  local key_str = "<<< '" .. key .. "' >>"
+  local key_str = nil
   if type(key) == "number" then
+    -- Try to convert to key name for better debug msg
+    for k, v in pairs(BRC.KEYS) do
+      if v == key then
+        key_str = "<<< " .. k .. " >>"
+        break
+      end
+    end
+    -- Format keycode string for crawl.setopt()
     key = "\\{" .. key .. "}"
-    key_str = "<<< \\" .. key .. " >>"
+    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
   end
+
+  -- The << >> formatting protects against crawl thinking '<' is a tag
+  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
 
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 
@@ -3482,7 +3495,7 @@ end
 BRC.Hotkey = {}
 BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"
 BRC.Hotkey.Config = {
-  key = { keycode = 13, name = "[Enter]" },
+  key = { keycode = BRC.KEYS.ENTER, name = "[Enter]" },
   skip_keycode = BRC.KEYS.ESC,
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view

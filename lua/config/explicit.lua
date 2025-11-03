@@ -1,5 +1,7 @@
 --- Explicit config: All config values from all features listed explicitly, set to defaults
 -- Large feature config sections are at the end
+-- @warning Since this lives at the top of the RC, it can't reference constants.lua or util/*.lua
+--   So it must hardcode values like keycodes, where feature configs get to use BRC.KEYS, etc
 
 brc_config_explicit = {
   BRC_CONFIG_NAME = "Explicit",
@@ -41,7 +43,7 @@ brc_config_explicit = {
   },
 
   hotkey = {
-    key = { keycode = "13", name = "[Enter]" },
+    key = { keycode = 13, name = "[Enter]" },
     skip_keycode = 27, -- ESC keycode
     equip_hotkey = true, -- Offer to equip after picking up equipment
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view

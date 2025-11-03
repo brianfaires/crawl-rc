@@ -97,7 +97,7 @@ BRC.ARTPROPS_EGO = { -- Corresponding ego
 } -- BRC.ARTPROPS_EGO (do not remove this comment)
 
 ---- Other ----
-BRC.KEYS = { ESC = 27 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
