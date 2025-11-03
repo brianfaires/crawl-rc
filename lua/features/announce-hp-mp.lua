@@ -11,6 +11,7 @@ f_announce_hp_mp.Config = {
   dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
+  meter_length = 5, -- Number of pips in each meter
 
   Announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
@@ -41,25 +42,39 @@ f_announce_hp_mp.Config = {
 ---- Persistent variables ----
 ad_prev = BRC.Data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
 
----- Local config alias ----
-local Config = f_announce_hp_mp.Config
-
 ---- Local constants ----
-local PIPS_PER_METER = 5
-local METER_LENGTH = PIPS_PER_METER + 2 * #BRC.txt.clean(Config.HP_METER.BORDER or "")
 local ALWAYS_BOTTOM_SETTINGS = {
   hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
   hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
 } -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
 
+---- Local variables ----
+local Config
+
+---- Initialization ----
+function f_announce_hp_mp.init()
+  Config = f_announce_hp_mp.Config
+
+  ad_prev.hp = 0
+  ad_prev.mhp = 0
+  ad_prev.mp = 0
+  ad_prev.mmp = 0
+
+  if Config.always_on_bottom then Config.Announce = ALWAYS_BOTTOM_SETTINGS end
+
+  if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
+      BRC.opt.message_mute("Ouch! That really hurt!", true)
+  end
+end
+
 ---- Local functions ----
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  local num_halfpips = math.floor(perc * PIPS_PER_METER * 2)
+  local num_halfpips = math.floor(perc * Config.meter_length * 2)
   local num_full_emojis = math.floor(num_halfpips / 2)
   local num_part_emojis = num_halfpips % 2
-  local num_empty_emojis = PIPS_PER_METER - num_full_emojis - num_part_emojis
+  local num_empty_emojis = Config.meter_length - num_full_emojis - num_part_emojis
 
   return table.concat({
     emojis.BORDER or "",
@@ -136,27 +151,15 @@ local function get_mp_message(mp_delta, mmp_delta)
 end
 
 local function last_msg_is_meter()
+  local meter_chars = Config.meter_length + 2 * #(BRC.txt.clean(Config.HP_METER.BORDER) or "")
   local last_msg = crawl.messages(1)
-  if not (last_msg and #last_msg > METER_LENGTH + 4) then return false end
+  if not (last_msg and #last_msg > meter_chars + 4) then return false end
 
-  local s = last_msg:sub(METER_LENGTH + 1, METER_LENGTH + 4)
+  local s = last_msg:sub(meter_chars + 1, meter_chars + 4)
   return s == " HP[" or s == " MP["
 end
 
----- Hook functions ----
-function f_announce_hp_mp.init()
-  ad_prev.hp = 0
-  ad_prev.mhp = 0
-  ad_prev.mp = 0
-  ad_prev.mmp = 0
-
-  if Config.always_on_bottom then Config.Announce = ALWAYS_BOTTOM_SETTINGS end
-
-  if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
-    BRC.opt.message_mute("Ouch! That really hurt!", true)
-  end
-end
-
+---- Crawl hook functions ----
 function f_announce_hp_mp.ready()
   -- Update prev state first, so we can safely return early below
   local hp, mhp = you.hp()

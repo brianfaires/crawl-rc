@@ -7,6 +7,7 @@
 f_answer_prompts = {}
 f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"
 
+---- Crawl hook functions ----
 function f_answer_prompts.c_answer_prompt(prompt)
   if prompt == "Die?" then return false end
   if prompt:contains("cheaper one?") and you.branch() ~= "Bazaar" then

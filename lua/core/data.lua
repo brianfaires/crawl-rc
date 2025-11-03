@@ -20,6 +20,12 @@ local _default_values = {}
 local pushed_restore_table_creation = false -- Set this on file load, not on init()
 local cur_location
 
+---- Initialization ----
+function BRC.Data.init()
+  cur_location = you.where()
+  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
+end
+
 ---- Local functions ----
 local function is_usable_backup()
   if
@@ -167,12 +173,7 @@ function BRC.Data.backup()
   end
 end
 
----- Hook functions ----
-function BRC.Data.init()
-  cur_location = you.where()
-  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
-end
-
+---- Crawl hook functions ----
 function BRC.Data.ready()
   if you.where() ~= cur_location and not you.have_orb() then
     cur_location = you.where()

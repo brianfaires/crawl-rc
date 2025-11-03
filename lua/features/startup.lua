@@ -39,8 +39,17 @@ f_startup.Config = {
   ]],
 } -- f_startup.Config (do not remove this comment)
 
----- Local config alias ----
-local Config = f_startup.Config
+---- Local variables ----
+local Config
+
+---- Initialization ----
+function f_startup.init()
+  Config = f_startup.Config
+
+  if Config.macro_save_key and (Config.use_saved_training or Config.use_saved_config) then
+    BRC.opt.macro(Config.macro_save_key, "macro_brc_save_skills_and_config")
+  end
+end
 
 ---- Local functions ----
 local function ensure_tables_exist()
@@ -209,13 +218,7 @@ function macro_brc_save_skills_and_config()
   end
 end
 
----- Hook functions ----
-function f_startup.init()
-  if Config.macro_save_key and (Config.use_saved_training or Config.use_saved_config) then
-    BRC.opt.macro(Config.macro_save_key, "macro_brc_save_skills_and_config")
-  end
-end
-
+---- Crawl hook functions ----
 function f_startup.ready()
   if you.turns() ~= 0 then return end
 

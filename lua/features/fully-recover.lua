@@ -14,15 +14,26 @@ f_fully_recover.Config = {
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
----- Local config alias ----
-local Config = f_fully_recover.Config
-
 ---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500
 
 ---- Local variables ----
+local Config
 local recovery_start_turn
 local explore_after_recovery
+
+---- Initialization ----
+function f_fully_recover.init()
+  Config = f_fully_recover.Config
+  recovery_start_turn = 0
+  explore_after_recovery = false
+
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.runrest_ignore_message("recovery:.*", true)
+  BRC.opt.runrest_ignore_message("duration:.*", true)
+  BRC.opt.message_mute("^HP restored", true)
+  BRC.opt.message_mute("Magic restored", true)
+end
 
 ---- Local functions ----
 local function abort_fully_recover()
@@ -103,19 +114,7 @@ function macro_brc_explore()
   end
 end
 
----- Hook functions ----
-function f_fully_recover.init()
-  recovery_start_turn = 0
-  explore_after_recovery = false
-
-  BRC.opt.runrest_ignore_message("recovery:.*", true)
-  BRC.opt.runrest_ignore_message("duration:.*", true)
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
-
-  BRC.opt.message_mute("^HP restored", true)
-  BRC.opt.message_mute("Magic restored", true)
-end
-
+---- Crawl hook functions ----
 function f_fully_recover.c_message(text, channel)
   if channel == "plain" then
     if text:contains("ou start waiting") or text:contains("ou start resting") then

@@ -21,10 +21,7 @@ rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
 rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 rr_shaft_location = BRC.Data.persist("rr_shaft_location", nil)
 
----- Local config alias ----
-local Config = f_runrest_features.Config
-
----- Local constants / configuration ----
+---- Local constants ----
 local GAUNTLET_CONCAT_STRING = " && !!"
 local GAUNTLET_SEARCH_STRING = table.concat({
   "gauntlet", "gate leading", "a transporter", "gold piece",
@@ -32,9 +29,20 @@ local GAUNTLET_SEARCH_STRING = table.concat({
   }, GAUNTLET_CONCAT_STRING)
 
 ---- Local variables ----
+local Config
 local stop_on_altars
 local stop_on_portals
 local stop_on_stairs
+
+---- Initialization ----
+function f_runrest_features.init()
+  Config = f_runrest_features.Config
+  stop_on_altars = true
+  stop_on_portals = true
+  stop_on_stairs = false
+
+  if you.turns() == 0 and you.class() == "Delver" then rr_shaft_location = "D:1" end
+end
 
 ---- Local functions ----
 local function is_explore_done_msg(text)
@@ -139,14 +147,7 @@ local function ready_after_shaft()
   if you.where() == rr_shaft_location then rr_shaft_location = nil end
 end
 
----- Hook functions ----
-function f_runrest_features.init()
-  stop_on_altars = true
-  stop_on_portals = true
-  stop_on_stairs = false
-  if you.turns() == 0 and you.class() == "Delver" then rr_shaft_location = "D:1" end
-end
-
+---- Crawl hook functions ----
 function f_runrest_features.c_message(text, _)
   if Config.temple_search then c_message_temple(text) end
   if Config.gauntlet_search then c_message_gauntlet(text) end

@@ -13,11 +13,6 @@ pa_lowest_hands_alerted = BRC.Data.persist("pa_lowest_hands_alerted", {
   ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
 
----- Local config alias ----
-local Config = f_pickup_alert.Config
-local Heur = f_pickup_alert.Config.Tuning.Weap
-local Emoji = f_pickup_alert.Config.Emoji
-
 ---- Local constants ----
 local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
 local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
@@ -30,8 +25,23 @@ local WEAP_CACHE_KEYS = {
 }
 
 ---- Local variables ----
+local Config
+local Heur
+local Emoji
 local top_attack_skill
 local _weapon_cache = {} -- Cache info for inventory weapons to avoid repeat calculations
+
+---- Initialization ----
+function f_pa_weapons.init()
+  Config = f_pickup_alert.Config
+  Heur = f_pickup_alert.Config.Tuning.Weap
+  Emoji = f_pickup_alert.Config.Emoji
+  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
+  _weapon_cache.refresh(true)
+
+  if not Config.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
+  if not Config.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
+end
 
 ---- Local functions ----
 local function get_score(it, no_brand_bonus)
@@ -409,14 +419,7 @@ function f_pa_weapons.alert_weapon(it)
   return false
 end
 
----- Hook functions ----
-function f_pa_weapons.init()
-  if not Config.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
-  if not Config.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
-  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
-  _weapon_cache.refresh(true)
-end
-
+---- Crawl hook functions ----
 function f_pa_weapons.ready()
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
 end

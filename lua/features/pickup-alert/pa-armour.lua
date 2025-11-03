@@ -7,13 +7,7 @@
 
 f_pa_armour = {}
 
----- Local config aliases ----
-local Heur = f_pickup_alert.Config.Tuning.Armour
-local Emoji = f_pickup_alert.Config.Emoji
-local Alert = f_pickup_alert.Config.Alert
-local More = f_pickup_alert.Config.Alert.More
-
----- Local constants / configuration ----
+---- Local constants ----
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
 local SAME = "same_ego"
 local LOST = "lost_ego"
@@ -23,26 +17,41 @@ local DIFF = "diff_ego"
 local HEAVIER = "Heavier"
 local LIGHTER = "Lighter"
 
-local ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
-  [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
-  [NEW] = { msg = "New ego", emoji = Emoji.EGO },
-  [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
-  [LIGHTER] = {
-    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
-    [NEW] = { msg = "New ego (Lighter armour)", emoji = Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
-    [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
-    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
-  },
-  [HEAVIER] = {
-    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
-    [NEW] = { msg = "New ego (Heavier armour)", emoji = Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
-    [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
-    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
-  },
-} -- ARMOUR_ALERT (do not remove this comment)
+---- Local variables ----
+local Heur
+local Emoji
+local Alert
+local More
+local ARMOUR_ALERT
+
+---- Initialization ----
+function f_pa_armour.init()
+  Heur = f_pickup_alert.Config.Tuning.Armour
+  Emoji = f_pickup_alert.Config.Emoji
+  Alert = f_pickup_alert.Config.Alert
+  More = f_pickup_alert.Config.Alert.More
+
+  ARMOUR_ALERT = {
+    artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
+    [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
+    [NEW] = { msg = "New ego", emoji = Emoji.EGO },
+    [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
+    [LIGHTER] = {
+      [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
+      [NEW] = { msg = "New ego (Lighter armour)", emoji = Emoji.EGO },
+      [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
+      [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
+      [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
+    },
+    [HEAVIER] = {
+      [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
+      [NEW] = { msg = "New ego (Heavier armour)", emoji = Emoji.EGO },
+      [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
+      [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
+      [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
+    },
+  }
+end
 
 ---- Local functions ----
 local function aux_slot_is_impaired(it)

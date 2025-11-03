@@ -12,10 +12,7 @@ f_inscribe_stats.Config = {
   dmg_type = BRC.DMG_TYPE.unbranded,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
----- Local config alias ----
-local Config = f_inscribe_stats.Config
-
----- Local constants / configuration ----
+---- Local constants ----
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
 ---- Local functions ----
@@ -57,7 +54,7 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.eq.wpn_stats(it, BRC.DMG_TYPE[Config.dmg_type])
+  local dps_inscr = BRC.eq.wpn_stats(it, BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type])
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
@@ -73,11 +70,14 @@ local function inscribe_weapon_stats(it)
   it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
 end
 
----- Hook functions ----
+---- Crawl hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
-  if Config.inscribe_weapons and it.is_weapon then
+  if f_inscribe_stats.Config.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif Config.inscribe_armour and BRC.it.is_armour(it) and not BRC.it.is_scarf(it) then
+  elseif f_inscribe_stats.Config.inscribe_armour
+    and BRC.it.is_armour(it)
+    and not BRC.it.is_scarf(it)
+  then
     inscribe_armour_stats(it)
   end
 end

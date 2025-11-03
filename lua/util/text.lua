@@ -42,6 +42,7 @@ end
 
 --- Remove newlines and tags from text
 function BRC.txt.clean(text)
+  if type(text) ~= "string" then return text end
   return text:gsub("\n", ""):gsub("<[^>]*>", "")
 end
 

@@ -23,7 +23,7 @@ local function inscription_needed(class, st)
   return true
 end
 
----- Hook functions ----
+---- Crawl hook functions ----
 function f_safe_consumables.ready()
   -- Add / Remove inscriptions as appropriate
   for _, inv in ipairs(items.inventory()) do

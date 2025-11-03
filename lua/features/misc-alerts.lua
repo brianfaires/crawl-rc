@@ -19,15 +19,28 @@ f_misc_alerts.Config = {
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 
----- Local config alias ----
-local Config = f_misc_alerts.Config
-
----- Local constants / configuration ----
+---- Local constants ----
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
 ---- Local variables ----
+local Config
 local below_hp_threshold
 local prev_spell_levels
+
+---- Initialization ----
+function f_misc_alerts.init()
+  Config = f_misc_alerts.Config
+  below_hp_threshold = false
+  prev_spell_levels = you.spell_levels()
+
+  if Config.save_with_msg then
+    BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
+    if ma_saved_msg and ma_saved_msg ~= "" then
+      BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
+      ma_saved_msg = nil
+    end
+  end
+end
 
 ---- Local functions ----
 local function alert_low_hp()
@@ -87,20 +100,7 @@ function macro_brc_save()
   BRC.util.do_cmd("CMD_SAVE_GAME_NOW")
 end
 
----- Hook functions ----
-function f_misc_alerts.init()
-  below_hp_threshold = false
-  prev_spell_levels = you.spell_levels()
-
-  if Config.save_with_msg then
-    BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
-    if ma_saved_msg and ma_saved_msg ~= "" then
-      BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
-      ma_saved_msg = nil
-    end
-  end
-end
-
+---- Crawl hook functions ----
 function f_misc_alerts.ready()
   if Config.alert_remove_faith then alert_remove_faith() end
   if Config.alert_low_hp_threshold > 0 then alert_low_hp() end

@@ -10,7 +10,6 @@ f_mute_messages.Config = {
   messages = {
     -- Light reduction; unnecessary messages
     [1] = {
-
       -- Unnecessary
       "You now have .* runes",
       "to see all the runes you have collected",
@@ -81,6 +80,7 @@ f_mute_messages.Config = {
   },
 } -- f_mute_messages.Config (do not remove this comment)
 
+---- Initialization ----
 function f_mute_messages.init()
   if f_mute_messages.Config.mute_level and f_mute_messages.Config.mute_level > 0 then
     for i = 1, f_mute_messages.Config.mute_level do

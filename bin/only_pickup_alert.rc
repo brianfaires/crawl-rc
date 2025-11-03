@@ -12,13 +12,7 @@
 
 f_pa_armour = {}
 
----- Local config aliases ----
-local Heur = f_pickup_alert.Config.Tuning.Armour
-local Emoji = f_pickup_alert.Config.Emoji
-local Alert = f_pickup_alert.Config.Alert
-local More = f_pickup_alert.Config.Alert.More
-
----- Local constants / configuration ----
+---- Local constants ----
 local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
 local SAME = "same_ego"
 local LOST = "lost_ego"
@@ -28,26 +22,41 @@ local DIFF = "diff_ego"
 local HEAVIER = "Heavier"
 local LIGHTER = "Lighter"
 
-local ARMOUR_ALERT = {
-  artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
-  [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
-  [NEW] = { msg = "New ego", emoji = Emoji.EGO },
-  [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
-  [LIGHTER] = {
-    [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
-    [NEW] = { msg = "New ego (Lighter armour)", emoji = Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
-    [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
-    [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
-  },
-  [HEAVIER] = {
-    [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
-    [NEW] = { msg = "New ego (Heavier armour)", emoji = Emoji.EGO },
-    [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
-    [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
-    [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
-  },
-} -- ARMOUR_ALERT (do not remove this comment)
+---- Local variables ----
+local Heur
+local Emoji
+local Alert
+local More
+local ARMOUR_ALERT
+
+---- Initialization ----
+function f_pa_armour.init()
+  Heur = f_pickup_alert.Config.Tuning.Armour
+  Emoji = f_pickup_alert.Config.Emoji
+  Alert = f_pickup_alert.Config.Alert
+  More = f_pickup_alert.Config.Alert.More
+
+  ARMOUR_ALERT = {
+    artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
+    [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
+    [NEW] = { msg = "New ego", emoji = Emoji.EGO },
+    [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
+    [LIGHTER] = {
+      [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
+      [NEW] = { msg = "New ego (Lighter armour)", emoji = Emoji.EGO },
+      [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
+      [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
+      [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
+    },
+    [HEAVIER] = {
+      [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
+      [NEW] = { msg = "New ego (Heavier armour)", emoji = Emoji.EGO },
+      [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
+      [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
+      [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
+    },
+  }
+end
 
 ---- Local functions ----
 local function aux_slot_is_impaired(it)
@@ -359,11 +368,6 @@ pa_lowest_hands_alerted = BRC.Data.persist("pa_lowest_hands_alerted", {
   ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
 })
 
----- Local config alias ----
-local Config = f_pickup_alert.Config
-local Heur = f_pickup_alert.Config.Tuning.Weap
-local Emoji = f_pickup_alert.Config.Emoji
-
 ---- Local constants ----
 local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
 local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
@@ -376,8 +380,23 @@ local WEAP_CACHE_KEYS = {
 }
 
 ---- Local variables ----
+local Config
+local Heur
+local Emoji
 local top_attack_skill
 local _weapon_cache = {} -- Cache info for inventory weapons to avoid repeat calculations
+
+---- Initialization ----
+function f_pa_weapons.init()
+  Config = f_pickup_alert.Config
+  Heur = f_pickup_alert.Config.Tuning.Weap
+  Emoji = f_pickup_alert.Config.Emoji
+  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
+  _weapon_cache.refresh(true)
+
+  if not Config.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
+  if not Config.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
+end
 
 ---- Local functions ----
 local function get_score(it, no_brand_bonus)
@@ -755,14 +774,7 @@ function f_pa_weapons.alert_weapon(it)
   return false
 end
 
----- Hook functions ----
-function f_pa_weapons.init()
-  if not Config.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
-  if not Config.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
-  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
-  _weapon_cache.refresh(true)
-end
-
+---- Crawl hook functions ----
 function f_pa_weapons.ready()
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
 end
@@ -782,9 +794,17 @@ end
 
 f_pa_misc = {}
 
----- Local config alias ----
-local Emoji = f_pickup_alert.Config.Emoji
-local Alert = f_pickup_alert.Config.Alert
+---- Local variables ----
+local Emoji
+local Alert
+
+---- Initialization ----
+function f_pa_misc.init()
+  Emoji = f_pickup_alert.Config.Emoji
+  Alert = f_pickup_alert.Config.Alert
+end
+
+---- Local functions ----
 
 ---- Public API ----
 function f_pa_misc.alert_orb(it)
@@ -1037,12 +1057,42 @@ end
 f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
----- Local config alias ----
-local Config = f_pickup_alert.Config
-
 ---- Local variables ----
+local Config
 local pause_pa_system
 local hold_alerts_for_next_turn
+
+---- Initialization ----
+function f_pickup_alert.init()
+  Config = f_pickup_alert.Config
+  pause_pa_system = false
+  hold_alerts_for_next_turn = false
+
+  BRC.mpr.debug("Initialize pickup-alert submodules...")
+  if f_pa_data.init then f_pa_data.init() end
+  BRC.mpr.debug("  pa-data loaded")
+
+  if f_pa_armour then
+    if f_pa_armour.init then f_pa_armour.init() end
+    BRC.mpr.debug("  pa-armour loaded")
+  end
+
+  if f_pa_weapons then
+    if f_pa_weapons.init then f_pa_weapons.init() end
+    BRC.mpr.debug("  pa-weapons loaded")
+  end
+
+  if f_pa_misc then
+    if f_pa_misc.init then f_pa_misc.init() end
+    BRC.mpr.debug("  pa-misc loaded")
+  end
+
+  -- Don't alert for starting items
+  for _, inv in ipairs(items.inventory()) do
+    f_pa_data.remember_alert(inv)
+    f_pa_data.remove_OTA(inv)
+  end
+end
 
 ---- Local functions ----
 local function has_configured_force_more(it)
@@ -1155,37 +1205,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   return true
 end
 
----- Hook functions ----
-function f_pickup_alert.init()
-  pause_pa_system = false
-  hold_alerts_for_next_turn = false
-
-  BRC.mpr.debug("Initialize pickup-alert submodules...")
-  if f_pa_data.init then f_pa_data.init() end
-  BRC.mpr.debug("  pa-data loaded")
-
-  if f_pa_armour then
-    if f_pa_armour.init then f_pa_armour.init() end
-    BRC.mpr.debug("  pa-armour loaded")
-  end
-
-  if f_pa_weapons then
-    if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC.mpr.debug("  pa-weapons loaded")
-  end
-
-  if f_pa_misc then
-    if f_pa_misc.init then f_pa_misc.init() end
-    BRC.mpr.debug("  pa-misc loaded")
-  end
-
-  -- Don't alert for starting items
-  for _, inv in ipairs(items.inventory()) do
-    f_pa_data.remember_alert(inv)
-    f_pa_data.remove_OTA(inv)
-  end
-end
-
+---- Crawl hook functions ----
 function f_pickup_alert.autopickup(it, _)
   if should_skip_pickup_check(it) then return end
 

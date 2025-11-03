@@ -17,9 +17,6 @@ f_alert_monsters.Config = {
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
 } -- f_alert_monsters.Config (do not remove this comment)
 
----- Local config alias ----
-local Config = f_alert_monsters.Config
-
 --[[
 Config.Alerts contains all alerts. Each table in it creates one alert, using the following fields:
   - `name` is for debugging.
@@ -223,12 +220,47 @@ f_alert_monsters.Config.init = [[
 ]]
 ------------------- End config section -------------------
 
----- Local variables ----
-local patterns_to_mute -- which packs to mute at next ready()
-
 ---- Local constants ----
 local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+
+---- Local variables ----
+local Config
+local patterns_to_mute -- which packs to mute at next ready()
+
+---- Initialization ----
+function f_alert_monsters.init()
+  Config = f_alert_monsters.Config
+  patterns_to_mute = {}
+
+  -- Break packs with tables into individual alerts
+  local add_patterns = {}
+  local remove_patterns = {}
+  for _, v in ipairs(Config.Alerts) do
+    if v.is_pack and type(v.pattern) == "table" and #v.pattern > 1 then
+      remove_patterns[#remove_patterns + 1] = v
+      for _, m in ipairs(v.pattern) do
+        local to_add = util.copy_table(v)
+        to_add.name = (to_add.name or "") .. "_" .. m:gsub(" ", "_")
+        to_add.pattern = m
+        add_patterns[#add_patterns + 1] = to_add
+      end
+    end
+  end
+  util.append(Config.Alerts, add_patterns)
+  for _, v in ipairs(remove_patterns) do
+    util.remove(Config.Alerts, v)
+  end
+
+  -- Convert patterns to regex
+  for _, v in ipairs(Config.Alerts) do
+    v.active_alert = false
+    v.last_fm_turn = -1
+    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
+    v.pattern = WARN_PREFIX .. v.pattern .. WARN_SUFFIX
+    v.regex = crawl.regex(v.pattern:gsub("monster_warning:", ""))
+  end
+end
 
 ---- Local functions ----
 --- Check if player HP is below threshold, accounting for 0-3 pips of resistance.
@@ -281,39 +313,7 @@ local function update_pack_mutes()
   end
 end
 
----- Hook functions ----
-function f_alert_monsters.init()
-  patterns_to_mute = {}
-
-  -- Break packs with tables into individual alerts
-  local add_patterns = {}
-  local remove_patterns = {}
-  for _, v in ipairs(Config.Alerts) do
-    if v.is_pack and type(v.pattern) == "table" and #v.pattern > 1 then
-      remove_patterns[#remove_patterns + 1] = v
-      for _, m in ipairs(v.pattern) do
-        local to_add = util.copy_table(v)
-        to_add.name = (to_add.name or "") .. "_" .. m:gsub(" ", "_")
-        to_add.pattern = m
-        add_patterns[#add_patterns + 1] = to_add
-      end
-    end
-  end
-  util.append(Config.Alerts, add_patterns)
-  for _, v in ipairs(remove_patterns) do
-    util.remove(Config.Alerts, v)
-  end
-
-  -- Convert patterns to regex
-  for _, v in ipairs(Config.Alerts) do
-    v.active_alert = false
-    v.last_fm_turn = -1
-    if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
-    v.pattern = WARN_PREFIX .. v.pattern .. WARN_SUFFIX
-    v.regex = crawl.regex(v.pattern:gsub("monster_warning:", ""))
-  end
-end
-
+---- Crawl hook functions ----
 function f_alert_monsters.c_message(text, channel)
   if channel ~= "monster_warning" or not text:find("comes? into view") then return end
   if Config.pack_timeout <= 0 then return end

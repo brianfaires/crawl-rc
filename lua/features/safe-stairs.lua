@@ -16,11 +16,18 @@ f_safe_stairs.Config = {
 ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
----- Local config alias ----
-local Config = f_safe_stairs.Config
-
 ---- Local variables ----
+local Config
 local ss_cur_location
+
+---- Initialization ----
+function f_safe_stairs.init()
+  Config = f_safe_stairs.Config
+  ss_cur_location = you.where()
+
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
+end
 
 ---- Local functions ----
 local function check_new_location(cmd)
@@ -66,14 +73,7 @@ function macro_brc_upstairs()
   end
 end
 
----- Hook functions ----
-function f_safe_stairs.init()
-  ss_cur_location = you.where()
-
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
-end
-
+---- Crawl hook functions ----
 function f_safe_stairs.ready()
   ss_prev_location = ss_cur_location
   ss_cur_location = you.where()

@@ -12,11 +12,18 @@ f_quiver_reminders.Config = {
 } -- f_quiver_reminders.Config (do not remove this comment)
 
 ---- Local variables ----
+local Config
 local last_thrown
 local last_thrown_turn
 
----- Local config alias ----
-local Config = f_quiver_reminders.Config
+---- Initialization ----
+function f_quiver_reminders.init()
+  Config = f_quiver_reminders.Config
+  last_thrown = nil
+  last_thrown_turn = -1
+
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
+end
 
 ---- Local functions ----
 local function quiver_missile_by_name(name)
@@ -66,13 +73,7 @@ function macro_brc_fire()
   BRC.util.do_cmd("CMD_FIRE")
 end
 
----- Hook functions ----
-function f_quiver_reminders.init()
-  last_thrown = nil
-  last_thrown_turn = -1
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
-end
-
+---- Crawl hook functions ----
 function f_quiver_reminders.c_message(text, _)
   local cleaned = BRC.txt.clean(text)
   local prefix = "You throw a "

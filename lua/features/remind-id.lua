@@ -17,15 +17,15 @@ f_remind_id.Config = {
 ---- Persistent variables ----
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
----- Local config alias ----
-local Config = f_remind_id.Config
-
----- Local constants / configuration ----
-local IDENTIFY_MSG = BRC.txt.magenta(" You have something to identify. ")
-if Config.emoji then IDENTIFY_MSG = Config.emoji .. IDENTIFY_MSG .. Config.emoji end
-
 ---- Local variables ----
+local Config
 local do_remind_id_check
+
+---- Initialization ----
+function f_remind_id.init()
+  Config = f_remind_id.Config
+  do_remind_id_check = true
+end
 
 ---- Local functions ----
 local function get_max_stack(class)
@@ -56,11 +56,7 @@ local function have_unid_item()
   end)
 end
 
----- Hook functions ----
-function f_remind_id.init()
-  do_remind_id_check = true
-end
-
+---- Crawl hook functions ----
 function f_remind_id.c_assign_invletter(it)
   if
     not it.is_identified and have_scroll_of_id()
@@ -111,7 +107,8 @@ function f_remind_id.ready()
   if do_remind_id_check then
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
-      BRC.mpr.stop(IDENTIFY_MSG)
+      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), Config.emoji)
+      BRC.mpr.stop(msg)
       if Config.read_id_hotkey then
         BRC.Hotkey.set("read", "scroll of identify", false, function()
           for _, inv in ipairs(items.inventory()) do

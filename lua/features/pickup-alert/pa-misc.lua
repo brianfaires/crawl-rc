@@ -6,9 +6,17 @@
 
 f_pa_misc = {}
 
----- Local config alias ----
-local Emoji = f_pickup_alert.Config.Emoji
-local Alert = f_pickup_alert.Config.Alert
+---- Local variables ----
+local Emoji
+local Alert
+
+---- Initialization ----
+function f_pa_misc.init()
+  Emoji = f_pickup_alert.Config.Emoji
+  Alert = f_pickup_alert.Config.Alert
+end
+
+---- Local functions ----
 
 ---- Public API ----
 function f_pa_misc.alert_orb(it)

@@ -106,13 +106,14 @@ local function should_exclude(item_name, full_msg)
   return true
 end
 
----- Hook functions ----
+---- Initialization ----
 function f_exclude_dropped.init()
   for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)
   end
 end
 
+---- Crawl hook functions ----
 function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
 

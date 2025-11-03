@@ -7,7 +7,7 @@
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
 
----- Local constants / configuration ----
+---- Local constants ----
 local LOSS_COLOR = BRC.COL.brown
 local GAIN_COLOR = BRC.COL.white
 local MULTI_PLUS = "%++"
@@ -87,7 +87,7 @@ function f_color_inscribe.colorize(it)
   it.inscribe(text, false)
 end
 
----- Hook functions ----
+---- Crawl hook functions ----
 function f_color_inscribe.c_assign_invletter(it)
   if it.artefact then return end
   -- If enabled, call inscribe stats before colorizing

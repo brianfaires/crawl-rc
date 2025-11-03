@@ -13,6 +13,14 @@ local slots_changed
 local priorities_ab
 local priorities_w
 
+---- Initialization ----
+function f_weapon_slots.init()
+  do_cleanup_weapon_slots = false
+  slots_changed = false
+  priorities_ab = nil
+  priorities_w = nil
+end
+
 ---- Local functions ----
 local function get_first_empty_slot()
   -- First try to avoid same slot as a consumable, then find first empty equipment slot
@@ -108,14 +116,7 @@ local function cleanup_weapon_slots()
   cleanup_w()
 end
 
----- Hook functions ----
-function f_weapon_slots.init()
-  do_cleanup_weapon_slots = false
-  slots_changed = false
-  priorities_ab = nil
-  priorities_w = nil
-end
-
+---- Crawl hook functions ----
 function f_weapon_slots.c_assign_invletter(it)
   if not it.is_weapon then return end
 

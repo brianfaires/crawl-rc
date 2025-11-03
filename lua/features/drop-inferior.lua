@@ -15,6 +15,11 @@ f_drop_inferior.Config = {
 ---- Local constants ----
 local DROP_KEY = "~~DROP_ME"
 
+---- Initialization ----
+function f_drop_inferior.init()
+  crawl.setopt("drop_filter += " .. DROP_KEY)
+end
+
 ---- Local functions ----
 local function inscribe_drop(it)
   local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
@@ -25,11 +30,7 @@ local function inscribe_drop(it)
   end
 end
 
----- Hook functions ----
-function f_drop_inferior.init()
-  crawl.setopt("drop_filter += " .. DROP_KEY)
-end
-
+---- Crawl hook functions ----
 function f_drop_inferior.c_assign_invletter(it)
   -- Remove any previous DROP_KEY inscriptions
   it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)

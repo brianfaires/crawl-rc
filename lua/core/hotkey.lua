@@ -14,9 +14,6 @@ BRC.Hotkey.Config = {
   explore_clears_queue = true, -- Clear the hotkey queue on explore
 } -- BRC.Hotkey.Config (do not remove this comment)
 
----- Config alias ----
-local Config = BRC.Hotkey.Config
-
 ---- Local constants ----
 local WAYPOINT_MUTES = {
   "Assign waypoint to what number",
@@ -31,9 +28,21 @@ local WAYPOINT_MUTES = {
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
+local Config
 local action_queue
 local cur_action
 local delay_expire
+
+---- Initialization ----
+function BRC.Hotkey.init()
+  Config = BRC.Hotkey.Config
+  action_queue = {}
+  cur_action = nil
+  delay_expire = false
+
+  BRC.opt.macro(Config.key.keycode, "macro_brc_hotkey")
+  BRC.opt.macro(Config.skip_keycode, "macro_brc_skip_hotkey")
+end
 
 ---- Local functions ----
 local function display_cur_message()
@@ -211,15 +220,7 @@ function BRC.Hotkey.waypoint(name, push_front)
   BRC.Hotkey.set("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
 end
 
----- Hook functions ----
-function BRC.Hotkey.init()
-  action_queue = {}
-  cur_action = nil
-
-  BRC.opt.macro(Config.key.keycode, "macro_brc_hotkey")
-  BRC.opt.macro(Config.skip_keycode, "macro_brc_skip_hotkey")
-end
-
+---- Crawl hook functions ----
 function BRC.Hotkey.c_assign_invletter(it)
   if Config.equip_hotkey then BRC.Hotkey.equip(it, true) end
 end

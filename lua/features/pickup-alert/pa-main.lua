@@ -8,12 +8,42 @@
 f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
----- Local config alias ----
-local Config = f_pickup_alert.Config
-
 ---- Local variables ----
+local Config
 local pause_pa_system
 local hold_alerts_for_next_turn
+
+---- Initialization ----
+function f_pickup_alert.init()
+  Config = f_pickup_alert.Config
+  pause_pa_system = false
+  hold_alerts_for_next_turn = false
+
+  BRC.mpr.debug("Initialize pickup-alert submodules...")
+  if f_pa_data.init then f_pa_data.init() end
+  BRC.mpr.debug("  pa-data loaded")
+
+  if f_pa_armour then
+    if f_pa_armour.init then f_pa_armour.init() end
+    BRC.mpr.debug("  pa-armour loaded")
+  end
+
+  if f_pa_weapons then
+    if f_pa_weapons.init then f_pa_weapons.init() end
+    BRC.mpr.debug("  pa-weapons loaded")
+  end
+
+  if f_pa_misc then
+    if f_pa_misc.init then f_pa_misc.init() end
+    BRC.mpr.debug("  pa-misc loaded")
+  end
+
+  -- Don't alert for starting items
+  for _, inv in ipairs(items.inventory()) do
+    f_pa_data.remember_alert(inv)
+    f_pa_data.remove_OTA(inv)
+  end
+end
 
 ---- Local functions ----
 local function has_configured_force_more(it)
@@ -126,37 +156,7 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   return true
 end
 
----- Hook functions ----
-function f_pickup_alert.init()
-  pause_pa_system = false
-  hold_alerts_for_next_turn = false
-
-  BRC.mpr.debug("Initialize pickup-alert submodules...")
-  if f_pa_data.init then f_pa_data.init() end
-  BRC.mpr.debug("  pa-data loaded")
-
-  if f_pa_armour then
-    if f_pa_armour.init then f_pa_armour.init() end
-    BRC.mpr.debug("  pa-armour loaded")
-  end
-
-  if f_pa_weapons then
-    if f_pa_weapons.init then f_pa_weapons.init() end
-    BRC.mpr.debug("  pa-weapons loaded")
-  end
-
-  if f_pa_misc then
-    if f_pa_misc.init then f_pa_misc.init() end
-    BRC.mpr.debug("  pa-misc loaded")
-  end
-
-  -- Don't alert for starting items
-  for _, inv in ipairs(items.inventory()) do
-    f_pa_data.remember_alert(inv)
-    f_pa_data.remove_OTA(inv)
-  end
-end
-
+---- Crawl hook functions ----
 function f_pickup_alert.autopickup(it, _)
   if should_skip_pickup_check(it) then return end
 
