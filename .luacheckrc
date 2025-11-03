@@ -30,7 +30,7 @@ globals = {
   "ready",
 
   -- BRC macro functions
-  "macro_brc_cntl_e",
+  "macro_brc_go_up",
   "macro_brc_downstairs",
   "macro_brc_dump_character",
   "macro_brc_explore",

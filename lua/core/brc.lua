@@ -261,7 +261,7 @@ function BRC.init(config_name)
   BRC.mpr.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
-  BRC.opt.macro("\\{5}", "macro_brc_cntl_e")
+  BRC.opt.macro(BRC.Config.go_up_macro_key, "macro_brc_go_up")
 
   BRC.mpr.debug("Verify persistent data reload...")
   local success = BRC.Data.handle_persist_errors()
@@ -311,7 +311,7 @@ function macro_brc_dump_character()
 end
 
 --- Go up the closest stairs (Cntl-E)
-function macro_brc_cntl_e()
+function macro_brc_go_up()
   local where = you.where()
   if where == "D:1" and you.have_orb()
     or where == "Temple"

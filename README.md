@@ -6,8 +6,17 @@ A modular system for Dungeon Crawl Stone Soup RC files, designed to be easily cu
 - Include the contents of `bin/buehler.rc` in your RC file.
 - **Merge hooks (if needed)**: Hook functions like `ready()` are defined at the very end of BRC. If your RC already contains these, remove BRC's hook function and add `BRC.ready()` at the top of your hook function.
 
-## File Structure
+## Macros / keybinds
+- `Cntl-D`: Travel down one level (with the nearest stairs)
+- `Cntl-E`: Travel up one level (with the nearest stairs)
+- `Cntl-T`: Save current training targets, to be used in future games with same race/class
+- `Cntl-Tab`: Autofight, no movement
+- `~`: Open lua interpreter
+- 1,2,3,4,6,7,8,9,0: Cast spell a,b,c,d,f,g,h,i,j,k
+  - Press again to confirm target
+- TODO: numpad keybinds
 
+## File Structure
 ```
 bin/                    # Pre-built RC files
 ├── buehler.rc              # Core + all features (Use this for webtiles)
@@ -55,7 +64,7 @@ _(See header of each feature's lua code for more detail)_
 
 ### Misc
 - **dynamic-options** - Change crawl settings based on XL, religion, etc
-- **startup** - Set skill targets and/or open skills menu
+- **startup** - Auto-set skill targets, open skills menu, save/reload skill targets by race+class
 - **answer-prompts** - Auto-answer certain prompts
 - **exclude-dropped** - Exclude dropped items from autopickup
 

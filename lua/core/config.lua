@@ -24,6 +24,12 @@ brc_config_name = BRC.Data.persist("brc_config_name", nil)
 
 BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
 
+-- Bind key to the "go up closest stairs" macro
+BRC.Configs.Default.go_up_macro_key = BRC.util.cntl("e")
+
+-- Does "Armour of <MagicSkill>" have an ego when skill is 0?
+BRC.Configs.Default.unskilled_egos_usable = false
+
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
   debug_to_stderr = false,
@@ -33,9 +39,6 @@ BRC.Configs.Default.dump = {
     max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
     omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
 } -- BRC.Configs.Default.dump (do not remove this comment)
-
--- Does "Armour of <MagicSkill>" have an ego when skill is 0?
-BRC.Configs.Default.unskilled_egos_usable = false
 
 --- How weapon damage is calculated for inscriptions+pickup/alert: (factor * DMG + offset)
 BRC.Configs.Default.BrandBonus = {

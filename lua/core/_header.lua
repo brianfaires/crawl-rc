@@ -8,7 +8,7 @@ BRC.Config = {
   --   "<config name>": Use the named config
   --   "ask": Prompt at start of each new game
   --   "previous": Keep using the last config
-  use_config = "ask",
+  use_config = "Testing",
 
   --- For local games, use store_config to use different configs across multiple characters.
   --   "none": Normal behavior: Read use_config, and load it from the RC.

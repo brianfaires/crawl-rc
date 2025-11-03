@@ -216,8 +216,8 @@ function BRC.Hotkey.init()
   action_queue = {}
   cur_action = nil
 
-  BRC.opt.macro("\\{" .. Config.key.keycode .. "}", "macro_brc_hotkey")
-  BRC.opt.macro("\\{" .. Config.skip_keycode .. "}", "macro_brc_skip_hotkey")
+  BRC.opt.macro(Config.key.keycode, "macro_brc_hotkey")
+  BRC.opt.macro(Config.skip_keycode, "macro_brc_skip_hotkey")
 end
 
 function BRC.Hotkey.c_assign_invletter(it)

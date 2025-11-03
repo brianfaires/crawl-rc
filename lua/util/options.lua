@@ -44,7 +44,8 @@ function BRC.opt.force_more_message(pattern, create)
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
 end
 
--- Bind a macro to a key. Function must be global and not a member of a module.
+--- Bind a macro to a key. Function must be global and not a member of a module.
+-- If key is a number, it is converted to a keycode string.
 function BRC.opt.macro(key, function_name)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
@@ -57,6 +58,8 @@ function BRC.opt.macro(key, function_name)
       BRC.txt.lightred("<<< '" .. key .. "' >>")
     )
   )
+
+  if type(key) == "number" then key = "\\{" .. key .. "}" end
   crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
 end
 
