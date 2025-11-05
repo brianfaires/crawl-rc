@@ -3,10 +3,8 @@
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 
 ### To do list
-1. Profile features:
+1. Config features:
   - Turncount:
-    - show_game_time = false
-    - disable autopickup
     - auto-print name+qty when gold or item comes into view that would have been picked up
     - Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
   - Speedrun:

@@ -160,6 +160,7 @@ local function load_specific_config(config)
     local name = get_valid_config_name(config)
     override_table(BRC.Config, BRC.Configs[name])
     execute_config_init(BRC.Config, "BRC")
+    execute_config_init(BRC.Configs[name], "BRC.Configs." ..name)
   end
 
   -- Store persistent config info

@@ -10,4 +10,9 @@ brc_config_turncount = {
   ["mute-messages"] = {
     mute_level = 1,
   },
+
+  init = function()
+    crawl.setopt("show_game_time = false")
+    BRC.util.do_cmd("CMD_TOGGLE_AUTOPICKUP")
+  end,
 } -- brc_config_turncount (do not remove this comment)
