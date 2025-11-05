@@ -7,8 +7,6 @@
   - Turncount:
     - auto-print name+qty when gold or item comes into view that would have been picked up
     - Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
-  - Speedrun:
-    - Display realtime
 1. Pull crawl version for compatibility / 0.33 support
 1. In-game menu (change config, save settings, etc...)
 1. Update all RC files to be lua and use crawl.setopt()
@@ -20,19 +18,20 @@ resting statuses fails after 100 turns (blocks fully-recover.lua behavior)
 Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
 
 ### TODO - requiring crawl PR?
-1. Wait for allies to fully heal
-1. Bring back mute_swaps.lua - only show final inventory slots (needs to intercept msgs)
+1. fully-recover:
+  - Wait for allies to fully heal
+  - Wait for ancestor respawn
+1. Ancestor reappear; stop rest, but not explore
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription`)
 1. 0.34: Make use of explore_auto_rest_status to replace fully-recover.lua.
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
     (Try macro'ing: { WAIT, READY, EXPLORE })
-1. If ancestor dead, apply a negative status (so resting will wait for it)
 1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
-1. Ancestor reappear; stop rest, but not explore
+1. Display realtime for speedrun config
 
 ### Won't do - random ideas
-1. feature ready() option to fire every turn, or every ready()
+1. feature ready() hook takes optional bool to fire every ready() instead of every turn
 1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)

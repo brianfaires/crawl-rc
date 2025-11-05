@@ -19,8 +19,8 @@ brc_config_speed = {
     mute_level = 3,
   },
   ["remind-id"] = {
-    stop_on_scrolls_count = 9, -- Stop when largest un-ID'd scroll stack increases and is >= this
-    stop_on_pots_count = 9,    -- Stop when largest un-ID'd potion stack increases and is >= this
+    stop_on_scrolls_count = 99, -- Stop when largest un-ID'd scroll stack increases and is >= this
+    stop_on_pots_count = 99,    -- Stop when largest un-ID'd potion stack increases and is >= this
   },
   ["runrest-features"] = { after_shaft = false },
   ["startup"] = {
@@ -60,5 +60,7 @@ brc_config_speed = {
 
   init = [[
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
+    crawl.setopt("view_delay = 0")
+    crawl.setopt("use_animations = 0")
   ]],
 } -- brc_config_speed (do not remove this comment)
