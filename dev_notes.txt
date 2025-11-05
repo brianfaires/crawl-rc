@@ -3,7 +3,6 @@
 1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 
 ### To do list
-1. dynamic-options: use dispatch tables, `join["Beogh"]()` and `abandon["Jiyva"]()`
 1. Features:
   - Rebind cntl-E and low radius for fast orb run
     - (runrest_ignore_monster ^= .*:2) above X% HP

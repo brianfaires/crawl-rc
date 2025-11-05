@@ -6,63 +6,60 @@
 
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
-f_dynamic_options.Config = {}
+f_dynamic_options.Config = {
+  -- XL-based force more messages: active when XL <= specified level
+  xl_force_mores = {
+    { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
+    { pattern = "You.*re more poisoned", xl = 7 },
+    { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
+    { pattern = "danger:goes berserk", xl = 18 },
+    { pattern = "monster_warning:carrying a wand of", xl = 15 },
+  },
 
--- XL-based force more messages: active when XL <= specified level
-f_dynamic_options.Config.xl_force_mores = {
-  { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
-  { pattern = "You.*re more poisoned", xl = 7 },
-  { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
-  { pattern = "danger:goes berserk", xl = 18 },
-  { pattern = "monster_warning:carrying a wand of", xl = 15 },
-} -- xl_force_mores (do not remove this comment)
+  race_options = {
+    Gnoll = function()
+      BRC.opt.message_mute("intrinsic_gain:skill increases to level", true)
+    end,
+  },
 
----- God dispatch table ----
-f_dynamic_options.Config.god_handlers = {
-  ["No God"] = function(joined)
-    BRC.opt.force_more_message("Found.*the Ecumenical Temple", not joined)
-    BRC.opt.flash_screen_message("Found.*the Ecumenical Temple", joined)
-    BRC.opt.runrest_stop_message("Found.*the Ecumenical Temple", joined)
-  end,
-  Beogh = function(joined)
-    BRC.opt.runrest_ignore_message("no longer looks.*", joined)
-    BRC.opt.force_more_message("Your orc.*dies", joined)
-  end,
-  Cheibriados = function(joined)
-    BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)
-  end,
-  Jiyva = function(joined)
-    BRC.opt.flash_screen_message("god:splits in two", joined)
-    BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", joined)
-  end,
-  Lugonu = function(joined)
-    BRC.util.add_or_remove(BRC.RISKY_EGOS, "distort", not joined)
-  end,
-  Trog = function(joined)
-    BRC.util.add_or_remove(BRC.ARTPROPS_BAD, "-Cast", not joined)
-    BRC.util.add_or_remove(BRC.RISKY_EGOS, "antimagic", not joined)
-  end,
-  Xom = function(joined)
-    BRC.opt.flash_screen_message("god:", joined)
-  end,
-}
+  class_options = {
+    Hunter = function()
+      crawl.setopt("view_delay = 30")
+    end,
+    Shapeshifter = function()
+      BRC.opt.autopickup_exceptions("<flux bauble", true)
+    end,
+  },
 
----- Race dispatch table ----
-f_dynamic_options.Config.race_options = {
-  Gnoll = function()
-    BRC.opt.message_mute("intrinsic_gain:skill increases to level", true)
-  end,
-}
-
----- Class dispatch table ----
-f_dynamic_options.Config.class_options = {
-  Hunter = function()
-    crawl.setopt("view_delay = 30")
-  end,
-  Shapeshifter = function()
-    BRC.opt.autopickup_exceptions("<flux bauble", true)
-  end,
-}
+  god_options = {
+    ["No God"] = function(joined)
+      BRC.opt.force_more_message("Found.*the Ecumenical Temple", not joined)
+      BRC.opt.flash_screen_message("Found.*the Ecumenical Temple", joined)
+      BRC.opt.runrest_stop_message("Found.*the Ecumenical Temple", joined)
+    end,
+    Beogh = function(joined)
+      BRC.opt.runrest_ignore_message("no longer looks.*", joined)
+      BRC.opt.force_more_message("Your orc.*dies", joined)
+    end,
+    Cheibriados = function(joined)
+      BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)
+    end,
+    Jiyva = function(joined)
+      BRC.opt.flash_screen_message("god:splits in two", joined)
+      BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", joined)
+    end,
+    Lugonu = function(joined)
+      BRC.util.add_or_remove(BRC.RISKY_EGOS, "distort", not joined)
+    end,
+    Trog = function(joined)
+      BRC.util.add_or_remove(BRC.ARTPROPS_BAD, "-Cast", not joined)
+      BRC.util.add_or_remove(BRC.RISKY_EGOS, "antimagic", not joined)
+    end,
+    Xom = function(joined)
+      BRC.opt.flash_screen_message("god:", joined)
+    end,
+  },
+} -- f_dynamic_options.Config (do not remove this comment)
 
 ---- Local constants ----
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
@@ -106,10 +103,10 @@ local function set_god_options()
   local prev_god = cur_god
   cur_god = you.god()
 
-  local abandoned = Config.god_handlers[prev_god]
+  local abandoned = Config.god_options[prev_god]
   if abandoned then abandoned(false) end
 
-  local joined = Config.god_handlers[cur_god]
+  local joined = Config.god_options[cur_god]
   if joined then joined(true) end
 end
 

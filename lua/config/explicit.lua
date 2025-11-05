@@ -56,6 +56,7 @@ brc_config_explicit = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
     always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
+    meter_length = 5, -- Number of pips in each meter
 
     Announce = {
       hp_loss_limit = 1, -- Announce when HP loss >= this
@@ -97,11 +98,6 @@ brc_config_explicit = {
     disabled = false,
     msg_on_inscribe = true, -- Show a message when an item is marked for drop
     hotkey_drop = true, -- BRC hotkey drops all items on the drop list
-  },
-
-  ["dynamic-options"] = {
-    disabled = false,
-    -- No config; See dynamic-options.lua for specifics
   },
 
   ["exclude-dropped"] = {
@@ -172,7 +168,7 @@ brc_config_explicit = {
   ["startup"] = {
     disabled = false,
     -- Save current training targets and config, for race/class
-    save_skills_and_config_key = 20, -- (Cntl-T) Keycode to save training targets and config
+    macro_save_key = 20, -- (Cntl-T) Keycode to save training targets and config
     use_saved_training = true, -- Allow save/load of race/class training targets
     use_saved_config = true, -- Allow save/load of BRC config
     prompt_before_load = true, -- Prompt before loading in a new game with same race+class
@@ -208,6 +204,62 @@ brc_config_explicit = {
   },
 
   ---- Large config sections ----
+  ["dynamic-options"] = {
+    disabled = false,
+    -- XL-based force more messages: active when XL <= specified level
+    xl_force_mores = {
+      { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
+      { pattern = "You.*re more poisoned", xl = 7 },
+      { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
+      { pattern = "danger:goes berserk", xl = 18 },
+      { pattern = "monster_warning:carrying a wand of", xl = 15 },
+    },
+
+    race_options = {
+      Gnoll = function()
+        BRC.opt.message_mute("intrinsic_gain:skill increases to level", true)
+      end,
+    },
+
+    class_options = {
+      Hunter = function()
+        crawl.setopt("view_delay = 30")
+      end,
+      Shapeshifter = function()
+        BRC.opt.autopickup_exceptions("<flux bauble", true)
+      end,
+    },
+
+    god_options = {
+      ["No God"] = function(joined)
+        BRC.opt.force_more_message("Found.*the Ecumenical Temple", not joined)
+        BRC.opt.flash_screen_message("Found.*the Ecumenical Temple", joined)
+        BRC.opt.runrest_stop_message("Found.*the Ecumenical Temple", joined)
+      end,
+      Beogh = function(joined)
+        BRC.opt.runrest_ignore_message("no longer looks.*", joined)
+        BRC.opt.force_more_message("Your orc.*dies", joined)
+      end,
+      Cheibriados = function(joined)
+        BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)
+      end,
+      Jiyva = function(joined)
+        BRC.opt.flash_screen_message("god:splits in two", joined)
+        BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", joined)
+      end,
+      Lugonu = function(joined)
+        BRC.util.add_or_remove(BRC.RISKY_EGOS, "distort", not joined)
+      end,
+      Trog = function(joined)
+        BRC.util.add_or_remove(BRC.ARTPROPS_BAD, "-Cast", not joined)
+        BRC.util.add_or_remove(BRC.RISKY_EGOS, "antimagic", not joined)
+      end,
+      Xom = function(joined)
+        BRC.opt.flash_screen_message("god:", joined)
+      end,
+    },
+  },
+
   ["mute-messages"] = {
     disabled = false,
     mute_level = 2,
