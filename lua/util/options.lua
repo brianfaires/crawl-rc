@@ -91,6 +91,11 @@ function BRC.opt.runrest_ignore_message(pattern, create)
   crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
 end
 
+function BRC.opt.runrest_ignore_monster(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("runrest_ignore_monster %s %s", op, pattern))
+end
+
 function BRC.opt.runrest_stop_message(pattern, create)
   local op = create and "+=" or "-="
   crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))

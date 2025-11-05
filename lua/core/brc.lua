@@ -260,7 +260,6 @@ function BRC.init(config)
   BRC.mpr.debug("Add non-feature hooks...")
   add_autopickup_func(BRC.autopickup)
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_CHARACTER_DUMP") or "#", "macro_brc_dump_character")
-  BRC.opt.macro(BRC.Config.go_up_macro_key, "macro_brc_go_up")
 
   BRC.mpr.debug("Verify persistent data reload...")
   local success = BRC.Data.handle_persist_errors()
@@ -307,20 +306,6 @@ end
 function macro_brc_dump_character()
   if not BRC.active then BRC.util.do_cmd("CMD_CHARACTER_DUMP") end
   char_dump(BRC.mpr.yesno("Add BRC debug info to character dump?", BRC.COL.lightcyan))
-end
-
---- Go up the closest stairs (Cntl-E)
-function macro_brc_go_up()
-  local where = you.where()
-  if where == "D:1" and you.have_orb()
-    or where == "Temple"
-    or util.contains(BRC.PORTAL_NAMES, you.branch())
-  then
-    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
-  else
-    crawl.sendkeys({ BRC.util.cntl("g"), "<" })
-  end
-  crawl.flush_input()
 end
 
 ---- Crawl hooks ----

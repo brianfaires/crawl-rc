@@ -25,9 +25,6 @@ brc_config_name = BRC.Data.persist("brc_config_name", nil)
 BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
 BRC.Configs.Default.BRC_CONFIG_NAME = "Default"
 
--- Bind key to the "go up closest stairs" macro
-BRC.Configs.Default.go_up_macro_key = BRC.util.cntl("e")
-
 -- Does "Armour of <MagicSkill>" have an ego when skill is 0?
 BRC.Configs.Default.unskilled_egos_usable = false
 

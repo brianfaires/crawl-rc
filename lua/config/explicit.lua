@@ -129,6 +129,14 @@ brc_config_explicit = {
     remove_faith_hotkey = true, -- Hotkey remove amulet
   },
 
+  ["go-up-macro"] = {
+    disabled = false,
+    go_up_macro_key = 5, -- (Cntl-E) Key for "go up closest stairs" macro
+    ignore_mon_on_orb_run = true, -- Ignore monsters on orb run
+    orb_ignore_hp_min = 0.30, -- HP percent to stop ignoring monsters
+    orb_ignore_hp_max = 0.70, -- HP percent to ignore monsters at min distance away (2 tiles)
+  },
+
   ["quiver-reminders"] = {
     disabled = false,
     confirm_consumables = true,

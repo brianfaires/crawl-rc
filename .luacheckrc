@@ -62,6 +62,7 @@ globals = {
   "f_exclude_dropped",
   "f_fm_disable",
   "f_fully_recover",
+  "f_go_up_macro",
   "f_inscribe_stats",
   "f_fix_artefact_inscriptions",
   "f_misc_alerts",
