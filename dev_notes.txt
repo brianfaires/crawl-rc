@@ -11,6 +11,7 @@
 1. Update all RC files to be lua and use crawl.setopt()
 
 ### crawl PRs / issues affecting BRC
+https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
 https://github.com/crawl/crawl/pull/4814 -> remove cap on inscription colors
 https://github.com/crawl/crawl/issues/4789 -> drop_disables_autopickup overrides exclude-dropped
 resting statuses fails after 100 turns (blocks fully-recover.lua behavior)
