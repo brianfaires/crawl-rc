@@ -89,6 +89,10 @@ brc_config_explicit = {
     -- No config; See answer-prompts.lua for Questions/Answers
   },
 
+  ["bread-swinger"] = {
+    disabled = false,
+  },
+
   ["color-inscribe"] = {
     disabled = false,
     -- No config; See color-inscribe.lua for COLORIZE_TAGS

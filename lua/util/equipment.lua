@@ -66,33 +66,6 @@ local function get_weap_min_delay(it)
   return math.min(min_delay, 7)
 end
 
-local function get_weap_delay(it)
-  local delay = it.delay - BRC.you.skill(it.weap_skill) / 2
-  delay = math.max(delay, get_weap_min_delay(it))
-  delay = get_branded_delay(delay, BRC.eq.get_ego(it))
-  delay = math.max(delay, 3)
-
-  local sh = items.equipped_at("offhand")
-  if BRC.it.is_shield(sh) then delay = delay + get_shield_penalty(sh) end
-
-  if it.is_ranged then
-    local worn = items.equipped_at("armour")
-    if worn then
-      local str = you.strength()
-
-      local cur = items.equipped_at("weapon")
-      if cur and cur ~= it and cur.artefact then
-        if it.artefact and it.artprops["Str"] then str = str + it.artprops["Str"] end
-        if cur.artefact and cur.artprops["Str"] then str = str - cur.artprops["Str"] end
-      end
-
-      delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
-    end
-  end
-
-  return delay / 10
-end
-
 local function get_slay_bonuses()
   local sum = 0
 
@@ -279,7 +252,7 @@ function BRC.eq.wpn_stats(it, dmg_type)
   end
 
   local dmg = format_dmg(BRC.eq.get_avg_dmg(it, dmg_type))
-  local delay = get_weap_delay(it)
+  local delay = BRC.eq.get_weap_delay(it)
   local delay_str = string.format("%.1f", delay)
   if delay < 1 then
     delay_str = string.format("%.2f", delay)
@@ -341,6 +314,32 @@ end
 
 
 ---- Weapon stats ----
+function BRC.eq.get_weap_delay(it)
+  local delay = it.delay - BRC.you.skill(it.weap_skill) / 2
+  delay = math.max(delay, get_weap_min_delay(it))
+  delay = get_branded_delay(delay, BRC.eq.get_ego(it))
+  delay = math.max(delay, 3)
+
+  local sh = items.equipped_at("offhand")
+  if BRC.it.is_shield(sh) then delay = delay + get_shield_penalty(sh) end
+
+  if it.is_ranged then
+    local worn = items.equipped_at("armour")
+    if worn then
+      local str = you.strength()
+
+      local cur = items.equipped_at("weapon")
+      if cur and cur ~= it and cur.artefact then
+        if it.artefact and it.artprops["Str"] then str = str + it.artprops["Str"] end
+        if cur.artefact and cur.artprops["Str"] then str = str - cur.artprops["Str"] end
+      end
+
+      delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
+    end
+  end
+
+  return delay / 10
+end
 --- Get weapon damage (average), including stat/slay changes when swapping from current weapon.
 -- Aux attacks not included
 function BRC.eq.get_avg_dmg(it, dmg_type)
@@ -364,7 +363,7 @@ end
 
 function BRC.eq.get_dps(it, dmg_type)
   if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
-  return BRC.eq.get_avg_dmg(it, dmg_type) / get_weap_delay(it)
+  return BRC.eq.get_avg_dmg(it, dmg_type) / BRC.eq.get_weap_delay(it)
 end
 
 
