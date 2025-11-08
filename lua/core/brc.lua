@@ -37,8 +37,9 @@ local function char_dump(add_debug_info)
 end
 
 local function feature_is_disabled(f)
-  return f.Config and f.Config.disabled
-    or BRC.Config[f.BRC_FEATURE_NAME] and BRC.Config[f.BRC_FEATURE_NAME].disabled
+  local main = BRC.Config[f.BRC_FEATURE_NAME]
+  if main and main.disabled == false then return false end
+  return (f.Config and f.Config.disabled) or (main and main.disabled)
 end
 
 local function handle_feature_error(feature_name, hook_name, result)

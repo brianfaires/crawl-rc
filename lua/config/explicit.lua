@@ -91,6 +91,8 @@ brc_config_explicit = {
 
   ["bread-swinger"] = {
     disabled = false,
+    allow_plant_damage = false, -- Allow damaging plants to rest
+    walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
   },
 
   ["color-inscribe"] = {

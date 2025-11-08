@@ -6,7 +6,6 @@
 1. Config features:
   - Turncount:
     - auto-print name+qty when gold or item comes into view that would have been picked up
-    - Bread-swinger: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
 1. Pull crawl version for compatibility / 0.33 support
 1. In-game menu (change config, save settings, etc...)
 1. Update all RC files to be lua and use crawl.setopt()

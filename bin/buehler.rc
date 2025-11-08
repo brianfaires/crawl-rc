@@ -239,6 +239,9 @@ brc_config_turncount = {
   ["alert-monsters"] = {
     sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
+  ["bread-swinger"] = {
+    disabled = false,
+  },
   ["runrest-features"] = { after_shaft = false },
   ["mute-messages"] = {
     mute_level = 1,
@@ -370,6 +373,8 @@ brc_config_explicit = {
 
   ["bread-swinger"] = {
     disabled = false,
+    allow_plant_damage = false, -- Allow damaging plants to rest
+    walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
   },
 
   ["color-inscribe"] = {
@@ -3865,8 +3870,9 @@ local function char_dump(add_debug_info)
 end
 
 local function feature_is_disabled(f)
-  return f.Config and f.Config.disabled
-    or BRC.Config[f.BRC_FEATURE_NAME] and BRC.Config[f.BRC_FEATURE_NAME].disabled
+  local main = BRC.Config[f.BRC_FEATURE_NAME]
+  if main and main.disabled == false then return false end
+  return (f.Config and f.Config.disabled) or (main and main.disabled)
 end
 
 local function handle_feature_error(feature_name, hook_name, result)
@@ -4865,27 +4871,9 @@ end
 f_bread_swinger = {}
 f_bread_swinger.BRC_FEATURE_NAME = "bread-swinger"
 f_bread_swinger.Config = {
-  naga_always_walk = false, -- Naga always walk instead of item swing
-  walk_delay = 50, -- ms delay between walk commands. Make visuals less jarring.
-
-  -- Status messages to ignore during rest. Key is status from you.status().
-  status_messages = {
-    ["poisoned"] = {"You feel[^%.]+sick%.", "You are no longer poisoned%."},
-    ["regenerating"] = {
-      "You feel the effects of Trog's Hand fading%.",
-      "Your skin is crawling a little less now%.",
-    },
-  },
-
-  -- Arbitrary messages to ignore during rest
-  ignore_messages = {
-    -- RandomTiles messages
-    "Trog roars: Now[^!]+!+",
-    "Sif Muna whispers: Become[^!]+!+",
-    "[^:]+ says: Become[^!]+!+",
-    -- Debug messages
-    "Dbg:.*",
-  },
+  disabled = true, -- Disable by default
+  allow_plant_damage = false, -- Allow damaging plants to rest
+  walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
 } -- f_bread_swinger.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -4902,21 +4890,42 @@ local SOLID_FEATURES = {
 
 ---- Local variables ----
 local Config
-local bs_swing_slot
+local swing_slot
 local turns_remaining
+local turns_to_rest
+local rest_type
 local wielding
 local dir
 
 ---- Local functions ----
 local function reset_rest(msg)
-  if turns_remaining and turns_remaining > 0 and msg then BRC.mpr.warning(msg) end
+  -- Display msg iff we're aborting a rest command
+  if turns_remaining and turns_remaining > 0 and msg then
+    if turns_remaining ~= turns_to_rest then
+      local diff = turns_to_rest - turns_remaining
+      msg = string.format("%s (Rested %s/%s turns)", msg, diff, turns_to_rest)
+    end
+    BRC.mpr.warning(msg)
+  end
 
-  bs_swing_slot = nil
+  swing_slot = nil
   turns_remaining = 0
+  turns_to_rest = 0
+  rest_type = nil
   wielding = false
   dir = { x = nil, y = nil }
 end
 
+local function get_num_turns()
+  BRC.mpr.info("Enter number of turns to rest: ")
+  local input = crawl.c_input_line()
+  local turns = tonumber(input)
+  if not turns or turns < 0 then
+    BRC.mpr.warning("Must be a number!")
+    return 0
+  end
+  return turns
+end
 
 -- Weapon functions
 local function weapon_can_swap()
@@ -4949,102 +4958,92 @@ end
 
 local function swing_item_wielded()
   local weapon = items.equipped_at("Weapon")
-  if not weapon or not bs_swing_slot then return false end
-  return weapon.slot == items.letter_to_index(bs_swing_slot)
+  if not weapon or not swing_slot then return false end
+  return weapon.slot == items.letter_to_index(swing_slot)
 end
 
 local function wield_swing_item()
-  if not bs_swing_slot then return end
+  if not swing_slot then return end
   wielding = true
-  crawl.sendkeys({ "w", "*", bs_swing_slot })
+  BRC.opt.single_turn_mute(swing_slot .. " - ")
+  crawl.sendkeys({ "w", "*", swing_slot })
   crawl.flush_input()
 end
 
 -- Feature checks
-local function in_water()
-  local feat = view.feature_at(0, 0)
+local function is_water(x, y)
+  local feat = view.feature_at(x, y)
   return feat and feat:contains("water") and not you.status("flying")
 end
 
-local function feat_is_open(feat)
-  local lower = feat:lower()
-  return not util.exists(SOLID_FEATURES, function(f) return lower:find(f) end)
+local function is_plant(x, y)
+  local mon = monster.get_monster_at(x, y)
+  return mon and mon.is_stationary() -- Close enough. We know you.feel_safe() == true
 end
 
--- Player attributes
-local function get_rest_type()
-  if you.race() == "Naga" and Config.naga_always_walk
-    or you.god() == "Cheibriados"
-    or (not swing_item_wielded() and not weapon_can_swap())
-  then
-    return "walk"
-  end
-
-  return "item"
+local function is_solid(x, y)
+  local feat = view.feature_at(x, y):lower()
+  return util.exists(SOLID_FEATURES, function(f) return feat:find(f) end)
 end
 
-local function player_move_speed()
-  if you.transform() == "tree" then
-    return 0
-  end
+-- Setting direction to move or swing
+local function is_good_dir_walk(x, y)
+  if x == 0 and y == 0 then return false end
+  return is_water(x, y) == is_water(0, 0)
+    and view.is_safe_square(x, y)
+    and not is_solid(x, y)
+    and not monster.get_monster_at(x, y)
+end
 
-  -- This is a basic approximation
-  local base_speed = 10
-  local move_speed = base_speed
-  local in_water_flag = in_water()
+local function is_good_dir_swing(x, y)
+  if x == 0 and y == 0 then return false end
+  local weapon = items.equipped_at("Weapon")
+  if not weapon then return false end
 
-  if in_water_flag then move_speed = move_speed + 3 end
-
-  local speed_mut = you.mutation("speed")
-  local slow_mut = you.mutation("slowness")
-  if speed_mut > 0 then
-    move_speed = move_speed - speed_mut - 1
-  elseif slow_mut > 0 then
-    move_speed = math.floor(move_speed * (10 + slow_mut * 2) / 10)
-  end
-
-  if not in_water_flag and you.status("sluggish") then
-    if move_speed >= 8 then
-      move_speed = math.floor(move_speed * 3 / 2)
-    elseif move_speed == 7 then
-      move_speed = math.floor(7 * 6 / 5)
+  if Config.allow_plant_damage then
+    return weapon.is_ranged or not is_solid(x,y)
+  elseif weapon.is_ranged then
+    -- Confirm no plants in straight line
+    for i = 1, you.los() do
+      local cur_x = i * x
+      local cur_y = i * y
+      if is_plant(cur_x, cur_y) then return false end
+      if is_solid(cur_x, cur_y) then break end
     end
-  elseif not in_water_flag and you.status("swift") then
-    move_speed = math.floor(move_speed * 3 / 4)
-  end
-
-  if move_speed < 6 then
-    move_speed = 6
-  end
-
-  return math.floor(base_speed * move_speed / 10)
-end
-
--- Finding safe direction to move or swing
-local function is_safe_direction(x, y)
-  if x == nil or y == nil or x == 0 and y == 0 then return false end
-  if get_rest_type() == "walk" then
-    local pos_is_water = view.feature_at(x, y):find("water")
-    return in_water() == pos_is_water and view.is_safe_square(x, y)
+  elseif weapon.weap_skill:contains("Axes") then
+    -- Confirm no plants in adjacent squares
+    for cur_x = -1, 1 do
+      for cur_y = -1, 1 do
+        if is_plant(cur_x, cur_y) then return false end
+      end
+    end
   else
-    return not monster.get_monster_at(x, y) and feat_is_open(view.feature_at(x, y))
+    return not is_plant(x, y)
   end
+
+  return true
 end
 
-local function get_safe_direction()
+local function get_good_direction()
+  local func_is_good_dir = rest_type == "walk" and is_good_dir_walk or is_good_dir_swing
   for x = -1, 1 do
     for y = -1, 1 do
-      if is_safe_direction(x, y) then return x, y end
+      if func_is_good_dir(x, y) then return x, y end
     end
   end
   return nil
 end
 
-local function set_safe_direction()
-  if get_rest_type() == "walk" or not is_safe_direction(dir.x, dir.y) then
-    dir.x, dir.y = get_safe_direction()
+local function set_good_direction()
+  if rest_type == "walk" and dir.x ~= nil then
+    -- Try to move back and forth by saving next dir
+    if is_good_dir_walk(dir.x, dir.y) then return true end
+    dir.x = nil
+  end
+  if dir.x == nil or not is_good_dir_swing(dir.x, dir.y) then
+    dir.x, dir.y = get_good_direction()
     if not dir.x then
-      reset_rest("No safe direction found!")
+      reset_rest("No good direction found!")
       return false
     end
   end
@@ -5053,28 +5052,47 @@ local function set_safe_direction()
 end
 
 -- Resting
-local function okay_to_rest()
-  local hp, mhp = you.hp()
-  if hp == mhp then
-    reset_rest("You are already at full health!")
-  elseif turns_remaining <= 0 then
-    reset_rest()
-  elseif not you.feel_safe() then
-    reset_rest("You can't rest with a hostile monster in view!")
-  elseif you.status("manticore barbs") then
-    reset_rest("You must remove the manticore barbs first.")
-  elseif get_rest_type() == "walk" and player_move_speed() <= 10 then
-    reset_rest("You cannot walk slowly right now!")
+local function set_rest_type()
+  local int_slot = items.letter_to_index(swing_slot)
+  if not swing_slot
+    or (not swing_item_wielded() and not weapon_can_swap())
+    or you.movement_cost() <= 10 * BRC.eq.get_weap_delay(items.inslot(int_slot))
+  then
+    rest_type = "walk"
   else
-    return true
+    rest_type = "item"
   end
 end
 
-local function do_resting()
-  if not set_safe_direction() then return end
+local function verify_safe_rest()
+  local hp, mhp = you.hp()
+  if hp == mhp then
+    reset_rest("You are already at full health!")
+    return false
+  elseif turns_remaining <= 0 then
+    reset_rest()
+    return false
+  elseif not you.feel_safe() then
+    reset_rest("You can't rest with a hostile monster in view!")
+    return false
+  elseif rest_type == "walk" then
+    if you.movement_cost() <= 10 then
+      reset_rest("You can't walk slowly right now!")
+      return false
+    elseif you.status("manticore barbs") then
+      reset_rest("You must remove the manticore barbs first.")
+      return false
+    end
+  end
+  return true
+end
 
-  local rest_type = get_rest_type()
+local function do_resting()
+  if not set_good_direction() then return end
+
   if rest_type == "item" then
+    BRC.opt.single_turn_mute("You swing at nothing.")
+    BRC.opt.single_turn_mute("You shoot ")
     crawl.sendkeys({ BRC.util.cntl(DIR_TO_VI[dir.x][dir.y]) })
     crawl.flush_input()
   else
@@ -5090,24 +5108,23 @@ local function do_resting()
   end
 
   turns_remaining = turns_remaining - 1
-  if turns_remaining <= 0 then reset_rest() end
+  if turns_remaining <= 0 then
+    BRC.mpr.green("Resting complete. (" .. turns_to_rest .. " turns)")
+    reset_rest()
+  end
 end
 
-local function get_num_turns()
-  BRC.mpr.info("Enter number of turns to rest: ")
-  local input = crawl.c_input_line()
-  local turns = tonumber(input)
-  if not turns or turns < 0 then
-    BRC.mpr.warning("Must be a number!")
-    return 0
-  end
-  return turns
-end
 
 ---- Public API ----
 function macro_brc_bread_swing(turns)
-  turns_remaining = turns or get_num_turns()
-  bs_swing_slot = get_slowest_slot()
+  turns_to_rest = turns or get_num_turns()
+  turns_remaining = turns_to_rest
+  swing_slot = get_slowest_slot()
+  set_rest_type()
+  if rest_type == "walk" and turns_to_rest % 2 == 1 then
+    turns_to_rest = turns_to_rest - 1
+    turns_remaining = turns_remaining - 1
+  end
   f_bread_swinger.ready()
 end
 
@@ -5119,7 +5136,7 @@ function f_bread_swinger.set_swing_slot()
     BRC.mpr.error("Must be a letter (a-z or A-Z)!")
     return
   end
-  bs_swing_slot = letter
+  swing_slot = letter
   BRC.mpr.info("Set swing slot to " .. letter .. ".")
 end
 
@@ -5131,78 +5148,28 @@ function f_bread_swinger.init()
 end
 
 ---- Crawl hook functions ----
-function f_bread_swinger.c_message(text, _)
-  if 1 == 1 then return end
+function f_bread_swinger.c_message(_, channel)
   if turns_remaining <= 0 then return end
-
-  -- Stop on any unrecognized message
-  local swing_pt = "^ *You swing at nothing%. *$"
-  local pattern = wielding and "^ *" .. bs_swing_slot .. " - .+[%)}] *$" or swing_pt
-  if get_rest_type() == "walk" or not text:find(pattern) then
-    reset_rest()
-  end
+  if channel == "recovery" or channel == "duration" then return end
+  reset_rest() -- Stop on any unrecognized message
 end
 
 function f_bread_swinger.ready()
   if not turns_remaining or turns_remaining <= 0 then return end
-  if not okay_to_rest() then
-    reset_rest("You can't rest here.")
-  end
+  if not verify_safe_rest() then return end
 
   if wielding and not swing_item_wielded() then
     -- An error happened with the 'w' command
-    reset_rest("Unable to wield swing item on slot " .. bs_swing_slot .. "!")
+    reset_rest("Unable to wield swing item on slot " .. swing_slot .. "!")
     return
   end
 
-  if get_rest_type() == "item" and not swing_item_wielded() then
+  if rest_type == "item" and not swing_item_wielded() then
     wield_swing_item()
   else
     do_resting()
   end
 end
-
-
-
--- -- TODO: ignore in c_message
--- local function get_last_message()
---   local rest_type = get_rest_type()
---   local in_water_flag = in_water()
---   -- Ignore these movement messages when walking
---   local move_patterns = {"There is a[^%.]+here%.", "Things that are here:.*", "Items here:.*"}
-
---   for i = 1, 200 do
---     local msg = crawl_message(i)
---     for s, _ in pairs(start_status) do
---       local patterns = Config.status_messages[s]
---       if type(patterns) == "table" then
---         for _, p in ipairs(patterns) do
---           msg = msg:gsub(p, "")
---         end
---       else
---         msg = msg:gsub(patterns, "")
---       end
---     end
-
---     if rest_type == "walk" then
---       for _, p in ipairs(move_patterns) do
---         msg = msg:gsub(" *" .. p .. " *", "")
---       end
---     end
-
---     msg = msg:gsub(" *Beep! [^%.]+%. *", "")
-
---     for _, p in ipairs(Config.ignore_messages) do
---       msg = msg:gsub(p, "")
---     end
-
---     if msg ~= "" then
---       return msg
---     end
---   end
-
---   return nil
--- end
 
 }
 ############################### End lua/features/bread-swinger.lua ###############################
