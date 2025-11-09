@@ -57,6 +57,7 @@ end
 
 function f_template.autopickup(it)
   -- When considering autopickup for an item. Any function returning false will block the pickup.
+  -- Can also use this function to do checks on each item you find, and just return nil at the end.
   if it.is_ranged then return true end -- Picks up every ranged weapon you find
   return nil -- Return nil for no opinion
 end

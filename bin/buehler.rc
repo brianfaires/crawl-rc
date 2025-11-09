@@ -4870,8 +4870,7 @@ end
 -- BRC feature module: bread-swinger
 -- @module f_bread_swinger
 -- @author gammafunk, buehler
--- Efficient resting during speedruns by wielding slow items at nothing,
--- or walking back and forth slowly when item swinging isn't possible.
+-- Efficient resting during turncount runs, by wielding slow weapons, or walking back and forth.
 -- Based on: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
 ---------------------------------------------------------------------------------------------------
 
@@ -4881,7 +4880,11 @@ f_bread_swinger.Config = {
   disabled = true, -- Disable by default
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
+  alert_for_slowest_weapon = true, -- Alert each time you find a weapon with largest delay yet.
 } -- f_bread_swinger.Config (do not remove this comment)
+
+---- Persistent variables ----
+bs_manual_swing_slot = BRC.Data.persist("bs_manual_swing_slot", nil)
 
 ---- Local constants ----
 local DIR_TO_VI = {
@@ -4924,11 +4927,14 @@ local function reset_rest(msg)
 end
 
 local function get_num_turns()
-  BRC.mpr.info("Enter number of turns to rest: ")
+  BRC.mpr.info(BRC.txt.white("Enter number of turns to rest")
+    .. " (Esc to manually set weapon slot): ")
   local input = crawl.c_input_line()
   local turns = tonumber(input)
-  if not turns or turns < 0 then
-    BRC.mpr.warning("Must be a number!")
+  if not turns then
+    return nil
+  elseif turns <= 0 then
+    BRC.mpr.warning("Must be a positive number!")
     return 0
   end
   return turns
@@ -5125,26 +5131,44 @@ end
 ---- Public API ----
 function macro_brc_bread_swing(turns)
   turns_to_rest = turns or get_num_turns()
+  if not turns_to_rest then
+    f_bread_swinger.set_swing_slot()
+    return
+  elseif turns_to_rest <= 0 then
+    return
+  end
   turns_remaining = turns_to_rest
-  swing_slot = get_slowest_slot()
+
+  -- Set swing slot
+  local slowest_slot = get_slowest_slot()
+  swing_slot = bs_manual_swing_slot or slowest_slot
+  if not swing_slot then return end
+  local weap = items.inslot(items.letter_to_index(swing_slot))
+  if not weap or not weap.is_weapon then
+    BRC.mpr.warning("Swing slot " .. BRC.txt.lightmagenta(swing_slot) .. " is not a weapon!")
+    return
+  end
+
+  -- Determine rest type
   set_rest_type()
   if rest_type == "walk" and turns_to_rest % 2 == 1 then
     turns_to_rest = turns_to_rest - 1
     turns_remaining = turns_remaining - 1
   end
+
   f_bread_swinger.ready()
 end
 
 function f_bread_swinger.set_swing_slot()
-  BRC.mpr.info("Enter an slot letter for the swing item: ")
-  local letter = crawl.c_input_line()
-  local index = items.letter_to_index(letter)
-  if not index or index < 0 then
-    BRC.mpr.error("Must be a letter (a-z or A-Z)!")
+  BRC.mpr.info(BRC.txt.white("Enter the inventory slot") .. " for the swing item: ")
+  local letter = crawl.getch()
+  if not letter or letter < string.byte('A') or letter > string.byte('z') then
+    bs_manual_swing_slot = nil
+    BRC.mpr.info(BRC.txt.magenta("Swing slot cleared.") .. " (Must be a letter a-z or A-Z).")
     return
   end
-  swing_slot = letter
-  BRC.mpr.info("Set swing slot to " .. letter .. ".")
+  bs_manual_swing_slot = string.char(letter)
+  BRC.mpr.info(BRC.txt.lightgrey("Set swing slot to " .. BRC.txt.cyan(bs_manual_swing_slot) .. "."))
 end
 
 ---- Initialization ----
