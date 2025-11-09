@@ -55,6 +55,12 @@ function f_template.ready()
   if you.turns() == Config.example_number then BRC.mpr.blue("Hit magic number!") end
 end
 
+function f_template.autopickup(it)
+  -- When considering autopickup for an item. Any function returning false will block the pickup.
+  if it.is_ranged then return true end -- Picks up every ranged weapon you find
+  return nil -- Return nil for no opinion
+end
+
 function f_template.c_message(text, channel)
   -- React to incoming messages
   crawl.mpr(string.format("Got message: '%s' on channel %s", text, channel), channel)

@@ -3919,26 +3919,33 @@ local function call_all_hooks(hook_name, ...)
       local success, result = pcall(hook_info.func, ...)
       if not success then
         handle_feature_error(hook_info.feature_name, hook_name, result)
-      else
-        if last_return_value and result and last_return_value ~= result then
-          BRC.mpr.warning(
-            string.format(
-              "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
-              hook_name,
-              returning_feature,
-              BRC.txt.tostr(last_return_value, true),
-              hook_info.feature_name,
-              BRC.txt.tostr(result, true)
+      elseif result ~= nil and last_return_value ~= result then
+        -- Only track non-nil return values. This actually matters for autopickup
+        if hook_name == HOOK_FUNCTIONS.autopickup then
+          -- Unique case. One false will block autopickup.
+          if result == false or last_return_value == nil then
+            last_return_value = result
+            returning_feature = hook_info.feature_name
+          end
+        else
+          if last_return_value ~= nil then
+            BRC.mpr.warning(
+              string.format(
+                "Return value mismatch in %s:\n  (first) %s -> %s\n  (final) %s -> %s",
+                hook_name,
+                returning_feature,
+                BRC.txt.tostr(last_return_value, true),
+                hook_info.feature_name,
+                BRC.txt.tostr(result, true)
+              )
             )
-          )
+          end
+          last_return_value = result
+          returning_feature = hook_info.feature_name
         end
-
-        last_return_value = result
-        returning_feature = hook_info.feature_name
       end
     end
   end
-
   return last_return_value
 end
 
@@ -5169,6 +5176,10 @@ function f_bread_swinger.ready()
   else
     do_resting()
   end
+end
+
+function f_bread_swinger.autopickup(it)
+  return it.asdf or nil
 end
 
 }
