@@ -88,6 +88,8 @@ globals = {
   "ad_prev",
   "brc_full_persistant_config",
   "brc_config_name",
+  "bs_highest_delay",
+  "bs_highest_delay_1h",
   "bs_manual_swing_slot",
   "ed_dropped_items",
   "fr_explore_after",

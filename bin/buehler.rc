@@ -4880,11 +4880,13 @@ f_bread_swinger.Config = {
   disabled = true, -- Disable by default
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
-  alert_for_slowest_weapon = true, -- Alert each time you find a weapon with largest delay yet.
+  alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
 } -- f_bread_swinger.Config (do not remove this comment)
 
 ---- Persistent variables ----
 bs_manual_swing_slot = BRC.Data.persist("bs_manual_swing_slot", nil)
+bs_highest_delay = BRC.Data.persist("bs_highest_delay", 0)
+bs_highest_delay_1h = BRC.Data.persist("bs_highest_delay_1h", 0)
 
 ---- Local constants ----
 local DIR_TO_VI = {
@@ -4938,6 +4940,14 @@ local function get_num_turns()
     return 0
   end
   return turns
+end
+
+local function do_alert(msg)
+  local tokens = {}
+  tokens[1] = BRC.Config.emojis and "🍞" or BRC.txt.cyan("----")
+  tokens[#tokens + 1] = msg
+  tokens[#tokens + 1] = tokens[1]
+  BRC.mpr.que(table.concat(tokens))
 end
 
 -- Weapon functions
@@ -5203,7 +5213,21 @@ function f_bread_swinger.ready()
 end
 
 function f_bread_swinger.autopickup(it)
-  return it.asdf or nil
+  if not BRC.it.is_weapon(it) then return nil end
+  local delay = BRC.eq.get_weap_delay(it)
+  if delay < Config.alert_slow_weap_min then return nil end
+
+  if delay > bs_highest_delay then
+    bs_highest_delay = delay
+    if BRC.eq.get_hands(it) == 1 then bs_highest_delay_1h = delay end
+    do_alert("Found slowest weapon: " .. BRC.txt.lightmagenta(delay))
+  elseif delay > bs_highest_delay_1h
+    and BRC.eq.get_hands(it) == 1
+    and not BRC.you.free_offhand()
+  then
+    bs_highest_delay_1h = delay
+    do_alert("Found slowest 1-handed weapon: " .. BRC.txt.lightmagenta(delay))
+  end
 end
 
 }
