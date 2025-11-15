@@ -225,18 +225,18 @@ local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local patterns_to_mute -- which packs to mute at next ready()
 
 ---- Initialization ----
 function f_alert_monsters.init()
-  Config = f_alert_monsters.Config
+  C = f_alert_monsters.Config
   patterns_to_mute = {}
 
   -- Break packs with tables into individual alerts
   local add_patterns = {}
   local remove_patterns = {}
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     if v.is_pack and type(v.pattern) == "table" and #v.pattern > 1 then
       remove_patterns[#remove_patterns + 1] = v
       for _, m in ipairs(v.pattern) do
@@ -247,13 +247,13 @@ function f_alert_monsters.init()
       end
     end
   end
-  util.append(Config.Alerts, add_patterns)
+  util.append(C.Alerts, add_patterns)
   for _, v in ipairs(remove_patterns) do
-    util.remove(Config.Alerts, v)
+    util.remove(C.Alerts, v)
   end
 
   -- Convert patterns to regex
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     v.active_alert = false
     v.last_fm_turn = -1
     if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
@@ -274,17 +274,17 @@ end
 --- Dispatch table for condition handler functions; checking if alerts should be active or not.
 -- Each handler takes (alert, stats) and returns true if the alert should be active.
 local CONDITION_HANDLERS = {
-  xl = function(a, s) return s.xl < a.cutoff * Config.sensitivity end,
-  hp = function(a, s) return s.hp < a.cutoff * Config.sensitivity end,
-  int = function(a, s) return s.int < a.cutoff * Config.sensitivity end,
-  will = function(a, s) return s.will < a.cutoff * Config.sensitivity end,
+  xl = function(a, s) return s.xl < a.cutoff * C.sensitivity end,
+  hp = function(a, s) return s.hp < a.cutoff * C.sensitivity end,
+  int = function(a, s) return s.int < a.cutoff * C.sensitivity end,
+  will = function(a, s) return s.will < a.cutoff * C.sensitivity end,
   mut = function(_, s) return s.rMut == 0 end,
-  pois = function(a, s) return s.rPois == 0 and s.hp < a.cutoff * Config.sensitivity end,
-  elec = function(a, s) return s.rElec == 0 and s.hp < a.cutoff * Config.sensitivity end,
-  corr = function(a, s) return not s.rCorr and s.hp < a.cutoff * Config.sensitivity end,
-  fire = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rF) end,
-  cold = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rC) end,
-  drain = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rN) end,
+  pois = function(a, s) return s.rPois == 0 and s.hp < a.cutoff * C.sensitivity end,
+  elec = function(a, s) return s.rElec == 0 and s.hp < a.cutoff * C.sensitivity end,
+  corr = function(a, s) return not s.rCorr and s.hp < a.cutoff * C.sensitivity end,
+  fire = function(a, s) return is_active_3pip(s.hp, a.cutoff * C.sensitivity, s.rF) end,
+  cold = function(a, s) return is_active_3pip(s.hp, a.cutoff * C.sensitivity, s.rC) end,
+  drain = function(a, s) return is_active_3pip(s.hp, a.cutoff * C.sensitivity, s.rN) end,
 } -- CONDITION_HANDLERS (do not remove this comment)
 
 local function update_pack_mutes()
@@ -295,20 +295,20 @@ local function update_pack_mutes()
     else
       BRC.opt.force_more_message(v, false)
     end
-    if Config.debug_alert_monsters then BRC.mpr.blue("Muted pack: " .. v) end
+    if C.debug_alert_monsters then BRC.mpr.blue("Muted pack: " .. v) end
   end
   patterns_to_mute = {}
 
   -- Remove expired mutes
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     if
       v.is_pack
       and v.last_fm_turn ~= -1
-      and you.turns() >= v.last_fm_turn + Config.pack_timeout
+      and you.turns() >= v.last_fm_turn + C.pack_timeout
     then
       v.last_fm_turn = -1
       v.active_alert = false -- Let the main logic decide if/when to reactivate it.
-      if Config.debug_alert_monsters then BRC.mpr.blue("Unmuted pack: " .. v.pattern) end
+      if C.debug_alert_monsters then BRC.mpr.blue("Unmuted pack: " .. v.pattern) end
     end
   end
 end
@@ -316,16 +316,16 @@ end
 ---- Crawl hook functions ----
 function f_alert_monsters.c_message(text, channel)
   if channel ~= "monster_warning" or not text:find("comes? into view") then return end
-  if Config.pack_timeout <= 0 then return end
+  if C.pack_timeout <= 0 then return end
 
   -- Identify when a mute should be turned on
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     if v.is_pack and v.regex:matches(text) then
       if v.last_fm_turn == -1 then
         patterns_to_mute[#patterns_to_mute + 1] = v.pattern
-        if Config.debug_alert_monsters then BRC.mpr.blue("To mute: " .. v.pattern) end
+        if C.debug_alert_monsters then BRC.mpr.blue("To mute: " .. v.pattern) end
       else
-        if Config.debug_alert_monsters then BRC.mpr.blue("Extending mute: " .. v.pattern) end
+        if C.debug_alert_monsters then BRC.mpr.blue("Extending mute: " .. v.pattern) end
       end
       v.last_fm_turn = you.turns()
     end
@@ -358,10 +358,10 @@ function f_alert_monsters.ready()
     rN = you.res_draining(),
   } -- stats (do not remove this comment)
 
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     local should_be_active = false
 
-    if Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
+    if C.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
       should_be_active = false
     elseif not v.cond then
       should_be_active = true
@@ -382,7 +382,7 @@ function f_alert_monsters.ready()
         BRC.opt.force_more_message(v.pattern, should_be_active)
       end
 
-      if Config.debug_alert_monsters then
+      if C.debug_alert_monsters then
         if v.active_alert then
           activated[#activated + 1] = v.name or v.pattern
         else
@@ -392,7 +392,7 @@ function f_alert_monsters.ready()
     end
   end
 
-  if Config.debug_alert_monsters then
+  if C.debug_alert_monsters then
     if #activated > 0 then
       BRC.mpr.blue("Activating f_m: " .. table.concat(activated, ", "))
     end
@@ -401,5 +401,5 @@ function f_alert_monsters.ready()
     end
   end
 
-  if Config.pack_timeout > 0 then update_pack_mutes() end
+  if C.pack_timeout > 0 then update_pack_mutes() end
 end

@@ -28,25 +28,25 @@ local WAYPOINT_MUTES = {
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local action_queue
 local cur_action
 local delay_expire
 
 ---- Initialization ----
 function BRC.Hotkey.init()
-  Config = BRC.Hotkey.Config
+  C = BRC.Hotkey.Config
   action_queue = {}
   cur_action = nil
   delay_expire = false
 
-  BRC.opt.macro(Config.key.keycode, "macro_brc_hotkey")
-  BRC.opt.macro(Config.skip_keycode, "macro_brc_skip_hotkey")
+  BRC.opt.macro(C.key.keycode, "macro_brc_hotkey")
+  BRC.opt.macro(C.skip_keycode, "macro_brc_skip_hotkey")
 end
 
 ---- Local functions ----
 local function display_cur_message()
-  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.msg)
+  local msg = string.format("[BRC] Press %s to %s.", C.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
@@ -91,11 +91,11 @@ function macro_brc_hotkey()
 end
 
 function macro_brc_skip_hotkey()
-  if cur_action and (you.feel_safe() or not Config.wait_for_safety) then
+  if cur_action and (you.feel_safe() or not C.wait_for_safety) then
     expire_cur_action()
     if not cur_action then BRC.mpr.info("Hotkey cleared.") end
   else
-    crawl.sendkeys({ Config.skip_keycode })
+    crawl.sendkeys({ C.skip_keycode })
     crawl.flush_input()
   end
 end
@@ -222,11 +222,11 @@ end
 
 ---- Crawl hook functions ----
 function BRC.Hotkey.c_assign_invletter(it)
-  if Config.equip_hotkey then BRC.Hotkey.equip(it, true) end
+  if C.equip_hotkey then BRC.Hotkey.equip(it, true) end
 end
 
 function BRC.Hotkey.ch_start_running(kind)
-  if Config.explore_clears_queue and kind:contains("explore") then
+  if C.explore_clears_queue and kind:contains("explore") then
     action_queue = {}
     cur_action = nil
   end
@@ -237,7 +237,7 @@ function BRC.Hotkey.ready()
     load_next_action()
   elseif cur_action.turn > you.turns() then
     return
-  elseif Config.wait_for_safety and not you.feel_safe() and cur_action.condition() then
+  elseif C.wait_for_safety and not you.feel_safe() and cur_action.condition() then
     delay_expire = true
   elseif delay_expire and you.feel_safe() then
     delay_expire = false

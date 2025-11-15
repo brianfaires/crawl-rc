@@ -29,7 +29,7 @@ persistent_map = BRC.Data.persist("persistent_map", {})
 local CONSTANT_STRING = "Hand Weapons"
 
 ---- Local variables ----
-local Config -- Optional local alias, for more concise code
+local C -- config alias
 -- Declare locals, but initialize their values in init()
 local local_var
 local local_table
@@ -37,14 +37,14 @@ local local_table
 ---- Initialization ----
 function f_template.init()
   -- Called when game opens, or re-init after loading a new config
-  Config = f_template.Config
+  C = f_template.Config
   local_var = CONSTANT_STRING
   local_table = { local_var }
 
   persistent_int = persistent_int + 1
   persistent_map.num_startups = persistent_int
 
-  if Config.example_boolean then BRC.mpr.debug("Template feature initialized.") end
+  if C.example_boolean then BRC.mpr.debug("Template feature initialized.") end
 end
 
 ---- Local functions ----
@@ -52,7 +52,7 @@ end
 ---- Crawl hook functions (Remove any hooks you don't need) ----
 function f_template.ready()
   -- Called at the start of each turn
-  if you.turns() == Config.example_number then BRC.mpr.blue("Hit magic number!") end
+  if you.turns() == C.example_number then BRC.mpr.blue("Hit magic number!") end
 end
 
 function f_template.autopickup(it)

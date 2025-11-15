@@ -66,7 +66,7 @@ local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local cur_god
 local ignore_all_magic
 local ignore_advanced_magic
@@ -74,7 +74,7 @@ local xl_force_mores_active
 
 ---- Initialization ----
 function f_dynamic_options.init()
-  Config = f_dynamic_options.Config
+  C = f_dynamic_options.Config
 
   cur_god = "No God"
   ignore_advanced_magic = false
@@ -82,12 +82,12 @@ function f_dynamic_options.init()
   xl_force_mores_active = {}
 
   -- Class options
-  local handler = Config.class_options[you.class()]
+  local handler = C.class_options[you.class()]
   if handler then handler() end
 
   -- Race options
   local race = you.race()
-  handler = Config.race_options[race]
+  handler = C.race_options[race]
   if handler then handler() end
   if util.contains(BRC.UNDEAD_RACES, race) then
     BRC.opt.force_more_message("monster_warning:wielding.*of holy wrath", true)
@@ -103,15 +103,15 @@ local function set_god_options()
   local prev_god = cur_god
   cur_god = you.god()
 
-  local abandoned = Config.god_options[prev_god]
+  local abandoned = C.god_options[prev_god]
   if abandoned then abandoned(false) end
 
-  local joined = Config.god_options[cur_god]
+  local joined = C.god_options[cur_god]
   if joined then joined(true) end
 end
 
 local function set_xl_options()
-  for i, v in ipairs(Config.xl_force_mores) do
+  for i, v in ipairs(C.xl_force_mores) do
     local should_be_active = you.xl() <= v.xl
     if xl_force_mores_active[i] ~= should_be_active then
       xl_force_mores_active[i] = should_be_active

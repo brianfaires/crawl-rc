@@ -3609,25 +3609,25 @@ local WAYPOINT_MUTES = {
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local action_queue
 local cur_action
 local delay_expire
 
 ---- Initialization ----
 function BRC.Hotkey.init()
-  Config = BRC.Hotkey.Config
+  C = BRC.Hotkey.Config
   action_queue = {}
   cur_action = nil
   delay_expire = false
 
-  BRC.opt.macro(Config.key.keycode, "macro_brc_hotkey")
-  BRC.opt.macro(Config.skip_keycode, "macro_brc_skip_hotkey")
+  BRC.opt.macro(C.key.keycode, "macro_brc_hotkey")
+  BRC.opt.macro(C.skip_keycode, "macro_brc_skip_hotkey")
 end
 
 ---- Local functions ----
 local function display_cur_message()
-  local msg = string.format("[BRC] Press %s to %s.", Config.key.name, cur_action.msg)
+  local msg = string.format("[BRC] Press %s to %s.", C.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
@@ -3672,11 +3672,11 @@ function macro_brc_hotkey()
 end
 
 function macro_brc_skip_hotkey()
-  if cur_action and (you.feel_safe() or not Config.wait_for_safety) then
+  if cur_action and (you.feel_safe() or not C.wait_for_safety) then
     expire_cur_action()
     if not cur_action then BRC.mpr.info("Hotkey cleared.") end
   else
-    crawl.sendkeys({ Config.skip_keycode })
+    crawl.sendkeys({ C.skip_keycode })
     crawl.flush_input()
   end
 end
@@ -3803,11 +3803,11 @@ end
 
 ---- Crawl hook functions ----
 function BRC.Hotkey.c_assign_invletter(it)
-  if Config.equip_hotkey then BRC.Hotkey.equip(it, true) end
+  if C.equip_hotkey then BRC.Hotkey.equip(it, true) end
 end
 
 function BRC.Hotkey.ch_start_running(kind)
-  if Config.explore_clears_queue and kind:contains("explore") then
+  if C.explore_clears_queue and kind:contains("explore") then
     action_queue = {}
     cur_action = nil
   end
@@ -3818,7 +3818,7 @@ function BRC.Hotkey.ready()
     load_next_action()
   elseif cur_action.turn > you.turns() then
     return
-  elseif Config.wait_for_safety and not you.feel_safe() and cur_action.condition() then
+  elseif C.wait_for_safety and not you.feel_safe() and cur_action.condition() then
     delay_expire = true
   elseif delay_expire and you.feel_safe() then
     delay_expire = false
@@ -4432,18 +4432,18 @@ local WARN_PREFIX = "monster_warning:(?<!spectral )("
 local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local patterns_to_mute -- which packs to mute at next ready()
 
 ---- Initialization ----
 function f_alert_monsters.init()
-  Config = f_alert_monsters.Config
+  C = f_alert_monsters.Config
   patterns_to_mute = {}
 
   -- Break packs with tables into individual alerts
   local add_patterns = {}
   local remove_patterns = {}
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     if v.is_pack and type(v.pattern) == "table" and #v.pattern > 1 then
       remove_patterns[#remove_patterns + 1] = v
       for _, m in ipairs(v.pattern) do
@@ -4454,13 +4454,13 @@ function f_alert_monsters.init()
       end
     end
   end
-  util.append(Config.Alerts, add_patterns)
+  util.append(C.Alerts, add_patterns)
   for _, v in ipairs(remove_patterns) do
-    util.remove(Config.Alerts, v)
+    util.remove(C.Alerts, v)
   end
 
   -- Convert patterns to regex
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     v.active_alert = false
     v.last_fm_turn = -1
     if type(v.pattern) == "table" then v.pattern = table.concat(v.pattern, "|") end
@@ -4481,17 +4481,17 @@ end
 --- Dispatch table for condition handler functions; checking if alerts should be active or not.
 -- Each handler takes (alert, stats) and returns true if the alert should be active.
 local CONDITION_HANDLERS = {
-  xl = function(a, s) return s.xl < a.cutoff * Config.sensitivity end,
-  hp = function(a, s) return s.hp < a.cutoff * Config.sensitivity end,
-  int = function(a, s) return s.int < a.cutoff * Config.sensitivity end,
-  will = function(a, s) return s.will < a.cutoff * Config.sensitivity end,
+  xl = function(a, s) return s.xl < a.cutoff * C.sensitivity end,
+  hp = function(a, s) return s.hp < a.cutoff * C.sensitivity end,
+  int = function(a, s) return s.int < a.cutoff * C.sensitivity end,
+  will = function(a, s) return s.will < a.cutoff * C.sensitivity end,
   mut = function(_, s) return s.rMut == 0 end,
-  pois = function(a, s) return s.rPois == 0 and s.hp < a.cutoff * Config.sensitivity end,
-  elec = function(a, s) return s.rElec == 0 and s.hp < a.cutoff * Config.sensitivity end,
-  corr = function(a, s) return not s.rCorr and s.hp < a.cutoff * Config.sensitivity end,
-  fire = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rF) end,
-  cold = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rC) end,
-  drain = function(a, s) return is_active_3pip(s.hp, a.cutoff * Config.sensitivity, s.rN) end,
+  pois = function(a, s) return s.rPois == 0 and s.hp < a.cutoff * C.sensitivity end,
+  elec = function(a, s) return s.rElec == 0 and s.hp < a.cutoff * C.sensitivity end,
+  corr = function(a, s) return not s.rCorr and s.hp < a.cutoff * C.sensitivity end,
+  fire = function(a, s) return is_active_3pip(s.hp, a.cutoff * C.sensitivity, s.rF) end,
+  cold = function(a, s) return is_active_3pip(s.hp, a.cutoff * C.sensitivity, s.rC) end,
+  drain = function(a, s) return is_active_3pip(s.hp, a.cutoff * C.sensitivity, s.rN) end,
 } -- CONDITION_HANDLERS (do not remove this comment)
 
 local function update_pack_mutes()
@@ -4502,20 +4502,20 @@ local function update_pack_mutes()
     else
       BRC.opt.force_more_message(v, false)
     end
-    if Config.debug_alert_monsters then BRC.mpr.blue("Muted pack: " .. v) end
+    if C.debug_alert_monsters then BRC.mpr.blue("Muted pack: " .. v) end
   end
   patterns_to_mute = {}
 
   -- Remove expired mutes
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     if
       v.is_pack
       and v.last_fm_turn ~= -1
-      and you.turns() >= v.last_fm_turn + Config.pack_timeout
+      and you.turns() >= v.last_fm_turn + C.pack_timeout
     then
       v.last_fm_turn = -1
       v.active_alert = false -- Let the main logic decide if/when to reactivate it.
-      if Config.debug_alert_monsters then BRC.mpr.blue("Unmuted pack: " .. v.pattern) end
+      if C.debug_alert_monsters then BRC.mpr.blue("Unmuted pack: " .. v.pattern) end
     end
   end
 end
@@ -4523,16 +4523,16 @@ end
 ---- Crawl hook functions ----
 function f_alert_monsters.c_message(text, channel)
   if channel ~= "monster_warning" or not text:find("comes? into view") then return end
-  if Config.pack_timeout <= 0 then return end
+  if C.pack_timeout <= 0 then return end
 
   -- Identify when a mute should be turned on
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     if v.is_pack and v.regex:matches(text) then
       if v.last_fm_turn == -1 then
         patterns_to_mute[#patterns_to_mute + 1] = v.pattern
-        if Config.debug_alert_monsters then BRC.mpr.blue("To mute: " .. v.pattern) end
+        if C.debug_alert_monsters then BRC.mpr.blue("To mute: " .. v.pattern) end
       else
-        if Config.debug_alert_monsters then BRC.mpr.blue("Extending mute: " .. v.pattern) end
+        if C.debug_alert_monsters then BRC.mpr.blue("Extending mute: " .. v.pattern) end
       end
       v.last_fm_turn = you.turns()
     end
@@ -4565,10 +4565,10 @@ function f_alert_monsters.ready()
     rN = you.res_draining(),
   } -- stats (do not remove this comment)
 
-  for _, v in ipairs(Config.Alerts) do
+  for _, v in ipairs(C.Alerts) do
     local should_be_active = false
 
-    if Config.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
+    if C.disable_alert_monsters_in_zigs and you.branch() == "Zig" then
       should_be_active = false
     elseif not v.cond then
       should_be_active = true
@@ -4589,7 +4589,7 @@ function f_alert_monsters.ready()
         BRC.opt.force_more_message(v.pattern, should_be_active)
       end
 
-      if Config.debug_alert_monsters then
+      if C.debug_alert_monsters then
         if v.active_alert then
           activated[#activated + 1] = v.name or v.pattern
         else
@@ -4599,7 +4599,7 @@ function f_alert_monsters.ready()
     end
   end
 
-  if Config.debug_alert_monsters then
+  if C.debug_alert_monsters then
     if #activated > 0 then
       BRC.mpr.blue("Activating f_m: " .. table.concat(activated, ", "))
     end
@@ -4608,7 +4608,7 @@ function f_alert_monsters.ready()
     end
   end
 
-  if Config.pack_timeout > 0 then update_pack_mutes() end
+  if C.pack_timeout > 0 then update_pack_mutes() end
 end
 
 }
@@ -4669,20 +4669,20 @@ local ALWAYS_BOTTOM_SETTINGS = {
 } -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 
 ---- Initialization ----
 function f_announce_hp_mp.init()
-  Config = f_announce_hp_mp.Config
+  C = f_announce_hp_mp.Config
 
   ad_prev.hp = 0
   ad_prev.mhp = 0
   ad_prev.mp = 0
   ad_prev.mmp = 0
 
-  if Config.always_on_bottom then Config.Announce = ALWAYS_BOTTOM_SETTINGS end
+  if C.always_on_bottom then C.Announce = ALWAYS_BOTTOM_SETTINGS end
 
-  if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
+  if C.dmg_fm_threshold > 0 and C.dmg_fm_threshold <= 0.5 then
       BRC.opt.message_mute("Ouch! That really hurt!", true)
   end
 end
@@ -4691,10 +4691,10 @@ end
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  local num_halfpips = math.floor(perc * Config.meter_length * 2)
+  local num_halfpips = math.floor(perc * C.meter_length * 2)
   local num_full_emojis = math.floor(num_halfpips / 2)
   local num_part_emojis = num_halfpips % 2
-  local num_empty_emojis = Config.meter_length - num_full_emojis - num_part_emojis
+  local num_empty_emojis = C.meter_length - num_full_emojis - num_part_emojis
 
   return table.concat({
     emojis.BORDER or "",
@@ -4735,7 +4735,7 @@ end
 local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, Config.HP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, C.HP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.txt.white(string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
 
@@ -4744,7 +4744,7 @@ local function get_hp_message(hp_delta, mhp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.txt.lightgrey(text)
   end
 
-  if not Config.Announce.same_line and hp == mhp then
+  if not C.Announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = BRC.txt.white(" (Full HP)")
   end
 
@@ -4754,7 +4754,7 @@ end
 local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, Config.MP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, C.MP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
 
@@ -4763,7 +4763,7 @@ local function get_mp_message(mp_delta, mmp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.txt.cyan(tok)
   end
 
-  if not Config.Announce.same_line and mp == mmp then
+  if not C.Announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(" (Full MP)")
   end
 
@@ -4771,7 +4771,7 @@ local function get_mp_message(mp_delta, mmp_delta)
 end
 
 local function last_msg_is_meter()
-  local meter_chars = Config.meter_length + 2 * #(BRC.txt.clean(Config.HP_METER.BORDER) or "")
+  local meter_chars = C.meter_length + 2 * #(BRC.txt.clean(C.HP_METER.BORDER) or "")
   local last_msg = crawl.messages(1)
   if not (last_msg and #last_msg > meter_chars + 4) then return false end
 
@@ -4797,19 +4797,19 @@ function f_announce_hp_mp.ready()
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = hp <= Config.Announce.very_low_hp * mhp
+  local is_very_low_hp = hp <= C.Announce.very_low_hp * mhp
 
   -- Determine which messages to show
   local do_hp = true
   local do_mp = true
-  if hp_delta <= 0 and hp_delta > -Config.Announce.hp_loss_limit then do_hp = false end
-  if hp_delta >= 0 and hp_delta < Config.Announce.hp_gain_limit then do_hp = false end
-  if mp_delta <= 0 and mp_delta > -Config.Announce.mp_loss_limit then do_mp = false end
-  if mp_delta >= 0 and mp_delta < Config.Announce.mp_gain_limit then do_mp = false end
+  if hp_delta <= 0 and hp_delta > -C.Announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta < C.Announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -C.Announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta < C.Announce.mp_gain_limit then do_mp = false end
 
   if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
   if not do_hp and not do_mp then return end
-  if Config.Announce.always_both then
+  if C.Announce.always_both then
     do_hp = true
     do_mp = true
   end
@@ -4818,17 +4818,17 @@ function f_announce_hp_mp.ready()
   local hp_msg = get_hp_message(hp_delta, mhp_delta)
   local mp_msg = get_mp_message(mp_delta, mmp_delta)
   local msg_tokens = {}
-  msg_tokens[1] = (Config.Announce.hp_first and do_hp) and hp_msg or mp_msg
+  msg_tokens[1] = (C.Announce.hp_first and do_hp) and hp_msg or mp_msg
   if do_mp and do_hp then
-    msg_tokens[2] = Config.Announce.same_line and string.rep(" ", 7) or "\n"
-    msg_tokens[3] = Config.Announce.hp_first and mp_msg or hp_msg
+    msg_tokens[2] = C.Announce.same_line and string.rep(" ", 7) or "\n"
+    msg_tokens[3] = C.Announce.hp_first and mp_msg or hp_msg
   end
   if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
 
   -- Add Damage-related warnings, when damage >= threshold
-  if damage_taken >= mhp * Config.dmg_flash_threshold then
+  if damage_taken >= mhp * C.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    if damage_taken >= (mhp * Config.dmg_fm_threshold) then
+    if damage_taken >= (mhp * C.dmg_fm_threshold) then
       local msg = BRC.txt.lightmagenta("MASSIVE DAMAGE")
       BRC.mpr.que_optmore(true, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
     else
@@ -4905,7 +4905,7 @@ local SOLID_FEATURES = {
 } -- SOLID_FEATURES (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local swing_slot
 local turns_remaining
 local turns_to_rest
@@ -5005,7 +5005,7 @@ end
 
 local function is_monster(x, y)
   local mon = monster.get_monster_at(x, y)
-  return mon and not (Config.allow_plant_damage and mon.is_stationary())
+  return mon and not (C.allow_plant_damage and mon.is_stationary())
 end
 
 local function is_solid(x, y)
@@ -5129,7 +5129,7 @@ local function do_resting()
     crawl.sendkeys({ DIR_TO_VI[cur_x][cur_y] })
     crawl.flush_input()
 
-    if Config.walk_delay > 0 then crawl.delay(Config.walk_delay) end
+    if C.walk_delay > 0 then crawl.delay(C.walk_delay) end
   end
 
   turns_remaining = turns_remaining - 1
@@ -5185,7 +5185,7 @@ end
 
 ---- Initialization ----
 function f_bread_swinger.init()
-  Config = f_bread_swinger.Config
+  C = f_bread_swinger.Config
   reset_rest()
   BRC.opt.macro("5", "macro_brc_bread_swing")
 end
@@ -5217,7 +5217,7 @@ end
 function f_bread_swinger.autopickup(it)
   if it.is_useless or not it.is_weapon then return nil end
   local delay = BRC.eq.get_weap_delay(it)
-  if delay < Config.alert_slow_weap_min then return nil end
+  if delay < C.alert_slow_weap_min then return nil end
 
   if delay > bs_highest_delay and BRC.eq.get_hands(it) == 1 or BRC.you.free_offhand() then
     --crawl.mpr("FIRST: delay =" .. delay .. " bs_highest_delay =" .. bs_highest_delay)
@@ -5526,7 +5526,7 @@ local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
 local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local cur_god
 local ignore_all_magic
 local ignore_advanced_magic
@@ -5534,7 +5534,7 @@ local xl_force_mores_active
 
 ---- Initialization ----
 function f_dynamic_options.init()
-  Config = f_dynamic_options.Config
+  C = f_dynamic_options.Config
 
   cur_god = "No God"
   ignore_advanced_magic = false
@@ -5542,12 +5542,12 @@ function f_dynamic_options.init()
   xl_force_mores_active = {}
 
   -- Class options
-  local handler = Config.class_options[you.class()]
+  local handler = C.class_options[you.class()]
   if handler then handler() end
 
   -- Race options
   local race = you.race()
-  handler = Config.race_options[race]
+  handler = C.race_options[race]
   if handler then handler() end
   if util.contains(BRC.UNDEAD_RACES, race) then
     BRC.opt.force_more_message("monster_warning:wielding.*of holy wrath", true)
@@ -5563,15 +5563,15 @@ local function set_god_options()
   local prev_god = cur_god
   cur_god = you.god()
 
-  local abandoned = Config.god_options[prev_god]
+  local abandoned = C.god_options[prev_god]
   if abandoned then abandoned(false) end
 
-  local joined = Config.god_options[cur_god]
+  local joined = C.god_options[cur_god]
   if joined then joined(true) end
 end
 
 local function set_xl_options()
-  for i, v in ipairs(Config.xl_force_mores) do
+  for i, v in ipairs(C.xl_force_mores) do
     local should_be_active = you.xl() <= v.xl
     if xl_force_mores_active[i] ~= should_be_active then
       xl_force_mores_active[i] = should_be_active
@@ -5774,13 +5774,13 @@ f_fully_recover.Config = {
 local MAX_TURNS_TO_WAIT = 500
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local recovery_start_turn
 local explore_after_recovery
 
 ---- Initialization ----
 function f_fully_recover.init()
-  Config = f_fully_recover.Config
+  C = f_fully_recover.Config
   recovery_start_turn = 0
   explore_after_recovery = false
 
@@ -5828,7 +5828,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(Config.rest_off_statuses) do
+  for _, s in ipairs(C.rest_off_statuses) do
     if status:find(s) and not should_ignore_status(s) then return false end
   end
 
@@ -5838,11 +5838,11 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(Config.rest_off_statuses) do
+  for _, s in ipairs(C.rest_off_statuses) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(Config.rest_off_statuses, s)
+    util.remove(C.rest_off_statuses, s)
     BRC.mpr.error("  Removed: " .. s)
   end
 end
@@ -6114,17 +6114,17 @@ ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local below_hp_threshold
 local prev_spell_levels
 
 ---- Initialization ----
 function f_misc_alerts.init()
-  Config = f_misc_alerts.Config
+  C = f_misc_alerts.Config
   below_hp_threshold = false
   prev_spell_levels = you.spell_levels()
 
-  if Config.save_with_msg then
+  if C.save_with_msg then
     BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
@@ -6138,9 +6138,9 @@ local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= Config.alert_low_hp_threshold * mhp then
+  elseif hp <= C.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. 100 * Config.alert_low_hp_threshold .. "%% HP"
+    local low_hp_msg = "Dropped below " .. 100 * C.alert_low_hp_threshold .. "%% HP"
     BRC.mpr.que_optmore(true, BRC.txt.wrap(BRC.txt.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
   end
 end
@@ -6152,7 +6152,7 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
-      if Config.remove_faith_hotkey then
+      if C.remove_faith_hotkey then
         BRC.Hotkey.set("remove", "amulet of faith", false, function()
           items.equipped_at("amulet"):remove()
         end)
@@ -6193,9 +6193,9 @@ end
 
 ---- Crawl hook functions ----
 function f_misc_alerts.ready()
-  if Config.alert_remove_faith then alert_remove_faith() end
-  if Config.alert_low_hp_threshold > 0 then alert_low_hp() end
-  if Config.alert_spell_level_changes then alert_spell_level_changes() end
+  if C.alert_remove_faith then alert_remove_faith() end
+  if C.alert_low_hp_threshold > 0 then alert_low_hp() end
+  if C.alert_spell_level_changes then alert_spell_level_changes() end
 end
 
 }
@@ -6320,13 +6320,13 @@ f_quiver_reminders.Config = {
 } -- f_quiver_reminders.Config (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local last_thrown
 local last_thrown_turn
 
 ---- Initialization ----
 function f_quiver_reminders.init()
-  Config = f_quiver_reminders.Config
+  C = f_quiver_reminders.Config
   last_thrown = nil
   last_thrown_turn = -1
 
@@ -6350,11 +6350,11 @@ end
 
 ---- Macro function: Fire from quiver ----
 function macro_brc_fire()
-  if not BRC.active or Config.disabled then return BRC.util.do_cmd("CMD_FIRE") end
+  if not BRC.active or C.disabled then return BRC.util.do_cmd("CMD_FIRE") end
   local quivered = items.fired_item()
   if not quivered then return end
 
-  if Config.confirm_consumables then
+  if C.confirm_consumables then
     local cls = quivered.class(true)
     if cls == "potion" or cls == "scroll" then
       local action = cls == "potion" and "drink" or "read"
@@ -6364,7 +6364,7 @@ function macro_brc_fire()
     end
   end
 
-  if you.turns() - last_thrown_turn <= Config.warn_diff_missile_turns then
+  if you.turns() - last_thrown_turn <= C.warn_diff_missile_turns then
     if last_thrown ~= quivered.name("qual") then
       local q = BRC.txt.lightgreen(quivered.name("qual"))
       if not BRC.mpr.yesno("Did you mean to throw " .. q .. "?") then
@@ -6418,12 +6418,12 @@ f_remind_id.Config = {
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local do_remind_id_check
 
 ---- Initialization ----
 function f_remind_id.init()
-  Config = f_remind_id.Config
+  C = f_remind_id.Config
   do_remind_id_check = true
 end
 
@@ -6494,8 +6494,8 @@ function f_remind_id.c_message(text, channel)
       local num_scrolls, slot_scrolls = get_max_stack("scroll")
       local num_pots, slot_pots = get_max_stack("potion")
       if
-        is_scroll and slot_scrolls == slot and num_scrolls >= Config.stop_on_scrolls_count
-        or is_potion and slot_pots == slot and num_pots >= Config.stop_on_pots_count
+        is_scroll and slot_scrolls == slot and num_scrolls >= C.stop_on_scrolls_count
+        or is_potion and slot_pots == slot and num_pots >= C.stop_on_pots_count
       then
         you.stop_activity()
       end
@@ -6507,9 +6507,9 @@ function f_remind_id.ready()
   if do_remind_id_check then
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
-      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), Config.emoji)
+      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), C.emoji)
       BRC.mpr.stop(msg)
-      if Config.read_id_hotkey then
+      if C.read_id_hotkey then
         BRC.Hotkey.set("read", "scroll of identify", false, function()
           for _, inv in ipairs(items.inventory()) do
             if inv.name("qual") == "scroll of identify" then
@@ -6563,14 +6563,14 @@ local GAUNTLET_SEARCH_STRING = table.concat({
   }, GAUNTLET_CONCAT_STRING)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local stop_on_altars
 local stop_on_portals
 local stop_on_stairs
 
 ---- Initialization ----
 function f_runrest_features.init()
-  Config = f_runrest_features.Config
+  C = f_runrest_features.Config
   stop_on_altars = true
   stop_on_portals = true
   stop_on_stairs = false
@@ -6585,9 +6585,9 @@ local function is_explore_done_msg(text)
 end
 
 local function set_stairs_stop_state()
-  local should_be_active = Config.stop_on_pan_gates and you.branch() == "Pan"
-    or Config.stop_on_hell_stairs and BRC.you.in_hell(true)
-    or Config.after_shaft and rr_shaft_location ~= nil
+  local should_be_active = C.stop_on_pan_gates and you.branch() == "Pan"
+    or C.stop_on_hell_stairs and BRC.you.in_hell(true)
+    or C.after_shaft and rr_shaft_location ~= nil
 
   if stop_on_stairs and not should_be_active then
     stop_on_stairs = false
@@ -6683,17 +6683,17 @@ end
 
 ---- Crawl hook functions ----
 function f_runrest_features.c_message(text, _)
-  if Config.temple_search then c_message_temple(text) end
-  if Config.gauntlet_search then c_message_gauntlet(text) end
-  if Config.after_shaft then c_message_after_shaft(text) end
+  if C.temple_search then c_message_temple(text) end
+  if C.gauntlet_search then c_message_gauntlet(text) end
+  if C.after_shaft then c_message_after_shaft(text) end
 end
 
 function f_runrest_features.ready()
-  if Config.ignore_altars then ready_ignore_altars() end
-  if Config.ignore_portal_exits then ready_ignore_portals() end
-  if Config.temple_search then ready_temple_macro() end
-  if Config.gauntlet_search then ready_gauntlet_macro() end
-  if Config.after_shaft then ready_after_shaft() end
+  if C.ignore_altars then ready_ignore_altars() end
+  if C.ignore_portal_exits then ready_ignore_portals() end
+  if C.temple_search then ready_temple_macro() end
+  if C.gauntlet_search then ready_gauntlet_macro() end
+  if C.after_shaft then ready_after_shaft() end
   set_stairs_stop_state()
 end
 
@@ -6776,12 +6776,12 @@ ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local ss_cur_location
 
 ---- Initialization ----
 function f_safe_stairs.init()
-  Config = f_safe_stairs.Config
+  C = f_safe_stairs.Config
   ss_cur_location = you.where()
 
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
@@ -6792,7 +6792,7 @@ end
 local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
 
-  if Config.warn_backtracking and ss_prev_location ~= ss_cur_location then
+  if C.warn_backtracking and ss_prev_location ~= ss_cur_location then
     if
       cmd == "CMD_GO_DOWNSTAIRS" and (feature:contains("down") or feature:contains("shaft"))
       or cmd == "CMD_GO_UPSTAIRS" and feature:contains("up")
@@ -6802,7 +6802,7 @@ local function check_new_location(cmd)
   end
 
   if
-    Config.warn_v5
+    C.warn_v5
     and not ss_v5_warned
     and ss_cur_location == "Vaults:4"
     and cmd == "CMD_GO_DOWNSTAIRS"
@@ -6887,14 +6887,14 @@ f_startup.Config = {
 } -- f_startup.Config (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 
 ---- Initialization ----
 function f_startup.init()
-  Config = f_startup.Config
+  C = f_startup.Config
 
-  if Config.macro_save_key and (Config.use_saved_training or Config.use_saved_config) then
-    BRC.opt.macro(Config.macro_save_key, "macro_brc_save_skills_and_config")
+  if C.macro_save_key and (C.use_saved_training or C.use_saved_config) then
+    BRC.opt.macro(C.macro_save_key, "macro_brc_save_skills_and_config")
   end
 end
 
@@ -6949,9 +6949,9 @@ end
 local function load_saved_training_targets()
   ensure_tables_exist()
 
-  return load_training_targets(you.race() .. " " .. you.class(), Config.prompt_before_load)
-    or (Config.allow_race_only_saves and load_training_targets(you.race(), true))
-    or (Config.allow_class_only_saves and load_training_targets(you.class(), true))
+  return load_training_targets(you.race() .. " " .. you.class(), C.prompt_before_load)
+    or (C.allow_race_only_saves and load_training_targets(you.race(), true))
+    or (C.allow_class_only_saves and load_training_targets(you.class(), true))
 end
 
 local function load_config(key, require_confirmation)
@@ -6970,17 +6970,17 @@ end
 local function load_saved_config()
   ensure_tables_exist()
 
-  return load_config(you.race() .. " " .. you.class(), Config.prompt_before_load)
-    or (Config.allow_race_only_saves and load_config(you.race(), true))
-    or (Config.allow_class_only_saves and load_config(you.class(), true))
+  return load_config(you.race() .. " " .. you.class(), C.prompt_before_load)
+    or (C.allow_race_only_saves and load_config(you.race(), true))
+    or (C.allow_class_only_saves and load_config(you.class(), true))
 end
 
 --- Save obj to storage_table, under keys: race/class/combo
 local function save_race_class(desc, parent, child)
   local keys = { }
   keys[1] = you.race() .. " " .. you.class() -- Always save combo
-  if Config.allow_race_only_saves then keys[#keys + 1] = you.race() end
-  if Config.allow_class_only_saves then keys[#keys + 1] = you.class() end
+  if C.allow_race_only_saves then keys[#keys + 1] = you.race() end
+  if C.allow_class_only_saves then keys[#keys + 1] = you.class() end
   for i, key in ipairs(keys) do
     if i == 1 -- don't prompt for combo
       or not parent[key] -- don't prompt if empty
@@ -6997,15 +6997,15 @@ local function load_generic_skill_targets()
   clear_skill_targets()
 
   local set_first = false
-  for _, skill_target in ipairs(Config.auto_set_skill_targets) do
+  for _, skill_target in ipairs(C.auto_set_skill_targets) do
     local skill, target = unpack(skill_target)
     if you.skill(skill) < target then
       you.set_training_target(skill, target)
-      if not set_first or not Config.focus_one_skill then
+      if not set_first or not C.focus_one_skill then
         you.train_skill(skill, 1)
         set_first = true
       end
-      if not Config.set_all_targets then break end
+      if not C.set_all_targets then break end
     end
   end
 end
@@ -7044,21 +7044,21 @@ end
 
 ---- Macro function: Save current skill targets (training levels and targets) for race/class ----
 function macro_brc_save_skills_and_config()
-  if not BRC.active or Config.disabled then
+  if not BRC.active or C.disabled then
     BRC.mpr.info("BRC not active, or startup feature is disabled. Training targets not saved.")
     return
   end
 
   ensure_tables_exist()
-  if Config.use_saved_training
+  if C.use_saved_training
     and you.race() ~= "Gnoll"
-    and (not Config.use_saved_config or BRC.mpr.yesno("Save training targets?", BRC.COL.magenta))
+    and (not C.use_saved_config or BRC.mpr.yesno("Save training targets?", BRC.COL.magenta))
   then
     save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
   end
 
-  if Config.use_saved_config
-    and (not Config.use_saved_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
+  if C.use_saved_config
+    and (not C.use_saved_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
   then
     local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
     save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
@@ -7070,18 +7070,18 @@ function f_startup.ready()
   if you.turns() ~= 0 then return end
 
   -- Check for saved config/targets in c_persist
-  if Config.use_saved_config then load_saved_config() end
-  if Config.use_saved_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
+  if C.use_saved_config then load_saved_config() end
+  if C.use_saved_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
     if load_saved_training_targets() then return end
   end
 
   -- If no saved targets were loaded, use other configured skill targets
-  if Config.auto_set_skill_targets and you.race() ~= "Gnoll" then
+  if C.auto_set_skill_targets and you.race() ~= "Gnoll" then
     load_generic_skill_targets()
   end
 
   -- Show skills menu: Disable for non-Wanderer Gnolls
-  if Config.show_skills_menu and (you.race() ~= "Gnoll" or you.class() == "Wanderer") then
+  if C.show_skills_menu and (you.race() ~= "Gnoll" or you.class() == "Wanderer") then
     BRC.util.do_cmd("CMD_DISPLAY_SKILLS")
   end
 end
@@ -7448,13 +7448,13 @@ f_pickup_alert = f_pickup_alert or {}
 f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local pause_pa_system
 local hold_alerts_for_next_turn
 
 ---- Initialization ----
 function f_pickup_alert.init()
-  Config = f_pickup_alert.Config
+  C = f_pickup_alert.Config
   pause_pa_system = false
   hold_alerts_for_next_turn = false
 
@@ -7487,15 +7487,15 @@ end
 ---- Local functions ----
 local function has_configured_force_more(it)
   if it.artefact then
-    if Config.Alert.More.artefact then return true end
-    if Config.Alert.More.trained_artefacts then
+    if C.Alert.More.artefact then return true end
+    if C.Alert.More.trained_artefacts then
       -- Accept artefacts with any relevant training, or no training required
       local s = BRC.you.skill_with(it)
       if s == nil or s > 0 then return true end
     end
   end
 
-  return Config.Alert.More.armour_ego and BRC.it.is_armour(it) and BRC.eq.get_ego(it)
+  return C.Alert.More.armour_ego and BRC.it.is_armour(it) and BRC.eq.get_ego(it)
 end
 
 local function track_unique_egos(it)
@@ -7510,12 +7510,12 @@ local function track_unique_egos(it)
 end
 
 local function get_alert_color_for_item(it)
-  if it.is_weapon then return Config.AlertColor.weapon end
-  if BRC.it.is_orb(it) then return Config.AlertColor.orb end
-  if BRC.it.is_talisman(it) then return Config.AlertColor.talisman end
-  if BRC.it.is_body_armour(it) then return Config.AlertColor.body_arm end
-  if BRC.it.is_armour(it) then return Config.AlertColor.aux_arm end
-  return Config.AlertColor.misc
+  if it.is_weapon then return C.AlertColor.weapon end
+  if BRC.it.is_orb(it) then return C.AlertColor.orb end
+  if BRC.it.is_talisman(it) then return C.AlertColor.talisman end
+  if BRC.it.is_body_armour(it) then return C.AlertColor.body_arm end
+  if BRC.it.is_armour(it) then return C.AlertColor.aux_arm end
+  return C.AlertColor.misc
 end
 
 local function should_skip_pickup_check(it)
@@ -7529,20 +7529,20 @@ local function check_and_trigger_alerts(it, unworn_aux_item)
   if f_pa_data.already_alerted(it) then return true end
 
   -- One-time alerts
-  if f_pa_misc and Config.Alert.one_time and #Config.Alert.one_time > 0 then
+  if f_pa_misc and C.Alert.one_time and #C.Alert.one_time > 0 then
     if f_pa_misc.alert_OTA(it) then return true end
   end
 
   -- Item-specific alerts
-  if BRC.it.is_magic_staff(it) and f_pa_misc and Config.Alert.staff_resists then
+  if BRC.it.is_magic_staff(it) and f_pa_misc and C.Alert.staff_resists then
     if f_pa_misc.alert_staff(it) then return true end
-  elseif BRC.it.is_orb(it) and f_pa_misc and Config.Alert.orbs then
+  elseif BRC.it.is_orb(it) and f_pa_misc and C.Alert.orbs then
     if f_pa_misc.alert_orb(it) then return true end
-  elseif BRC.it.is_talisman(it) and f_pa_misc and Config.Alert.talismans then
+  elseif BRC.it.is_talisman(it) and f_pa_misc and C.Alert.talismans then
     if f_pa_misc.alert_talisman(it) then return true end
-  elseif BRC.it.is_armour(it) and f_pa_armour and Config.Alert.armour_sensitivity > 0 then
+  elseif BRC.it.is_armour(it) and f_pa_armour and C.Alert.armour_sensitivity > 0 then
     if f_pa_armour.alert_armour(it, unworn_aux_item) then return true end
-  elseif it.is_weapon and f_pa_weapons and Config.Alert.weapon_sensitivity > 0 then
+  elseif it.is_weapon and f_pa_weapons and C.Alert.weapon_sensitivity > 0 then
     if f_pa_weapons.alert_weapon(it) then return true end
   end
 
@@ -7562,14 +7562,14 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   if it.is_weapon then
     f_pa_data.update_high_scores(it)
     local weapon_info = string.format(" (%s)", BRC.eq.wpn_stats(it))
-    item_name = item_name .. BRC.txt[Config.AlertColor.weapon.stats](weapon_info)
+    item_name = item_name .. BRC.txt[C.AlertColor.weapon.stats](weapon_info)
   elseif BRC.it.is_armour(it) then
     track_unique_egos(it)
     if BRC.it.is_body_armour(it) then
       f_pa_data.update_high_scores(it)
       local ac, ev = BRC.eq.arm_stats(it)
       local armour_info = string.format(" {%s, %s}", ac, ev)
-      item_name = item_name .. BRC.txt[Config.AlertColor.body_arm.stats](armour_info)
+      item_name = item_name .. BRC.txt[C.AlertColor.body_arm.stats](armour_info)
     end
   end
 
@@ -7587,9 +7587,9 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   -- Set hotkeys
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    if Config.Alert.hotkey_pickup then BRC.Hotkey.pickup(it.name(), true) end
+    if C.Alert.hotkey_pickup then BRC.Hotkey.pickup(it.name(), true) end
   else
-    if Config.Alert.hotkey_travel then BRC.Hotkey.waypoint(it.name()) end
+    if C.Alert.hotkey_travel then BRC.Hotkey.waypoint(it.name()) end
   end
 
   return true
@@ -7613,11 +7613,11 @@ function f_pickup_alert.autopickup(it, _)
     if not unworn_aux_item then return end
   else
     if BRC.it.is_armour(it) then
-      if Config.Pickup.armour and f_pa_armour.pickup_armour(it) then return true end
+      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return true end
     elseif BRC.it.is_magic_staff(it) then
-      if Config.Pickup.staves and f_pa_misc.pickup_staff(it) then return true end
+      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return true end
     elseif it.is_weapon then
-      if Config.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return true end
+      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return true end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
     end
@@ -8311,7 +8311,7 @@ local WEAP_CACHE_KEYS = {
 }
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local Heur
 local Emoji
 local top_attack_skill
@@ -8319,14 +8319,14 @@ local _weapon_cache = {} -- Cache info for inventory weapons to avoid repeat cal
 
 ---- Initialization ----
 function f_pa_weapons.init()
-  Config = f_pickup_alert.Config
+  C = f_pickup_alert.Config
   Heur = f_pickup_alert.Config.Tuning.Weap
   Emoji = f_pickup_alert.Config.Emoji
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
   _weapon_cache.refresh(true)
 
-  if not Config.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
-  if not Config.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
+  if not C.Alert.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
+  if not C.Alert.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
 end
 
 ---- Local functions ----
@@ -8521,7 +8521,7 @@ local function get_first_of_skill_alert(it)
     -- Update lowest # hands alerted, and alert
     pa_lowest_hands_alerted[skill] = hands
     local msg = "First " .. string.sub(skill, 1, -2) .. (hands == 1 and " (1-handed)" or "")
-    return make_alert(it, msg, Emoji.WEAPON, Config.Alert.More.early_weap)
+    return make_alert(it, msg, Emoji.WEAPON, C.Alert.More.early_weap)
   end
 end
 
@@ -8529,10 +8529,10 @@ local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
   if it.is_ranged and you.xl() <= Heur.Alert.EarlyRanged.xl then
     local min_plus = Heur.Alert.EarlyRanged[BRC.eq.get_ego(it) and "branded_min_plus" or "min_plus"]
-    if (it.plus or 0) >= min_plus / Config.Alert.weapon_sensitivity then
+    if (it.plus or 0) >= min_plus / C.Alert.weapon_sensitivity then
       local low_shield_training = you.skill("Shields") <= Heur.Alert.EarlyRanged.max_shields
       if BRC.eq.get_hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
-        return make_alert(it, "Ranged weapon", Emoji.RANGED, Config.Alert.More.early_weap)
+        return make_alert(it, "Ranged weapon", Emoji.RANGED, C.Alert.More.early_weap)
       end
     end
   end
@@ -8546,9 +8546,9 @@ local function get_early_weapon_alert(it)
     local it_plus = it.plus or 0
     if
       BRC.eq.get_ego(it)
-      or it_plus >= Heur.Alert.Early.branded_min_plus / Config.Alert.weapon_sensitivity
+      or it_plus >= Heur.Alert.Early.branded_min_plus / C.Alert.weapon_sensitivity
     then
-      return make_alert(it, "Early weapon", Emoji.WEAPON, Config.Alert.More.early_weap)
+      return make_alert(it, "Early weapon", Emoji.WEAPON, C.Alert.More.early_weap)
     end
   end
 
@@ -8559,7 +8559,7 @@ local function get_weap_high_score_alert(it)
   if _weapon_cache.is_empty() then return end -- Skip if not using weapons
   local category = f_pa_data.update_high_scores(it)
   if not category then return end
-  return make_alert(it, category, Emoji.WEAPON, Config.Alert.More.high_score_weap)
+  return make_alert(it, category, Emoji.WEAPON, C.Alert.More.high_score_weap)
 end
 
 -- get_upgrade_alert() subroutines
@@ -8570,9 +8570,9 @@ end
 local function check_upgrade_free_offhand(it, ratio)
   local it_ego = BRC.eq.get_ego(it)
   if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
-    return make_alert(it, "New ego (2-handed)", Emoji.EGO, Config.Alert.More.weap_ego)
+    return make_alert(it, "New ego (2-handed)", Emoji.EGO, C.Alert.More.weap_ego)
   elseif ratio > Heur.Alert.AddHand.not_using then
-    return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, Config.Alert.More.upgrade_weap)
+    return make_alert(it, "2-handed weapon", Emoji.TWO_HAND, C.Alert.More.upgrade_weap)
   end
   return false
 end
@@ -8584,7 +8584,7 @@ local function check_upgrade_lose_shield(it, cur, ratio)
       and ratio > Heur.Alert.AddHand.add_ego_lose_sh
     )
   then
-    return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, Config.Alert.More.weap_ego)
+    return make_alert(it, "2-handed weapon (Gain ego)", Emoji.TWO_HAND, C.Alert.More.weap_ego)
   end
 
   return false
@@ -8597,15 +8597,15 @@ local function check_upgrade_no_hand_loss(it, cur, ratio)
     local it_ego = BRC.eq.get_ego(it)
     if not BRC.eq.get_ego(cur) then
       if ratio > Heur.Alert.gain_ego then
-        return make_alert(it, "Gain ego", Emoji.EGO, Config.Alert.More.weap_ego)
+        return make_alert(it, "Gain ego", Emoji.EGO, C.Alert.More.weap_ego)
       end
     elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > Heur.Alert.new_ego then
-      return make_alert(it, "New ego", Emoji.EGO, Config.Alert.More.weap_ego)
+      return make_alert(it, "New ego", Emoji.EGO, C.Alert.More.weap_ego)
     end
   end
 
   if ratio > Heur.Alert.pure_dps then
-    return make_alert(it, "DPS increase", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
+    return make_alert(it, "DPS increase", Emoji.WEAPON, C.Alert.More.upgrade_weap)
   end
 
   return false
@@ -8617,11 +8617,11 @@ local function check_upgrade_same_subtype(it, cur, best_dps, best_score)
   local cur_ego = BRC.eq.get_ego(cur)
   if not cur.artefact and it_ego and it_ego ~= cur_ego then
     local change = cur_ego and "Diff ego" or "Gain ego"
-    return make_alert(it, change, Emoji.EGO, Config.Alert.More.weap_ego)
+    return make_alert(it, change, Emoji.EGO, C.Alert.More.weap_ego)
   else
-    local s = Config.Alert.weapon_sensitivity
+    local s = C.Alert.weapon_sensitivity
     if get_score(it) > best_score / s or BRC.eq.get_dps(it) > best_dps / s then
-      return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
+      return make_alert(it, "Weapon upgrade", Emoji.WEAPON, C.Alert.More.upgrade_weap)
     end
   end
 end
@@ -8630,8 +8630,8 @@ end
 -- @param cur (weapon) comes from _weapon_cache - it has some pre-computed values
 local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Ensure the non-strict upgrade is checked, if not already done in pickup_weapon()
-  if Config.Pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
-    return make_alert(it, "Weapon upgrade", Emoji.WEAPON, Config.Alert.More.upgrade_weap)
+  if C.Pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
+    return make_alert(it, "Weapon upgrade", Emoji.WEAPON, C.Alert.More.upgrade_weap)
   end
 
   if it.artefact then return make_alert(it, "Artefact weapon", Emoji.ARTEFACT) end
@@ -8643,7 +8643,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = Heur.Alert.low_skill_penalty_damping
   local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
-  local ratio = penalty * get_score(it) / best_score * Config.Alert.weapon_sensitivity
+  local ratio = penalty * get_score(it) / best_score * C.Alert.weapon_sensitivity
 
   if BRC.eq.get_hands(it) <= cur.hands then
     return check_upgrade_no_hand_loss(it, cur, ratio)
@@ -8686,10 +8686,10 @@ function f_pa_weapons.pickup_weapon(it)
 
   if BRC.eq.is_risky(it) then return false end
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if is_weapon_upgrade(it, inv, Config.Pickup.weapons_pure_upgrades_only) then
+    if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then
       -- Confirm after updating cache, to avoid spurious alerts from XP gain.
       _weapon_cache.refresh(true)
-      if is_weapon_upgrade(it, inv, Config.Pickup.weapons_pure_upgrades_only) then return true end
+      if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then return true end
     end
   end
 end

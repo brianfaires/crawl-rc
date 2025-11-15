@@ -17,12 +17,12 @@ ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
 ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local ss_cur_location
 
 ---- Initialization ----
 function f_safe_stairs.init()
-  Config = f_safe_stairs.Config
+  C = f_safe_stairs.Config
   ss_cur_location = you.where()
 
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
@@ -33,7 +33,7 @@ end
 local function check_new_location(cmd)
   local feature = view.feature_at(0, 0)
 
-  if Config.warn_backtracking and ss_prev_location ~= ss_cur_location then
+  if C.warn_backtracking and ss_prev_location ~= ss_cur_location then
     if
       cmd == "CMD_GO_DOWNSTAIRS" and (feature:contains("down") or feature:contains("shaft"))
       or cmd == "CMD_GO_UPSTAIRS" and feature:contains("up")
@@ -43,7 +43,7 @@ local function check_new_location(cmd)
   end
 
   if
-    Config.warn_v5
+    C.warn_v5
     and not ss_v5_warned
     and ss_cur_location == "Vaults:4"
     and cmd == "CMD_GO_DOWNSTAIRS"

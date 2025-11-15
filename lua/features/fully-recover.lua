@@ -18,13 +18,13 @@ f_fully_recover.Config = {
 local MAX_TURNS_TO_WAIT = 500
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local recovery_start_turn
 local explore_after_recovery
 
 ---- Initialization ----
 function f_fully_recover.init()
-  Config = f_fully_recover.Config
+  C = f_fully_recover.Config
   recovery_start_turn = 0
   explore_after_recovery = false
 
@@ -72,7 +72,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(Config.rest_off_statuses) do
+  for _, s in ipairs(C.rest_off_statuses) do
     if status:find(s) and not should_ignore_status(s) then return false end
   end
 
@@ -82,11 +82,11 @@ end
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(Config.rest_off_statuses) do
+  for _, s in ipairs(C.rest_off_statuses) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(Config.rest_off_statuses, s)
+    util.remove(C.rest_off_statuses, s)
     BRC.mpr.error("  Removed: " .. s)
   end
 end

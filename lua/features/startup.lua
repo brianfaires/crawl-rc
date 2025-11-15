@@ -40,14 +40,14 @@ f_startup.Config = {
 } -- f_startup.Config (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 
 ---- Initialization ----
 function f_startup.init()
-  Config = f_startup.Config
+  C = f_startup.Config
 
-  if Config.macro_save_key and (Config.use_saved_training or Config.use_saved_config) then
-    BRC.opt.macro(Config.macro_save_key, "macro_brc_save_skills_and_config")
+  if C.macro_save_key and (C.use_saved_training or C.use_saved_config) then
+    BRC.opt.macro(C.macro_save_key, "macro_brc_save_skills_and_config")
   end
 end
 
@@ -102,9 +102,9 @@ end
 local function load_saved_training_targets()
   ensure_tables_exist()
 
-  return load_training_targets(you.race() .. " " .. you.class(), Config.prompt_before_load)
-    or (Config.allow_race_only_saves and load_training_targets(you.race(), true))
-    or (Config.allow_class_only_saves and load_training_targets(you.class(), true))
+  return load_training_targets(you.race() .. " " .. you.class(), C.prompt_before_load)
+    or (C.allow_race_only_saves and load_training_targets(you.race(), true))
+    or (C.allow_class_only_saves and load_training_targets(you.class(), true))
 end
 
 local function load_config(key, require_confirmation)
@@ -123,17 +123,17 @@ end
 local function load_saved_config()
   ensure_tables_exist()
 
-  return load_config(you.race() .. " " .. you.class(), Config.prompt_before_load)
-    or (Config.allow_race_only_saves and load_config(you.race(), true))
-    or (Config.allow_class_only_saves and load_config(you.class(), true))
+  return load_config(you.race() .. " " .. you.class(), C.prompt_before_load)
+    or (C.allow_race_only_saves and load_config(you.race(), true))
+    or (C.allow_class_only_saves and load_config(you.class(), true))
 end
 
 --- Save obj to storage_table, under keys: race/class/combo
 local function save_race_class(desc, parent, child)
   local keys = { }
   keys[1] = you.race() .. " " .. you.class() -- Always save combo
-  if Config.allow_race_only_saves then keys[#keys + 1] = you.race() end
-  if Config.allow_class_only_saves then keys[#keys + 1] = you.class() end
+  if C.allow_race_only_saves then keys[#keys + 1] = you.race() end
+  if C.allow_class_only_saves then keys[#keys + 1] = you.class() end
   for i, key in ipairs(keys) do
     if i == 1 -- don't prompt for combo
       or not parent[key] -- don't prompt if empty
@@ -150,15 +150,15 @@ local function load_generic_skill_targets()
   clear_skill_targets()
 
   local set_first = false
-  for _, skill_target in ipairs(Config.auto_set_skill_targets) do
+  for _, skill_target in ipairs(C.auto_set_skill_targets) do
     local skill, target = unpack(skill_target)
     if you.skill(skill) < target then
       you.set_training_target(skill, target)
-      if not set_first or not Config.focus_one_skill then
+      if not set_first or not C.focus_one_skill then
         you.train_skill(skill, 1)
         set_first = true
       end
-      if not Config.set_all_targets then break end
+      if not C.set_all_targets then break end
     end
   end
 end
@@ -197,21 +197,21 @@ end
 
 ---- Macro function: Save current skill targets (training levels and targets) for race/class ----
 function macro_brc_save_skills_and_config()
-  if not BRC.active or Config.disabled then
+  if not BRC.active or C.disabled then
     BRC.mpr.info("BRC not active, or startup feature is disabled. Training targets not saved.")
     return
   end
 
   ensure_tables_exist()
-  if Config.use_saved_training
+  if C.use_saved_training
     and you.race() ~= "Gnoll"
-    and (not Config.use_saved_config or BRC.mpr.yesno("Save training targets?", BRC.COL.magenta))
+    and (not C.use_saved_config or BRC.mpr.yesno("Save training targets?", BRC.COL.magenta))
   then
     save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
   end
 
-  if Config.use_saved_config
-    and (not Config.use_saved_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
+  if C.use_saved_config
+    and (not C.use_saved_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
   then
     local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
     save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
@@ -223,18 +223,18 @@ function f_startup.ready()
   if you.turns() ~= 0 then return end
 
   -- Check for saved config/targets in c_persist
-  if Config.use_saved_config then load_saved_config() end
-  if Config.use_saved_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
+  if C.use_saved_config then load_saved_config() end
+  if C.use_saved_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
     if load_saved_training_targets() then return end
   end
 
   -- If no saved targets were loaded, use other configured skill targets
-  if Config.auto_set_skill_targets and you.race() ~= "Gnoll" then
+  if C.auto_set_skill_targets and you.race() ~= "Gnoll" then
     load_generic_skill_targets()
   end
 
   -- Show skills menu: Disable for non-Wanderer Gnolls
-  if Config.show_skills_menu and (you.race() ~= "Gnoll" or you.class() == "Wanderer") then
+  if C.show_skills_menu and (you.race() ~= "Gnoll" or you.class() == "Wanderer") then
     BRC.util.do_cmd("CMD_DISPLAY_SKILLS")
   end
 end

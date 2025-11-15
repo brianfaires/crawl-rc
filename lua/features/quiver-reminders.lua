@@ -12,13 +12,13 @@ f_quiver_reminders.Config = {
 } -- f_quiver_reminders.Config (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local last_thrown
 local last_thrown_turn
 
 ---- Initialization ----
 function f_quiver_reminders.init()
-  Config = f_quiver_reminders.Config
+  C = f_quiver_reminders.Config
   last_thrown = nil
   last_thrown_turn = -1
 
@@ -42,11 +42,11 @@ end
 
 ---- Macro function: Fire from quiver ----
 function macro_brc_fire()
-  if not BRC.active or Config.disabled then return BRC.util.do_cmd("CMD_FIRE") end
+  if not BRC.active or C.disabled then return BRC.util.do_cmd("CMD_FIRE") end
   local quivered = items.fired_item()
   if not quivered then return end
 
-  if Config.confirm_consumables then
+  if C.confirm_consumables then
     local cls = quivered.class(true)
     if cls == "potion" or cls == "scroll" then
       local action = cls == "potion" and "drink" or "read"
@@ -56,7 +56,7 @@ function macro_brc_fire()
     end
   end
 
-  if you.turns() - last_thrown_turn <= Config.warn_diff_missile_turns then
+  if you.turns() - last_thrown_turn <= C.warn_diff_missile_turns then
     if last_thrown ~= quivered.name("qual") then
       local q = BRC.txt.lightgreen(quivered.name("qual"))
       if not BRC.mpr.yesno("Did you mean to throw " .. q .. "?") then

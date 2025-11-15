@@ -18,12 +18,12 @@ f_remind_id.Config = {
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local do_remind_id_check
 
 ---- Initialization ----
 function f_remind_id.init()
-  Config = f_remind_id.Config
+  C = f_remind_id.Config
   do_remind_id_check = true
 end
 
@@ -94,8 +94,8 @@ function f_remind_id.c_message(text, channel)
       local num_scrolls, slot_scrolls = get_max_stack("scroll")
       local num_pots, slot_pots = get_max_stack("potion")
       if
-        is_scroll and slot_scrolls == slot and num_scrolls >= Config.stop_on_scrolls_count
-        or is_potion and slot_pots == slot and num_pots >= Config.stop_on_pots_count
+        is_scroll and slot_scrolls == slot and num_scrolls >= C.stop_on_scrolls_count
+        or is_potion and slot_pots == slot and num_pots >= C.stop_on_pots_count
       then
         you.stop_activity()
       end
@@ -107,9 +107,9 @@ function f_remind_id.ready()
   if do_remind_id_check then
     do_remind_id_check = false
     if have_unid_item() and have_scroll_of_id() then
-      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), Config.emoji)
+      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), C.emoji)
       BRC.mpr.stop(msg)
-      if Config.read_id_hotkey then
+      if C.read_id_hotkey then
         BRC.Hotkey.set("read", "scroll of identify", false, function()
           for _, inv in ipairs(items.inventory()) do
             if inv.name("qual") == "scroll of identify" then

@@ -33,7 +33,7 @@ local SOLID_FEATURES = {
 } -- SOLID_FEATURES (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local swing_slot
 local turns_remaining
 local turns_to_rest
@@ -133,7 +133,7 @@ end
 
 local function is_monster(x, y)
   local mon = monster.get_monster_at(x, y)
-  return mon and not (Config.allow_plant_damage and mon.is_stationary())
+  return mon and not (C.allow_plant_damage and mon.is_stationary())
 end
 
 local function is_solid(x, y)
@@ -257,7 +257,7 @@ local function do_resting()
     crawl.sendkeys({ DIR_TO_VI[cur_x][cur_y] })
     crawl.flush_input()
 
-    if Config.walk_delay > 0 then crawl.delay(Config.walk_delay) end
+    if C.walk_delay > 0 then crawl.delay(C.walk_delay) end
   end
 
   turns_remaining = turns_remaining - 1
@@ -313,7 +313,7 @@ end
 
 ---- Initialization ----
 function f_bread_swinger.init()
-  Config = f_bread_swinger.Config
+  C = f_bread_swinger.Config
   reset_rest()
   BRC.opt.macro("5", "macro_brc_bread_swing")
 end
@@ -345,7 +345,7 @@ end
 function f_bread_swinger.autopickup(it)
   if it.is_useless or not it.is_weapon then return nil end
   local delay = BRC.eq.get_weap_delay(it)
-  if delay < Config.alert_slow_weap_min then return nil end
+  if delay < C.alert_slow_weap_min then return nil end
 
   if delay > bs_highest_delay and BRC.eq.get_hands(it) == 1 or BRC.you.free_offhand() then
     --crawl.mpr("FIRST: delay =" .. delay .. " bs_highest_delay =" .. bs_highest_delay)

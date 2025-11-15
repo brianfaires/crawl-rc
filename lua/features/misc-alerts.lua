@@ -23,17 +23,17 @@ ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local below_hp_threshold
 local prev_spell_levels
 
 ---- Initialization ----
 function f_misc_alerts.init()
-  Config = f_misc_alerts.Config
+  C = f_misc_alerts.Config
   below_hp_threshold = false
   prev_spell_levels = you.spell_levels()
 
-  if Config.save_with_msg then
+  if C.save_with_msg then
     BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
@@ -47,9 +47,9 @@ local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= Config.alert_low_hp_threshold * mhp then
+  elseif hp <= C.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. 100 * Config.alert_low_hp_threshold .. "%% HP"
+    local low_hp_msg = "Dropped below " .. 100 * C.alert_low_hp_threshold .. "%% HP"
     BRC.mpr.que_optmore(true, BRC.txt.wrap(BRC.txt.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
   end
 end
@@ -61,7 +61,7 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
-      if Config.remove_faith_hotkey then
+      if C.remove_faith_hotkey then
         BRC.Hotkey.set("remove", "amulet of faith", false, function()
           items.equipped_at("amulet"):remove()
         end)
@@ -102,7 +102,7 @@ end
 
 ---- Crawl hook functions ----
 function f_misc_alerts.ready()
-  if Config.alert_remove_faith then alert_remove_faith() end
-  if Config.alert_low_hp_threshold > 0 then alert_low_hp() end
-  if Config.alert_spell_level_changes then alert_spell_level_changes() end
+  if C.alert_remove_faith then alert_remove_faith() end
+  if C.alert_low_hp_threshold > 0 then alert_low_hp() end
+  if C.alert_spell_level_changes then alert_spell_level_changes() end
 end

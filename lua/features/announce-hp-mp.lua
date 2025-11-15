@@ -49,20 +49,20 @@ local ALWAYS_BOTTOM_SETTINGS = {
 } -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 
 ---- Initialization ----
 function f_announce_hp_mp.init()
-  Config = f_announce_hp_mp.Config
+  C = f_announce_hp_mp.Config
 
   ad_prev.hp = 0
   ad_prev.mhp = 0
   ad_prev.mp = 0
   ad_prev.mmp = 0
 
-  if Config.always_on_bottom then Config.Announce = ALWAYS_BOTTOM_SETTINGS end
+  if C.always_on_bottom then C.Announce = ALWAYS_BOTTOM_SETTINGS end
 
-  if Config.dmg_fm_threshold > 0 and Config.dmg_fm_threshold <= 0.5 then
+  if C.dmg_fm_threshold > 0 and C.dmg_fm_threshold <= 0.5 then
       BRC.opt.message_mute("Ouch! That really hurt!", true)
   end
 end
@@ -71,10 +71,10 @@ end
 local function create_meter(perc, emojis)
   perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
 
-  local num_halfpips = math.floor(perc * Config.meter_length * 2)
+  local num_halfpips = math.floor(perc * C.meter_length * 2)
   local num_full_emojis = math.floor(num_halfpips / 2)
   local num_part_emojis = num_halfpips % 2
-  local num_empty_emojis = Config.meter_length - num_full_emojis - num_part_emojis
+  local num_empty_emojis = C.meter_length - num_full_emojis - num_part_emojis
 
   return table.concat({
     emojis.BORDER or "",
@@ -115,7 +115,7 @@ end
 local function get_hp_message(hp_delta, mhp_delta)
   local hp, mhp = you.hp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, Config.HP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, C.HP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.txt.white(string.format(" HP[%s]", format_delta(hp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
 
@@ -124,7 +124,7 @@ local function get_hp_message(hp_delta, mhp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.txt.lightgrey(text)
   end
 
-  if not Config.Announce.same_line and hp == mhp then
+  if not C.Announce.same_line and hp == mhp then
     msg_tokens[#msg_tokens + 1] = BRC.txt.white(" (Full HP)")
   end
 
@@ -134,7 +134,7 @@ end
 local function get_mp_message(mp_delta, mmp_delta)
   local mp, mmp = you.mp()
   local msg_tokens = {}
-  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, Config.MP_METER)
+  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, C.MP_METER)
   msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
   msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
 
@@ -143,7 +143,7 @@ local function get_mp_message(mp_delta, mmp_delta)
     msg_tokens[#msg_tokens + 1] = BRC.txt.cyan(tok)
   end
 
-  if not Config.Announce.same_line and mp == mmp then
+  if not C.Announce.same_line and mp == mmp then
     msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(" (Full MP)")
   end
 
@@ -151,7 +151,7 @@ local function get_mp_message(mp_delta, mmp_delta)
 end
 
 local function last_msg_is_meter()
-  local meter_chars = Config.meter_length + 2 * #(BRC.txt.clean(Config.HP_METER.BORDER) or "")
+  local meter_chars = C.meter_length + 2 * #(BRC.txt.clean(C.HP_METER.BORDER) or "")
   local last_msg = crawl.messages(1)
   if not (last_msg and #last_msg > meter_chars + 4) then return false end
 
@@ -177,19 +177,19 @@ function f_announce_hp_mp.ready()
 
   if is_startup then return end
   if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
-  local is_very_low_hp = hp <= Config.Announce.very_low_hp * mhp
+  local is_very_low_hp = hp <= C.Announce.very_low_hp * mhp
 
   -- Determine which messages to show
   local do_hp = true
   local do_mp = true
-  if hp_delta <= 0 and hp_delta > -Config.Announce.hp_loss_limit then do_hp = false end
-  if hp_delta >= 0 and hp_delta < Config.Announce.hp_gain_limit then do_hp = false end
-  if mp_delta <= 0 and mp_delta > -Config.Announce.mp_loss_limit then do_mp = false end
-  if mp_delta >= 0 and mp_delta < Config.Announce.mp_gain_limit then do_mp = false end
+  if hp_delta <= 0 and hp_delta > -C.Announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta < C.Announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -C.Announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta < C.Announce.mp_gain_limit then do_mp = false end
 
   if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
   if not do_hp and not do_mp then return end
-  if Config.Announce.always_both then
+  if C.Announce.always_both then
     do_hp = true
     do_mp = true
   end
@@ -198,17 +198,17 @@ function f_announce_hp_mp.ready()
   local hp_msg = get_hp_message(hp_delta, mhp_delta)
   local mp_msg = get_mp_message(mp_delta, mmp_delta)
   local msg_tokens = {}
-  msg_tokens[1] = (Config.Announce.hp_first and do_hp) and hp_msg or mp_msg
+  msg_tokens[1] = (C.Announce.hp_first and do_hp) and hp_msg or mp_msg
   if do_mp and do_hp then
-    msg_tokens[2] = Config.Announce.same_line and string.rep(" ", 7) or "\n"
-    msg_tokens[3] = Config.Announce.hp_first and mp_msg or hp_msg
+    msg_tokens[2] = C.Announce.same_line and string.rep(" ", 7) or "\n"
+    msg_tokens[3] = C.Announce.hp_first and mp_msg or hp_msg
   end
   if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
 
   -- Add Damage-related warnings, when damage >= threshold
-  if damage_taken >= mhp * Config.dmg_flash_threshold then
+  if damage_taken >= mhp * C.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    if damage_taken >= (mhp * Config.dmg_fm_threshold) then
+    if damage_taken >= (mhp * C.dmg_fm_threshold) then
       local msg = BRC.txt.lightmagenta("MASSIVE DAMAGE")
       BRC.mpr.que_optmore(true, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
     else

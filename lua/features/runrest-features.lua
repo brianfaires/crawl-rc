@@ -29,14 +29,14 @@ local GAUNTLET_SEARCH_STRING = table.concat({
   }, GAUNTLET_CONCAT_STRING)
 
 ---- Local variables ----
-local Config
+local C -- config alias
 local stop_on_altars
 local stop_on_portals
 local stop_on_stairs
 
 ---- Initialization ----
 function f_runrest_features.init()
-  Config = f_runrest_features.Config
+  C = f_runrest_features.Config
   stop_on_altars = true
   stop_on_portals = true
   stop_on_stairs = false
@@ -51,9 +51,9 @@ local function is_explore_done_msg(text)
 end
 
 local function set_stairs_stop_state()
-  local should_be_active = Config.stop_on_pan_gates and you.branch() == "Pan"
-    or Config.stop_on_hell_stairs and BRC.you.in_hell(true)
-    or Config.after_shaft and rr_shaft_location ~= nil
+  local should_be_active = C.stop_on_pan_gates and you.branch() == "Pan"
+    or C.stop_on_hell_stairs and BRC.you.in_hell(true)
+    or C.after_shaft and rr_shaft_location ~= nil
 
   if stop_on_stairs and not should_be_active then
     stop_on_stairs = false
@@ -149,16 +149,16 @@ end
 
 ---- Crawl hook functions ----
 function f_runrest_features.c_message(text, _)
-  if Config.temple_search then c_message_temple(text) end
-  if Config.gauntlet_search then c_message_gauntlet(text) end
-  if Config.after_shaft then c_message_after_shaft(text) end
+  if C.temple_search then c_message_temple(text) end
+  if C.gauntlet_search then c_message_gauntlet(text) end
+  if C.after_shaft then c_message_after_shaft(text) end
 end
 
 function f_runrest_features.ready()
-  if Config.ignore_altars then ready_ignore_altars() end
-  if Config.ignore_portal_exits then ready_ignore_portals() end
-  if Config.temple_search then ready_temple_macro() end
-  if Config.gauntlet_search then ready_gauntlet_macro() end
-  if Config.after_shaft then ready_after_shaft() end
+  if C.ignore_altars then ready_ignore_altars() end
+  if C.ignore_portal_exits then ready_ignore_portals() end
+  if C.temple_search then ready_temple_macro() end
+  if C.gauntlet_search then ready_gauntlet_macro() end
+  if C.after_shaft then ready_after_shaft() end
   set_stairs_stop_state()
 end
