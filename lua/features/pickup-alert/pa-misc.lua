@@ -7,20 +7,22 @@
 f_pa_misc = {}
 
 ---- Local variables ----
-local Emoji
-local Alert
+local E -- emoji config alias
+local A -- alert config alias
+local M -- more config alias
 
 ---- Initialization ----
 function f_pa_misc.init()
-  Emoji = f_pickup_alert.Config.Emoji
-  Alert = f_pickup_alert.Config.Alert
+  E = f_pickup_alert.Config.Emoji
+  A = f_pickup_alert.Config.Alert
+  M = f_pickup_alert.Config.Alert.More
 end
 
 ---- Local functions ----
 
 ---- Public API ----
 function f_pa_misc.alert_orb(it)
-  return f_pickup_alert.do_alert(it, "New orb", Emoji.ORB, Alert.More.orbs)
+  return f_pickup_alert.do_alert(it, "New orb", E.ORB, M.orbs)
 end
 
 function f_pa_misc.alert_OTA(it)
@@ -30,7 +32,7 @@ function f_pa_misc.alert_OTA(it)
   local do_alert = true
 
   if BRC.it.is_shield(it) then
-    if you.skill("Shields") < Alert.OTA_require_skill.shield then return end
+    if you.skill("Shields") < A.OTA_require_skill.shield then return end
 
     -- Don't alert if already wearing a larger shield
     if ota_item == "buckler" then
@@ -40,14 +42,14 @@ function f_pa_misc.alert_OTA(it)
       if sh and sh.name("qual") == "tower shield" then do_alert = false end
     end
   elseif BRC.it.is_armour(it) then
-    if you.skill("Armour") < Alert.OTA_require_skill.armour then return end
+    if you.skill("Armour") < A.OTA_require_skill.armour then return end
   elseif it.is_weapon then
-    if you.skill(it.weap_skill) < Alert.OTA_require_skill.weapon then return end
+    if you.skill(it.weap_skill) < A.OTA_require_skill.weapon then return end
   end
 
   f_pa_data.remove_OTA(it)
   if not do_alert then return false end
-  return f_pickup_alert.do_alert(it, "Found first", Emoji.RARE_ITEM, Alert.More.one_time_alerts)
+  return f_pickup_alert.do_alert(it, "Found first", E.RARE_ITEM, M.one_time_alerts)
 end
 
 function f_pa_misc.alert_staff(it)
@@ -67,17 +69,17 @@ function f_pa_misc.alert_staff(it)
   end
 
   if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", Emoji.STAFF_RES, Alert.More.staff_resists)
+  return f_pickup_alert.do_alert(it, "Staff resistance", E.STAFF_RES, M.staff_resists)
 end
 
 function f_pa_misc.alert_talisman(it)
   if not it.is_identified then return false end -- Necessary to avoid firing on '\' menu
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact talisman", Emoji.TALISMAN, Alert.More.talismans)
+    return f_pickup_alert.do_alert(it, "Artefact talisman", E.TALISMAN, M.talismans)
   end
-  local required_skill = BRC.it.get_talisman_min_level(it) - Alert.talisman_lvl_diff
+  local required_skill = BRC.it.get_talisman_min_level(it) - A.talisman_lvl_diff
   if required_skill > BRC.you.shapeshifting_skill() then return false end
-  return f_pickup_alert.do_alert(it, "New talisman", Emoji.TALISMAN, Alert.More.talismans)
+  return f_pickup_alert.do_alert(it, "New talisman", E.TALISMAN, M.talismans)
 end
 
 function f_pa_misc.is_unneeded_ring(it)

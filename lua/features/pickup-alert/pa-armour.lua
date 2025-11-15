@@ -18,37 +18,37 @@ local HEAVIER = "Heavier"
 local LIGHTER = "Lighter"
 
 ---- Local variables ----
-local Heur
-local Emoji
-local Alert
-local More
+local H -- heuristic tuning alias
+local E -- emoji config alias
+local A -- alert config alias
+local M -- more config alias
 local ARMOUR_ALERT
 
 ---- Initialization ----
 function f_pa_armour.init()
-  Heur = f_pickup_alert.Config.Tuning.Armour
-  Emoji = f_pickup_alert.Config.Emoji
-  Alert = f_pickup_alert.Config.Alert
-  More = f_pickup_alert.Config.Alert.More
+  H = f_pickup_alert.Config.Tuning.Armour
+  E = f_pickup_alert.Config.Emoji
+  A = f_pickup_alert.Config.Alert
+  M = f_pickup_alert.Config.Alert.More
 
   ARMOUR_ALERT = {
-    artefact = { msg = "Artefact armour", emoji = Emoji.ARTEFACT },
-    [GAIN] = { msg = "Gain ego", emoji = Emoji.EGO },
-    [NEW] = { msg = "New ego", emoji = Emoji.EGO },
-    [DIFF] = { msg = "Diff ego", emoji = Emoji.EGO },
+    artefact = { msg = "Artefact armour", emoji = E.ARTEFACT },
+    [GAIN] = { msg = "Gain ego", emoji = E.EGO },
+    [NEW] = { msg = "New ego", emoji = E.EGO },
+    [DIFF] = { msg = "Diff ego", emoji = E.EGO },
     [LIGHTER] = {
-      [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = Emoji.EGO },
-      [NEW] = { msg = "New ego (Lighter armour)", emoji = Emoji.EGO },
-      [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = Emoji.EGO },
-      [SAME] = { msg = "Lighter armour", emoji = Emoji.LIGHTER },
-      [LOST] = { msg = "Lighter armour (Lost ego)", emoji = Emoji.LIGHTER },
+      [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = E.EGO },
+      [NEW] = { msg = "New ego (Lighter armour)", emoji = E.EGO },
+      [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = E.EGO },
+      [SAME] = { msg = "Lighter armour", emoji = E.LIGHTER },
+      [LOST] = { msg = "Lighter armour (Lost ego)", emoji = E.LIGHTER },
     },
     [HEAVIER] = {
-      [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = Emoji.EGO },
-      [NEW] = { msg = "New ego (Heavier armour)", emoji = Emoji.EGO },
-      [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = Emoji.EGO },
-      [SAME] = { msg = "Heavier Armour", emoji = Emoji.HEAVIER },
-      [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = Emoji.HEAVIER },
+      [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = E.EGO },
+      [NEW] = { msg = "New ego (Heavier armour)", emoji = E.EGO },
+      [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = E.EGO },
+      [SAME] = { msg = "Heavier Armour", emoji = E.HEAVIER },
+      [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = E.HEAVIER },
     },
   }
 end
@@ -84,7 +84,7 @@ local function get_adjusted_ev_delta(encumb_delta, ev_delta)
   encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
 
   -- Subtract weighted encumbrance penalty, to align with ev_delta (heavier is negative)
-  return ev_delta - encumb_delta * encumb_impact * Heur.encumb_penalty_weight
+  return ev_delta - encumb_delta * encumb_impact * H.encumb_penalty_weight
 end
 
 local function get_ego_change_type(cur_ego, it_ego)
@@ -104,12 +104,12 @@ end
 --- Decides if an ego change is good enough to skip the min_gain check.
 --- For DIFF egos (neutral change), true for Shields/Aux, configurable for body armour
 local function is_good_ego_change(ego_change, is_body_armour)
-  if ego_change == DIFF then return not is_body_armour or Heur.diff_body_ego_is_good end
+  if ego_change == DIFF then return not is_body_armour or H.diff_body_ego_is_good end
   return ego_change == GAIN or ego_change == NEW
 end
 
 local function send_armour_alert(it, t_alert)
-  return f_pickup_alert.do_alert(it, t_alert.msg, t_alert.emoji, More.body_armour)
+  return f_pickup_alert.do_alert(it, t_alert.msg, t_alert.emoji, M.body_armour)
 end
 
 -- Local functions: Pickup
@@ -190,14 +190,14 @@ end
 local function should_alert_body_armour(weight, gain, loss, ego_change)
   -- Check if armour stat trade-off meets configured ratio thresholds
   local meets_ratio = loss <= 0
-    or (gain / loss > Heur[weight][ego_change] / Alert.armour_sensitivity)
+    or (gain / loss > H[weight][ego_change] / A.armour_sensitivity)
   if not meets_ratio then return false end
 
   -- Additional ego-specific restrictions
   if ego_change == SAME or is_good_ego_change(ego_change, true) then
-    return loss <= Heur[weight].max_loss * Alert.armour_sensitivity
+    return loss <= H[weight].max_loss * A.armour_sensitivity
   else
-    return gain >= Heur[weight].min_gain / Alert.armour_sensitivity
+    return gain >= H[weight].min_gain / A.armour_sensitivity
   end
 end
 
@@ -215,7 +215,7 @@ local function alert_highest_ac(it)
     local itAC = BRC.eq.get_ac(it)
     if itAC > pa_high_score.ac then
       pa_high_score.ac = itAC
-      return f_pickup_alert.do_alert(it, "Highest AC", Emoji.STRONGEST, More.high_score_armour)
+      return f_pickup_alert.do_alert(it, "Highest AC", E.STRONGEST, M.high_score_armour)
     end
   end
 
@@ -242,7 +242,7 @@ local function alert_body_armour(it)
     if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
 
     local weight = encumb_delta < 0 and LIGHTER or HEAVIER
-    if math.abs(ac_delta + ev_delta) <= Heur[weight].ignore_small * Alert.armour_sensitivity then
+    if math.abs(ac_delta + ev_delta) <= H[weight].ignore_small * A.armour_sensitivity then
       BRC.mpr.debug("small change: AC:" .. ac_delta .. ", EV:" .. ev_delta)
       return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
     end
@@ -264,14 +264,14 @@ local function alert_body_armour(it)
 
   -- Check for record AC values or early-game ego armour
   if alert_highest_ac(it) then return true end
-  if it_ego and you.xl() <= Heur.early_xl then
-    return f_pickup_alert.do_alert(it, "Early armour", Emoji.EGO)
+  if it_ego and you.xl() <= H.early_xl then
+    return f_pickup_alert.do_alert(it, "Early armour", E.EGO)
   end
 end
 
 local function alert_shield(it)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact shield", Emoji.ARTEFACT, More.shields)
+    return f_pickup_alert.do_alert(it, "Artefact shield", E.ARTEFACT, M.shields)
   end
 
   -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
@@ -282,15 +282,15 @@ local function alert_shield(it)
   local ego_change = get_ego_change_type(BRC.eq.get_ego(cur), BRC.eq.get_ego(it))
   if is_good_ego_change(ego_change, false) then
     local alert_msg = BRC.txt.capitalize(ego_change):gsub("_", " ")
-    return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.shields)
+    return f_pickup_alert.do_alert(it, alert_msg, E.EGO, M.shields)
   elseif BRC.eq.get_sh(it) > BRC.eq.get_sh(cur) then
-    return f_pickup_alert.do_alert(it, "Higher SH", Emoji.STRONGER, More.shields)
+    return f_pickup_alert.do_alert(it, "Higher SH", E.STRONGER, M.shields)
   end
 end
 
 local function alert_aux_armour(it, unworn_inv_item)
   if it.artefact then
-    return f_pickup_alert.do_alert(it, "Artefact aux armour", Emoji.ARTEFACT, More.aux_armour)
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", E.ARTEFACT, M.aux_armour)
   end
 
   local all_equipped, num_slots = BRC.you.equipped_at(it)
@@ -299,7 +299,7 @@ local function alert_aux_armour(it, unworn_inv_item)
       all_equipped[#all_equipped + 1] = unworn_inv_item
     else
       -- Catch dangerous brands or items blocked by non-innate mutations
-      return f_pickup_alert.do_alert(it, "Aux armour", BRC.EMOJI.EXCLAMATION, More.aux_armour)
+      return f_pickup_alert.do_alert(it, "Aux armour", BRC.EMOJI.EXCLAMATION, M.aux_armour)
     end
   end
 
@@ -308,9 +308,9 @@ local function alert_aux_armour(it, unworn_inv_item)
     local ego_change = get_ego_change_type(BRC.eq.get_ego(cur), it_ego)
     if is_good_ego_change(ego_change, false) then
       local alert_msg = BRC.txt.capitalize(ego_change):gsub("_", " ")
-      return f_pickup_alert.do_alert(it, alert_msg, Emoji.EGO, More.aux_armour)
+      return f_pickup_alert.do_alert(it, alert_msg, E.EGO, M.aux_armour)
     elseif BRC.eq.get_ac(it) > BRC.eq.get_ac(cur) then
-      return f_pickup_alert.do_alert(it, "Higher AC", Emoji.STRONGER, More.aux_armour)
+      return f_pickup_alert.do_alert(it, "Higher AC", E.STRONGER, M.aux_armour)
     end
   end
 end

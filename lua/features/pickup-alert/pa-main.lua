@@ -10,12 +10,16 @@ f_pickup_alert.BRC_FEATURE_NAME = "pickup-alert"
 
 ---- Local variables ----
 local C -- config alias
+local A -- alert config alias
+local M -- more config alias
 local pause_pa_system
 local hold_alerts_for_next_turn
 
 ---- Initialization ----
 function f_pickup_alert.init()
   C = f_pickup_alert.Config
+  A = f_pickup_alert.Config.Alert
+  M = f_pickup_alert.Config.Alert.More
   pause_pa_system = false
   hold_alerts_for_next_turn = false
 
@@ -48,15 +52,15 @@ end
 ---- Local functions ----
 local function has_configured_force_more(it)
   if it.artefact then
-    if C.Alert.More.artefact then return true end
-    if C.Alert.More.trained_artefacts then
+    if M.artefact then return true end
+    if M.trained_artefacts then
       -- Accept artefacts with any relevant training, or no training required
       local s = BRC.you.skill_with(it)
       if s == nil or s > 0 then return true end
     end
   end
 
-  return C.Alert.More.armour_ego and BRC.it.is_armour(it) and BRC.eq.get_ego(it)
+  return M.armour_ego and BRC.it.is_armour(it) and BRC.eq.get_ego(it)
 end
 
 local function track_unique_egos(it)
@@ -90,20 +94,20 @@ local function check_and_trigger_alerts(it, unworn_aux_item)
   if f_pa_data.already_alerted(it) then return true end
 
   -- One-time alerts
-  if f_pa_misc and C.Alert.one_time and #C.Alert.one_time > 0 then
+  if f_pa_misc and A.one_time and #A.one_time > 0 then
     if f_pa_misc.alert_OTA(it) then return true end
   end
 
   -- Item-specific alerts
-  if BRC.it.is_magic_staff(it) and f_pa_misc and C.Alert.staff_resists then
+  if BRC.it.is_magic_staff(it) and f_pa_misc and A.staff_resists then
     if f_pa_misc.alert_staff(it) then return true end
-  elseif BRC.it.is_orb(it) and f_pa_misc and C.Alert.orbs then
+  elseif BRC.it.is_orb(it) and f_pa_misc and A.orbs then
     if f_pa_misc.alert_orb(it) then return true end
-  elseif BRC.it.is_talisman(it) and f_pa_misc and C.Alert.talismans then
+  elseif BRC.it.is_talisman(it) and f_pa_misc and A.talismans then
     if f_pa_misc.alert_talisman(it) then return true end
-  elseif BRC.it.is_armour(it) and f_pa_armour and C.Alert.armour_sensitivity > 0 then
+  elseif BRC.it.is_armour(it) and f_pa_armour and A.armour_sensitivity > 0 then
     if f_pa_armour.alert_armour(it, unworn_aux_item) then return true end
-  elseif it.is_weapon and f_pa_weapons and C.Alert.weapon_sensitivity > 0 then
+  elseif it.is_weapon and f_pa_weapons and A.weapon_sensitivity > 0 then
     if f_pa_weapons.alert_weapon(it) then return true end
   end
 
@@ -148,9 +152,9 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   -- Set hotkeys
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    if C.Alert.hotkey_pickup then BRC.Hotkey.pickup(it.name(), true) end
+    if A.hotkey_pickup then BRC.Hotkey.pickup(it.name(), true) end
   else
-    if C.Alert.hotkey_travel then BRC.Hotkey.waypoint(it.name()) end
+    if A.hotkey_travel then BRC.Hotkey.waypoint(it.name()) end
   end
 
   return true
