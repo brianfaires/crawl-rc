@@ -74,12 +74,16 @@ local function get_num_turns()
   return turns
 end
 
-local function do_alert(msg)
+local function do_alert(msg, it)
   local tokens = {}
-  tokens[1] = BRC.Config.emojis and "🍞" or BRC.txt.cyan("----")
-  tokens[#tokens + 1] = msg
+  tokens[1] = BRC.Config.emojis and "🍞 " or BRC.txt.cyan("---- ")
+  tokens[#tokens + 1] = msg .. ": "
+  tokens[#tokens + 1] = BRC.txt.cyan(it.name() .. " (")
+  tokens[#tokens + 1] = BRC.txt.lightmagenta(string.format("%.2f", BRC.eq.get_weap_delay(it)))
+  tokens[#tokens + 1] = BRC.txt.cyan(") ")
   tokens[#tokens + 1] = tokens[1]
   BRC.mpr.que(table.concat(tokens))
+  you.stop_activity()
 end
 
 -- Weapon functions
@@ -347,17 +351,15 @@ function f_bread_swinger.autopickup(it)
   local delay = BRC.eq.get_weap_delay(it)
   if delay < C.alert_slow_weap_min then return nil end
 
-  if delay > bs_highest_delay and BRC.eq.get_hands(it) == 1 or BRC.you.free_offhand() then
-    --crawl.mpr("FIRST: delay =" .. delay .. " bs_highest_delay =" .. bs_highest_delay)
+  if delay > bs_highest_delay and (BRC.eq.get_hands(it) == 1 or BRC.you.free_offhand()) then
     bs_highest_delay = delay
     if BRC.eq.get_hands(it) == 1 then bs_highest_delay_1h = delay end
-    do_alert("Found slowest weapon: " .. BRC.txt.lightmagenta(delay))
-    --crawl.mpr("AFTER: delay =" .. delay .. " bs_highest_delay =" .. bs_highest_delay)
+    do_alert("Found slowest weapon", it)
   elseif delay > bs_highest_delay_1h
     and BRC.eq.get_hands(it) == 1
     and not BRC.you.free_offhand()
   then
     bs_highest_delay_1h = delay
-    do_alert("Found slowest 1-handed weapon: " .. BRC.txt.lightmagenta(delay))
+    do_alert("Found slowest 1-handed weapon", it)
   end
 end
