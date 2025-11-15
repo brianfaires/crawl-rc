@@ -5002,9 +5002,9 @@ local function is_water(x, y)
   return feat and feat:contains("water") and not you.status("flying")
 end
 
-local function is_plant(x, y)
+local function is_monster(x, y)
   local mon = monster.get_monster_at(x, y)
-  return mon and mon.is_stationary() -- Close enough. We know you.feel_safe() == true
+  return mon and not (Config.allow_plant_damage and mon.is_stationary())
 end
 
 local function is_solid(x, y)
@@ -5026,25 +5026,23 @@ local function is_good_dir_swing(x, y)
   local weapon = items.equipped_at("Weapon")
   if not weapon then return false end
 
-  if Config.allow_plant_damage then
-    return weapon.is_ranged or not is_solid(x,y)
-  elseif weapon.is_ranged then
-    -- Confirm no plants in straight line
+  if weapon.is_ranged then
+    -- Confirm no monsters in straight line
     for i = 1, you.los() do
       local cur_x = i * x
       local cur_y = i * y
-      if is_plant(cur_x, cur_y) then return false end
+      if is_monster(cur_x, cur_y) then return false end
       if is_solid(cur_x, cur_y) then break end
     end
   elseif weapon.weap_skill:contains("Axes") then
-    -- Confirm no plants in adjacent squares
+    -- Confirm no monsters in adjacent squares
     for cur_x = -1, 1 do
       for cur_y = -1, 1 do
-        if is_plant(cur_x, cur_y) then return false end
+        if is_monster(cur_x, cur_y) then return false end
       end
     end
   else
-    return not is_solid(x, y) and not is_plant(x, y)
+    return not is_solid(x, y) and not is_monster(x, y)
   end
 
   return true
