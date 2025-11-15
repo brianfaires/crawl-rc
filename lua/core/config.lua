@@ -226,3 +226,6 @@ function BRC.serialize_config()
 
   return tokens
 end
+
+---- Initialize BRC.Config for debugging during startup + data.persist() calls ----
+override_table(BRC.Config, BRC.Configs.Default)
