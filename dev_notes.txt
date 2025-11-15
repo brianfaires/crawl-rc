@@ -1,8 +1,9 @@
-### 0.34 changes needed
-1. Items get auto-"inscribed" now in resists menu (using new terse name)
-1. [BUG] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
+### Misc
+1. [0.34] Items get auto-"inscribed" now in resists menu (using new terse name)
+1. [0.34] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
+1. [TEST] wield artefact; still get weapon alerts?  (seems like only if adding an unused hand)
 
-### To do list
+### To do features
 1. Config features:
   - Turncount:
     - auto-print name+qty when gold or item comes into view that would have been picked up

@@ -7,7 +7,7 @@
 f_dynamic_options = {}
 f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
 f_dynamic_options.Config = {
-  -- XL-based force more messages: active when XL <= specified level
+  --- XL-based force more messages: patterns active when XL <= specified level
   xl_force_mores = {
     { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
     { pattern = "You.*re more poisoned", xl = 7 },
@@ -16,12 +16,14 @@ f_dynamic_options.Config = {
     { pattern = "monster_warning:carrying a wand of", xl = 15 },
   },
 
+  --- Call each function for the corresponding race
   race_options = {
     Gnoll = function()
       BRC.opt.message_mute("intrinsic_gain:skill increases to level", true)
     end,
   },
 
+  --- Call each function for the corresponding class
   class_options = {
     Hunter = function()
       crawl.setopt("view_delay = 30")
@@ -31,6 +33,7 @@ f_dynamic_options.Config = {
     end,
   },
 
+  --- Call each function when joining/leaving a god
   god_options = {
     ["No God"] = function(joined)
       BRC.opt.force_more_message("Found.*the Ecumenical Temple", not joined)
@@ -131,7 +134,7 @@ local function set_skill_options()
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
-  if ignore_all_magic and (you.race() ~= "Mountain Dwarf") then
+  if ignore_all_magic and you.race() ~= "Mountain Dwarf" then
     local worn = items.equipped_at("armour")
     local encumbered_magic = worn and worn.encumbrance > (4 + you.skill("Armour") / 2)
     if ignore_advanced_magic ~= encumbered_magic then
