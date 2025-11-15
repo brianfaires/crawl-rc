@@ -566,6 +566,8 @@ end
 
 ---- Local constants ----
 BRC.VERSION = "1.2.0"
+BRC.MIN_CRAWL_VERSION = "0.34"
+
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
   c_answer_prompt = "c_answer_prompt",
@@ -807,6 +809,19 @@ function BRC.init(config)
   BRC.active = false
   _features = {}
   _hooks = {}
+
+  if not BRC.util.version_is_valid(BRC.MIN_CRAWL_VERSION) then
+    BRC.mpr.error(string.format(
+      "BRC v%s requires crawl v%s or higher. You are running %s.",
+      BRC.VERSION,
+      BRC.txt.yellow(BRC.MIN_CRAWL_VERSION),
+      BRC.txt.yellow(crawl.version("major"))
+    ))
+    if not BRC.mpr.yesno("Continue loading BRC anyway?", BRC.COL.yellow) then
+      BRC.mpr.brown("BRC deactivated.")
+      return false
+    end
+  end
 
   BRC.init_config(config)
   BRC.mpr.debug("Config loaded.")

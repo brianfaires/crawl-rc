@@ -71,3 +71,12 @@ end
 function BRC.util.is_map(value)
   return value and type(value) == "table" and next(value) ~= nil and #value == 0
 end
+
+--- Compare version (x.y) to crawl version. Return true if v1 <= crawl version.
+function BRC.util.version_is_valid(v1)
+  local crawl_v = crawl.version("major")
+  local cv_parts = { string.match(crawl_v, "([0-9]+)%.([0-9]+)" ) }
+  local v1_parts = { string.match(v1, "([0-9]+)%.([0-9]+)" ) }
+  return v1_parts[1] < cv_parts[1]
+    or (v1_parts[1] == cv_parts[1] and v1_parts[2] <= cv_parts[2])
+end

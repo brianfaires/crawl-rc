@@ -1954,6 +1954,15 @@ function BRC.util.is_map(value)
   return value and type(value) == "table" and next(value) ~= nil and #value == 0
 end
 
+--- Compare version (x.y) to crawl version. Return true if v1 <= crawl version.
+function BRC.util.version_is_valid(v1)
+  local crawl_v = crawl.version("major")
+  local cv_parts = { string.match(crawl_v, "([0-9]+)%.([0-9]+)" ) }
+  local v1_parts = { string.match(v1, "([0-9]+)%.([0-9]+)" ) }
+  return v1_parts[1] < cv_parts[1]
+    or (v1_parts[1] == cv_parts[1] and v1_parts[2] <= cv_parts[2])
+end
+
 }
 ############################### End lua/util/util.lua ###############################
 ##########################################################################################
@@ -3846,6 +3855,8 @@ end
 
 ---- Local constants ----
 BRC.VERSION = "1.2.0"
+BRC.MIN_CRAWL_VERSION = "0.34"
+
 local HOOK_FUNCTIONS = {
   autopickup = "autopickup",
   c_answer_prompt = "c_answer_prompt",
@@ -4087,6 +4098,19 @@ function BRC.init(config)
   BRC.active = false
   _features = {}
   _hooks = {}
+
+  if not BRC.util.version_is_valid(BRC.MIN_CRAWL_VERSION) then
+    BRC.mpr.error(string.format(
+      "BRC v%s requires crawl v%s or higher. You are running %s.",
+      BRC.VERSION,
+      BRC.txt.yellow(BRC.MIN_CRAWL_VERSION),
+      BRC.txt.yellow(crawl.version("major"))
+    ))
+    if not BRC.mpr.yesno("Continue loading BRC anyway?", BRC.COL.yellow) then
+      BRC.mpr.brown("BRC deactivated.")
+      return false
+    end
+  end
 
   BRC.init_config(config)
   BRC.mpr.debug("Config loaded.")
