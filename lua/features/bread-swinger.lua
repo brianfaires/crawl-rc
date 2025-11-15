@@ -173,7 +173,7 @@ local function is_good_dir_swing(x, y)
       end
     end
   else
-    return not is_plant(x, y)
+    return not is_solid(x, y) and not is_plant(x, y)
   end
 
   return true
@@ -208,10 +208,10 @@ end
 
 -- Resting
 local function set_rest_type()
-  local int_slot = items.letter_to_index(swing_slot)
+  local inv = items.inslot(items.letter_to_index(swing_slot))
   if not swing_slot
     or (not swing_item_wielded() and not weapon_can_swap())
-    or you.movement_cost() <= 10 * BRC.eq.get_weap_delay(items.inslot(int_slot))
+    or you.movement_cost and you.movement_cost() > 10 * BRC.eq.get_weap_delay(inv)
   then
     rest_type = "walk"
   else
@@ -231,7 +231,7 @@ local function verify_safe_rest()
     reset_rest("You can't rest with a hostile monster in view!")
     return false
   elseif rest_type == "walk" then
-    if you.movement_cost() <= 10 then
+    if you.movement_cost and you.movement_cost() <= 10 then
       reset_rest("You can't walk slowly right now!")
       return false
     elseif you.status("manticore barbs") then
@@ -345,14 +345,16 @@ function f_bread_swinger.ready()
 end
 
 function f_bread_swinger.autopickup(it)
-  if not BRC.it.is_weapon(it) then return nil end
+  if it.is_useless or not it.is_weapon then return nil end
   local delay = BRC.eq.get_weap_delay(it)
   if delay < Config.alert_slow_weap_min then return nil end
 
-  if delay > bs_highest_delay then
+  if delay > bs_highest_delay and BRC.eq.get_hands(it) == 1 or BRC.you.free_offhand() then
+    --crawl.mpr("FIRST: delay =" .. delay .. " bs_highest_delay =" .. bs_highest_delay)
     bs_highest_delay = delay
     if BRC.eq.get_hands(it) == 1 then bs_highest_delay_1h = delay end
     do_alert("Found slowest weapon: " .. BRC.txt.lightmagenta(delay))
+    --crawl.mpr("AFTER: delay =" .. delay .. " bs_highest_delay =" .. bs_highest_delay)
   elseif delay > bs_highest_delay_1h
     and BRC.eq.get_hands(it) == 1
     and not BRC.you.free_offhand()
