@@ -752,7 +752,6 @@ function BRC.register(f)
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
     if not f.Config then f.Config = {} end
-    --f.Config.disabled = false
   end
 
   BRC.mpr.debug(string.format("Registering %s...", BRC.txt.lightcyan(f.BRC_FEATURE_NAME)))

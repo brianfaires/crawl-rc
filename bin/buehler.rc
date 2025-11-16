@@ -4044,7 +4044,6 @@ function BRC.register(f)
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
     if not f.Config then f.Config = {} end
-    --f.Config.disabled = false
   end
 
   BRC.mpr.debug(string.format("Registering %s...", BRC.txt.lightcyan(f.BRC_FEATURE_NAME)))
@@ -4875,14 +4874,14 @@ end
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: announce-items
 -- @module f_announce_items
--- TODO
---
+-- Announce when items of certain classes come into view. Off by default.
+-- Intended and configured for turncount runs, to avoid having to manually check floor items.
 ---------------------------------------------------------------------------------------------------
 f_announce_items = {}
 f_announce_items.BRC_FEATURE_NAME = "announce-items"
 f_announce_items.Config = {
   disabled = true, -- Disabled by default. Intended only for turncount runs.
-  announced_classes = { "gold", "jewellery", "scroll", "potion", "wand", "misc" }
+  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
 } -- f_announce_items.Config (do not remove this comment)
 
 ---- Local variables ----

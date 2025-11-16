@@ -2,11 +2,11 @@
 1. [0.34] Items get auto-"inscribed" now in resists menu (using new terse name)
 1. [0.34] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. [TEST] wield artefact; still get weapon alerts?  (seems like only if adding an unused hand)
+1. [TEST] these needed?
+  - ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
+  - ae ^= <scrolls? of immolation, <scrolls? of poison
 
 ### To do features
-1. Config features:
-  - Turncount:
-    - auto-print name+qty when gold or item comes into view that would have been picked up
 1. In-game menu (change config, save settings, etc...)
 1. Update all RC files to be lua and use crawl.setopt()
 

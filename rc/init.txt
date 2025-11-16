@@ -37,6 +37,7 @@ lua_file = crawl-rc/lua/core/brc.lua
 ### Lua feature files ###
 lua_file = crawl-rc/lua/features/alert-monsters.lua
 lua_file = crawl-rc/lua/features/announce-hp-mp.lua
+lua_file = crawl-rc/lua/features/announce-items.lua
 lua_file = crawl-rc/lua/features/answer-prompts.lua
 lua_file = crawl-rc/lua/features/bread-swinger.lua
 lua_file = crawl-rc/lua/features/color-inscribe.lua

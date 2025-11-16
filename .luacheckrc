@@ -13,6 +13,7 @@ read_globals = {
   "items",
   "iter",
   "monster",
+  "options",
   "travel",
   "util",
   "view",
@@ -57,6 +58,7 @@ globals = {
   -- Feature modules
   "f_alert_monsters",
   "f_announce_hp_mp",
+  "f_announce_items",
   "f_answer_prompts",
   "f_bread_swinger",
   "f_color_inscribe",

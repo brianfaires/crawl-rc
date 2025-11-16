@@ -68,6 +68,10 @@ _(See header of each feature's lua code for more detail)_
 - **answer-prompts** - Auto-answer certain prompts
 - **exclude-dropped** - Exclude dropped items from autopickup
 
+### Turncount features
+- **alert-items** - Prints message describing floor items like gold/wands/books as they come into view
+- **bread-swinger** - Macros `5` to rest _X_ turns: Swinging your slowest weapon, or walking if slower
+
 ## Pickup & Alert Feature
 
 The `pickup-alert` feature provides smart autopickup that grabs items you definitely want,
