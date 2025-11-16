@@ -1,4 +1,4 @@
-### Misc
+### TODO
 1. [0.34] Items get auto-"inscribed" now in resists menu (using new terse name)
 1. [0.34] Arte items get extra inscriptions from autoinscribe.rc (need to add negative regex check)
 1. [TEST] wield artefact; still get weapon alerts?  (seems like only if adding an unused hand)
@@ -6,9 +6,6 @@
   - ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
   - ae ^= <scrolls? of immolation, <scrolls? of poison
 1. [TEST] standalone features
-
-### To do features
-1. Update macros to use lua for readable keycodes
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
