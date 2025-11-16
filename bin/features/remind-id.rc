@@ -1,0 +1,303 @@
+## Standalone BRC Feature: remind-id
+## Generated from: lua/features/remind-id.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+-- Standalone BRC Feature: remind-id
+
+-- Minimal BRC namespace
+BRC = {}
+BRC.Config = {
+  emojis = false,
+} -- BRC.Config
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- end
+
+-- BRC module tables
+BRC.Data = {}
+BRC.Hotkey = {}
+BRC.mpr = {}
+BRC.txt = {}
+BRC.util = {}
+
+-- BRC.Data module
+-- Minimal persistence system for standalone features
+local _persist_names = {}
+function BRC.Data.persist(name, default_value)
+  -- If variable already exists (from chk_lua_save), use it
+  -- Otherwise initialize from default
+  if _G[name] == nil then
+    if type(default_value) == "table" then
+      _G[name] = {}
+      for k, v in pairs(default_value) do
+        _G[name][k] = v
+      end
+    else
+      _G[name] = default_value
+    end
+  end
+  
+  -- Register for persistence (only once per variable)
+  local already_registered = false
+  for _, n in ipairs(_persist_names) do
+    if n == name then
+      already_registered = true
+      break
+    end
+  end
+  
+  if not already_registered then
+    _persist_names[#_persist_names + 1] = name
+    table.insert(chk_lua_save, function()
+      if _G[name] == nil then return "" end
+      local val_str
+      if type(_G[name]) == "table" then
+        -- Simple table serialization (basic, but works for simple tables)
+        local parts = {}
+        for k, v in pairs(_G[name]) do
+          if type(v) == "string" then
+            table.insert(parts, string.format('[%s] = "%s"', tostring(k), v))
+          else
+            table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))
+          end
+        end
+        val_str = "{" .. table.concat(parts, ", ") .. "}"
+      else
+        val_str = tostring(_G[name])
+      end
+      return name .. " = " .. val_str .. "\n"
+    end)
+  end
+  
+  return _G[name]
+end
+
+-- BRC.Hotkey module
+function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
+  local act = {
+    msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
+    action = f_action,
+    condition = f_condition or function() return true end,
+    cleanup = f_cleanup or function() end,
+  } -- act (do not remove this comment)
+
+  if push_front then
+    table.insert(action_queue, 1, act)
+  else
+    table.insert(action_queue, act)
+  end
+end
+
+
+-- BRC.mpr module
+function BRC.mpr.stop(msg, color, channel)
+  BRC.mpr[color or BRC.COL.lightgrey](msg, channel)
+  you.stop_activity()
+end
+
+-- BRC.mpr color functions
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+-- BRC.txt module
+function BRC.txt.get_pickup_info(text)
+  local cleaned = BRC.txt.clean(text)
+  if cleaned:sub(2, 4) ~= " - " then return nil end
+  return cleaned:sub(5, #cleaned), items.letter_to_index(cleaned:sub(1, 1))
+end
+
+function BRC.txt.clean(text)
+  if type(text) ~= "string" then return text end
+  return text:gsub("\n", ""):gsub("<[^>]*>", "")
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
+function BRC.txt.int2char(num)
+  return string.char(string.byte("a") + num)
+end
+
+-- BRC.txt color functions
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+-- BRC.util module
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+    crawl.flush_input()
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: remind-id
+-- @module f_remind_id
+-- Alerts a reminder to read scroll of ID, when carrying unidentified items.
+-- Before finding scroll of ID, stops explore when largest stack of un-ID'd scrolls/pots increases.
+---------------------------------------------------------------------------------------------------
+
+f_remind_id = {}
+
+f_remind_id.Config = {
+  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
+  stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
+  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
+  read_id_hotkey = true, -- Put read ID on hotkey
+} -- f_remind_id.Config (do not remove this comment)
+
+---- Persistent variables ----
+ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
+
+---- Local variables ----
+local C -- config alias
+local do_remind_id_check
+
+---- Initialization ----
+function f_remind_id.init()
+  C = f_remind_id.Config
+  do_remind_id_check = true
+end
+
+---- Local functions ----
+local function get_max_stack(class)
+  local max_stack_size = 0
+  local slot = nil
+  for _, inv in ipairs(items.inventory()) do
+    if inv.class(true) == class and not inv.is_identified then
+      if inv.quantity > max_stack_size then
+        max_stack_size = inv.quantity
+        slot = inv.slot
+      elseif inv.quantity == max_stack_size then
+        slot = nil -- If tied for max, no slot set a new max
+      end
+    end
+  end
+  return max_stack_size, slot
+end
+
+local function have_scroll_of_id()
+  return util.exists(items.inventory(), function(i)
+    return i.name("qual") == "scroll of identify"
+  end)
+end
+
+local function have_unid_item()
+  return util.exists(items.inventory(), function(i)
+    return not i.is_identified
+  end)
+end
+
+---- Crawl hook functions ----
+function f_remind_id.c_assign_invletter(it)
+  if
+    not it.is_identified and have_scroll_of_id()
+    or it.name("qual") == "scroll of identify" and have_unid_item()
+  then
+    you.stop_activity()
+    do_remind_id_check = true
+  end
+end
+
+function f_remind_id.c_message(text, channel)
+  if channel ~= "plain" then return end
+
+  if text:find("scrolls? of identify") then
+    ri_found_scroll_of_id = true
+    -- Don't re-trigger on dropping or on hotkey notification
+    text = BRC.txt.clean(text)
+    if not text:contains("ou drop ") and not text:contains("to read ") and have_unid_item() then
+      you.stop_activity()
+      do_remind_id_check = true
+    end
+  else
+    local name, slot = BRC.txt.get_pickup_info(text)
+    if not name then return end
+
+    local is_scroll = name:contains("scroll")
+    local is_potion = name:contains("potion")
+    if not (is_scroll or is_potion) then return end
+
+    if ri_found_scroll_of_id then
+      -- Check for pickup unidentified consumable
+      if not name:contains(" of ") then do_remind_id_check = true end
+    else
+      -- Check if max stack size increased
+      local num_scrolls, slot_scrolls = get_max_stack("scroll")
+      local num_pots, slot_pots = get_max_stack("potion")
+      if
+        is_scroll and slot_scrolls == slot and num_scrolls >= C.stop_on_scrolls_count
+        or is_potion and slot_pots == slot and num_pots >= C.stop_on_pots_count
+      then
+        you.stop_activity()
+      end
+    end
+  end
+end
+
+function f_remind_id.ready()
+  if do_remind_id_check then
+    do_remind_id_check = false
+    if have_unid_item() and have_scroll_of_id() then
+      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), C.emoji)
+      BRC.mpr.stop(msg)
+      if C.read_id_hotkey then
+        BRC.Hotkey.set("read", "scroll of identify", false, function()
+          for _, inv in ipairs(items.inventory()) do
+            if inv.name("qual") == "scroll of identify" then
+              BRC.util.do_cmd("CMD_READ")
+              crawl.sendkeys(BRC.txt.int2char(inv.slot))
+              crawl.flush_input()
+              return
+            end
+          end
+        end)
+      end
+    end
+  end
+end
+
+
+-- Crawl hook wrappers
+function c_assign_invletter(...)
+  if f_remind_id.c_assign_invletter then
+    return f_remind_id.c_assign_invletter(...)
+  end
+end
+function c_message(...)
+  if f_remind_id.c_message then
+    return f_remind_id.c_message(...)
+  end
+end
+function ready(...)
+  if f_remind_id.ready then
+    return f_remind_id.ready(...)
+  end
+end
+
+-- Initialize feature
+f_remind_id.init()
+
+}

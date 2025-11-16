@@ -1,0 +1,368 @@
+## Standalone BRC Feature: announce-hp-mp
+## Generated from: lua/features/announce-hp-mp.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+-- Standalone BRC Feature: announce-hp-mp
+
+-- Minimal BRC namespace
+BRC = {}
+BRC.Config = {
+  emojis = false,
+} -- BRC.Config
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- end
+BRC.EMOJI = {
+  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
+  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
+  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
+} -- end
+
+-- BRC module tables
+BRC.Data = {}
+BRC.mpr = {}
+BRC.opt = {}
+BRC.txt = {}
+
+-- BRC.Data module
+-- Minimal persistence system for standalone features
+local _persist_names = {}
+function BRC.Data.persist(name, default_value)
+  -- If variable already exists (from chk_lua_save), use it
+  -- Otherwise initialize from default
+  if _G[name] == nil then
+    if type(default_value) == "table" then
+      _G[name] = {}
+      for k, v in pairs(default_value) do
+        _G[name][k] = v
+      end
+    else
+      _G[name] = default_value
+    end
+  end
+  
+  -- Register for persistence (only once per variable)
+  local already_registered = false
+  for _, n in ipairs(_persist_names) do
+    if n == name then
+      already_registered = true
+      break
+    end
+  end
+  
+  if not already_registered then
+    _persist_names[#_persist_names + 1] = name
+    table.insert(chk_lua_save, function()
+      if _G[name] == nil then return "" end
+      local val_str
+      if type(_G[name]) == "table" then
+        -- Simple table serialization (basic, but works for simple tables)
+        local parts = {}
+        for k, v in pairs(_G[name]) do
+          if type(v) == "string" then
+            table.insert(parts, string.format('[%s] = "%s"', tostring(k), v))
+          else
+            table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))
+          end
+        end
+        val_str = "{" .. table.concat(parts, ", ") .. "}"
+      else
+        val_str = tostring(_G[name])
+      end
+      return name .. " = " .. val_str .. "\n"
+    end)
+  end
+  
+  return _G[name]
+end
+
+-- BRC.mpr module
+function BRC.mpr.que(msg, color, channel)
+  BRC.mpr.que_optmore(false, msg, color, channel)
+end
+
+function BRC.mpr.que_optmore(show_more, msg, color, channel)
+  for _, q in ipairs(_mpr_queue) do
+    if q.m == msg and q.ch == channel and q.more == show_more then return end
+  end
+  color = color or BRC.COL.lightgrey
+  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
+end
+
+-- BRC.mpr color functions
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+-- Message queue for BRC.mpr
+local _mpr_queue = {}
+
+-- BRC.opt module
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+
+-- BRC.txt module
+function BRC.txt.clean(text)
+  if type(text) ~= "string" then return text end
+  return text:gsub("\n", ""):gsub("<[^>]*>", "")
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
+-- BRC.txt color functions
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: announce-hp-mp
+-- @module f_announce_hp_mp
+-- @author magus, buehler
+-- Announce changes in HP/MP, with visual meters and additional warnings for severe damage.
+---------------------------------------------------------------------------------------------------
+
+f_announce_hp_mp = {}
+
+f_announce_hp_mp.Config = {
+  dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
+  dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
+  always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
+  meter_length = 5, -- Number of pips in each meter
+
+  Announce = {
+    hp_loss_limit = 1, -- Announce when HP loss >= this
+    hp_gain_limit = 4, -- Announce when HP gain >= this
+    mp_loss_limit = 1, -- Announce when MP loss >= this
+    mp_gain_limit = 2, -- Announce when MP gain >= this
+    hp_first = true, -- Show HP first in the message
+    same_line = true, -- Show HP/MP on the same line
+    always_both = true, -- If showing one, show both
+    very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
+  },
+
+  HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
+    BORDER = BRC.txt.white("|"),
+    FULL = BRC.txt.lightgreen("+"),
+    PART = BRC.txt.lightgrey("+"),
+    EMPTY = BRC.txt.darkgrey("-"),
+  },
+
+  MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
+    BORDER = BRC.txt.white("|"),
+    FULL = BRC.txt.lightblue("+"),
+    PART = BRC.txt.lightgrey("+"),
+    EMPTY = BRC.txt.darkgrey("-"),
+  },
+} -- f_announce_hp_mp.Config (do not remove this comment)
+
+---- Persistent variables ----
+ad_prev = BRC.Data.persist("ad_prev", { hp = 0, mhp = 0, mp = 0, mmp = 0 })
+
+---- Local constants ----
+local ALWAYS_BOTTOM_SETTINGS = {
+  hp_loss_limit = 0, hp_gain_limit = 0, mp_loss_limit = 0, mp_gain_limit = 0,
+  hp_first = true, same_line = true, always_both = true, very_low_hp = 0,
+} -- ALWAYS_BOTTOM_SETTINGS (do not remove this comment)
+
+---- Local variables ----
+local C -- config alias
+
+---- Initialization ----
+function f_announce_hp_mp.init()
+  C = f_announce_hp_mp.Config
+
+  ad_prev.hp = 0
+  ad_prev.mhp = 0
+  ad_prev.mp = 0
+  ad_prev.mmp = 0
+
+  if C.always_on_bottom then C.Announce = ALWAYS_BOTTOM_SETTINGS end
+
+  if C.dmg_fm_threshold > 0 and C.dmg_fm_threshold <= 0.5 then
+      BRC.opt.message_mute("Ouch! That really hurt!", true)
+  end
+end
+
+---- Local functions ----
+local function create_meter(perc, emojis)
+  perc = math.max(0, math.min(1, perc)) -- Clamp between 0 and 1
+
+  local num_halfpips = math.floor(perc * C.meter_length * 2)
+  local num_full_emojis = math.floor(num_halfpips / 2)
+  local num_part_emojis = num_halfpips % 2
+  local num_empty_emojis = C.meter_length - num_full_emojis - num_part_emojis
+
+  return table.concat({
+    emojis.BORDER or "",
+    string.rep(emojis.FULL, num_full_emojis),
+    string.rep(emojis.PART, num_part_emojis),
+    string.rep(emojis.EMPTY, num_empty_emojis),
+    emojis.BORDER or "",
+  })
+end
+
+local function format_delta(delta)
+  if delta > 0 then
+    return BRC.txt.green("+" .. delta)
+  elseif delta < 0 then
+    return BRC.txt.red(delta)
+  else
+    return BRC.txt.darkgrey("+0")
+  end
+end
+
+local function format_ratio(cur, max)
+  local color
+  if cur <= (max * 0.25) then
+    color = BRC.COL.lightred
+  elseif cur <= (max * 0.50) then
+    color = BRC.COL.red
+  elseif cur <= (max * 0.75) then
+    color = BRC.COL.yellow
+  elseif cur < max then
+    color = BRC.COL.white
+  else
+    color = BRC.COL.green
+  end
+
+  return BRC.txt[color](string.format(" -> %s/%s", cur, max))
+end
+
+local function get_hp_message(hp_delta, mhp_delta)
+  local hp, mhp = you.hp()
+  local msg_tokens = {}
+  msg_tokens[#msg_tokens + 1] = create_meter(hp / mhp, C.HP_METER)
+  msg_tokens[#msg_tokens + 1] = BRC.txt.white(string.format(" HP[%s]", format_delta(hp_delta)))
+  msg_tokens[#msg_tokens + 1] = format_ratio(hp, mhp)
+
+  if mhp_delta ~= 0 then
+    local text = string.format(" (%s max HP)", format_delta(mhp_delta))
+    msg_tokens[#msg_tokens + 1] = BRC.txt.lightgrey(text)
+  end
+
+  if not C.Announce.same_line and hp == mhp then
+    msg_tokens[#msg_tokens + 1] = BRC.txt.white(" (Full HP)")
+  end
+
+  return table.concat(msg_tokens)
+end
+
+local function get_mp_message(mp_delta, mmp_delta)
+  local mp, mmp = you.mp()
+  local msg_tokens = {}
+  msg_tokens[#msg_tokens + 1] = create_meter(mp / mmp, C.MP_METER)
+  msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(string.format(" MP[%s]", format_delta(mp_delta)))
+  msg_tokens[#msg_tokens + 1] = format_ratio(mp, mmp)
+
+  if mmp_delta ~= 0 then
+    local tok = string.format(" (%s max MP)", format_delta(mmp_delta))
+    msg_tokens[#msg_tokens + 1] = BRC.txt.cyan(tok)
+  end
+
+  if not C.Announce.same_line and mp == mmp then
+    msg_tokens[#msg_tokens + 1] = BRC.txt.lightcyan(" (Full MP)")
+  end
+
+  return table.concat(msg_tokens)
+end
+
+local function last_msg_is_meter()
+  local meter_chars = C.meter_length + 2 * #(BRC.txt.clean(C.HP_METER.BORDER) or "")
+  local last_msg = crawl.messages(1)
+  if not (last_msg and #last_msg > meter_chars + 4) then return false end
+
+  local s = last_msg:sub(meter_chars + 1, meter_chars + 4)
+  return s == " HP[" or s == " MP["
+end
+
+---- Crawl hook functions ----
+function f_announce_hp_mp.ready()
+  -- Update prev state first, so we can safely return early below
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
+  local is_startup = ad_prev.hp == 0
+  local hp_delta = hp - ad_prev.hp
+  local mp_delta = mp - ad_prev.mp
+  local mhp_delta = mhp - ad_prev.mhp
+  local mmp_delta = mmp - ad_prev.mmp
+  local damage_taken = mhp_delta - hp_delta
+  ad_prev.hp = hp
+  ad_prev.mhp = mhp
+  ad_prev.mp = mp
+  ad_prev.mmp = mmp
+
+  if is_startup then return end
+  if hp_delta == 0 and mp_delta == 0 and last_msg_is_meter() then return end
+  local is_very_low_hp = hp <= C.Announce.very_low_hp * mhp
+
+  -- Determine which messages to show
+  local do_hp = true
+  local do_mp = true
+  if hp_delta <= 0 and hp_delta > -C.Announce.hp_loss_limit then do_hp = false end
+  if hp_delta >= 0 and hp_delta < C.Announce.hp_gain_limit then do_hp = false end
+  if mp_delta <= 0 and mp_delta > -C.Announce.mp_loss_limit then do_mp = false end
+  if mp_delta >= 0 and mp_delta < C.Announce.mp_gain_limit then do_mp = false end
+
+  if not do_hp and is_very_low_hp and hp_delta ~= 0 then do_hp = true end
+  if not do_hp and not do_mp then return end
+  if C.Announce.always_both then
+    do_hp = true
+    do_mp = true
+  end
+
+  -- Put messages together
+  local hp_msg = get_hp_message(hp_delta, mhp_delta)
+  local mp_msg = get_mp_message(mp_delta, mmp_delta)
+  local msg_tokens = {}
+  msg_tokens[1] = (C.Announce.hp_first and do_hp) and hp_msg or mp_msg
+  if do_mp and do_hp then
+    msg_tokens[2] = C.Announce.same_line and string.rep(" ", 7) or "\n"
+    msg_tokens[3] = C.Announce.hp_first and mp_msg or hp_msg
+  end
+  if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
+
+  -- Add Damage-related warnings, when damage >= threshold
+  if damage_taken >= mhp * C.dmg_flash_threshold then
+    if is_very_low_hp then return end -- mute % HP alerts
+    if damage_taken >= (mhp * C.dmg_fm_threshold) then
+      local msg = BRC.txt.lightmagenta("MASSIVE DAMAGE")
+      BRC.mpr.que_optmore(true, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
+    else
+      local msg = BRC.txt.magenta("BIG DAMAGE")
+      BRC.mpr.que_optmore(false, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION))
+    end
+  end
+end
+
+
+-- Crawl hook wrappers
+function ready(...)
+  if f_announce_hp_mp.ready then
+    return f_announce_hp_mp.ready(...)
+  end
+end
+
+-- Initialize feature
+f_announce_hp_mp.init()
+
+}

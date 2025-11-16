@@ -1,0 +1,62 @@
+## Standalone BRC Feature: answer_prompts
+## Generated from: lua/features/answer-prompts.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+-- Standalone BRC Feature: answer_prompts
+
+-- Minimal BRC namespace
+BRC = {}
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- end
+
+-- BRC module tables
+BRC.mpr = {}
+
+-- BRC.mpr module
+-- BRC.mpr color functions
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: answer-prompts
+-- @module f_answer_prompts
+-- Automatically answer crawl prompts.
+---------------------------------------------------------------------------------------------------
+
+f_answer_prompts = {}
+
+
+---- Crawl hook functions ----
+function f_answer_prompts.c_answer_prompt(prompt)
+  if prompt == "Die?" then return false end
+  if prompt:contains("cheaper one?") and you.branch() ~= "Bazaar" then
+    BRC.mpr.yellow("Replacing shopping list items")
+    return true
+  end
+end
+
+
+-- Crawl hook wrappers
+function c_answer_prompt(...)
+  if f_answer_prompts.c_answer_prompt then
+    return f_answer_prompts.c_answer_prompt(...)
+  end
+end
+
+-- Initialize feature
+f_answer_prompts.init()
+
+}

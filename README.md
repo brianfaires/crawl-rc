@@ -66,6 +66,16 @@ _(disabled by default; enabled in the turncount config)_
 - **announce-items** - Prints messages describing floor items like gold/wands/books as they come into view 
 - **bread-swinger** - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
 
+---
+
+## Cherry-Picking Individual Features
+
+Want to use just one feature without the full BRC system? The script `build/standalone_feature.py` converts the feature modules to standalone files in `bin/features/` that can be copy-pasted into your RC. 
+
+**Remember to merge hooks if you already have them defined!**
+
+The generated files are always active and work independently of the full BRC system.
+
 ## Pickup & Alert Feature
 
 BRC's largest feature. It provides smart autopickup of item upgrades, and generates alerts for noteworthy items.
@@ -279,7 +289,8 @@ BRC.Configs.Testing = {
 bin/                    # Pre-built RC files
 ├── buehler.rc              # Core + all features (Use this for webtiles)
 ├── only_core.rc            # Core with no features
-├── only_pickup_alert.rc    # pickup-alert feature as a single file
+├── features/           # Each features file, as a self-contained version
+|   └── *.rc                # Each feature and its dependencies
 lua/                    # Lua files
 ├── core/                   # Core BRC system
 │   ├── brc.lua                 # Main coordinator
@@ -293,7 +304,7 @@ lua/                    # Lua files
 │   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
 │   └── ...                     # Other features
 rc/                     # RC file components
-build/                  # Scripts to generate bin/
+build/                  # Python scripts to generate bin/
 ```
 
 ---

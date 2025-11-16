@@ -1,0 +1,70 @@
+## Standalone BRC Feature: safe-consumables
+## Generated from: lua/features/safe-consumables.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+-- Standalone BRC Feature: safe-consumables
+
+-- Minimal BRC namespace
+BRC = {}
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-consumables
+-- @module f_safe_consumables
+-- Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
+---------------------------------------------------------------------------------------------------
+
+f_safe_consumables = {}
+
+
+---- Local constants ----
+local NO_INSCRIPTION_NEEDED = {
+  "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
+  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
+} -- NO_INSCRIPTION_NEEDED (do not remove this comment)
+
+---- Local functions ----
+local function inscription_needed(class, st)
+  if util.contains(NO_INSCRIPTION_NEEDED, st) then return false end
+  if class == "scroll" then
+    if st == "poison" then return you.res_poison() > 0 end
+    if st == "torment" then return you.torment_immune() end
+  end
+  return true
+end
+
+---- Crawl hook functions ----
+function f_safe_consumables.ready()
+  -- Add / Remove inscriptions as appropriate
+  for _, inv in ipairs(items.inventory()) do
+    local inv_class = inv.class(true)
+    if inv_class == "scroll" then
+      if inscription_needed(inv_class, inv.subtype()) then
+        if not inv.inscription:contains("!r") then inv.inscribe("!r") end
+      elseif inv.inscription:contains("!r") then
+        inv.inscribe(inv.inscription:gsub("%!r", ""), false)
+      end
+    elseif inv_class == "potion" then
+      if inscription_needed(inv_class, inv.subtype()) then
+        if not inv.inscription:contains("!q") then inv.inscribe("!q") end
+      elseif inv.inscription:contains("!q") then
+        inv.inscribe(inv.inscription:gsub("%!q", ""), false)
+      end
+    end
+  end
+end
+
+
+-- Crawl hook wrappers
+function ready(...)
+  if f_safe_consumables.ready then
+    return f_safe_consumables.ready(...)
+  end
+end
+
+-- Initialize feature
+f_safe_consumables.init()
+
+}

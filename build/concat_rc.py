@@ -1,14 +1,12 @@
 from pathlib import Path
 
 base_dir = Path(__file__).parent.parent
-processed_files = set()
 
 # Paths
 init_file = base_dir / "rc" / "init.txt"
 core_dir = base_dir / "lua" / "core"
 pickup_alert_dir = base_dir / "lua" / "features" / "pickup-alert"
 output_dir = base_dir / "bin"
-output_dir.mkdir(parents=True, exist_ok=True)
 
 # Patterns
 rc_prefix = "include = crawl-rc/"
@@ -40,7 +38,7 @@ def parse_include(line):
         return base_dir / line[len(lua_prefix):]
     return None
 
-def process_file(file_path, outfile):
+def process_file(file_path, outfile, processed_files):
     if file_path in processed_files:
         return
     processed_files.add(file_path)
@@ -56,7 +54,7 @@ def process_file(file_path, outfile):
             if line.startswith(rc_prefix) or line.startswith(lua_prefix):
                 include_path = parse_include(line.strip())
                 if include_path and include_path.exists() and include_path not in processed_files:
-                    process_file(include_path, outfile)
+                    process_file(include_path, outfile, processed_files)
                 else:
                     outfile.write(line)
             else:
@@ -66,19 +64,19 @@ def process_file(file_path, outfile):
             outfile.write("\n}")
         write_footer(file_path, outfile)
 
-def process_line(line, outfile):
+def process_line(line, outfile, processed_files):
     """Process a single line, handling includes and returns True if a file was processed."""
     if line.startswith(lua_prefix):
         include_path = parse_include(line.strip())
         if include_path and include_path.exists():
-            process_file(include_path, outfile)
+            process_file(include_path, outfile, processed_files)
             return True
         else:
             outfile.write(line)
     elif line.startswith(rc_prefix):
         include_path = parse_include(line.strip())
         if include_path and include_path.exists():
-            process_file(include_path, outfile)
+            process_file(include_path, outfile, processed_files)
             return True
         else:
             outfile.write(line)
@@ -86,44 +84,52 @@ def process_line(line, outfile):
         outfile.write(line)
     return False
 
-def process_init_file(infile, outfile):
+def process_init_file(infile, outfile, processed_files):
     resume = False
     # skip first 5 lines of init.txt, assuming they still start with ":crawl"
     for _ in range(5):
         line = infile.readline()
         if not (line.find("crawl.mpr(") or line.find("crawl.more()")):
-            resume = process_line(line, outfile)
+            resume = process_line(line, outfile, processed_files)
         
     # Process the rest of the lines
     for line in infile:
-        if process_line(line, outfile):
+        if process_line(line, outfile, processed_files):
             resume = True
         else:
             if resume:
                 write_resume(init_file, outfile)
                 resume = False
 
-print("Building buehler.rc...")
-with open(init_file, 'r') as infile:
-    with open(output_dir / "buehler.rc", 'w') as outfile:
-        process_init_file(infile, outfile)
+def main():
+    """Main entry point."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    processed_files = set()
+    
+    print("Building buehler.rc...")
+    with open(init_file, 'r') as infile:
+        with open(output_dir / "buehler.rc", 'w') as outfile:
+            process_init_file(infile, outfile, processed_files)
+    
+    print("Building core.rc...")
+    processed_files.clear()
+    with open(output_dir / "only_core.rc", 'w') as outfile:
+        outfile.write("## BRC Core files - Copy/paste any features above this line.\n")
+        for filename in [ "config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua" ]:
+            file_path = core_dir / filename
+            if file_path.exists():
+                process_file(file_path, outfile, processed_files)
+    
+    print("Building pickup-alert.rc...")
+    processed_files.clear()
+    with open(output_dir / "only_pickup_alert.rc", 'w') as outfile:
+        outfile.write("## BRC Pickup-alert feature - Copy/paste this file above only_core.rc.\n")
+        for filename in [ "pa-armour.lua", "pa-weapons.lua", "pa-misc.lua", "pa-data.lua", "pa-main.lua" ]:
+            file_path = pickup_alert_dir / filename
+            if file_path.exists():
+                process_file(file_path, outfile, processed_files)
+    
+    print(f"Done! processed_files {len(processed_files)} files.")
 
-print("Building core.rc...")
-processed_files.clear()
-with open(output_dir / "only_core.rc", 'w') as outfile:
-    outfile.write("## BRC Core files - Copy/paste any features above this line.\n")
-    for filename in [ "config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua" ]:
-        file_path = core_dir / filename
-        if file_path.exists():
-            process_file(file_path, outfile)
-
-print("Building pickup-alert.rc...")
-processed_files.clear()
-with open(output_dir / "only_pickup_alert.rc", 'w') as outfile:
-    outfile.write("## BRC Pickup-alert feature - Copy/paste this file above only_core.rc.\n")
-    for filename in [ "pa-armour.lua", "pa-weapons.lua", "pa-misc.lua", "pa-data.lua", "pa-main.lua" ]:
-        file_path = pickup_alert_dir / filename
-        if file_path.exists():
-            process_file(file_path, outfile)
-
-print(f"Done! processed_files {len(processed_files)} files.")
+if __name__ == "__main__":
+    main()

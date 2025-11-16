@@ -5,10 +5,10 @@
 1. [TEST] these needed?
   - ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
   - ae ^= <scrolls? of immolation, <scrolls? of poison
+1. [TEST] standalone features
 
 ### To do features
-1. In-game menu (change config, save settings, etc...)
-1. Update all RC files to be lua and use crawl.setopt()
+1. Update macros to use lua for readable keycodes
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua

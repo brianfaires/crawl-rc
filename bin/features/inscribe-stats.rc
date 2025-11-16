@@ -1,0 +1,186 @@
+## Standalone BRC Feature: inscribe-stats
+## Generated from: lua/features/inscribe-stats.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+-- Standalone BRC Feature: inscribe-stats
+
+-- Minimal BRC namespace
+BRC = {}
+
+-- BRC Constants
+BRC.DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg for non-elemental brands
+  branded = 3, -- Include full brand dmg
+  scoring = 4, -- Include boosts for non-damaging brands
+} -- end
+
+-- BRC module tables
+BRC.eq = {}
+BRC.it = {}
+
+-- BRC.eq module
+function BRC.eq.arm_stats(it)
+  if not BRC.it.is_armour(it) then return "", "" end
+
+  if BRC.it.is_shield(it) then
+    local sh_delta, ev_delta = get_delta_sh_ev(it)
+    local sh_str = format_stat("SH", sh_delta, it.equipped)
+    local ev_str = format_stat("EV", ev_delta, it.equipped)
+    return sh_str, ev_str
+  else
+    local ac_delta, ev_delta = get_delta_ac_ev(it)
+    local ac_str = format_stat("AC", ac_delta, it.equipped)
+    if not BRC.it.is_body_armour(it) then return ac_str end
+    local ev_str = format_stat("EV", ev_delta, it.equipped)
+    return ac_str, ev_str
+  end
+end
+
+function BRC.eq.wpn_stats(it, dmg_type)
+  if not it.is_weapon then return end
+  if not dmg_type then
+    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
+      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    else
+      dmg_type = BRC.DMG_TYPE.plain
+    end
+  end
+
+  local dmg = format_dmg(BRC.eq.get_avg_dmg(it, dmg_type))
+  local delay = BRC.eq.get_weap_delay(it)
+  local delay_str = string.format("%.1f", delay)
+  if delay < 1 then
+    delay_str = string.format("%.2f", delay)
+    delay_str = delay_str:sub(2, #delay_str)
+  end
+
+  local dps = format_dmg(dmg / delay)
+  local acc = it.accuracy + (it.plus or 0)
+  if acc >= 0 then acc = "+" .. acc end
+
+  --TODO: This would be nice if it worked in all UIs
+  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
+  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+end
+
+
+-- BRC.it module
+function BRC.it.is_armour(it, include_orbs)
+  return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
+end
+
+function BRC.it.is_scarf(it)
+  return BRC.it.is_armour(it) and it.subtype() == "cloak" and it.name():contains("scarf")
+end
+
+function BRC.it.is_shield(it)
+  return it and it.is_shield()
+end
+
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: inscribe-stats
+-- @module f_inscribe_stats
+-- Inscribes and updates weapon DPS/dmg/delay, and armour AC/EV/SH, for items in inventory.
+---------------------------------------------------------------------------------------------------
+
+f_inscribe_stats = {}
+
+f_inscribe_stats.Config = {
+  inscribe_weapons = true, -- Inscribe weapon stats on pickup
+  inscribe_armour = true, -- Inscribe armour stats on pickup
+  dmg_type = BRC.DMG_TYPE.unbranded,
+} -- f_inscribe_stats.Config (do not remove this comment)
+
+---- Local constants ----
+local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
+
+---- Local functions ----
+local function inscribe_armour_stats(it)
+  local abbr = BRC.it.is_shield(it) and "SH" or "AC"
+  local ac_or_sh, ev = BRC.eq.arm_stats(it)
+  local sign_change = false
+
+  local new_insc
+  if it.inscription:find(abbr .. NUM_PATTERN) then
+    new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, ac_or_sh)
+    if not it.inscription:contains(ac_or_sh:sub(1, 3)) then sign_change = true end
+
+    if ev and ev ~= "" then
+      new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
+      if not it.inscription:contains(ev:sub(1, 3)) then sign_change = true end
+    end
+  else
+    new_insc = ac_or_sh
+    if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
+    if it.inscription and it.inscription ~= "" then
+      new_insc = string.format("%s; %s", new_insc, it.inscription)
+    end
+  end
+
+  it.inscribe(new_insc, false)
+
+  -- If f_color_inscribe is enabled, update the color
+  if
+    sign_change
+    and f_color_inscribe
+    and f_color_inscribe.Config
+    and not f_color_inscribe.Config.disabled
+    and f_color_inscribe.colorize
+  then
+    f_color_inscribe.colorize(it)
+  end
+end
+
+local function inscribe_weapon_stats(it)
+  local orig_inscr = it.inscription
+  local dps_inscr = BRC.eq.wpn_stats(it, BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type])
+  local prefix, suffix = "", ""
+
+  local idx = orig_inscr:find("DPS:", 1, true)
+  if idx then
+    if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
+    if idx + #dps_inscr - 1 < #orig_inscr then
+      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
+    end
+  elseif #orig_inscr > 0 then
+    suffix = "; " .. orig_inscr
+  end
+
+  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
+end
+
+---- Crawl hook functions ----
+function f_inscribe_stats.do_stat_inscription(it)
+  if f_inscribe_stats.Config.inscribe_weapons and it.is_weapon then
+    inscribe_weapon_stats(it)
+  elseif f_inscribe_stats.Config.inscribe_armour
+    and BRC.it.is_armour(it)
+    and not BRC.it.is_scarf(it)
+  then
+    inscribe_armour_stats(it)
+  end
+end
+
+function f_inscribe_stats.ready()
+  for _, inv in ipairs(items.inventory()) do
+    f_inscribe_stats.do_stat_inscription(inv)
+  end
+end
+
+
+-- Crawl hook wrappers
+function ready(...)
+  if f_inscribe_stats.ready then
+    return f_inscribe_stats.ready(...)
+  end
+end
+
+-- Initialize feature
+f_inscribe_stats.init()
+
+}

@@ -1,0 +1,319 @@
+## Standalone BRC Feature: fully-recover
+## Generated from: lua/features/fully-recover.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+-- Standalone BRC Feature: fully-recover
+
+-- Minimal BRC namespace
+BRC = {}
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- end
+
+-- BRC module tables
+BRC.mpr = {}
+BRC.opt = {}
+BRC.txt = {}
+BRC.util = {}
+BRC.you = {}
+
+-- BRC.mpr module
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
+-- BRC.mpr color functions
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+-- BRC.opt module
+function BRC.opt.single_turn_mute(pattern)
+  BRC.opt.message_mute(pattern, true)
+  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
+end
+
+function BRC.opt.macro(key, function_name)
+  if type(_G[function_name]) ~= "function" then
+    BRC.mpr.error("Function %s is not a global function", function_name)
+    return
+  end
+
+  -- Format msg for debugging and keycode for crawl.setopt()
+  local key_str = nil
+  if type(key) == "number" then
+    -- Try to convert to key name for better debug msg
+    for k, v in pairs(BRC.KEYS) do
+      if v == key then
+        key_str = "<<< " .. k .. " >>"
+        break
+      end
+    end
+    -- Format keycode string for crawl.setopt()
+    key = "\\{" .. key .. "}"
+    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
+  end
+
+  -- The << >> formatting protects against crawl thinking '<' is a tag
+  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
+
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+
+  BRC.mpr.debug(
+    string.format(
+      "Assigned macro: %s to key: %s",
+      BRC.txt.magenta(function_name .. "()"),
+      BRC.txt.lightred(key_str)
+    )
+  )
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+function BRC.opt.runrest_ignore_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
+end
+
+
+-- BRC.txt module
+-- BRC.txt color functions
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+-- BRC.util module
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+    crawl.flush_input()
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+
+-- BRC.you module
+function BRC.you.by_slimy_wall()
+  for x = -1, 1 do
+    for y = -1, 1 do
+      if view.feature_at(x, y) == "slimy_wall" then return true end
+    end
+  end
+  return false
+end
+
+function BRC.you.zero_stat()
+  return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: fully-recover
+-- @module f_fully_recover
+-- Rests until no negative duration statuses. Doesn't stop rest on each status expiration.
+-- @todo Can remove when crawl's explore_auto_rest_status setting reaches feature parity.
+---------------------------------------------------------------------------------------------------
+
+f_fully_recover = {}
+
+f_fully_recover.Config = {
+  rest_off_statuses = { -- Keep resting until these statuses are gone
+    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
+    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
+  },
+} -- f_fully_recover.Config (do not remove this comment)
+
+---- Local constants ----
+local MAX_TURNS_TO_WAIT = 500
+
+---- Local variables ----
+local C -- config alias
+local recovery_start_turn
+local explore_after_recovery
+
+---- Initialization ----
+function f_fully_recover.init()
+  C = f_fully_recover.Config
+  recovery_start_turn = 0
+  explore_after_recovery = false
+
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.runrest_ignore_message("recovery:.*", true)
+  BRC.opt.runrest_ignore_message("duration:.*", true)
+  BRC.opt.message_mute("^HP restored", true)
+  BRC.opt.message_mute("Magic restored", true)
+end
+
+---- Local functions ----
+local function abort_fully_recover()
+  recovery_start_turn = 0
+  explore_after_recovery = false
+  you.stop_activity()
+end
+
+local function finish_fully_recover()
+  local turns = you.turns() - recovery_start_turn
+  BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
+
+  recovery_start_turn = 0
+  you.stop_activity()
+
+  if explore_after_recovery then
+    explore_after_recovery = false
+    BRC.util.do_cmd("CMD_EXPLORE")
+  end
+end
+
+local function should_ignore_status(s)
+  if s == "corroded" then
+    return BRC.you.by_slimy_wall() or you.branch() == "Dis"
+  elseif s == "slowed" then
+    return BRC.you.zero_stat()
+  end
+  return false
+end
+
+local function fully_recovered()
+  if you.contaminated() > 0 then return false end
+  local hp, mhp = you.hp()
+  local mp, mmp = you.mp()
+  if hp ~= mhp then return false end
+  if mp ~= mmp then return false end
+
+  local status = you.status()
+  for _, s in ipairs(C.rest_off_statuses) do
+    if status:find(s) and not should_ignore_status(s) then return false end
+  end
+
+  return true
+end
+
+local function remove_statuses_from_config()
+  local status = you.status()
+  local to_remove = {}
+  for _, s in ipairs(C.rest_off_statuses) do
+    if status:find(s) then table.insert(to_remove, s) end
+  end
+  for _, s in ipairs(to_remove) do
+    util.remove(C.rest_off_statuses, s)
+    BRC.mpr.error("  Removed: " .. s)
+  end
+end
+
+local function start_fully_recover()
+  recovery_start_turn = you.turns()
+  BRC.opt.single_turn_mute("You start waiting.")
+end
+
+---- Macro function: Attach full recovery to auto-explore ----
+function macro_brc_explore()
+  if not BRC.active or f_fully_recover.Config.disabled then
+    return BRC.util.do_cmd("CMD_EXPLORE")
+  end
+
+  if fully_recovered() then
+    if recovery_start_turn > 0 then
+      finish_fully_recover()
+    else
+      BRC.util.do_cmd("CMD_EXPLORE")
+    end
+  else
+    if you.feel_safe() then explore_after_recovery = true end
+    BRC.util.do_cmd("CMD_REST")
+  end
+end
+
+---- Crawl hook functions ----
+function f_fully_recover.c_message(text, channel)
+  if channel == "plain" then
+    if text:contains("ou start waiting") or text:contains("ou start resting") then
+      if not fully_recovered() then start_fully_recover() end
+    end
+  elseif recovery_start_turn > 0 then
+    if channel == "timed_portal" then
+      abort_fully_recover()
+    elseif fully_recovered() then
+      finish_fully_recover()
+    end
+  end
+end
+
+function f_fully_recover.ready()
+  if recovery_start_turn > 0 then
+    if fully_recovered() then
+      finish_fully_recover()
+    elseif not you.feel_safe() then
+      abort_fully_recover()
+    elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
+      BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
+      BRC.mpr.error("f_fully_recover.Config.rest_off_statuses:")
+      remove_statuses_from_config()
+      abort_fully_recover()
+    else
+      BRC.util.do_cmd("CMD_SAFE_WAIT")
+    end
+  else
+    explore_after_recovery = false
+  end
+end
+
+
+-- Crawl hook wrappers
+function c_message(...)
+  if f_fully_recover.c_message then
+    return f_fully_recover.c_message(...)
+  end
+end
+function ready(...)
+  if f_fully_recover.ready then
+    return f_fully_recover.ready(...)
+  end
+end
+
+-- Initialize feature
+f_fully_recover.init()
+
+}

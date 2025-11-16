@@ -1069,10 +1069,10 @@ macros += M \{4} \{7}>
 
 # Numpad keymaps
 macros += K \{-1019} f
+macros += K \{-1012} 1
+macros += K \{-1015} 2
 macros += K \{-1018} 3
 macros += K \{-1016} \{9}
-macros += K \{-1015} 2
-macros += K \{-1012} 1
 macros += K \{-1010} o
 macros += K \{-1000} .
 macros += K \{-247} 5

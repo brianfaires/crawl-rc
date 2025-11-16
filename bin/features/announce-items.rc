@@ -1,0 +1,104 @@
+## Standalone BRC Feature: announce-items
+## Generated from: lua/features/announce-items.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+-- Standalone BRC Feature: announce-items
+
+-- Minimal BRC namespace
+BRC = {}
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- end
+
+-- BRC module tables
+BRC.txt = {}
+
+-- BRC.txt module
+-- BRC.txt color functions
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: announce-items
+-- @module f_announce_items
+-- Announce when items of certain classes come into view. Off by default.
+-- Intended and configured for turncount runs, to avoid having to manually check floor items.
+---------------------------------------------------------------------------------------------------
+f_announce_items = {}
+
+f_announce_items.Config = {
+  disabled = false, -- Disabled by default. Intended only for turncount runs.
+  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+} -- f_announce_items.Config (do not remove this comment)
+
+---- Local variables ----
+local los_items
+local prev_item_names
+
+---- Initialization ----
+function f_announce_items.init()
+  los_items = {}
+  prev_item_names = {}
+end
+
+---- Local functions ----
+local function announce_item(it)
+  local class = it.class(true):lower()
+  if util.contains(f_announce_items.Config.announced_classes, class) then
+    crawl.mpr(BRC.txt.white("You see: ") .. it.name())
+  end
+end
+
+---- Crawl hook functions ----
+function f_announce_items.ready()
+  los_items = {}
+  local r = you.los()
+  for x = -r, r do
+    for y = -r, r do
+      if you.see_cell(x, y) then
+        local items_xy = items.get_items_at(x, y)
+        if items_xy and #items_xy > 0 then
+          for _, it in ipairs(items_xy) do
+            los_items[#los_items+1] = it
+          end
+        end
+      end
+    end
+  end
+
+  for _, it in ipairs(los_items) do
+    if not util.contains(prev_item_names, it.name()) then
+      announce_item(it)
+    end
+  end
+
+  -- Save names for comparison
+  prev_item_names = {}
+  for _, it in ipairs(los_items) do
+    prev_item_names[#prev_item_names+1] = it.name()
+  end
+end
+
+
+-- Crawl hook wrappers
+function ready(...)
+  if f_announce_items.ready then
+    return f_announce_items.ready(...)
+  end
+end
+
+-- Initialize feature
+f_announce_items.init()
+
+}
