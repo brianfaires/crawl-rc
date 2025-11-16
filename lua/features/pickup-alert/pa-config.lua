@@ -22,6 +22,8 @@ f_pickup_alert.Config.Alert = {
   first_ranged = true,
   first_polearm = true,
 
+  autopickup_disabled = true, -- If autopickup is off, alert for items that would be autopicked up
+
   hotkey_travel = true,
   hotkey_pickup = true,
 
@@ -59,6 +61,7 @@ f_pickup_alert.Config.Alert = {
     orbs = false,
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false,
+    autopickup_disabled = false, -- Alerts for autopickup items, when autopickup is disabled
   },
 } -- f_pickup_alert.Config.Alert (do not remove this comment)
 
@@ -172,4 +175,6 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   STRONGEST = "💪💪",
   LIGHTER = "⏬",
   HEAVIER = "⏫",
+
+  AUTOPICKUP = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)

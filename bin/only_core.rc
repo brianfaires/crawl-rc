@@ -597,7 +597,7 @@ end
 
 local function feature_is_disabled(f)
   local main = BRC.Config[f.BRC_FEATURE_NAME]
-  if main and main.disabled == false then return false end
+  if main and main.disabled == false then return false end -- catch override not yet applied
   return (f.Config and f.Config.disabled) or (main and main.disabled)
 end
 
@@ -752,7 +752,7 @@ function BRC.register(f)
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
     if not f.Config then f.Config = {} end
-    f.Config.disabled = false
+    --f.Config.disabled = false
   end
 
   BRC.mpr.debug(string.format("Registering %s...", BRC.txt.lightcyan(f.BRC_FEATURE_NAME)))

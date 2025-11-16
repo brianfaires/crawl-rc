@@ -1105,6 +1105,15 @@ function f_pickup_alert.init()
 end
 
 ---- Local functions ----
+local function do_autopickup(it)
+  local autopick_on = options.autopick_on and options.autopick_on:lower() == "true"
+  if not autopick_on and A.autopickup_disabled and not f_pa_data.already_alerted(it) then
+    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP, M.autopickup_disabled)
+  end
+
+  return true
+end
+
 local function has_configured_force_more(it)
   if it.artefact then
     if M.artefact then return true end
@@ -1233,11 +1242,11 @@ function f_pickup_alert.autopickup(it, _)
     if not unworn_aux_item then return end
   else
     if BRC.it.is_armour(it) then
-      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return true end
+      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return do_autopickup(it) end
     elseif BRC.it.is_magic_staff(it) then
-      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return true end
+      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return do_autopickup(it) end
     elseif it.is_weapon then
-      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return true end
+      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return do_autopickup(it) end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
     end

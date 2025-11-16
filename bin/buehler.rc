@@ -239,6 +239,9 @@ brc_config_turncount = {
   ["alert-monsters"] = {
     sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   },
+  ["announce-items"] = {
+    disabled = false,
+  },
   ["bread-swinger"] = {
     disabled = false,
   },
@@ -249,7 +252,7 @@ brc_config_turncount = {
 
   init = function()
     crawl.setopt("show_game_time = false")
-    BRC.util.do_cmd("CMD_TOGGLE_AUTOPICKUP")
+    crawl.setopt("autopick_on = false")
   end,
 } -- brc_config_turncount (do not remove this comment)
 
@@ -3886,7 +3889,7 @@ end
 
 local function feature_is_disabled(f)
   local main = BRC.Config[f.BRC_FEATURE_NAME]
-  if main and main.disabled == false then return false end
+  if main and main.disabled == false then return false end -- catch override not yet applied
   return (f.Config and f.Config.disabled) or (main and main.disabled)
 end
 
@@ -4041,7 +4044,7 @@ function BRC.register(f)
   else
     if not BRC.Config[f.BRC_FEATURE_NAME] then BRC.Config[f.BRC_FEATURE_NAME] = {} end
     if not f.Config then f.Config = {} end
-    f.Config.disabled = false
+    --f.Config.disabled = false
   end
 
   BRC.mpr.debug(string.format("Registering %s...", BRC.txt.lightcyan(f.BRC_FEATURE_NAME)))
@@ -4864,6 +4867,74 @@ end
 
 }
 ############################### End lua/features/announce-hp-mp.lua ###############################
+##########################################################################################
+
+################################### Begin lua/features/announce-items.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: announce-items
+-- @module f_announce_items
+-- TODO
+--
+---------------------------------------------------------------------------------------------------
+f_announce_items = {}
+f_announce_items.BRC_FEATURE_NAME = "announce-items"
+f_announce_items.Config = {
+  disabled = true, -- Disabled by default. Intended only for turncount runs.
+  announced_classes = { "gold", "jewellery", "scroll", "potion", "wand", "misc" }
+} -- f_announce_items.Config (do not remove this comment)
+
+---- Local variables ----
+local los_items
+local prev_item_names
+
+---- Initialization ----
+function f_announce_items.init()
+  los_items = {}
+  prev_item_names = {}
+end
+
+---- Local functions ----
+local function announce_item(it)
+  local class = it.class(true):lower()
+  if util.contains(f_announce_items.Config.announced_classes, class) then
+    crawl.mpr(BRC.txt.white("You see: ") .. it.name())
+  end
+end
+
+---- Crawl hook functions ----
+function f_announce_items.ready()
+  los_items = {}
+  local r = you.los()
+  for x = -r, r do
+    for y = -r, r do
+      if you.see_cell(x, y) then
+        local items_xy = items.get_items_at(x, y)
+        if items_xy and #items_xy > 0 then
+          for _, it in ipairs(items_xy) do
+            los_items[#los_items+1] = it
+          end
+        end
+      end
+    end
+  end
+
+  for _, it in ipairs(los_items) do
+    if not util.contains(prev_item_names, it.name()) then
+      announce_item(it)
+    end
+  end
+
+  -- Save names for comparison
+  prev_item_names = {}
+  for _, it in ipairs(los_items) do
+    prev_item_names[#prev_item_names+1] = it.name()
+  end
+end
+
+}
+############################### End lua/features/announce-items.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/features/answer-prompts.lua ###################################
@@ -7307,6 +7378,8 @@ f_pickup_alert.Config.Alert = {
   first_ranged = true,
   first_polearm = true,
 
+  autopickup_disabled = true, -- If autopickup is off, alert for items that would be autopicked up
+
   hotkey_travel = true,
   hotkey_pickup = true,
 
@@ -7344,6 +7417,7 @@ f_pickup_alert.Config.Alert = {
     orbs = false,
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
     staff_resists = false,
+    autopickup_disabled = false, -- Alerts for autopickup items, when autopickup is disabled
   },
 } -- f_pickup_alert.Config.Alert (do not remove this comment)
 
@@ -7457,6 +7531,8 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   STRONGEST = "💪💪",
   LIGHTER = "⏬",
   HEAVIER = "⏫",
+
+  AUTOPICKUP = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
 }
@@ -7518,6 +7594,15 @@ function f_pickup_alert.init()
 end
 
 ---- Local functions ----
+local function do_autopickup(it)
+  local autopick_on = options.autopick_on and options.autopick_on:lower() == "true"
+  if not autopick_on and A.autopickup_disabled and not f_pa_data.already_alerted(it) then
+    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP, M.autopickup_disabled)
+  end
+
+  return true
+end
+
 local function has_configured_force_more(it)
   if it.artefact then
     if M.artefact then return true end
@@ -7646,11 +7731,11 @@ function f_pickup_alert.autopickup(it, _)
     if not unworn_aux_item then return end
   else
     if BRC.it.is_armour(it) then
-      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return true end
+      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return do_autopickup(it) end
     elseif BRC.it.is_magic_staff(it) then
-      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return true end
+      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return do_autopickup(it) end
     elseif it.is_weapon then
-      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return true end
+      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return do_autopickup(it) end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
     end

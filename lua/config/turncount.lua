@@ -16,6 +16,6 @@ brc_config_turncount = {
 
   init = function()
     crawl.setopt("show_game_time = false")
-    BRC.util.do_cmd("CMD_TOGGLE_AUTOPICKUP")
+    crawl.setopt("autopick_on = false")
   end,
 } -- brc_config_turncount (do not remove this comment)
