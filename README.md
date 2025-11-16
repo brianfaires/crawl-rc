@@ -4,89 +4,84 @@ A modular system for Dungeon Crawl Stone Soup RC files, designed to be easily cu
 
 ## Quick Start
 - Include the contents of `bin/buehler.rc` in your RC file.
-- **Merge hooks (if needed)**: Hook functions like `ready()` are defined at the very end of BRC. If your RC already contains these, remove BRC's hook function and add `BRC.ready()` at the top of your hook function.
+- **Merge hooks (if needed)**: Hook functions like `ready()` are defined at the very end of BRC.
+If your RC already contains these, remove BRC's hook function and add `BRC.ready()` at the top of your hook function.
 
-## Macros / keybinds
+## Built-in Keybinds / Macros
 - `Cntl-D`: Travel down one level (with the nearest stairs)
 - `Cntl-E`: Travel up one level (with the nearest stairs)
-- `Cntl-T`: Save current training targets, to be used in future games with same race/class
+- `Cntl-T`: Save current training targets, to be used in future games with the same race/class
 - `Cntl-Tab`: Autofight, no movement
 - `~`: Open lua interpreter
-- 1,2,3,4,6,7,8,9,0: Cast spell a,b,c,d,f,g,h,i,j,k
+- 1,2,3,4,6,7,8,9,0: Cast spell a,b,c,d,f,g,h,i,j,k (press again to confirm targetting)
   - Press again to confirm target
 - TODO: numpad keybinds
 
-## File Structure
-```
-bin/                    # Pre-built RC files
-├── buehler.rc              # Core + all features (Use this for webtiles)
-├── only_core.rc            # Core with no features
-├── only_pickup_alert.rc    # pickup-alert feature as a single file
-lua/                    # Lua files
-├── core/                   # Core BRC system
-│   ├── brc.lua                 # Main coordinator
-│   ├── config.lua              # Config definitions
-│   ├── data.lua                # Manages persistent data + backup
-│   ├── util.lua                # General functions available to features
-│   └── constants.lua
-├── features/               # Feature modules
-│   ├── _template.lua           # Template for new features
-│   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
-│   └── ...                     # Other features
-rc/                     # RC file components
-build/                  # Scripts to generate bin/
-```
+## Feature Modules
 
-## Feature Overview
-_(See header of each feature's lua code for more detail)_
+BRC is made up of feature modules that are isolated from each other. Each feature can be independently edited, enabled, and configured.
+All features work out of the box with sensible config defaults. You can customize anything later if you want, but you don't need to!
+
+While you can modify features normally, it's intended to configure them all in a config at the top of your RC.
+Looking at a feature module might still be helpful to read the description, or see what config options are available.
 
 ### Most Noticeable Features
-- **pickup-alert** - Smart autopickup and alerts for interesting items _(Detailed description below)_
-- **announce-hp-mp** - Print current HP/MP with meters (ex. ❤️❤️❤️‍🩹🤍🤍) on HP/MP changes
 
-### Item management
-- **color-inscribe** - Add color in item inscriptions (like <span style="color: red;">rF++</span>)
-- **inscribe-stats** - Auto-inscribe items with appropriate stats, like +/- AC/EV, DPS, etc
-- **drop-inferior** - Alert when you pick up a replacement for an item in inventory, and add the inferior one to the drop list
-- **weapon-slots** - Keep weapons in slots a/b/w
-- **safe-consumables** - Robustly maintain `!q` and `!r` inscriptions only where required
+- **pickup-alert** - Smart autopickup and alerts for noteworthy items. _(See detailed description below)_
+- **announce-hp-mp** - Displays current HP/MP with visual meters (ex. ❤️❤️❤️‍🩹🤍🤍) whenever HP/MP changes
+- **inscribe-stats** - Auto-inscribes items with relevant stats like +/- AC/EV, DPS, etc.
 
-### Alerts
-- **alert-monsters** - `flash_screen` or `force_more` on dangerous monsters, based on your HP/Will/Resistances/etc _(Huge config)_
-- **remind-id** - Alert when you should read a scroll of ID. Before finding scroll of ID, stop travel on increasing un-ID'd stack sizes
-- **misc-alerts** - Misc useful alerts: Low HP, spell levels, Amulet of faith + max piety
-- **quiver-reminders** - Alert before (f)iring from quiver: if a consumable, or after (F)iring a different ammo
+### Inventory Management
 
-### Exploration
-- **runrest-features** - Update travel stops based on location/religion/recent shaft. Auto-search when entering temple/gauntlet
-- **safe-stairs** - Prevent accidental stair usage. Warn before entering V:5
-- **fully-recover** - Rest until negative status effects clear
+- **color-inscribe** - Adds color to item inscriptions (like <span style="color: red;">rF++</span>)
+- **drop-inferior** - Alerts when you pick up a replacement for an item in inventory, and adds the inferior one to the drop list
+- **exclude-dropped** - Excludes dropped items from autopickup
+- **safe-consumables** - Robustly maintains `!q` and `!r` inscriptions only where required
+- **weapon-slots** - Keeps weapons organized in slots a/b/w
 
-### Misc
-- **dynamic-options** - Change crawl settings based on XL, religion, etc
-- **startup** - Auto-set skill targets, open skills menu, save/reload skill targets by race+class
-- **answer-prompts** - Auto-answer certain prompts
-- **exclude-dropped** - Exclude dropped items from autopickup
+### Alerts & Warnings
 
-### Turncount features
-- **alert-items** - Prints message describing floor items like gold/wands/books as they come into view
-- **bread-swinger** - Macros `5` to rest _X_ turns: Swinging your slowest weapon, or walking if slower
+- **alert-monsters** - `flash_screen` or `force_more` on dangerous monsters, based on your HP/Will/Resistances/etc. Highly configurable.
+- **misc-alerts** - Various useful alerts: Low HP, spell levels, max piety w/ Amulet of faith
+- **quiver-reminders** - Alerts before (f)iring from quiver: if a consumable, or after (F)iring a different ammo
+- **remind-id** - Alerts when you should read a scroll of ID. Before finding scroll of ID, stops travel on increasing un-ID'd stack sizes
+
+### Exploration & Travel
+
+- **fully-recover** - Rests until negative status effects clear
+- **go-up-macro** - Enhanced Cntl-E macro with orb run mechanics: HP-based monster ignore for fast+safe ascension
+- **runrest-features** - Updates travel stops based on location/religion/recent shaft. Auto-searches when entering temple/gauntlet
+- **safe-stairs** - Prevents accidental stair usage. Warns before entering V:5
+
+### Quality of Life
+
+- **answer-prompts** - Auto-answers certain prompts
+- **dynamic-options** - Changes crawl settings based on XL, religion, race/class, etc.
+- **mute-messages** - Reduces message spam with configurable mute levels (light/moderate/heavy reduction)
+- **startup** - Auto-sets skill targets, opens skills menu, saves/reloads skill targets by race+class
+
+### Turncount Features
+
+_(disabled by default; enabled in the turncount config)_
+- **announce-items** - Prints messages describing floor items like gold/wands/books as they come into view 
+- **bread-swinger** - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
 
 ## Pickup & Alert Feature
 
-The `pickup-alert` feature provides smart autopickup that grabs items you definitely want,
-and generates alerts for noteworthy items.
-The goal is to enable confident "o-tabbing" without inspecting every dropped item or searching the entire floor to make sure you didn't overlook anything.
+BRC's largest feature. It provides smart autopickup of item upgrades, and generates alerts for noteworthy items.
+The goal is to enable confident "o-tabbing" without inspecting every dropped item, or searching each floor to make sure you didn't overlook anything.
 
 ### How It Works
-- **Alerts** are one-line messages that stop travel and stand out visually
+
+- **Alerts** - One-line messages that stop travel and stand out visually
 - **No spam** - alerts won't fire for identical/inferior items
 - **Smart** - adjusts behavior to your inventory and character progression
 - **Configurable** - lots of config values for which alerts are active, when they fire, and when to do a force_more.
-  - In `f_pickup_alert.Config.Alert`, see `armour_sensitivity` and `weapon_sensitivity` to adjust the overall frequency of alerts.
-  - _(Advanced)_ See `f_pickup_alert.Config.Tuning` and `BRC.Configs.Default.BrandBonus` for several heuristics that define when alerts fire.
+  - To adjust the overall frequency of alerts, configure: `Alert.armour_sensitivity` and `Alert.weapon_sensitivity`
+  - _(Advanced)_ For detailed tuning of alert behavior, see heuristics in `Tuning` and `BrandBonus`.
 
 ### Alerts
+
 - **`pa-armour.lua`**
   - Alerts for artefacts, new egos, or anything with a plausible tradeoff of AC/encumbrance/ego
 - **`pa-weapons.lua`**
@@ -97,57 +92,69 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
   - New orbs, relevant talismans
   - Staves that provide a needed resistance.
 
+---
+
 ## Configuration Guide
 
 ### 1. Disabling Features
 
 **Method 1 (Simple): Delete the code**
 
-- Delete the feature definition from your RC:
+- Just delete the feature module from your RC:
   - Delete everything from: `#### Begin <feature_name>` - `#### End <feature_name>`
+  - No other changes needed
 
 **Method 2 (Flexible): Disable via config**
 
-- Config is at the top of `buehler.rc`.
-Add `disabled = true` to the corresponding feature section of your config.
+- Add `disabled = true` to the corresponding feature section of your config.
 ```lua
-  ["alert-monsters"] = { disabled = true }
-  ...
+  my_config = {
+
+    ["alert-monsters"] = { disabled = true }
+
+  } -- end my_config
 ```
 
 ### 2. Configuring Features
 
-Each feature defines a `Config` table, including default values.
-The main config section at the top of `buehler.rc` is used to override those default values.
-You can set any feature config value from the main config section. Otherwise the default value is used.
-*(See all available config values in `config/Explicit.lua`, or in each feature definition)*
+Each feature defines its own `Config` table, containing options and default values.
+
+Configuration for all features is intended to live at the top of `buehler.rc`. A "Main" config can specify a feature name and any of its options to override default values.
+*(See all available config options in `config/Explicit.lua` - it's a lot though)*
 
 **Ex:** The `inscribe-stats` feature inscribes items with their current stats (AC, EV, DPS, ...).
 To disable this for weapons, add this to your config:
 
 ```lua
-  ["inscribe-stats"] = {
-    inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
-    inscribe_armour = true,  -- This line is redundant, since the default value is true
-  },
+  my_config = {
+
+    ["inscribe-stats"] = {
+      inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
+      inscribe_armour = true,  -- This line is redundant, since the default value is true
+    },
+
+} -- end my_config
 ```
 
-### 3. User-defined Configs
+### 3. Multiple Configs
+
+_(Feel free to delete any configs you don't want. No other changes needed.)_
 
 BRC includes several pre-built configs. You can edit/remove any of them or create new ones.
 Any table that includes `BRC_CONFIG_NAME = <config_name>` will be available as a config.
 
 Included configs:
-- **Custom**: Intended as the main config for customizing BRC. Includes commonly adjusted fields.
+- **Custom**: Intended as the main config, or maybe the only one. It includes options that seem the most likely to be configured.
 - **Testing**: Turns on debug messages, and disables any features not explicitly configured.
 - **Explicit**: A big config with every field defined, set to default values.
 - _**Others**_:
+  - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
   - **Streak**: For win streaks (extra caution)
   - **Speed**: For speed runs (reduced prompts + alerts)
-  - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
 
-**High-level config settings**
-`BRC.Config` is at the top of `buehler.rc` (and `lua/core/_header.lua`) with 3 settings. You can't remove these settings, but you can add others.
+### 4. Set which config to load
+
+`BRC.Config` is at the top of `buehler.rc` (and `lua/core/_header.lua`) with 3 settings. Don't remove these - they define which config to load.
 
 ```lua
 --- All other configs start with these values
@@ -155,10 +162,10 @@ BRC.Config = {
   emojis = true, -- Include emojis in alerts
 
   --- Specify which config (defined below) to use, or how to choose one.
-  --   "<config name>": Use the named config
-  --   "ask": Prompt at start of each new game
-  --   "previous": Keep using the last config
-  use_config = "Speed",
+  --   "<config name>": Use the named config like "Custom"
+  --   "ask": Select config at start of each new game
+  --   "previous": Keep using previously loaded config; asks on first game
+  use_config = "previous",
 
   --- For local games, use store_config to use different configs across multiple characters.
   --   "none": Normal behavior: Read use_config, and load it from the RC.
@@ -229,7 +236,7 @@ These crawl hooks are currently implemented:
 
 Define them in your feature and they will be automatically hooked to crawl. Example:
 ```lua
-my_feature.c_assign_invletter(it)
+function my_feature.c_assign_invletter(it)
   ...
 end
 ```
@@ -262,9 +269,35 @@ BRC.Configs.Testing = {
 } -- BRC.Configs.Testing
 ```
 
+---
 
+## Misc
 
-## Other topics
+### File Structure
+
+```
+bin/                    # Pre-built RC files
+├── buehler.rc              # Core + all features (Use this for webtiles)
+├── only_core.rc            # Core with no features
+├── only_pickup_alert.rc    # pickup-alert feature as a single file
+lua/                    # Lua files
+├── core/                   # Core BRC system
+│   ├── brc.lua                 # Main coordinator
+│   ├── config.lua              # Config definitions
+│   ├── data.lua                # Manages persistent data + backup
+│   ├── util.lua                # General functions available to features
+│   ├── constants.lua           # Constants from crawl
+│   └── ...                     # BRC Core features; don't remove
+├── features/               # Feature modules
+│   ├── _template.lua           # Template for new features
+│   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
+│   └── ...                     # Other features
+rc/                     # RC file components
+build/                  # Scripts to generate bin/
+```
+
+---
+
 ### In-Game Commands
 
 Use the Lua interpreter (open with the `~` key) for these commands:
@@ -272,11 +305,11 @@ Use the Lua interpreter (open with the `~` key) for these commands:
 ```lua
 -- BRC management
 BRC.active = false                    -- Disable entire BRC system
-BRC.init("config-name")               -- Load config-name and re-init (keeping persistent data)
-BRC.reset("config-name")              -- Reset data, load config-name, and re-init
-BRC.reset()                           -- Reset everything and re-init
+BRC.init("config-name")               -- Load a diff config (keep persistent data)
+BRC.reset()                           -- Reset everything select a config
+BRC.reset("config-name")              -- Reset and load config by name
 BRC.Data.reset()                      -- Reset persistent data
-BRC.unregister("feature-name")        -- Disable a feature
+BRC.unregister("feature-name")        -- Remove a feature
 
 -- Debugging
 BRC.dump()                        -- Print all persistent data
@@ -284,7 +317,10 @@ BRC.dump(1)                       -- Print a lot more debugging info
 BRC.Config.mpr.show_debug_messages = true -- Enable debug output
 ```
 
+---
+
 ### Troubleshooting
+
 **Bugs/Issues**: Please submit/send me any issues you find! It would help to attach:
 - A copy of your RC
 - **Character dump**: Press `#`, and answer `Y` to include BRC debug info.
@@ -307,21 +343,21 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
   - **Regex issues**: Some regular expression patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
   - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT MacOS doesn't, so I configure `BRC.Config.emojis = false` locally.
   If you have one, define it in `rc/display.rc`, and LMK!
-  - **Switching between characters** does not re-execute lua files. As long as you initialize all locals in `init()`,
-  this should not cause problems. But it never hurts to restart crawl when switching between characters.
+  - **Switching between characters** does not re-execute lua files. `init()` will be called, so all locals are set to defaults in init functions. But it never hurts to restart crawl when switching between characters.
 
-**RC syntax errors**: When editing the RC, a single character out of place can break the whole thing. 
-If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You may be prompted to restore data from backup.
+**RC syntax errors**: If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You may be prompted to restore data from backup.
 
-**Data backup in `c_persist`**: BRC keeps a backup of persistent data in crawl's `c_persist` table. Backup data is only available for the most recent character opened. It'll automatically restore if no turns have passed since the backup was taken. Otherwise it'll ask for confirmation.
+**Data backup in `c_persist`**: BRC keeps a backup of persistent data in crawl's `c_persist` table. Backup data is only available for the most recent game. It'll automatically restore if no turns have passed since the backup was taken. Otherwise it'll ask for confirmation.
 
-### Other Error Handling prompts
+### Error Handling
+
 - When a feature throws an error, BRC will offer to disable the feature.
 - If errors occur in the core code (rare), BRC may offer to disable a hook. This would impact all features using that hook,
 so it's recommended to determine the feature causing the error and disable it.
-- In both cases, it's probably worth saying No once, then disabling things if the error persists. Restarting crawl will re-enable all features and hooks.
+- In both cases, it's probably worth answering No once, then disabling things only if the error persists. Restarting crawl will re-enable all features and hooks.
 
 ## Resources
+
 ### DCSS Documentation
 - [RC Options Guide](http://crawl.akrasiac.org/docs/options_guide.txt)
 - [Lua Integration Guide](https://github.com/gammafunk/dcss-rc#1-include-the-rc-or-lua-file-in-your-rc)
