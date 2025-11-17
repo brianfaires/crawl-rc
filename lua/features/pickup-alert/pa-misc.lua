@@ -53,23 +53,42 @@ function f_pa_misc.alert_OTA(it)
 end
 
 function f_pa_misc.alert_staff(it)
-  local needRes = false
   local basename = it.name("base")
+  local tag
+  local tag_color
 
-  if basename == "staff of fire" then
-    needRes = you.res_fire() == 0
+  if basename == "staff of air" then
+    if you.res_shock() > 0 then return false end
+    tag = "rElec"
+    tag_color = BRC.COL.lightcyan
+  elseif basename == "staff of alchemy" then
+    if you.res_poison() > 0 then return false end
+    tag = "rPois"
+    tag_color = BRC.COL.lightgreen
   elseif basename == "staff of cold" then
-    needRes = you.res_cold() == 0
-  elseif basename == "staff of air" then
-    needRes = you.res_shock() == 0
-  elseif basename == "staff of poison" then
-    needRes = you.res_poison() == 0
-  elseif basename == "staff of death" then
-    needRes = you.res_draining() == 0
+    if you.res_cold() > 0 then return false end
+    tag = "rC+"
+    tag_color = BRC.COL.lightblue
+  elseif basename == "staff of fire" then
+    if you.res_fire() > 0 then return false end
+    tag = "rF+"
+    tag_color = BRC.COL.lightred
+  elseif basename == "staff of necromancy" then
+    if you.res_draining() > 0 then return false end
+    tag = "rN+"
+    tag_color = BRC.COL.lightmagenta
+  else
+    return false
   end
 
-  if not needRes then return false end
-  return f_pickup_alert.do_alert(it, "Staff resistance", E.STAFF_RES, M.staff_resists)
+  for _, inv in ipairs(items.inventory()) do
+    if inv.is_weapon and inv.name("plain"):contains(tag) then
+      return false
+    end
+  end
+
+  tag = BRC.txt[tag_color]("(" .. tag .. ")")
+  return f_pickup_alert.do_alert(it, "Staff resistance " .. tag, E.STAFF_RES, M.staff_resists)
 end
 
 function f_pa_misc.alert_talisman(it)
@@ -97,5 +116,18 @@ function f_pa_misc.is_unneeded_ring(it)
 end
 
 function f_pa_misc.pickup_staff(it)
-  return BRC.you.skill(BRC.it.get_staff_school(it)) > 0
+  if f_pa_data.already_alerted(it) then return false end
+  if BRC.you.skill(BRC.it.get_staff_school(it)) == 0 then return false end
+
+  local qualname = it.name("qual")
+  local max_slots = BRC.you.num_eq_slots(it)
+  local count = 0
+  for _, inv in ipairs(items.inventory()) do
+    if inv.name("qual") == qualname then
+      count = count + 1
+      if count >= max_slots then return false end
+    end
+  end
+
+  return true
 end

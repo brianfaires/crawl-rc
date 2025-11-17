@@ -41,7 +41,7 @@ ai += ring of wizardry:Wiz+
 
 # Staves
 ai += staff of air:rElec
+ai += staff of alchemy:rPois
 ai += staff of cold:rC+
-ai += staff of death:rN+
 ai += staff of fire:rF+
-ai += staff of poison:rPois
+ai += staff of necromancy:rN+
