@@ -184,6 +184,7 @@ end
 function BRC.Hotkey.waypoint(name, push_front)
   local x, y = BRC.it.get_xy(name)
   if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
+  if not view.can_reach(x, y) then return BRC.mpr.debug("Cannot reach " .. name) end
 
   local waynum = get_avail_waypoint()
   if not waynum then return end
