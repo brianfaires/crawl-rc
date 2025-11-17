@@ -4,28 +4,32 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: announce-items
 
 -- Minimal BRC namespace
-BRC = {}
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
 
 -- BRC module tables
 BRC.txt = {}
 
 -- BRC.txt module
--- BRC.txt color functions
+getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
   end
   BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.contains(self, text)
+  return self:find(text, 1, true) ~= nil
 end
 
 -- Feature code

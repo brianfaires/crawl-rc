@@ -4,17 +4,19 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: quiver-reminders
 
 -- Minimal BRC namespace
-BRC = {}
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
 
 -- BRC module tables
 BRC.mpr = {}
@@ -23,6 +25,53 @@ BRC.txt = {}
 BRC.util = {}
 
 -- BRC.mpr module
+local _mpr_queue = {}
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
 function BRC.mpr.okay(suffix)
   BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
 end
@@ -45,16 +94,9 @@ function BRC.mpr.yesno(msg, color, capital_only)
   return false
 end
 
--- BRC.mpr color functions
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
-
 -- BRC.opt module
+local _single_turn_mutes = {}
+
 function BRC.opt.macro(key, function_name)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
@@ -90,18 +132,8 @@ function BRC.opt.macro(key, function_name)
   )
 end
 
-
 -- BRC.txt module
-function BRC.txt.clean(text)
-  if type(text) ~= "string" then return text end
-  return text:gsub("\n", ""):gsub("<[^>]*>", "")
-end
-
-function BRC.txt.int2char(num)
-  return string.char(string.byte("a") + num)
-end
-
--- BRC.txt color functions
+getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -109,13 +141,22 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
+function BRC.txt.clean(text)
+  if type(text) ~= "string" then return text end
+  return text:gsub("\n", ""):gsub("<[^>]*>", "")
+end
+
+function BRC.txt.contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+
+function BRC.txt.int2char(num)
+  return string.char(string.byte("a") + num)
+end
+
 -- BRC.util module
-function BRC.util.get_cmd_key(cmd)
-  local key = crawl.get_command(cmd)
-  if not key or key == "NULL" then return nil end
-  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
-  local char_key = key:sub(-1)
-  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
 end
 
 function BRC.util.do_cmd(cmd)
@@ -128,6 +169,13 @@ function BRC.util.do_cmd(cmd)
   end
 end
 
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------

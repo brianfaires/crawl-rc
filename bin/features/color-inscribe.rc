@@ -4,17 +4,17 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: color-inscribe
 
 -- Minimal BRC namespace
-BRC = {}
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
 
 -- BRC module tables
 BRC.it = {}
@@ -25,19 +25,26 @@ function BRC.it.is_armour(it, include_orbs)
   return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
 end
 
-
--- BRC.txt module
-function BRC.txt.clean(text)
-  if type(text) ~= "string" then return text end
-  return text:gsub("\n", ""):gsub("<[^>]*>", "")
+function BRC.it.is_orb(it)
+  return it and it.subtype() == "offhand" and not it.is_shield()
 end
 
--- BRC.txt color functions
+-- BRC.txt module
+getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
   end
   BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.clean(text)
+  if type(text) ~= "string" then return text end
+  return text:gsub("\n", ""):gsub("<[^>]*>", "")
+end
+
+function BRC.txt.contains(self, text)
+  return self:find(text, 1, true) ~= nil
 end
 
 -- Feature code

@@ -4,10 +4,9 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: safe-consumables
 
 -- Minimal BRC namespace
-BRC = {}
+BRC = { Config = { emojis = false } }
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------

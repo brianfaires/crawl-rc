@@ -4,27 +4,36 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: startup
 
 -- Minimal BRC namespace
-BRC = {}
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
 BRC.TRAINING_SKILLS = {
   "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic",
   "Evocations", "Fighting", "Fire Magic", "Forgecraft", "Hexes", "Ice Magic",
   "Invocations", "Long Blades", "Maces & Flails", "Necromancy", "Polearms",
   "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting", "Staves",
   "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
-} -- end
+} -- BRC.TRAINING_SKILLS (do not remove this comment)
+
+BRC.WEAP_SCHOOLS = {
+  "axes", "maces & flails", "polearms", "long blades", "short blades",
+  "staves", "unarmed combat", "ranged weapons",
+} -- BRC.WEAP_SCHOOLS (do not remove this comment)
+
 
 -- BRC module tables
 BRC.Configs = {}
+BRC.Data = {}
 BRC.mpr = {}
 BRC.opt = {}
 BRC.txt = {}
@@ -32,10 +41,141 @@ BRC.util = {}
 BRC.you = {}
 
 -- BRC.Configs module
+brc_full_persistant_config = BRC.Data.persist("brc_full_persistant_config", nil)
+brc_config_name = BRC.Data.persist("brc_config_name", nil)
+BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
+BRC.Configs.Default.BRC_CONFIG_NAME = "Default"
+BRC.Configs.Default.unskilled_egos_usable = false
+BRC.Configs.Default.mpr = {
+  show_debug_messages = false,
+  debug_to_stderr = false,
+} -- BRC.Configs.Default.mpr (do not remove this comment)
+BRC.Configs.Default.dump = {
+    max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
+    omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
+} -- BRC.Configs.Default.dump (do not remove this comment)
+BRC.Configs.Default.BrandBonus = {
+  chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
+  distort = { factor = 1.0, offset = 6.0 },
+  drain = { factor = 1.25, offset = 2.0 },
+  elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
+  flame = { factor = 1.25, offset = 0 },
+  freeze = { factor = 1.25, offset = 0 },
+  heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
+  pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
+  spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
+  venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
+  subtle = { -- Values to use for weapon "scores" (not damage)
+    antimagic = { factor = 1.1, offset = 0 },
+    holy = { factor = 1.15, offset = 0 },
+    penet = { factor = 1.3, offset = 0 },
+    protect = { factor = 1.15, offset = 0 },
+    reap = { factor = 1.3, offset = 0 },
+    vamp = { factor = 1.2, offset = 0 },
+  },
+} -- BRC.Configs.Default.BrandBonus (do not remove this comment)
+override_table(BRC.Config, BRC.Configs.Default)
+
+
+-- BRC.Data module
+-- Minimal persistence system for standalone features
+local _persist_names = {}
+function BRC.Data.persist(name, default_value)
+  -- If variable already exists (from chk_lua_save), use it
+  -- Otherwise initialize from default
+  if _G[name] == nil then
+    if type(default_value) == "table" then
+      _G[name] = {}
+      for k, v in pairs(default_value) do
+        _G[name][k] = v
+      end
+    else
+      _G[name] = default_value
+    end
+  end
+
+  _persist_names[#_persist_names + 1] = name
+  table.insert(chk_lua_save, function()
+    if _G[name] == nil then return "" end
+    local val_str
+    if type(_G[name]) == "table" then
+      -- Simple table serialization (basic, but works for simple tables)
+      local parts = {}
+      for k, v in pairs(_G[name]) do
+        if type(v) == "string" then
+          table.insert(parts, string.format('[%s] = "%s"', tostring(k), v))
+        else
+          table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))
+        end
+      end
+      val_str = "{" .. table.concat(parts, ", ") .. "}"
+    else
+      val_str = tostring(_G[name])
+    end
+  return name .. " = " .. val_str .. "\\n"
+  end)
+
+  return _G[name]
+end
 
 -- BRC.mpr module
+local _mpr_queue = {}
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
 function BRC.mpr.info(message, context)
   log_message(message, context, BRC.COL.darkgrey)
+end
+
+function BRC.mpr.warning(message, context)
+  log_message(message, context, BRC.COL.yellow)
+  you.stop_activity()
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Warning) " .. message)
+  end
 end
 
 function BRC.mpr.yesno(msg, color, capital_only)
@@ -56,16 +196,9 @@ function BRC.mpr.yesno(msg, color, capital_only)
   return false
 end
 
--- BRC.mpr color functions
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
-
 -- BRC.opt module
+local _single_turn_mutes = {}
+
 function BRC.opt.macro(key, function_name)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
@@ -101,14 +234,100 @@ function BRC.opt.macro(key, function_name)
   )
 end
 
-
 -- BRC.txt module
--- BRC.txt color functions
+getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
   end
   BRC.txt[color] = BRC.txt[k]
+end
+
+local function tostr_list(var, pretty, indents)
+  local tokens = {}
+  for _, v in ipairs(var) do
+    tokens[#tokens + 1] = limit_lines(BRC.txt.tostr(v, pretty, indents + 1))
+  end
+  if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
+    return "{ " .. table.concat(tokens, ", ") .. " }"
+  else
+    local INDENT = string.rep("  ", indents)
+    local CHILD_INDENT = string.rep("  ", indents + 1)
+    local LIST_SEP = ",\n" .. CHILD_INDENT
+    return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+  end
+end
+local function tostr_map(var, pretty, indents)
+  local tokens = {}
+
+  if pretty then
+    local keys = BRC.util.get_sorted_keys(var)
+    local contains_table = false
+    for i = 1, #keys do
+      local v = limit_lines(BRC.txt.tostr(var[keys[i]], true, indents + 1))
+      if v then
+        if type(var[keys[i]]) == "table" then
+          contains_table = true
+          tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
+        else
+          tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
+        end
+      end
+    end
+    if #tokens <= 2 and not contains_table then
+      return "{ " .. table.concat(tokens, ", ") .. " }"
+    end
+  else
+    for k, v in pairs(var) do
+      local val_str = BRC.txt.tostr(v, pretty, indents + 1)
+      if val_str then
+        tokens[#tokens + 1] = '["' .. k .. '"] = ' .. val_str
+      end
+    end
+  end
+
+  local INDENT = string.rep("  ", indents)
+  local CHILD_INDENT = string.rep("  ", indents + 1)
+  local LIST_SEP = ",\n" .. CHILD_INDENT
+  return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+end
+local function tostr_string(var, pretty)
+  local s
+  if var:contains("\n") then
+    s = string.format("[[\n%s]]", var)
+  else
+    s = '"' .. var:gsub('"', "") .. '"'
+  end
+
+  if not pretty then return s end
+  -- Replace > and < to display the color tags instead of colored text
+  return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
+end
+
+function BRC.txt.contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+
+function BRC.txt.tostr(var, pretty, _indents)
+  local var_type = type(var)
+  if var_type == "string" then
+    return tostr_string(var, pretty)
+  elseif var_type == "table" then
+    _indents = _indents or 0
+    if BRC.util.is_list(var) then
+      return tostr_list(var, pretty, _indents)
+    elseif BRC.util.is_map(var) then
+      return tostr_map(var, pretty, _indents)
+    else
+      return "{}"
+    end
+  end
+
+  if BRC.Config.dump.omit_pointers and (var_type == "function" or var_type == "userdata") then
+    return nil
+  end
+
+  return tostring(var) -- fallback to tostring()
 end
 
 -- BRC.util module
@@ -126,6 +345,14 @@ function BRC.util.do_cmd(cmd)
   end
 end
 
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
 function BRC.util.is_list(value)
   return value and type(value) == "table" and #value > 0
 end
@@ -134,8 +361,21 @@ function BRC.util.is_map(value)
   return value and type(value) == "table" and next(value) ~= nil and #value == 0
 end
 
-
 -- BRC.you module
+function BRC.you.skill(skill)
+  if skill and not skill:contains(",") then return you.skill(skill) end
+
+  local skills = crawl.split(skill, ",")
+  local sum = 0
+  local count = 0
+  for _, s in ipairs(skills) do
+    sum = sum + you.skill(s)
+    count = count + 1
+  end
+
+  return sum / count
+end
+
 function BRC.you.top_wpn_skill()
   local max_weap_skill = 0
   local pref = nil
@@ -147,7 +387,6 @@ function BRC.you.top_wpn_skill()
   end
   return pref
 end
-
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------

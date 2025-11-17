@@ -4,21 +4,22 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: weapon-slots
 
 -- Minimal BRC namespace
-BRC = {}
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
 
 -- BRC module tables
 BRC.it = {}
 BRC.mpr = {}
+BRC.txt = {}
 
 -- BRC.it module
 function BRC.it.is_magic_staff(it)
@@ -29,8 +30,25 @@ function BRC.it.is_polearm(it)
   return it and it.weap_skill:contains("Polearms")
 end
 
-
 -- BRC.mpr module
+local _mpr_queue = {}
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
 function BRC.mpr.debug(message, context)
   if BRC.Config.mpr.show_debug_messages then
     log_message(message, context, BRC.COL.lightblue)
@@ -40,14 +58,7 @@ function BRC.mpr.debug(message, context)
   end
 end
 
--- BRC.mpr color functions
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
+-- BRC.txt module
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------

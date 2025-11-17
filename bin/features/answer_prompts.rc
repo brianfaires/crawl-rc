@@ -4,23 +4,24 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: answer_prompts
 
 -- Minimal BRC namespace
-BRC = {}
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
 
 -- BRC module tables
 BRC.mpr = {}
+BRC.txt = {}
 
 -- BRC.mpr module
--- BRC.mpr color functions
+local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -28,6 +29,9 @@ for k, color in pairs(BRC.COL) do
   end
   BRC.mpr[color] = BRC.mpr[k]
 end
+
+
+-- BRC.txt module
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------

@@ -4,26 +4,49 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: drop-inferior
 
 -- Minimal BRC namespace
-BRC = {}
-BRC.Config = {
-  emojis = false,
-} -- BRC.Config
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
+BRC.ARTPROPS_BAD = {
+  "Bane", "-Cast", "-Move", "-Tele",
+  "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
+} -- BRC.ARTPROPS_BAD (do not remove this comment)
+
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
 BRC.EMOJI = {
   CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
   EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
   EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
   SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- end
+} -- BRC.EMOJI (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
+BRC.MAGIC_SCHOOLS = {
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
+  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+} -- BRC.MAGIC_SCHOOLS (do not remove this comment)
+
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+BRC.LITTLE_RACES = { "Spriggan" }
+BRC.SMALL_RACES = { "Kobold" }
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+
+---- Skills ----
+
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
+BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
+BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
+
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
+
 
 -- BRC module tables
 BRC.Hotkey = {}
@@ -35,6 +58,30 @@ BRC.util = {}
 BRC.you = {}
 
 -- BRC.Hotkey module
+BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"
+BRC.Hotkey.Config = {
+  key = { keycode = BRC.KEYS.ENTER, name = "[Enter]" },
+  skip_keycode = BRC.KEYS.ESC,
+  equip_hotkey = true, -- Offer to equip after picking up equipment
+  wait_for_safety = true, -- Don't expire the hotkey with monsters in view
+  explore_clears_queue = true, -- Clear the hotkey queue on explore
+} -- BRC.Hotkey.Config (do not remove this comment)
+local WAYPOINT_MUTES = {
+  "Assign waypoint to what number",
+  "Existing waypoints",
+  "Delete which waypoint",
+  "(\\(\\d\\) )",
+  "All waypoints deleted",
+  "You're already here!",
+  "Okay\\, then\\.",
+  "Unknown command",
+  "Waypoint \\d re-assigned",
+} -- WAYPOINT_MUTES (do not remove this comment)
+local C -- config alias
+local action_queue
+local cur_action
+local delay_expire
+
 function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
   local act = {
     msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
@@ -49,7 +96,6 @@ function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cle
     table.insert(action_queue, act)
   end
 end
-
 
 -- BRC.eq module
 function BRC.eq.get_ac(it)
@@ -98,15 +144,40 @@ function BRC.eq.is_risky(it)
   return ego_name and util.contains(BRC.RISKY_EGOS, ego_name)
 end
 
+function BRC.eq.is_useless_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
+end
 
 -- BRC.it module
 function BRC.it.is_armour(it, include_orbs)
   return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
 end
 
+function BRC.it.is_aux_armour(it)
+  return BRC.it.is_armour(it) and not (BRC.it.is_body_armour(it) or BRC.it.is_shield(it))
+end
+
+function BRC.it.is_body_armour(it)
+  return it and it.subtype() == "body"
+end
+
+function BRC.it.is_orb(it)
+  return it and it.subtype() == "offhand" and not it.is_shield()
+end
+
+function BRC.it.is_shield(it)
+  return it and it.is_shield()
+end
 
 -- BRC.mpr module
--- BRC.mpr color functions
+local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -115,17 +186,9 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
+
 -- BRC.txt module
-function BRC.txt.wrap(text, wrapper, no_space)
-  if not wrapper then return text end
-  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
-end
-
-function BRC.txt.int2char(num)
-  return string.char(string.byte("a") + num)
-end
-
--- BRC.txt color functions
+getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -133,7 +196,24 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
+function BRC.txt.contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+
+function BRC.txt.int2char(num)
+  return string.char(string.byte("a") + num)
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
 -- BRC.util module
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
 function BRC.util.get_cmd_key(cmd)
   local key = crawl.get_command(cmd)
   if not key or key == "NULL" then return nil end
@@ -142,8 +222,11 @@ function BRC.util.get_cmd_key(cmd)
   return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
 end
 
-
 -- BRC.you module
+function BRC.you.mut_lvl(mutation, innate_only)
+  return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+
 function BRC.you.num_eq_slots(it)
   local player_race = you.race()
   if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
@@ -154,7 +237,6 @@ function BRC.you.num_eq_slots(it)
 
   return 1
 end
-
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------

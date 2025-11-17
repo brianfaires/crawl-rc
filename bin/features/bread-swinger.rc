@@ -4,20 +4,33 @@
 ## No external dependencies required.
 
 {
--- Standalone BRC Feature: bread-swinger
 
 -- Minimal BRC namespace
-BRC = {}
-BRC.Config = {
-  emojis = false,
-} -- BRC.Config
+BRC = { Config = { emojis = false } }
 
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- end
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
+BRC.MAGIC_SCHOOLS = {
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
+  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+} -- BRC.MAGIC_SCHOOLS (do not remove this comment)
+
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+BRC.LITTLE_RACES = { "Spriggan" }
+BRC.SMALL_RACES = { "Kobold" }
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+
+---- Skills ----
+
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
+
 
 -- BRC module tables
 BRC.Data = {}
@@ -45,43 +58,92 @@ function BRC.Data.persist(name, default_value)
       _G[name] = default_value
     end
   end
-  
-  -- Register for persistence (only once per variable)
-  local already_registered = false
-  for _, n in ipairs(_persist_names) do
-    if n == name then
-      already_registered = true
-      break
-    end
-  end
-  
-  if not already_registered then
-    _persist_names[#_persist_names + 1] = name
-    table.insert(chk_lua_save, function()
-      if _G[name] == nil then return "" end
-      local val_str
-      if type(_G[name]) == "table" then
-        -- Simple table serialization (basic, but works for simple tables)
-        local parts = {}
-        for k, v in pairs(_G[name]) do
-          if type(v) == "string" then
-            table.insert(parts, string.format('[%s] = "%s"', tostring(k), v))
-          else
-            table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))
-          end
+
+  _persist_names[#_persist_names + 1] = name
+  table.insert(chk_lua_save, function()
+    if _G[name] == nil then return "" end
+    local val_str
+    if type(_G[name]) == "table" then
+      -- Simple table serialization (basic, but works for simple tables)
+      local parts = {}
+      for k, v in pairs(_G[name]) do
+        if type(v) == "string" then
+          table.insert(parts, string.format('[%s] = "%s"', tostring(k), v))
+        else
+          table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))
         end
-        val_str = "{" .. table.concat(parts, ", ") .. "}"
-      else
-        val_str = tostring(_G[name])
       end
-      return name .. " = " .. val_str .. "\n"
-    end)
-  end
-  
+      val_str = "{" .. table.concat(parts, ", ") .. "}"
+    else
+      val_str = tostring(_G[name])
+    end
+  return name .. " = " .. val_str .. "\\n"
+  end)
+
   return _G[name]
 end
 
 -- BRC.eq module
+local function get_adjusted_armour_pen(encumb, str)
+  local base_pen = get_unadjusted_armour_pen(encumb)
+  return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
+end
+local function get_branded_delay(delay, ego)
+  if not ego then return delay end
+  if ego == "speed" then
+    return delay * 2 / 3
+  elseif ego == "heavy" then
+    return delay * 1.5
+  end
+  return delay
+end
+local function get_shield_penalty(sh)
+  return 2 * sh.encumbrance * sh.encumbrance
+    * (27 - you.skill("Shields")) / 27
+    / (25 + 5 * you.strength())
+end
+local function get_weap_min_delay(it)
+  -- This is an abbreviated version of the actual calculation.
+  -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
+  if it.artefact and it.name("qual"):contains("woodcutter's axe") then return it.delay end
+
+  local min_delay = math.floor(it.delay / 2)
+  if it.weap_skill == "Short Blades" then return 5 end
+  if it.is_ranged then
+    local basename = it.name("base")
+    local is_2h_ranged = basename:contains("crossbow") or basename:contains("arbalest")
+    if is_2h_ranged then return math.max(min_delay, 10) end
+  end
+
+  return math.min(min_delay, 7)
+end
+
+function BRC.eq.get_ego(it, no_stat_only_egos)
+  local ego = it.ego(true)
+  if ego then
+    ego = ego:lower()
+    if BRC.eq.is_useless_ego(ego) or (no_stat_only_egos and (ego == "speed" or ego == "heavy")) then
+      return it.artefact and it.name() or nil
+    end
+    return ego
+  end
+
+  if BRC.it.is_body_armour(it) then
+    local name = it.name("qual")
+    local good_scales = name:contains("dragon scales") and not name:contains("steam")
+    if name:contains("troll leather") or good_scales then return name end
+  end
+
+  return it.artefact and it.name() or nil
+end
+
+function BRC.eq.get_hands(it)
+  if you.race() ~= "Formicid" then return it.hands end
+  local st = it.subtype()
+  if st == "giant club" or st == "giant spiked club" then return 2 end
+  return 1
+end
+
 function BRC.eq.get_weap_delay(it)
   local delay = it.delay - BRC.you.skill(it.weap_skill) / 2
   delay = math.max(delay, get_weap_min_delay(it))
@@ -109,19 +171,88 @@ function BRC.eq.get_weap_delay(it)
   return delay / 10
 end
 
-function BRC.eq.get_hands(it)
-  if you.race() ~= "Formicid" then return it.hands end
-  local st = it.subtype()
-  if st == "giant club" or st == "giant spiked club" then return 2 end
-  return 1
+function BRC.eq.is_useless_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
 end
 
-
 -- BRC.it module
+function BRC.it.is_body_armour(it)
+  return it and it.subtype() == "body"
+end
+
+function BRC.it.is_shield(it)
+  return it and it.is_shield()
+end
 
 -- BRC.mpr module
+local _mpr_queue = {}
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
+function BRC.mpr.info(message, context)
+  log_message(message, context, BRC.COL.darkgrey)
+end
+
 function BRC.mpr.que(msg, color, channel)
   BRC.mpr.que_optmore(false, msg, color, channel)
+end
+
+function BRC.mpr.que_optmore(show_more, msg, color, channel)
+  for _, q in ipairs(_mpr_queue) do
+    if q.m == msg and q.ch == channel and q.more == show_more then return end
+  end
+  color = color or BRC.COL.lightgrey
+  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
 end
 
 function BRC.mpr.warning(message, context)
@@ -132,26 +263,8 @@ function BRC.mpr.warning(message, context)
   end
 end
 
-function BRC.mpr.info(message, context)
-  log_message(message, context, BRC.COL.darkgrey)
-end
-
--- BRC.mpr color functions
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
--- Message queue for BRC.mpr
-local _mpr_queue = {}
-
 -- BRC.opt module
-function BRC.opt.single_turn_mute(pattern)
-  BRC.opt.message_mute(pattern, true)
-  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
-end
+local _single_turn_mutes = {}
 
 function BRC.opt.macro(key, function_name)
   if type(_G[function_name]) ~= "function" then
@@ -188,9 +301,18 @@ function BRC.opt.macro(key, function_name)
   )
 end
 
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+function BRC.opt.single_turn_mute(pattern)
+  BRC.opt.message_mute(pattern, true)
+  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
+end
 
 -- BRC.txt module
--- BRC.txt color functions
+getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -198,11 +320,105 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
+local function tostr_list(var, pretty, indents)
+  local tokens = {}
+  for _, v in ipairs(var) do
+    tokens[#tokens + 1] = limit_lines(BRC.txt.tostr(v, pretty, indents + 1))
+  end
+  if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
+    return "{ " .. table.concat(tokens, ", ") .. " }"
+  else
+    local INDENT = string.rep("  ", indents)
+    local CHILD_INDENT = string.rep("  ", indents + 1)
+    local LIST_SEP = ",\n" .. CHILD_INDENT
+    return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+  end
+end
+local function tostr_map(var, pretty, indents)
+  local tokens = {}
+
+  if pretty then
+    local keys = BRC.util.get_sorted_keys(var)
+    local contains_table = false
+    for i = 1, #keys do
+      local v = limit_lines(BRC.txt.tostr(var[keys[i]], true, indents + 1))
+      if v then
+        if type(var[keys[i]]) == "table" then
+          contains_table = true
+          tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
+        else
+          tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
+        end
+      end
+    end
+    if #tokens <= 2 and not contains_table then
+      return "{ " .. table.concat(tokens, ", ") .. " }"
+    end
+  else
+    for k, v in pairs(var) do
+      local val_str = BRC.txt.tostr(v, pretty, indents + 1)
+      if val_str then
+        tokens[#tokens + 1] = '["' .. k .. '"] = ' .. val_str
+      end
+    end
+  end
+
+  local INDENT = string.rep("  ", indents)
+  local CHILD_INDENT = string.rep("  ", indents + 1)
+  local LIST_SEP = ",\n" .. CHILD_INDENT
+  return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
+end
+local function tostr_string(var, pretty)
+  local s
+  if var:contains("\n") then
+    s = string.format("[[\n%s]]", var)
+  else
+    s = '"' .. var:gsub('"', "") .. '"'
+  end
+
+  if not pretty then return s end
+  -- Replace > and < to display the color tags instead of colored text
+  return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
+end
+
+function BRC.txt.contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+
+function BRC.txt.tostr(var, pretty, _indents)
+  local var_type = type(var)
+  if var_type == "string" then
+    return tostr_string(var, pretty)
+  elseif var_type == "table" then
+    _indents = _indents or 0
+    if BRC.util.is_list(var) then
+      return tostr_list(var, pretty, _indents)
+    elseif BRC.util.is_map(var) then
+      return tostr_map(var, pretty, _indents)
+    else
+      return "{}"
+    end
+  end
+
+  if BRC.Config.dump.omit_pointers and (var_type == "function" or var_type == "userdata") then
+    return nil
+  end
+
+  return tostring(var) -- fallback to tostring()
+end
+
 -- BRC.util module
 function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
 end
 
+function BRC.util.is_list(value)
+  return value and type(value) == "table" and #value > 0
+end
+
+function BRC.util.is_map(value)
+  return value and type(value) == "table" and next(value) ~= nil and #value == 0
+end
 
 -- BRC.you module
 function BRC.you.free_offhand()
@@ -210,6 +426,23 @@ function BRC.you.free_offhand()
   return not items.equipped_at("offhand")
 end
 
+function BRC.you.mut_lvl(mutation, innate_only)
+  return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+
+function BRC.you.skill(skill)
+  if skill and not skill:contains(",") then return you.skill(skill) end
+
+  local skills = crawl.split(skill, ",")
+  local sum = 0
+  local count = 0
+  for _, s in ipairs(skills) do
+    sum = sum + you.skill(s)
+    count = count + 1
+  end
+
+  return sum / count
+end
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------
@@ -585,6 +818,7 @@ function autopickup(...)
     return f_bread_swinger.autopickup(...)
   end
 end
+add_autopickup_func(f_bread_swinger.autopickup)
 function c_message(...)
   if f_bread_swinger.c_message then
     return f_bread_swinger.c_message(...)
