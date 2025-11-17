@@ -51,8 +51,10 @@ end
 
 ---- Local functions ----
 local function do_autopickup(it)
-  local autopick_on = options.autopick_on and options.autopick_on:lower() == "true"
-  if not autopick_on and A.autopickup_disabled and not f_pa_data.already_alerted(it) then
+  if options.autopick_on == false
+    and A.autopickup_disabled
+    and not f_pa_data.already_alerted(it)
+  then
     f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP, M.autopickup_disabled)
   end
 
@@ -204,6 +206,7 @@ end
 function f_pickup_alert.c_assign_invletter(it)
   f_pa_misc.alert_OTA(it)
   f_pa_data.remove_recent_alert(it)
+  f_pa_data.remember_alert(it)
 
   -- Re-enable the alert, iff we are able to use another one
   if BRC.you.num_eq_slots(it) > 1 then f_pa_data.forget_alert(it) end

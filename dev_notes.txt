@@ -7,6 +7,9 @@
   - ae ^= <scrolls? of immolation, <scrolls? of poison
 1. [TEST] standalone features
 
+### Watch for:
+- Added remember_alert() to pickup
+
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
 https://github.com/crawl/crawl/pull/4814 -> remove cap on inscription colors

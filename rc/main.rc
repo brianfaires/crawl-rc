@@ -31,7 +31,5 @@ explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang
 
 ####### Autopickup exceptions #######
 ae := autopickup_exceptions
-ae ^= <potions? of attraction, <potions? of lignification, <potions? of mutation
-ae ^= <scrolls? of immolation, <scrolls? of poison
-ae ^= <missile, <misc, <bauble
-ae ^= >staff of.*, >useless_item
+ae ^= <missile, <bauble
+ae ^= >useless_item
