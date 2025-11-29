@@ -178,7 +178,6 @@ function BRC.it.is_shield(it)
 end
 
 -- BRC.mpr module
-local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -318,10 +317,9 @@ end
 
 -- Crawl hook wrappers
 function c_assign_invletter(...)
-  if f_drop_inferior.c_assign_invletter then
-    return f_drop_inferior.c_assign_invletter(...)
-  end
+  return f_drop_inferior.c_assign_invletter(...)
 end
+
 
 -- Initialize feature
 f_drop_inferior.init()

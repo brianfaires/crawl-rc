@@ -1,5 +1,5 @@
-## Standalone BRC Feature: remind-id
-## Generated from: lua/features/remind-id.lua
+## Standalone BRC Feature: exclude-dropped
+## Generated from: lua/features/exclude-dropped.lua
 ## This file is self-contained and can be copy-pasted into your RC file.
 ## No external dependencies required.
 
@@ -15,13 +15,24 @@ BRC.COL = {
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
 } -- BRC.COL (do not remove this comment)
 
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+BRC.MISC_ITEMS = {
+  "box of beasts", "condenser vane", "figurine of a ziggurat", "Gell's gravitambourine",
+  "horn of Geryon", "lightning rod", "phantom mirror", "phial of floods", "sack of spiders",
+  "tin of tremorstones",
+} -- BRC.MISC_ITEMS (do not remove this comment)
+
+BRC.MISSILES = {
+  "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart",
+  "darts? of disjunction", "darts? of dispersal", " stone", "boomerang",
+  "silver javelin", "javelin", "large rock", "throwing net",
+} -- BRC.MISSILES (do not remove this comment)
 
 
 -- BRC module tables
 BRC.Data = {}
-BRC.Hotkey = {}
+BRC.it = {}
 BRC.mpr = {}
+BRC.opt = {}
 BRC.txt = {}
 BRC.util = {}
 
@@ -66,49 +77,16 @@ function BRC.Data.persist(name, default_value)
   return _G[name]
 end
 
--- BRC.Hotkey module
-BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"
-BRC.Hotkey.Config = {
-  key = { keycode = BRC.KEYS.ENTER, name = "[Enter]" },
-  skip_keycode = BRC.KEYS.ESC,
-  equip_hotkey = true, -- Offer to equip after picking up equipment
-  wait_for_safety = true, -- Don't expire the hotkey with monsters in view
-  explore_clears_queue = true, -- Clear the hotkey queue on explore
-} -- BRC.Hotkey.Config (do not remove this comment)
-local WAYPOINT_MUTES = {
-  "Assign waypoint to what number",
-  "Existing waypoints",
-  "Delete which waypoint",
-  "\\(\\d\\) ",
-  "All waypoints deleted",
-  "You're already here!",
-  "Okay\\, then\\.",
-  "Unknown command",
-  "Waypoint \\d re-assigned",
-  "Waypoints will disappear",
-} -- WAYPOINT_MUTES (do not remove this comment)
-local C -- config alias
-local action_queue
-local cur_action
-local delay_expire
+-- BRC.it module
+function BRC.it.is_jewellery(it)
+  return it and it.class(true) == "jewellery"
+end
 
-function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
-  local act = {
-    msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
-    action = f_action,
-    condition = f_condition or function() return true end,
-    cleanup = f_cleanup or function() end,
-  } -- act (do not remove this comment)
-
-  if push_front then
-    table.insert(action_queue, 1, act)
-  else
-    table.insert(action_queue, act)
-  end
+function BRC.it.is_magic_staff(it)
+  return it and it.class and it.class(true) == "magical staff"
 end
 
 -- BRC.mpr module
-local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -155,17 +133,20 @@ function BRC.mpr.error(message, context, skip_more)
   end
 end
 
-function BRC.mpr.stop(msg, color, channel)
-  BRC.mpr[color or BRC.COL.lightgrey](msg, channel)
-  you.stop_activity()
-end
-
 function BRC.mpr.warning(message, context)
   log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
   if BRC.Config.mpr.debug_to_stderr then
     crawl.stderr("[BRC] (Warning) " .. message)
   end
+end
+
+-- BRC.opt module
+local _single_turn_mutes = {}
+
+function BRC.opt.autopickup_exceptions(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
 end
 
 -- BRC.txt module
@@ -191,6 +172,7 @@ local function tostr_list(var, pretty, indents)
     return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
   end
 end
+
 local function tostr_map(var, pretty, indents)
   local tokens = {}
 
@@ -225,6 +207,7 @@ local function tostr_map(var, pretty, indents)
   local LIST_SEP = ",\n" .. CHILD_INDENT
   return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
 end
+
 local function tostr_string(var, pretty)
   local s
   if var:contains("\n") then
@@ -253,10 +236,6 @@ function BRC.txt.get_pickup_info(text)
   return cleaned:sub(5, #cleaned), items.letter_to_index(cleaned:sub(1, 1))
 end
 
-function BRC.txt.int2char(num)
-  return string.char(string.byte("a") + num)
-end
-
 function BRC.txt.tostr(var, pretty, _indents)
   local var_type = type(var)
   if var_type == "string" then
@@ -279,34 +258,7 @@ function BRC.txt.tostr(var, pretty, _indents)
   return tostring(var) -- fallback to tostring()
 end
 
-function BRC.txt.wrap(text, wrapper, no_space)
-  if not wrapper then return text end
-  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
-end
-
 -- BRC.util module
-function BRC.util.cntl(c)
-  return string.byte(c:upper()) - 64
-end
-
-function BRC.util.do_cmd(cmd)
-  local key = BRC.util.get_cmd_key(cmd)
-  if key then
-    crawl.sendkeys({ key })
-    crawl.flush_input()
-  else
-    crawl.do_commands({ cmd })
-  end
-end
-
-function BRC.util.get_cmd_key(cmd)
-  local key = crawl.get_command(cmd)
-  if not key or key == "NULL" then return nil end
-  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
-  local char_key = key:sub(-1)
-  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
-end
-
 function BRC.util.is_list(value)
   return value and type(value) == "table" and #value > 0
 end
@@ -317,151 +269,145 @@ end
 
 -- Feature code
 ---------------------------------------------------------------------------------------------------
--- BRC feature module: remind-id
--- @module f_remind_id
--- Alerts a reminder to read scroll of ID, when carrying unidentified items.
--- Before finding scroll of ID, stops explore when largest stack of un-ID'd scrolls/pots increases.
+-- BRC feature module: exclude-dropped
+-- @module f_exclude_dropped
+-- Excludes dropped items from autopickup, pickup resumes autopickup.
+-- @todo Can remove when crawl's drop_disables_autopickup setting reaches feature parity.
+--    (Configurable/optional, dropping partial stack does not exclude, pickup resumes autopickup)
 ---------------------------------------------------------------------------------------------------
 
-f_remind_id = {}
+f_exclude_dropped = {}
 
-f_remind_id.Config = {
-  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
-  stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
-  read_id_hotkey = true, -- Put read ID on hotkey
-} -- f_remind_id.Config (do not remove this comment)
+f_exclude_dropped.Config = {
+  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
+} -- f_exclude_dropped.Config (do not remove this comment)
 
 ---- Persistent variables ----
-ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
-
----- Local variables ----
-local C -- config alias
-local do_remind_id_check
-
----- Initialization ----
-function f_remind_id.init()
-  C = f_remind_id.Config
-  do_remind_id_check = true
-end
+ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})
 
 ---- Local functions ----
-local function get_max_stack(class)
-  local max_stack_size = 0
-  local slot = nil
+local function add_exclusion(item_name)
+  if not util.contains(ed_dropped_items, item_name) then
+    table.insert(ed_dropped_items, item_name)
+  end
+  BRC.opt.autopickup_exceptions(item_name, true)
+end
+
+local function remove_exclusion(item_name)
+  util.remove(ed_dropped_items, item_name)
+  BRC.opt.autopickup_exceptions(item_name, false)
+end
+
+local function enchantable_weap_in_inv()
+  return util.exists(items.inventory(), function(i)
+    return i.is_weapon
+      and not BRC.it.is_magic_staff(i)
+      and i.plus < 9
+      and (not i.artefact or you.race() == "Mountain Dwarf")
+  end)
+end
+
+local function clean_item_text(text)
+  text = BRC.txt.clean(text)
+  text = text:gsub("{.*}", "")
+  text = text:gsub("[.]", "")
+  text = text:gsub("%(.*%)", "")
+  return util.trim(text)
+end
+
+local function extract_jewellery_or_evoker(text)
+  local idx = text:find("ring of", 1, true)
+    or text:find("amulet of", 1, true)
+    or text:find("wand of", 1, true)
+  if idx then return text:sub(idx, #text) end
+
+  for _, item_name in ipairs(BRC.MISC_ITEMS) do
+    if text:find(item_name) then return item_name end
+  end
+end
+
+local function extract_missile(text)
+  for _, item_name in ipairs(BRC.MISSILES) do
+    if text:find(item_name) then return item_name end
+  end
+end
+
+local function extract_potion(text)
+  local idx = text:find("potions? of")
+  if idx then return "potions? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
+
+local function extract_scroll(text)
+  local idx = text:find("scrolls? of")
+  if idx then return "scrolls? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
+
+--[[
+  get_item_name() - Tries to extract item name from text.
+  Returns name of item, or nil if not recognized as an excludable item.
+--]]
+local function get_item_name(text)
+  text = clean_item_text(text)
+  return extract_jewellery_or_evoker(text)
+    or extract_missile(text)
+    or extract_potion(text)
+    or extract_scroll(text)
+end
+
+local function should_exclude(item_name, full_msg)
+  -- Enchant/Brand weapon scrolls continue pickup if they're still useful
+  if
+    f_exclude_dropped.Config.not_weapon_scrolls
+    and (item_name:contains("enchant weapon") or item_name:contains("brand weapon"))
+    and enchantable_weap_in_inv()
+  then
+    return false
+  end
+
+  -- Don't exclude if we dropped partial stack (except for jewellery)
   for _, inv in ipairs(items.inventory()) do
-    if inv.class(true) == class and not inv.is_identified then
-      if inv.quantity > max_stack_size then
-        max_stack_size = inv.quantity
-        slot = inv.slot
-      elseif inv.quantity == max_stack_size then
-        slot = nil -- If tied for max, no slot set a new max
-      end
+    if inv.name("qual"):contains(item_name) then
+      return BRC.it.is_jewellery(inv)
+        or inv.quantity == 1
+        or full_msg:contains("ou drop " .. item_name .. " " .. inv.quantity)
     end
   end
-  return max_stack_size, slot
+
+  return true
 end
 
-local function have_scroll_of_id()
-  return util.exists(items.inventory(), function(i)
-    return i.name("qual") == "scroll of identify"
-  end)
-end
-
-local function have_unid_item()
-  return util.exists(items.inventory(), function(i)
-    return not i.is_identified
-  end)
+---- Initialization ----
+function f_exclude_dropped.init()
+  for _, v in ipairs(ed_dropped_items) do
+    add_exclusion(v)
+  end
 end
 
 ---- Crawl hook functions ----
-function f_remind_id.c_assign_invletter(it)
-  if
-    not it.is_identified and have_scroll_of_id()
-    or it.name("qual") == "scroll of identify" and have_unid_item()
-  then
-    you.stop_activity()
-    do_remind_id_check = true
-  end
-end
-
-function f_remind_id.c_message(text, channel)
+function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
 
-  if text:find("scrolls? of identify") then
-    ri_found_scroll_of_id = true
-    -- Don't re-trigger on dropping or on hotkey notification
-    text = BRC.txt.clean(text)
-    if not text:contains("ou drop ") and not text:contains("to read ") and have_unid_item() then
-      you.stop_activity()
-      do_remind_id_check = true
-    end
-  else
-    local name, slot = BRC.txt.get_pickup_info(text)
-    if not name then return end
+  local picked_up = BRC.txt.get_pickup_info(text)
+  if not picked_up and not text:contains("ou drop ") then return end
 
-    local is_scroll = name:contains("scroll")
-    local is_potion = name:contains("potion")
-    if not (is_scroll or is_potion) then return end
+  local item_name = get_item_name(text)
+  if not item_name then return end
 
-    if ri_found_scroll_of_id then
-      -- Check for pickup unidentified consumable
-      if not name:contains(" of ") then do_remind_id_check = true end
-    else
-      -- Check if max stack size increased
-      local num_scrolls, slot_scrolls = get_max_stack("scroll")
-      local num_pots, slot_pots = get_max_stack("potion")
-      if
-        is_scroll and slot_scrolls == slot and num_scrolls >= C.stop_on_scrolls_count
-        or is_potion and slot_pots == slot and num_pots >= C.stop_on_pots_count
-      then
-        you.stop_activity()
-      end
-    end
-  end
-end
-
-function f_remind_id.ready()
-  if do_remind_id_check then
-    do_remind_id_check = false
-    if have_unid_item() and have_scroll_of_id() then
-      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), C.emoji)
-      BRC.mpr.stop(msg)
-      if C.read_id_hotkey then
-        BRC.Hotkey.set("read", "scroll of identify", false, function()
-          for _, inv in ipairs(items.inventory()) do
-            if inv.name("qual") == "scroll of identify" then
-              BRC.util.do_cmd("CMD_READ")
-              crawl.sendkeys(BRC.txt.int2char(inv.slot))
-              crawl.flush_input()
-              return
-            end
-          end
-        end)
-      end
-    end
+  if picked_up then
+    remove_exclusion(item_name)
+  elseif should_exclude(item_name, text) then
+    add_exclusion(item_name)
   end
 end
 
 
 -- Crawl hook wrappers
-function c_assign_invletter(...)
-  if f_remind_id.c_assign_invletter then
-    return f_remind_id.c_assign_invletter(...)
-  end
-end
 function c_message(...)
-  if f_remind_id.c_message then
-    return f_remind_id.c_message(...)
-  end
-end
-function ready(...)
-  if f_remind_id.ready then
-    return f_remind_id.ready(...)
-  end
+  return f_exclude_dropped.c_message(...)
 end
 
+
 -- Initialize feature
-f_remind_id.init()
+f_exclude_dropped.init()
 
 }

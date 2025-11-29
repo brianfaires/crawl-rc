@@ -111,24 +111,6 @@ def main():
         with open(output_dir / "buehler.rc", 'w') as outfile:
             process_init_file(infile, outfile, processed_files)
     
-    print("Building core.rc...")
-    processed_files.clear()
-    with open(output_dir / "only_core.rc", 'w') as outfile:
-        outfile.write("## BRC Core files - Copy/paste any features above this line.\n")
-        for filename in [ "config.lua", "constants.lua", "util.lua", "data.lua", "brc.lua" ]:
-            file_path = core_dir / filename
-            if file_path.exists():
-                process_file(file_path, outfile, processed_files)
-    
-    print("Building pickup-alert.rc...")
-    processed_files.clear()
-    with open(output_dir / "only_pickup_alert.rc", 'w') as outfile:
-        outfile.write("## BRC Pickup-alert feature - Copy/paste this file above only_core.rc.\n")
-        for filename in [ "pa-armour.lua", "pa-weapons.lua", "pa-misc.lua", "pa-data.lua", "pa-main.lua" ]:
-            file_path = pickup_alert_dir / filename
-            if file_path.exists():
-                process_file(file_path, outfile, processed_files)
-    
     print(f"Done! processed_files {len(processed_files)} files.")
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-## Standalone BRC Feature: safe-stairs
-## Generated from: lua/features/safe-stairs.lua
+## Standalone BRC Feature: runrest-features
+## Generated from: lua/features/runrest-features.lua
 ## This file is self-contained and can be copy-pasted into your RC file.
 ## No external dependencies required.
 
@@ -15,7 +15,16 @@ BRC.COL = {
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
 } -- BRC.COL (do not remove this comment)
 
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
+BRC.PORTAL_NAMES = {
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
+  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
+} -- BRC.PORTAL_NAMES (do not remove this commen
+
+BRC.PORTAL_NAMES = {
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
+  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
+} -- BRC.PORTAL_NAMES (do not remove this comment)
 
 
 -- BRC module tables
@@ -24,6 +33,7 @@ BRC.mpr = {}
 BRC.opt = {}
 BRC.txt = {}
 BRC.util = {}
+BRC.you = {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features
@@ -67,7 +77,6 @@ function BRC.Data.persist(name, default_value)
 end
 
 -- BRC.mpr module
-local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -114,10 +123,6 @@ function BRC.mpr.error(message, context, skip_more)
   end
 end
 
-function BRC.mpr.okay(suffix)
-  BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
-end
-
 function BRC.mpr.warning(message, context)
   log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
@@ -126,60 +131,12 @@ function BRC.mpr.warning(message, context)
   end
 end
 
-function BRC.mpr.yesno(msg, color, capital_only)
-  msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
-
-  for i = 1, 10 do
-    BRC.mpr[color or BRC.COL.lightgrey](msg, "prompt")
-    local res = crawl.getch()
-    if res and res >= 0 and res <= 255 then
-      local c = string.char(res)
-      if c == "Y" or c == "y" and not capital_only then return true end
-      if c == "N" or c == "n" and not capital_only then return false end
-    end
-    if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
-  end
-
-  BRC.mpr.lightmagenta("Feels like a no.")
-  return false
-end
-
 -- BRC.opt module
 local _single_turn_mutes = {}
 
-function BRC.opt.macro(key, function_name)
-  if type(_G[function_name]) ~= "function" then
-    BRC.mpr.error("Function %s is not a global function", function_name)
-    return
-  end
-
-  -- Format msg for debugging and keycode for crawl.setopt()
-  local key_str = nil
-  if type(key) == "number" then
-    -- Try to convert to key name for better debug msg
-    for k, v in pairs(BRC.KEYS) do
-      if v == key then
-        key_str = "<<< " .. k .. " >>"
-        break
-      end
-    end
-    -- Format keycode string for crawl.setopt()
-    key = "\\{" .. key .. "}"
-    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
-  end
-
-  -- The << >> formatting protects against crawl thinking '<' is a tag
-  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
-
-  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
-
-  BRC.mpr.debug(
-    string.format(
-      "Assigned macro: %s to key: %s",
-      BRC.txt.magenta(function_name .. "()"),
-      BRC.txt.lightred(key_str)
-    )
-  )
+function BRC.opt.explore_stop(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("explore_stop %s %s", op, pattern))
 end
 
 -- BRC.txt module
@@ -205,6 +162,7 @@ local function tostr_list(var, pretty, indents)
     return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
   end
 end
+
 local function tostr_map(var, pretty, indents)
   local tokens = {}
 
@@ -239,6 +197,7 @@ local function tostr_map(var, pretty, indents)
   local LIST_SEP = ",\n" .. CHILD_INDENT
   return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
 end
+
 local function tostr_string(var, pretty)
   local s
   if var:contains("\n") then
@@ -250,6 +209,11 @@ local function tostr_string(var, pretty)
   if not pretty then return s end
   -- Replace > and < to display the color tags instead of colored text
   return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
+end
+
+function BRC.txt.clean(text)
+  if type(text) ~= "string" then return text end
+  return text:gsub("\n", ""):gsub("<[^>]*>", "")
 end
 
 function BRC.txt.contains(self, text)
@@ -283,16 +247,6 @@ function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
 end
 
-function BRC.util.do_cmd(cmd)
-  local key = BRC.util.get_cmd_key(cmd)
-  if key then
-    crawl.sendkeys({ key })
-    crawl.flush_input()
-  else
-    crawl.do_commands({ cmd })
-  end
-end
-
 function BRC.util.get_cmd_key(cmd)
   local key = crawl.get_command(cmd)
   if not key or key == "NULL" then return nil end
@@ -309,97 +263,195 @@ function BRC.util.is_map(value)
   return value and type(value) == "table" and next(value) ~= nil and #value == 0
 end
 
+-- BRC.you module
+function BRC.you.in_hell(exclude_vestibule)
+  local branch = you.branch()
+  if exclude_vestibule and branch == "Hell" then return false end
+  return util.contains(BRC.HELL_BRANCHES, branch)
+end
+
 -- Feature code
 ---------------------------------------------------------------------------------------------------
--- BRC feature module: safe-stairs
--- @module f_safe_stairs
--- @author rypofalem (V:5 warning idea), buehler
--- Prevent accidental stairs use and warn for Vaults:5 entry.
+-- BRC feature module: runrest-features
+-- @module f_runrest_features
+-- Simple features related to auto-explore stops: altars, gauntlets, portals, stairs, etc.
 ---------------------------------------------------------------------------------------------------
 
-f_safe_stairs = {}
+f_runrest_features = {}
 
-f_safe_stairs.Config = {
-  warn_backtracking = true, -- Warn if immediately taking stairs twice in a row
-  warn_v5 = true, -- Prompt before entering Vaults:5
-} -- f_safe_stairs.Config (do not remove this comment)
+f_runrest_features.Config = {
+  after_shaft = true, -- stop on stairs after being shafted, until returned to original floor
+  ignore_altars = true, -- when you don't need a god
+  ignore_portal_exits = true, -- don't stop explore on portal exits
+  stop_on_hell_stairs = true, -- stop explore on hell stairs
+  stop_on_pan_gates = true, -- stop explore on pan gates
+  temple_search = true, -- on entering or exploring temple, auto-search
+  gauntlet_search = true, -- on entering or exploring gauntlet, auto-search with filters
+} -- f_runrest_features.Config (do not remove this comment)
 
 ---- Persistent variables ----
-ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
-ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
+rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
+rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
+rr_shaft_location = BRC.Data.persist("rr_shaft_location", nil)
+
+---- Local constants ----
+local GAUNTLET_CONCAT_STRING = " && !!"
+local GAUNTLET_SEARCH_STRING = table.concat({
+  "gauntlet", "gate leading", "a transporter", "gold piece",
+  " trap", "translucent door", "translucent gate"
+  }, GAUNTLET_CONCAT_STRING)
 
 ---- Local variables ----
 local C -- config alias
-local ss_cur_location
+local stop_on_altars
+local stop_on_portals
+local stop_on_stairs
 
 ---- Initialization ----
-function f_safe_stairs.init()
-  C = f_safe_stairs.Config
-  ss_cur_location = you.where()
+function f_runrest_features.init()
+  C = f_runrest_features.Config
+  stop_on_altars = true
+  stop_on_portals = true
+  stop_on_stairs = false
 
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
+  if you.turns() == 0 and you.class() == "Delver" then rr_shaft_location = "D:1" end
 end
 
 ---- Local functions ----
-local function check_new_location(cmd)
-  local feature = view.feature_at(0, 0)
-
-  if C.warn_backtracking and ss_prev_location ~= ss_cur_location then
-    if
-      cmd == "CMD_GO_DOWNSTAIRS" and (feature:contains("down") or feature:contains("shaft"))
-      or cmd == "CMD_GO_UPSTAIRS" and feature:contains("up")
-    then
-      if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
-    end
-  end
-
-  if
-    C.warn_v5
-    and not ss_v5_warned
-    and ss_cur_location == "Vaults:4"
-    and cmd == "CMD_GO_DOWNSTAIRS"
-    and (feature:contains("down") or feature:contains("shaft"))
-  then
-    if not BRC.mpr.yesno("Really go to Vaults:5?") then return BRC.mpr.okay() end
-    ss_v5_warned = true
-  end
-
-  BRC.util.do_cmd(cmd)
+local function is_explore_done_msg(text)
+  local cleaned = BRC.txt.clean(text)
+  return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
 end
 
----- Macro functions ----
-function macro_brc_downstairs()
-  if BRC.active and not f_safe_stairs.Config.disabled then
-    check_new_location("CMD_GO_DOWNSTAIRS")
-  else
-    BRC.util.do_cmd("CMD_GO_DOWNSTAIRS")
+local function set_stairs_stop_state()
+  local should_be_active = C.stop_on_pan_gates and you.branch() == "Pan"
+    or C.stop_on_hell_stairs and BRC.you.in_hell(true)
+    or C.after_shaft and rr_shaft_location ~= nil
+
+  if stop_on_stairs and not should_be_active then
+    stop_on_stairs = false
+    BRC.opt.explore_stop("stairs", false)
+  elseif not stop_on_stairs and should_be_active then
+    stop_on_stairs = true
+    BRC.opt.explore_stop("stairs", true)
   end
 end
 
-function macro_brc_upstairs()
-  if BRC.active and not f_safe_stairs.Config.disabled then
-    check_new_location("CMD_GO_UPSTAIRS")
-  else
-    BRC.util.do_cmd("CMD_GO_UPSTAIRS")
+-- Altar/Religion functions
+local function religion_is_handled()
+  if you.race() == "Demigod" then return true end
+  if you.god() == "No God" then return false end
+  if you.good_god() then return you.xl() > 9 end
+  return true
+end
+
+local function ready_ignore_altars()
+  if stop_on_altars and religion_is_handled() then
+    stop_on_altars = false
+    BRC.opt.explore_stop("altars", false)
+  elseif not stop_on_altars and not religion_is_handled() then
+    stop_on_altars = true
+    BRC.opt.explore_stop("altars", true)
   end
+end
+
+-- Temple functions
+local function search_altars()
+  local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
+  crawl.sendkeys({ cmd_key, "altar", "\r" })
+  crawl.flush_input()
+end
+
+local function ready_temple_macro()
+  if you.branch() == "Temple" and not rr_autosearched_temple then
+    search_altars()
+    rr_autosearched_temple = true
+  end
+end
+
+local function c_message_temple(text, _)
+  if you.branch() == "Temple" then
+    -- Search again after explore
+    if is_explore_done_msg(text) then search_altars() end
+  end
+end
+
+-- Gauntlet functions
+local function search_gauntlet()
+  local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
+  crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
+  crawl.flush_input()
+end
+
+local function ready_gauntlet_macro()
+  if you.branch() == "Gauntlet" and not rr_autosearched_gauntlet then
+    search_gauntlet()
+    rr_autosearched_gauntlet = true
+  end
+end
+
+local function c_message_gauntlet(text, _)
+  -- Search again after explore
+  if you.branch() == "Gauntlet" then
+    if is_explore_done_msg(text) then search_gauntlet() end
+  end
+end
+
+-- Portal exit functions
+local function ready_ignore_portals()
+  if stop_on_portals and util.contains(BRC.PORTAL_NAMES, you.branch()) then
+    stop_on_portals = false
+    BRC.opt.explore_stop("portals", false)
+  elseif not stop_on_portals and not util.contains(BRC.PORTAL_NAMES, you.branch()) then
+    stop_on_portals = true
+    BRC.opt.explore_stop("portals", true)
+  end
+end
+
+-- After shaft functions
+local function c_message_after_shaft(text, channel)
+  if channel ~= "plain" or rr_shaft_location then return end
+  if text:contains("ou fall into a shaft") or text:contains("ou are sucked into a shaft") then
+    rr_shaft_location = you.where()
+  end
+end
+
+local function ready_after_shaft()
+  if you.where() == rr_shaft_location then rr_shaft_location = nil end
 end
 
 ---- Crawl hook functions ----
-function f_safe_stairs.ready()
-  ss_prev_location = ss_cur_location
-  ss_cur_location = you.where()
+function f_runrest_features.c_message(text, _)
+  if C.temple_search then c_message_temple(text) end
+  if C.gauntlet_search then c_message_gauntlet(text) end
+  if C.after_shaft then c_message_after_shaft(text) end
+end
+
+function f_runrest_features.ready()
+  if C.ignore_altars then ready_ignore_altars() end
+  if C.ignore_portal_exits then ready_ignore_portals() end
+  if C.temple_search then ready_temple_macro() end
+  if C.gauntlet_search then ready_gauntlet_macro() end
+  if C.after_shaft then ready_after_shaft() end
+  set_stairs_stop_state()
 end
 
 
 -- Crawl hook wrappers
+function c_message(...)
+  return f_runrest_features.c_message(...)
+end
+
+local brc_last_turn = -1
 function ready(...)
-  if f_safe_stairs.ready then
-    return f_safe_stairs.ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_runrest_features.ready(...)
   end
 end
 
+
 -- Initialize feature
-f_safe_stairs.init()
+f_runrest_features.init()
 
 }

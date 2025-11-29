@@ -26,7 +26,6 @@ BRC.util = {}
 BRC.you = {}
 
 -- BRC.mpr module
-local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -330,15 +329,17 @@ end
 
 -- Crawl hook wrappers
 function c_message(...)
-  if f_fully_recover.c_message then
-    return f_fully_recover.c_message(...)
-  end
+  return f_fully_recover.c_message(...)
 end
+
+local brc_last_turn = -1
 function ready(...)
-  if f_fully_recover.ready then
-    return f_fully_recover.ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_fully_recover.ready(...)
   end
 end
+
 
 -- Initialize feature
 f_fully_recover.init()

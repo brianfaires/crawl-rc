@@ -31,7 +31,6 @@ function BRC.it.is_polearm(it)
 end
 
 -- BRC.mpr module
-local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -214,20 +213,21 @@ end
 
 -- Crawl hook wrappers
 function c_assign_invletter(...)
-  if f_weapon_slots.c_assign_invletter then
-    return f_weapon_slots.c_assign_invletter(...)
-  end
+  return f_weapon_slots.c_assign_invletter(...)
 end
+
 function c_message(...)
-  if f_weapon_slots.c_message then
-    return f_weapon_slots.c_message(...)
-  end
+  return f_weapon_slots.c_message(...)
 end
+
+local brc_last_turn = -1
 function ready(...)
-  if f_weapon_slots.ready then
-    return f_weapon_slots.ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_weapon_slots.ready(...)
   end
 end
+
 
 -- Initialize feature
 f_weapon_slots.init()

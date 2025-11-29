@@ -19,7 +19,7 @@ base_dir = Path(__file__).parent.parent
 core_dir = base_dir / "lua" / "core"
 util_dir = base_dir / "lua" / "util"
 features_dir = base_dir / "lua" / "features"
-output_dir = base_dir / "bin" / "features"
+output_dir = base_dir / "bin" / "standalone_features"
 output_dir.mkdir(parents=True, exist_ok=True)
 
 BRC_MODULES = {
@@ -133,9 +133,9 @@ def _find_function_by_pattern(lines: List[str], pattern: re.Pattern, start_idx: 
             return (i, func_name)
     return None
 
-def extract_lua_function(module_name: str, function_name: str, file_path: Path) -> Optional[str]:
+def extract_lua_function(module_name: str, function_name: str) -> Optional[str]:
     """Extract a specific BRC module function from a file."""
-    lines = _get_cached_lines(file_path)
+    lines = _get_cached_lines(BRC_MODULES[module_name])
     module_var = module_name.split('.')[1]
     pattern = re.compile(rf'^function\s+BRC\.{re.escape(module_var)}\.{re.escape(function_name)}\s*\(')
     
@@ -173,8 +173,8 @@ def extract_init_code(file_path: Path) -> str:
     for i, line in enumerate(lines):
         stripped = line.strip()
         
-        # Skip empty lines and comments
-        if not stripped or stripped.startswith('--'):
+        # Skip empty lines, comments, and _mpr_queue declaration
+        if not stripped or stripped.startswith('--') or stripped == "local _mpr_queue = {}":
             continue
         
         current_indent = len(line) - len(line.lstrip())
@@ -190,7 +190,7 @@ def extract_init_code(file_path: Path) -> str:
                 in_function = False
                 function_indent = 0
             continue
-        
+
         # Top-level code (not in function, not module table declaration)
         if not re.match(r'^BRC\.\w+\s*=\s*\{\}\s*$', stripped):
             result.append(line)
@@ -242,7 +242,7 @@ class DependencyAnalyzer:
                     for func in funcs:
                         if (mod, func) not in self.extracted_functions:
                             changed = True
-                            if func_code := extract_lua_function(mod, func, BRC_MODULES[mod]):
+                            if func_code := extract_lua_function(mod, func):
                                 new_functions[(mod, func)] = func_code
             
             self.extracted_functions.update(new_functions)
@@ -263,7 +263,7 @@ class DependencyAnalyzer:
                             self.used_functions[module].add(match)
                             new_refs.setdefault(module, set()).add(match)
                             if (module, match) not in self.extracted_functions:
-                                if func_code := extract_lua_function(module, match, BRC_MODULES[module]):
+                                if func_code := extract_lua_function(module, match):
                                     self.extracted_functions[(module, match)] = func_code
         
         # Find constants
@@ -342,6 +342,19 @@ class StandaloneGenerator:
                 return match.group(1)
         return "feature"
     
+    def _needs_consume_queue(self) -> bool:
+        """Check if the generated content uses the mpr queue."""
+        all_code = self.analyzer.content
+        for func_code in self.analyzer.extracted_functions.values():
+            all_code += func_code
+        for blocks in self.analyzer.init_code_blocks.values():
+            for block in blocks:
+                all_code += block
+        for module_local_funcs in self.analyzer.local_functions.values():
+            for local_func_code in module_local_funcs.values():
+                all_code += local_func_code
+        return 'BRC.mpr.que' in all_code
+    
     def generate(self) -> str:
         """Generate complete standalone feature file."""
         parts = [
@@ -356,14 +369,15 @@ class StandaloneGenerator:
         if self.analyzer.used_constants:
             parts.append(self._generate_constants())
         
-        # Module tables
         module_tables = [f"BRC.{m.split('.')[1]} = {{}}" for m in sorted(self.analyzer.used_modules)]
         if module_tables:
             parts.append("-- BRC module tables\n" + "\n".join(module_tables))
         
-        # Module code
         for module in sorted(self.analyzer.used_modules):
             parts.append(self._generate_module_code(module))
+        
+        if self._needs_consume_queue():
+            parts.append(self._generate_consume_queue())
         
         parts.extend([
             self._generate_feature_code(),
@@ -412,19 +426,16 @@ class StandaloneGenerator:
         if module == "BRC.Data":
             result.append(self._generate_minimal_persist())
         else:
-            # Init blocks
             if module in self.analyzer.init_code_blocks:
                 for block in self.analyzer.init_code_blocks[module]:
                     result.append(block)
                 result.append('')
             
-            # Local functions
             if module in self.analyzer.local_functions:
                 for func_name in sorted(self.analyzer.local_functions[module].keys()):
                     result.append(self.analyzer.local_functions[module][func_name])
-                result.append('')
+                    result.append('')
             
-            # Module functions
             if module in self.analyzer.used_functions:
                 func_names = sorted(self.analyzer.used_functions[module])
                 extracted_funcs = [
@@ -491,23 +502,46 @@ class StandaloneGenerator:
     def _generate_hooks(self) -> str:
         """Generate crawl hook wrappers (excluding init)."""
         hooks = [h for h in sorted(self.analyzer.used_hooks) if h != "init"]
+        
+        # Ensure ready() exists if using mpr queue
+        needs_consume = self._needs_consume_queue()
+        if needs_consume and "ready" not in hooks:
+            hooks.append("ready")
+            hooks = sorted(hooks)
+        
         if not hooks:
             return ""
         
         result = ["-- Crawl hook wrappers"]
         for hook in hooks:
-            result.append(f"function {hook}(...)\n  if {self.feature_var}.{hook} then\n    return {self.feature_var}.{hook}(...)\n  end\nend")
-            if hook == "autopickup":
+            if hook == "ready":
+                hook_code = "\n".join([
+                    f"local brc_last_turn = -1",
+                    f"function {hook}(...)",
+                    f"  if you.turns() > brc_last_turn then",
+                    f"    brc_last_turn = you.turns()",
+                    f"    {self.feature_var}.{hook}(...)",
+                    f"  end",
+                    *([f"  BRC.mpr.consume_queue()"] if needs_consume else []),
+                    f"end",
+                ])
+                result.append(hook_code)
+            elif hook == "autopickup":
                 result.append(f"add_autopickup_func({self.feature_var}.autopickup)")
+            else:
+                result.append(f"function {hook}(...)\n  return {self.feature_var}.{hook}(...)\nend")
+            result.append('')
         return '\n'.join(result)
     
-    def _generate_init_call(self) -> str:
-        """Generate init() call at the end."""
-        return f"-- Initialize feature\n{self.feature_var}.init()"
+    def _generate_consume_queue(self) -> str:
+        return "\n".join([
+            "-- mpr queue support: _mpr_queue and BRC.mpr.consume_queue()",
+            "_mpr_queue = {}",
+            extract_lua_function("BRC.mpr", "consume_queue"),
+        ])
     
-    def _generate_footer(self) -> str:
-        """Generate closing brace."""
-        return "}"
+    def _generate_init_call(self) -> str:
+        return f"-- Initialize feature\n{self.feature_var}.init()"
 
 # ============================================================================
 # Main Entry Point
@@ -516,6 +550,9 @@ class StandaloneGenerator:
 def main():
     """Process all feature files and generate standalone versions."""
     for feature_path in features_dir.glob("*.lua"):
+        if "_template" in feature_path.name:
+            continue
+
         print(f"Analyzing feature: {feature_path.name}")
         
         analyzer = DependencyAnalyzer(feature_path)
@@ -528,8 +565,8 @@ def main():
         
         generator = StandaloneGenerator(analyzer)
         standalone_content = generator.generate()
-        standalone_content += "\n\n" + generator._generate_footer()
-        
+        standalone_content += "\n\n}\n"
+
         output_file = output_dir / f"{generator.feature_name}.rc"
         output_file.write_text(standalone_content, encoding='utf-8')
         

@@ -250,11 +250,14 @@ end
 
 
 -- Crawl hook wrappers
+local brc_last_turn = -1
 function ready(...)
-  if f_dynamic_options.ready then
-    return f_dynamic_options.ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_dynamic_options.ready(...)
   end
 end
+
 
 -- Initialize feature
 f_dynamic_options.init()

@@ -28,6 +28,7 @@ local function format_dmg(dmg)
   if dmg > 99.9 then return ">100" end
   return string.format("%.1f", dmg)
 end
+
 local function format_stat(abbr, val, is_worn)
   local stat_str = string.format("%.1f", val)
   if val < 0 then
@@ -38,10 +39,12 @@ local function format_stat(abbr, val, is_worn)
     return string.format("%s+%s", abbr, stat_str)
   end
 end
+
 local function get_adjusted_armour_pen(encumb, str)
   local base_pen = get_unadjusted_armour_pen(encumb)
   return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
+
 local function get_branded_delay(delay, ego)
   if not ego then return delay end
   if ego == "speed" then
@@ -51,6 +54,7 @@ local function get_branded_delay(delay, ego)
   end
   return delay
 end
+
 local function get_delta_ac_ev(it)
   local it_ac = BRC.eq.get_ac(it)
   local it_ev = BRC.eq.get_armour_ev(it)
@@ -61,6 +65,7 @@ local function get_delta_ac_ev(it)
     return it_ac - BRC.eq.get_ac(cur), it_ev - BRC.eq.get_armour_ev(cur)
   end
 end
+
 local function get_delta_sh_ev(it)
   local it_sh = BRC.eq.get_sh(it)
   local it_ev = -get_shield_penalty(it)
@@ -71,6 +76,7 @@ local function get_delta_sh_ev(it)
     return it_sh - BRC.eq.get_sh(cur), it_ev + get_shield_penalty(cur)
   end
 end
+
 local function get_dmg_with_brand_bonus(ego, base_dmg, it_plus, dmg_type)
   if not ego then return base_dmg + it_plus end
 
@@ -89,11 +95,13 @@ local function get_dmg_with_brand_bonus(ego, base_dmg, it_plus, dmg_type)
     return base_dmg + it_plus
   end
 end
+
 local function get_shield_penalty(sh)
   return 2 * sh.encumbrance * sh.encumbrance
     * (27 - you.skill("Shields")) / 27
     / (25 + 5 * you.strength())
 end
+
 local function get_slay_bonuses()
   local sum = 0
 
@@ -135,6 +143,7 @@ local function get_slay_bonuses()
 
   return sum
 end
+
 local function get_staff_bonus_dmg(it, dmg_type)
   if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
   if dmg_type == BRC.DMG_TYPE.plain then
@@ -152,6 +161,7 @@ local function get_staff_bonus_dmg(it, dmg_type)
   local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
   return avg_dmg * chance
 end
+
 local function get_stats_with_item(it, stats)
   local new_stats = util.copy_table(stats)
   local cur = items.equipped_at(it.equip_type)
@@ -171,6 +181,7 @@ local function get_stats_with_item(it, stats)
 
   return new_stats
 end
+
 local function get_weap_min_delay(it)
   -- This is an abbreviated version of the actual calculation.
   -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
@@ -429,11 +440,14 @@ end
 
 
 -- Crawl hook wrappers
+local brc_last_turn = -1
 function ready(...)
-  if f_inscribe_stats.ready then
-    return f_inscribe_stats.ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_inscribe_stats.ready(...)
   end
 end
+
 
 -- Initialize feature
 f_inscribe_stats.init()

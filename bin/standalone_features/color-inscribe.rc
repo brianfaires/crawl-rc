@@ -179,15 +179,13 @@ end
 
 -- Crawl hook wrappers
 function c_assign_invletter(...)
-  if f_color_inscribe.c_assign_invletter then
-    return f_color_inscribe.c_assign_invletter(...)
-  end
+  return f_color_inscribe.c_assign_invletter(...)
 end
+
 function c_message(...)
-  if f_color_inscribe.c_message then
-    return f_color_inscribe.c_message(...)
-  end
+  return f_color_inscribe.c_message(...)
 end
+
 
 -- Initialize feature
 f_color_inscribe.init()

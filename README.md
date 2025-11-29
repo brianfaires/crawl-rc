@@ -287,10 +287,9 @@ BRC.Configs.Testing = {
 
 ```
 bin/                    # Pre-built RC files
-├── buehler.rc              # Core + all features (Use this for webtiles)
-├── only_core.rc            # Core with no features
-├── features/           # Each features file, as a self-contained version
-|   └── *.rc                # Each feature and its dependencies
+├── buehler.rc            # Core + all features (Use this for webtiles)
+├── standalone_features/  # Each feature, with its dependencies, as a self-contained file
+|   └── *.rc                # One RC file per feature, including crawl hooks
 lua/                    # Lua files
 ├── core/                   # Core BRC system
 │   ├── brc.lua                 # Main coordinator

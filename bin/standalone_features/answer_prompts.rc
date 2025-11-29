@@ -21,7 +21,6 @@ BRC.mpr = {}
 BRC.txt = {}
 
 -- BRC.mpr module
-local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -55,10 +54,9 @@ end
 
 -- Crawl hook wrappers
 function c_answer_prompt(...)
-  if f_answer_prompts.c_answer_prompt then
-    return f_answer_prompts.c_answer_prompt(...)
-  end
+  return f_answer_prompts.c_answer_prompt(...)
 end
+
 
 -- Initialize feature
 f_answer_prompts.init()

@@ -88,6 +88,7 @@ local function get_adjusted_armour_pen(encumb, str)
   local base_pen = get_unadjusted_armour_pen(encumb)
   return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
+
 local function get_branded_delay(delay, ego)
   if not ego then return delay end
   if ego == "speed" then
@@ -97,11 +98,13 @@ local function get_branded_delay(delay, ego)
   end
   return delay
 end
+
 local function get_shield_penalty(sh)
   return 2 * sh.encumbrance * sh.encumbrance
     * (27 - you.skill("Shields")) / 27
     / (25 + 5 * you.strength())
 end
+
 local function get_weap_min_delay(it)
   -- This is an abbreviated version of the actual calculation.
   -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
@@ -192,7 +195,6 @@ function BRC.it.is_shield(it)
 end
 
 -- BRC.mpr module
-local _mpr_queue = {}
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -334,6 +336,7 @@ local function tostr_list(var, pretty, indents)
     return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
   end
 end
+
 local function tostr_map(var, pretty, indents)
   local tokens = {}
 
@@ -368,6 +371,7 @@ local function tostr_map(var, pretty, indents)
   local LIST_SEP = ",\n" .. CHILD_INDENT
   return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
 end
+
 local function tostr_string(var, pretty)
   local s
   if var:contains("\n") then
@@ -442,6 +446,28 @@ function BRC.you.skill(skill)
   end
 
   return sum / count
+end
+
+-- mpr queue support: _mpr_queue and BRC.mpr.consume_queue()
+_mpr_queue = {}
+function BRC.mpr.consume_queue()
+  local do_more = util.exists(_mpr_queue, function(q) return q.more end)
+  -- stop_activity() can generate more autopickups, and thus more queue'd messages
+  if do_more then
+    you.stop_activity()
+    crawl.redraw_screen()
+  end
+
+  for _, msg in ipairs(_mpr_queue) do
+    crawl.mpr(tostring(msg.m), msg.ch)
+    crawl.flush_prev_message()
+  end
+  _mpr_queue = {}
+
+  if do_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
 end
 
 -- Feature code
@@ -813,22 +839,21 @@ end
 
 
 -- Crawl hook wrappers
-function autopickup(...)
-  if f_bread_swinger.autopickup then
-    return f_bread_swinger.autopickup(...)
-  end
-end
 add_autopickup_func(f_bread_swinger.autopickup)
+
 function c_message(...)
-  if f_bread_swinger.c_message then
-    return f_bread_swinger.c_message(...)
-  end
+  return f_bread_swinger.c_message(...)
 end
+
+local brc_last_turn = -1
 function ready(...)
-  if f_bread_swinger.ready then
-    return f_bread_swinger.ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_bread_swinger.ready(...)
   end
+  BRC.mpr.consume_queue()
 end
+
 
 -- Initialize feature
 f_bread_swinger.init()
