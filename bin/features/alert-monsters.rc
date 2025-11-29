@@ -114,7 +114,7 @@ f_alert_monsters.Config = {
 --[[
 Config.Alerts contains all alerts. Each table in it creates one alert, using the following fields:
   - `name` is for debugging.
-  - `pattern` is a string or list of monster names, will alert when one comes into view.
+  - `pattern` is a string or list of monster names, will alert when you encounter one.
   - `is_pack` (optional) indicates the alert is for a pack of monsters.
     Packs only fire once every few turns - as defined in Config.pack_timeout (default 15).
   - `flash_screen` (optional) alert will flash the screen instead of using force_more.
@@ -308,15 +308,15 @@ f_alert_monsters.Config.init = [[
 
     -- If configured, add fm for all uniques and pan lords
     if f_alert_monsters.Config.fm_on_uniques then
-      local uniques_pattern = "monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view"
+      local uniques_pattern = "monster_warning:encounter.*(?-i:[A-Z]).*(?<!rb Guardian)"
       BRC.opt.force_more_message(uniques_pattern, true)
     end
 ]]
 ------------------- End config section -------------------
 
 ---- Local constants ----
-local WARN_PREFIX = "monster_warning:(?<!spectral )("
-local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum)).*comes? into view"
+local WARN_PREFIX = "monster_warning:encounter.*(?<!spectral )("
+local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum))"
 
 ---- Local variables ----
 local C -- config alias
@@ -409,7 +409,7 @@ end
 
 ---- Crawl hook functions ----
 function f_alert_monsters.c_message(text, channel)
-  if channel ~= "monster_warning" or not text:find("comes? into view") then return end
+  if channel ~= "monster_warning" or not text:find("encounter") then return end
   if C.pack_timeout <= 0 then return end
 
   -- Identify when a mute should be turned on
