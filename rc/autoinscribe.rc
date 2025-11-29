@@ -13,16 +13,16 @@ ai += of regeneration:Regen+
 ai += of resistance:rF+, rC+
 ai += of willpower:Will+
 
-# Armour
-ai += fire dragon scale:rF++, rC-
-ai += gold dragon scale:rC+, rF+, rPois
-ai += ice dragon scale:rC++, rF-
-ai += pearl dragon scale:rN+
-ai += storm dragon scale:rElec
-ai += swamp dragon scale:rPois
-ai += quicksilver dragon scale:Will+
-ai += shadow dragon scale:Stlth+
-ai += (?<!moon) troll leather:Regen+
+# Armour (avoid double inscribing artefacts)
+ai += (?!.*artefact)fire dragon scale:rF++, rC-
+ai += (?!.*artefact)gold dragon scale:rC+, rF+, rPois
+ai += (?!.*artefact)ice dragon scale:rC++, rF-
+ai += (?!.*artefact)pearl dragon scale:rN+
+ai += (?!.*artefact)storm dragon scale:rElec
+ai += (?!.*artefact)swamp dragon scale:rPois
+ai += (?!.*artefact)quicksilver dragon scale:Will+
+ai += (?!.*artefact)shadow dragon scale:Stlth+
+ai += (?!.*artefact)(?<!moon) troll leather:Regen+
 
 
 # Amulets

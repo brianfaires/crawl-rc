@@ -75,12 +75,12 @@ function f_color_inscribe.colorize(it)
     text = colorize_subtext(text, tag[1], tag[2])
   end
 
-  -- Limit length for % menu: = 80 total width - 25/32 other text - #name - #" {}"
+  -- Limit length for % menu: = total width, minus other text, minus length of item name
   it.inscribe("", false)
-  local max_length = 80 - (it.is_melded and 32 or 25) - #it.name("plain", true) - 3
+  local max_length = 80 - 3 - (it.is_melded and 32 or 25) - #it.name("plain", true)
   if max_length < 0 then return end
-  -- Try removing darkgrey and white, then just remove all
-  if #text > max_length then text = text:gsub("</?" .. BRC.COL.darkgrey .. ">", "") end
+  -- Try removing brown, then white, then just remove all
+  if #text > max_length then text = text:gsub("</?" .. BRC.COL.brown .. ">", "") end
   if #text > max_length then text = text:gsub("</?" .. BRC.COL.white .. ">", "") end
   if #text > max_length then text = text:gsub("<.->", "") end
 
