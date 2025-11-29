@@ -21,14 +21,7 @@ f_pickup_alert.Config.Alert = {
   talismans = true,
   first_ranged = true,
   first_polearm = true,
-
   autopickup_disabled = true, -- If autopickup is off, alert for items that would be autopicked up
-
-  hotkey_travel = true,
-  hotkey_pickup = true,
-
-  -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
-  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
 
   -- Each usable item is alerted once.
   one_time = {
@@ -40,9 +33,16 @@ f_pickup_alert.Config.Alert = {
     "lajatang", "bardiche", "demon trident", "partisan", "trishula",
     "hand cannon", "triple crossbow",
   },
-
   -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
   OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
+
+  hotkey_travel = true,
+  hotkey_pickup = true,
+
+  allow_arte_weap_upgrades = true, -- If false, won't alert weapons as upgrades to an artefact
+
+  -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
+  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
 
   -- Which alerts generate a force_more
   More = {

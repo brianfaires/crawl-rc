@@ -1,6 +1,6 @@
 ### TODO
-1. [TEST] wield artefact; still get weapon alerts?  (seems like only if adding an unused hand)
 1. [TEST] standalone features
+1. [BUG] Waypoints in portals
 
 ### Watch for:
 - Added remember_alert() to pickup
