@@ -14,7 +14,7 @@ function BRC.opt.single_turn_mute(pattern)
   _single_turn_mutes[#_single_turn_mutes + 1] = pattern
 end
 
-function BRC.clear_single_turn_mutes()
+function BRC.opt.clear_single_turn_mutes()
   util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
   _single_turn_mutes = {}
 end

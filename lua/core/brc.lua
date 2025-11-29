@@ -360,7 +360,7 @@ function BRC.ready()
   if you.turns() == 0 then BRC.active = true end
   if not BRC.active then return end
   crawl.redraw_screen()
-  BRC.clear_single_turn_mutes()
+  BRC.opt.clear_single_turn_mutes()
 
   if you.turns() > turn_count then
     turn_count = you.turns()

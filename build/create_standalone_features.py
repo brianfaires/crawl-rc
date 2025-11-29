@@ -173,8 +173,9 @@ def extract_init_code(file_path: Path) -> str:
     for i, line in enumerate(lines):
         stripped = line.strip()
         
-        # Skip empty lines, comments, and _mpr_queue declaration
-        if not stripped or stripped.startswith('--') or stripped == "local _mpr_queue = {}":
+        # Skip empty lines, comments, and _mpr_queue/_single_turn_mutes declaration
+        if (not stripped or stripped.startswith('--') or
+            stripped in ["local _mpr_queue = {}", "local _single_turn_mutes = {}"]):
             continue
         
         current_indent = len(line) - len(line.lstrip())
@@ -355,6 +356,16 @@ class StandaloneGenerator:
                 all_code += local_func_code
         return 'BRC.mpr.que' in all_code
     
+    def _needs_single_turn_mutes(self) -> bool:
+        """Check if the generated content uses single turn mutes."""
+        all_code = self.analyzer.content
+        for func_code in self.analyzer.extracted_functions.values():
+            all_code += func_code
+        for blocks in self.analyzer.init_code_blocks.values():
+            for block in blocks:
+                all_code += block
+        return 'BRC.opt.single_turn_mute' in all_code
+
     def generate(self) -> str:
         """Generate complete standalone feature file."""
         parts = [
@@ -378,6 +389,9 @@ class StandaloneGenerator:
         
         if self._needs_consume_queue():
             parts.append(self._generate_consume_queue())
+        
+        if self._needs_single_turn_mutes():
+            parts.append(self._generate_single_turn_mutes())
         
         parts.extend([
             self._generate_feature_code(),
@@ -505,7 +519,8 @@ class StandaloneGenerator:
         
         # Ensure ready() exists if using mpr queue
         needs_consume = self._needs_consume_queue()
-        if needs_consume and "ready" not in hooks:
+        needs_mutes = self._needs_single_turn_mutes()
+        if "ready" not in hooks and (needs_consume or needs_mutes):
             hooks.append("ready")
             hooks = sorted(hooks)
         
@@ -518,6 +533,7 @@ class StandaloneGenerator:
                 hook_code = "\n".join([
                     f"local brc_last_turn = -1",
                     f"function {hook}(...)",
+                    *([f"  BRC.opt.clear_single_turn_mutes()"] if needs_mutes else []),
                     f"  if you.turns() > brc_last_turn then",
                     f"    brc_last_turn = you.turns()",
                     f"    {self.feature_var}.{hook}(...)",
@@ -538,6 +554,13 @@ class StandaloneGenerator:
             "-- mpr queue support: _mpr_queue and BRC.mpr.consume_queue()",
             "_mpr_queue = {}",
             extract_lua_function("BRC.mpr", "consume_queue"),
+        ])
+    
+    def _generate_single_turn_mutes(self) -> str:
+        return "\n".join([
+            "-- single turn mutes support: _single_turn_mutes and BRC.opt.clear_single_turn_mutes()",
+            "_single_turn_mutes = {}",
+            extract_lua_function("BRC.opt", "clear_single_turn_mutes"),
         ])
     
     def _generate_init_call(self) -> str:

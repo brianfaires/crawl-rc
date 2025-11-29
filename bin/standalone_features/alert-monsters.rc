@@ -65,8 +65,6 @@ function BRC.mpr.error(message, context, skip_more)
 end
 
 -- BRC.opt module
-local _single_turn_mutes = {}
-
 function BRC.opt.flash_screen_message(pattern, create)
   local op = create and "+=" or "-="
   crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))

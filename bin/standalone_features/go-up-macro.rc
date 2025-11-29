@@ -77,8 +77,6 @@ function BRC.mpr.error(message, context, skip_more)
 end
 
 -- BRC.opt module
-local _single_turn_mutes = {}
-
 function BRC.opt.macro(key, function_name)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)

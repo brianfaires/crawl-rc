@@ -132,8 +132,6 @@ function BRC.mpr.warning(message, context)
 end
 
 -- BRC.opt module
-local _single_turn_mutes = {}
-
 function BRC.opt.explore_stop(pattern, create)
   local op = create and "+=" or "-="
   crawl.setopt(string.format("explore_stop %s %s", op, pattern))

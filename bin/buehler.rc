@@ -3071,7 +3071,7 @@ function BRC.opt.single_turn_mute(pattern)
   _single_turn_mutes[#_single_turn_mutes + 1] = pattern
 end
 
-function BRC.clear_single_turn_mutes()
+function BRC.opt.clear_single_turn_mutes()
   util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
   _single_turn_mutes = {}
 end
@@ -4216,7 +4216,7 @@ function BRC.ready()
   if you.turns() == 0 then BRC.active = true end
   if not BRC.active then return end
   crawl.redraw_screen()
-  BRC.clear_single_turn_mutes()
+  BRC.opt.clear_single_turn_mutes()
 
   if you.turns() > turn_count then
     turn_count = you.turns()

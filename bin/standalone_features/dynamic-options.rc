@@ -48,8 +48,6 @@ BRC.opt = {}
 BRC.util = {}
 
 -- BRC.opt module
-local _single_turn_mutes = {}
-
 function BRC.opt.autopickup_exceptions(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))

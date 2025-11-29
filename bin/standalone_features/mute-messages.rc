@@ -12,8 +12,6 @@ BRC = { Config = { emojis = false } }
 BRC.opt = {}
 
 -- BRC.opt module
-local _single_turn_mutes = {}
-
 function BRC.opt.message_mute(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))

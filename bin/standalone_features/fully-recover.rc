@@ -73,8 +73,6 @@ function BRC.mpr.error(message, context, skip_more)
 end
 
 -- BRC.opt module
-local _single_turn_mutes = {}
-
 function BRC.opt.macro(key, function_name)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
@@ -173,6 +171,13 @@ end
 
 function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
+end
+
+-- single turn mutes support: _single_turn_mutes and BRC.opt.clear_single_turn_mutes()
+_single_turn_mutes = {}
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
 end
 
 -- Feature code
@@ -334,6 +339,7 @@ end
 
 local brc_last_turn = -1
 function ready(...)
+  BRC.opt.clear_single_turn_mutes()
   if you.turns() > brc_last_turn then
     brc_last_turn = you.turns()
     f_fully_recover.ready(...)
