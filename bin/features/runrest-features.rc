@@ -17,12 +17,12 @@ BRC.COL = {
 
 BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
 BRC.PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
-} -- BRC.PORTAL_NAMES (do not remove this com
+} -- BRC.PORTAL_NAMES (do not remove this commen
 
 BRC.PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 

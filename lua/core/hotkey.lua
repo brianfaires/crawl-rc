@@ -19,12 +19,13 @@ local WAYPOINT_MUTES = {
   "Assign waypoint to what number",
   "Existing waypoints",
   "Delete which waypoint",
-  "(\\(\\d\\) )",
+  "\\(\\d\\) ",
   "All waypoints deleted",
   "You're already here!",
   "Okay\\, then\\.",
   "Unknown command",
   "Waypoint \\d re-assigned",
+  "Waypoints will disappear",
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
@@ -182,9 +183,10 @@ end
 
 --- Set hotkey as 'move to <name>'; searches for the item by name in LOS
 function BRC.Hotkey.waypoint(name, push_front)
+  if util.contains(BRC.PORTAL_NAMES, you.branch()) then return end -- Can't auto-travel
+
   local x, y = BRC.it.get_xy(name)
   if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
-  if not view.can_reach(x, y) then return BRC.mpr.debug("Cannot reach " .. name) end
 
   local waynum = get_avail_waypoint()
   if not waynum then return end

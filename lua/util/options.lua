@@ -16,6 +16,7 @@ end
 
 function BRC.clear_single_turn_mutes()
   util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
 end
 
 ---- crawl.setopt() wrappers ----

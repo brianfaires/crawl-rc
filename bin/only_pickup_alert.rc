@@ -413,7 +413,7 @@ local function get_score(it, no_brand_bonus)
   return BRC.eq.get_dps(it, dmg_type) + acc_bonus
 end
 
-local function is_valid_upgrade(it, cur)
+local function is_upgradable_weapon(it, cur)
   return cur.is_ranged == it.is_ranged
     and BRC.it.is_polearm(cur) == BRC.it.is_polearm(it)
     and (
@@ -439,7 +439,7 @@ local function is_weapon_upgrade(it, cur, strict)
   -- Check if it's a very likely upgrade
   if it.subtype() == cur.subtype() then
     if it.artefact then return true end
-    if cur.artefact then return false end
+    if cur.artefact and not A.allow_arte_weap_upgrades then return false end
 
     local it_ego = BRC.eq.get_ego(it)
     local cur_ego = BRC.eq.get_ego(cur)
@@ -452,7 +452,7 @@ local function is_weapon_upgrade(it, cur, strict)
     if BRC.it.is_polearm(cur) ~= BRC.it.is_polearm(it) then return false end
 
     if it.artefact then return true end
-    if cur.artefact then return false end
+    if cur.artefact and not A.allow_arte_weap_upgrades then return false end
 
     local min_ratio = it.is_ranged and H.Pickup.same_type_ranged or H.Pickup.same_type_melee
     return get_score(it) / cur.score > min_ratio
@@ -664,8 +664,6 @@ local function check_upgrade_lose_shield(it, cur, ratio)
 end
 
 local function check_upgrade_no_hand_loss(it, cur, ratio)
-  if cur.artefact then return false end
-
   if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
     local it_ego = BRC.eq.get_ego(it)
     if not BRC.eq.get_ego(cur) then
@@ -685,17 +683,16 @@ local function check_upgrade_no_hand_loss(it, cur, ratio)
 end
 
 local function check_upgrade_same_subtype(it, cur, best_dps, best_score)
-  -- Alert: new egos, highest DPS or highest weap_score
   local it_ego = BRC.eq.get_ego(it, true) -- Don't overvalue speed/heavy (only consider their DPS)
   local cur_ego = BRC.eq.get_ego(cur)
-  if not cur.artefact and it_ego and it_ego ~= cur_ego then
+  if it_ego and it_ego ~= cur_ego then
     local change = cur_ego and "Diff ego" or "Gain ego"
     return make_alert(it, change, E.EGO, M.weap_ego)
-  else
-    local s = A.weapon_sensitivity
-    if get_score(it) > best_score / s or BRC.eq.get_dps(it) > best_dps / s then
-      return make_alert(it, "Weapon upgrade", E.WEAPON, M.upgrade_weap)
-    end
+  end
+
+  local s = A.weapon_sensitivity
+  if get_score(it) > best_score / s or BRC.eq.get_dps(it) > best_dps / s then
+    return make_alert(it, "Weapon upgrade", E.WEAPON, M.upgrade_weap)
   end
 end
 
@@ -708,10 +705,12 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   end
 
   if it.artefact then return make_alert(it, "Artefact weapon", E.ARTEFACT) end
-  if cur.subtype() == it.subtype() then
+  if cur.artefact and not A.allow_arte_weap_upgrades then return false end
+  if not is_upgradable_weapon(it, cur) then return end
+
+  if cur.subtype() ~= it.subtype() then
     return check_upgrade_same_subtype(it, cur, best_dps, best_score)
   end
-  if not is_valid_upgrade(it, cur) then return end
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
   local damp = H.Alert.low_skill_penalty_damping
@@ -770,7 +769,7 @@ end
 function f_pa_weapons.alert_weapon(it)
   _weapon_cache.refresh()
   if get_weapon_alert(it) then
-    -- Confirm after updating cache, to avoid spurious alerts from XP gain.
+    -- Refresh mid-turn, to avoid spurious alerts from XP gain.
     _weapon_cache.refresh(true)
     local a = get_weapon_alert(it)
     if a then return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option) end

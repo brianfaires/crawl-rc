@@ -18,7 +18,7 @@ BRC.COL = {
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 BRC.PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "Ice Cave", "Necropolis",
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 

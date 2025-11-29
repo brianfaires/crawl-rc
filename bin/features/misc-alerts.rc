@@ -87,12 +87,13 @@ local WAYPOINT_MUTES = {
   "Assign waypoint to what number",
   "Existing waypoints",
   "Delete which waypoint",
-  "(\\(\\d\\) )",
+  "\\(\\d\\) ",
   "All waypoints deleted",
   "You're already here!",
   "Okay\\, then\\.",
   "Unknown command",
   "Waypoint \\d re-assigned",
+  "Waypoints will disappear",
 } -- WAYPOINT_MUTES (do not remove this comment)
 local C -- config alias
 local action_queue

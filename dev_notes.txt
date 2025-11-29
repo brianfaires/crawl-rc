@@ -1,6 +1,5 @@
 ### TODO
 1. [TEST] standalone features
-1. [BUG] Waypoints in portals
 
 ### Watch for:
 - Added remember_alert() to pickup
