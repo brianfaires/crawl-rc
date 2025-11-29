@@ -23,6 +23,16 @@ BRC.PORTAL_NAMES = {
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
 
+f_go_up_macro = {}
+f_go_up_macro.Config = {
+  go_up_macro_key = BRC.util.cntl("e"), -- Key for "go up closest stairs" macro
+
+  ignore_mon_on_orb_run = true, -- Ignore monsters on orb run
+  -- %HP thresholds for ignoring monsters during orb run (2-7 tiles away, depending on HP percent)
+  orb_ignore_hp_min = 0.30, -- HP percent to stop ignoring monsters
+  orb_ignore_hp_max = 0.70, -- HP percent to ignore monsters at min distance away (2 tiles)
+} -- f_go_up_macro.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.mpr = {}
 BRC.opt = {}
@@ -142,16 +152,7 @@ end
 -- Handles orb run mechanics: HP-based monster ignore for cntl-E macro
 ---------------------------------------------------------------------------------------------------
 
-f_go_up_macro = {}
 
-f_go_up_macro.Config = {
-  go_up_macro_key = BRC.util.cntl("e"), -- Key for "go up closest stairs" macro
-
-  ignore_mon_on_orb_run = true, -- Ignore monsters on orb run
-  -- %HP thresholds for ignoring monsters during orb run (2-7 tiles away, depending on HP percent)
-  orb_ignore_hp_min = 0.30, -- HP percent to stop ignoring monsters
-  orb_ignore_hp_max = 0.70, -- HP percent to ignore monsters at min distance away (2 tiles)
-} -- f_go_up_macro.Config (do not remove this comment)
 
 ---- Local variables ----
 local orb_ignore_distance

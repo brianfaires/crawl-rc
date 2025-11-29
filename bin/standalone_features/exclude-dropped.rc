@@ -28,6 +28,11 @@ BRC.MISSILES = {
 } -- BRC.MISSILES (do not remove this comment)
 
 
+f_exclude_dropped = {}
+f_exclude_dropped.Config = {
+  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
+} -- f_exclude_dropped.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.Data = {}
 BRC.it = {}
@@ -274,11 +279,7 @@ end
 --    (Configurable/optional, dropping partial stack does not exclude, pickup resumes autopickup)
 ---------------------------------------------------------------------------------------------------
 
-f_exclude_dropped = {}
 
-f_exclude_dropped.Config = {
-  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
-} -- f_exclude_dropped.Config (do not remove this comment)
 
 ---- Persistent variables ----
 ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})

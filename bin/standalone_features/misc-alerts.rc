@@ -25,6 +25,15 @@ BRC.EMOJI = {
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 
+f_misc_alerts = {}
+f_misc_alerts.Config = {
+  save_with_msg = true, -- Shift-S to save and leave yourself a message
+  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
+  alert_remove_faith = true, -- Reminder to remove amulet at max piety
+  remove_faith_hotkey = true, -- Hotkey remove amulet
+} -- f_misc_alerts.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.Data = {}
 BRC.Hotkey = {}
@@ -408,15 +417,7 @@ end
 -- Various single-purpose alerts: save game w/ msg, low HP, faith amulet, spell level changes.
 ---------------------------------------------------------------------------------------------------
 
-f_misc_alerts = {}
 
-f_misc_alerts.Config = {
-  save_with_msg = true, -- Shift-S to save and leave yourself a message
-  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
-  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
-  alert_remove_faith = true, -- Reminder to remove amulet at max piety
-  remove_faith_hotkey = true, -- Hotkey remove amulet
-} -- f_misc_alerts.Config (do not remove this comment)
 
 ---- Persistent variables ----
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)

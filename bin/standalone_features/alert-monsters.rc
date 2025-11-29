@@ -20,86 +20,7 @@ BRC.NONLIVING_RACES = { "Djinni", "Gargoyle" }
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
--- BRC module tables
-BRC.mpr = {}
-BRC.opt = {}
-BRC.txt = {}
-BRC.you = {}
-
--- BRC.mpr module
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
-
-local function log_message(message, context, color)
-  -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
-  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
-  crawl.flush_prev_message()
-end
-
-function BRC.mpr.error(message, context, skip_more)
-  if type(context) == "boolean" and skip_more == nil then
-    skip_more = context
-    context = nil
-  end
-
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
-  you.stop_activity()
-  crawl.redraw_screen()
-
-  if not skip_more then
-    crawl.more()
-    crawl.redraw_screen()
-  end
-
-  if BRC.Config.mpr.debug_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
-  end
-end
-
--- BRC.opt module
-function BRC.opt.flash_screen_message(pattern, create)
-  local op = create and "+=" or "-="
-  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
-end
-
-function BRC.opt.force_more_message(pattern, create)
-  local op = create and "+=" or "-="
-  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
-end
-
--- BRC.txt module
-
--- BRC.you module
-function BRC.you.miasma_immune()
-  if util.contains(BRC.UNDEAD_RACES, you.race()) then return true end
-  if util.contains(BRC.NONLIVING_RACES, you.race()) then return true end
-  return false
-end
-
-function BRC.you.mutation_immune()
-  return util.contains(BRC.UNDEAD_RACES, you.race())
-end
-
--- Feature code
----------------------------------------------------------------------------------------------------
--- BRC feature module: alert-monsters
--- @module f_alert_monsters
--- @author gammafunk, buehler
--- Dynamic force_more and flash_screen messages for monsters.
--- Alerts are active/inactive based on player HP, XL, willpower, resistances, etc.
---
--- @warning Never put a '}' on a line by itself. This breaks crawl's RC parser.
----------------------------------------------------------------------------------------------------
 f_alert_monsters = {}
-
 f_alert_monsters.Config = {
   sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
   fm_on_uniques = true, -- Stop on all Uniques & Pan lords
@@ -310,6 +231,86 @@ f_alert_monsters.Config.init = [[
     end
 ]]
 ------------------- End config section -------------------
+
+-- BRC module tables
+BRC.mpr = {}
+BRC.opt = {}
+BRC.txt = {}
+BRC.you = {}
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.debug_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
+-- BRC.opt module
+function BRC.opt.flash_screen_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
+end
+
+function BRC.opt.force_more_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
+end
+
+-- BRC.txt module
+
+-- BRC.you module
+function BRC.you.miasma_immune()
+  if util.contains(BRC.UNDEAD_RACES, you.race()) then return true end
+  if util.contains(BRC.NONLIVING_RACES, you.race()) then return true end
+  return false
+end
+
+function BRC.you.mutation_immune()
+  return util.contains(BRC.UNDEAD_RACES, you.race())
+end
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: alert-monsters
+-- @module f_alert_monsters
+-- @author gammafunk, buehler
+-- Dynamic force_more and flash_screen messages for monsters.
+-- Alerts are active/inactive based on player HP, XL, willpower, resistances, etc.
+--
+-- @warning Never put a '}' on a line by itself. This breaks crawl's RC parser.
+---------------------------------------------------------------------------------------------------
+
 
 ---- Local constants ----
 local WARN_PREFIX = "monster_warning:encounter.*(?<!spectral )("

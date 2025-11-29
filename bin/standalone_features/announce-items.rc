@@ -16,6 +16,12 @@ BRC.COL = {
 } -- BRC.COL (do not remove this comment)
 
 
+f_announce_items = {}
+f_announce_items.Config = {
+  disabled = false, -- Disabled by default. Intended only for turncount runs.
+  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+} -- f_announce_items.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.txt = {}
 
@@ -39,12 +45,7 @@ end
 -- Announce when items of certain classes come into view. Off by default.
 -- Intended and configured for turncount runs, to avoid having to manually check floor items.
 ---------------------------------------------------------------------------------------------------
-f_announce_items = {}
 
-f_announce_items.Config = {
-  disabled = false, -- Disabled by default. Intended only for turncount runs.
-  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
-} -- f_announce_items.Config (do not remove this comment)
 
 ---- Local variables ----
 local los_items

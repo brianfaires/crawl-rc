@@ -18,6 +18,12 @@ BRC.COL = {
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 
+f_safe_stairs = {}
+f_safe_stairs.Config = {
+  warn_backtracking = true, -- Warn if immediately taking stairs twice in a row
+  warn_v5 = true, -- Prompt before entering Vaults:5
+} -- f_safe_stairs.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.Data = {}
 BRC.mpr = {}
@@ -316,12 +322,7 @@ end
 -- Prevent accidental stairs use and warn for Vaults:5 entry.
 ---------------------------------------------------------------------------------------------------
 
-f_safe_stairs = {}
 
-f_safe_stairs.Config = {
-  warn_backtracking = true, -- Warn if immediately taking stairs twice in a row
-  warn_v5 = true, -- Prompt before entering Vaults:5
-} -- f_safe_stairs.Config (do not remove this comment)
 
 ---- Persistent variables ----
 ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())

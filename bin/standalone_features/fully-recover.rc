@@ -18,6 +18,14 @@ BRC.COL = {
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 
+f_fully_recover = {}
+f_fully_recover.Config = {
+  rest_off_statuses = { -- Keep resting until these statuses are gone
+    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
+    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
+  },
+} -- f_fully_recover.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.mpr = {}
 BRC.opt = {}
@@ -188,14 +196,7 @@ end
 -- @todo Can remove when crawl's explore_auto_rest_status setting reaches feature parity.
 ---------------------------------------------------------------------------------------------------
 
-f_fully_recover = {}
 
-f_fully_recover.Config = {
-  rest_off_statuses = { -- Keep resting until these statuses are gone
-    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
-  },
-} -- f_fully_recover.Config (do not remove this comment)
 
 ---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500

@@ -8,23 +8,7 @@
 -- Minimal BRC namespace
 BRC = { Config = { emojis = false } }
 
--- BRC module tables
-BRC.opt = {}
-
--- BRC.opt module
-function BRC.opt.message_mute(pattern, create)
-  local op = create and "^=" or "-="
-  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
-end
-
--- Feature code
----------------------------------------------------------------------------------------------------
--- BRC feature module: mute-messages
--- @module f_mute_messages
--- Mutes various crawl messages, with configurable levels of reduction.
-
 f_mute_messages = {}
-
 f_mute_messages.Config = {
   mute_level = 2,
   messages = {
@@ -99,6 +83,23 @@ f_mute_messages.Config = {
     },
   },
 } -- f_mute_messages.Config (do not remove this comment)
+
+-- BRC module tables
+BRC.opt = {}
+
+-- BRC.opt module
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: mute-messages
+-- @module f_mute_messages
+-- Mutes various crawl messages, with configurable levels of reduction.
+
+
 
 ---- Initialization ----
 function f_mute_messages.init()

@@ -18,6 +18,12 @@ BRC.COL = {
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 
+f_quiver_reminders = {}
+f_quiver_reminders.Config = {
+  confirm_consumables = true,
+  warn_diff_missile_turns = 10,
+} -- f_quiver_reminders.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.mpr = {}
 BRC.opt = {}
@@ -181,12 +187,7 @@ end
 -- A handful of useful quiver-related reminders. (AKA things I often screw up.)
 ---------------------------------------------------------------------------------------------------
 
-f_quiver_reminders = {}
 
-f_quiver_reminders.Config = {
-  confirm_consumables = true,
-  warn_diff_missile_turns = 10,
-} -- f_quiver_reminders.Config (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias

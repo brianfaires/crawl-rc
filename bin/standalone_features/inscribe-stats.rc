@@ -17,6 +17,13 @@ BRC.DMG_TYPE = {
 } -- BRC.DMG_TYPE (do not remove this comment)
 
 
+f_inscribe_stats = {}
+f_inscribe_stats.Config = {
+  inscribe_weapons = true, -- Inscribe weapon stats on pickup
+  inscribe_armour = true, -- Inscribe armour stats on pickup
+  dmg_type = BRC.DMG_TYPE.unbranded,
+} -- f_inscribe_stats.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.eq = {}
 BRC.it = {}
@@ -354,13 +361,7 @@ end
 -- Inscribes and updates weapon DPS/dmg/delay, and armour AC/EV/SH, for items in inventory.
 ---------------------------------------------------------------------------------------------------
 
-f_inscribe_stats = {}
 
-f_inscribe_stats.Config = {
-  inscribe_weapons = true, -- Inscribe weapon stats on pickup
-  inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = BRC.DMG_TYPE.unbranded,
-} -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal

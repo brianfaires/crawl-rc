@@ -365,6 +365,81 @@ class StandaloneGenerator:
             for block in blocks:
                 all_code += block
         return 'BRC.opt.single_turn_mute' in all_code
+    
+    def _find_config_section_bounds(self, lines: List[str]) -> Optional[Tuple[int, int]]:
+        """Find start and end indices of contiguous Config section. Returns (start_idx, end_idx) or None."""
+        feature_var = self.feature_var
+        config_pattern = re.compile(rf'^{re.escape(feature_var)}\.Config(\.\w+)*\s*=')
+        
+        start_idx = None
+        for i, line in enumerate(lines):
+            if config_pattern.match(line.strip()):
+                start_idx = i
+                break
+        
+        if start_idx is None:
+            return None
+        
+        i = start_idx
+        
+        while i < len(lines):
+            stripped = lines[i].strip()
+            if not config_pattern.match(stripped):
+                break
+
+            # If it's a table assignment, skip until matching closing brace
+            # Handle multiline strings [[ ... ]] atomically
+            brace_count = stripped.count('{') - stripped.count('}')
+            in_multiline_string = bool(re.search(r'=\s+\[\[', stripped))
+            i += 1
+            
+            while i < len(lines) and (brace_count > 0 or in_multiline_string):
+                stripped = lines[i].strip()
+
+                brace_count += stripped.count('{') - stripped.count('}')
+                
+                if re.search(r'=\s+\[\[', stripped):
+                    in_multiline_string = True
+                
+                if in_multiline_string and re.match(r'^\-*\s*\]\]', stripped):
+                    in_multiline_string = False
+
+                i += 1
+
+            # Keep including lines that are blank or comments
+            while i < len(lines):
+                stripped = lines[i].strip()
+                if not stripped or stripped.startswith('--') or in_multiline_string:
+                    i += 1
+                    if re.search(r'\[\[', stripped):
+                      in_multiline_string = True                
+                    if in_multiline_string and re.match(r'^\-*\s*\]\]', stripped):
+                        in_multiline_string = False
+                else:
+                    break
+
+        # Remove comments/blank lines at end of Config section
+        i -= 1
+        while i > start_idx:
+            stripped = lines[i].strip()
+            if not stripped or (stripped.startswith('--') and "config" not in stripped):
+                i -= 1
+            else:
+                break
+        
+        return (start_idx, i+1)
+    
+    def _extract_config_section(self) -> Optional[str]:
+        """Extract contiguous Config section from feature content."""
+        lines = self.analyzer.content.split('\n')
+        bounds = self._find_config_section_bounds(lines)
+        
+        if bounds is None:
+            return None
+        
+        start_idx, end_idx = bounds
+        config_lines = lines[start_idx:end_idx]
+        return '\n'.join(config_lines)
 
     def generate(self) -> str:
         """Generate complete standalone feature file."""
@@ -373,12 +448,16 @@ class StandaloneGenerator:
             self._generate_brc_setup(),
         ]
         
-        # Add COL constant if using color functions
+        # Add constants accessed via dynamically declared functions
         if any("mpr" in m or "txt" in m for m in self.analyzer.used_modules):
             self.analyzer.used_constants.add("COL")
         
         if self.analyzer.used_constants:
             parts.append(self._generate_constants())
+        
+        config_section = self._generate_config_section()
+        if config_section:
+            parts.append(config_section)
         
         module_tables = [f"BRC.{m.split('.')[1]} = {{}}" for m in sorted(self.analyzer.used_modules)]
         if module_tables:
@@ -506,11 +585,30 @@ class StandaloneGenerator:
             "end",
         ])
     
+    def _generate_config_section(self) -> str:
+        """Generate Config section and prepend feature initialization."""
+        config_content = self._extract_config_section()
+        if not config_content:
+            return ""
+        
+        # Remove disabled = true
+        config_content = re.sub(r'(\s+disabled\s*=\s*)true', r'\1false', config_content)
+        return f"{self.feature_var} = {{}}\n{config_content}"
+    
     def _generate_feature_code(self) -> str:
         """Generate the feature code itself."""
+        content = self.analyzer.content
         content = re.sub(r'^\s*\w+\.BRC_FEATURE_NAME\s*=.*$', '', 
-                        self.analyzer.content, flags=re.MULTILINE)
-        content = re.sub(r'(\s+disabled\s*=\s*)true', r'\1false', content)
+                        content, flags=re.MULTILINE)
+        
+        # Remove Config section and prepended feature initialization
+        lines = content.split('\n')
+        bounds = self._find_config_section_bounds(lines)
+        if bounds is not None:
+            start_idx, end_idx = bounds
+            content = '\n'.join(lines[:start_idx] + lines[end_idx:])
+            content = re.sub(rf'{self.feature_var} = {{}}\n', '', content)
+
         return f"-- Feature code\n{content}"
     
     def _generate_hooks(self) -> str:

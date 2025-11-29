@@ -48,6 +48,12 @@ BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
+f_drop_inferior = {}
+f_drop_inferior.Config = {
+  msg_on_inscribe = true, -- Show a message when an item is marked for drop
+  hotkey_drop = true, -- BRC hotkey drops all items on the drop list
+} -- f_drop_inferior.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.Hotkey = {}
 BRC.eq = {}
@@ -246,12 +252,7 @@ end
 -- Items with "~~DROP_ME" are added to the drop list, and can be quickly selected with `,`
 ---------------------------------------------------------------------------------------------------
 
-f_drop_inferior = {}
 
-f_drop_inferior.Config = {
-  msg_on_inscribe = true, -- Show a message when an item is marked for drop
-  hotkey_drop = true, -- BRC hotkey drops all items on the drop list
-} -- f_drop_inferior.Config (do not remove this comment)
 
 ---- Local constants ----
 local DROP_KEY = "~~DROP_ME"

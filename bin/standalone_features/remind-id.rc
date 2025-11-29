@@ -18,6 +18,14 @@ BRC.COL = {
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 
+f_remind_id = {}
+f_remind_id.Config = {
+  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
+  stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
+  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
+  read_id_hotkey = true, -- Put read ID on hotkey
+} -- f_remind_id.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.Data = {}
 BRC.Hotkey = {}
@@ -324,14 +332,7 @@ end
 -- Before finding scroll of ID, stops explore when largest stack of un-ID'd scrolls/pots increases.
 ---------------------------------------------------------------------------------------------------
 
-f_remind_id = {}
 
-f_remind_id.Config = {
-  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
-  stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
-  read_id_hotkey = true, -- Put read ID on hotkey
-} -- f_remind_id.Config (do not remove this comment)
 
 ---- Persistent variables ----
 ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)

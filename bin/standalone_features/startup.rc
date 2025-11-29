@@ -31,6 +31,39 @@ BRC.WEAP_SCHOOLS = {
 } -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 
+f_startup = {}
+f_startup.Config = {
+  -- Save current training targets and config, for race/class
+  macro_save_key = BRC.util.cntl("t"), -- Keycode to save training targets and config
+  use_saved_training = true, -- Allow save/load of race/class training targets
+  use_saved_config = true, -- Allow save/load of BRC config
+  prompt_before_load = true, -- Prompt before loading in a new game with same race+class
+  allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
+  allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
+
+  -- Remaining values only used if no training targets were loaded by race/class
+  show_skills_menu = false, -- Show skills menu on startup
+
+  -- Settings to set skill targets, regardless of race/class
+  set_all_targets = true, -- Set all targets, even if only focusing one
+  focus_one_skill = true, -- Focus one skill at a time, even if setting all targets
+  auto_set_skill_targets = {
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+  },
+
+  -- For non-spellcasters, add preferred weapon type as 3rd skill target
+  init = [[
+    if you.skill("Spellcasting") == 0 then
+      local wpn_skill = BRC.you.top_wpn_skill()
+      if wpn_skill then
+        local t = f_startup.Config.auto_set_skill_targets
+        t[#t + 1] = { wpn_skill, 6.0 }
+      end
+    end
+  ]],
+} -- f_startup.Config (do not remove this comment)
+
 -- BRC module tables
 BRC.Configs = {}
 BRC.Data = {}
@@ -395,39 +428,7 @@ end
 -- Handles startup actions, like displaying skills menu and auto-setting skill targets.
 ---------------------------------------------------------------------------------------------------
 
-f_startup = {}
 
-f_startup.Config = {
-  -- Save current training targets and config, for race/class
-  macro_save_key = BRC.util.cntl("t"), -- Keycode to save training targets and config
-  use_saved_training = true, -- Allow save/load of race/class training targets
-  use_saved_config = true, -- Allow save/load of BRC config
-  prompt_before_load = true, -- Prompt before loading in a new game with same race+class
-  allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
-  allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
-
-  -- Remaining values only used if no training targets were loaded by race/class
-  show_skills_menu = false, -- Show skills menu on startup
-
-  -- Settings to set skill targets, regardless of race/class
-  set_all_targets = true, -- Set all targets, even if only focusing one
-  focus_one_skill = true, -- Focus one skill at a time, even if setting all targets
-  auto_set_skill_targets = {
-    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
-    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
-  },
-
-  -- For non-spellcasters, add preferred weapon type as 3rd skill target
-  init = [[
-    if you.skill("Spellcasting") == 0 then
-      local wpn_skill = BRC.you.top_wpn_skill()
-      if wpn_skill then
-        local t = f_startup.Config.auto_set_skill_targets
-        t[#t + 1] = { wpn_skill, 6.0 }
-      end
-    end
-  ]],
-} -- f_startup.Config (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias

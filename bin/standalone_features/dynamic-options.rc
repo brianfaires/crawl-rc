@@ -43,64 +43,7 @@ BRC.SPELLBOOKS = {
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
--- BRC module tables
-BRC.opt = {}
-BRC.util = {}
-
--- BRC.opt module
-function BRC.opt.autopickup_exceptions(pattern, create)
-  local op = create and "^=" or "-="
-  crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
-end
-
-function BRC.opt.explore_stop_pickup_ignore(pattern, create)
-  local op = create and "+=" or "-="
-  crawl.setopt(string.format("explore_stop_pickup_ignore %s %s", op, pattern))
-end
-
-function BRC.opt.flash_screen_message(pattern, create)
-  local op = create and "+=" or "-="
-  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
-end
-
-function BRC.opt.force_more_message(pattern, create)
-  local op = create and "+=" or "-="
-  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
-end
-
-function BRC.opt.message_mute(pattern, create)
-  local op = create and "^=" or "-="
-  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
-end
-
-function BRC.opt.runrest_ignore_message(pattern, create)
-  local op = create and "+=" or "-="
-  crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
-end
-
-function BRC.opt.runrest_stop_message(pattern, create)
-  local op = create and "+=" or "-="
-  crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
-end
-
--- BRC.util module
-function BRC.util.add_or_remove(list, item, add)
-  if add then
-    list[#list + 1] = item
-  else
-    util.remove(list, item)
-  end
-end
-
--- Feature code
----------------------------------------------------------------------------------------------------
--- BRC feature module: dynamic-options
--- @module f_dynamic_options
--- Contains options that change based on game state: xl, class, race, god, skills.
----------------------------------------------------------------------------------------------------
-
 f_dynamic_options = {}
-
 f_dynamic_options.Config = {
   --- XL-based force more messages: patterns active when XL <= specified level
   xl_force_mores = {
@@ -158,6 +101,64 @@ f_dynamic_options.Config = {
     end,
   },
 } -- f_dynamic_options.Config (do not remove this comment)
+
+-- BRC module tables
+BRC.opt = {}
+BRC.util = {}
+
+-- BRC.opt module
+function BRC.opt.autopickup_exceptions(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))
+end
+
+function BRC.opt.explore_stop_pickup_ignore(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("explore_stop_pickup_ignore %s %s", op, pattern))
+end
+
+function BRC.opt.flash_screen_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
+end
+
+function BRC.opt.force_more_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+function BRC.opt.runrest_ignore_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
+end
+
+function BRC.opt.runrest_stop_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("runrest_stop_message %s %s", op, pattern))
+end
+
+-- BRC.util module
+function BRC.util.add_or_remove(list, item, add)
+  if add then
+    list[#list + 1] = item
+  else
+    util.remove(list, item)
+  end
+end
+
+-- Feature code
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: dynamic-options
+-- @module f_dynamic_options
+-- Contains options that change based on game state: xl, class, race, god, skills.
+---------------------------------------------------------------------------------------------------
+
+
 
 ---- Local constants ----
 local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
