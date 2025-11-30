@@ -22,7 +22,7 @@ local RANGED_PREFIX = "range_"
 local MELEE_PREFIX = "melee_"
 local WEAP_CACHE_KEYS = {
   "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b"
-}
+} -- WEAP_CACHE_KEYS (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias

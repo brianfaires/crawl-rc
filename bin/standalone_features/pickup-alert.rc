@@ -1,0 +1,2276 @@
+## Standalone BRC Feature: pickup-alert
+## Generated from: lua/features/pickup-alert/pa-main.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.logs_to_stderr = false
+
+f_pickup_alert = {}
+
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+f_pickup_alert.Config = {}
+f_pickup_alert.Config.Pickup = {
+  armour = true,
+  weapons = true,
+  weapons_pure_upgrades_only = true, -- Only pick up better versions of same exact weapon
+  staves = true,
+} -- f_pickup_alert.Config.Pickup (do not remove this comment)
+
+f_pickup_alert.Config.Alert = {
+  armour_sensitivity = 1.0, -- Adjust all armour alerts; 0 to disable all (typical range 0.5-2.0)
+  weapon_sensitivity = 1.0, -- Adjust all weapon alerts; 0 to disable all (typical range 0.5-2.0)
+  orbs = true,
+  staff_resists = true,
+  talismans = true,
+  first_ranged = true,
+  first_polearm = true,
+  autopickup_disabled = true, -- If autopickup is off, alert for items that would be autopicked up
+
+  -- Each usable item is alerted once.
+  one_time = {
+    "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+    "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
+    "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
+    "broad axe", "executioner's axe",
+    "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+    "lajatang", "bardiche", "demon trident", "partisan", "trishula",
+    "hand cannon", "triple crossbow",
+  },
+  -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
+  OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
+
+  hotkey_travel = true,
+  hotkey_pickup = true,
+
+  allow_arte_weap_upgrades = true, -- If false, won't alert weapons as upgrades to an artefact
+
+  -- Only alert a plain talisman if its min_skill <= Shapeshifting + talisman_lvl_diff
+  talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
+
+  -- Which alerts generate a force_more
+  More = {
+    early_weap = false, -- Good weapons found early
+    upgrade_weap = false, -- Better DPS / weapon_score
+    weap_ego = false, -- New or diff egos
+    body_armour = false,
+    shields = true,
+    aux_armour = false,
+    armour_ego = true, -- New or diff egos
+    high_score_weap = false, -- Highest damage found
+    high_score_armour = true, -- Highest AC found
+    one_time_alerts = true,
+    artefact = false, -- Any artefact
+    trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
+    orbs = false,
+    talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
+    staff_resists = false,
+    autopickup_disabled = false, -- Alerts for autopickup items, when autopickup is disabled
+  },
+} -- f_pickup_alert.Config.Alert (do not remove this comment)
+
+---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
+f_pickup_alert.Config.Tuning = {}
+
+--[[
+  f_pickup_alert.Config.Tuning.Armour: Magic numbers for the armour pickup/alert system.
+  For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
+  Lower values mean more alerts. gain/diff/same/lose refers to egos.
+  min_gain/max_loss block alerts for new egos, when AC or EV delta is outside limits
+  ignore_small: if abs(AC+EV) <= this, ignore ratios and alert any gain/diff ego
+--]]
+f_pickup_alert.Config.Tuning.Armour = {
+  Lighter = {
+    gain_ego = 0.6,
+    new_ego = 0.7,
+    diff_ego = 0.9,
+    same_ego = 1.2,
+    lost_ego = 2.0,
+    min_gain = 3.0,
+    max_loss = 4.0,
+    ignore_small = 3.5,
+  },
+
+  Heavier = {
+    gain_ego = 0.4,
+    new_ego = 0.5,
+    diff_ego = 0.6,
+    same_ego = 0.7,
+    lost_ego = 2.0,
+    min_gain = 3.0,
+    max_loss = 8.0,
+    ignore_small = 5,
+  },
+
+  encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
+  early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
+  diff_body_ego_is_good = false, -- More alerts for diff_ego in body armour (skips min_gain check)
+} -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
+
+--[[
+  f_pickup_alert.Config.Tuning.Weap: Magic numbers for the weapon pickup/alert system, namely:
+    1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
+    2. Cutoffs for when alerts are active (XL, skill_level)
+  Pickup/alert system will try to upgrade ANY weapon in your inventory.
+  "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS/brand/accuracy.
+--]]
+f_pickup_alert.Config.Tuning.Weap = {}
+f_pickup_alert.Config.Tuning.Weap.Pickup = {
+  add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > add_ego
+  same_type_melee = 1.2, -- Pickup melee weap of same school if DPS ratio > same_type_melee
+  same_type_ranged = 1.1, -- Pickup ranged weap if DPS ratio > same_type_ranged
+  accuracy_weight = 0.25, -- Treat +1 Accuracy as +accuracy_weight DPS
+} -- f_pickup_alert.Config.Tuning.Weap.Pickup (do not remove this comment)
+
+f_pickup_alert.Config.Tuning.Weap.Alert = {
+  -- Alerts for weapons not requiring an extra hand
+  pure_dps = 1.0, -- Alert if DPS ratio > pure_dps
+  gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > gain_ego
+  new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > new_ego
+  low_skill_penalty_damping = 8, -- [0-20] Reduces penalty to weapons of lower-trained schools
+
+  -- Alerts for 2-handed weapons, when carrying 1-handed
+  AddHand = {
+    ignore_sh_lvl = 4.0, -- Treat offhand as empty if shield_skill < ignore_sh_lvl
+    add_ego_lose_sh = 0.8, -- Alert 1h -> 2h (using shield) if DPS ratio > add_ego_lose_sh
+    not_using = 1.0, --  Alert 1h -> 2h (not using 2nd hand) if DPS ratio > not_using
+  },
+
+  -- Alerts for good early weapons of all types
+  Early = {
+    xl = 7, -- Alert early weapons if XL <= xl
+    skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons with skill_diff > XL*factor+offset
+    branded_min_plus = 4, -- Alert branded weapons with plus >= branded_min_plus
+  },
+
+  -- Alerts for particularly strong ranged weapons
+  EarlyRanged = {
+    xl = 14, -- Alert strong ranged weapons if XL <= xl
+    min_plus = 7, -- Alert ranged weapons with plus >= min_plus
+    branded_min_plus = 4, -- Alert branded ranged weapons with plus >= branded_min_plus
+    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= max_shields
+  },
+} -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
+
+f_pickup_alert.Config.AlertColor = {
+  weapon = { desc = BRC.COL.magenta, item = BRC.COL.yellow, stats = BRC.COL.lightgrey },
+  body_arm = { desc = BRC.COL.lightblue, item = BRC.COL.lightcyan, stats = BRC.COL.lightgrey },
+  aux_arm = { desc = BRC.COL.lightblue, item = BRC.COL.yellow },
+  orb = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
+  talisman = { desc = BRC.COL.green, item = BRC.COL.lightgreen },
+  misc = { desc = BRC.COL.brown, item = BRC.COL.white },
+} -- f_pickup_alert.Config.AlertColor (do not remove this comment)
+
+f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+  RARE_ITEM = "💎",
+  ARTEFACT = "💠",
+  ORB = "🔮",
+  TALISMAN = "🧬",
+  STAFF_RES = "🔥",
+
+  WEAPON = "⚔️",
+  RANGED = "🏹",
+  POLEARM = "🔱",
+  TWO_HAND = "✋🤚",
+
+  EGO = "✨",
+  ACCURACY = "🎯",
+  STRONGER = "💪",
+  STRONGEST = "💪💪",
+  LIGHTER = "⏬",
+  HEAVIER = "⏫",
+
+  AUTOPICKUP = "👍",
+} -- f_pickup_alert.Config.Emoji (do not remove this comment)
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert
+-- @module f_pickup_alert
+-- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
+-- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
+  antimagic = "antimagic", heavy = "heavy", spectralising = "spectral", vampirism = "vampiric"
+} -- BRC.ADJECTIVE_EGOS (do not remove this comment)
+
+BRC.ARTPROPS_BAD = {
+  "Bane", "-Cast", "-Move", "-Tele",
+  "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
+} -- BRC.ARTPROPS_BAD (do not remove this comment)
+
+BRC.ARTPROPS_EGO = { -- Corresponding ego
+  rF = "fire resistance", rC = "cold resistance", rPois = "poison resistance",
+  rN = "positive energy", rCorr = "corrosion resistance",
+  Archmagi = "the Archmagi", Rampage = "rampaging", Will = "willpower",
+  Air = "air", Earth = "earth", Fire = "fire", Ice = "ice", Necro = "death", Summ = "command",
+} -- BRC.ARTPROPS_EGO (do not remove this comment)
+
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+BRC.DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg for non-elemental brands
+  branded = 3, -- Include full brand dmg
+  scoring = 4, -- Include boosts for non-damaging brands
+} -- BRC.DMG_TYPE (do not remove this comment)
+
+BRC.EMOJI = {
+  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
+  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
+  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
+} -- BRC.EMOJI (do not remove this comment)
+
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+
+BRC.LITTLE_RACES = { "Spriggan" }
+
+BRC.MAGIC_SCHOOLS = {
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
+  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+} -- BRC.MAGIC_SCHOOLS (do not remove this comment)
+
+BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
+
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
+
+BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
+
+BRC.SMALL_RACES = { "Kobold" }
+
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
+
+BRC.WEAP_SCHOOLS = {
+  "axes", "maces & flails", "polearms", "long blades", "short blades",
+  "staves", "unarmed combat", "ranged weapons",
+} -- BRC.WEAP_SCHOOLS (do not remove this comment)
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Data = BRC.Data or {}
+BRC.eq = BRC.eq or {}
+BRC.it = BRC.it or {}
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
+BRC.you = BRC.you or {}
+
+-- BRC.Data module
+-- Minimal persistence system for standalone features
+local function brc_tostr(value)
+  if type(value) == "table" then
+    if #value == 0 then
+      local result = "{ "
+      for k, v in pairs(value) do
+        result = result .. k .. " = " .. brc_tostr(v) .. ", "
+      end
+      return result .. " }"
+    else
+      return "{ " .. table.concat(value, ", ") .. " }"
+    end
+  elseif type(value) == "string" then
+    return "\"" .. value:gsub("\"", "") .. "\""
+  else
+    return tostring(value)
+  end
+end
+
+function BRC.Data.persist(name, default_value)
+  if _G[name] == nil then
+    if type(default_value) == "table" then
+      _G[name] = util.copy_table(default_value)
+    else
+      _G[name] = default_value
+    end
+  end
+  table.insert(chk_lua_save, function()
+    if _G[name] == nil then return "" end
+    return name .. " = " .. brc_tostr(_G[name]) .. "\n"
+  end)
+  return _G[name]
+end
+
+-- BRC.eq module
+local function format_dmg(dmg)
+  if dmg < 10 then return string.format("%.2f", dmg) end
+  if dmg > 99.9 then return ">100" end
+  return string.format("%.1f", dmg)
+end
+
+local function format_stat(abbr, val, is_worn)
+  local stat_str = string.format("%.1f", val)
+  if val < 0 then
+    return string.format("%s%s", abbr, stat_str)
+  elseif is_worn then
+    return string.format("%s:%s", abbr, stat_str)
+  else
+    return string.format("%s+%s", abbr, stat_str)
+  end
+end
+
+local function get_branded_delay(delay, ego)
+  if not ego then return delay end
+  if ego == "speed" then
+    return delay * 2 / 3
+  elseif ego == "heavy" then
+    return delay * 1.5
+  end
+  return delay
+end
+
+local function get_delta_ac_ev(it)
+  local it_ac = BRC.eq.get_ac(it)
+  local it_ev = BRC.eq.get_armour_ev(it)
+  local cur = items.equipped_at(it.equip_type)
+  if not cur or it.equipped or BRC.you.num_eq_slots(it) > 1 then
+    return it_ac, it_ev
+  else
+    return it_ac - BRC.eq.get_ac(cur), it_ev - BRC.eq.get_armour_ev(cur)
+  end
+end
+
+local function get_dmg_with_brand_bonus(ego, base_dmg, it_plus, dmg_type)
+  if not ego then return base_dmg + it_plus end
+
+  -- Check if brand should apply based on damage type
+  local should_apply = (
+    dmg_type == BRC.DMG_TYPE.unbranded and ego == "heavy"
+    or dmg_type == BRC.DMG_TYPE.plain and util.contains(BRC.NON_ELEMENTAL_DMG_EGOS, ego)
+    or dmg_type >= BRC.DMG_TYPE.branded and BRC.Config.BrandBonus[ego]
+    or dmg_type == BRC.DMG_TYPE.scoring and BRC.Config.BrandBonus.subtle[ego]
+  )
+
+  if should_apply then
+    local bonus = BRC.Config.BrandBonus[ego] or BRC.Config.BrandBonus.subtle[ego]
+    return bonus.factor * base_dmg + it_plus + bonus.offset
+  else
+    return base_dmg + it_plus
+  end
+end
+
+local function get_shield_penalty(sh)
+  return 2 * sh.encumbrance * sh.encumbrance
+    * (27 - you.skill("Shields")) / 27
+    / (25 + 5 * you.strength())
+end
+
+local function get_delta_sh_ev(it)
+  local it_sh = BRC.eq.get_sh(it)
+  local it_ev = -get_shield_penalty(it)
+  local cur = items.equipped_at(it.equip_type)
+  if not cur or it.equipped then
+    return it_sh, it_ev
+  else
+    return it_sh - BRC.eq.get_sh(cur), it_ev + get_shield_penalty(cur)
+  end
+end
+
+local function get_slay_bonuses()
+  local sum = 0
+
+  -- Slots can go as high as 18 afaict
+  for i = 0, 20 do
+    local inv = items.equipped_at(i)
+    if inv then
+      if BRC.it.is_ring(inv) then
+        if inv.artefact then
+          local name = inv.name()
+          local idx = name:find("Slay", 1, true)
+          if idx then
+            local slay = tonumber(name:sub(idx + 5, idx + 5))
+            if slay == 1 then
+              local next_digit = tonumber(name:sub(idx + 6, idx + 6))
+              if next_digit then slay = 10 + next_digit end
+            end
+
+            if name:sub(idx + 4, idx + 4) == "+" then
+              sum = sum + slay
+            else
+              sum = sum - slay
+            end
+          end
+        elseif BRC.eq.get_ego(inv) == "Slay" then
+          sum = sum + inv.plus
+        end
+      elseif inv.artefact and (BRC.it.is_armour(inv, true) or BRC.it.is_amulet(inv)) then
+        local slay = inv.artprops["Slay"]
+        if slay then sum = sum + slay end
+      end
+    end
+  end
+
+  if you.race() == "Demonspawn" then
+    sum = sum + 3 * BRC.you.mut_lvl("augmentation")
+    sum = sum + BRC.you.mut_lvl("sharp scales")
+  end
+
+  return sum
+end
+
+local function get_staff_bonus_dmg(it, dmg_type)
+  if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
+  if dmg_type == BRC.DMG_TYPE.plain then
+    local basename = it.name("base")
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
+  end
+
+  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
+  local evo_skill = you.skill("Evocations")
+
+  local chance = (2 * evo_skill + spell_skill) / 30
+  if chance > 1 then chance = 1 end
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
+  return avg_dmg * chance
+end
+
+local function get_stats_with_item(it, stats)
+  local new_stats = util.copy_table(stats)
+  local cur = items.equipped_at(it.equip_type)
+  if not cur or it.equipped then return new_stats end
+
+  if cur.artefact and BRC.you.num_eq_slots(it) == 1 then
+    for k, _ in pairs(new_stats) do
+      new_stats[k] = new_stats[k] - (cur.artprops[k] or 0)
+    end
+  end
+
+  if it.artefact then
+    for k, _ in pairs(new_stats) do
+      new_stats[k] = new_stats[k] + (it.artprops[k] or 0)
+    end
+  end
+
+  return new_stats
+end
+
+local function get_unadjusted_armour_pen(encumb)
+  local pen = encumb - 2 * BRC.you.mut_lvl("sturdy frame")
+  if pen > 0 then return pen end
+  return 0
+end
+
+local function get_adjusted_armour_pen(encumb, str)
+  local base_pen = get_unadjusted_armour_pen(encumb)
+  return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
+end
+
+local function get_adjusted_dodge_bonus(encumb, str, dex)
+  local size_factor = -2 * BRC.you.size_penalty()
+  local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
+  local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
+  if armour_dodge_penalty <= 0 then return dodge_bonus end
+
+  if armour_dodge_penalty >= str then return dodge_bonus * str / (armour_dodge_penalty * 2) end
+  return dodge_bonus - dodge_bonus * armour_dodge_penalty / (str * 2)
+end
+
+local function get_weap_min_delay(it)
+  -- This is an abbreviated version of the actual calculation.
+  -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
+  if it.artefact and it.name("qual"):contains("woodcutter's axe") then return it.delay end
+
+  local min_delay = math.floor(it.delay / 2)
+  if it.weap_skill == "Short Blades" then return 5 end
+  if it.is_ranged then
+    local basename = it.name("base")
+    local is_2h_ranged = basename:contains("crossbow") or basename:contains("arbalest")
+    if is_2h_ranged then return math.max(min_delay, 10) end
+  end
+
+  return math.min(min_delay, 7)
+end
+
+function BRC.eq.arm_stats(it)
+  if not BRC.it.is_armour(it) then return "", "" end
+
+  if BRC.it.is_shield(it) then
+    local sh_delta, ev_delta = get_delta_sh_ev(it)
+    local sh_str = format_stat("SH", sh_delta, it.equipped)
+    local ev_str = format_stat("EV", ev_delta, it.equipped)
+    return sh_str, ev_str
+  else
+    local ac_delta, ev_delta = get_delta_ac_ev(it)
+    local ac_str = format_stat("AC", ac_delta, it.equipped)
+    if not BRC.it.is_body_armour(it) then return ac_str end
+    local ev_str = format_stat("EV", ev_delta, it.equipped)
+    return ac_str, ev_str
+  end
+end
+
+function BRC.eq.get_ac(it)
+  local it_plus = it.plus or 0
+
+  if it.artefact then
+    local art_ac = it.artprops["AC"]
+    if art_ac then it_plus = it_plus + art_ac end
+  end
+
+  local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
+  if not BRC.it.is_body_armour(it) then return ac end
+
+  if BRC.you.mut_lvl("deformed body") + BRC.you.mut_lvl("pseudopods") > 0 then ac = ac * 0.6 end
+
+  return ac
+end
+
+function BRC.eq.get_armour_ev(it)
+  local cur = { Str = you.strength(), Dex = you.dexterity(), EV = 0 }
+  local worn = get_stats_with_item(it, cur)
+
+  if worn.Str <= 0 then worn.Str = 1 end
+  local bonus = get_adjusted_dodge_bonus(it.encumbrance, worn.Str, worn.Dex)
+
+  if cur.Str <= 0 then cur.Str = 1 end
+  local naked_bonus = get_adjusted_dodge_bonus(0, cur.Str, cur.Dex)
+
+  return bonus - naked_bonus + worn.EV - get_adjusted_armour_pen(it.encumbrance, worn.Str)
+end
+
+function BRC.eq.get_avg_dmg(it, dmg_type)
+  dmg_type = dmg_type or BRC.DMG_TYPE.scoring
+
+  local it_plus = (it.plus or 0) + get_slay_bonuses()
+  local stats = { Str = you.strength(), Dex = you.dexterity(), Slay = it_plus }
+  stats = get_stats_with_item(it, stats)
+
+  local stat = (it.is_ranged or it.weap_skill:contains("Blades")) and stats.Dex or stats.Str
+  local stat_mod = 0.75 + 0.025 * stat
+  local skill_mod = (1 + BRC.you.skill(it.weap_skill) / 50) * (1 + you.skill("Fighting") / 60)
+  local base_dmg = it.damage * stat_mod * skill_mod
+
+  if BRC.it.is_magic_staff(it) then
+    return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
+  else
+    return get_dmg_with_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
+  end
+end
+
+function BRC.eq.get_dps(it, dmg_type)
+  if not dmg_type then dmg_type = BRC.DMG_TYPE.scoring end
+  return BRC.eq.get_avg_dmg(it, dmg_type) / BRC.eq.get_weap_delay(it)
+end
+
+function BRC.eq.get_ego(it, no_stat_only_egos)
+  local ego = it.ego(true)
+  if ego then
+    ego = ego:lower()
+    if BRC.eq.is_useless_ego(ego) or (no_stat_only_egos and (ego == "speed" or ego == "heavy")) then
+      return it.artefact and it.name() or nil
+    end
+    return ego
+  end
+
+  if BRC.it.is_body_armour(it) then
+    local name = it.name("qual")
+    local good_scales = name:contains("dragon scales") and not name:contains("steam")
+    if name:contains("troll leather") or good_scales then return name end
+  end
+
+  return it.artefact and it.name() or nil
+end
+
+function BRC.eq.get_hands(it)
+  if you.race() ~= "Formicid" then return it.hands end
+  local st = it.subtype()
+  if st == "giant club" or st == "giant spiked club" then return 2 end
+  return 1
+end
+
+function BRC.eq.get_sh(it)
+  local stats = get_stats_with_item(it, { Dex = you.dexterity() })
+  local it_plus = it.plus or 0
+  local sh_skill = you.skill("Shields")
+
+  local base_sh = it.ac * 2
+  local shield = base_sh * (50 + sh_skill * 5 / 2)
+  shield = shield + 200 * it_plus
+  shield = shield + 38 * (sh_skill + 3 + stats.Dex * (base_sh + 13) / 26)
+  return shield / 200
+end
+
+function BRC.eq.get_weap_delay(it)
+  local delay = it.delay - BRC.you.skill(it.weap_skill) / 2
+  delay = math.max(delay, get_weap_min_delay(it))
+  delay = get_branded_delay(delay, BRC.eq.get_ego(it))
+  delay = math.max(delay, 3)
+
+  local sh = items.equipped_at("offhand")
+  if BRC.it.is_shield(sh) then delay = delay + get_shield_penalty(sh) end
+
+  if it.is_ranged then
+    local worn = items.equipped_at("armour")
+    if worn then
+      local str = you.strength()
+
+      local cur = items.equipped_at("weapon")
+      if cur and cur ~= it and cur.artefact then
+        if it.artefact and it.artprops["Str"] then str = str + it.artprops["Str"] end
+        if cur.artefact and cur.artprops["Str"] then str = str - cur.artprops["Str"] end
+      end
+
+      delay = delay + get_adjusted_armour_pen(worn.encumbrance, str)
+    end
+  end
+
+  return delay / 10
+end
+
+function BRC.eq.is_risky(it)
+  if it.artefact then
+    for k, v in pairs(it.artprops) do
+      if util.contains(BRC.ARTPROPS_BAD, k) or v < 0 then return true end
+    end
+  end
+
+  local ego_name = BRC.eq.get_ego(it)
+  return ego_name and util.contains(BRC.RISKY_EGOS, ego_name)
+end
+
+function BRC.eq.is_useless_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
+end
+
+function BRC.eq.wpn_stats(it, dmg_type)
+  if not it.is_weapon then return end
+  if not dmg_type then
+    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
+      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    else
+      dmg_type = BRC.DMG_TYPE.plain
+    end
+  end
+
+  local dmg = format_dmg(BRC.eq.get_avg_dmg(it, dmg_type))
+  local delay = BRC.eq.get_weap_delay(it)
+  local delay_str = string.format("%.1f", delay)
+  if delay < 1 then
+    delay_str = string.format("%.2f", delay)
+    delay_str = delay_str:sub(2, #delay_str)
+  end
+
+  local dps = format_dmg(dmg / delay)
+  local acc = it.accuracy + (it.plus or 0)
+  if acc >= 0 then acc = "+" .. acc end
+
+  --TODO: This would be nice if it worked in all UIs
+  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
+  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+end
+
+-- BRC.it module
+function BRC.it.get_staff_school(it)
+  for k, v in pairs(BRC.MAGIC_SCHOOLS) do
+    if it.subtype() == k then return v end
+  end
+end
+
+function BRC.it.get_talisman_min_level(it)
+  if it.name() == "protean talisman" then return 6 end
+
+  -- Parse the item description
+  local tokens = crawl.split(it.description, "\n")
+  for _, v in ipairs(tokens) do
+    if v:sub(1, 4) == "Min " then
+      local start_pos = v:find("%d", 4)
+      if start_pos then
+        local end_pos = v:find("[^%d]", start_pos)
+        return tonumber(v:sub(start_pos, end_pos - 1))
+      end
+    end
+  end
+
+  BRC.mpr.error("Failed to find skill required for: " .. it.name())
+  return -1
+end
+
+function BRC.it.is_amulet(it)
+  return it and it.name("base") == "amulet"
+end
+
+function BRC.it.is_armour(it, include_orbs)
+  return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
+end
+
+function BRC.it.is_aux_armour(it)
+  return BRC.it.is_armour(it) and not (BRC.it.is_body_armour(it) or BRC.it.is_shield(it))
+end
+
+function BRC.it.is_body_armour(it)
+  return it and it.subtype() == "body"
+end
+
+function BRC.it.is_magic_staff(it)
+  return it and it.class and it.class(true) == "magical staff"
+end
+
+function BRC.it.is_orb(it)
+  return it and it.subtype() == "offhand" and not it.is_shield()
+end
+
+function BRC.it.is_polearm(it)
+  return it and it.weap_skill:contains("Polearms")
+end
+
+function BRC.it.is_ring(it)
+  return it and it.name("base") == "ring"
+end
+
+function BRC.it.is_shield(it)
+  return it and it.is_shield()
+end
+
+function BRC.it.is_talisman(it)
+  return it and it.class(true) == "talisman"
+end
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
+function BRC.mpr.que(msg, color, channel)
+  BRC.mpr.que_optmore(false, msg, color, channel)
+end
+
+function BRC.mpr.que_optmore(show_more, msg, color, channel)
+  for _, q in ipairs(_mpr_queue) do
+    if q.m == msg and q.ch == channel and q.more == show_more then return end
+  end
+  color = color or BRC.COL.lightgrey
+  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.capitalize(s)
+  if not s or s == "" then return s end
+  return string.upper(string.sub(s, 1, 1)) .. string.lower(string.sub(s, 2))
+end
+
+-- BRC.you module
+function BRC.you.equipped_at(it)
+  local all_aux = {}
+  local num_slots = BRC.you.num_eq_slots(it)
+  local slot_name = it.is_weapon and "weapon"
+    or BRC.it.is_body_armour(it) and "armour"
+    or it.subtype()
+
+  for i = 1, num_slots do
+    local eq = items.equipped_at(slot_name, i)
+    all_aux[#all_aux + 1] = eq
+  end
+
+  return all_aux, num_slots
+end
+
+function BRC.you.free_offhand()
+  if BRC.you.mut_lvl("missing a hand") > 0 then return true end
+  return not items.equipped_at("offhand")
+end
+
+function BRC.you.have_shield()
+  return BRC.it.is_shield(items.equipped_at("offhand"))
+end
+
+function BRC.you.mut_lvl(mutation, innate_only)
+  return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+
+function BRC.you.num_eq_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.it.is_aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
+end
+
+function BRC.you.shapeshifting_skill()
+  local skill = you.skill("Shapeshifting")
+  local AMU = "amulet of wildshape"
+  if util.exists(items.inventory(), function(i) return i.name("qual") == AMU end) then
+    return skill + 5
+  end
+  return skill
+end
+
+function BRC.you.size_penalty()
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
+end
+
+function BRC.you.skill(skill)
+  if skill and not skill:contains(",") then return you.skill(skill) end
+
+  local skills = crawl.split(skill, ",")
+  local sum = 0
+  local count = 0
+  for _, s in ipairs(skills) do
+    sum = sum + you.skill(s)
+    count = count + 1
+  end
+
+  return sum / count
+end
+
+function BRC.you.skill_with(it)
+  if BRC.it.is_magic_staff(it) then
+    return math.max(BRC.you.skill(BRC.it.get_staff_school(it)), BRC.you.skill("Staves"))
+  end
+  if it.is_weapon then return BRC.you.skill(it.weap_skill) end
+  if BRC.it.is_body_armour(it) then return BRC.you.skill("Armour") end
+  if BRC.it.is_shield(it) then return BRC.you.skill("Shields") end
+  if BRC.it.is_talisman(it) then return BRC.you.shapeshifting_skill() end
+
+  return nil
+end
+
+function BRC.you.top_wpn_skill()
+  local max_weap_skill = 0
+  local pref = nil
+  for _, v in ipairs(BRC.WEAP_SCHOOLS) do
+    if BRC.you.skill(v) > max_weap_skill then
+      max_weap_skill = BRC.you.skill(v)
+      pref = v
+    end
+  end
+  return pref
+end
+
+-- mpr queue support: _mpr_queue and BRC.mpr.consume_queue()
+_mpr_queue = {}
+function BRC.mpr.consume_queue()
+  local do_more = util.exists(_mpr_queue, function(q) return q.more end)
+  -- stop_activity() can generate more autopickups, and thus more queue'd messages
+  if do_more then
+    you.stop_activity()
+    crawl.redraw_screen()
+  end
+
+  for _, msg in ipairs(_mpr_queue) do
+    crawl.mpr(tostring(msg.m), msg.ch)
+    crawl.flush_prev_message()
+  end
+  _mpr_queue = {}
+
+  if do_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-config
+-- @submodule f_pickup_alert.Config
+-- Configuration and in-depth tuning heuristics for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
+
+f_pickup_alert = f_pickup_alert or {}
+---------------------------------------------------------------------------------------------------
+
+f_pickup_alert = f_pickup_alert or {}
+
+
+---- Local variables ----
+local C -- config alias
+local A -- alert config alias
+local M -- more config alias
+local pause_pa_system
+local hold_alerts_for_next_turn
+
+---- Initialization ----
+function f_pickup_alert.init()
+  C = f_pickup_alert.Config
+  A = f_pickup_alert.Config.Alert
+  M = f_pickup_alert.Config.Alert.More
+  pause_pa_system = false
+  hold_alerts_for_next_turn = false
+
+  BRC.mpr.debug("Initialize pickup-alert submodules...")
+  if f_pa_data.init then f_pa_data.init() end
+  BRC.mpr.debug("  pa-data loaded")
+
+  if f_pa_armour then
+    if f_pa_armour.init then f_pa_armour.init() end
+    BRC.mpr.debug("  pa-armour loaded")
+  end
+
+  if f_pa_weapons then
+    if f_pa_weapons.init then f_pa_weapons.init() end
+    BRC.mpr.debug("  pa-weapons loaded")
+  end
+
+  if f_pa_misc then
+    if f_pa_misc.init then f_pa_misc.init() end
+    BRC.mpr.debug("  pa-misc loaded")
+  end
+
+  -- Don't alert for starting items
+  for _, inv in ipairs(items.inventory()) do
+    f_pa_data.remember_alert(inv)
+    f_pa_data.remove_OTA(inv)
+  end
+end
+
+---- Local functions ----
+local function do_autopickup(it)
+  if options.autopick_on == false
+    and A.autopickup_disabled
+    and not f_pa_data.already_alerted(it)
+  then
+    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP, M.autopickup_disabled)
+  end
+
+  return true
+end
+
+local function has_configured_force_more(it)
+  if it.artefact then
+    if M.artefact then return true end
+    if M.trained_artefacts then
+      -- Accept artefacts with any relevant training, or no training required
+      local s = BRC.you.skill_with(it)
+      if s == nil or s > 0 then return true end
+    end
+  end
+
+  return M.armour_ego and BRC.it.is_armour(it) and BRC.eq.get_ego(it)
+end
+
+local function track_unique_egos(it)
+  local ego = BRC.eq.get_ego(it)
+  if
+    ego
+    and not util.contains(pa_egos_alerted, ego)
+    and not (it.artefact and BRC.eq.is_risky(it))
+  then
+    pa_egos_alerted[#pa_egos_alerted+1] = ego
+  end
+end
+
+local function get_alert_color_for_item(it)
+  if it.is_weapon then return C.AlertColor.weapon end
+  if BRC.it.is_orb(it) then return C.AlertColor.orb end
+  if BRC.it.is_talisman(it) then return C.AlertColor.talisman end
+  if BRC.it.is_body_armour(it) then return C.AlertColor.body_arm end
+  if BRC.it.is_armour(it) then return C.AlertColor.aux_arm end
+  return C.AlertColor.misc
+end
+
+local function should_skip_pickup_check(it)
+  return BRC.active == false
+    or pause_pa_system
+    or you.have_orb()
+    or (not it.is_identified and (it.branded or it.artefact or BRC.it.is_magic_staff(it)))
+end
+
+local function check_and_trigger_alerts(it, unworn_aux_item)
+  if f_pa_data.already_alerted(it) then return true end
+
+  -- One-time alerts
+  if f_pa_misc and A.one_time and #A.one_time > 0 then
+    if f_pa_misc.alert_OTA(it) then return true end
+  end
+
+  -- Item-specific alerts
+  if BRC.it.is_magic_staff(it) and f_pa_misc and A.staff_resists then
+    if f_pa_misc.alert_staff(it) then return true end
+  elseif BRC.it.is_orb(it) and f_pa_misc and A.orbs then
+    if f_pa_misc.alert_orb(it) then return true end
+  elseif BRC.it.is_talisman(it) and f_pa_misc and A.talismans then
+    if f_pa_misc.alert_talisman(it) then return true end
+  elseif BRC.it.is_armour(it) and f_pa_armour and A.armour_sensitivity > 0 then
+    if f_pa_armour.alert_armour(it, unworn_aux_item) then return true end
+  elseif it.is_weapon and f_pa_weapons and A.weapon_sensitivity > 0 then
+    if f_pa_weapons.alert_weapon(it) then return true end
+  end
+
+  return false
+end
+
+---- Public API ----
+function f_pickup_alert.pause_alerts()
+  hold_alerts_for_next_turn = true
+end
+
+function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
+  local item_name = f_pa_data.get_keyname(it, true)
+  local alert_col = get_alert_color_for_item(it)
+
+  -- Handle special formatting for weapons and body armour
+  if it.is_weapon then
+    f_pa_data.update_high_scores(it)
+    local weapon_info = string.format(" (%s)", BRC.eq.wpn_stats(it))
+    item_name = item_name .. BRC.txt[C.AlertColor.weapon.stats](weapon_info)
+  elseif BRC.it.is_armour(it) then
+    track_unique_egos(it)
+    if BRC.it.is_body_armour(it) then
+      f_pa_data.update_high_scores(it)
+      local ac, ev = BRC.eq.arm_stats(it)
+      local armour_info = string.format(" {%s, %s}", ac, ev)
+      item_name = item_name .. BRC.txt[C.AlertColor.body_arm.stats](armour_info)
+    end
+  end
+
+  local tokens = {}
+  tokens[1] = emoji and emoji or BRC.txt.cyan("----")
+  tokens[#tokens + 1] = BRC.txt[alert_col.desc](string.format(" %s:", alert_type))
+  tokens[#tokens + 1] = BRC.txt[alert_col.item](string.format(" %s ", item_name))
+  tokens[#tokens + 1] = tokens[1]
+  BRC.mpr.que_optmore(force_more or has_configured_force_more(it), table.concat(tokens))
+
+  f_pa_data.add_recent_alert(it)
+  f_pa_data.remember_alert(it)
+
+  if not hold_alerts_for_next_turn then you.stop_activity() end
+
+  -- Set hotkeys
+  if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
+    if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it.name(), true) end
+  else
+    if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it.name()) end
+  end
+
+  return true
+end
+
+---- Crawl hook functions ----
+function f_pickup_alert.autopickup(it, _)
+  if should_skip_pickup_check(it) then return end
+
+  local unworn_aux_item = nil -- Track carried aux armour for mutation scenarios
+  if it.is_useless then
+    -- Allow alerts for useless aux armour, iff you're carrying one (implies a temporary mutation)
+    if not BRC.it.is_aux_armour(it) then return end
+    local st = it.subtype()
+    for _, inv in ipairs(items.inventory()) do
+      if inv.subtype() == st then
+        unworn_aux_item = inv
+        break
+      end
+    end
+    if not unworn_aux_item then return end
+  else
+    if BRC.it.is_armour(it) then
+      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return do_autopickup(it) end
+    elseif BRC.it.is_magic_staff(it) then
+      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return do_autopickup(it) end
+    elseif it.is_weapon then
+      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return do_autopickup(it) end
+    elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
+      return false
+    end
+  end
+
+  -- Item not picked up - check if it should trigger alerts
+  if check_and_trigger_alerts(it, unworn_aux_item) then return end
+end
+
+function f_pickup_alert.c_assign_invletter(it)
+  f_pa_misc.alert_OTA(it)
+  f_pa_data.remove_recent_alert(it)
+  f_pa_data.remember_alert(it)
+
+  -- Re-enable the alert, iff we are able to use another one
+  if BRC.you.num_eq_slots(it) > 1 then f_pa_data.forget_alert(it) end
+
+  -- Ensure we always stop for these autopickup types
+  if it.is_weapon or BRC.it.is_armour(it) then
+    f_pa_data.update_high_scores(it)
+    you.stop_activity()
+  end
+end
+
+function f_pickup_alert.c_message(text, channel)
+  -- Avoid firing alerts when changing armour/weapons
+  if channel == "multiturn" then
+    if not pause_pa_system and text:contains("ou start ") then pause_pa_system = true end
+  elseif channel == "plain" then
+    if pause_pa_system and (text:contains("ou stop ") or text:contains("ou finish ")) then
+      pause_pa_system = false
+    elseif text:contains("one exploring") or text:contains("artly explored") then
+      local tokens = { "Recent alerts:" }
+      for _, v in ipairs(pa_recent_alerts) do
+        tokens[#tokens + 1] = string.format("\n  %s", v)
+      end
+      if #tokens > 1 then BRC.mpr.que(table.concat(tokens), BRC.COL.magenta) end
+      pa_recent_alerts = {}
+    end
+  end
+end
+
+function f_pickup_alert.ready()
+  hold_alerts_for_next_turn = false
+  if pause_pa_system then return end
+  f_pa_weapons.ready()
+  f_pa_data.update_high_scores(items.equipped_at("armour"))
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-data
+-- @submodule f_pa_data
+-- Persistent data management and alert tracking for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
+
+f_pa_data = {}
+
+---- Persistent variables ----
+pa_items_alerted = BRC.Data.persist("pa_items_alerted", {})
+pa_recent_alerts = BRC.Data.persist("pa_recent_alerts", {})
+pa_OTA_items = BRC.Data.persist("pa_OTA_items", f_pickup_alert.Config.Alert.one_time)
+pa_high_score = BRC.Data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
+pa_egos_alerted = BRC.Data.persist("pa_egos_alerted", {})
+
+---- Local functions ----
+local function get_pa_keys(it, use_plain_name)
+  if it.class(true) == "bauble" then
+    return it.name("qual"):gsub('"', ""), 0
+  elseif BRC.it.is_talisman(it) or BRC.it.is_orb(it) then
+    return it.name():gsub('"', ""), 0
+  elseif BRC.it.is_magic_staff(it) then
+    return it.name("base"):gsub('"', ""), 0
+  else
+    local name = it.name(use_plain_name and "plain" or "base"):gsub('"', "")
+    local value = tonumber(name:sub(1, 3))
+    if not value then return name, 0 end
+    return util.trim(name:sub(4)), value
+  end
+end
+
+---- Public API ----
+function f_pa_data.already_alerted(it)
+  local name, value = get_pa_keys(it)
+  if pa_items_alerted[name] ~= nil and tonumber(pa_items_alerted[name]) >= value then
+    return name
+  end
+end
+
+function f_pa_data.remember_alert(it)
+  if not (it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_talisman(it)) then return end
+  local name, value = get_pa_keys(it)
+  local cur_val = tonumber(pa_items_alerted[name])
+  if not cur_val or value > cur_val then pa_items_alerted[name] = value end
+
+  -- Add lesser versions of same item, to avoid alerting an inferior item
+  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
+    -- Add plain unbranded version
+    name = it.name("db")
+    cur_val = tonumber(pa_items_alerted[name])
+    if not cur_val or value > cur_val then pa_items_alerted[name] = value end
+
+    -- For branded artefact, add the plain branded version
+    local verbose_ego = it.ego(false)
+    if it.artefact and verbose_ego then
+      local branded_name
+      if BRC.ADJECTIVE_EGOS[verbose_ego] then
+        branded_name = BRC.ADJECTIVE_EGOS[verbose_ego] .. " " .. name
+      else
+        branded_name = name .. " of " .. verbose_ego
+      end
+      cur_val = tonumber(pa_items_alerted[name])
+      if not cur_val or value > cur_val then pa_items_alerted[branded_name] = value end
+    end
+
+    -- Armour may hit multiple egos based on artefact properties. Add each plain branded version.
+    if it.artefact and BRC.it.is_armour(it) then
+      for k, v in pairs(it.artprops) do
+        if v > 0 and BRC.ARTPROPS_EGO[k] then
+          local branded_name = name .. " of " .. BRC.ARTPROPS_EGO[k]
+          cur_val = tonumber(pa_items_alerted[branded_name])
+          if not cur_val or value > cur_val then pa_items_alerted[branded_name] = value end
+        end
+      end
+    end
+  end
+end
+
+function f_pa_data.forget_alert(it)
+  local name, _ = get_pa_keys(it)
+  pa_items_alerted[name] = nil
+end
+
+function f_pa_data.add_recent_alert(it)
+  if it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_talisman(it) then
+    pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
+  end
+end
+
+function f_pa_data.remove_recent_alert(it)
+  util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
+end
+
+function f_pa_data.find_OTA(it)
+  local qualname = it.name("qual")
+  for _, v in ipairs(pa_OTA_items) do
+    if v and qualname:find(v) then return v end
+  end
+end
+
+function f_pa_data.remove_OTA(it)
+  repeat
+    local item_name = f_pa_data.find_OTA(it)
+    if item_name == nil then return end
+    util.remove(pa_OTA_items, item_name)
+  until item_name == nil
+end
+
+--- Return name with plus included and quotes removed; used as key in tables
+function f_pa_data.get_keyname(it, use_plain_name)
+  local name, value = get_pa_keys(it, use_plain_name)
+  if not (BRC.it.is_armour(it) or it.is_weapon) then return name end
+  if value >= 0 then value = string.format("+%s", value) end
+  return string.format("%s %s", value, name)
+end
+
+--- Return string of the high score type if item sets a new high score, else nil
+function f_pa_data.update_high_scores(it)
+  if not it then return end
+  local ret_val = nil
+
+  if BRC.it.is_armour(it) then
+    local ac = BRC.eq.get_ac(it)
+    if ac > pa_high_score.ac then
+      pa_high_score.ac = ac
+      if not ret_val then ret_val = "Highest AC" end
+    end
+  elseif it.is_weapon then
+    -- Don't alert for unusable weapons
+    if BRC.eq.get_hands(it) == 2 and not BRC.you.free_offhand() then return end
+
+    local dmg = BRC.eq.get_avg_dmg(it, BRC.DMG_TYPE.branded)
+    if dmg > pa_high_score.weapon then
+      pa_high_score.weapon = dmg
+      if not ret_val then ret_val = "Highest damage" end
+    end
+
+    dmg = BRC.eq.get_avg_dmg(it, BRC.DMG_TYPE.plain)
+    if dmg > pa_high_score.plain_dmg then
+      pa_high_score.plain_dmg = dmg
+      if not ret_val then ret_val = "Highest plain damage" end
+    end
+  end
+
+  return ret_val
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-armour
+-- @submodule f_pa_armour
+-- @author Medar, gammafunk, buehler
+-- Armour pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
+
+f_pa_armour = {}
+
+---- Local constants ----
+local ENCUMB_ARMOUR_DIVISOR = 2 -- Encumbrance penalty is offset by (Armour / ENCUMB_ARMOUR_DIVISOR)
+local SAME = "same_ego"
+local LOST = "lost_ego"
+local GAIN = "gain_ego"
+local NEW = "new_ego"
+local DIFF = "diff_ego"
+local HEAVIER = "Heavier"
+local LIGHTER = "Lighter"
+
+---- Local variables ----
+local H -- heuristic tuning alias
+local E -- emoji config alias
+local A -- alert config alias
+local M -- more config alias
+local ARMOUR_ALERT
+
+---- Initialization ----
+function f_pa_armour.init()
+  H = f_pickup_alert.Config.Tuning.Armour
+  E = f_pickup_alert.Config.Emoji
+  A = f_pickup_alert.Config.Alert
+  M = f_pickup_alert.Config.Alert.More
+
+  ARMOUR_ALERT = {
+    artefact = { msg = "Artefact armour", emoji = E.ARTEFACT },
+    [GAIN] = { msg = "Gain ego", emoji = E.EGO },
+    [NEW] = { msg = "New ego", emoji = E.EGO },
+    [DIFF] = { msg = "Diff ego", emoji = E.EGO },
+    [LIGHTER] = {
+      [GAIN] = { msg = "Gain ego (Lighter armour)", emoji = E.EGO },
+      [NEW] = { msg = "New ego (Lighter armour)", emoji = E.EGO },
+      [DIFF] = { msg = "Diff ego (Lighter armour)", emoji = E.EGO },
+      [SAME] = { msg = "Lighter armour", emoji = E.LIGHTER },
+      [LOST] = { msg = "Lighter armour (Lost ego)", emoji = E.LIGHTER },
+    },
+    [HEAVIER] = {
+      [GAIN] = { msg = "Gain ego (Heavier armour)", emoji = E.EGO },
+      [NEW] = { msg = "New ego (Heavier armour)", emoji = E.EGO },
+      [DIFF] = { msg = "Diff ego (Heavier armour)", emoji = E.EGO },
+      [SAME] = { msg = "Heavier Armour", emoji = E.HEAVIER },
+      [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = E.HEAVIER },
+    },
+  } -- ARMOUR_ALERT (do not remove this comment)
+end
+
+---- Local functions ----
+local function aux_slot_is_impaired(it)
+  local st = it.subtype()
+  -- Skip boots/gloves/helmet if wearing Lear's hauberk
+  local worn = items.equipped_at("armour")
+  if worn and worn.name("qual") == "Lear's hauberk" and st ~= "cloak" then return true end
+
+  -- Mutation interference
+  if st == "gloves" then
+    return BRC.you.mut_lvl("demonic touch") >= 3 and not BRC.you.free_offhand()
+        or BRC.you.mut_lvl("claws") > 0 and not items.equipped_at("weapon")
+  elseif st == "boots" then
+    return BRC.you.mut_lvl("hooves") > 0
+        or BRC.you.mut_lvl("talons") > 0
+  elseif it.name("base"):contains("helmet") then
+    return BRC.you.mut_lvl("horns") > 0
+        or BRC.you.mut_lvl("beak") > 0
+        or BRC.you.mut_lvl("antennae") > 0
+  end
+
+  return false
+end
+
+local function get_adjusted_ev_delta(encumb_delta, ev_delta)
+  local encumb_skills = you.skill("Spellcasting")
+    + you.skill("Ranged Weapons")
+    - you.skill("Armour") / ENCUMB_ARMOUR_DIVISOR
+  local encumb_impact = encumb_skills / you.xl()
+  encumb_impact = math.max(0, math.min(1, encumb_impact)) -- Clamp to 0-1
+
+  -- Subtract weighted encumbrance penalty, to align with ev_delta (heavier is negative)
+  return ev_delta - encumb_delta * encumb_impact * H.encumb_penalty_weight
+end
+
+local function get_ego_change_type(cur_ego, it_ego)
+  if it_ego == cur_ego then
+    return SAME
+  elseif not it_ego then
+    return LOST
+  elseif not cur_ego then
+    return GAIN
+  elseif not util.contains(pa_egos_alerted, it_ego) then
+    return NEW
+  else
+    return DIFF
+  end
+end
+
+--- Decides if an ego change is good enough to skip the min_gain check.
+--- For DIFF egos (neutral change), true for Shields/Aux, configurable for body armour
+local function is_good_ego_change(ego_change, is_body_armour)
+  if ego_change == DIFF then return not is_body_armour or H.diff_body_ego_is_good end
+  return ego_change == GAIN or ego_change == NEW
+end
+
+local function send_armour_alert(it, t_alert)
+  return f_pickup_alert.do_alert(it, t_alert.msg, t_alert.emoji, M.body_armour)
+end
+
+-- Local functions: Pickup
+local function pickup_body_armour(it)
+  local cur = items.equipped_at("armour")
+  if not cur then return false end -- surely am naked for a reason
+
+  -- No pickup if wearing an artefact
+  if cur.artefact then return false end
+
+  -- No pickup if adding encumbrance or losing AC
+  local encumb_delta = it.encumbrance - cur.encumbrance
+  if encumb_delta > 0 then return false end
+  local ac_delta = BRC.eq.get_ac(it) - BRC.eq.get_ac(cur)
+  if ac_delta < 0 then return false end
+
+  -- Pickup: Pure upgrades
+  local it_ego = BRC.eq.get_ego(it)
+  local cur_ego = BRC.eq.get_ego(cur)
+  if it_ego == cur_ego then return (ac_delta > 0 or encumb_delta < 0) end
+  return not cur_ego and (ac_delta >= 0 or encumb_delta <= 0)
+end
+
+local function pickup_shield(it)
+  -- Don't replace these
+  local cur = items.equipped_at("offhand")
+  if not BRC.it.is_shield(cur) then return false end
+  if cur.encumbrance ~= it.encumbrance then return false end
+  if cur.artefact then return false end
+
+  -- Pickup: artefact
+  if it.artefact then return true end
+
+  -- Pickup: Pure upgrades
+  local it_plus = it.plus or 0
+  local it_ego = BRC.eq.get_ego(it)
+  local cur_ego = BRC.eq.get_ego(cur)
+  if it_ego == cur_ego then return it_plus > cur.plus end
+  return not cur_ego and it_plus >= cur.plus
+end
+
+local function pickup_aux_armour(it)
+  -- Pickup: Anything if the slot is empty, unless downside from mutation
+  if aux_slot_is_impaired(it) then return false end
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
+  if #all_equipped < num_slots then
+    -- If we're carrying one (implying a blocking mutation), don't pickup another
+    if num_slots == 1 then
+      local ST = it.subtype()
+      return not util.exists(items.inventory(), function(inv) return inv.subtype() == ST end)
+    end
+    return true
+  end
+
+  -- Pickup: artefact, unless slot(s) already full of artefact(s)
+  for i, cur in ipairs(all_equipped) do
+    if not cur.artefact then break end
+    if i == num_slots then return false end
+  end
+  if it.artefact then return true end
+
+  -- Pickup: Pure upgrades
+  local it_ac = BRC.eq.get_ac(it)
+  local it_ego = BRC.eq.get_ego(it)
+  for _, cur in ipairs(all_equipped) do
+    local cur_ac = BRC.eq.get_ac(cur)
+    local cur_ego = BRC.eq.get_ego(cur)
+    if it_ego == cur_ego then
+      if it_ac > cur_ac then return true end
+    elseif not cur_ego then
+      if it_ac >= cur_ac then return true end
+    end
+  end
+  return false
+end
+
+-- Local functions: Alerting
+local function should_alert_body_armour(weight, gain, loss, ego_change)
+  -- Check if armour stat trade-off meets configured ratio thresholds
+  local meets_ratio = loss <= 0
+    or (gain / loss > H[weight][ego_change] / A.armour_sensitivity)
+  if not meets_ratio then return false end
+
+  -- Additional ego-specific restrictions
+  if ego_change == SAME or is_good_ego_change(ego_change, true) then
+    return loss <= H[weight].max_loss * A.armour_sensitivity
+  else
+    return gain >= H[weight].min_gain / A.armour_sensitivity
+  end
+end
+
+-- Alert when finding higher AC than previously seen, unless training spells/ranged and NOT armour
+local function alert_highest_ac(it)
+  if you.xl() > 12 then return false end
+  local total_skill = you.skill("Spellcasting") + you.skill("Ranged Weapons")
+  if total_skill > 0 and you.skill("Armour") == 0 then return false end
+
+  if pa_high_score.ac == 0 then
+    local worn = items.equipped_at("armour")
+    if not worn then return false end
+    pa_high_score.ac = BRC.eq.get_ac(worn)
+  else
+    local itAC = BRC.eq.get_ac(it)
+    if itAC > pa_high_score.ac then
+      pa_high_score.ac = itAC
+      return f_pickup_alert.do_alert(it, "Highest AC", E.STRONGEST, M.high_score_armour)
+    end
+  end
+
+  return false
+end
+
+local function alert_body_armour(it)
+  local cur = items.equipped_at("armour")
+  if not cur then return false end
+
+  -- Always alert artefacts once identified
+  if it.artefact then return send_armour_alert(it, ARMOUR_ALERT.artefact) end
+
+  -- Get changes to ego, AC, EV, encumbrance
+  local it_ego = BRC.eq.get_ego(it)
+  local cur_ego = BRC.eq.get_ego(cur)
+  local ego_change = get_ego_change_type(cur_ego, it_ego)
+  local ac_delta = BRC.eq.get_ac(it) - BRC.eq.get_ac(cur)
+  local ev_delta = BRC.eq.get_armour_ev(it) - BRC.eq.get_armour_ev(cur)
+  local encumb_delta = it.encumbrance - cur.encumbrance
+
+  -- Alert new egos if same encumbrance, or small change to total (AC+EV)
+  if is_good_ego_change(ego_change, true) then
+    if encumb_delta == 0 then return send_armour_alert(it, ARMOUR_ALERT[ego_change]) end
+
+    local weight = encumb_delta < 0 and LIGHTER or HEAVIER
+    if math.abs(ac_delta + ev_delta) <= H[weight].ignore_small * A.armour_sensitivity then
+      BRC.mpr.debug("small change: AC:" .. ac_delta .. ", EV:" .. ev_delta)
+      return send_armour_alert(it, ARMOUR_ALERT[weight][ego_change])
+    end
+  end
+
+  -- Check if lighter/heavier armour meets stat trade-off thresholds
+  if encumb_delta < 0 then
+    if should_alert_body_armour(LIGHTER, ev_delta, -ac_delta, ego_change) then
+      BRC.mpr.debug("Lighter: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
+      return send_armour_alert(it, ARMOUR_ALERT[LIGHTER][ego_change])
+    end
+  elseif encumb_delta > 0 then
+    local adj_ev_delta = get_adjusted_ev_delta(encumb_delta, ev_delta)
+    if should_alert_body_armour(HEAVIER, ac_delta, -adj_ev_delta, ego_change) then
+      BRC.mpr.debug("Heavier: AC:" .. ac_delta .. ", EV:" .. ev_delta .. ", " .. ego_change)
+      return send_armour_alert(it, ARMOUR_ALERT[HEAVIER][ego_change])
+    end
+  end
+
+  -- Check for record AC values or early-game ego armour
+  if alert_highest_ac(it) then return true end
+  if it_ego and you.xl() <= H.early_xl then
+    return f_pickup_alert.do_alert(it, "Early armour", E.EGO)
+  end
+end
+
+local function alert_shield(it)
+  if it.artefact then
+    return f_pickup_alert.do_alert(it, "Artefact shield", E.ARTEFACT, M.shields)
+  end
+
+  -- Don't alert shields if not wearing one (one_time_alerts fire for the first of each type)
+  local cur = items.equipped_at("offhand")
+  if not BRC.it.is_shield(cur) then return false end
+
+  -- Alert: New ego, Gain SH
+  local ego_change = get_ego_change_type(BRC.eq.get_ego(cur), BRC.eq.get_ego(it))
+  if is_good_ego_change(ego_change, false) then
+    local alert_msg = BRC.txt.capitalize(ego_change):gsub("_", " ")
+    return f_pickup_alert.do_alert(it, alert_msg, E.EGO, M.shields)
+  elseif BRC.eq.get_sh(it) > BRC.eq.get_sh(cur) then
+    return f_pickup_alert.do_alert(it, "Higher SH", E.STRONGER, M.shields)
+  end
+end
+
+local function alert_aux_armour(it, unworn_inv_item)
+  if it.artefact then
+    return f_pickup_alert.do_alert(it, "Artefact aux armour", E.ARTEFACT, M.aux_armour)
+  end
+
+  local all_equipped, num_slots = BRC.you.equipped_at(it)
+  if #all_equipped < num_slots then
+    if unworn_inv_item then
+      all_equipped[#all_equipped + 1] = unworn_inv_item
+    else
+      -- Catch dangerous brands or items blocked by non-innate mutations
+      return f_pickup_alert.do_alert(it, "Aux armour", BRC.EMOJI.EXCLAMATION, M.aux_armour)
+    end
+  end
+
+  local it_ego = BRC.eq.get_ego(it)
+  for _, cur in ipairs(all_equipped) do
+    local ego_change = get_ego_change_type(BRC.eq.get_ego(cur), it_ego)
+    if is_good_ego_change(ego_change, false) then
+      local alert_msg = BRC.txt.capitalize(ego_change):gsub("_", " ")
+      return f_pickup_alert.do_alert(it, alert_msg, E.EGO, M.aux_armour)
+    elseif BRC.eq.get_ac(it) > BRC.eq.get_ac(cur) then
+      return f_pickup_alert.do_alert(it, "Higher AC", E.STRONGER, M.aux_armour)
+    end
+  end
+end
+
+---- Public API ----
+function f_pa_armour.pickup_armour(it)
+  if BRC.eq.is_risky(it) then return false end
+
+  if BRC.it.is_body_armour(it) then
+    return pickup_body_armour(it)
+  elseif BRC.it.is_shield(it) then
+    return pickup_shield(it)
+  else
+    return pickup_aux_armour(it)
+  end
+end
+
+--- Alerts armour items that didn't auto-pickup but are worth considering.
+--- This comes after pickup, so there will be no pure upgrades.
+-- @param unworn_inv_item (optional) to compare against an unworn aux armour item in inventory.
+function f_pa_armour.alert_armour(it, unworn_inv_item)
+  if BRC.it.is_body_armour(it) then
+    return alert_body_armour(it)
+  elseif BRC.it.is_shield(it) then
+    return alert_shield(it)
+  else
+    return alert_aux_armour(it, unworn_inv_item)
+  end
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-misc
+-- @submodule f_pa_misc
+-- Miscellaneous item pickup and alert functions for the pickup-alert feature.
+---------------------------------------------------------------------------------------------------
+
+f_pa_misc = {}
+
+---- Local variables ----
+local E -- emoji config alias
+local A -- alert config alias
+local M -- more config alias
+
+---- Initialization ----
+function f_pa_misc.init()
+  E = f_pickup_alert.Config.Emoji
+  A = f_pickup_alert.Config.Alert
+  M = f_pickup_alert.Config.Alert.More
+end
+
+---- Local functions ----
+
+---- Public API ----
+function f_pa_misc.alert_orb(it)
+  return f_pickup_alert.do_alert(it, "New orb", E.ORB, M.orbs)
+end
+
+function f_pa_misc.alert_OTA(it)
+  local ota_item = f_pa_data.find_OTA(it)
+  if not ota_item then return end
+
+  local do_alert = true
+
+  if BRC.it.is_shield(it) then
+    if you.skill("Shields") < A.OTA_require_skill.shield then return end
+
+    -- Don't alert if already wearing a larger shield
+    if ota_item == "buckler" then
+      if BRC.you.have_shield() then do_alert = false end
+    elseif ota_item == "kite shield" then
+      local sh = items.equipped_at("offhand")
+      if sh and sh.name("qual") == "tower shield" then do_alert = false end
+    end
+  elseif BRC.it.is_armour(it) then
+    if you.skill("Armour") < A.OTA_require_skill.armour then return end
+  elseif it.is_weapon then
+    if you.skill(it.weap_skill) < A.OTA_require_skill.weapon then return end
+  end
+
+  f_pa_data.remove_OTA(it)
+  if not do_alert then return false end
+  return f_pickup_alert.do_alert(it, "Found first", E.RARE_ITEM, M.one_time_alerts)
+end
+
+function f_pa_misc.alert_staff(it)
+  local basename = it.name("base")
+  local tag
+  local tag_color
+
+  if basename == "staff of air" then
+    if you.res_shock() > 0 then return false end
+    tag = "rElec"
+    tag_color = BRC.COL.lightcyan
+  elseif basename == "staff of alchemy" then
+    if you.res_poison() > 0 then return false end
+    tag = "rPois"
+    tag_color = BRC.COL.lightgreen
+  elseif basename == "staff of cold" then
+    if you.res_cold() > 0 then return false end
+    tag = "rC+"
+    tag_color = BRC.COL.lightblue
+  elseif basename == "staff of fire" then
+    if you.res_fire() > 0 then return false end
+    tag = "rF+"
+    tag_color = BRC.COL.lightred
+  elseif basename == "staff of necromancy" then
+    if you.res_draining() > 0 then return false end
+    tag = "rN+"
+    tag_color = BRC.COL.lightmagenta
+  else
+    return false
+  end
+
+  for _, inv in ipairs(items.inventory()) do
+    if inv.is_weapon and inv.name("plain"):contains(tag) then
+      return false
+    end
+  end
+
+  tag = BRC.txt[tag_color]("(" .. tag .. ")")
+  return f_pickup_alert.do_alert(it, "Staff resistance " .. tag, E.STAFF_RES, M.staff_resists)
+end
+
+function f_pa_misc.alert_talisman(it)
+  if not it.is_identified then return false end -- Necessary to avoid firing on '\' menu
+  if it.artefact then
+    return f_pickup_alert.do_alert(it, "Artefact talisman", E.TALISMAN, M.talismans)
+  end
+  local required_skill = BRC.it.get_talisman_min_level(it) - A.talisman_lvl_diff
+  if required_skill > BRC.you.shapeshifting_skill() then return false end
+  return f_pickup_alert.do_alert(it, "New talisman", E.TALISMAN, M.talismans)
+end
+
+function f_pa_misc.is_unneeded_ring(it)
+  if not BRC.it.is_ring(it) or it.artefact or you.race() == "Octopode" then return false end
+  local missing_hand = BRC.you.mut_lvl("missing a hand") > 0
+  local st = it.subtype()
+  local found_first = false
+  for _, inv in ipairs(items.inventory()) do
+    if BRC.it.is_ring(inv) and inv.subtype() == st then
+      if found_first or missing_hand then return true end
+      found_first = true
+    end
+  end
+  return false
+end
+
+function f_pa_misc.pickup_staff(it)
+  if f_pa_data.already_alerted(it) then return false end
+  if BRC.you.skill(BRC.it.get_staff_school(it)) == 0 then return false end
+
+  local qualname = it.name("qual")
+  local max_slots = BRC.you.num_eq_slots(it)
+  local count = 0
+  for _, inv in ipairs(items.inventory()) do
+    if inv.name("qual") == qualname then
+      count = count + 1
+      if count >= max_slots then return false end
+    end
+  end
+
+  return true
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert-weapons
+-- @submodule f_pa_weapons
+-- Weapon pickup and alert functions for the pickup-alert feature.
+-- _weapon_cache table stores info about inventory weapons, to avoid repeat calculations.
+---------------------------------------------------------------------------------------------------
+
+f_pa_weapons = {}
+
+---- Persistent variables ----
+pa_lowest_hands_alerted = BRC.Data.persist("pa_lowest_hands_alerted", {
+  ["Ranged Weapons"] = 3, -- Track lowest hand count alerted for this weapon school
+  ["Polearms"] = 3, -- Track lowest hand count alerted for this weapon school
+})
+
+---- Local constants ----
+local FIRST_WEAPON_XL_CUTOFF = 6 -- Stop first-weapon alerts after this experience level
+local POLEARM_RANGED_CUTOFF = 3 -- Stop polearm alerts when ranged skill reaches this level
+local UPGRADE_SKILL_FACTOR = 0.5 -- No upgrade alerts if weapon skill is this % of top skill
+-- Weapon cache constants
+local RANGED_PREFIX = "range_"
+local MELEE_PREFIX = "melee_"
+local WEAP_CACHE_KEYS = {
+  "melee_1", "melee_1b", "melee_2", "melee_2b", "range_1", "range_1b", "range_2", "range_2b"
+} -- WEAP_CACHE_KEYS (do not remove this comment)
+
+---- Local variables ----
+local C -- config alias
+local W -- heuristic tuning alias
+local E -- emoji config alias
+local A -- alert config alias
+local M -- more config alias
+local top_attack_skill
+local _weapon_cache = {} -- Cache info for inventory weapons to avoid repeat calculations
+
+---- Initialization ----
+function f_pa_weapons.init()
+  C = f_pickup_alert.Config
+  W = f_pickup_alert.Config.Tuning.Weap
+  E = f_pickup_alert.Config.Emoji
+  A = f_pickup_alert.Config.Alert
+  M = f_pickup_alert.Config.Alert.More
+  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
+  _weapon_cache.refresh(true)
+
+  if not A.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
+  if not A.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
+end
+
+---- Local functions ----
+local function get_score(it, no_brand_bonus)
+  if it.dps and it.acc then
+    -- Handle cached /  high-score tuples in _weapon_cache
+    return it.dps + it.acc * W.Pickup.accuracy_weight
+  end
+  local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
+  local acc_bonus = (it.accuracy + (it.plus or 0)) * W.Pickup.accuracy_weight
+  return BRC.eq.get_dps(it, dmg_type) + acc_bonus
+end
+
+local function is_upgradable_weapon(it, cur)
+  return cur.is_ranged == it.is_ranged
+    and BRC.it.is_polearm(cur) == BRC.it.is_polearm(it)
+    and (
+      you.race() == "Gnoll"
+      or BRC.you.skill(it.weap_skill) >= UPGRADE_SKILL_FACTOR * BRC.you.skill(cur.weap_skill)
+    )
+end
+
+-- is_weapon_upgrade() -> boolean: compares floor weapon to one in inventory
+-- `cur` comes from _weapon_cache - it has some pre-computed values
+local function is_weapon_upgrade(it, cur, strict)
+  if not cur.allow_upgrade then return false end
+  if strict then
+    -- Pure upgrades only
+    if cur.artefact or it.subtype() ~= cur.subtype() then return false end
+    if it.artefact then return true end
+    local it_plus = it.plus or 0
+    local cur_ego = BRC.eq.get_ego(cur)
+    if BRC.eq.get_ego(it) == cur_ego then return it_plus > cur.plus end
+    return not cur_ego and it_plus >= cur.plus
+  end
+
+  -- Check if it's a very likely upgrade
+  if it.subtype() == cur.subtype() then
+    if it.artefact then return true end
+    if cur.artefact and not A.allow_arte_weap_upgrades then return false end
+
+    local it_ego = BRC.eq.get_ego(it)
+    local cur_ego = BRC.eq.get_ego(cur)
+    if cur_ego and not it_ego then return false end
+    if it_ego and not cur_ego then return get_score(it) / cur.score > W.Pickup.add_ego end
+    return it_ego == cur_ego and (it.plus or 0) > cur.plus
+  elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
+    if BRC.eq.get_hands(it) > cur.hands then return false end
+    if cur.is_ranged ~= it.is_ranged then return false end
+    if BRC.it.is_polearm(cur) ~= BRC.it.is_polearm(it) then return false end
+
+    if it.artefact then return true end
+    if cur.artefact and not A.allow_arte_weap_upgrades then return false end
+
+    local min_ratio = it.is_ranged and W.Pickup.same_type_ranged or W.Pickup.same_type_melee
+    return get_score(it) / cur.score > min_ratio
+  end
+
+  return false
+end
+
+local function make_alert(it, msg, emoji, fm_option)
+  return { it = it, msg = msg, emoji = emoji, fm_option = fm_option }
+end
+
+local function need_first_weapon()
+  return you.xl() < FIRST_WEAPON_XL_CUTOFF
+    and _weapon_cache.is_empty()
+    and you.skill("Unarmed Combat") == 0
+    and BRC.you.mut_lvl("claws") == 0
+end
+
+-- Local functions: Weapon cache
+function _weapon_cache.get_primary_key(it)
+  local tokens = {}
+  tokens[1] = it.is_ranged and RANGED_PREFIX or MELEE_PREFIX
+  tokens[2] = tostring(it.hands)
+  if BRC.eq.get_ego(it) then tokens[3] = "b" end
+  return table.concat(tokens)
+end
+
+--- Get all categories this weapon fits into (including more-restrictive categories)
+function _weapon_cache.get_keys(is_ranged, hands, is_branded)
+  local ranged_types = is_ranged and { RANGED_PREFIX, MELEE_PREFIX } or { MELEE_PREFIX }
+  local handed_types = hands == 1 and { "1", "2" } or { "2" }
+  local branded_types = is_branded and { "b", "" } or { "" }
+
+  -- Generate all combinations
+  local keys = {}
+  for _, r in ipairs(ranged_types) do
+    for _, h in ipairs(handed_types) do
+      for _, b in ipairs(branded_types) do
+        keys[#keys + 1] = table.concat({ r, h, b })
+      end
+    end
+  end
+
+  return keys
+end
+
+function _weapon_cache.add_weapon(it)
+  local weap_data = {}
+  weap_data.is_weapon = it.is_weapon
+  weap_data.basename = it.name("base")
+  weap_data._subtype = it.subtype()
+  weap_data.subtype = function() -- For consistency with crawl item.subtype()
+    return weap_data._subtype
+  end
+  weap_data.weap_skill = it.weap_skill
+  weap_data.skill_lvl = BRC.you.skill(it.weap_skill)
+  weap_data.is_ranged = it.is_ranged
+  weap_data.hands = BRC.eq.get_hands(it)
+  weap_data.artefact = it.artefact
+  weap_data._ego = BRC.eq.get_ego(it)
+  weap_data.ego = function() -- For consistency with crawl item.ego()
+    return weap_data._ego
+  end
+  weap_data.plus = it.plus or 0
+  weap_data.acc = it.accuracy + weap_data.plus
+  weap_data.damage = it.damage
+  weap_data.dps = BRC.eq.get_dps(it)
+  weap_data.score = get_score(it)
+  weap_data.unbranded_score = get_score(it, true)
+
+  -- Check for exclusion tags
+  local lower_insc = it.inscription:lower()
+  weap_data.allow_upgrade = not (lower_insc:contains("!u") or lower_insc:contains("!brc"))
+
+  -- Track unique egos
+  if weap_data._ego and not util.contains(_weapon_cache.egos, weap_data._ego) then
+    _weapon_cache.egos[#_weapon_cache.egos + 1] = weap_data._ego
+  end
+
+  -- Track max damage for applicable weapon categories
+  local keys = _weapon_cache.get_keys(weap_data.is_ranged, weap_data.hands, weap_data._ego ~= nil)
+
+  -- Update the max DPS for each category
+  for _, key in ipairs(keys) do
+    if weap_data.dps > _weapon_cache.max_dps[key].dps then
+      _weapon_cache.max_dps[key].dps = weap_data.dps
+      _weapon_cache.max_dps[key].acc = weap_data.acc
+    end
+  end
+
+  _weapon_cache.weapons[#_weapon_cache.weapons + 1] = weap_data
+  return weap_data
+end
+
+function _weapon_cache.is_empty()
+  return _weapon_cache.max_dps["melee_2"].dps == 0 -- The most restrictive category
+end
+
+function _weapon_cache.refresh(skip_turn_check)
+  local cur_turn = you.turns()
+  if _weapon_cache.turn and _weapon_cache.turn == cur_turn and not skip_turn_check then return end
+  _weapon_cache.turn = cur_turn
+  _weapon_cache.weapons = {}
+  _weapon_cache.egos = {}
+
+  -- Can reuse max_dps table
+  if _weapon_cache.max_dps then
+    for _, key in ipairs(WEAP_CACHE_KEYS) do
+      _weapon_cache.max_dps[key].dps = 0
+      _weapon_cache.max_dps[key].acc = 0
+    end
+  else
+    _weapon_cache.max_dps = {}
+    for _, key in ipairs(WEAP_CACHE_KEYS) do
+      _weapon_cache.max_dps[key] = { dps = 0, acc = 0 }
+    end
+  end
+
+  for _, inv in ipairs(items.inventory()) do
+    if inv.is_weapon and not BRC.it.is_magic_staff(inv) then
+      _weapon_cache.add_weapon(inv)
+      f_pa_data.update_high_scores(inv)
+    end
+  end
+end
+
+-- Local functions: Alerting
+local function get_first_of_skill_alert(it)
+  local skill = it.weap_skill
+  if not pa_lowest_hands_alerted[skill] then return end
+
+  local hands = BRC.eq.get_hands(it)
+  if pa_lowest_hands_alerted[skill] > hands then
+    -- Some early checks to skip alerts
+    if hands == 2 and BRC.you.have_shield() then return end
+    if skill == "Polearms" and you.skill("Ranged Weapons") >= POLEARM_RANGED_CUTOFF then return end
+
+    -- Update lowest # hands alerted, and alert
+    pa_lowest_hands_alerted[skill] = hands
+    local msg = "First " .. string.sub(skill, 1, -2) .. (hands == 1 and " (1-handed)" or "")
+    return make_alert(it, msg, E.WEAPON, M.early_weap)
+  end
+end
+
+local function get_early_weapon_alert(it)
+  -- Alert really good usable ranged weapons
+  if it.is_ranged and you.xl() <= W.Alert.EarlyRanged.xl then
+    local min_plus = W.Alert.EarlyRanged[BRC.eq.get_ego(it) and "branded_min_plus" or "min_plus"]
+    if (it.plus or 0) >= min_plus / A.weapon_sensitivity then
+      local low_shield_training = you.skill("Shields") <= W.Alert.EarlyRanged.max_shields
+      if BRC.eq.get_hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
+        return make_alert(it, "Ranged weapon", E.RANGED, M.early_weap)
+      end
+    end
+  end
+
+  if you.xl() <= W.Alert.Early.xl then
+    -- Ignore items if we're clearly going another route
+    local skill_setting = W.Alert.Early.skill
+    local skill_diff = BRC.you.skill(top_attack_skill) - BRC.you.skill(it.weap_skill)
+    if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
+
+    local it_plus = it.plus or 0
+    if
+      BRC.eq.get_ego(it)
+      or it_plus >= W.Alert.Early.branded_min_plus / A.weapon_sensitivity
+    then
+      return make_alert(it, "Early weapon", E.WEAPON, M.early_weap)
+    end
+  end
+
+  return false
+end
+
+local function get_weap_high_score_alert(it)
+  if _weapon_cache.is_empty() then return end -- Skip if not using weapons
+  local category = f_pa_data.update_high_scores(it)
+  if not category then return end
+  return make_alert(it, category, E.WEAPON, M.high_score_weap)
+end
+
+-- get_upgrade_alert() subroutines
+local function can_use_2h_without_losing_shield()
+  return BRC.you.free_offhand() or (you.skill("Shields") < W.Alert.AddHand.ignore_sh_lvl)
+end
+
+local function check_upgrade_free_offhand(it, ratio)
+  local it_ego = BRC.eq.get_ego(it)
+  if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > W.Alert.new_ego then
+    return make_alert(it, "New ego (2-handed)", E.EGO, M.weap_ego)
+  elseif ratio > W.Alert.AddHand.not_using then
+    return make_alert(it, "2-handed weapon", E.TWO_HAND, M.upgrade_weap)
+  end
+  return false
+end
+
+local function check_upgrade_lose_shield(it, cur, ratio)
+  if (
+      BRC.eq.get_ego(it)
+      and not BRC.eq.get_ego(cur)
+      and ratio > W.Alert.AddHand.add_ego_lose_sh
+    )
+  then
+    return make_alert(it, "2-handed weapon (Gain ego)", E.TWO_HAND, M.weap_ego)
+  end
+
+  return false
+end
+
+local function check_upgrade_no_hand_loss(it, cur, ratio)
+  if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
+    local it_ego = BRC.eq.get_ego(it)
+    if not BRC.eq.get_ego(cur) then
+      if ratio > W.Alert.gain_ego then
+        return make_alert(it, "Gain ego", E.EGO, M.weap_ego)
+      end
+    elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > W.Alert.new_ego then
+      return make_alert(it, "New ego", E.EGO, M.weap_ego)
+    end
+  end
+
+  if ratio > W.Alert.pure_dps then
+    return make_alert(it, "DPS increase", E.WEAPON, M.upgrade_weap)
+  end
+
+  return false
+end
+
+local function check_upgrade_same_subtype(it, cur, best_dps, best_score)
+  local it_ego = BRC.eq.get_ego(it, true) -- Don't overvalue speed/heavy (only consider their DPS)
+  local cur_ego = BRC.eq.get_ego(cur)
+  if it_ego and it_ego ~= cur_ego then
+    local change = cur_ego and "Diff ego" or "Gain ego"
+    return make_alert(it, change, E.EGO, M.weap_ego)
+  end
+
+  local s = A.weapon_sensitivity
+  if get_score(it) > best_score / s or BRC.eq.get_dps(it) > best_dps / s then
+    return make_alert(it, "Weapon upgrade", E.WEAPON, M.upgrade_weap)
+  end
+end
+
+--- Check if weapon is worth alerting for, compared against one weapon currently in inventory
+-- @param cur (weapon) comes from _weapon_cache - it has some pre-computed values
+local function get_upgrade_alert(it, cur, best_dps, best_score)
+  -- Ensure the non-strict upgrade is checked, if not already done in pickup_weapon()
+  if C.Pickup.weapons_pure_upgrades_only and is_weapon_upgrade(it, cur, false) then
+    return make_alert(it, "Weapon upgrade", E.WEAPON, M.upgrade_weap)
+  end
+
+  if it.artefact then return make_alert(it, "Artefact weapon", E.ARTEFACT) end
+  if cur.artefact and not A.allow_arte_weap_upgrades then return false end
+  if not is_upgradable_weapon(it, cur) then return end
+
+  if cur.subtype() ~= it.subtype() then
+    return check_upgrade_same_subtype(it, cur, best_dps, best_score)
+  end
+
+  -- Get ratio of weap_score / best_score. Penalize lower-trained skills
+  local damp = W.Alert.low_skill_penalty_damping
+  local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
+  local ratio = penalty * get_score(it) / best_score * A.weapon_sensitivity
+
+  if BRC.eq.get_hands(it) <= cur.hands then
+    return check_upgrade_no_hand_loss(it, cur, ratio)
+  elseif can_use_2h_without_losing_shield() then
+    return check_upgrade_free_offhand(it, ratio)
+  else
+    return check_upgrade_lose_shield(it, cur, ratio)
+  end
+end
+
+local function get_inventory_upgrade_alert(it)
+  -- Once, find the top dps & score for inventory weapons of the same category
+  local inv_best = _weapon_cache.max_dps[_weapon_cache.get_primary_key(it)]
+  local top_dps = inv_best and inv_best.dps or 0
+  local top_score = inv_best and get_score(inv_best) or 0
+
+  -- Compare against all inventory weapons, even from other categories
+  for _, inv in ipairs(_weapon_cache.weapons) do
+    local best_dps = math.max(inv.dps, top_dps)
+    local best_score = math.max(inv.score, top_score)
+    local a = get_upgrade_alert(it, inv, best_dps, best_score)
+    if a then return a end
+  end
+end
+
+local function get_weapon_alert(it)
+  return get_inventory_upgrade_alert(it)
+    or get_first_of_skill_alert(it)
+    or get_early_weapon_alert(it)
+    or get_weap_high_score_alert(it)
+end
+
+---- Public API ----
+function f_pa_weapons.pickup_weapon(it)
+  _weapon_cache.refresh()
+  if need_first_weapon() then
+    -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
+    return not util.exists(items.inventory(), function(i) return i.is_weapon end)
+  end
+
+  if BRC.eq.is_risky(it) then return false end
+  for _, inv in ipairs(_weapon_cache.weapons) do
+    if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then
+      -- Confirm after updating cache, to avoid spurious alerts from XP gain.
+      _weapon_cache.refresh(true)
+      if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then return true end
+    end
+  end
+end
+
+function f_pa_weapons.alert_weapon(it)
+  _weapon_cache.refresh()
+  if get_weapon_alert(it) then
+    -- Refresh mid-turn, to avoid spurious alerts from XP gain.
+    _weapon_cache.refresh(true)
+    local a = get_weapon_alert(it)
+    if a then return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option) end
+  end
+  return false
+end
+
+---- Crawl hook functions ----
+function f_pa_weapons.ready()
+  top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
+end
+
+
+-- Crawl hook wrappers
+add_autopickup_func(f_pickup_alert.autopickup)
+
+function c_assign_invletter(...)
+  return f_pickup_alert.c_assign_invletter(...)
+end
+
+function c_message(...)
+  return f_pickup_alert.c_message(...)
+end
+
+local brc_last_turn = -1
+function ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_pickup_alert.ready(...)
+  end
+  BRC.mpr.consume_queue()
+end
+
+
+-- Initialize feature
+if f_pickup_alert.init then f_pickup_alert.init() end
+}

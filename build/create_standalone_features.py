@@ -235,9 +235,9 @@ def get_minimal_persist_code() -> str:
 class DependencyAnalyzer:
     """Analyzes feature files to recursively find all BRC dependencies."""
     
-    def __init__(self, feature_file: Path):
+    def __init__(self, feature_file: Path, content: Optional[str] = None):
         self.feature_file = feature_file
-        self.content = feature_file.read_text(encoding='utf-8')
+        self.content = content if content is not None else feature_file.read_text(encoding='utf-8')
         self.used_modules: Set[str] = set()
         self.used_functions: Dict[str, Set[str]] = {}
         self.used_constants: Set[str] = set()
@@ -436,10 +436,10 @@ class DependencyAnalyzer:
 class StandaloneGenerator:
     """Generates standalone feature files with all dependencies included."""
     
-    def __init__(self, analyzer: DependencyAnalyzer):
+    def __init__(self, analyzer: DependencyAnalyzer, f_var_name: Optional[str] = None):
         self.analyzer = analyzer
         self.feature_name = self._get_feature_name()
-        self.feature_var = self._get_feature_var_name()
+        self.feature_var = f_var_name if f_var_name else self._get_feature_var_name()
     
     def _get_feature_name(self) -> str:
         """Extract feature name from BRC_FEATURE_NAME or derive from filename."""
@@ -638,6 +638,10 @@ class StandaloneGenerator:
         dmg_type_map = { "unbranded": "1", "plain": "2", "branded": "3", "scoring": "4" }
         config_content = re.sub(r'BRC\.DMG_TYPE\.(\w+)', lambda m: dmg_type_map[m.group(1)], config_content)
 
+        if "BRC.COL." in config_content:
+            lines = match_constant_definition(_get_cached_text(BRC_CONSTANTS), "COL")
+            config_content = f"\n{lines}\n\n{config_content}"
+
         return f"{self.feature_var} = {{}}\n{config_content}"
     
     def _generate_feature_code(self) -> str:
@@ -700,6 +704,31 @@ class StandaloneGenerator:
     def _generate_init_call(self) -> str:
         return f"-- Initialize feature\nif {self.feature_var}.init then {self.feature_var}.init() end"
 
+def process_feature(analyzer: DependencyAnalyzer, output_name: str, display_name: str = None, f_var_name: Optional[str] = None):
+    """Process a feature analyzer and generate the standalone output file."""
+    if display_name is None:
+        display_name = output_name
+    
+    print(f"Analyzing feature: {display_name}")
+    
+    analyzer.analyze()
+    
+    print(f"  Dependencies found:")
+    print(f"    Modules: {sorted(analyzer.used_modules)}")
+    print(f"    Hooks: {sorted(analyzer.used_hooks)}")
+    print(f"    Constants: {sorted(analyzer.used_constants)}")
+    
+    generator = StandaloneGenerator(analyzer, f_var_name)
+    standalone_content = generator.generate()
+    standalone_content += "\n}\n"
+
+    output_file = output_dir / f"{output_name}.rc"
+    output_file.write_text(standalone_content, encoding='utf-8')
+    
+    print(f"\nGenerated: {output_file}")
+    print(f"  Size: {len(standalone_content)} characters, {len(standalone_content.splitlines())} lines")
+    print()
+
 # ============================================================================
 # Main Entry Point
 # ============================================================================
@@ -708,27 +737,33 @@ def main():
     for feature_path in features_dir.glob("*.lua"):
         if "_template" in feature_path.name:
             continue
-
-        print(f"Analyzing feature: {feature_path.name}")
-        
         analyzer = DependencyAnalyzer(feature_path)
-        analyzer.analyze()
-        
-        print(f"  Dependencies found:")
-        print(f"    Modules: {sorted(analyzer.used_modules)}")
-        print(f"    Hooks: {sorted(analyzer.used_hooks)}")
-        print(f"    Constants: {sorted(analyzer.used_constants)}")
-        
-        generator = StandaloneGenerator(analyzer)
-        standalone_content = generator.generate()
-        standalone_content += "\n}\n"
-
-        output_file = output_dir / f"{generator.feature_name}.rc"
-        output_file.write_text(standalone_content, encoding='utf-8')
-        
-        print(f"\nGenerated: {output_file}")
-        print(f"  Size: {len(standalone_content)} characters, {len(standalone_content.splitlines())} lines")
-        print()
+        process_feature(analyzer, feature_path.stem.replace('_', '-'))
+    
+    # Special handling for pickup-alert: concatenate multiple files
+    pickup_alert_dir = features_dir / "pickup-alert"
+    pickup_alert_files = [
+        "pa-config.lua",
+        "pa-main.lua",
+        "pa-data.lua",
+        "pa-armour.lua",
+        "pa-misc.lua",
+        "pa-weapons.lua",
+    ]
+    
+    concatenated_content = []
+    for filename in pickup_alert_files:
+        file_path = pickup_alert_dir / filename
+        if file_path.exists():
+            concatenated_content.append(file_path.read_text(encoding='utf-8'))
+        else:
+            print(f"  Warning: {file_path} not found, skipping")
+    
+    if concatenated_content:
+        concatenated_text = '\n'.join(concatenated_content)
+        dummy_path = features_dir / "pickup-alert" / "pa-main.lua"
+        analyzer = DependencyAnalyzer(dummy_path, content=concatenated_text)
+        process_feature(analyzer, "pickup-alert", "pickup-alert (concatenated)", "f_pickup_alert")
 
 if __name__ == "__main__":
     main()

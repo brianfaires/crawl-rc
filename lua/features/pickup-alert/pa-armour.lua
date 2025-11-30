@@ -50,7 +50,7 @@ function f_pa_armour.init()
       [SAME] = { msg = "Heavier Armour", emoji = E.HEAVIER },
       [LOST] = { msg = "Heavier Armour (Lost ego)", emoji = E.HEAVIER },
     },
-  }
+  } -- ARMOUR_ALERT (do not remove this comment)
 end
 
 ---- Local functions ----
