@@ -195,7 +195,6 @@ def get_txt_contains_code() -> str:
 
 def get_minimal_persist_code() -> str:
     return "\n".join([
-        "local _persist_names = {}",
         "function BRC.Data.persist(name, default_value)",
         "  if _G[name] == nil then",
         "    if type(default_value) == \"table\" then",
@@ -208,7 +207,6 @@ def get_minimal_persist_code() -> str:
         "    end",
         "  end",
         "",
-        "  _persist_names[#_persist_names + 1] = name",
         "  table.insert(chk_lua_save, function()",
         "    if _G[name] == nil then return \"\" end",
         "    local val_str",

@@ -49,7 +49,6 @@ BRC.txt = BRC.txt or {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features
-local _persist_names = {}
 function BRC.Data.persist(name, default_value)
   if _G[name] == nil then
     if type(default_value) == "table" then
@@ -62,7 +61,6 @@ function BRC.Data.persist(name, default_value)
     end
   end
 
-  _persist_names[#_persist_names + 1] = name
   table.insert(chk_lua_save, function()
     if _G[name] == nil then return "" end
     local val_str
