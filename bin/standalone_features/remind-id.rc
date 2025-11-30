@@ -57,6 +57,7 @@ local function brc_tostr(value)
     return tostring(value)
   end
 end
+
 function BRC.Data.persist(name, default_value)
   if _G[name] == nil then
     if type(default_value) == "table" then

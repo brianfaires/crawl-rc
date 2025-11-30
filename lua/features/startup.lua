@@ -203,24 +203,28 @@ function macro_brc_save_skills_and_config()
   end
 
   ensure_tables_exist()
-  local did_save = false
-  if f_startup.Config.save_training
-    and you.race() ~= "Gnoll"
-    and (not f_startup.Config.save_config or BRC.mpr.yesno("Save training?", BRC.COL.magenta))
-  then
-    save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
-    did_save = true
+  if f_startup.Config.save_training and you.race() ~= "Gnoll" then
+    local do_save = not f_startup.Config.save_config
+    if not do_save then
+      do_save = BRC.mpr.yesno("Save training + targets?", BRC.COL.magenta)
+      if not do_save then crawl.mpr.okay() end
+    end
+    if do_save then
+      save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
+    end
   end
 
-  if f_startup.Config.save_config
-    and (not f_startup.Config.save_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
-  then
-    local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
-    save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
-    did_save = true
+  if f_startup.Config.save_config then
+    local do_save = not f_startup.Config.save_training
+    if not do_save then
+      do_save = BRC.mpr.yesno("Save config?", BRC.COL.magenta)
+      if not do_save then crawl.mpr.okay() end
+    end
+    if do_save then
+      local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
+      save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
+    end
   end
-
-  if not did_save then BRC.mpr.okay() end
 end
 
 ---- Crawl hook functions ----

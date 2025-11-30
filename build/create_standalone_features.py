@@ -211,6 +211,7 @@ def get_minimal_persist_code() -> str:
         '    return tostring(value)',
         '  end',
         'end',
+        '',
         'function BRC.Data.persist(name, default_value)',
         '  if _G[name] == nil then',
         '    if type(default_value) == "table" then',
@@ -348,7 +349,7 @@ class DependencyAnalyzer:
     
     def _extract_top_level(self):
         for module in list(self.used_modules):
-            if module in ["BRC.Data", "BRC.Hotkey"]:
+            if module in ["BRC.Data", "BRC.Hotkey", "BRC.Configs"]:
                 continue
             init_code = extract_top_level(BRC_MODULES[module])
             if init_code:
@@ -357,7 +358,7 @@ class DependencyAnalyzer:
     
     def _extract_local_functions(self):
         for module in list(self.used_modules):
-            if module in ["BRC.Data", "BRC.Hotkey"]:
+            if module in ["BRC.Data", "BRC.Hotkey", "BRC.Configs"]:
                 continue
             
             all_local_funcs = extract_local_functions(BRC_MODULES[module])
