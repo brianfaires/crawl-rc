@@ -42,11 +42,6 @@ BRC.MAGIC_SCHOOLS = {
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
-BRC.LITTLE_RACES = { "Spriggan" }
-BRC.SMALL_RACES = { "Kobold" }
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
-
----- Skills ----
 
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
@@ -65,8 +60,6 @@ BRC.you = {}
 -- Minimal persistence system for standalone features
 local _persist_names = {}
 function BRC.Data.persist(name, default_value)
-  -- If variable already exists (from chk_lua_save), use it
-  -- Otherwise initialize from default
   if _G[name] == nil then
     if type(default_value) == "table" then
       _G[name] = {}
@@ -83,7 +76,6 @@ function BRC.Data.persist(name, default_value)
     if _G[name] == nil then return "" end
     local val_str
     if type(_G[name]) == "table" then
-      -- Simple table serialization (basic, but works for simple tables)
       local parts = {}
       for k, v in pairs(_G[name]) do
         if type(v) == "string" then

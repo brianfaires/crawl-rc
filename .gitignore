@@ -3,3 +3,4 @@
 /morgue
 .cursor/docs/
 default.profraw
+build/__pycache__/

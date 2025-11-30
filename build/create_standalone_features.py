@@ -44,56 +44,49 @@ CRAWL_HOOKS = ["ready", "autopickup", "c_answer_prompt", "c_assign_invletter", "
 # File Caching
 # ============================================================================
 
-_file_content_cache: Dict[Path, List[str]] = {}
-_file_text_cache: Dict[Path, str] = {}
-
-def _get_cached_lines(file_path: Path) -> List[str]:
-    """Get file lines from cache, loading if necessary."""
-    if file_path not in _file_content_cache:
-        _file_content_cache[file_path] = file_path.read_text(encoding='utf-8').split('\n')
-    return _file_content_cache[file_path]
+_file_cache: Dict[Path, str] = {}
 
 def _get_cached_text(file_path: Path) -> str:
-    """Get file text from cache, loading if necessary."""
-    if file_path not in _file_text_cache:
-        _file_text_cache[file_path] = file_path.read_text(encoding='utf-8')
-    return _file_text_cache[file_path]
+    if file_path not in _file_cache:
+        _file_cache[file_path] = file_path.read_text(encoding='utf-8')
+    return _file_cache[file_path]
+
+def _get_cached_lines(file_path: Path) -> List[str]:
+    return _get_cached_text(file_path).split('\n')
+
 
 # ============================================================================
 # Constants Extraction
 # ============================================================================
 
 def get_constant_names() -> List[str]:
-    """Extract all constant names from constants.lua."""
     content = _get_cached_text(BRC_CONSTANTS)
-    matches = re.findall(r'BRC\.(\w+)\s*=', content)
-    return [m for m in matches if m not in ['Config', 'Configs']]
+    return [m for m in re.findall(r'BRC\.(\w+)\s*=', content) if m not in ['Config', 'Configs']]
 
-def get_default_config_boolean(pattern: str) -> bool:
-    """Extract a boolean value from _header.lua or config.lua."""
+def get_default_config_boolean(pattern: str) -> str:
     content = _get_cached_text(BRC_HEADER)
     match = re.search(rf'{pattern}\s*=\s*(true|false)', content)
-    return "true" if match and match.group(1) == 'true' else "false"
+    return match.group(1) if match else "false"
 
 def match_constant_definition(content: str, const_name: str) -> Optional[str]:
-    """Match a constant definition with balanced braces."""
     pattern = rf'BRC\.{re.escape(const_name)}\s*=\s*\{{'
     match = re.search(pattern, content)
     if not match:
         return None
     
-    # Match balanced braces
     start_pos = match.end() - 1
-    depth = 0
-    for i in range(start_pos, len(content)):
+    depth = 1
+    for i in range(start_pos + 1, len(content)):
         if content[i] == '{':
             depth += 1
         elif content[i] == '}':
             depth -= 1
             if depth == 0:
                 end_pos = i + 1
-                # Include trailing comment if present
-                remaining = content[end_pos:end_pos + 200]
+                next_newline = content.find('\n', end_pos)
+                if next_newline == -1:
+                    next_newline = len(content)
+                remaining = content[end_pos:next_newline]
                 comment_match = re.search(r'\s*--[^\n]*', remaining)
                 return content[match.start():end_pos + (comment_match.end() if comment_match else 0)]
     return None
@@ -134,23 +127,18 @@ def _find_function_by_pattern(lines: List[str], pattern: re.Pattern, start_idx: 
     return None
 
 def extract_lua_function(module_name: str, function_name: str) -> Optional[str]:
-    """Extract a specific BRC module function from a file."""
     lines = _get_cached_lines(BRC_MODULES[module_name])
     module_var = module_name.split('.')[1]
     pattern = re.compile(rf'^function\s+BRC\.{re.escape(module_var)}\.{re.escape(function_name)}\s*\(')
-    
     result = _find_function_by_pattern(lines, pattern)
     if result:
-        func_lines = _extract_function_block(lines, result[0])
-        return '\n'.join(func_lines)
+        return '\n'.join(_extract_function_block(lines, result[0]))
     return None
 
 def extract_local_functions(file_path: Path) -> Dict[str, str]:
-    """Extract all local functions from a file."""
     lines = _get_cached_lines(file_path)
     result = {}
     pattern = re.compile(r'^local\s+function\s+(\w+)\s*\(')
-    
     i = 0
     while i < len(lines):
         match = _find_function_by_pattern(lines, pattern, i)
@@ -164,21 +152,17 @@ def extract_local_functions(file_path: Path) -> Dict[str, str]:
     return result
 
 def extract_top_level(file_path: Path) -> str:
-    """Extract all top-level (non-function) code, excluding comments and empty lines."""
     lines = _get_cached_lines(file_path)
     result = []
     in_function = False
     function_indent = 0
+    skip_patterns = {"local _mpr_queue = {}", "local _single_turn_mutes = {}", 
+                     'getmetatable("").__index.contains = BRC.txt.contains'}
     
     for i, line in enumerate(lines):
         stripped = line.strip()
-        
-        # Skip empty lines, comments, and special case declarations
-        if (not stripped or stripped.startswith('--') or
-            stripped == "local _mpr_queue = {}" or
-            stripped == "local _single_turn_mutes = {}" or
-            stripped == 'getmetatable("").__index.contains = BRC.txt.contains'):
-                continue
+        if (not stripped or stripped.startswith('--') or stripped in skip_patterns):
+            continue
         
         current_indent = len(line) - len(line.lstrip())
         
@@ -194,7 +178,6 @@ def extract_top_level(file_path: Path) -> str:
                 function_indent = 0
             continue
 
-        # Top-level code (not in function, not module table declaration)
         if not re.match(r'^BRC\.\w+\s*=\s*\{\}\s*$', stripped):
             result.append(line)
     
@@ -211,12 +194,9 @@ def get_txt_contains_code() -> str:
 
 
 def get_minimal_persist_code() -> str:
-    """Get minimal persist code for dependency scanning and generation."""
     return "\n".join([
         "local _persist_names = {}",
         "function BRC.Data.persist(name, default_value)",
-        "  -- If variable already exists (from chk_lua_save), use it",
-        "  -- Otherwise initialize from default",
         "  if _G[name] == nil then",
         "    if type(default_value) == \"table\" then",
         "      _G[name] = {}",
@@ -233,7 +213,6 @@ def get_minimal_persist_code() -> str:
         "    if _G[name] == nil then return \"\" end",
         "    local val_str",
         "    if type(_G[name]) == \"table\" then",
-        "      -- Simple table serialization (basic, but works for simple tables)",
         "      local parts = {}",
         "      for k, v in pairs(_G[name]) do",
         "        if type(v) == \"string\" then",
@@ -276,12 +255,21 @@ class DependencyAnalyzer:
     def analyze(self):
         """Perform complete dependency analysis."""
         self._find_brc_references(self.content)
-        self._extract_dependencies_recursively()
-        self._extract_top_level()
-        self._extract_dependencies_recursively()  # Check init blocks for dependencies
-        self._extract_top_level()  # Extract top-level code for newly discovered modules
-        self._extract_local_functions()
-    
+        
+        changed = True
+        while changed:
+            changed = self._extract_dependencies_recursively()
+
+            prev_modules = len(self.used_modules)
+            self._extract_top_level()
+            if len(self.used_modules) > prev_modules:
+                changed = True
+
+            prev_local_funcs = sum(len(funcs) for funcs in self.local_functions.values())
+            self._extract_local_functions()
+            if sum(len(funcs) for funcs in self.local_functions.values()) > prev_local_funcs:
+                changed = True
+
     def get_all_code(self) -> str:
         """Get all code from the feature file and its dependencies."""
         return "\n".join([self.content] +
@@ -289,34 +277,34 @@ class DependencyAnalyzer:
             [block for blocks in self.init_code_blocks.values() for block in blocks] +
             [local_func_code for module_local_funcs in self.local_functions.values()
                 for local_func_code in module_local_funcs.values()])
-    
-    def _extract_dependencies_recursively(self):
-        """Recursively extract dependencies until no new ones are found."""
-        changed = True
-        while changed:
-            changed = False
-            new_functions = {}
-            
-            # Check all extracted code for new BRC references
-            sources = [code for code in self.extracted_functions.values() if code is not None]
-            sources.extend([block for blocks in self.init_code_blocks.values() for block in blocks])
-            
-            # Add minimal persist code if BRC.Data.persist is used
-            if self.uses_persist:
-                sources.append(get_minimal_persist_code())
-            
-            for code in sources:
-                if code is None:
-                    continue
-                new_refs = self._find_brc_references(code)
-                for mod, funcs in new_refs.items():
-                    for func in funcs:
-                        if (mod, func) not in self.extracted_functions:
-                            changed = True
-                            if func_code := extract_lua_function(mod, func):
-                                new_functions[(mod, func)] = func_code
-            
-            self.extracted_functions.update(new_functions)
+
+    def _extract_dependencies_recursively(self) -> bool:
+        """Extract dependencies from all current code. Returns True if new dependencies were found."""
+        changed = False
+        new_functions = {}
+
+        sources = [code for code in self.extracted_functions.values() if code is not None]
+        sources.extend([block for blocks in self.init_code_blocks.values() for block in blocks])
+        sources.extend([func_code for module_funcs in self.local_functions.values() 
+                        for func_code in module_funcs.values()])
+        
+        if self.uses_persist:
+            sources.append(get_minimal_persist_code())
+        
+        for code in sources:
+            if code is None:
+                continue
+            new_refs = self._find_brc_references(code)
+            for mod, funcs in new_refs.items():
+                for func in funcs:
+                    if (mod, func) not in self.extracted_functions:
+                        changed = True
+                        if func_code := extract_lua_function(mod, func):
+                            new_functions[(mod, func)] = func_code
+                            self._find_brc_references(func_code)
+        
+        self.extracted_functions.update(new_functions)
+        return changed
     
     def _find_brc_references(self, content: str) -> Dict[str, Set[str]]:
         """Find all BRC references in content. Returns dict of module -> set of NEW function names."""
@@ -340,6 +328,7 @@ class DependencyAnalyzer:
                                     func_code = extract_lua_function(module, match)
                                 if func_code:
                                     self.extracted_functions[(module, match)] = func_code
+                                    self._find_brc_references(func_code)
         
         # Find constants
         for const in get_constant_names():
@@ -363,7 +352,6 @@ class DependencyAnalyzer:
         return new_refs
     
     def _extract_top_level(self):
-        """Extract top-level initialization code from used modules."""
         for module in list(self.used_modules):
             if module == "BRC.Data":
                 continue
@@ -373,10 +361,7 @@ class DependencyAnalyzer:
                 self._find_brc_references(init_code)
     
     def _extract_local_functions(self):
-        """Extract local functions called by extracted module functions.
-        Recursively finds all local functions, including those called by other local functions.
-        """
-        for module in self.used_modules:
+        for module in list(self.used_modules):
             if module == "BRC.Data":
                 continue
             
@@ -405,51 +390,29 @@ class DependencyAnalyzer:
                                 changed = True
             
             if called_local_funcs:
-                local_funcs_dict = {
-                    name: all_local_funcs[name] for name in called_local_funcs
-                }
-                # Topologically sort local functions so dependencies come first
-                ordered_funcs = self._topological_sort_local_functions(
-                    local_funcs_dict, all_local_funcs
-                )
-                self.local_functions[module] = {
-                    name: local_funcs_dict[name] for name in ordered_funcs
-                }
+                local_funcs_dict = {name: all_local_funcs[name] for name in called_local_funcs}
+                ordered_funcs = self._topological_sort_local_functions(local_funcs_dict, all_local_funcs)
+                self.local_functions[module] = {name: local_funcs_dict[name] for name in ordered_funcs}
+                for local_func_code in local_funcs_dict.values():
+                    self._find_brc_references(local_func_code)
     
     def _topological_sort_local_functions(
         self, local_funcs: Dict[str, str], all_local_funcs: Dict[str, str]
     ) -> List[str]:
-        """Topologically sort local functions so dependencies come before dependents.
-        
-        If function A calls function B, then B is a dependency of A, so B should come first.
-        Returns a list of function names in dependency order.
-        """
-        # Build reverse dependency graph: func_name -> set of functions that depend on it
-        # If A calls B, then B is depended on by A
         dependents: Dict[str, Set[str]] = {name: set() for name in local_funcs.keys()}
-        
-        for func_name, func_code in local_funcs.items():
-            for other_func_name in all_local_funcs.keys():
-                if other_func_name != func_name and other_func_name in local_funcs:
-                    if re.search(rf'\b{re.escape(other_func_name)}\s*\(', func_code):
-                        # func_name calls other_func_name, so other_func_name is a dependency
-                        # other_func_name is depended on by func_name
-                        dependents[other_func_name].add(func_name)
-        
-        # Topological sort using Kahn's algorithm
-        # Calculate in-degree: how many dependencies each function has
         in_degree: Dict[str, int] = {name: 0 for name in local_funcs.keys()}
+        
         for func_name, func_code in local_funcs.items():
             for other_func_name in all_local_funcs.keys():
                 if other_func_name != func_name and other_func_name in local_funcs:
                     if re.search(rf'\b{re.escape(other_func_name)}\s*\(', func_code):
-                        # func_name depends on other_func_name
+                        dependents[other_func_name].add(func_name)
+                        # Calculate in-degree: how many dependencies each function has
                         in_degree[func_name] += 1
         
         # Start with functions that have no dependencies (in-degree 0)
         queue = [name for name, degree in in_degree.items() if degree == 0]
         result = []
-        
         while queue:
             # Sort queue for deterministic output
             queue.sort()
@@ -496,77 +459,57 @@ class StandaloneGenerator:
         return "feature"
     
     def _needs_consume_queue(self) -> bool:
-        """Check if the generated content uses the mpr queue."""
         return 'BRC.mpr.que' in self.analyzer.get_all_code()
     
     def _needs_debug(self) -> bool:
-        """Check if the generated content uses debugging."""
         return 'BRC.Config.mpr.show_debug_messages' in self.analyzer.get_all_code()
     
     def _needs_stderr(self) -> bool:
-        """Check if the generated content uses stderr."""
         return 'BRC.Config.mpr.debug_to_stderr' in self.analyzer.get_all_code()
 
     def _needs_single_turn_mutes(self) -> bool:
-        """Check if the generated content uses single turn mutes."""
         return 'BRC.opt.single_turn_mute' in self.analyzer.get_all_code()
     
     def _needs_txt_contains(self) -> bool:
-        """Check if the generated content uses BRC.txt.contains()."""
         return ':contains' in self.analyzer.get_all_code()
     
     def _find_config_section_bounds(self, lines: List[str]) -> Optional[Tuple[int, int]]:
-        """Find start and end indices of contiguous Config section. Returns (start_idx, end_idx) or None."""
-        feature_var = self.feature_var
-        config_pattern = re.compile(rf'^{re.escape(feature_var)}\.Config(\.\w+)*\s*=')
-        
-        start_idx = None
-        for i, line in enumerate(lines):
-            if config_pattern.match(line.strip()):
-                start_idx = i
-                break
-        
+        config_pattern = re.compile(rf'^{re.escape(self.feature_var)}\.Config(\.\w+)*\s*=')
+        start_idx = next((i for i, line in enumerate(lines) if config_pattern.match(line.strip())), None)
         if start_idx is None:
             return None
         
         i = start_idx
-        
+        in_multiline_string = False
         while i < len(lines):
             stripped = lines[i].strip()
             if not config_pattern.match(stripped):
                 break
 
-            # Handle multiline strings [[ ... ]] and { ... } atomic groups
             brace_count = stripped.count('{') - stripped.count('}')
             in_multiline_string = bool(re.search(r'=\s+\[\[', stripped))
             i += 1
             
             while i < len(lines) and (brace_count > 0 or in_multiline_string):
                 stripped = lines[i].strip()
-
                 brace_count += stripped.count('{') - stripped.count('}')
-                
                 if re.search(r'=\s+\[\[', stripped):
                     in_multiline_string = True
-                
                 if in_multiline_string and re.match(r'^\-*\s*\]\]', stripped):
                     in_multiline_string = False
-
                 i += 1
 
-            # Keep including lines that are blank or comments
             while i < len(lines):
                 stripped = lines[i].strip()
                 if not stripped or stripped.startswith('--') or in_multiline_string:
                     i += 1
                     if re.search(r'\[\[', stripped):
-                      in_multiline_string = True                
+                        in_multiline_string = True
                     if in_multiline_string and re.match(r'^\-*\s*\]\]', stripped):
                         in_multiline_string = False
                 else:
                     break
 
-        # Remove comments/blank lines at end of Config section
         i -= 1
         while i > start_idx:
             stripped = lines[i].strip()
@@ -578,19 +521,11 @@ class StandaloneGenerator:
         return (start_idx, i+1)
     
     def _extract_config_section(self) -> Optional[str]:
-        """Extract contiguous Config section from feature content."""
         lines = self.analyzer.content.split('\n')
         bounds = self._find_config_section_bounds(lines)
-        
-        if bounds is None:
-            return None
-        
-        start_idx, end_idx = bounds
-        config_lines = lines[start_idx:end_idx]
-        return '\n'.join(config_lines)
+        return '\n'.join(lines[bounds[0]:bounds[1]]) if bounds else None
 
     def generate(self) -> str:
-        """Generate complete standalone feature file."""
         parts = [
             self._generate_header(),
             self._generate_brc_setup(),
@@ -598,7 +533,6 @@ class StandaloneGenerator:
             get_txt_contains_code() if self._needs_txt_contains() else None,
         ]
 
-        # Add constants accessed via dynamically declared functions
         if any("mpr" in m or "txt" in m for m in self.analyzer.used_modules):
             self.analyzer.used_constants.add("COL")
         
@@ -627,7 +561,6 @@ class StandaloneGenerator:
         return '\n\n'.join(filter(None, parts))
     
     def _generate_header(self) -> str:
-        """Generate file header with metadata."""
         feature_file = self.analyzer.feature_file.relative_to(base_dir)
         return "\n".join([
             f"## Standalone BRC Feature: {self.feature_name}",
@@ -639,7 +572,6 @@ class StandaloneGenerator:
         ])
     
     def _generate_brc_setup(self) -> str:
-        """Generate minimal BRC namespace setup."""
         content = "\n".join([
           f"-- Minimal BRC namespace (Don't overwrite existing globals)\nBRC = BRC or {{}}",
           f"BRC.Config = BRC.Config or {{}}",
@@ -653,7 +585,6 @@ class StandaloneGenerator:
         return content
     
     def _generate_constants(self) -> str:
-        """Generate needed constants with balanced brace matching."""
         constants_content = _get_cached_text(BRC_CONSTANTS)
         result = ["-- BRC Constants"]
         added = set()
@@ -668,7 +599,6 @@ class StandaloneGenerator:
         return '\n'.join(result)
     
     def _generate_module_code(self, module: str) -> str:
-        """Generate code for a BRC module."""
         result = [f"-- {module} module"]
         
         if module == "BRC.Data":
@@ -697,29 +627,25 @@ class StandaloneGenerator:
         return '\n'.join(result)
     
     def _generate_minimal_persist(self) -> str:
-        """Generate minimal persistence system for standalone features."""
         return "-- Minimal persistence system for standalone features\n" + get_minimal_persist_code()
     
     def _generate_config_section(self) -> str:
-        """Generate Config section and prepend feature initialization."""
         config_content = self._extract_config_section()
         if not config_content:
             return ""
         
-        # Remove disabled = true
+        # Simplify configs: always enabled, no BRC.txt.color(), no BRC.util.cntl()
         config_content = re.sub(r'(\s+disabled\s*=\s*)true', r'\1false', config_content)
-
-        # Replace calls to BRC.txt in config with explicit colors
         config_content = re.sub(r'BRC\.txt\.(\w+)\("([^"]+)"\)', r'"<\1>\2</\1>"', config_content)
+        config_content = re.sub(r'BRC\.util\.cntl\("([^"]+)"\)', 
+                               lambda m: f'string.byte("{m.group(1).upper()}") - 64', config_content)
+        dmg_type_map = { "unbranded": "1", "plain": "2", "branded": "3", "scoring": "4" }
+        config_content = re.sub(r'BRC\.DMG_TYPE\.(\w+)', lambda m: dmg_type_map[m.group(1)], config_content)
 
         return f"{self.feature_var} = {{}}\n{config_content}"
     
     def _generate_feature_code(self) -> str:
-        """Generate the feature code itself."""
-        content = self.analyzer.content
-        content = re.sub(r'^\s*\w+\.BRC_FEATURE_NAME\s*=.*$', '', content, flags=re.MULTILINE)
-        
-        # Remove Config section and prepended feature initialization
+        content = re.sub(r'^\s*\w+\.BRC_FEATURE_NAME\s*=.*$', '', self.analyzer.content, flags=re.MULTILINE)
         lines = content.split('\n')
         bounds = self._find_config_section_bounds(lines)
         if bounds is not None:
@@ -730,15 +656,11 @@ class StandaloneGenerator:
         return content
     
     def _generate_hooks(self) -> str:
-        """Generate crawl hook wrappers (excluding init)."""
         hooks = [h for h in sorted(self.analyzer.used_hooks) if h != "init"]
-        
-        # Ensure ready() exists if using mpr queue
         needs_queue = self._needs_consume_queue()
         needs_mutes = self._needs_single_turn_mutes()
         if "ready" not in hooks and (needs_queue or needs_mutes):
-            hooks.append("ready")
-            hooks = sorted(hooks)
+            hooks = sorted(hooks + ["ready"])
         
         if not hooks:
             return ""
@@ -787,7 +709,6 @@ class StandaloneGenerator:
 # ============================================================================
 
 def main():
-    """Process all feature files and generate standalone versions."""
     for feature_path in features_dir.glob("*.lua"):
         if "_template" in feature_path.name:
             continue

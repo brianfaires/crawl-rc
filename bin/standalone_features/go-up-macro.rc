@@ -15,7 +15,7 @@ BRC.Config.mpr.debug_to_stderr = false
 
 f_go_up_macro = {}
 f_go_up_macro.Config = {
-  go_up_macro_key = BRC.util.cntl("e"), -- Key for "go up closest stairs" macro
+  go_up_macro_key = string.byte("E") - 64, -- Key for "go up closest stairs" macro
 
   ignore_mon_on_orb_run = true, -- Ignore monsters on orb run
   -- %HP thresholds for ignoring monsters during orb run (2-7 tiles away, depending on HP percent)

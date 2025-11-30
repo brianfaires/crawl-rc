@@ -49,15 +49,8 @@ BRC.MAGIC_SCHOOLS = {
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
-BRC.LITTLE_RACES = { "Spriggan" }
-BRC.SMALL_RACES = { "Kobold" }
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
-
----- Skills ----
 
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
-BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
-BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
 
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 

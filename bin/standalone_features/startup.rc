@@ -16,7 +16,7 @@ BRC.Config.mpr.debug_to_stderr = false
 f_startup = {}
 f_startup.Config = {
   -- Save current training targets and config, for race/class
-  macro_save_key = BRC.util.cntl("t"), -- Keycode to save training targets and config
+  macro_save_key = string.byte("T") - 64, -- Keycode to save training targets and config
   use_saved_training = true, -- Allow save/load of race/class training targets
   use_saved_config = true, -- Allow save/load of BRC config
   prompt_before_load = true, -- Prompt before loading in a new game with same race+class
@@ -125,8 +125,6 @@ override_table(BRC.Config, BRC.Configs.Default)
 -- Minimal persistence system for standalone features
 local _persist_names = {}
 function BRC.Data.persist(name, default_value)
-  -- If variable already exists (from chk_lua_save), use it
-  -- Otherwise initialize from default
   if _G[name] == nil then
     if type(default_value) == "table" then
       _G[name] = {}
@@ -143,7 +141,6 @@ function BRC.Data.persist(name, default_value)
     if _G[name] == nil then return "" end
     local val_str
     if type(_G[name]) == "table" then
-      -- Simple table serialization (basic, but works for simple tables)
       local parts = {}
       for k, v in pairs(_G[name]) do
         if type(v) == "string" then

@@ -14,7 +14,7 @@ f_inscribe_stats = {}
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = BRC.DMG_TYPE.unbranded,
+  dmg_type = 1,
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 -- define string:contains() for all strings
@@ -30,6 +30,25 @@ BRC.DMG_TYPE = {
   branded = 3, -- Include full brand dmg
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
+
+BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+
+BRC.LITTLE_RACES = { "Spriggan" }
+
+BRC.MAGIC_SCHOOLS = {
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
+  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+} -- BRC.MAGIC_SCHOOLS (do not remove this comment)
+
+BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
+
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+
+BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
+
+BRC.SMALL_RACES = { "Kobold" }
+
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
 -- BRC module tables
@@ -203,6 +222,16 @@ local function get_adjusted_armour_pen(encumb, str)
   return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
+local function get_adjusted_dodge_bonus(encumb, str, dex)
+  local size_factor = -2 * BRC.you.size_penalty()
+  local dodge_bonus = 8 * (10 + you.skill("Dodging") * dex) / (20 - size_factor) / 10
+  local armour_dodge_penalty = get_unadjusted_armour_pen(encumb) - 3
+  if armour_dodge_penalty <= 0 then return dodge_bonus end
+
+  if armour_dodge_penalty >= str then return dodge_bonus * str / (armour_dodge_penalty * 2) end
+  return dodge_bonus - dodge_bonus * armour_dodge_penalty / (str * 2)
+end
+
 local function get_weap_min_delay(it)
   -- This is an abbreviated version of the actual calculation.
   -- Doesn't check brand or delay >=3, which are covered in get_weap_delay()
@@ -234,6 +263,35 @@ function BRC.eq.arm_stats(it)
     local ev_str = format_stat("EV", ev_delta, it.equipped)
     return ac_str, ev_str
   end
+end
+
+function BRC.eq.get_ac(it)
+  local it_plus = it.plus or 0
+
+  if it.artefact then
+    local art_ac = it.artprops["AC"]
+    if art_ac then it_plus = it_plus + art_ac end
+  end
+
+  local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
+  if not BRC.it.is_body_armour(it) then return ac end
+
+  if BRC.you.mut_lvl("deformed body") + BRC.you.mut_lvl("pseudopods") > 0 then ac = ac * 0.6 end
+
+  return ac
+end
+
+function BRC.eq.get_armour_ev(it)
+  local cur = { Str = you.strength(), Dex = you.dexterity(), EV = 0 }
+  local worn = get_stats_with_item(it, cur)
+
+  if worn.Str <= 0 then worn.Str = 1 end
+  local bonus = get_adjusted_dodge_bonus(it.encumbrance, worn.Str, worn.Dex)
+
+  if cur.Str <= 0 then cur.Str = 1 end
+  local naked_bonus = get_adjusted_dodge_bonus(0, cur.Str, cur.Dex)
+
+  return bonus - naked_bonus + worn.EV - get_adjusted_armour_pen(it.encumbrance, worn.Str)
 end
 
 function BRC.eq.get_avg_dmg(it, dmg_type)
@@ -274,6 +332,18 @@ function BRC.eq.get_ego(it, no_stat_only_egos)
   return it.artefact and it.name() or nil
 end
 
+function BRC.eq.get_sh(it)
+  local stats = get_stats_with_item(it, { Dex = you.dexterity() })
+  local it_plus = it.plus or 0
+  local sh_skill = you.skill("Shields")
+
+  local base_sh = it.ac * 2
+  local shield = base_sh * (50 + sh_skill * 5 / 2)
+  shield = shield + 200 * it_plus
+  shield = shield + 38 * (sh_skill + 3 + stats.Dex * (base_sh + 13) / 26)
+  return shield / 200
+end
+
 function BRC.eq.get_weap_delay(it)
   local delay = it.delay - BRC.you.skill(it.weap_skill) / 2
   delay = math.max(delay, get_weap_min_delay(it))
@@ -299,6 +369,17 @@ function BRC.eq.get_weap_delay(it)
   end
 
   return delay / 10
+end
+
+function BRC.eq.is_useless_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
 end
 
 function BRC.eq.wpn_stats(it, dmg_type)
@@ -329,8 +410,22 @@ function BRC.eq.wpn_stats(it, dmg_type)
 end
 
 -- BRC.it module
+function BRC.it.get_staff_school(it)
+  for k, v in pairs(BRC.MAGIC_SCHOOLS) do
+    if it.subtype() == k then return v end
+  end
+end
+
+function BRC.it.is_amulet(it)
+  return it and it.name("base") == "amulet"
+end
+
 function BRC.it.is_armour(it, include_orbs)
   return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
+end
+
+function BRC.it.is_aux_armour(it)
+  return BRC.it.is_armour(it) and not (BRC.it.is_body_armour(it) or BRC.it.is_shield(it))
 end
 
 function BRC.it.is_body_armour(it)
@@ -345,6 +440,10 @@ function BRC.it.is_orb(it)
   return it and it.subtype() == "offhand" and not it.is_shield()
 end
 
+function BRC.it.is_ring(it)
+  return it and it.name("base") == "ring"
+end
+
 function BRC.it.is_scarf(it)
   return BRC.it.is_armour(it) and it.subtype() == "cloak" and it.name():contains("scarf")
 end
@@ -354,6 +453,33 @@ function BRC.it.is_shield(it)
 end
 
 -- BRC.you module
+function BRC.you.mut_lvl(mutation, innate_only)
+  return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+
+function BRC.you.num_eq_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.it.is_aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
+end
+
+function BRC.you.size_penalty()
+  if util.contains(BRC.LITTLE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LITTLE
+  elseif util.contains(BRC.SMALL_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.SMALL
+  elseif util.contains(BRC.LARGE_RACES, you.race()) then
+    return BRC.SIZE_PENALTY.LARGE
+  else
+    return BRC.SIZE_PENALTY.NORMAL
+  end
+end
+
 function BRC.you.skill(skill)
   if skill and not skill:contains(",") then return you.skill(skill) end
 
