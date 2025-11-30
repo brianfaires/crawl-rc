@@ -5,7 +5,7 @@ brc_config_testing = {
 
   mpr = {
     show_debug_messages = true,
-    debug_to_stderr = true,
+    logs_to_stderr = true,
   },
 
   disable_other_features = false,

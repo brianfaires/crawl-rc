@@ -465,7 +465,7 @@ class StandaloneGenerator:
         return 'BRC.Config.mpr.show_debug_messages' in self.analyzer.get_all_code()
     
     def _needs_stderr(self) -> bool:
-        return 'BRC.Config.mpr.debug_to_stderr' in self.analyzer.get_all_code()
+        return 'BRC.Config.mpr.logs_to_stderr' in self.analyzer.get_all_code()
 
     def _needs_single_turn_mutes(self) -> bool:
         return 'BRC.opt.single_turn_mute' in self.analyzer.get_all_code()
@@ -581,7 +581,7 @@ class StandaloneGenerator:
         if self._needs_debug():
           content += f"\nBRC.Config.mpr.show_debug_messages = {get_default_config_boolean('show_debug_messages')}"
         if self._needs_stderr():
-          content += f"\nBRC.Config.mpr.debug_to_stderr = {get_default_config_boolean('debug_to_stderr')}"
+          content += f"\nBRC.Config.mpr.logs_to_stderr = {get_default_config_boolean('logs_to_stderr')}"
         return content
     
     def _generate_constants(self) -> str:

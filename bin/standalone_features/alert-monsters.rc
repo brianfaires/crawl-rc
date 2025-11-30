@@ -10,7 +10,7 @@ BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
-BRC.Config.mpr.debug_to_stderr = false
+BRC.Config.mpr.logs_to_stderr = false
 
 f_alert_monsters = {}
 f_alert_monsters.Config = {
@@ -275,7 +275,7 @@ function BRC.mpr.error(message, context, skip_more)
     crawl.redraw_screen()
   end
 
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Error) " .. message)
   end
 end

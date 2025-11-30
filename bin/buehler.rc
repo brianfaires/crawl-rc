@@ -124,7 +124,7 @@ brc_config_testing = {
 
   mpr = {
     show_debug_messages = true,
-    debug_to_stderr = true,
+    logs_to_stderr = true,
   },
 
   disable_other_features = false,
@@ -294,7 +294,7 @@ brc_config_explicit = {
   ---- BRC Core values ----
   mpr = {
     show_debug_messages = false,
-    debug_to_stderr = false,
+    logs_to_stderr = false,
   },
 
   dump = {
@@ -2251,7 +2251,7 @@ function BRC.mpr.error(message, context, skip_more)
     crawl.redraw_screen()
   end
 
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Error) " .. message)
   end
 end
@@ -2259,7 +2259,7 @@ end
 function BRC.mpr.warning(message, context)
   log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Warning) " .. message)
   end
 end
@@ -2272,7 +2272,7 @@ function BRC.mpr.debug(message, context)
   if BRC.Config.mpr.show_debug_messages then
     log_message(message, context, BRC.COL.lightblue)
   end
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Debug) " .. message)
   end
 end
@@ -3388,7 +3388,7 @@ BRC.Configs.Default.unskilled_egos_usable = false
 
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
-  debug_to_stderr = false,
+  logs_to_stderr = false,
 } -- BRC.Configs.Default.mpr (do not remove this comment)
 
 BRC.Configs.Default.dump = {

@@ -82,7 +82,7 @@ function BRC.mpr.error(message, context, skip_more)
     crawl.redraw_screen()
   end
 
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Error) " .. message)
   end
 end
@@ -90,7 +90,7 @@ end
 function BRC.mpr.warning(message, context)
   log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Warning) " .. message)
   end
 end
@@ -103,7 +103,7 @@ function BRC.mpr.debug(message, context)
   if BRC.Config.mpr.show_debug_messages then
     log_message(message, context, BRC.COL.lightblue)
   end
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Debug) " .. message)
   end
 end

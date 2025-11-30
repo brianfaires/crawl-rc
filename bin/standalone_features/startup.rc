@@ -11,7 +11,7 @@ BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.show_debug_messages = false
-BRC.Config.mpr.debug_to_stderr = false
+BRC.Config.mpr.logs_to_stderr = false
 
 f_startup = {}
 f_startup.Config = {
@@ -92,7 +92,7 @@ BRC.Configs.Default.BRC_CONFIG_NAME = "Default"
 BRC.Configs.Default.unskilled_egos_usable = false
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
-  debug_to_stderr = false,
+  logs_to_stderr = false,
 } -- BRC.Configs.Default.mpr (do not remove this comment)
 BRC.Configs.Default.dump = {
     max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
@@ -181,7 +181,7 @@ function BRC.mpr.debug(message, context)
   if BRC.Config.mpr.show_debug_messages then
     log_message(message, context, BRC.COL.lightblue)
   end
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Debug) " .. message)
   end
 end
@@ -201,7 +201,7 @@ function BRC.mpr.error(message, context, skip_more)
     crawl.redraw_screen()
   end
 
-  if BRC.Config.mpr.debug_to_stderr then
+  if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr("[BRC] (Error) " .. message)
   end
 end

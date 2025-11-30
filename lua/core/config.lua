@@ -30,7 +30,7 @@ BRC.Configs.Default.unskilled_egos_usable = false
 
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
-  debug_to_stderr = false,
+  logs_to_stderr = false,
 } -- BRC.Configs.Default.mpr (do not remove this comment)
 
 BRC.Configs.Default.dump = {

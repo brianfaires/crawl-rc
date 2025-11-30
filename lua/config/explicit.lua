@@ -9,7 +9,7 @@ brc_config_explicit = {
   ---- BRC Core values ----
   mpr = {
     show_debug_messages = false,
-    debug_to_stderr = false,
+    logs_to_stderr = false,
   },
 
   dump = {
