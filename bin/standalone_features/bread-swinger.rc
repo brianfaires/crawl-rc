@@ -103,11 +103,6 @@ function BRC.Data.persist(name, default_value)
 end
 
 -- BRC.eq module
-local function get_adjusted_armour_pen(encumb, str)
-  local base_pen = get_unadjusted_armour_pen(encumb)
-  return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
-end
-
 local function get_branded_delay(delay, ego)
   if not ego then return delay end
   if ego == "speed" then
@@ -122,6 +117,17 @@ local function get_shield_penalty(sh)
   return 2 * sh.encumbrance * sh.encumbrance
     * (27 - you.skill("Shields")) / 27
     / (25 + 5 * you.strength())
+end
+
+local function get_unadjusted_armour_pen(encumb)
+  local pen = encumb - 2 * BRC.you.mut_lvl("sturdy frame")
+  if pen > 0 then return pen end
+  return 0
+end
+
+local function get_adjusted_armour_pen(encumb, str)
+  local base_pen = get_unadjusted_armour_pen(encumb)
+  return 2 * base_pen * base_pen * (45 - you.skill("Armour")) / 45 / (5 * (str + 3))
 end
 
 local function get_weap_min_delay(it)

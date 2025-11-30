@@ -373,25 +373,103 @@ class DependencyAnalyzer:
                 self._find_brc_references(init_code)
     
     def _extract_local_functions(self):
-        """Extract local functions called by extracted module functions."""
+        """Extract local functions called by extracted module functions.
+        Recursively finds all local functions, including those called by other local functions.
+        """
         for module in self.used_modules:
             if module == "BRC.Data":
                 continue
             
             all_local_funcs = extract_local_functions(BRC_MODULES[module])
-            called_local_funcs = set()
+            if not all_local_funcs:
+                continue
             
+            # Start with local functions called by extracted module functions
+            called_local_funcs = set()
             for (mod, func_name), func_code in self.extracted_functions.items():
                 if mod == module:
                     for local_func_name in all_local_funcs.keys():
                         if re.search(rf'\b{re.escape(local_func_name)}\s*\(', func_code):
                             called_local_funcs.add(local_func_name)
             
+            # Recursively find local functions called by other local functions
+            changed = True
+            while changed:
+                changed = False
+                for local_func_name in list(called_local_funcs):
+                    local_func_code = all_local_funcs[local_func_name]
+                    for other_local_func_name in all_local_funcs.keys():
+                        if other_local_func_name not in called_local_funcs:
+                            if re.search(rf'\b{re.escape(other_local_func_name)}\s*\(', local_func_code):
+                                called_local_funcs.add(other_local_func_name)
+                                changed = True
+            
             if called_local_funcs:
-                self.local_functions[module] = {
+                local_funcs_dict = {
                     name: all_local_funcs[name] for name in called_local_funcs
                 }
-
+                # Topologically sort local functions so dependencies come first
+                ordered_funcs = self._topological_sort_local_functions(
+                    local_funcs_dict, all_local_funcs
+                )
+                self.local_functions[module] = {
+                    name: local_funcs_dict[name] for name in ordered_funcs
+                }
+    
+    def _topological_sort_local_functions(
+        self, local_funcs: Dict[str, str], all_local_funcs: Dict[str, str]
+    ) -> List[str]:
+        """Topologically sort local functions so dependencies come before dependents.
+        
+        If function A calls function B, then B is a dependency of A, so B should come first.
+        Returns a list of function names in dependency order.
+        """
+        # Build reverse dependency graph: func_name -> set of functions that depend on it
+        # If A calls B, then B is depended on by A
+        dependents: Dict[str, Set[str]] = {name: set() for name in local_funcs.keys()}
+        
+        for func_name, func_code in local_funcs.items():
+            for other_func_name in all_local_funcs.keys():
+                if other_func_name != func_name and other_func_name in local_funcs:
+                    if re.search(rf'\b{re.escape(other_func_name)}\s*\(', func_code):
+                        # func_name calls other_func_name, so other_func_name is a dependency
+                        # other_func_name is depended on by func_name
+                        dependents[other_func_name].add(func_name)
+        
+        # Topological sort using Kahn's algorithm
+        # Calculate in-degree: how many dependencies each function has
+        in_degree: Dict[str, int] = {name: 0 for name in local_funcs.keys()}
+        for func_name, func_code in local_funcs.items():
+            for other_func_name in all_local_funcs.keys():
+                if other_func_name != func_name and other_func_name in local_funcs:
+                    if re.search(rf'\b{re.escape(other_func_name)}\s*\(', func_code):
+                        # func_name depends on other_func_name
+                        in_degree[func_name] += 1
+        
+        # Start with functions that have no dependencies (in-degree 0)
+        queue = [name for name, degree in in_degree.items() if degree == 0]
+        result = []
+        
+        while queue:
+            # Sort queue for deterministic output
+            queue.sort()
+            func_name = queue.pop(0)
+            result.append(func_name)
+            
+            # Decrease in-degree for functions that depend on this one
+            for dependent in dependents[func_name]:
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
+        
+        # If we didn't process all functions, there's a cycle (shouldn't happen in valid code)
+        # But include remaining functions anyway
+        remaining = set(local_funcs.keys()) - set(result)
+        if remaining:
+            result.extend(sorted(remaining))
+        
+        return result
+    
 # ============================================================================
 # Code Generation
 # ============================================================================
@@ -458,8 +536,7 @@ class StandaloneGenerator:
             if not config_pattern.match(stripped):
                 break
 
-            # If it's a table assignment, skip until matching closing brace
-            # Handle multiline strings [[ ... ]] atomically
+            # Handle multiline strings [[ ... ]] and { ... } atomic groups
             brace_count = stripped.count('{') - stripped.count('}')
             in_multiline_string = bool(re.search(r'=\s+\[\[', stripped))
             i += 1
@@ -603,7 +680,7 @@ class StandaloneGenerator:
                 result.append('')
             
             if module in self.analyzer.local_functions:
-                for func_name in sorted(self.analyzer.local_functions[module].keys()):
+                for func_name in self.analyzer.local_functions[module].keys():
                     result.append(self.analyzer.local_functions[module][func_name])
                     result.append('')
             
