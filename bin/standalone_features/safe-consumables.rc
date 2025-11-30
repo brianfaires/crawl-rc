@@ -5,10 +5,17 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
 
--- Feature code
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: safe-consumables
 -- @module f_safe_consumables
@@ -67,6 +74,5 @@ end
 
 
 -- Initialize feature
-f_safe_consumables.init()
-
+if f_safe_consumables.init then f_safe_consumables.init() end
 }

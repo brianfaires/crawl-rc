@@ -5,7 +5,7 @@
 ---------------------------------------------------------------------------------------------------
 
 f_answer_prompts = {}
-f_answer_prompts.BRC_FEATURE_NAME = "answer_prompts"
+f_answer_prompts.BRC_FEATURE_NAME = "answer-prompts"
 
 ---- Crawl hook functions ----
 function f_answer_prompts.c_answer_prompt(prompt)

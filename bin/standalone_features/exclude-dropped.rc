@@ -5,8 +5,21 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+
+f_exclude_dropped = {}
+f_exclude_dropped.Config = {
+  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
+} -- f_exclude_dropped.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
 BRC.COL = {
@@ -28,18 +41,11 @@ BRC.MISSILES = {
 } -- BRC.MISSILES (do not remove this comment)
 
 
-f_exclude_dropped = {}
-f_exclude_dropped.Config = {
-  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
-} -- f_exclude_dropped.Config (do not remove this comment)
-
 -- BRC module tables
 BRC.Data = {}
 BRC.it = {}
-BRC.mpr = {}
 BRC.opt = {}
 BRC.txt = {}
-BRC.util = {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features
@@ -91,61 +97,6 @@ function BRC.it.is_magic_staff(it)
   return it and it.class and it.class(true) == "magical staff"
 end
 
--- BRC.mpr module
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
-
-local function log_message(message, context, color)
-  -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
-  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
-  crawl.flush_prev_message()
-end
-
-function BRC.mpr.debug(message, context)
-  if BRC.Config.mpr.show_debug_messages then
-    log_message(message, context, BRC.COL.lightblue)
-  end
-  if BRC.Config.mpr.debug_to_stderr then
-    crawl.stderr("[BRC] (Debug) " .. message)
-  end
-end
-
-function BRC.mpr.error(message, context, skip_more)
-  if type(context) == "boolean" and skip_more == nil then
-    skip_more = context
-    context = nil
-  end
-
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
-  you.stop_activity()
-  crawl.redraw_screen()
-
-  if not skip_more then
-    crawl.more()
-    crawl.redraw_screen()
-  end
-
-  if BRC.Config.mpr.debug_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
-  end
-end
-
-function BRC.mpr.warning(message, context)
-  log_message(message, context, BRC.COL.yellow)
-  you.stop_activity()
-  if BRC.Config.mpr.debug_to_stderr then
-    crawl.stderr("[BRC] (Warning) " .. message)
-  end
-end
-
 -- BRC.opt module
 function BRC.opt.autopickup_exceptions(pattern, create)
   local op = create and "^=" or "-="
@@ -153,7 +104,6 @@ function BRC.opt.autopickup_exceptions(pattern, create)
 end
 
 -- BRC.txt module
-getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -161,76 +111,9 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
-local function tostr_list(var, pretty, indents)
-  local tokens = {}
-  for _, v in ipairs(var) do
-    tokens[#tokens + 1] = limit_lines(BRC.txt.tostr(v, pretty, indents + 1))
-  end
-  if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
-    return "{ " .. table.concat(tokens, ", ") .. " }"
-  else
-    local INDENT = string.rep("  ", indents)
-    local CHILD_INDENT = string.rep("  ", indents + 1)
-    local LIST_SEP = ",\n" .. CHILD_INDENT
-    return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
-  end
-end
-
-local function tostr_map(var, pretty, indents)
-  local tokens = {}
-
-  if pretty then
-    local keys = BRC.util.get_sorted_keys(var)
-    local contains_table = false
-    for i = 1, #keys do
-      local v = limit_lines(BRC.txt.tostr(var[keys[i]], true, indents + 1))
-      if v then
-        if type(var[keys[i]]) == "table" then
-          contains_table = true
-          tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
-        else
-          tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
-        end
-      end
-    end
-    if #tokens <= 2 and not contains_table then
-      return "{ " .. table.concat(tokens, ", ") .. " }"
-    end
-  else
-    for k, v in pairs(var) do
-      local val_str = BRC.txt.tostr(v, pretty, indents + 1)
-      if val_str then
-        tokens[#tokens + 1] = '["' .. k .. '"] = ' .. val_str
-      end
-    end
-  end
-
-  local INDENT = string.rep("  ", indents)
-  local CHILD_INDENT = string.rep("  ", indents + 1)
-  local LIST_SEP = ",\n" .. CHILD_INDENT
-  return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
-end
-
-local function tostr_string(var, pretty)
-  local s
-  if var:contains("\n") then
-    s = string.format("[[\n%s]]", var)
-  else
-    s = '"' .. var:gsub('"', "") .. '"'
-  end
-
-  if not pretty then return s end
-  -- Replace > and < to display the color tags instead of colored text
-  return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
-end
-
 function BRC.txt.clean(text)
   if type(text) ~= "string" then return text end
   return text:gsub("\n", ""):gsub("<[^>]*>", "")
-end
-
-function BRC.txt.contains(self, text)
-  return self:find(text, 1, true) ~= nil
 end
 
 function BRC.txt.get_pickup_info(text)
@@ -239,38 +122,6 @@ function BRC.txt.get_pickup_info(text)
   return cleaned:sub(5, #cleaned), items.letter_to_index(cleaned:sub(1, 1))
 end
 
-function BRC.txt.tostr(var, pretty, _indents)
-  local var_type = type(var)
-  if var_type == "string" then
-    return tostr_string(var, pretty)
-  elseif var_type == "table" then
-    _indents = _indents or 0
-    if BRC.util.is_list(var) then
-      return tostr_list(var, pretty, _indents)
-    elseif BRC.util.is_map(var) then
-      return tostr_map(var, pretty, _indents)
-    else
-      return "{}"
-    end
-  end
-
-  if BRC.Config.dump.omit_pointers and (var_type == "function" or var_type == "userdata") then
-    return nil
-  end
-
-  return tostring(var) -- fallback to tostring()
-end
-
--- BRC.util module
-function BRC.util.is_list(value)
-  return value and type(value) == "table" and #value > 0
-end
-
-function BRC.util.is_map(value)
-  return value and type(value) == "table" and next(value) ~= nil and #value == 0
-end
-
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: exclude-dropped
 -- @module f_exclude_dropped
@@ -407,6 +258,5 @@ end
 
 
 -- Initialize feature
-f_exclude_dropped.init()
-
+if f_exclude_dropped.init then f_exclude_dropped.init() end
 }

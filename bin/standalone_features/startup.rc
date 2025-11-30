@@ -5,31 +5,13 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
-
--- BRC Constants
-BRC.COL = {
-  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
-  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
-  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COL (do not remove this comment)
-
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
-
-BRC.TRAINING_SKILLS = {
-  "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic",
-  "Evocations", "Fighting", "Fire Magic", "Forgecraft", "Hexes", "Ice Magic",
-  "Invocations", "Long Blades", "Maces & Flails", "Necromancy", "Polearms",
-  "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting", "Staves",
-  "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
-} -- BRC.TRAINING_SKILLS (do not remove this comment)
-
-BRC.WEAP_SCHOOLS = {
-  "axes", "maces & flails", "polearms", "long blades", "short blades",
-  "staves", "unarmed combat", "ranged weapons",
-} -- BRC.WEAP_SCHOOLS (do not remove this comment)
-
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.debug_to_stderr = false
 
 f_startup = {}
 f_startup.Config = {
@@ -63,6 +45,35 @@ f_startup.Config = {
     end
   ]],
 } -- f_startup.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
+BRC.TRAINING_SKILLS = {
+  "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic",
+  "Evocations", "Fighting", "Fire Magic", "Forgecraft", "Hexes", "Ice Magic",
+  "Invocations", "Long Blades", "Maces & Flails", "Necromancy", "Polearms",
+  "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting", "Staves",
+  "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
+} -- BRC.TRAINING_SKILLS (do not remove this comment)
+
+BRC.WEAP_SCHOOLS = {
+  "axes", "maces & flails", "polearms", "long blades", "short blades",
+  "staves", "unarmed combat", "ranged weapons",
+} -- BRC.WEAP_SCHOOLS (do not remove this comment)
+
 
 -- BRC module tables
 BRC.Configs = {}
@@ -202,14 +213,6 @@ function BRC.mpr.info(message, context)
   log_message(message, context, BRC.COL.darkgrey)
 end
 
-function BRC.mpr.warning(message, context)
-  log_message(message, context, BRC.COL.yellow)
-  you.stop_activity()
-  if BRC.Config.mpr.debug_to_stderr then
-    crawl.stderr("[BRC] (Warning) " .. message)
-  end
-end
-
 function BRC.mpr.yesno(msg, color, capital_only)
   msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
 
@@ -265,7 +268,6 @@ function BRC.opt.macro(key, function_name)
 end
 
 -- BRC.txt module
-getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -273,94 +275,6 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
-local function tostr_list(var, pretty, indents)
-  local tokens = {}
-  for _, v in ipairs(var) do
-    tokens[#tokens + 1] = limit_lines(BRC.txt.tostr(v, pretty, indents + 1))
-  end
-  if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
-    return "{ " .. table.concat(tokens, ", ") .. " }"
-  else
-    local INDENT = string.rep("  ", indents)
-    local CHILD_INDENT = string.rep("  ", indents + 1)
-    local LIST_SEP = ",\n" .. CHILD_INDENT
-    return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
-  end
-end
-
-local function tostr_map(var, pretty, indents)
-  local tokens = {}
-
-  if pretty then
-    local keys = BRC.util.get_sorted_keys(var)
-    local contains_table = false
-    for i = 1, #keys do
-      local v = limit_lines(BRC.txt.tostr(var[keys[i]], true, indents + 1))
-      if v then
-        if type(var[keys[i]]) == "table" then
-          contains_table = true
-          tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
-        else
-          tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
-        end
-      end
-    end
-    if #tokens <= 2 and not contains_table then
-      return "{ " .. table.concat(tokens, ", ") .. " }"
-    end
-  else
-    for k, v in pairs(var) do
-      local val_str = BRC.txt.tostr(v, pretty, indents + 1)
-      if val_str then
-        tokens[#tokens + 1] = '["' .. k .. '"] = ' .. val_str
-      end
-    end
-  end
-
-  local INDENT = string.rep("  ", indents)
-  local CHILD_INDENT = string.rep("  ", indents + 1)
-  local LIST_SEP = ",\n" .. CHILD_INDENT
-  return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
-end
-
-local function tostr_string(var, pretty)
-  local s
-  if var:contains("\n") then
-    s = string.format("[[\n%s]]", var)
-  else
-    s = '"' .. var:gsub('"', "") .. '"'
-  end
-
-  if not pretty then return s end
-  -- Replace > and < to display the color tags instead of colored text
-  return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
-end
-
-function BRC.txt.contains(self, text)
-  return self:find(text, 1, true) ~= nil
-end
-
-function BRC.txt.tostr(var, pretty, _indents)
-  local var_type = type(var)
-  if var_type == "string" then
-    return tostr_string(var, pretty)
-  elseif var_type == "table" then
-    _indents = _indents or 0
-    if BRC.util.is_list(var) then
-      return tostr_list(var, pretty, _indents)
-    elseif BRC.util.is_map(var) then
-      return tostr_map(var, pretty, _indents)
-    else
-      return "{}"
-    end
-  end
-
-  if BRC.Config.dump.omit_pointers and (var_type == "function" or var_type == "userdata") then
-    return nil
-  end
-
-  return tostring(var) -- fallback to tostring()
-end
 
 -- BRC.util module
 function BRC.util.cntl(c)
@@ -420,7 +334,6 @@ function BRC.you.top_wpn_skill()
   return pref
 end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: startup
 -- @module f_startup
@@ -642,6 +555,5 @@ end
 
 
 -- Initialize feature
-f_startup.init()
-
+if f_startup.init then f_startup.init() end
 }

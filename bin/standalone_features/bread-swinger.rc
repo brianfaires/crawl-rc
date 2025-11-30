@@ -5,8 +5,27 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.debug_to_stderr = false
+
+f_bread_swinger = {}
+f_bread_swinger.Config = {
+  disabled = false, -- Disable by default
+  allow_plant_damage = false, -- Allow damaging plants to rest
+  walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
+  alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
+} -- f_bread_swinger.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
 BRC.COL = {
@@ -31,14 +50,6 @@ BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
-
-f_bread_swinger = {}
-f_bread_swinger.Config = {
-  disabled = false, -- Disable by default
-  allow_plant_damage = false, -- Allow damaging plants to rest
-  walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
-  alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
-} -- f_bread_swinger.Config (do not remove this comment)
 
 -- BRC module tables
 BRC.Data = {}
@@ -320,7 +331,6 @@ function BRC.opt.single_turn_mute(pattern)
 end
 
 -- BRC.txt module
-getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -328,106 +338,10 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
-local function tostr_list(var, pretty, indents)
-  local tokens = {}
-  for _, v in ipairs(var) do
-    tokens[#tokens + 1] = limit_lines(BRC.txt.tostr(v, pretty, indents + 1))
-  end
-  if #tokens < 4 and not util.exists(var, function(t) return type(t) == "table" end) then
-    return "{ " .. table.concat(tokens, ", ") .. " }"
-  else
-    local INDENT = string.rep("  ", indents)
-    local CHILD_INDENT = string.rep("  ", indents + 1)
-    local LIST_SEP = ",\n" .. CHILD_INDENT
-    return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
-  end
-end
-
-local function tostr_map(var, pretty, indents)
-  local tokens = {}
-
-  if pretty then
-    local keys = BRC.util.get_sorted_keys(var)
-    local contains_table = false
-    for i = 1, #keys do
-      local v = limit_lines(BRC.txt.tostr(var[keys[i]], true, indents + 1))
-      if v then
-        if type(var[keys[i]]) == "table" then
-          contains_table = true
-          tokens[#tokens + 1] = string.format('["%s"] = %s', keys[i], v)
-        else
-          tokens[#tokens + 1] = string.format("%s = %s", keys[i], v)
-        end
-      end
-    end
-    if #tokens <= 2 and not contains_table then
-      return "{ " .. table.concat(tokens, ", ") .. " }"
-    end
-  else
-    for k, v in pairs(var) do
-      local val_str = BRC.txt.tostr(v, pretty, indents + 1)
-      if val_str then
-        tokens[#tokens + 1] = '["' .. k .. '"] = ' .. val_str
-      end
-    end
-  end
-
-  local INDENT = string.rep("  ", indents)
-  local CHILD_INDENT = string.rep("  ", indents + 1)
-  local LIST_SEP = ",\n" .. CHILD_INDENT
-  return "{\n" .. CHILD_INDENT .. table.concat(tokens, LIST_SEP) .. "\n" .. INDENT .. "}"
-end
-
-local function tostr_string(var, pretty)
-  local s
-  if var:contains("\n") then
-    s = string.format("[[\n%s]]", var)
-  else
-    s = '"' .. var:gsub('"', "") .. '"'
-  end
-
-  if not pretty then return s end
-  -- Replace > and < to display the color tags instead of colored text
-  return s:gsub(">", "TempGT"):gsub("<", "TempLT"):gsub("TempGT", "<gt>"):gsub("TempLT", "<lt>")
-end
-
-function BRC.txt.contains(self, text)
-  return self:find(text, 1, true) ~= nil
-end
-
-function BRC.txt.tostr(var, pretty, _indents)
-  local var_type = type(var)
-  if var_type == "string" then
-    return tostr_string(var, pretty)
-  elseif var_type == "table" then
-    _indents = _indents or 0
-    if BRC.util.is_list(var) then
-      return tostr_list(var, pretty, _indents)
-    elseif BRC.util.is_map(var) then
-      return tostr_map(var, pretty, _indents)
-    else
-      return "{}"
-    end
-  end
-
-  if BRC.Config.dump.omit_pointers and (var_type == "function" or var_type == "userdata") then
-    return nil
-  end
-
-  return tostring(var) -- fallback to tostring()
-end
 
 -- BRC.util module
 function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
-end
-
-function BRC.util.is_list(value)
-  return value and type(value) == "table" and #value > 0
-end
-
-function BRC.util.is_map(value)
-  return value and type(value) == "table" and next(value) ~= nil and #value == 0
 end
 
 -- BRC.you module
@@ -483,7 +397,6 @@ function BRC.opt.clear_single_turn_mutes()
   _single_turn_mutes = {}
 end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: bread-swinger
 -- @module f_bread_swinger
@@ -863,6 +776,5 @@ end
 
 
 -- Initialize feature
-f_bread_swinger.init()
-
+if f_bread_swinger.init then f_bread_swinger.init() end
 }

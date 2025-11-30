@@ -69,11 +69,11 @@ def get_constant_names() -> List[str]:
     matches = re.findall(r'BRC\.(\w+)\s*=', content)
     return [m for m in matches if m not in ['Config', 'Configs']]
 
-def get_config_emojis_default() -> bool:
-    """Extract the default emojis value from _header.lua."""
+def get_default_config_boolean(pattern: str) -> bool:
+    """Extract a boolean value from _header.lua or config.lua."""
     content = _get_cached_text(BRC_HEADER)
-    match = re.search(r'emojis\s*=\s*(true|false)', content)
-    return match.group(1) == 'true' if match else False
+    match = re.search(rf'{pattern}\s*=\s*(true|false)', content)
+    return "true" if match and match.group(1) == 'true' else "false"
 
 def match_constant_definition(content: str, const_name: str) -> Optional[str]:
     """Match a constant definition with balanced braces."""
@@ -163,7 +163,7 @@ def extract_local_functions(file_path: Path) -> Dict[str, str]:
             i += 1
     return result
 
-def extract_init_code(file_path: Path) -> str:
+def extract_top_level(file_path: Path) -> str:
     """Extract all top-level (non-function) code, excluding comments and empty lines."""
     lines = _get_cached_lines(file_path)
     result = []
@@ -173,10 +173,12 @@ def extract_init_code(file_path: Path) -> str:
     for i, line in enumerate(lines):
         stripped = line.strip()
         
-        # Skip empty lines, comments, and _mpr_queue/_single_turn_mutes declaration
+        # Skip empty lines, comments, and special case declarations
         if (not stripped or stripped.startswith('--') or
-            stripped in ["local _mpr_queue = {}", "local _single_turn_mutes = {}"]):
-            continue
+            stripped == "local _mpr_queue = {}" or
+            stripped == "local _single_turn_mutes = {}" or
+            stripped == 'getmetatable("").__index.contains = BRC.txt.contains'):
+                continue
         
         current_indent = len(line) - len(line.lstrip())
         
@@ -197,6 +199,59 @@ def extract_init_code(file_path: Path) -> str:
             result.append(line)
     
     return '\n'.join(result).strip()
+
+def get_txt_contains_code() -> str:
+    return "\n".join([
+        "-- define string:contains() for all strings",
+        "function BRC_txt_str_contains(self, text)",
+        "  return self:find(text, 1, true) ~= nil",
+        "end",
+        "getmetatable(\"\").__index.contains = BRC_txt_str_contains",
+    ])
+
+
+def get_minimal_persist_code() -> str:
+    """Get minimal persist code for dependency scanning and generation."""
+    return "\n".join([
+        "local _persist_names = {}",
+        "function BRC.Data.persist(name, default_value)",
+        "  -- If variable already exists (from chk_lua_save), use it",
+        "  -- Otherwise initialize from default",
+        "  if _G[name] == nil then",
+        "    if type(default_value) == \"table\" then",
+        "      _G[name] = {}",
+        "      for k, v in pairs(default_value) do",
+        "        _G[name][k] = v",
+        "      end",
+        "    else",
+        "      _G[name] = default_value",
+        "    end",
+        "  end",
+        "",
+        "  _persist_names[#_persist_names + 1] = name",
+        "  table.insert(chk_lua_save, function()",
+        "    if _G[name] == nil then return \"\" end",
+        "    local val_str",
+        "    if type(_G[name]) == \"table\" then",
+        "      -- Simple table serialization (basic, but works for simple tables)",
+        "      local parts = {}",
+        "      for k, v in pairs(_G[name]) do",
+        "        if type(v) == \"string\" then",
+        "          table.insert(parts, string.format('[%s] = \"%s\"', tostring(k), v))",
+        "        else",
+        "          table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))",
+        "        end",
+        "      end",
+        "      val_str = \"{\" .. table.concat(parts, \", \") .. \"}\"",
+        "    else",
+        "      val_str = tostring(_G[name])",
+        "    end",
+        "  return name .. \" = \" .. val_str .. \"\\\\n\"",
+        "  end)",
+        "",
+        "  return _G[name]",
+        "end",
+    ])
 
 # ============================================================================
 # Dependency Analysis
@@ -222,9 +277,18 @@ class DependencyAnalyzer:
         """Perform complete dependency analysis."""
         self._find_brc_references(self.content)
         self._extract_dependencies_recursively()
-        self._extract_init_blocks()
+        self._extract_top_level()
         self._extract_dependencies_recursively()  # Check init blocks for dependencies
+        self._extract_top_level()  # Extract top-level code for newly discovered modules
         self._extract_local_functions()
+    
+    def get_all_code(self) -> str:
+        """Get all code from the feature file and its dependencies."""
+        return "\n".join([self.content] +
+            [func_code for func_code in self.extracted_functions.values()] +
+            [block for blocks in self.init_code_blocks.values() for block in blocks] +
+            [local_func_code for module_local_funcs in self.local_functions.values()
+                for local_func_code in module_local_funcs.values()])
     
     def _extract_dependencies_recursively(self):
         """Recursively extract dependencies until no new ones are found."""
@@ -234,10 +298,16 @@ class DependencyAnalyzer:
             new_functions = {}
             
             # Check all extracted code for new BRC references
-            sources = list(self.extracted_functions.values())
+            sources = [code for code in self.extracted_functions.values() if code is not None]
             sources.extend([block for blocks in self.init_code_blocks.values() for block in blocks])
             
+            # Add minimal persist code if BRC.Data.persist is used
+            if self.uses_persist:
+                sources.append(get_minimal_persist_code())
+            
             for code in sources:
+                if code is None:
+                    continue
                 new_refs = self._find_brc_references(code)
                 for mod, funcs in new_refs.items():
                     for func in funcs:
@@ -264,7 +334,11 @@ class DependencyAnalyzer:
                             self.used_functions[module].add(match)
                             new_refs.setdefault(module, set()).add(match)
                             if (module, match) not in self.extracted_functions:
-                                if func_code := extract_lua_function(module, match):
+                                if module == "BRC.Data" and match == "persist":
+                                    func_code = get_minimal_persist_code()
+                                else:
+                                    func_code = extract_lua_function(module, match)
+                                if func_code:
                                     self.extracted_functions[(module, match)] = func_code
         
         # Find constants
@@ -288,12 +362,12 @@ class DependencyAnalyzer:
         
         return new_refs
     
-    def _extract_init_blocks(self):
+    def _extract_top_level(self):
         """Extract top-level initialization code from used modules."""
         for module in list(self.used_modules):
             if module == "BRC.Data":
                 continue
-            init_code = extract_init_code(BRC_MODULES[module])
+            init_code = extract_top_level(BRC_MODULES[module])
             if init_code:
                 self.init_code_blocks[module] = [init_code]
                 self._find_brc_references(init_code)
@@ -345,26 +419,23 @@ class StandaloneGenerator:
     
     def _needs_consume_queue(self) -> bool:
         """Check if the generated content uses the mpr queue."""
-        all_code = self.analyzer.content
-        for func_code in self.analyzer.extracted_functions.values():
-            all_code += func_code
-        for blocks in self.analyzer.init_code_blocks.values():
-            for block in blocks:
-                all_code += block
-        for module_local_funcs in self.analyzer.local_functions.values():
-            for local_func_code in module_local_funcs.values():
-                all_code += local_func_code
-        return 'BRC.mpr.que' in all_code
+        return 'BRC.mpr.que' in self.analyzer.get_all_code()
     
+    def _needs_debug(self) -> bool:
+        """Check if the generated content uses debugging."""
+        return 'BRC.Config.mpr.show_debug_messages' in self.analyzer.get_all_code()
+    
+    def _needs_stderr(self) -> bool:
+        """Check if the generated content uses stderr."""
+        return 'BRC.Config.mpr.debug_to_stderr' in self.analyzer.get_all_code()
+
     def _needs_single_turn_mutes(self) -> bool:
         """Check if the generated content uses single turn mutes."""
-        all_code = self.analyzer.content
-        for func_code in self.analyzer.extracted_functions.values():
-            all_code += func_code
-        for blocks in self.analyzer.init_code_blocks.values():
-            for block in blocks:
-                all_code += block
-        return 'BRC.opt.single_turn_mute' in all_code
+        return 'BRC.opt.single_turn_mute' in self.analyzer.get_all_code()
+    
+    def _needs_txt_contains(self) -> bool:
+        """Check if the generated content uses BRC.txt.contains()."""
+        return ':contains' in self.analyzer.get_all_code()
     
     def _find_config_section_bounds(self, lines: List[str]) -> Optional[Tuple[int, int]]:
         """Find start and end indices of contiguous Config section. Returns (start_idx, end_idx) or None."""
@@ -446,18 +517,16 @@ class StandaloneGenerator:
         parts = [
             self._generate_header(),
             self._generate_brc_setup(),
+            self._generate_config_section(),
+            get_txt_contains_code() if self._needs_txt_contains() else None,
         ]
-        
+
         # Add constants accessed via dynamically declared functions
         if any("mpr" in m or "txt" in m for m in self.analyzer.used_modules):
             self.analyzer.used_constants.add("COL")
         
         if self.analyzer.used_constants:
             parts.append(self._generate_constants())
-        
-        config_section = self._generate_config_section()
-        if config_section:
-            parts.append(config_section)
         
         module_tables = [f"BRC.{m.split('.')[1]} = {{}}" for m in sorted(self.analyzer.used_modules)]
         if module_tables:
@@ -494,8 +563,17 @@ class StandaloneGenerator:
     
     def _generate_brc_setup(self) -> str:
         """Generate minimal BRC namespace setup."""
-        emojis = 'true' if get_config_emojis_default() else 'false'
-        return f"-- Minimal BRC namespace\nBRC = {{ Config = {{ emojis = {emojis} }} }}"
+        content = "\n".join([
+          f"-- Minimal BRC namespace (Don't overwrite existing globals)\nBRC = BRC or {{}}",
+          f"BRC.Config = BRC.Config or {{}}",
+          f"BRC.Config.emojis = {get_default_config_boolean('emojis')}",
+          *(["BRC.Config.mpr = BRC.Config.mpr or {}"] if self._needs_debug() or self._needs_stderr() else [])
+        ])
+        if self._needs_debug():
+          content += f"\nBRC.Config.mpr.show_debug_messages = {get_default_config_boolean('show_debug_messages')}"
+        if self._needs_stderr():
+          content += f"\nBRC.Config.mpr.debug_to_stderr = {get_default_config_boolean('debug_to_stderr')}"
+        return content
     
     def _generate_constants(self) -> str:
         """Generate needed constants with balanced brace matching."""
@@ -543,47 +621,7 @@ class StandaloneGenerator:
     
     def _generate_minimal_persist(self) -> str:
         """Generate minimal persistence system for standalone features."""
-        return "\n".join([
-            "-- Minimal persistence system for standalone features",
-            "local _persist_names = {}",
-            "function BRC.Data.persist(name, default_value)",
-            "  -- If variable already exists (from chk_lua_save), use it",
-            "  -- Otherwise initialize from default",
-            "  if _G[name] == nil then",
-            "    if type(default_value) == \"table\" then",
-            "      _G[name] = {}",
-            "      for k, v in pairs(default_value) do",
-            "        _G[name][k] = v",
-            "      end",
-            "    else",
-            "      _G[name] = default_value",
-            "    end",
-            "  end",
-            "",
-            "  _persist_names[#_persist_names + 1] = name",
-            "  table.insert(chk_lua_save, function()",
-            "    if _G[name] == nil then return \"\" end",
-            "    local val_str",
-            "    if type(_G[name]) == \"table\" then",
-            "      -- Simple table serialization (basic, but works for simple tables)",
-            "      local parts = {}",
-            "      for k, v in pairs(_G[name]) do",
-            "        if type(v) == \"string\" then",
-            "          table.insert(parts, string.format('[%s] = \"%s\"', tostring(k), v))",
-            "        else",
-            "          table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))",
-            "        end",
-            "      end",
-            "      val_str = \"{\" .. table.concat(parts, \", \") .. \"}\"",
-            "    else",
-            "      val_str = tostring(_G[name])",
-            "    end",
-            "  return name .. \" = \" .. val_str .. \"\\\\n\"",
-            "  end)",
-            "",
-            "  return _G[name]",
-            "end",
-        ])
+        return "-- Minimal persistence system for standalone features\n" + get_minimal_persist_code()
     
     def _generate_config_section(self) -> str:
         """Generate Config section and prepend feature initialization."""
@@ -593,13 +631,16 @@ class StandaloneGenerator:
         
         # Remove disabled = true
         config_content = re.sub(r'(\s+disabled\s*=\s*)true', r'\1false', config_content)
+
+        # Replace calls to BRC.txt in config with explicit colors
+        config_content = re.sub(r'BRC\.txt\.(\w+)\("([^"]+)"\)', r'"<\1>\2</\1>"', config_content)
+
         return f"{self.feature_var} = {{}}\n{config_content}"
     
     def _generate_feature_code(self) -> str:
         """Generate the feature code itself."""
         content = self.analyzer.content
-        content = re.sub(r'^\s*\w+\.BRC_FEATURE_NAME\s*=.*$', '', 
-                        content, flags=re.MULTILINE)
+        content = re.sub(r'^\s*\w+\.BRC_FEATURE_NAME\s*=.*$', '', content, flags=re.MULTILINE)
         
         # Remove Config section and prepended feature initialization
         lines = content.split('\n')
@@ -609,16 +650,16 @@ class StandaloneGenerator:
             content = '\n'.join(lines[:start_idx] + lines[end_idx:])
             content = re.sub(rf'{self.feature_var} = {{}}\n', '', content)
 
-        return f"-- Feature code\n{content}"
+        return content
     
     def _generate_hooks(self) -> str:
         """Generate crawl hook wrappers (excluding init)."""
         hooks = [h for h in sorted(self.analyzer.used_hooks) if h != "init"]
         
         # Ensure ready() exists if using mpr queue
-        needs_consume = self._needs_consume_queue()
+        needs_queue = self._needs_consume_queue()
         needs_mutes = self._needs_single_turn_mutes()
-        if "ready" not in hooks and (needs_consume or needs_mutes):
+        if "ready" not in hooks and (needs_queue or needs_mutes):
             hooks.append("ready")
             hooks = sorted(hooks)
         
@@ -636,7 +677,7 @@ class StandaloneGenerator:
                     f"    brc_last_turn = you.turns()",
                     f"    {self.feature_var}.{hook}(...)",
                     f"  end",
-                    *([f"  BRC.mpr.consume_queue()"] if needs_consume else []),
+                    *([f"  BRC.mpr.consume_queue()"] if needs_queue else []),
                     f"end",
                 ])
                 result.append(hook_code)
@@ -662,7 +703,7 @@ class StandaloneGenerator:
         ])
     
     def _generate_init_call(self) -> str:
-        return f"-- Initialize feature\n{self.feature_var}.init()"
+        return f"-- Initialize feature\nif {self.feature_var}.init then {self.feature_var}.init() end"
 
 # ============================================================================
 # Main Entry Point
@@ -686,7 +727,7 @@ def main():
         
         generator = StandaloneGenerator(analyzer)
         standalone_content = generator.generate()
-        standalone_content += "\n\n}\n"
+        standalone_content += "\n}\n"
 
         output_file = output_dir / f"{generator.feature_name}.rc"
         output_file.write_text(standalone_content, encoding='utf-8')

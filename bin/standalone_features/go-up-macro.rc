@@ -5,8 +5,23 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.debug_to_stderr = false
+
+f_go_up_macro = {}
+f_go_up_macro.Config = {
+  go_up_macro_key = BRC.util.cntl("e"), -- Key for "go up closest stairs" macro
+
+  ignore_mon_on_orb_run = true, -- Ignore monsters on orb run
+  -- %HP thresholds for ignoring monsters during orb run (2-7 tiles away, depending on HP percent)
+  orb_ignore_hp_min = 0.30, -- HP percent to stop ignoring monsters
+  orb_ignore_hp_max = 0.70, -- HP percent to ignore monsters at min distance away (2 tiles)
+} -- f_go_up_macro.Config (do not remove this comment)
 
 -- BRC Constants
 BRC.COL = {
@@ -22,16 +37,6 @@ BRC.PORTAL_NAMES = {
   "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
 } -- BRC.PORTAL_NAMES (do not remove this comment)
 
-
-f_go_up_macro = {}
-f_go_up_macro.Config = {
-  go_up_macro_key = BRC.util.cntl("e"), -- Key for "go up closest stairs" macro
-
-  ignore_mon_on_orb_run = true, -- Ignore monsters on orb run
-  -- %HP thresholds for ignoring monsters during orb run (2-7 tiles away, depending on HP percent)
-  orb_ignore_hp_min = 0.30, -- HP percent to stop ignoring monsters
-  orb_ignore_hp_max = 0.70, -- HP percent to ignore monsters at min distance away (2 tiles)
-} -- f_go_up_macro.Config (do not remove this comment)
 
 -- BRC module tables
 BRC.mpr = {}
@@ -128,7 +133,6 @@ function BRC.opt.runrest_ignore_monster(pattern, create)
 end
 
 -- BRC.txt module
-getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -136,16 +140,12 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
-function BRC.txt.contains(self, text)
-  return self:find(text, 1, true) ~= nil
-end
 
 -- BRC.util module
 function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
 end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: go-up-macro
 -- @module f_go_up_macro
@@ -213,6 +213,5 @@ end
 
 
 -- Initialize feature
-f_go_up_macro.init()
-
+if f_go_up_macro.init then f_go_up_macro.init() end
 }

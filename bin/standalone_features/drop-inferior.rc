@@ -5,8 +5,22 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+
+f_drop_inferior = {}
+f_drop_inferior.Config = {
+  msg_on_inscribe = true, -- Show a message when an item is marked for drop
+  hotkey_drop = true, -- BRC hotkey drops all items on the drop list
+} -- f_drop_inferior.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
 BRC.ARTPROPS_BAD = {
@@ -47,12 +61,6 @@ BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
 
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
-
-f_drop_inferior = {}
-f_drop_inferior.Config = {
-  msg_on_inscribe = true, -- Show a message when an item is marked for drop
-  hotkey_drop = true, -- BRC hotkey drops all items on the drop list
-} -- f_drop_inferior.Config (do not remove this comment)
 
 -- BRC module tables
 BRC.Hotkey = {}
@@ -194,16 +202,11 @@ end
 
 
 -- BRC.txt module
-getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
   end
   BRC.txt[color] = BRC.txt[k]
-end
-
-function BRC.txt.contains(self, text)
-  return self:find(text, 1, true) ~= nil
 end
 
 function BRC.txt.int2char(num)
@@ -244,7 +247,6 @@ function BRC.you.num_eq_slots(it)
   return 1
 end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: drop-inferior
 -- @module f_drop_inferior
@@ -323,6 +325,5 @@ end
 
 
 -- Initialize feature
-f_drop_inferior.init()
-
+if f_drop_inferior.init then f_drop_inferior.init() end
 }

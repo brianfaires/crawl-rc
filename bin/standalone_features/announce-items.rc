@@ -5,8 +5,16 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+
+f_announce_items = {}
+f_announce_items.Config = {
+  disabled = false, -- Disabled by default. Intended only for turncount runs.
+  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+} -- f_announce_items.Config (do not remove this comment)
 
 -- BRC Constants
 BRC.COL = {
@@ -16,17 +24,10 @@ BRC.COL = {
 } -- BRC.COL (do not remove this comment)
 
 
-f_announce_items = {}
-f_announce_items.Config = {
-  disabled = false, -- Disabled by default. Intended only for turncount runs.
-  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
-} -- f_announce_items.Config (do not remove this comment)
-
 -- BRC module tables
 BRC.txt = {}
 
 -- BRC.txt module
-getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -34,11 +35,7 @@ for k, color in pairs(BRC.COL) do
   BRC.txt[color] = BRC.txt[k]
 end
 
-function BRC.txt.contains(self, text)
-  return self:find(text, 1, true) ~= nil
-end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: announce-items
 -- @module f_announce_items
@@ -107,6 +104,5 @@ end
 
 
 -- Initialize feature
-f_announce_items.init()
-
+if f_announce_items.init then f_announce_items.init() end
 }

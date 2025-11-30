@@ -5,8 +5,25 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.debug_to_stderr = false
+
+f_quiver_reminders = {}
+f_quiver_reminders.Config = {
+  confirm_consumables = true,
+  warn_diff_missile_turns = 10,
+} -- f_quiver_reminders.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
 BRC.COL = {
@@ -17,12 +34,6 @@ BRC.COL = {
 
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
-
-f_quiver_reminders = {}
-f_quiver_reminders.Config = {
-  confirm_consumables = true,
-  warn_diff_missile_turns = 10,
-} -- f_quiver_reminders.Config (do not remove this comment)
 
 -- BRC module tables
 BRC.mpr = {}
@@ -136,7 +147,6 @@ function BRC.opt.macro(key, function_name)
 end
 
 -- BRC.txt module
-getmetatable("").__index.contains = BRC.txt.contains
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
     return string.format("<%s>%s</%s>", color, tostring(text), color)
@@ -147,10 +157,6 @@ end
 function BRC.txt.clean(text)
   if type(text) ~= "string" then return text end
   return text:gsub("\n", ""):gsub("<[^>]*>", "")
-end
-
-function BRC.txt.contains(self, text)
-  return self:find(text, 1, true) ~= nil
 end
 
 function BRC.txt.int2char(num)
@@ -180,7 +186,6 @@ function BRC.util.get_cmd_key(cmd)
   return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
 end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: quiver-reminders
 -- @module f_quiver_reminders
@@ -269,6 +274,5 @@ end
 
 
 -- Initialize feature
-f_quiver_reminders.init()
-
+if f_quiver_reminders.init then f_quiver_reminders.init() end
 }

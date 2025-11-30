@@ -5,8 +5,19 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.debug_to_stderr = false
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
 BRC.COL = {
@@ -58,8 +69,14 @@ function BRC.mpr.debug(message, context)
 end
 
 -- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
 
--- Feature code
+
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: weapon-slots
 -- @module f_weapon_slots
@@ -230,6 +247,5 @@ end
 
 
 -- Initialize feature
-f_weapon_slots.init()
-
+if f_weapon_slots.init then f_weapon_slots.init() end
 }

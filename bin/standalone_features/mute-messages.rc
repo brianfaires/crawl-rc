@@ -5,8 +5,10 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
 
 f_mute_messages = {}
 f_mute_messages.Config = {
@@ -93,7 +95,6 @@ function BRC.opt.message_mute(pattern, create)
   crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
 end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: mute-messages
 -- @module f_mute_messages
@@ -115,6 +116,5 @@ end
 
 
 -- Initialize feature
-f_mute_messages.init()
-
+if f_mute_messages.init then f_mute_messages.init() end
 }

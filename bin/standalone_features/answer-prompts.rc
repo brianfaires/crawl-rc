@@ -1,12 +1,20 @@
-## Standalone BRC Feature: answer_prompts
+## Standalone BRC Feature: answer-prompts
 ## Generated from: lua/features/answer-prompts.lua
 ## This file is self-contained and can be copy-pasted into your RC file.
 ## No external dependencies required.
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
 BRC.COL = {
@@ -31,8 +39,14 @@ end
 
 
 -- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
 
--- Feature code
+
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: answer-prompts
 -- @module f_answer_prompts
@@ -59,6 +73,5 @@ end
 
 
 -- Initialize feature
-f_answer_prompts.init()
-
+if f_answer_prompts.init then f_answer_prompts.init() end
 }

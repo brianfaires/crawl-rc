@@ -5,8 +5,23 @@
 
 {
 
--- Minimal BRC namespace
-BRC = { Config = { emojis = false } }
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+
+f_inscribe_stats = {}
+f_inscribe_stats.Config = {
+  inscribe_weapons = true, -- Inscribe weapon stats on pickup
+  inscribe_armour = true, -- Inscribe armour stats on pickup
+  dmg_type = BRC.DMG_TYPE.unbranded,
+} -- f_inscribe_stats.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
 BRC.DMG_TYPE = {
@@ -16,13 +31,6 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-
-f_inscribe_stats = {}
-f_inscribe_stats.Config = {
-  inscribe_weapons = true, -- Inscribe weapon stats on pickup
-  inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = BRC.DMG_TYPE.unbranded,
-} -- f_inscribe_stats.Config (do not remove this comment)
 
 -- BRC module tables
 BRC.eq = {}
@@ -354,7 +362,6 @@ function BRC.you.skill(skill)
   return sum / count
 end
 
--- Feature code
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: inscribe-stats
 -- @module f_inscribe_stats
@@ -451,6 +458,5 @@ end
 
 
 -- Initialize feature
-f_inscribe_stats.init()
-
+if f_inscribe_stats.init then f_inscribe_stats.init() end
 }
