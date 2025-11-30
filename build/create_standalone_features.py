@@ -539,9 +539,9 @@ class StandaloneGenerator:
         if self.analyzer.used_constants:
             parts.append(self._generate_constants())
         
-        module_tables = [f"BRC.{m.split('.')[1]} = {{}}" for m in sorted(self.analyzer.used_modules)]
+        module_tables = [f"BRC.{m.split('.')[1]} = BRC.{m.split('.')[1]} or {{}}" for m in sorted(self.analyzer.used_modules)]
         if module_tables:
-            parts.append("-- BRC module tables\n" + "\n".join(module_tables))
+            parts.append("-- BRC module tables (Don't overwrite existing globals)\n" + "\n".join(module_tables))
         
         for module in sorted(self.analyzer.used_modules):
             parts.append(self._generate_module_code(module))

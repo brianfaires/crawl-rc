@@ -75,14 +75,14 @@ BRC.WEAP_SCHOOLS = {
 } -- BRC.WEAP_SCHOOLS (do not remove this comment)
 
 
--- BRC module tables
-BRC.Configs = {}
-BRC.Data = {}
-BRC.mpr = {}
-BRC.opt = {}
-BRC.txt = {}
-BRC.util = {}
-BRC.you = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Configs = BRC.Configs or {}
+BRC.Data = BRC.Data or {}
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+BRC.you = BRC.you or {}
 
 -- BRC.Configs module
 brc_full_persistant_config = BRC.Data.persist("brc_full_persistant_config", nil)

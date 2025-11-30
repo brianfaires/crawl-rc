@@ -97,9 +97,9 @@ BRC.SPELLBOOKS = {
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
--- BRC module tables
-BRC.opt = {}
-BRC.util = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.opt = BRC.opt or {}
+BRC.util = BRC.util or {}
 
 -- BRC.opt module
 function BRC.opt.autopickup_exceptions(pattern, create)

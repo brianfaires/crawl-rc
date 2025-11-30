@@ -58,11 +58,11 @@ BRC.EMOJI = {
 } -- BRC.EMOJI (do not remove this comment)
 
 
--- BRC module tables
-BRC.Data = {}
-BRC.mpr = {}
-BRC.opt = {}
-BRC.txt = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Data = BRC.Data or {}
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features

@@ -51,10 +51,10 @@ BRC.SMALL_RACES = { "Kobold" }
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
--- BRC module tables
-BRC.eq = {}
-BRC.it = {}
-BRC.you = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.eq = BRC.eq or {}
+BRC.it = BRC.it or {}
+BRC.you = BRC.you or {}
 
 -- BRC.eq module
 local function format_dmg(dmg)

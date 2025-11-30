@@ -55,14 +55,14 @@ BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
--- BRC module tables
-BRC.Hotkey = {}
-BRC.eq = {}
-BRC.it = {}
-BRC.mpr = {}
-BRC.txt = {}
-BRC.util = {}
-BRC.you = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Hotkey = BRC.Hotkey or {}
+BRC.eq = BRC.eq or {}
+BRC.it = BRC.it or {}
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+BRC.you = BRC.you or {}
 
 -- BRC.Hotkey module
 BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"

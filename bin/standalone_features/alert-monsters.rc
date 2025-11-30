@@ -236,11 +236,11 @@ BRC.NONLIVING_RACES = { "Djinni", "Gargoyle" }
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
--- BRC module tables
-BRC.mpr = {}
-BRC.opt = {}
-BRC.txt = {}
-BRC.you = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.you = BRC.you or {}
 
 -- BRC.mpr module
 for k, color in pairs(BRC.COL) do

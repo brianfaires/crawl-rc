@@ -46,15 +46,15 @@ BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Re
 BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 
 
--- BRC module tables
-BRC.Data = {}
-BRC.eq = {}
-BRC.it = {}
-BRC.mpr = {}
-BRC.opt = {}
-BRC.txt = {}
-BRC.util = {}
-BRC.you = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Data = BRC.Data or {}
+BRC.eq = BRC.eq or {}
+BRC.it = BRC.it or {}
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+BRC.you = BRC.you or {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features

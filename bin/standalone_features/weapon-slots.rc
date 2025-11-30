@@ -27,10 +27,10 @@ BRC.COL = {
 } -- BRC.COL (do not remove this comment)
 
 
--- BRC module tables
-BRC.it = {}
-BRC.mpr = {}
-BRC.txt = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.it = BRC.it or {}
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
 
 -- BRC.it module
 function BRC.it.is_magic_staff(it)

@@ -86,8 +86,8 @@ f_mute_messages.Config = {
   },
 } -- f_mute_messages.Config (do not remove this comment)
 
--- BRC module tables
-BRC.opt = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.opt = BRC.opt or {}
 
 -- BRC.opt module
 function BRC.opt.message_mute(pattern, create)

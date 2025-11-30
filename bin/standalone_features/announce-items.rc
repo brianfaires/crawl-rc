@@ -24,8 +24,8 @@ BRC.COL = {
 } -- BRC.COL (do not remove this comment)
 
 
--- BRC module tables
-BRC.txt = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.txt = BRC.txt or {}
 
 -- BRC.txt module
 for k, color in pairs(BRC.COL) do

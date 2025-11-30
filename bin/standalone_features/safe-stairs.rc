@@ -35,12 +35,12 @@ BRC.COL = {
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 
--- BRC module tables
-BRC.Data = {}
-BRC.mpr = {}
-BRC.opt = {}
-BRC.txt = {}
-BRC.util = {}
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Data = BRC.Data or {}
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features
