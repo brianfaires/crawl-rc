@@ -1,7 +1,7 @@
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: quiver-reminders
 -- @module f_quiver_reminders
--- A handful of useful quiver-related reminders. (AKA things I often screw up.)
+-- A handful of useful quiver-related reminders. (AKA things I often forget.)
 ---------------------------------------------------------------------------------------------------
 
 f_quiver_reminders = {}
@@ -42,7 +42,10 @@ end
 
 ---- Macro function: Fire from quiver ----
 function macro_brc_fire()
-  if not BRC.active or C.disabled then return BRC.util.do_cmd("CMD_FIRE") end
+  if BRC.active == false or BRC.Config.quiver_reminders.disabled then
+    return BRC.util.do_cmd("CMD_FIRE")
+  end
+
   local quivered = items.fired_item()
   if not quivered then return end
 

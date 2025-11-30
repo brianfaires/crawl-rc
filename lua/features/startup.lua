@@ -10,8 +10,8 @@ f_startup.BRC_FEATURE_NAME = "startup"
 f_startup.Config = {
   -- Save current training targets and config, for race/class
   macro_save_key = BRC.util.cntl("t"), -- Keycode to save training targets and config
-  use_saved_training = true, -- Allow save/load of race/class training targets
-  use_saved_config = true, -- Allow save/load of BRC config
+  save_training = true, -- Allow save/load of race/class training targets
+  save_config = true, -- Allow save/load of BRC config
   prompt_before_load = true, -- Prompt before loading in a new game with same race+class
   allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
   allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
@@ -46,7 +46,7 @@ local C -- config alias
 function f_startup.init()
   C = f_startup.Config
 
-  if C.macro_save_key and (C.use_saved_training or C.use_saved_config) then
+  if C.macro_save_key and (C.save_training or C.save_config) then
     BRC.opt.macro(C.macro_save_key, "macro_brc_save_skills_and_config")
   end
 end
@@ -197,25 +197,30 @@ end
 
 ---- Macro function: Save current skill targets (training levels and targets) for race/class ----
 function macro_brc_save_skills_and_config()
-  if not BRC.active or C.disabled then
+  if BRC.active == false or f_startup.Config.disabled then
     BRC.mpr.info("BRC not active, or startup feature is disabled. Training targets not saved.")
     return
   end
 
   ensure_tables_exist()
-  if C.use_saved_training
+  local did_save = false
+  if f_startup.Config.save_training
     and you.race() ~= "Gnoll"
-    and (not C.use_saved_config or BRC.mpr.yesno("Save training targets?", BRC.COL.magenta))
+    and (not f_startup.Config.save_config or BRC.mpr.yesno("Save training?", BRC.COL.magenta))
   then
     save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
+    did_save = true
   end
 
-  if C.use_saved_config
-    and (not C.use_saved_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
+  if f_startup.Config.save_config
+    and (not f_startup.Config.save_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
   then
     local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
     save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
+    did_save = true
   end
+
+  if not did_save then BRC.mpr.okay() end
 end
 
 ---- Crawl hook functions ----
@@ -223,8 +228,8 @@ function f_startup.ready()
   if you.turns() ~= 0 then return end
 
   -- Check for saved config/targets in c_persist
-  if C.use_saved_config then load_saved_config() end
-  if C.use_saved_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
+  if C.save_config then load_saved_config() end
+  if C.save_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
     if load_saved_training_targets() then return end
   end
 

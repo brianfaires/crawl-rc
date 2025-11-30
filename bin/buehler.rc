@@ -5245,6 +5245,10 @@ end
 
 ---- Public API ----
 function macro_brc_bread_swing(turns)
+  if BRC.active == false or f_bread_swinger.Config.disabled then
+    return BRC.util.do_cmd("CMD_REST")
+  end
+
   turns_to_rest = turns or get_num_turns()
   if not turns_to_rest then
     f_bread_swinger.set_swing_slot()
@@ -5958,7 +5962,7 @@ end
 
 ---- Macro function: Attach full recovery to auto-explore ----
 function macro_brc_explore()
-  if not BRC.active or f_fully_recover.Config.disabled then
+  if BRC.active == false or f_fully_recover.Config.disabled then
     return BRC.util.do_cmd("CMD_EXPLORE")
   end
 
@@ -6070,6 +6074,8 @@ end
 ---- Macro function ----
 --- Go up the closest stairs (Cntl-E)
 function macro_brc_go_up()
+  if BRC.active == false or f_go_up_macro.Config.disabled then return end
+
   if you.have_orb() and f_go_up_macro.Config.ignore_mon_on_orb_run then
     local distance = get_ignore_distance_from_hp()
     if distance ~= orb_ignore_distance then set_orb_ignore_distance(distance) end
@@ -6281,7 +6287,10 @@ end
 
 ---- Macro function: Save with message feature ----
 function macro_brc_save()
-  if not BRC.active or f_misc_alerts.Config.disabled then
+  if BRC.active == false
+    or f_misc_alerts.Config.disabled
+    or not f_misc_alerts.Config.save_with_msg
+  then
     return BRC.util.do_cmd("CMD_SAVE_GAME")
   end
 
@@ -6413,7 +6422,7 @@ end
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: quiver-reminders
 -- @module f_quiver_reminders
--- A handful of useful quiver-related reminders. (AKA things I often screw up.)
+-- A handful of useful quiver-related reminders. (AKA things I often forget.)
 ---------------------------------------------------------------------------------------------------
 
 f_quiver_reminders = {}
@@ -6454,7 +6463,10 @@ end
 
 ---- Macro function: Fire from quiver ----
 function macro_brc_fire()
-  if not BRC.active or C.disabled then return BRC.util.do_cmd("CMD_FIRE") end
+  if BRC.active == false or BRC.Config.quiver_reminders.disabled then
+    return BRC.util.do_cmd("CMD_FIRE")
+  end
+
   local quivered = items.fired_item()
   if not quivered then return end
 
@@ -6921,18 +6933,18 @@ end
 
 ---- Macro functions ----
 function macro_brc_downstairs()
-  if BRC.active and not f_safe_stairs.Config.disabled then
-    check_new_location("CMD_GO_DOWNSTAIRS")
-  else
+  if BRC.active == false or f_safe_stairs.Config.disabled then
     BRC.util.do_cmd("CMD_GO_DOWNSTAIRS")
+  else
+    check_new_location("CMD_GO_DOWNSTAIRS")
   end
 end
 
 function macro_brc_upstairs()
-  if BRC.active and not f_safe_stairs.Config.disabled then
-    check_new_location("CMD_GO_UPSTAIRS")
-  else
+  if BRC.active == false or f_safe_stairs.Config.disabled then
     BRC.util.do_cmd("CMD_GO_UPSTAIRS")
+  else
+    check_new_location("CMD_GO_UPSTAIRS")
   end
 end
 
@@ -6961,8 +6973,8 @@ f_startup.BRC_FEATURE_NAME = "startup"
 f_startup.Config = {
   -- Save current training targets and config, for race/class
   macro_save_key = BRC.util.cntl("t"), -- Keycode to save training targets and config
-  use_saved_training = true, -- Allow save/load of race/class training targets
-  use_saved_config = true, -- Allow save/load of BRC config
+  save_training = true, -- Allow save/load of race/class training targets
+  save_config = true, -- Allow save/load of BRC config
   prompt_before_load = true, -- Prompt before loading in a new game with same race+class
   allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
   allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
@@ -6997,7 +7009,7 @@ local C -- config alias
 function f_startup.init()
   C = f_startup.Config
 
-  if C.macro_save_key and (C.use_saved_training or C.use_saved_config) then
+  if C.macro_save_key and (C.save_training or C.save_config) then
     BRC.opt.macro(C.macro_save_key, "macro_brc_save_skills_and_config")
   end
 end
@@ -7148,25 +7160,30 @@ end
 
 ---- Macro function: Save current skill targets (training levels and targets) for race/class ----
 function macro_brc_save_skills_and_config()
-  if not BRC.active or C.disabled then
+  if BRC.active == false or f_startup.Config.disabled then
     BRC.mpr.info("BRC not active, or startup feature is disabled. Training targets not saved.")
     return
   end
 
   ensure_tables_exist()
-  if C.use_saved_training
+  local did_save = false
+  if f_startup.Config.save_training
     and you.race() ~= "Gnoll"
-    and (not C.use_saved_config or BRC.mpr.yesno("Save training targets?", BRC.COL.magenta))
+    and (not f_startup.Config.save_config or BRC.mpr.yesno("Save training?", BRC.COL.magenta))
   then
     save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
+    did_save = true
   end
 
-  if C.use_saved_config
-    and (not C.use_saved_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
+  if f_startup.Config.save_config
+    and (not f_startup.Config.save_training or BRC.mpr.yesno("Save config?", BRC.COL.magenta))
   then
     local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
     save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
+    did_save = true
   end
+
+  if not did_save then BRC.mpr.okay() end
 end
 
 ---- Crawl hook functions ----
@@ -7174,8 +7191,8 @@ function f_startup.ready()
   if you.turns() ~= 0 then return end
 
   -- Check for saved config/targets in c_persist
-  if C.use_saved_config then load_saved_config() end
-  if C.use_saved_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
+  if C.save_config then load_saved_config() end
+  if C.save_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
     if load_saved_training_targets() then return end
   end
 
@@ -7643,7 +7660,7 @@ local function get_alert_color_for_item(it)
 end
 
 local function should_skip_pickup_check(it)
-  return not BRC.active
+  return BRC.active == false
     or pause_pa_system
     or you.have_orb()
     or (not it.is_identified and (it.branded or it.artefact or BRC.it.is_magic_staff(it)))

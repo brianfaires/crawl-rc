@@ -58,18 +58,18 @@ end
 
 ---- Macro functions ----
 function macro_brc_downstairs()
-  if BRC.active and not f_safe_stairs.Config.disabled then
-    check_new_location("CMD_GO_DOWNSTAIRS")
-  else
+  if BRC.active == false or f_safe_stairs.Config.disabled then
     BRC.util.do_cmd("CMD_GO_DOWNSTAIRS")
+  else
+    check_new_location("CMD_GO_DOWNSTAIRS")
   end
 end
 
 function macro_brc_upstairs()
-  if BRC.active and not f_safe_stairs.Config.disabled then
-    check_new_location("CMD_GO_UPSTAIRS")
-  else
+  if BRC.active == false or f_safe_stairs.Config.disabled then
     BRC.util.do_cmd("CMD_GO_UPSTAIRS")
+  else
+    check_new_location("CMD_GO_UPSTAIRS")
   end
 end
 

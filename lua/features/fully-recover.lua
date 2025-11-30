@@ -98,7 +98,7 @@ end
 
 ---- Macro function: Attach full recovery to auto-explore ----
 function macro_brc_explore()
-  if not BRC.active or f_fully_recover.Config.disabled then
+  if BRC.active == false or f_fully_recover.Config.disabled then
     return BRC.util.do_cmd("CMD_EXPLORE")
   end
 

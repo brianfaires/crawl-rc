@@ -53,6 +53,8 @@ end
 ---- Macro function ----
 --- Go up the closest stairs (Cntl-E)
 function macro_brc_go_up()
+  if BRC.active == false or f_go_up_macro.Config.disabled then return end
+
   if you.have_orb() and f_go_up_macro.Config.ignore_mon_on_orb_run then
     local distance = get_ignore_distance_from_hp()
     if distance ~= orb_ignore_distance then set_orb_ignore_distance(distance) end

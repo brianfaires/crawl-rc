@@ -86,7 +86,10 @@ end
 
 ---- Macro function: Save with message feature ----
 function macro_brc_save()
-  if not BRC.active or f_misc_alerts.Config.disabled then
+  if BRC.active == false
+    or f_misc_alerts.Config.disabled
+    or not f_misc_alerts.Config.save_with_msg
+  then
     return BRC.util.do_cmd("CMD_SAVE_GAME")
   end
 

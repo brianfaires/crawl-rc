@@ -66,37 +66,35 @@ BRC.txt = BRC.txt or {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features
+local function brc_tostr(value)
+  if type(value) == "table" then
+    if #value == 0 then
+      local result = "{ "
+      for k, v in pairs(value) do
+        result = result .. k .. " = " .. brc_tostr(v) .. ", "
+      end
+      return result .. " }"
+    else
+      return "{ " .. table.concat(value, ", ") .. " }"
+    end
+  elseif type(value) == "string" then
+    return "\"" .. value:gsub("\"", "") .. "\""
+  else
+    return tostring(value)
+  end
+end
 function BRC.Data.persist(name, default_value)
   if _G[name] == nil then
     if type(default_value) == "table" then
-      _G[name] = {}
-      for k, v in pairs(default_value) do
-        _G[name][k] = v
-      end
+      _G[name] = util.copy_table(default_value)
     else
       _G[name] = default_value
     end
   end
-
   table.insert(chk_lua_save, function()
     if _G[name] == nil then return "" end
-    local val_str
-    if type(_G[name]) == "table" then
-      local parts = {}
-      for k, v in pairs(_G[name]) do
-        if type(v) == "string" then
-          table.insert(parts, string.format('[%s] = "%s"', tostring(k), v))
-        else
-          table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))
-        end
-      end
-      val_str = "{" .. table.concat(parts, ", ") .. "}"
-    else
-      val_str = tostring(_G[name])
-    end
-  return name .. " = " .. val_str .. "\\n"
+    return name .. " = " .. brc_tostr(_G[name]) .. "\n"
   end)
-
   return _G[name]
 end
 

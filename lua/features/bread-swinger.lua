@@ -274,6 +274,10 @@ end
 
 ---- Public API ----
 function macro_brc_bread_swing(turns)
+  if BRC.active == false or f_bread_swinger.Config.disabled then
+    return BRC.util.do_cmd("CMD_REST")
+  end
+
   turns_to_rest = turns or get_num_turns()
   if not turns_to_rest then
     f_bread_swinger.set_swing_slot()

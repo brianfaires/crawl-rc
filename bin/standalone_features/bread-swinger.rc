@@ -58,37 +58,35 @@ BRC.you = BRC.you or {}
 
 -- BRC.Data module
 -- Minimal persistence system for standalone features
+local function brc_tostr(value)
+  if type(value) == "table" then
+    if #value == 0 then
+      local result = "{ "
+      for k, v in pairs(value) do
+        result = result .. k .. " = " .. brc_tostr(v) .. ", "
+      end
+      return result .. " }"
+    else
+      return "{ " .. table.concat(value, ", ") .. " }"
+    end
+  elseif type(value) == "string" then
+    return "\"" .. value:gsub("\"", "") .. "\""
+  else
+    return tostring(value)
+  end
+end
 function BRC.Data.persist(name, default_value)
   if _G[name] == nil then
     if type(default_value) == "table" then
-      _G[name] = {}
-      for k, v in pairs(default_value) do
-        _G[name][k] = v
-      end
+      _G[name] = util.copy_table(default_value)
     else
       _G[name] = default_value
     end
   end
-
   table.insert(chk_lua_save, function()
     if _G[name] == nil then return "" end
-    local val_str
-    if type(_G[name]) == "table" then
-      local parts = {}
-      for k, v in pairs(_G[name]) do
-        if type(v) == "string" then
-          table.insert(parts, string.format('[%s] = "%s"', tostring(k), v))
-        else
-          table.insert(parts, string.format('[%s] = %s', tostring(k), tostring(v)))
-        end
-      end
-      val_str = "{" .. table.concat(parts, ", ") .. "}"
-    else
-      val_str = tostring(_G[name])
-    end
-  return name .. " = " .. val_str .. "\\n"
+    return name .. " = " .. brc_tostr(_G[name]) .. "\n"
   end)
-
   return _G[name]
 end
 
@@ -338,6 +336,24 @@ end
 -- BRC.util module
 function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
+end
+
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+    crawl.flush_input()
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
 end
 
 -- BRC.you module
@@ -662,6 +678,10 @@ end
 
 ---- Public API ----
 function macro_brc_bread_swing(turns)
+  if BRC.active == false or f_bread_swinger.Config.disabled then
+    return BRC.util.do_cmd("CMD_REST")
+  end
+
   turns_to_rest = turns or get_num_turns()
   if not turns_to_rest then
     f_bread_swinger.set_swing_slot()

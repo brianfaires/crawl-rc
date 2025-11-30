@@ -95,7 +95,7 @@ local function get_alert_color_for_item(it)
 end
 
 local function should_skip_pickup_check(it)
-  return not BRC.active
+  return BRC.active == false
     or pause_pa_system
     or you.have_orb()
     or (not it.is_identified and (it.branded or it.artefact or BRC.it.is_magic_staff(it)))
