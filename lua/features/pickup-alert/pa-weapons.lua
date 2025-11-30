@@ -26,7 +26,7 @@ local WEAP_CACHE_KEYS = {
 
 ---- Local variables ----
 local C -- config alias
-local H -- heuristic tuning alias
+local W -- heuristic tuning alias
 local E -- emoji config alias
 local A -- alert config alias
 local M -- more config alias
@@ -36,7 +36,7 @@ local _weapon_cache = {} -- Cache info for inventory weapons to avoid repeat cal
 ---- Initialization ----
 function f_pa_weapons.init()
   C = f_pickup_alert.Config
-  H = f_pickup_alert.Config.Tuning.Weap
+  W = f_pickup_alert.Config.Tuning.Weap
   E = f_pickup_alert.Config.Emoji
   A = f_pickup_alert.Config.Alert
   M = f_pickup_alert.Config.Alert.More
@@ -51,10 +51,10 @@ end
 local function get_score(it, no_brand_bonus)
   if it.dps and it.acc then
     -- Handle cached /  high-score tuples in _weapon_cache
-    return it.dps + it.acc * H.Pickup.accuracy_weight
+    return it.dps + it.acc * W.Pickup.accuracy_weight
   end
   local dmg_type = no_brand_bonus and BRC.DMG_TYPE.unbranded or BRC.DMG_TYPE.scoring
-  local acc_bonus = (it.accuracy + (it.plus or 0)) * H.Pickup.accuracy_weight
+  local acc_bonus = (it.accuracy + (it.plus or 0)) * W.Pickup.accuracy_weight
   return BRC.eq.get_dps(it, dmg_type) + acc_bonus
 end
 
@@ -89,7 +89,7 @@ local function is_weapon_upgrade(it, cur, strict)
     local it_ego = BRC.eq.get_ego(it)
     local cur_ego = BRC.eq.get_ego(cur)
     if cur_ego and not it_ego then return false end
-    if it_ego and not cur_ego then return get_score(it) / cur.score > H.Pickup.add_ego end
+    if it_ego and not cur_ego then return get_score(it) / cur.score > W.Pickup.add_ego end
     return it_ego == cur_ego and (it.plus or 0) > cur.plus
   elseif it.weap_skill == cur.weap_skill or you.race() == "Gnoll" then
     if BRC.eq.get_hands(it) > cur.hands then return false end
@@ -99,7 +99,7 @@ local function is_weapon_upgrade(it, cur, strict)
     if it.artefact then return true end
     if cur.artefact and not A.allow_arte_weap_upgrades then return false end
 
-    local min_ratio = it.is_ranged and H.Pickup.same_type_ranged or H.Pickup.same_type_melee
+    local min_ratio = it.is_ranged and W.Pickup.same_type_ranged or W.Pickup.same_type_melee
     return get_score(it) / cur.score > min_ratio
   end
 
@@ -245,26 +245,26 @@ end
 
 local function get_early_weapon_alert(it)
   -- Alert really good usable ranged weapons
-  if it.is_ranged and you.xl() <= H.Alert.EarlyRanged.xl then
-    local min_plus = H.Alert.EarlyRanged[BRC.eq.get_ego(it) and "branded_min_plus" or "min_plus"]
+  if it.is_ranged and you.xl() <= W.Alert.EarlyRanged.xl then
+    local min_plus = W.Alert.EarlyRanged[BRC.eq.get_ego(it) and "branded_min_plus" or "min_plus"]
     if (it.plus or 0) >= min_plus / A.weapon_sensitivity then
-      local low_shield_training = you.skill("Shields") <= H.Alert.EarlyRanged.max_shields
+      local low_shield_training = you.skill("Shields") <= W.Alert.EarlyRanged.max_shields
       if BRC.eq.get_hands(it) == 1 or not BRC.you.have_shield() or low_shield_training then
         return make_alert(it, "Ranged weapon", E.RANGED, M.early_weap)
       end
     end
   end
 
-  if you.xl() <= H.Alert.Early.xl then
+  if you.xl() <= W.Alert.Early.xl then
     -- Ignore items if we're clearly going another route
-    local skill_setting = H.Alert.Early.skill
+    local skill_setting = W.Alert.Early.skill
     local skill_diff = BRC.you.skill(top_attack_skill) - BRC.you.skill(it.weap_skill)
     if skill_diff > you.xl() * skill_setting.factor + skill_setting.offset then return false end
 
     local it_plus = it.plus or 0
     if
       BRC.eq.get_ego(it)
-      or it_plus >= H.Alert.Early.branded_min_plus / A.weapon_sensitivity
+      or it_plus >= W.Alert.Early.branded_min_plus / A.weapon_sensitivity
     then
       return make_alert(it, "Early weapon", E.WEAPON, M.early_weap)
     end
@@ -282,14 +282,14 @@ end
 
 -- get_upgrade_alert() subroutines
 local function can_use_2h_without_losing_shield()
-  return BRC.you.free_offhand() or (you.skill("Shields") < H.Alert.AddHand.ignore_sh_lvl)
+  return BRC.you.free_offhand() or (you.skill("Shields") < W.Alert.AddHand.ignore_sh_lvl)
 end
 
 local function check_upgrade_free_offhand(it, ratio)
   local it_ego = BRC.eq.get_ego(it)
-  if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > H.Alert.new_ego then
+  if it_ego and not util.contains(_weapon_cache.egos, it_ego) and ratio > W.Alert.new_ego then
     return make_alert(it, "New ego (2-handed)", E.EGO, M.weap_ego)
-  elseif ratio > H.Alert.AddHand.not_using then
+  elseif ratio > W.Alert.AddHand.not_using then
     return make_alert(it, "2-handed weapon", E.TWO_HAND, M.upgrade_weap)
   end
   return false
@@ -299,7 +299,7 @@ local function check_upgrade_lose_shield(it, cur, ratio)
   if (
       BRC.eq.get_ego(it)
       and not BRC.eq.get_ego(cur)
-      and ratio > H.Alert.AddHand.add_ego_lose_sh
+      and ratio > W.Alert.AddHand.add_ego_lose_sh
     )
   then
     return make_alert(it, "2-handed weapon (Gain ego)", E.TWO_HAND, M.weap_ego)
@@ -312,15 +312,15 @@ local function check_upgrade_no_hand_loss(it, cur, ratio)
   if BRC.eq.get_ego(it, true) then -- Don't overvalue Speed/Heavy egos (only consider their DPS)
     local it_ego = BRC.eq.get_ego(it)
     if not BRC.eq.get_ego(cur) then
-      if ratio > H.Alert.gain_ego then
+      if ratio > W.Alert.gain_ego then
         return make_alert(it, "Gain ego", E.EGO, M.weap_ego)
       end
-    elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > H.Alert.new_ego then
+    elseif not util.contains(_weapon_cache.egos, it_ego) and ratio > W.Alert.new_ego then
       return make_alert(it, "New ego", E.EGO, M.weap_ego)
     end
   end
 
-  if ratio > H.Alert.pure_dps then
+  if ratio > W.Alert.pure_dps then
     return make_alert(it, "DPS increase", E.WEAPON, M.upgrade_weap)
   end
 
@@ -358,7 +358,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   end
 
   -- Get ratio of weap_score / best_score. Penalize lower-trained skills
-  local damp = H.Alert.low_skill_penalty_damping
+  local damp = W.Alert.low_skill_penalty_damping
   local penalty = (BRC.you.skill(it.weap_skill) + damp) / (BRC.you.skill(top_attack_skill) + damp)
   local ratio = penalty * get_score(it) / best_score * A.weapon_sensitivity
 
