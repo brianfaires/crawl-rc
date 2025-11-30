@@ -262,10 +262,10 @@ local function ready_after_shaft()
 end
 
 ---- Crawl hook functions ----
-function f_runrest_features.c_message(text, _)
-  if C.temple_search then c_message_temple(text) end
-  if C.gauntlet_search then c_message_gauntlet(text) end
-  if C.after_shaft then c_message_after_shaft(text) end
+function f_runrest_features.c_message(...)
+  if C.temple_search then c_message_temple(...) end
+  if C.gauntlet_search then c_message_gauntlet(...) end
+  if C.after_shaft then c_message_after_shaft(...) end
 end
 
 function f_runrest_features.ready()

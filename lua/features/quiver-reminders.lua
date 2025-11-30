@@ -42,7 +42,7 @@ end
 
 ---- Macro function: Fire from quiver ----
 function macro_brc_fire()
-  if BRC.active == false or BRC.Config.quiver_reminders.disabled then
+  if BRC.active == false or f_quiver_reminders.Config.disabled then
     return BRC.util.do_cmd("CMD_FIRE")
   end
 
