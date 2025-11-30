@@ -109,7 +109,7 @@ function f_remind_id.ready()
     if have_unid_item() and have_scroll_of_id() then
       local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), C.emoji)
       BRC.mpr.stop(msg)
-      if C.read_id_hotkey then
+      if C.read_id_hotkey and BRC.Hotkey then
         BRC.Hotkey.set("read", "scroll of identify", false, function()
           for _, inv in ipairs(items.inventory()) do
             if inv.name("qual") == "scroll of identify" then

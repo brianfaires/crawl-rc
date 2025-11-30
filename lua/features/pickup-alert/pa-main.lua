@@ -163,9 +163,9 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   -- Set hotkeys
   if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    if A.hotkey_pickup then BRC.Hotkey.pickup(it.name(), true) end
+    if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it.name(), true) end
   else
-    if A.hotkey_travel then BRC.Hotkey.waypoint(it.name()) end
+    if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it.name()) end
   end
 
   return true

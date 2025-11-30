@@ -47,7 +47,6 @@ BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 -- BRC module tables (Don't overwrite existing globals)
 BRC.Data = BRC.Data or {}
-BRC.Hotkey = BRC.Hotkey or {}
 BRC.mpr = BRC.mpr or {}
 BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
@@ -87,47 +86,6 @@ function BRC.Data.persist(name, default_value)
   end)
 
   return _G[name]
-end
-
--- BRC.Hotkey module
-BRC.Hotkey.BRC_FEATURE_NAME = "hotkey"
-BRC.Hotkey.Config = {
-  key = { keycode = BRC.KEYS.ENTER, name = "[Enter]" },
-  skip_keycode = BRC.KEYS.ESC,
-  equip_hotkey = true, -- Offer to equip after picking up equipment
-  wait_for_safety = true, -- Don't expire the hotkey with monsters in view
-  explore_clears_queue = true, -- Clear the hotkey queue on explore
-} -- BRC.Hotkey.Config (do not remove this comment)
-local WAYPOINT_MUTES = {
-  "Assign waypoint to what number",
-  "Existing waypoints",
-  "Delete which waypoint",
-  "\\(\\d\\) ",
-  "All waypoints deleted",
-  "You're already here!",
-  "Okay\\, then\\.",
-  "Unknown command",
-  "Waypoint \\d re-assigned",
-  "Waypoints will disappear",
-} -- WAYPOINT_MUTES (do not remove this comment)
-local C -- config alias
-local action_queue
-local cur_action
-local delay_expire
-
-function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
-  local act = {
-    msg = BRC.txt.lightgreen(prefix) .. (suffix and (" " .. BRC.txt.white(suffix)) or ""),
-    action = f_action,
-    condition = f_condition or function() return true end,
-    cleanup = f_cleanup or function() end,
-  } -- act (do not remove this comment)
-
-  if push_front then
-    table.insert(action_queue, 1, act)
-  else
-    table.insert(action_queue, act)
-  end
 end
 
 -- BRC.mpr module
@@ -364,7 +322,7 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
-      if C.remove_faith_hotkey then
+      if C.remove_faith_hotkey and BRC.Hotkey then
         BRC.Hotkey.set("remove", "amulet of faith", false, function()
           items.equipped_at("amulet"):remove()
         end)

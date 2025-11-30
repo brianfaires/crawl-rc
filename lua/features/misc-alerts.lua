@@ -61,7 +61,7 @@ local function alert_remove_faith()
       if you.god() == "Uskayaw" then return end
       BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
       ma_alerted_max_piety = true
-      if C.remove_faith_hotkey then
+      if C.remove_faith_hotkey and BRC.Hotkey then
         BRC.Hotkey.set("remove", "amulet of faith", false, function()
           items.equipped_at("amulet"):remove()
         end)

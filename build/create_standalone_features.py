@@ -31,7 +31,6 @@ BRC_MODULES = {
     "BRC.it": util_dir / "item.lua",
     "BRC.opt": util_dir / "options.lua",
     "BRC.you": util_dir / "you.lua",
-    "BRC.Hotkey": core_dir / "hotkey.lua",
     "BRC.Configs": core_dir / "config.lua",
 }
 
@@ -351,7 +350,7 @@ class DependencyAnalyzer:
     
     def _extract_top_level(self):
         for module in list(self.used_modules):
-            if module == "BRC.Data":
+            if module in ["BRC.Data", "BRC.Hotkey"]:
                 continue
             init_code = extract_top_level(BRC_MODULES[module])
             if init_code:
@@ -360,7 +359,7 @@ class DependencyAnalyzer:
     
     def _extract_local_functions(self):
         for module in list(self.used_modules):
-            if module == "BRC.Data":
+            if module in ["BRC.Data", "BRC.Hotkey"]:
                 continue
             
             all_local_funcs = extract_local_functions(BRC_MODULES[module])
