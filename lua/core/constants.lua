@@ -71,10 +71,12 @@ BRC.WEAP_SCHOOLS = {
 
 ---- Branches ----
 BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
-BRC.PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
-  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
-} -- BRC.PORTAL_NAMES (do not remove this comment)
+BRC.PORTAL_FEATURE_NAMES = {
+  Bailey = "enter_bailey", Bazaar = "enter_bazaar", Desolation = "enter_desolation",
+  Gauntlet = "enter_gauntlet", IceCv = "enter_ice_cave", Necropolis = "enter_necropolis",
+  Ossuary = "enter_ossuary", Sewer = "enter_sewer", Trove = "enter_trove",
+  Volcano = "enter_volcano", Wizlab = "enter_wizlab", Zig = "exit_ziggurat",
+} -- BRC.PORTAL_FEATURE_NAMES (do not remove this comment)
 
 ---- Egos ----
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }

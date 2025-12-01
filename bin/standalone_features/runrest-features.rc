@@ -36,10 +36,12 @@ BRC.COL = {
 
 BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
 
-BRC.PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
-  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
-} -- BRC.PORTAL_NAMES (do not remove this comment)
+BRC.PORTAL_FEATURE_NAMES = {
+  Bailey = "enter_bailey", Bazaar = "enter_bazaar", Desolation = "enter_desolation",
+  Gauntlet = "enter_gauntlet", IceCv = "enter_ice_cave", Necropolis = "enter_necropolis",
+  Ossuary = "enter_ossuary", Sewer = "enter_sewer", Trove = "enter_trove",
+  Volcano = "enter_volcano", Wizlab = "enter_wizlab", Zig = "exit_ziggurat",
+} -- BRC.PORTAL_FEATURE_NAMES (do not remove this comment)
 
 
 -- BRC module tables (Don't overwrite existing globals)
@@ -241,10 +243,11 @@ end
 
 -- Portal exit functions
 local function ready_ignore_portals()
-  if stop_on_portals and util.contains(BRC.PORTAL_NAMES, you.branch()) then
+  local in_portal = util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch())
+  if stop_on_portals and in_portal then
     stop_on_portals = false
     BRC.opt.explore_stop("portals", false)
-  elseif not stop_on_portals and not util.contains(BRC.PORTAL_NAMES, you.branch()) then
+  elseif not stop_on_portals and not in_portal then
     stop_on_portals = true
     BRC.opt.explore_stop("portals", true)
   end

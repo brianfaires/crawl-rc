@@ -32,10 +32,12 @@ BRC.COL = {
 
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
-BRC.PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
-  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
-} -- BRC.PORTAL_NAMES (do not remove this comment)
+BRC.PORTAL_FEATURE_NAMES = {
+  Bailey = "enter_bailey", Bazaar = "enter_bazaar", Desolation = "enter_desolation",
+  Gauntlet = "enter_gauntlet", IceCv = "enter_ice_cave", Necropolis = "enter_necropolis",
+  Ossuary = "enter_ossuary", Sewer = "enter_sewer", Trove = "enter_trove",
+  Volcano = "enter_volcano", Wizlab = "enter_wizlab", Zig = "exit_ziggurat",
+} -- BRC.PORTAL_FEATURE_NAMES (do not remove this comment)
 
 
 -- BRC module tables (Don't overwrite existing globals)
@@ -203,7 +205,7 @@ function macro_brc_go_up()
   local where = you.where()
   if where == "D:1" and you.have_orb()
     or where == "Temple"
-    or util.contains(BRC.PORTAL_NAMES, you.branch())
+    or util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch())
   then
     crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else

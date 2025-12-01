@@ -375,8 +375,13 @@ brc_config_explicit = {
     -- No config; See answer-prompts.lua for Questions/Answers
   },
 
+  ["announce-items"] = {
+    disabled = true, -- Disabled by default. Intended only for turncount runs.
+    announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+  },
+
   ["bread-swinger"] = {
-    disabled = false,
+    disabled = true, -- Disable by default
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
     alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
@@ -815,7 +820,6 @@ brc_config_explicit = {
   ["alert-monsters"] = {
     disabled = false,
     sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
-    fm_on_uniques = true, -- Stop on all Uniques & Pan lords
     pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable
     disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
     debug_alert_monsters = false, -- Get a message when alerts toggle off/on
@@ -1027,7 +1031,7 @@ default_manual_training = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
-monster_alert = 
+monster_alert += uniques
 
 autofight_stop = 40
 hp_warning = 20
@@ -1204,7 +1208,7 @@ spell_slot ^= Dragon's Call:DCRGN
 spell_slot ^= Forge Monarch Bomb:FMBONRCHGEA
 spell_slot ^= Forge Phalanx Beetle:FPBENXORG
 spell_slot ^= Fortress Blast:FBRTSLA
-spell_slot ^= Foxfire:FXOIRE
+spell_slot ^= Foxfire:abcFXOIRE
 spell_slot ^= Fugue of the Fallen:FUGALNE
 spell_slot ^= Fulsome Fusillade:FLSOMADE
 spell_slot ^= Gloom:GLOM
@@ -1250,7 +1254,7 @@ spell_slot ^= Summon Ice Beast:ISB
 spell_slot ^= Summon Lightning Spire:SMLIRNG
 spell_slot ^= Summon Mana Viper:MSV
 spell_slot ^= Summon Seismosaurus Egg:EGSMIEOAU
-spell_slot ^= Summon Small Mammal:SMLAUON
+spell_slot ^= Summon Small Mammal:abSMLAUON
 spell_slot ^= Swiftness:SWIFT
 spell_slot ^= Volatile Blastmotes:VBOLMASTE
 :if you.class() == "Summoner" then
@@ -1838,10 +1842,12 @@ BRC.WEAP_SCHOOLS = {
 
 ---- Branches ----
 BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
-BRC.PORTAL_NAMES = {
-  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis",
-  "Ossuary", "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
-} -- BRC.PORTAL_NAMES (do not remove this comment)
+BRC.PORTAL_FEATURE_NAMES = {
+  Bailey = "enter_bailey", Bazaar = "enter_bazaar", Desolation = "enter_desolation",
+  Gauntlet = "enter_gauntlet", IceCv = "enter_ice_cave", Necropolis = "enter_necropolis",
+  Ossuary = "enter_ossuary", Sewer = "enter_sewer", Trove = "enter_trove",
+  Volcano = "enter_volcano", Wizlab = "enter_wizlab", Zig = "exit_ziggurat",
+} -- BRC.PORTAL_FEATURE_NAMES (do not remove this comment)
 
 ---- Egos ----
 BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
@@ -3611,6 +3617,10 @@ BRC.Hotkey.Config = {
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view
   explore_clears_queue = true, -- Clear the hotkey queue on explore
+  move_to_feature = {
+    -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
+    enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar"
+  },
 } -- BRC.Hotkey.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -3623,9 +3633,8 @@ local WAYPOINT_MUTES = {
   "You're already here!",
   "Okay\\, then\\.",
   "Unknown command",
-  "Waypoint \\d re-assigned",
+  "Waypoint \\d (re-)?assigned",
   "Waypoints will disappear",
-  "Re-assigned waypoint",
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
@@ -3779,16 +3788,32 @@ function BRC.Hotkey.pickup(name, push_front)
   BRC.Hotkey.set("pickup", name, push_front, do_pickup, condition)
 end
 
---- Set hotkey as 'move to <name>'; searches for the item by name in LOS
-function BRC.Hotkey.waypoint(name, push_front)
-  if util.contains(BRC.PORTAL_NAMES, you.branch()) then return end -- Can't auto-travel
+--- Set hotkey as 'move to <name>', if it's in LOS
+-- If feature_name provided, moves to that feature, otherwise searches for the item by name
+function BRC.Hotkey.waypoint(name, push_front, feature_name)
+  if util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch()) then
+    return -- Can't auto-travel
+  end
 
-  local x, y = BRC.it.get_xy(name)
+  local x, y
+  if feature_name ~= nil then
+    local r = you.los()
+    for dx = -r, r do
+      for dy = -r, r do
+        if view.feature_at(dx, dy) == feature_name then
+          x, y = dx, dy
+          break
+        end
+      end
+    end
+  else
+    x, y = BRC.it.get_xy(name)
+  end
   if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
 
   local waynum = get_avail_waypoint()
   if not waynum then return end
-  BRC.opt.single_turn_mute("Waypoint " .. waynum .. " assigned")
+  util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
   travel.set_waypoint(waynum, x, y)
 
   local is_valid = function()
@@ -3815,7 +3840,9 @@ function BRC.Hotkey.waypoint(name, push_front)
     crawl.sendkeys(keys)
     crawl.flush_input()
 
-    BRC.Hotkey.pickup(name, true)
+    if not feature_name then
+      BRC.Hotkey.pickup(name, true)
+    end
   end
 
   BRC.Hotkey.set("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
@@ -3830,6 +3857,23 @@ function BRC.Hotkey.ch_start_running(kind)
   if BRC.Hotkey.Config.explore_clears_queue and kind:contains("explore") then
     action_queue = {}
     cur_action = nil
+  end
+end
+
+function BRC.Hotkey.c_message(text, channel)
+  if channel ~= "plain" then return end
+  if BRC.Hotkey.Config.move_to_feature == nil then return end
+  if not text:contains("Found") then return end
+
+  for k, v in pairs(BRC.Hotkey.Config.move_to_feature) do
+    if text:contains(v) then
+      BRC.Hotkey.waypoint(v, true, k)
+    end
+  end
+  for k, v in pairs(BRC.PORTAL_FEATURE_NAMES) do
+    if text:contains(v) then
+      BRC.Hotkey.waypoint(v, true, k)
+    end
   end
 end
 
@@ -4252,7 +4296,6 @@ f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 f_alert_monsters.Config = {
   sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
-  fm_on_uniques = true, -- Stop on all Uniques & Pan lords
   pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable
   disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
@@ -4451,12 +4494,6 @@ f_alert_monsters.Config.init = [[
         pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
                     "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
       })
-    end
-
-    -- If configured, add fm for all uniques and pan lords
-    if f_alert_monsters.Config.fm_on_uniques then
-      local uniques_pattern = "monster_warning:encounter.*(?-i:[A-Z]).*(?<!rb Guardian)"
-      BRC.opt.force_more_message(uniques_pattern, true)
     end
 ]]
 ------------------- End config section -------------------
@@ -6090,7 +6127,7 @@ function macro_brc_go_up()
   local where = you.where()
   if where == "D:1" and you.have_orb()
     or where == "Temple"
-    or util.contains(BRC.PORTAL_NAMES, you.branch())
+    or util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch())
   then
     crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else
@@ -6785,10 +6822,11 @@ end
 
 -- Portal exit functions
 local function ready_ignore_portals()
-  if stop_on_portals and util.contains(BRC.PORTAL_NAMES, you.branch()) then
+  local in_portal = util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch())
+  if stop_on_portals and in_portal then
     stop_on_portals = false
     BRC.opt.explore_stop("portals", false)
-  elseif not stop_on_portals and not util.contains(BRC.PORTAL_NAMES, you.branch()) then
+  elseif not stop_on_portals and not in_portal then
     stop_on_portals = true
     BRC.opt.explore_stop("portals", true)
   end
@@ -7592,6 +7630,7 @@ local A -- alert config alias
 local M -- more config alias
 local pause_pa_system
 local hold_alerts_for_next_turn
+local function_queue -- queue of actions for next ready()
 
 ---- Initialization ----
 function f_pickup_alert.init()
@@ -7600,6 +7639,7 @@ function f_pickup_alert.init()
   M = f_pickup_alert.Config.Alert.More
   pause_pa_system = false
   hold_alerts_for_next_turn = false
+  function_queue = {}
 
   BRC.mpr.debug("Initialize pickup-alert submodules...")
   if f_pa_data.init then f_pa_data.init() end
@@ -7739,11 +7779,14 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   if not hold_alerts_for_next_turn then you.stop_activity() end
 
-  -- Set hotkeys
-  if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it.name(), true) end
-  else
-    if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it.name()) end
+  local it_name = it.name()
+  function_queue[#function_queue + 1] = function()
+    -- Set hotkeys (have to do next turn, so player position is updated for setting waypoint)
+    if util.exists(you.floor_items(), function(fl) return fl.name() == it_name end) then
+      if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it_name, true) end
+    else
+      if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it_name) end
+    end
   end
 
   return true
@@ -7816,6 +7859,9 @@ end
 
 function f_pickup_alert.ready()
   hold_alerts_for_next_turn = false
+  util.foreach(function_queue, function(f) f() end)
+  function_queue = {}
+
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
@@ -8895,8 +8941,8 @@ function f_pa_weapons.alert_weapon(it)
   if not a.msg:contains("First ") then
     _weapon_cache.refresh(true)
     a = get_weapon_alert(it)
+    if not a then return false end
   end
-  if not a then return false end
 
   return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option)
 end

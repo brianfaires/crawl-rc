@@ -12,6 +12,10 @@ BRC.Hotkey.Config = {
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view
   explore_clears_queue = true, -- Clear the hotkey queue on explore
+  move_to_feature = {
+    -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
+    enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar"
+  },
 } -- BRC.Hotkey.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -24,9 +28,8 @@ local WAYPOINT_MUTES = {
   "You're already here!",
   "Okay\\, then\\.",
   "Unknown command",
-  "Waypoint \\d re-assigned",
+  "Waypoint \\d (re-)?assigned",
   "Waypoints will disappear",
-  "Re-assigned waypoint",
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
@@ -180,16 +183,32 @@ function BRC.Hotkey.pickup(name, push_front)
   BRC.Hotkey.set("pickup", name, push_front, do_pickup, condition)
 end
 
---- Set hotkey as 'move to <name>'; searches for the item by name in LOS
-function BRC.Hotkey.waypoint(name, push_front)
-  if util.contains(BRC.PORTAL_NAMES, you.branch()) then return end -- Can't auto-travel
+--- Set hotkey as 'move to <name>', if it's in LOS
+-- If feature_name provided, moves to that feature, otherwise searches for the item by name
+function BRC.Hotkey.waypoint(name, push_front, feature_name)
+  if util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch()) then
+    return -- Can't auto-travel
+  end
 
-  local x, y = BRC.it.get_xy(name)
+  local x, y
+  if feature_name ~= nil then
+    local r = you.los()
+    for dx = -r, r do
+      for dy = -r, r do
+        if view.feature_at(dx, dy) == feature_name then
+          x, y = dx, dy
+          break
+        end
+      end
+    end
+  else
+    x, y = BRC.it.get_xy(name)
+  end
   if x == nil then return BRC.mpr.debug(name .. " not found in LOS") end
 
   local waynum = get_avail_waypoint()
   if not waynum then return end
-  BRC.opt.single_turn_mute("Waypoint " .. waynum .. " assigned")
+  util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
   travel.set_waypoint(waynum, x, y)
 
   local is_valid = function()
@@ -216,7 +235,9 @@ function BRC.Hotkey.waypoint(name, push_front)
     crawl.sendkeys(keys)
     crawl.flush_input()
 
-    BRC.Hotkey.pickup(name, true)
+    if not feature_name then
+      BRC.Hotkey.pickup(name, true)
+    end
   end
 
   BRC.Hotkey.set("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
@@ -231,6 +252,23 @@ function BRC.Hotkey.ch_start_running(kind)
   if BRC.Hotkey.Config.explore_clears_queue and kind:contains("explore") then
     action_queue = {}
     cur_action = nil
+  end
+end
+
+function BRC.Hotkey.c_message(text, channel)
+  if channel ~= "plain" then return end
+  if BRC.Hotkey.Config.move_to_feature == nil then return end
+  if not text:contains("Found") then return end
+
+  for k, v in pairs(BRC.Hotkey.Config.move_to_feature) do
+    if text:contains(v) then
+      BRC.Hotkey.waypoint(v, true, k)
+    end
+  end
+  for k, v in pairs(BRC.PORTAL_FEATURE_NAMES) do
+    if text:contains(v) then
+      BRC.Hotkey.waypoint(v, true, k)
+    end
   end
 end
 

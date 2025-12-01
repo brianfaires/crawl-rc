@@ -64,7 +64,7 @@ function macro_brc_go_up()
   local where = you.where()
   if where == "D:1" and you.have_orb()
     or where == "Temple"
-    or util.contains(BRC.PORTAL_NAMES, you.branch())
+    or util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch())
   then
     crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else

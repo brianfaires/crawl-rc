@@ -14,6 +14,7 @@ local A -- alert config alias
 local M -- more config alias
 local pause_pa_system
 local hold_alerts_for_next_turn
+local function_queue -- queue of actions for next ready()
 
 ---- Initialization ----
 function f_pickup_alert.init()
@@ -22,6 +23,7 @@ function f_pickup_alert.init()
   M = f_pickup_alert.Config.Alert.More
   pause_pa_system = false
   hold_alerts_for_next_turn = false
+  function_queue = {}
 
   BRC.mpr.debug("Initialize pickup-alert submodules...")
   if f_pa_data.init then f_pa_data.init() end
@@ -161,11 +163,14 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   if not hold_alerts_for_next_turn then you.stop_activity() end
 
-  -- Set hotkeys
-  if util.exists(you.floor_items(), function(fl) return fl.name() == it.name() end) then
-    if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it.name(), true) end
-  else
-    if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it.name()) end
+  local it_name = it.name()
+  function_queue[#function_queue + 1] = function()
+    -- Set hotkeys (have to do next turn, so player position is updated for setting waypoint)
+    if util.exists(you.floor_items(), function(fl) return fl.name() == it_name end) then
+      if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it_name, true) end
+    else
+      if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it_name) end
+    end
   end
 
   return true
@@ -238,6 +243,9 @@ end
 
 function f_pickup_alert.ready()
   hold_alerts_for_next_turn = false
+  util.foreach(function_queue, function(f) f() end)
+  function_queue = {}
+
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
