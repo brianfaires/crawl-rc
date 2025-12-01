@@ -1,8 +1,4 @@
-### TODO
-1. [NEW] standalone features:
-  - pickup-alert (unskilled_egos_usable, BrandBonus)
-
-### Watch for:
+### Testing reminders:
 - Added remember_alert() to pickup
 
 ### crawl PRs / issues affecting BRC
