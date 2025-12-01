@@ -2,6 +2,7 @@
 -- BRC feature module: inscribe-stats
 -- @module f_inscribe_stats
 -- Inscribes and updates weapon DPS/dmg/delay, and armour AC/EV/SH, for items in inventory.
+-- For Coglin weapons, evaluates as if swapping out the primary weapon (for artefact stat changes)
 ---------------------------------------------------------------------------------------------------
 
 f_inscribe_stats = {}

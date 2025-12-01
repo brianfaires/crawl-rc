@@ -1,4 +1,4 @@
-### To do / test notes
+### TODO / test notes
 
 
 ### crawl PRs / issues affecting BRC
@@ -15,7 +15,7 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
   - Wait for ancestor respawn
 1. Ancestor reappear; stop rest, but not explore
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
-1. colorize inscriptions of artefacts (arte inscriptions aren't part of `item.inscription`)
+1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
 1. 0.34: Make use of explore_auto_rest_status to replace fully-recover.lua.
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
     (Maybe could fix with >1 ready() / turn... Try macro'ing: { WAIT, READY, EXPLORE }?)
@@ -28,7 +28,3 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
 1. disable basic jewellery pickup after configurable xl
-
-### Known issues / Design choices
-1. Emojis load at startup based on BRC.Config.emojis; need a restart to change that setting
-1. Coglin DPS calcs for non-wielded weapons evaluate as if swapping out primary weapon (for artefact stat changes)
