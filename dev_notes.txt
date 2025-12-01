@@ -2,7 +2,6 @@
 - [REMINDER] Added remember_alert() to pickup
 
 ### Fixed (to confirm)
-- Remove hotkey move to portal entrances?
 - [BUG] travel into item; waypoint OOB; didn't update player location yet.
   - Doesn't affect o-o-o-o w/ no monsters
 

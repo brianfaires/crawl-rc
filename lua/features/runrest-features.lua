@@ -126,7 +126,7 @@ end
 
 -- Portal exit functions
 local function ready_ignore_portals()
-  local in_portal = util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch())
+  local in_portal = util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch())
   if stop_on_portals and in_portal then
     stop_on_portals = false
     BRC.opt.explore_stop("portals", false)

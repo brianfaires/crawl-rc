@@ -14,7 +14,13 @@ BRC.Hotkey.Config = {
   explore_clears_queue = true, -- Clear the hotkey queue on explore
   move_to_feature = {
     -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
-    enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar"
+    enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
+    enter_bailey = "flagged portal", enter_bazaar = "bazaar",
+    enter_desolation = "crumbling gateway", enter_gauntlet = "gauntlet",
+    enter_ice_cave = "frozen archway", enter_necropolis = "phantasmal passage",
+    enter_ossuary = "sand-covered staircase", enter_sewer = "glowing drain",
+    enter_trove = "trove of treasure", enter_volcano = "dark tunnel",
+    enter_wizlab = "magical portal", enter_ziggurat = "ziggurat",
   },
 } -- BRC.Hotkey.Config (do not remove this comment)
 
@@ -186,7 +192,7 @@ end
 --- Set hotkey as 'move to <name>', if it's in LOS
 -- If feature_name provided, moves to that feature, otherwise searches for the item by name
 function BRC.Hotkey.waypoint(name, push_front, feature_name)
-  if util.contains(util.keys(BRC.PORTAL_FEATURE_NAMES), you.branch()) then
+  if util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch()) then
     return -- Can't auto-travel
   end
 
