@@ -222,6 +222,7 @@ brc_config_speed = {
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
     crawl.setopt("view_delay = 0")
     crawl.setopt("use_animations = 0")
+    crawl.setopt("autofight_stop = 15")
   ]],
 } -- brc_config_speed (do not remove this comment)
 
