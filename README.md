@@ -70,7 +70,7 @@ _(disabled by default; enabled in the turncount config)_
 
 ## Cherry-Picking Individual Features
 
-Want to use just one feature without the full BRC system? The script `build/standalone_feature.py` converts the feature modules to standalone files in `bin/features/` that can be copy-pasted into your RC. 
+Want to use just one feature without the full BRC system? The script `build/create_standalone_features.py` converts the feature modules to standalone files in `bin/standalone_features/` that can be copy-pasted into your RC. 
 
 **Remember to merge hooks if you already have them defined!**
 
@@ -130,7 +130,7 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 Each feature defines its own `Config` table, containing options and default values.
 
 Configuration for all features is intended to live at the top of `buehler.rc`. A "Main" config can specify a feature name and any of its options to override default values.
-*(See all available config options in `config/Explicit.lua` - it's a lot though)*
+*(See all available config options in `lua/config/explicit.lua` - it's a lot though)*
 
 **Ex:** The `inscribe-stats` feature inscribes items with their current stats (AC, EV, DPS, ...).
 To disable this for weapons, add this to your config:
@@ -185,7 +185,7 @@ BRC.Config = {
 } -- BRC.Config
 ```
 
-### 4. Add Your Own Features
+### 5. Add Your Own Features
 
 BRC will find and load any global table that contains a `BRC_FEATURE_NAME`. Just define a table anywhere in your RC and everything else will happen automatically.
 
@@ -287,11 +287,14 @@ BRC.Configs.Testing = {
 
 ```
 bin/                    # Pre-built RC files
-├── buehler.rc            # Core + all features (Use this for webtiles)
+├── buehler.rc            # Single-file result of all files
 ├── standalone_features/  # Each feature, with its dependencies, as a self-contained file
 |   └── *.rc                # One RC file per feature, including crawl hooks
+build/                  # Python scripts to generate bin/
+rc/                     # RC file components
 lua/                    # Lua files
 ├── core/                   # Core BRC system
+│   ├── _header_.lua            # Stuff at top of buehler.rc, before config 
 │   ├── brc.lua                 # Main coordinator
 │   ├── config.lua              # Config definitions
 │   ├── data.lua                # Manages persistent data + backup
@@ -302,8 +305,6 @@ lua/                    # Lua files
 │   ├── _template.lua           # Template for new features
 │   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
 │   └── ...                     # Other features
-rc/                     # RC file components
-build/                  # Python scripts to generate bin/
 ```
 
 ---
@@ -316,7 +317,7 @@ Use the Lua interpreter (open with the `~` key) for these commands:
 -- BRC management
 BRC.active = false                    -- Disable entire BRC system
 BRC.init("config-name")               -- Load a diff config (keep persistent data)
-BRC.reset()                           -- Reset everything select a config
+BRC.reset()                           -- Reset everything and select a config
 BRC.reset("config-name")              -- Reset and load config by name
 BRC.Data.reset()                      -- Reset persistent data
 BRC.unregister("feature-name")        -- Remove a feature
@@ -350,10 +351,12 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
   # More RC
   ```
 - If running crawl locally:
+  - **Switching between characters** does not re-execute lua files. `init()` will be called, so all locals are set to defaults in init functions.
+  It's safest to use `buehler.rc` as a single file, but using `init.txt` will still work, and provides better line numbers in error messages.
+  It's generally good to restart crawl when switching between characters, to ensure all lua code re-executes.
   - **Regex issues**: Some regular expression patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
   - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT MacOS doesn't, so I configure `BRC.Config.emojis = false` locally.
   If you have one, define it in `rc/display.rc`, and LMK!
-  - **Switching between characters** does not re-execute lua files. `init()` will be called, so all locals are set to defaults in init functions. But it never hurts to restart crawl when switching between characters.
 
 **RC syntax errors**: If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You may be prompted to restore data from backup.
 

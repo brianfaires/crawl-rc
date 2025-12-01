@@ -3,7 +3,7 @@ BRC = {}
 --- All other configs start with these values
 -- These are loaded on startup. Changing them requires a restart.
 BRC.Config = {
-  emojis = false, -- Include emojis in alerts
+  emojis = true, -- Include emojis in alerts
 
   --- Specify which config (defined below) to use, or how to choose one.
   --   "<config name>": Use the named config
