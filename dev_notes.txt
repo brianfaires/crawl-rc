@@ -1,13 +1,10 @@
 ### Testing notes:
 - [REMINDER] Added remember_alert() to pickup
-- [FIX] what's causing force mores early?
-  - orc, goblin, kobold, hound, ogre
-- [BUG] travel into item; waypoint OOB; didn't update player location yet.
-  - Doesn't affect o-o-o-o w/ no monsters
-
 
 ### Fixed (to confirm)
 - Remove hotkey move to portal entrances?
+- [BUG] travel into item; waypoint OOB; didn't update player location yet.
+  - Doesn't affect o-o-o-o w/ no monsters
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->
