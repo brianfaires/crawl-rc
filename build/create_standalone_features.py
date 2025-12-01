@@ -572,12 +572,19 @@ class StandaloneGenerator:
           f"-- Minimal BRC namespace (Don't overwrite existing globals)\nBRC = BRC or {{}}",
           f"BRC.Config = BRC.Config or {{}}",
           f"BRC.Config.emojis = {get_default_config_boolean('emojis')}",
-          *(["BRC.Config.mpr = BRC.Config.mpr or {}"] if self._needs_debug() or self._needs_stderr() else [])
         ])
+        if self.feature_var == "f_pickup_alert":
+          content += "\nBRC.Config.unskilled_egos_usable = " + get_default_config_boolean('unskilled_egos_usable')
+          bb = match_constant_definition(_get_cached_text(BRC_MODULES["BRC.Configs"]), "Configs.Default.BrandBonus")
+          content += "\n" + bb.replace("BRC.Configs.Default.BrandBonus", "BRC.Config.BrandBonus")
+
+        if self._needs_debug() or self._needs_stderr():
+          content += "\nBRC.Config.mpr = BRC.Config.mpr or {}"
         if self._needs_debug():
           content += f"\nBRC.Config.mpr.show_debug_messages = {get_default_config_boolean('show_debug_messages')}"
         if self._needs_stderr():
           content += f"\nBRC.Config.mpr.logs_to_stderr = {get_default_config_boolean('logs_to_stderr')}"
+
         return content
     
     def _generate_constants(self) -> str:
@@ -630,19 +637,22 @@ class StandaloneGenerator:
         if not config_content:
             return ""
         
+        config_content = f"{self.feature_var} = {{}}\n" + config_content
+        
         # Simplify configs: always enabled, no BRC.txt.color(), no BRC.util.cntl()
         config_content = re.sub(r'(\s+disabled\s*=\s*)true', r'\1false', config_content)
         config_content = re.sub(r'BRC\.txt\.(\w+)\("([^"]+)"\)', r'"<\1>\2</\1>"', config_content)
         config_content = re.sub(r'BRC\.util\.cntl\("([^"]+)"\)', 
                                lambda m: f'string.byte("{m.group(1).upper()}") - 64', config_content)
-        dmg_type_map = { "unbranded": "1", "plain": "2", "branded": "3", "scoring": "4" }
-        config_content = re.sub(r'BRC\.DMG_TYPE\.(\w+)', lambda m: dmg_type_map[m.group(1)], config_content)
+ 
+        # Prepend constants that are used in the config
+        for c in ["COL", "DMG_TYPE"]:
+            if f"BRC.{c}." in config_content:
+                const = match_constant_definition(_get_cached_text(BRC_CONSTANTS), c)
+                config_content = f"\n{const}\n\n{config_content}"
 
-        if "BRC.COL." in config_content:
-            lines = match_constant_definition(_get_cached_text(BRC_CONSTANTS), "COL")
-            config_content = f"\n{lines}\n\n{config_content}"
 
-        return f"{self.feature_var} = {{}}\n{config_content}"
+        return config_content
     
     def _generate_feature_code(self) -> str:
         content = re.sub(r'^\s*\w+\.BRC_FEATURE_NAME\s*=.*$', '', self.analyzer.content, flags=re.MULTILINE)
