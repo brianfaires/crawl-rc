@@ -11,7 +11,6 @@ f_alert_monsters = {}
 f_alert_monsters.BRC_FEATURE_NAME = "alert-monsters"
 f_alert_monsters.Config = {
   sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
-  fm_on_uniques = true, -- Stop on all Uniques & Pan lords
   pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable
   disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
   debug_alert_monsters = false, -- Get a message when alerts toggle off/on
@@ -210,12 +209,6 @@ f_alert_monsters.Config.init = [[
         pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
                     "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
       })
-    end
-
-    -- If configured, add fm for all uniques and pan lords
-    if f_alert_monsters.Config.fm_on_uniques then
-      local uniques_pattern = "monster_warning:encounter.*(?-i:[A-Z]).*(?<!rb Guardian)"
-      BRC.opt.force_more_message(uniques_pattern, true)
     end
 ]]
 ------------------- End config section -------------------

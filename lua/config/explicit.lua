@@ -89,8 +89,13 @@ brc_config_explicit = {
     -- No config; See answer-prompts.lua for Questions/Answers
   },
 
+  ["announce-items"] = {
+    disabled = true, -- Disabled by default. Intended only for turncount runs.
+    announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+  },
+
   ["bread-swinger"] = {
-    disabled = false,
+    disabled = true, -- Disable by default
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
     alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
@@ -529,7 +534,6 @@ brc_config_explicit = {
   ["alert-monsters"] = {
     disabled = false,
     sensitivity = 1.0, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
-    fm_on_uniques = true, -- Stop on all Uniques & Pan lords
     pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable
     disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
     debug_alert_monsters = false, -- Get a message when alerts toggle off/on

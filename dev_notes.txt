@@ -1,10 +1,13 @@
 ### Testing notes:
 - [REMINDER] Added remember_alert() to pickup
 - [FIX] what's causing force mores early?
-- [NEW] hotkey: go to temple
+  - orc, goblin, kobold, hound, ogre
+- [BUG] travel into item; waypoint OOB; didn't update player location yet.
+  - Doesn't affect o-o-o-o w/ no monsters
+
 
 ### Fixed (to confirm)
-- "Waypoint 9 re-assigned from D:4 to D:6" - when setting waypoint but not displaying msg yet
+- Remove hotkey move to portal entrances?
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->
@@ -32,7 +35,7 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
 1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
 1. autorest starts w/autopickup (if inv not full)
 1. level-specific fm ignores (eg vault warden on v:5)
-1. disable jewellery pickup after configurable xl
+1. disable basic jewellery pickup after configurable xl
 
 ### Known issues / Design choices
 1. Emojis load at startup based on BRC.Config.emojis; need a restart to change that setting

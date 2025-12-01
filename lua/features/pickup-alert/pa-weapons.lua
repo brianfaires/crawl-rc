@@ -420,8 +420,8 @@ function f_pa_weapons.alert_weapon(it)
   if not a.msg:contains("First ") then
     _weapon_cache.refresh(true)
     a = get_weapon_alert(it)
+    if not a then return false end
   end
-  if not a then return false end
 
   return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option)
 end

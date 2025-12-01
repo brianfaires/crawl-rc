@@ -89,7 +89,7 @@ spell_slot ^= Dragon's Call:DCRGN
 spell_slot ^= Forge Monarch Bomb:FMBONRCHGEA
 spell_slot ^= Forge Phalanx Beetle:FPBENXORG
 spell_slot ^= Fortress Blast:FBRTSLA
-spell_slot ^= Foxfire:FXOIRE
+spell_slot ^= Foxfire:abcFXOIRE
 spell_slot ^= Fugue of the Fallen:FUGALNE
 spell_slot ^= Fulsome Fusillade:FLSOMADE
 spell_slot ^= Gloom:GLOM
@@ -135,7 +135,7 @@ spell_slot ^= Summon Ice Beast:ISB
 spell_slot ^= Summon Lightning Spire:SMLIRNG
 spell_slot ^= Summon Mana Viper:MSV
 spell_slot ^= Summon Seismosaurus Egg:EGSMIEOAU
-spell_slot ^= Summon Small Mammal:SMLAUON
+spell_slot ^= Summon Small Mammal:abSMLAUON
 spell_slot ^= Swiftness:SWIFT
 spell_slot ^= Volatile Blastmotes:VBOLMASTE
 :if you.class() == "Summoner" then
