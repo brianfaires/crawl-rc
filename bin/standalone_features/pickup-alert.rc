@@ -63,7 +63,7 @@ f_pickup_alert.Config.Alert = {
 
   -- Each usable item is alerted once.
   one_time = {
-    "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+    "buckler", "kite shield", "tower shield", "crystal plate armour",
     "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
     "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
     "broad axe", "executioner's axe",
@@ -96,10 +96,10 @@ f_pickup_alert.Config.Alert = {
     one_time_alerts = true,
     artefact = false, -- Any artefact
     trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
-    orbs = false,
+    orbs = false, -- Unique orbs
     talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
-    staff_resists = false,
-    autopickup_disabled = false, -- Alerts for autopickup items, when autopickup is disabled
+    staff_resists = false, -- When a staff gives a missing resistance
+    autopickup_disabled = true, -- Alerts for autopickup items, when autopickup is disabled
   },
 } -- f_pickup_alert.Config.Alert (do not remove this comment)
 

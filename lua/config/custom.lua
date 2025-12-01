@@ -43,13 +43,16 @@ brc_config_custom = {
 
     Alert = {
       armour_sensitivity = 1, -- Adjust all armour alerts; range [0.5-2.0]; 0 to disable
-      weapon_sensitivity = 1,   -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
-      orbs = true,
-      staff_resists = true,     -- When a staff gives a missing resistance
-      talismans = true,
+      weapon_sensitivity = 1, -- Adjust all weapon alerts; range [0.5-2.0]; 0 to disable
+      orbs = true,            -- Unique orbs
+      staff_resists = true,   -- When a staff gives a missing resistance
 
-      one_time = { -- Alert the first time each item is found
-        "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+      talismans = true, -- Alert talismans, if their min skill <= Shapeshifting + talisman_lvl_diff
+      talisman_lvl_diff = you.class() == "Shapeshifter" and 27 or 6,
+
+      -- Alert the first time each item is found. Can require training with OTA_require_skill.
+      one_time = {
+        "buckler", "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
         "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
         "broad axe", "executioner's axe",
@@ -57,7 +60,7 @@ brc_config_custom = {
         "lajatang", "bardiche", "demon trident", "partisan", "trishula",
         "hand cannon", "triple crossbow",
       },
-      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- No one_time if skill < this
+      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- No alert if skill < this
 
       More = { -- Which alerts generate a force_more_message (some categories overlap)
         early_weap = false,       -- Good weapons found early
@@ -66,7 +69,7 @@ brc_config_custom = {
         body_armour = false,
         shields = true,
         aux_armour = false,
-        armour_ego = false,        -- New or diff egos
+        armour_ego = false,       -- New or diff egos
         high_score_weap = false,  -- Highest damage found
         high_score_armour = true, -- Highest AC found
         one_time_alerts = true,
@@ -74,7 +77,7 @@ brc_config_custom = {
         trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
         orbs = false,
         talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
-        staff_resists = false,
+        staff_resists = false,    -- When a staff gives a missing resistance
       },
     },
   },

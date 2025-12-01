@@ -189,8 +189,8 @@ brc_config_explicit = {
     disabled = false,
     -- Save current training targets and config, for race/class
     macro_save_key = 20, -- (Cntl-T) Keycode to save training targets and config
-    use_saved_training = true, -- Allow save/load of race/class training targets
-    use_saved_config = true, -- Allow save/load of BRC config
+    save_training = true, -- Allow save/load of race/class training targets
+    save_config = true, -- Allow save/load of BRC config
     prompt_before_load = true, -- Prompt before loading in a new game with same race+class
     allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
     allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
@@ -376,9 +376,9 @@ brc_config_explicit = {
       first_polearm = true,
       autopickup_disabled = true, -- If autopickup off, alert for items that would be autopicked up
 
-      -- Each usable item is alerted once.
+      -- Alert the first time each item is found. Can require training with OTA_require_skill.
       one_time = {
-        "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
+        "buckler", "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
         "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
         "broad axe", "executioner's axe",
@@ -386,8 +386,7 @@ brc_config_explicit = {
         "lajatang", "bardiche", "demon trident", "partisan", "trishula",
         "hand cannon", "triple crossbow",
       },
-      -- Only do one-time alerts if your skill >= this value, in weap_school/armour/shield
-      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 },
+      OTA_require_skill = { weapon = 2, armour = 2.5, shield = 0 }, -- No alert if skill < this
 
       hotkey_travel = true,
       hotkey_pickup = true,
@@ -411,9 +410,10 @@ brc_config_explicit = {
         one_time_alerts = true,
         artefact = false, -- Any artefact
         trained_artefacts = true, -- Artefacts where you have corresponding skill > 0
-        orbs = false,
+        orbs = false, -- Unique orbs
         talismans = you.class() == "Shapeshifter", -- True for shapeshifter, false for everyone else
-        staff_resists = false,
+        staff_resists = false, -- When a staff gives a missing resistance
+        autopickup_disabled = true, -- Alerts for autopickup items, when autopickup is disabled
       }, -- Alert.More
     }, -- Alert
 
@@ -690,37 +690,31 @@ brc_config_explicit = {
     }, -- Alerts
 
     init = [[
-        local alert_list = f_alert_monsters.Config.Alerts
+    local alert_list = f_alert_monsters.Config.Alerts
 
-        -- Mutators (only flash if immune)
-        util.append(alert_list, {
-          name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-          pattern = { "cacodemon", "neqoxec", "shining eye" }
-        })
+    -- Mutators (only flash if immune)
+    util.append(alert_list, {
+      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+      pattern = { "cacodemon", "neqoxec", "shining eye" }
+    })
 
-        -- Conditionally add miasma monsters
-        if not BRC.you.miasma_immune() then
-          util.append(alert_list, {
-            name = "miasma", cond = "always", cutoff = 0,
-            pattern = { "death drake", "tainted leviathan", "putrid mouth" }
-          })
-        end
+    -- Conditionally add miasma monsters
+    if not BRC.you.miasma_immune() then
+      util.append(alert_list, {
+        name = "miasma", cond = "always", cutoff = 0,
+        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+      })
+    end
 
-        -- Conditionally add tormentors
-        if not you.torment_immune() then
-          util.append(alert_list, {
-            name = "torment", cond = "always", cutoff = 0,
-            pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
-                        "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
-          })
-        end
-
-        -- If configured, add fm for all uniques and pan lords
-        if f_alert_monsters.Config.fm_on_uniques then
-          local uniques_pattern = "monster_warning:(?-i:[A-Z]).*(?<!rb Guardian) comes? into view"
-          BRC.opt.force_more_message(uniques_pattern, true)
-        end
-    ]]
+    -- Conditionally add tormentors
+    if not you.torment_immune() then
+      util.append(alert_list, {
+        name = "torment", cond = "always", cutoff = 0,
+        pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
+                    "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+      })
+    end
+]]
   }, -- alert-monsters
 
 } -- brc_config_explicit (do not remove this comment)
