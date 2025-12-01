@@ -9,10 +9,11 @@ brc_config_testing = {
   },
 
   disable_other_features = false,
+  ["alert-monsters"] = { disabled = true },
   ["pickup-alert"] = {
     Alert = {
-      armour_sensitivity = 0.3,
-      weapon_sensitivity = 1,
+      armour_sensitivity = 0.5,
+      weapon_sensitivity = 0.5,
     },
     Tuning = {
       Armour = {

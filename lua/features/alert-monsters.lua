@@ -80,7 +80,7 @@ f_alert_monsters.Config.Alerts = {
   { name = "50hp", cond = "hp", cutoff = 50,
     pattern = { "manticore", "orc high priest" } },
   { name = "60hp", cond = "hp", cutoff = 60,
-    pattern = { "centaur(?! warrior)", "cyclops", "yaktaur(?! captain)" } },
+    pattern = { "centaur(?! warrior)", "cyclops", "orc knight", "yaktaur(?! captain)" } },
   { name = "70hp_melai", cond = "hp", cutoff = 70, is_pack = true,
     pattern = "meliai" },
   { name = "80hp", cond = "hp", cutoff = 80,
@@ -232,6 +232,8 @@ local patterns_to_mute -- which packs to mute at next ready()
 function f_alert_monsters.init()
   C = f_alert_monsters.Config
   patterns_to_mute = {}
+
+  crawl.setopt("monster_alert = ")
 
   -- Break packs with tables into individual alerts
   local add_patterns = {}

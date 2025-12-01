@@ -1,5 +1,10 @@
-### Testing reminders:
-- Added remember_alert() to pickup
+### Testing notes:
+- [REMINDER] Added remember_alert() to pickup
+- [FIX] what's causing force mores early?
+- [NEW] hotkey: go to temple
+
+### Fixed (to confirm)
+- "Waypoint 9 re-assigned from D:4 to D:6" - when setting waypoint but not displaying msg yet
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->

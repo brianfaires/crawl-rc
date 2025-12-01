@@ -26,6 +26,7 @@ local WAYPOINT_MUTES = {
   "Unknown command",
   "Waypoint \\d re-assigned",
   "Waypoints will disappear",
+  "Re-assigned waypoint",
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
@@ -124,7 +125,7 @@ function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cle
 end
 
 function BRC.Hotkey.equip(it, push_front)
-  if not (it.is_weapon or BRC.it.is_armour(it) or BRC.it.is_jewellery(it)) then return end
+  if not (it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_jewellery(it)) then return end
   local name = it.name():gsub(" {.*}", "")
 
   local condition = function()

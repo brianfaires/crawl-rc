@@ -88,7 +88,10 @@ function f_remind_id.c_message(text, channel)
 
     if ri_found_scroll_of_id then
       -- Check for pickup unidentified consumable
-      if not name:contains(" of ") then do_remind_id_check = true end
+      if not name:contains(" of ") then
+        do_remind_id_check = true
+        if have_scroll_of_id() then you.stop_activity() end
+      end
     else
       -- Check if max stack size increased
       local num_scrolls, slot_scrolls = get_max_stack("scroll")

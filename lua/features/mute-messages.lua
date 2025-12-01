@@ -72,7 +72,8 @@ f_mute_messages.Config = {
     -- Heavily reduced messages for speed runs
     [3] = {
       "No target in view",
-      "You (headbutt|bite|kick)",
+      "You (bite|headbutt|kick)",
+      "You (burn|freeze|drain)",
       "You block",
       "but do(es)? no damage",
       "misses you",

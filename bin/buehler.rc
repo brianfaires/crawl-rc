@@ -128,10 +128,11 @@ brc_config_testing = {
   },
 
   disable_other_features = false,
+  ["alert-monsters"] = { disabled = true },
   ["pickup-alert"] = {
     Alert = {
-      armour_sensitivity = 0.3,
-      weapon_sensitivity = 1,
+      armour_sensitivity = 0.5,
+      weapon_sensitivity = 0.5,
     },
     Tuning = {
       Armour = {
@@ -1026,6 +1027,7 @@ default_manual_training = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
+monster_alert = 
 
 autofight_stop = 40
 hp_warning = 20
@@ -3623,6 +3625,7 @@ local WAYPOINT_MUTES = {
   "Unknown command",
   "Waypoint \\d re-assigned",
   "Waypoints will disappear",
+  "Re-assigned waypoint",
 } -- WAYPOINT_MUTES (do not remove this comment)
 
 ---- Local variables ----
@@ -3721,7 +3724,7 @@ function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cle
 end
 
 function BRC.Hotkey.equip(it, push_front)
-  if not (it.is_weapon or BRC.it.is_armour(it) or BRC.it.is_jewellery(it)) then return end
+  if not (it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_jewellery(it)) then return end
   local name = it.name():gsub(" {.*}", "")
 
   local condition = function()
@@ -4318,7 +4321,7 @@ f_alert_monsters.Config.Alerts = {
   { name = "50hp", cond = "hp", cutoff = 50,
     pattern = { "manticore", "orc high priest" } },
   { name = "60hp", cond = "hp", cutoff = 60,
-    pattern = { "centaur(?! warrior)", "cyclops", "yaktaur(?! captain)" } },
+    pattern = { "centaur(?! warrior)", "cyclops", "orc knight", "yaktaur(?! captain)" } },
   { name = "70hp_melai", cond = "hp", cutoff = 70, is_pack = true,
     pattern = "meliai" },
   { name = "80hp", cond = "hp", cutoff = 80,
@@ -4470,6 +4473,8 @@ local patterns_to_mute -- which packs to mute at next ready()
 function f_alert_monsters.init()
   C = f_alert_monsters.Config
   patterns_to_mute = {}
+
+  crawl.setopt("monster_alert = ")
 
   -- Break packs with tables into individual alerts
   local add_patterns = {}
@@ -6392,7 +6397,8 @@ f_mute_messages.Config = {
     -- Heavily reduced messages for speed runs
     [3] = {
       "No target in view",
-      "You (headbutt|bite|kick)",
+      "You (bite|headbutt|kick)",
+      "You (burn|freeze|drain)",
       "You block",
       "but do(es)? no damage",
       "misses you",
@@ -6604,7 +6610,10 @@ function f_remind_id.c_message(text, channel)
 
     if ri_found_scroll_of_id then
       -- Check for pickup unidentified consumable
-      if not name:contains(" of ") then do_remind_id_check = true end
+      if not name:contains(" of ") then
+        do_remind_id_check = true
+        if have_scroll_of_id() then you.stop_activity() end
+      end
     else
       -- Check if max stack size increased
       local num_scrolls, slot_scrolls = get_max_stack("scroll")
@@ -8879,13 +8888,17 @@ end
 
 function f_pa_weapons.alert_weapon(it)
   _weapon_cache.refresh()
-  if get_weapon_alert(it) then
-    -- Refresh mid-turn, to avoid spurious alerts from XP gain.
+  local a = get_weapon_alert(it)
+  if not a then return false end
+
+  -- Refresh mid-turn to avoid spurious alerts from XP gain. (Except for first-of-skill alerts)
+  if not a.msg:contains("First ") then
     _weapon_cache.refresh(true)
-    local a = get_weapon_alert(it)
-    if a then return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option) end
+    a = get_weapon_alert(it)
   end
-  return false
+  if not a then return false end
+
+  return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option)
 end
 
 ---- Crawl hook functions ----

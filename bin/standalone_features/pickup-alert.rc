@@ -2257,13 +2257,17 @@ end
 
 function f_pa_weapons.alert_weapon(it)
   _weapon_cache.refresh()
-  if get_weapon_alert(it) then
-    -- Refresh mid-turn, to avoid spurious alerts from XP gain.
+  local a = get_weapon_alert(it)
+  if not a then return false end
+
+  -- Refresh mid-turn to avoid spurious alerts from XP gain. (Except for first-of-skill alerts)
+  if not a.msg:contains("First ") then
     _weapon_cache.refresh(true)
-    local a = get_weapon_alert(it)
-    if a then return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option) end
+    a = get_weapon_alert(it)
   end
-  return false
+  if not a then return false end
+
+  return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option)
 end
 
 ---- Crawl hook functions ----

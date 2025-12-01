@@ -8,6 +8,7 @@ default_manual_training = true
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
+monster_alert = 
 
 autofight_stop = 40
 hp_warning = 20
