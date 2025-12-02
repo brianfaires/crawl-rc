@@ -66,9 +66,16 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop and BRC.Hotkey then
-    BRC.Hotkey.set("drop", "your useless items", false, function()
+    local condition = function()
+      return util.exists(items.inventory(), function(i)
+        return i.inscription:contains(DROP_KEY) end)
+    end
+
+    local do_drop = function()
       crawl.sendkeys(BRC.util.get_cmd_key("CMD_DROP") .. ",\r")
       crawl.flush_input()
-    end)
+    end
+
+    BRC.Hotkey.set("drop", "your useless items", false, do_drop, condition)
   end
 end

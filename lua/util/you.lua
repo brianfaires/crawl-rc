@@ -118,18 +118,17 @@ function BRC.you.top_wpn_skill()
   return pref
 end
 
+--- Get the max skill for a comma-separated list of skills
 function BRC.you.skill(skill)
   if skill and not skill:contains(",") then return you.skill(skill) end
 
   local skills = crawl.split(skill, ",")
-  local sum = 0
-  local count = 0
+  local max = 0
   for _, s in ipairs(skills) do
-    sum = sum + you.skill(s)
-    count = count + 1
+    if you.skill(s) > max then max = you.skill(s) end
   end
 
-  return sum / count
+  return max
 end
 
 function BRC.you.skill_with(it)

@@ -214,8 +214,8 @@ local function set_xl_options()
 end
 
 local function set_skill_options()
-  -- If zero spellcasting, don't stop on spellbook pickup, and allow -Cast / antimagic
-  local no_spells = #you.spells() == 0
+  -- If zero spellcasting or no spells, don't stop on spellbook pickup, and allow -Cast / antimagic
+  local no_spells = you.skill("Spellcasting") == 0 or #you.spells() == 0
   if ignore_all_magic ~= no_spells then
     ignore_all_magic = no_spells
     BRC.opt.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)

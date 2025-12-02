@@ -166,7 +166,7 @@ function BRC.Hotkey.equip(it, push_front)
     end
   end
 
-  BRC.Hotkey.set("equip", name, push_front, do_equip, condition)
+  BRC.Hotkey.set("equip", it.name(), push_front, do_equip, condition)
 end
 
 --- Pick up an item by name (Must use name, since item goes stale when called from equip hotkey)

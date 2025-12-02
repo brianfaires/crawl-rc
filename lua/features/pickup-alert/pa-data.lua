@@ -83,12 +83,12 @@ end
 
 function f_pa_data.add_recent_alert(it)
   if it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_talisman(it) then
-    pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
+    pa_recent_alerts[#pa_recent_alerts + 1] = it.name()
   end
 end
 
 function f_pa_data.remove_recent_alert(it)
-  util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
+  util.remove(pa_recent_alerts, it.name())
 end
 
 function f_pa_data.find_OTA(it)

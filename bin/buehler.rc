@@ -1447,9 +1447,9 @@ channel.mutation = $m_attention
 channel.monster_spell = $m_interesting
 channel.monster_enchant = $m_interesting
 channel.monster_warning = $m_warning
-channel.friend_spell = $m_boring
-channel.friend_enchant = $m_boring
-channel.friend_action = $m_boring
+channel.friend_spell = mute
+channel.friend_enchant = mute
+channel.friend_action = mute
 channel.monster_damage = mute
 channel.monster_target = mute
 channel.banishment = $m_alert
@@ -2597,18 +2597,17 @@ function BRC.you.top_wpn_skill()
   return pref
 end
 
+--- Get the max skill for a comma-separated list of skills
 function BRC.you.skill(skill)
   if skill and not skill:contains(",") then return you.skill(skill) end
 
   local skills = crawl.split(skill, ",")
-  local sum = 0
-  local count = 0
+  local max = 0
   for _, s in ipairs(skills) do
-    sum = sum + you.skill(s)
-    count = count + 1
+    if you.skill(s) > max then max = you.skill(s) end
   end
 
-  return sum / count
+  return max
 end
 
 function BRC.you.skill_with(it)
@@ -3768,7 +3767,7 @@ function BRC.Hotkey.equip(it, push_front)
     end
   end
 
-  BRC.Hotkey.set("equip", name, push_front, do_equip, condition)
+  BRC.Hotkey.set("equip", it.name(), push_front, do_equip, condition)
 end
 
 --- Pick up an item by name (Must use name, since item goes stale when called from equip hotkey)
@@ -5594,10 +5593,17 @@ function f_drop_inferior.c_assign_invletter(it)
   end
 
   if marked_something and f_drop_inferior.Config.hotkey_drop and BRC.Hotkey then
-    BRC.Hotkey.set("drop", "your useless items", false, function()
+    local condition = function()
+      return util.exists(items.inventory(), function(i)
+        return i.inscription:contains(DROP_KEY) end)
+    end
+
+    local do_drop = function()
       crawl.sendkeys(BRC.util.get_cmd_key("CMD_DROP") .. ",\r")
       crawl.flush_input()
-    end)
+    end
+
+    BRC.Hotkey.set("drop", "your useless items", false, do_drop, condition)
   end
 end
 
@@ -5734,8 +5740,8 @@ local function set_xl_options()
 end
 
 local function set_skill_options()
-  -- If zero spellcasting, don't stop on spellbook pickup, and allow -Cast / antimagic
-  local no_spells = #you.spells() == 0
+  -- If zero spellcasting or no spells, don't stop on spellbook pickup, and allow -Cast / antimagic
+  local no_spells = you.skill("Spellcasting") == 0 or #you.spells() == 0
   if ignore_all_magic ~= no_spells then
     ignore_all_magic = no_spells
     BRC.opt.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)
@@ -7963,12 +7969,12 @@ end
 
 function f_pa_data.add_recent_alert(it)
   if it.is_weapon or BRC.it.is_armour(it, true) or BRC.it.is_talisman(it) then
-    pa_recent_alerts[#pa_recent_alerts + 1] = f_pa_data.get_keyname(it)
+    pa_recent_alerts[#pa_recent_alerts + 1] = it.name()
   end
 end
 
 function f_pa_data.remove_recent_alert(it)
-  util.remove(pa_recent_alerts, f_pa_data.get_keyname(it))
+  util.remove(pa_recent_alerts, it.name())
 end
 
 function f_pa_data.find_OTA(it)
