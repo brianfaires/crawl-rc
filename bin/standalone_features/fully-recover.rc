@@ -255,7 +255,7 @@ local function should_ignore_status(s)
 end
 
 local function fully_recovered()
-  if you.contaminated() > 0 then return false end
+  if you.contamination() > 0 then return false end
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
   if hp ~= mhp then return false end

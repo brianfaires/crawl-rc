@@ -2203,7 +2203,7 @@ local function get_upgrade_alert(it, cur, best_dps, best_score)
   if cur.artefact and not A.allow_arte_weap_upgrades then return false end
   if not is_upgradable_weapon(it, cur) then return end
 
-  if cur.subtype() ~= it.subtype() then
+  if cur.subtype() == it.subtype() then
     return check_upgrade_same_subtype(it, cur, best_dps, best_score)
   end
 
