@@ -7,6 +7,7 @@ Curr issues:
   - rr_autosearch need to be persistent?
     - ss_prev_location too?
     - manual_swing_slot?
+  - scrolls + artefacts both cyan in the $ menu
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->

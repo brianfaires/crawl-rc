@@ -8912,10 +8912,12 @@ local function get_inventory_upgrade_alert(it)
 
   -- Compare against all inventory weapons, even from other categories
   for _, inv in ipairs(_weapon_cache.weapons) do
-    local best_dps = math.max(inv.dps, top_dps)
-    local best_score = math.max(inv.score, top_score)
-    local a = get_upgrade_alert(it, inv, best_dps, best_score)
-    if a then return a end
+    if inv.allow_upgrade then
+      local best_dps = math.max(inv.dps, top_dps)
+      local best_score = math.max(inv.score, top_score)
+      local a = get_upgrade_alert(it, inv, best_dps, best_score)
+      if a then return a end
+    end
   end
 end
 
