@@ -1,14 +1,12 @@
-### TODO / test notes
-- orcbow "weapon upgrade" to sling, when wearing a shield
-- alerted trident/spear of flaming: carrying demon trident of poison, and other weap on flaming, and lochbar
-
-[BUG]
-- diff ego alert: +0 flail of protection
-  - +7 hand axe of prot
-  - trident of freezing, 2 other hand axes
-  - lower DPS than all, higher dmg than the 2 hand axes
-  - hotkey after shopping ("Thank you for shopping at")
-  -
+Curr issues:
+  - useless_item ?id not colored in 'd' menu; works in 'r' & 'i' menus
+  - didn't offer to pick up scarf of resistance; over +0 cloak
+  - stop rest on "something misses " (your orc friend)
+  - OTA for bardiche; wearing shield
+  - not seeing enemy die message (from ally kills?)
+  - rr_autosearch need to be persistent?
+    - ss_prev_location too?
+    - manual_swing_slot?
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->

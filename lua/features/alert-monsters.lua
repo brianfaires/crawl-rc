@@ -58,6 +58,8 @@ f_alert_monsters.Config.Alerts = {
       "deep elf knight", "swamp worm",
       -- Summoning
       "deep elf elementalist",
+      -- Agony
+      "death knight", "imperial myrmidon", "necromancer",
     } },
 
   { name = "always_fm_pack", is_pack = true,
