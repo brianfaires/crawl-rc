@@ -1,0 +1,306 @@
+## Standalone BRC Feature: safe-stairs
+## Generated from: lua/features/safe-stairs.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = true
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.logs_to_stderr = false
+
+f_safe_stairs = {}
+f_safe_stairs.Config = {
+  warn_backtracking = true, -- Warn if immediately taking stairs twice in a row
+  warn_v5 = true, -- Prompt before entering Vaults:5
+} -- f_safe_stairs.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Data = BRC.Data or {}
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+
+-- BRC.Data module
+-- Minimal persistence system for standalone features
+local function brc_tostr(value)
+  if type(value) == "table" then
+    if #value == 0 then
+      local result = "{ "
+      for k, v in pairs(value) do
+        result = result .. k .. " = " .. brc_tostr(v) .. ", "
+      end
+      return result .. " }"
+    else
+      return "{ " .. table.concat(value, ", ") .. " }"
+    end
+  elseif type(value) == "string" then
+    return "\"" .. value:gsub("\"", "") .. "\""
+  else
+    return tostring(value)
+  end
+end
+
+function BRC.Data.persist(name, default_value)
+  if _G[name] == nil then
+    if type(default_value) == "table" then
+      _G[name] = util.copy_table(default_value)
+    else
+      _G[name] = default_value
+    end
+  end
+  table.insert(chk_lua_save, function()
+    if _G[name] == nil then return "" end
+    return name .. " = " .. brc_tostr(_G[name]) .. "\n"
+  end)
+  return _G[name]
+end
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
+function BRC.mpr.okay(suffix)
+  BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
+end
+
+function BRC.mpr.yesno(msg, color, capital_only)
+  msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
+
+  for i = 1, 10 do
+    BRC.mpr[color or BRC.COL.lightgrey](msg, "prompt")
+    local res = crawl.getch()
+    if res and res >= 0 and res <= 255 then
+      local c = string.char(res)
+      if c == "Y" or c == "y" and not capital_only then return true end
+      if c == "N" or c == "n" and not capital_only then return false end
+    end
+    if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
+  end
+
+  BRC.mpr.lightmagenta("Feels like a no.")
+  return false
+end
+
+-- BRC.opt module
+function BRC.opt.macro(key, function_name)
+  if type(_G[function_name]) ~= "function" then
+    BRC.mpr.error("Function %s is not a global function", function_name)
+    return
+  end
+
+  -- Format msg for debugging and keycode for crawl.setopt()
+  local key_str = nil
+  if type(key) == "number" then
+    -- Try to convert to key name for better debug msg
+    for k, v in pairs(BRC.KEYS) do
+      if v == key then
+        key_str = "<<< " .. k .. " >>"
+        break
+      end
+    end
+    -- Format keycode string for crawl.setopt()
+    key = "\\{" .. key .. "}"
+    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
+  end
+
+  -- The << >> formatting protects against crawl thinking '<' is a tag
+  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
+
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+
+  BRC.mpr.debug(
+    string.format(
+      "Assigned macro: %s to key: %s",
+      BRC.txt.magenta(function_name .. "()"),
+      BRC.txt.lightred(key_str)
+    )
+  )
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
+-- BRC.util module
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+    crawl.flush_input()
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-stairs
+-- @module f_safe_stairs
+-- @author rypofalem (V:5 warning idea), buehler
+-- Prevent accidental stairs use and warn for Vaults:5 entry.
+---------------------------------------------------------------------------------------------------
+
+
+
+---- Persistent variables ----
+ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
+ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
+
+---- Local variables ----
+local C -- config alias
+local ss_cur_location
+
+---- Initialization ----
+function f_safe_stairs.init()
+  C = f_safe_stairs.Config
+  ss_cur_location = you.where()
+
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
+end
+
+---- Local functions ----
+local function check_new_location(cmd)
+  local feature = view.feature_at(0, 0)
+
+  if C.warn_backtracking and ss_prev_location ~= ss_cur_location then
+    if
+      cmd == "CMD_GO_DOWNSTAIRS" and (feature:contains("down") or feature:contains("shaft"))
+      or cmd == "CMD_GO_UPSTAIRS" and feature:contains("up")
+    then
+      if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
+    end
+  end
+
+  if
+    C.warn_v5
+    and not ss_v5_warned
+    and ss_cur_location == "Vaults:4"
+    and cmd == "CMD_GO_DOWNSTAIRS"
+    and (feature:contains("down") or feature:contains("shaft"))
+  then
+    if not BRC.mpr.yesno("Really go to Vaults:5?") then return BRC.mpr.okay() end
+    ss_v5_warned = true
+  end
+
+  BRC.util.do_cmd(cmd)
+end
+
+---- Macro functions ----
+function macro_brc_downstairs()
+  if BRC.active == false or f_safe_stairs.Config.disabled then
+    BRC.util.do_cmd("CMD_GO_DOWNSTAIRS")
+  else
+    check_new_location("CMD_GO_DOWNSTAIRS")
+  end
+end
+
+function macro_brc_upstairs()
+  if BRC.active == false or f_safe_stairs.Config.disabled then
+    BRC.util.do_cmd("CMD_GO_UPSTAIRS")
+  else
+    check_new_location("CMD_GO_UPSTAIRS")
+  end
+end
+
+---- Crawl hook functions ----
+function f_safe_stairs.ready()
+  ss_prev_location = ss_cur_location
+  ss_cur_location = you.where()
+end
+
+
+-- Crawl hook wrappers
+local brc_last_turn = -1
+function ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_safe_stairs.ready(...)
+  end
+end
+
+
+-- Initialize feature
+if f_safe_stairs.init then f_safe_stairs.init() end
+}

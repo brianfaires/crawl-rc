@@ -1,21 +1,91 @@
----- Cleanup weapon slots ----
--- Picked up weapons always go to a,b,w
--- Whenever you drop an item:
-  -- Assign weapons to slots a and b
-      -- Priority: 1:wielded, 2:weapon, not polearm/ranged unless training it
-      -- 3:magical staff, 4:polearm, 5:ranged
-  -- Assign weapon to w: ranged/polearm/magical staff/any
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: weapon-slots
+-- @module f_weapon_slots
+-- Automatically keeps weapons in slots a/b/w. Prioritizes slots by weapon type + skill.
+---------------------------------------------------------------------------------------------------
 
+f_weapon_slots = {}
+f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
+
+---- Local variables ----
 local do_cleanup_weapon_slots
+local slots_changed
 local priorities_ab
 local priorities_w
-local slots_changed
+
+---- Initialization ----
+function f_weapon_slots.init()
+  do_cleanup_weapon_slots = false
+  slots_changed = false
+  priorities_ab = nil
+  priorities_w = nil
+end
+
+---- Local functions ----
+local function get_first_empty_slot()
+  -- First try to avoid same slot as a consumable, then find first empty equipment slot
+  local used_slots = {}
+  for _, inv in ipairs(items.inventory()) do
+    used_slots[inv.slot] = true
+  end
+
+  for slot = 0, 51 do
+    if not used_slots[slot] then return slot end
+  end
+
+  for slot = 0, 51 do
+    if not items.inslot(slot) then return slot end
+  end
+end
+
+local function get_priority_ab(it)
+  if not it.is_weapon then return -1 end
+  if it.equipped then return 1 end
+
+  if BRC.it.is_magic_staff(it) then return 3 end
+  if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
+  if BRC.it.is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
+  return 2
+end
+
+local function get_priority_w(it)
+  if not it.is_weapon then return -1 end
+  if it.is_ranged then return 1 end
+  if BRC.it.is_polearm(it) then return 2 end
+  if BRC.it.is_magic_staff(it) then return 3 end
+  return 4
+end
+
+local function generate_priorities()
+  priorities_ab = { -1, -1, -1, -1, -1 }
+  priorities_w = { -1, -1, -1, -1 }
+
+  for _, inv in ipairs(items.inventory()) do
+    local p = get_priority_w(inv)
+    if p > 0 then
+      if priorities_w[p] == -1 then
+        priorities_w[p] = inv.slot
+      else
+        priorities_w[p + 1] = inv.slot
+      end
+    end
+
+    p = get_priority_ab(inv)
+    if p > 0 then
+      if priorities_ab[p] == -1 then
+        priorities_ab[p] = inv.slot
+      else
+        priorities_ab[p + 1] = inv.slot
+      end
+    end
+  end
+end
 
 local function cleanup_ab(slot)
   local inv = items.inslot(slot)
   if inv and inv.is_weapon then return end
 
-  for p=1,#priorities_ab do
+  for p = 1, #priorities_ab do
     if priorities_ab[p] > slot then -- Not from earlier slot
       items.swap_slots(priorities_ab[p], slot)
       slots_changed = true
@@ -30,50 +100,11 @@ local function cleanup_w()
   local inv = items.inslot(slot_w)
   if inv and inv.is_weapon then return end
 
-  for p=1,#priorities_w do
+  for p = 1, #priorities_w do
     if priorities_w[p] > 1 then -- Not from slots a or b
       items.swap_slots(priorities_w[p], slot_w)
       slots_changed = true
       return
-    end
-  end
-end
-
-local function get_priority_ab(it)
-  if not it.is_weapon then return -1 end
-  if it.equipped then return 1 end
-
-  if is_magic_staff(it) then return 3 end
-  if it.is_ranged then return (you.skill("Ranged Weapons") >= 4) and 2 or 5 end
-  if is_polearm(it) then return (you.skill("Polearms") >= 4) and 2 or 4 end
-  return 2
-end
-
-local function get_priority_w(it)
-  if not it.is_weapon then return -1 end
-  if it.is_ranged then return 1 end
-  if is_polearm(it) then return 2 end
-  if is_magic_staff(it) then return 3 end
-  return 4
-end
-
-local function generate_priorities()
-  priorities_ab = { -1, -1, -1, -1, -1 }
-  priorities_w = { -1, -1, -1, -1 }
-
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    local p = get_priority_w(inv)
-    if p > 0 then
-      if priorities_w[p] == -1 then priorities_w[p] = inv.slot
-      else priorities_w[p+1] = inv.slot
-      end
-    end
-
-    p = get_priority_ab(inv)
-    if p > 0 then
-      if priorities_ab[p] == -1 then priorities_ab[p] = inv.slot
-      else priorities_ab[p+1] = inv.slot
-      end
     end
   end
 end
@@ -85,31 +116,12 @@ local function cleanup_weapon_slots()
   cleanup_w()
 end
 
-local function get_first_empty_slot()
-  for slot=1,52 do
-    if not items.inslot(slot) then return slot end
-  end
-end
-
-
-function init_weapon_slots()
-  if CONFIG.debug_init then crawl.mpr("Initializing weapon-slots") end
-
-  do_cleanup_weapon_slots = false
-  slots_changed = false
-  priorities_ab = nil
-  priorities_w = nil
-end
-
-
-------------------- Hooks -------------------
-function c_assign_invletter_weapon_slots(it)
-  if not CONFIG.do_auto_weapon_slots_abw then return end
+---- Crawl hook functions ----
+function f_weapon_slots.c_assign_invletter(it)
   if not it.is_weapon then return end
 
-  for i=0,2 do
-    local slot = i==2 and items.letter_to_index("w") or i
-
+  for _, s in ipairs({ "a", "b", "w" }) do
+    local slot = items.letter_to_index(s)
     local inv = items.inslot(slot)
     if not inv then return slot end
     if not inv.is_weapon then
@@ -120,19 +132,18 @@ function c_assign_invletter_weapon_slots(it)
   end
 end
 
-function c_message_weapon_slots(text, channel)
-  if not CONFIG.do_auto_weapon_slots_abw then return end
-  do_cleanup_weapon_slots = channel == "plain" and text:find("ou drop ", 1, true)
+function f_weapon_slots.c_message(text, channel)
+  do_cleanup_weapon_slots = channel == "plain" and text:contains("ou drop ")
 end
 
-function ready_weapon_slots()
+function f_weapon_slots.ready()
   if do_cleanup_weapon_slots then
     cleanup_weapon_slots()
     do_cleanup_weapon_slots = false
-    if slots_changed then
-      crawl.mpr(with_color(COLORS.darkgrey, "Weapon slots updated (ab+w)."))
-      crawl.redraw_screen()
-      slots_changed = false
-    end
+  end
+  if slots_changed then
+    BRC.mpr.debug("Weapon slots updated (ab+w).")
+    crawl.redraw_screen()
+    slots_changed = false
   end
 end

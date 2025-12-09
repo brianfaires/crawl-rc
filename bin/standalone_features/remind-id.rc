@@ -1,0 +1,285 @@
+## Standalone BRC Feature: remind-id
+## Generated from: lua/features/remind-id.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = true
+
+f_remind_id = {}
+f_remind_id.Config = {
+  stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
+  stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
+  emoji = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>",
+  read_id_hotkey = true, -- Put read ID on hotkey
+} -- f_remind_id.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Data = BRC.Data or {}
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+
+-- BRC.Data module
+-- Minimal persistence system for standalone features
+local function brc_tostr(value)
+  if type(value) == "table" then
+    if #value == 0 then
+      local result = "{ "
+      for k, v in pairs(value) do
+        result = result .. k .. " = " .. brc_tostr(v) .. ", "
+      end
+      return result .. " }"
+    else
+      return "{ " .. table.concat(value, ", ") .. " }"
+    end
+  elseif type(value) == "string" then
+    return "\"" .. value:gsub("\"", "") .. "\""
+  else
+    return tostring(value)
+  end
+end
+
+function BRC.Data.persist(name, default_value)
+  if _G[name] == nil then
+    if type(default_value) == "table" then
+      _G[name] = util.copy_table(default_value)
+    else
+      _G[name] = default_value
+    end
+  end
+  table.insert(chk_lua_save, function()
+    if _G[name] == nil then return "" end
+    return name .. " = " .. brc_tostr(_G[name]) .. "\n"
+  end)
+  return _G[name]
+end
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+function BRC.mpr.stop(msg, color, channel)
+  BRC.mpr[color or BRC.COL.lightgrey](msg, channel)
+  you.stop_activity()
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.clean(text)
+  if type(text) ~= "string" then return text end
+  return text:gsub("\n", ""):gsub("<[^>]*>", "")
+end
+
+function BRC.txt.get_pickup_info(text)
+  local cleaned = BRC.txt.clean(text)
+  if cleaned:sub(2, 4) ~= " - " then return nil end
+  return cleaned:sub(5, #cleaned), items.letter_to_index(cleaned:sub(1, 1))
+end
+
+function BRC.txt.int2char(num)
+  return string.char(string.byte("a") + num)
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
+-- BRC.util module
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+    crawl.flush_input()
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: remind-id
+-- @module f_remind_id
+-- Alerts a reminder to read scroll of ID, when carrying unidentified items.
+-- Before finding scroll of ID, stops explore when largest stack of un-ID'd scrolls/pots increases.
+---------------------------------------------------------------------------------------------------
+
+
+
+---- Persistent variables ----
+ri_found_scroll_of_id = BRC.Data.persist("ri_found_scroll_of_id", false)
+
+---- Local variables ----
+local C -- config alias
+local do_remind_id_check
+
+---- Initialization ----
+function f_remind_id.init()
+  C = f_remind_id.Config
+  do_remind_id_check = true
+end
+
+---- Local functions ----
+local function get_max_stack(class)
+  local max_stack_size = 0
+  local slot = nil
+  for _, inv in ipairs(items.inventory()) do
+    if inv.class(true) == class and not inv.is_identified then
+      if inv.quantity > max_stack_size then
+        max_stack_size = inv.quantity
+        slot = inv.slot
+      elseif inv.quantity == max_stack_size then
+        slot = nil -- If tied for max, no slot set a new max
+      end
+    end
+  end
+  return max_stack_size, slot
+end
+
+local function have_scroll_of_id()
+  return util.exists(items.inventory(), function(i)
+    return i.name("qual") == "scroll of identify"
+  end)
+end
+
+local function have_unid_item()
+  return util.exists(items.inventory(), function(i)
+    return not i.is_identified
+  end)
+end
+
+---- Crawl hook functions ----
+function f_remind_id.c_assign_invletter(it)
+  if
+    not it.is_identified and have_scroll_of_id()
+    or it.name("qual") == "scroll of identify" and have_unid_item()
+  then
+    you.stop_activity()
+    do_remind_id_check = true
+  end
+end
+
+function f_remind_id.c_message(text, channel)
+  if channel ~= "plain" then return end
+
+  if text:find("scrolls? of identify") then
+    ri_found_scroll_of_id = true
+    -- Don't re-trigger on dropping or on hotkey notification
+    text = BRC.txt.clean(text)
+    if not text:contains("ou drop ") and not text:contains("to read ") and have_unid_item() then
+      you.stop_activity()
+      do_remind_id_check = true
+    end
+  else
+    local name, slot = BRC.txt.get_pickup_info(text)
+    if not name then return end
+
+    local is_scroll = name:contains("scroll")
+    local is_potion = name:contains("potion")
+    if not (is_scroll or is_potion) then return end
+
+    if ri_found_scroll_of_id then
+      -- Check for pickup unidentified consumable
+      if not name:contains(" of ") then
+        do_remind_id_check = true
+        if have_scroll_of_id() then you.stop_activity() end
+      end
+    else
+      -- Check if max stack size increased
+      local num_scrolls, slot_scrolls = get_max_stack("scroll")
+      local num_pots, slot_pots = get_max_stack("potion")
+      if
+        is_scroll and slot_scrolls == slot and num_scrolls >= C.stop_on_scrolls_count
+        or is_potion and slot_pots == slot and num_pots >= C.stop_on_pots_count
+      then
+        you.stop_activity()
+      end
+    end
+  end
+end
+
+function f_remind_id.ready()
+  if do_remind_id_check then
+    do_remind_id_check = false
+    if have_unid_item() and have_scroll_of_id() then
+      local msg = BRC.txt.wrap(BRC.txt.magenta("You have something to identify."), C.emoji)
+      BRC.mpr.stop(msg)
+      if C.read_id_hotkey and BRC.Hotkey then
+        BRC.Hotkey.set("read", "scroll of identify", false, function()
+          for _, inv in ipairs(items.inventory()) do
+            if inv.name("qual") == "scroll of identify" then
+              BRC.util.do_cmd("CMD_READ")
+              crawl.sendkeys(BRC.txt.int2char(inv.slot))
+              crawl.flush_input()
+              return
+            end
+          end
+        end)
+      end
+    end
+  end
+end
+
+
+-- Crawl hook wrappers
+function c_assign_invletter(...)
+  return f_remind_id.c_assign_invletter(...)
+end
+
+function c_message(...)
+  return f_remind_id.c_message(...)
+end
+
+local brc_last_turn = -1
+function ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_remind_id.ready(...)
+  end
+end
+
+
+-- Initialize feature
+if f_remind_id.init then f_remind_id.init() end
+}

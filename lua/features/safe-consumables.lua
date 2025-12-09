@@ -1,35 +1,44 @@
----- Protective consumable inscriptions on everything w/o a built-in prompt --
--- Updates every turn to:
-  -- Inscribe starting items
-  -- Update inscriptions after ID
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-consumables
+-- @module f_safe_consumables
+-- Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
+---------------------------------------------------------------------------------------------------
 
+f_safe_consumables = {}
+f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
+
+---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
   "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
-  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation"
+  "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
 
-------------------- Hook -------------------
-function ready_safe_consumables()
-  if not CONFIG.safe_consumables then return end
-  -- Remove the default "!r" and "!q" inscriptions after identify
-  for inv in iter.invent_iterator:new(items.inventory()) do
+---- Local functions ----
+local function inscription_needed(class, st)
+  if util.contains(NO_INSCRIPTION_NEEDED, st) then return false end
+  if class == "scroll" then
+    if st == "poison" then return you.res_poison() > 0 end
+    if st == "torment" then return you.torment_immune() end
+  end
+  return true
+end
+
+---- Crawl hook functions ----
+function f_safe_consumables.ready()
+  -- Add / Remove inscriptions as appropriate
+  for _, inv in ipairs(items.inventory()) do
     local inv_class = inv.class(true)
-    local st = inv.subtype()
     if inv_class == "scroll" then
-      if (st == "poison" and you.res_poison() > 0)
-        or (st == "torment" and you.torment_immune())
-        or util.contains(NO_INSCRIPTION_NEEDED, st) then
-          if inv.inscription:find("%!r") then
-            inv.inscribe(inv.inscription:gsub("%!r", ""), false)
-          end
-      elseif not inv.inscription:find("%!r") then inv.inscribe("!r")
+      if inscription_needed(inv_class, inv.subtype()) then
+        if not inv.inscription:contains("!r") then inv.inscribe("!r") end
+      elseif inv.inscription:contains("!r") then
+        inv.inscribe(inv.inscription:gsub("%!r", ""), false)
       end
     elseif inv_class == "potion" then
-      if util.contains(NO_INSCRIPTION_NEEDED, st) then
-        if inv.inscription:find("%!q") then 
-          inv.inscribe(inv.inscription:gsub("%!q", ""), false)
-        end
-      elseif not inv.inscription:find("%!q") then inv.inscribe("!q")
+      if inscription_needed(inv_class, inv.subtype()) then
+        if not inv.inscription:contains("!q") then inv.inscribe("!q") end
+      elseif inv.inscription:contains("!q") then
+        inv.inscribe(inv.inscription:gsub("%!q", ""), false)
       end
     end
   end

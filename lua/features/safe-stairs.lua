@@ -1,68 +1,80 @@
------ Prevent accidental stairs use -----
-local prev_location
-local cur_location
-local last_stair_turn
-local v5_unwarned
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: safe-stairs
+-- @module f_safe_stairs
+-- @author rypofalem (V:5 warning idea), buehler
+-- Prevent accidental stairs use and warn for Vaults:5 entry.
+---------------------------------------------------------------------------------------------------
 
-local function check_new_location(key)
-  local feature = view.feature_at (0, 0)
-  local one_way_stair = feature:find("escape_hatch", 1, true) or feature:find("shaft", 1, true)
+f_safe_stairs = {}
+f_safe_stairs.BRC_FEATURE_NAME = "safe-stairs"
+f_safe_stairs.Config = {
+  warn_backtracking = true, -- Warn if immediately taking stairs twice in a row
+  warn_v5 = true, -- Prompt before entering Vaults:5
+} -- f_safe_stairs.Config (do not remove this comment)
 
-  local turn_diff = you.turns() - last_stair_turn
-  if prev_location ~= cur_location and turn_diff > 0 and turn_diff < CONFIG.warn_stairs_threshold then
-    if key == ">" then
-      if not (feature:find("down", 1, true) or feature:find("shaft", 1, true)) then
-        crawl.sendkeys(key)
-        return
-      end
-    else
-      if not feature:find("up", 1, true) then
-        crawl.sendkeys(key)
-        return
-      end
-    end
-    if not mpr_yesno("Really go right back?") then
-      crawl.mpr("Okay, then.")
-      return
-    end
-  elseif CONFIG.warn_v5 and v5_unwarned and cur_location == "Vaults4" and key == ">" then
-    -- V5 warning idea by rypofalem --
-    if feature:find("down", 1, true) or feature:find("shaft", 1, true) then
-      if not mpr_yesno("Really go to Vaults:5?") then
-        crawl.mpr("Okay, then.")
-        return
-      end
-      v5_unwarned = false
+---- Persistent variables ----
+ss_prev_location = BRC.Data.persist("ss_prev_location", you.where())
+ss_v5_warned = BRC.Data.persist("ss_v5_warned", false)
+
+---- Local variables ----
+local C -- config alias
+local ss_cur_location
+
+---- Initialization ----
+function f_safe_stairs.init()
+  C = f_safe_stairs.Config
+  ss_cur_location = you.where()
+
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_DOWNSTAIRS") or ">", "macro_brc_downstairs")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_GO_UPSTAIRS") or "<", "macro_brc_upstairs")
+end
+
+---- Local functions ----
+local function check_new_location(cmd)
+  local feature = view.feature_at(0, 0)
+
+  if C.warn_backtracking and ss_prev_location ~= ss_cur_location then
+    if
+      cmd == "CMD_GO_DOWNSTAIRS" and (feature:contains("down") or feature:contains("shaft"))
+      or cmd == "CMD_GO_UPSTAIRS" and feature:contains("up")
+    then
+      if not BRC.mpr.yesno("Really go right back?") then return BRC.mpr.okay() end
     end
   end
 
-  crawl.sendkeys(key)
-  if not one_way_stair then last_stair_turn = you.turns() end
+  if
+    C.warn_v5
+    and not ss_v5_warned
+    and ss_cur_location == "Vaults:4"
+    and cmd == "CMD_GO_DOWNSTAIRS"
+    and (feature:contains("down") or feature:contains("shaft"))
+  then
+    if not BRC.mpr.yesno("Really go to Vaults:5?") then return BRC.mpr.okay() end
+    ss_v5_warned = true
+  end
+
+  BRC.util.do_cmd(cmd)
 end
 
-
-function init_safe_stairs()
-  if CONFIG.debug_init then crawl.mpr("Initializing safe-stairs") end
-  prev_location = you.branch() .. you.depth()
-  cur_location = you.branch() .. you.depth()
-  last_stair_turn = 0
-  v5_unwarned = true
-
-  crawl.setopt("macros += M " .. KEYS.go_downstairs .. " ===macro_do_safe_downstairs")
-  crawl.setopt("macros += M " .. KEYS.go_upstairs .. " ===macro_do_safe_upstairs")
+---- Macro functions ----
+function macro_brc_downstairs()
+  if BRC.active == false or f_safe_stairs.Config.disabled then
+    BRC.util.do_cmd("CMD_GO_DOWNSTAIRS")
+  else
+    check_new_location("CMD_GO_DOWNSTAIRS")
+  end
 end
 
-function macro_do_safe_downstairs()
-  check_new_location(">")
+function macro_brc_upstairs()
+  if BRC.active == false or f_safe_stairs.Config.disabled then
+    BRC.util.do_cmd("CMD_GO_UPSTAIRS")
+  else
+    check_new_location("CMD_GO_UPSTAIRS")
+  end
 end
 
-function macro_do_safe_upstairs()
-  check_new_location("<")
-end
-
-
-------------------- Hook -------------------
-function ready_safe_stairs()
-  prev_location = cur_location
-  cur_location = you.branch() .. you.depth()
+---- Crawl hook functions ----
+function f_safe_stairs.ready()
+  ss_prev_location = ss_cur_location
+  ss_cur_location = you.where()
 end

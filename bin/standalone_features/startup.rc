@@ -1,0 +1,489 @@
+## Standalone BRC Feature: startup
+## Generated from: lua/features/startup.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = true
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.logs_to_stderr = false
+
+f_startup = {}
+f_startup.Config = {
+  -- Save current training targets and config, for race/class
+  macro_save_key = string.byte("T") - 64, -- Keycode to save training targets and config
+  save_training = true, -- Allow save/load of race/class training targets
+  save_config = true, -- Allow save/load of BRC config
+  prompt_before_load = true, -- Prompt before loading in a new game with same race+class
+  allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
+  allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
+
+  -- Remaining values only used if no training targets were loaded by race/class
+  show_skills_menu = false, -- Show skills menu on startup
+
+  -- Settings to set skill targets, regardless of race/class
+  set_all_targets = true, -- Set all targets, even if only focusing one
+  focus_one_skill = true, -- Focus one skill at a time, even if setting all targets
+  auto_set_skill_targets = {
+    { "Stealth", 2.0 }, -- First, focus stealth to 2.0
+    { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
+  },
+
+  -- For non-spellcasters, add preferred weapon type as 3rd skill target
+  init = [[
+    if you.skill("Spellcasting") == 0 then
+      local wpn_skill = BRC.you.top_wpn_skill()
+      if wpn_skill then
+        local t = f_startup.Config.auto_set_skill_targets
+        t[#t + 1] = { wpn_skill, 6.0 }
+      end
+    end
+  ]],
+} -- f_startup.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
+BRC.TRAINING_SKILLS = {
+  "Air Magic", "Alchemy", "Armour", "Axes", "Conjurations", "Dodging", "Earth Magic",
+  "Evocations", "Fighting", "Fire Magic", "Forgecraft", "Hexes", "Ice Magic",
+  "Invocations", "Long Blades", "Maces & Flails", "Necromancy", "Polearms",
+  "Ranged Weapons", "Shapeshifting", "Shields", "Short Blades", "Spellcasting", "Staves",
+  "Stealth", "Summonings", "Translocations", "Unarmed Combat", "Throwing",
+} -- BRC.TRAINING_SKILLS (do not remove this comment)
+
+BRC.WEAP_SCHOOLS = {
+  "axes", "maces & flails", "polearms", "long blades", "short blades",
+  "staves", "unarmed combat", "ranged weapons",
+} -- BRC.WEAP_SCHOOLS (do not remove this comment)
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.Configs = BRC.Configs or {}
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+BRC.you = BRC.you or {}
+
+-- BRC.Configs module
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
+function BRC.mpr.info(message, context)
+  log_message(message, context, BRC.COL.darkgrey)
+end
+
+function BRC.mpr.yesno(msg, color, capital_only)
+  msg = string.format("%s (%s)", msg, capital_only and "Y/N" or "y/n")
+
+  for i = 1, 10 do
+    BRC.mpr[color or BRC.COL.lightgrey](msg, "prompt")
+    local res = crawl.getch()
+    if res and res >= 0 and res <= 255 then
+      local c = string.char(res)
+      if c == "Y" or c == "y" and not capital_only then return true end
+      if c == "N" or c == "n" and not capital_only then return false end
+    end
+    if i == 1 and capital_only then msg = "[CAPS ONLY] " .. msg end
+  end
+
+  BRC.mpr.lightmagenta("Feels like a no.")
+  return false
+end
+
+-- BRC.opt module
+function BRC.opt.macro(key, function_name)
+  if type(_G[function_name]) ~= "function" then
+    BRC.mpr.error("Function %s is not a global function", function_name)
+    return
+  end
+
+  -- Format msg for debugging and keycode for crawl.setopt()
+  local key_str = nil
+  if type(key) == "number" then
+    -- Try to convert to key name for better debug msg
+    for k, v in pairs(BRC.KEYS) do
+      if v == key then
+        key_str = "<<< " .. k .. " >>"
+        break
+      end
+    end
+    -- Format keycode string for crawl.setopt()
+    key = "\\{" .. key .. "}"
+    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
+  end
+
+  -- The << >> formatting protects against crawl thinking '<' is a tag
+  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
+
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+
+  BRC.mpr.debug(
+    string.format(
+      "Assigned macro: %s to key: %s",
+      BRC.txt.magenta(function_name .. "()"),
+      BRC.txt.lightred(key_str)
+    )
+  )
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
+-- BRC.util module
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+    crawl.flush_input()
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+function BRC.util.is_list(value)
+  return value and type(value) == "table" and #value > 0
+end
+
+function BRC.util.is_map(value)
+  return value and type(value) == "table" and next(value) ~= nil and #value == 0
+end
+
+-- BRC.you module
+function BRC.you.skill(skill)
+  if skill and not skill:contains(",") then return you.skill(skill) end
+
+  local skills = crawl.split(skill, ",")
+  local max = 0
+  for _, s in ipairs(skills) do
+    if you.skill(s) > max then max = you.skill(s) end
+  end
+
+  return max
+end
+
+function BRC.you.top_wpn_skill()
+  local max_weap_skill = 0
+  local pref = nil
+  for _, v in ipairs(BRC.WEAP_SCHOOLS) do
+    if BRC.you.skill(v) > max_weap_skill then
+      max_weap_skill = BRC.you.skill(v)
+      pref = v
+    end
+  end
+  return pref
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: startup
+-- @module f_startup
+-- @author rwbarton (display skills menu), gammafunk (training targets), buehler
+-- Handles startup actions, like displaying skills menu and auto-setting skill targets.
+---------------------------------------------------------------------------------------------------
+
+
+
+---- Local variables ----
+local C -- config alias
+
+---- Initialization ----
+function f_startup.init()
+  C = f_startup.Config
+
+  if C.macro_save_key and (C.save_training or C.save_config) then
+    BRC.opt.macro(C.macro_save_key, "macro_brc_save_skills_and_config")
+  end
+end
+
+---- Local functions ----
+local function ensure_tables_exist()
+  if type(c_persist.BRC) ~= "table" then c_persist.BRC = {} end
+  if type(c_persist.BRC.saved_training) ~= "table" then c_persist.BRC.saved_training = {} end
+  if type(c_persist.BRC.saved_configs) ~= "table" then c_persist.BRC.saved_configs = {} end
+end
+
+local function clear_skill_targets()
+  for _, s in ipairs(BRC.TRAINING_SKILLS) do
+    you.train_skill(s, 0)
+  end
+end
+
+local function create_skill_table()
+  local skill_table = {}
+  for _, skill_name in ipairs(BRC.TRAINING_SKILLS) do
+    local training_level = you.train_skill(skill_name)
+    local target = you.get_training_target(skill_name)
+    if training_level > 0 or target > 0 then
+      skill_table[skill_name] = { training_level = training_level, target = target, }
+    end
+  end
+  return skill_table
+end
+
+local function apply_skill_table(skill_table)
+  clear_skill_targets()
+  for skill_name, data in pairs(skill_table) do
+    you.train_skill(skill_name, data.training_level)
+    you.set_training_target(skill_name, data.target)
+  end
+end
+
+local function load_training_targets(key, require_confirmation)
+  local saved = c_persist.BRC.saved_training[key]
+  if type(saved) ~= "table" then return false end
+
+  if require_confirmation
+    and not BRC.mpr.yesno("Load training targets for " .. BRC.txt.lightcyan(key) .. "?")
+  then
+    return false
+  end
+
+  apply_skill_table(saved)
+  BRC.mpr.green("Loaded training targets for "  .. BRC.txt.lightcyan(key))
+  return true
+end
+
+local function load_saved_training_targets()
+  ensure_tables_exist()
+
+  return load_training_targets(you.race() .. " " .. you.class(), C.prompt_before_load)
+    or (C.allow_race_only_saves and load_training_targets(you.race(), true))
+    or (C.allow_class_only_saves and load_training_targets(you.class(), true))
+end
+
+local function load_config(key, require_confirmation)
+  local saved = c_persist.BRC.saved_configs[key]
+  if type(saved) ~= "table" and type(saved) ~= "string" then return false end
+
+  if require_confirmation
+    and not BRC.mpr.yesno("Load config for " .. BRC.txt.lightcyan(key) .. "?")
+  then
+    return false
+  end
+
+  return BRC.init(saved)
+end
+
+local function load_saved_config()
+  ensure_tables_exist()
+
+  return load_config(you.race() .. " " .. you.class(), C.prompt_before_load)
+    or (C.allow_race_only_saves and load_config(you.race(), true))
+    or (C.allow_class_only_saves and load_config(you.class(), true))
+end
+
+--- Save obj to storage_table, under keys: race/class/combo
+local function save_race_class(desc, parent, child)
+  local keys = { }
+  keys[1] = you.race() .. " " .. you.class() -- Always save combo
+  if C.allow_race_only_saves then keys[#keys + 1] = you.race() end
+  if C.allow_class_only_saves then keys[#keys + 1] = you.class() end
+  for i, key in ipairs(keys) do
+    if i == 1 -- don't prompt for combo
+      or not parent[key] -- don't prompt if empty
+      or BRC.mpr.yesno(string.format("Overwrite saved %s for %s?", desc, BRC.txt.lightcyan(key)))
+    then
+      parent[key] = type(child) == "table" and util.copy_table(child) or child
+      BRC.mpr.green(string.format("Saved %s for %s", desc, BRC.txt.lightcyan(key)))
+    end
+  end
+end
+
+--- Load configured skill targets, not saved by race/class in c_persist
+local function load_generic_skill_targets()
+  clear_skill_targets()
+
+  local set_first = false
+  for _, skill_target in ipairs(C.auto_set_skill_targets) do
+    local skill, target = unpack(skill_target)
+    if you.skill(skill) < target then
+      you.set_training_target(skill, target)
+      if not set_first or not C.focus_one_skill then
+        you.train_skill(skill, 1)
+        set_first = true
+      end
+      if not C.set_all_targets then break end
+    end
+  end
+end
+
+--- Since BRC.Config inherits from BRC.Configs.Default, remove the defaults to reduce size
+-- Recursively walks through config, removing values that match those in defaults
+-- @warning Does not check for circular references; there's no reason for them in BRC.Config
+local function strip_defaults_from_map(config, defaults)
+  if defaults == nil then return util.copy_table(config) end
+  local stripped = {}
+  for k, v in pairs(config) do
+    if type(v) == "table" then
+      -- If neither map nor list, it's {} and will be excluded
+      if BRC.util.is_map(v) then
+        local stripped_map = strip_defaults_from_map(v, defaults[k])
+        if next(stripped_map) then stripped[k] = stripped_map end
+      elseif BRC.util.is_list(v) then
+        local default_list = defaults[k]
+        local is_same = type(default_list) == "table" and #v == #default_list
+        if is_same then
+          for i = 1, #v do
+            if v[i] ~= default_list[i] then
+              is_same = false
+              break
+            end
+          end
+        end
+        if not is_same then stripped[k] = v end
+      end
+    elseif v ~= defaults[k] then
+      stripped[k] = v
+    end
+  end
+  return stripped
+end
+
+---- Macro function: Save current skill targets (training levels and targets) for race/class ----
+function macro_brc_save_skills_and_config()
+  if BRC.active == false or f_startup.Config.disabled then
+    BRC.mpr.info("BRC not active, or startup feature is disabled. Training targets not saved.")
+    return
+  end
+
+  ensure_tables_exist()
+  if f_startup.Config.save_training and you.race() ~= "Gnoll" then
+    local do_save = not f_startup.Config.save_config
+    if not do_save then
+      do_save = BRC.mpr.yesno("Save training + targets?", BRC.COL.magenta)
+      if not do_save then crawl.mpr.okay() end
+    end
+    if do_save then
+      save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
+    end
+  end
+
+  if f_startup.Config.save_config then
+    local do_save = not f_startup.Config.save_training
+    if not do_save then
+      do_save = BRC.mpr.yesno("Save config?", BRC.COL.magenta)
+      if not do_save then crawl.mpr.okay() end
+    end
+    if do_save then
+      local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
+      save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
+    end
+  end
+end
+
+---- Crawl hook functions ----
+function f_startup.ready()
+  if you.turns() ~= 0 then return end
+
+  -- Check for saved config/targets in c_persist
+  if C.save_config then load_saved_config() end
+  if C.save_training and you.race() ~= "Gnoll" and you.class() ~= "Wanderer" then
+    if load_saved_training_targets() then return end
+  end
+
+  -- If no saved targets were loaded, use other configured skill targets
+  if C.auto_set_skill_targets and you.race() ~= "Gnoll" then
+    load_generic_skill_targets()
+  end
+
+  -- Show skills menu: Disable for non-Wanderer Gnolls
+  if C.show_skills_menu and (you.race() ~= "Gnoll" or you.class() == "Wanderer") then
+    BRC.util.do_cmd("CMD_DISPLAY_SKILLS")
+  end
+end
+
+
+-- Crawl hook wrappers
+local brc_last_turn = -1
+function ready(...)
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_startup.ready(...)
+  end
+end
+
+
+-- Initialize feature
+if f_startup.init then f_startup.init() end
+}

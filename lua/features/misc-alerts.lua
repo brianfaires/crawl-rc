@@ -1,82 +1,111 @@
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: misc-alerts
+-- @module f_misc_alerts
+-- @author gammafunk (save game w/ msg), buehler
+-- Various single-purpose alerts: save game w/ msg, low HP, faith amulet, spell level changes.
+---------------------------------------------------------------------------------------------------
+
+f_misc_alerts = {}
+f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
+f_misc_alerts.Config = {
+  save_with_msg = true, -- Shift-S to save and leave yourself a message
+  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  alert_spell_level_changes = true, -- Alert when you gain additional spell levels
+  alert_remove_faith = true, -- Reminder to remove amulet at max piety
+  remove_faith_hotkey = true, -- Hotkey remove amulet
+} -- f_misc_alerts.Config (do not remove this comment)
+
+---- Persistent variables ----
+ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
+ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
+
+---- Local constants ----
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
+
+---- Local variables ----
+local C -- config alias
 local below_hp_threshold
-local prev_available_spell_levels = 0
+local prev_spell_levels
 
+---- Initialization ----
+function f_misc_alerts.init()
+  C = f_misc_alerts.Config
+  below_hp_threshold = false
+  prev_spell_levels = you.spell_levels()
 
+  if C.save_with_msg then
+    BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
+    if ma_saved_msg and ma_saved_msg ~= "" then
+      BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
+      ma_saved_msg = nil
+    end
+  end
+end
+
+---- Local functions ----
 local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= CONFIG.alert_low_hp_threshold * mhp then
+  elseif hp <= C.alert_low_hp_threshold * mhp then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. (100*CONFIG.alert_low_hp_threshold) .. "% HP"
-    enqueue_mpr_opt_more(true, table.concat({
-      EMOJI.EXCLAMATION, " ", with_color(COLORS.magenta, low_hp_msg), " ", EMOJI.EXCLAMATION
-    }))
+    local low_hp_msg = "Dropped below " .. 100 * C.alert_low_hp_threshold .. "%% HP"
+    BRC.mpr.que_optmore(true, BRC.txt.wrap(BRC.txt.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
   end
 end
 
 local function alert_remove_faith()
-  if not alerted_max_piety and you.piety_rank() == 6 then
+  if not ma_alerted_max_piety and you.piety_rank() == 6 then
     local am = items.equipped_at("amulet")
     if am and am.subtype() == "amulet of faith" and not am.artefact then
       if you.god() == "Uskayaw" then return end
-      mpr_with_more(with_color(COLORS.lightcyan, REMOVE_FAITH_MSG))
-      alerted_max_piety = true
+      BRC.mpr.more(REMOVE_FAITH_MSG, BRC.COL.lightcyan)
+      ma_alerted_max_piety = true
+      if C.remove_faith_hotkey and BRC.Hotkey then
+        BRC.Hotkey.set("remove", "amulet of faith", false, function()
+          items.equipped_at("amulet"):remove()
+        end)
+      end
     end
   end
 end
 
 local function alert_spell_level_changes()
   local new_spell_levels = you.spell_levels()
-  if new_spell_levels > prev_available_spell_levels then
-    local delta = new_spell_levels - prev_available_spell_levels
-    local msg = "Gained " .. delta .. " spell level" .. (delta > 1 and "s" or "")
-    local avail = " (" .. new_spell_levels .. " available)"
-    crawl.mpr(with_color(COLORS.lightcyan, msg) .. with_color(COLORS.cyan, avail))
-  elseif new_spell_levels < prev_available_spell_levels then
-    crawl.mpr(with_color(COLORS.magenta, new_spell_levels .. " spell levels remaining"))
+  if new_spell_levels > prev_spell_levels then
+    local delta = new_spell_levels - prev_spell_levels
+    local msg = string.format("Gained %s spell level%s", delta, delta > 1 and "s" or "")
+    local suffix = string.format(" (%s available)", new_spell_levels)
+    BRC.mpr.lightcyan(msg .. BRC.txt.cyan(suffix))
+  elseif new_spell_levels < prev_spell_levels then
+    BRC.mpr.magenta(new_spell_levels .. " spell levels remaining")
   end
 
-
-  prev_available_spell_levels = new_spell_levels
+  prev_spell_levels = new_spell_levels
 end
 
-function init_misc_alerts()
-  if CONFIG.debug_init then crawl.mpr("Initializing misc-alerts") end
-
-  prev_available_spell_levels = you.spell_levels()
-  below_hp_threshold = false
-  create_persistent_data("alerted_max_piety", false)
-
-  if CONFIG.save_with_msg then
-    crawl.setopt("macros += M " .. KEYS.save_game .. " ===macro_save_with_message")
-    if saved_game_msg and saved_game_msg ~= "" then
-      crawl.mpr("MESSAGE: " .. saved_game_msg, message_color)
-      saved_game_msg = nil
-    end
+---- Macro function: Save with message feature ----
+function macro_brc_save()
+  if BRC.active == false
+    or f_misc_alerts.Config.disabled
+    or not f_misc_alerts.Config.save_with_msg
+  then
+    return BRC.util.do_cmd("CMD_SAVE_GAME")
   end
-end
 
-
------ Save with message -----
--- by gammafunk, edits by buehler
-function macro_save_with_message()
-  crawl.formatted_mpr("Save game and exit? (y/n)", "prompt")
-  local res = crawl.getch()
-  if not (string.char(res) == "y" or string.char(res) == "Y") then
-    crawl.mpr("Okay, then.")
+  if not BRC.mpr.yesno("Save game and exit?", BRC.COL.lightcyan) then
+    BRC.mpr.okay()
     return
   end
-  crawl.formatted_mpr("Leave a message: ", "prompt")
-  saved_game_msg = crawl.c_input_line()
-  create_persistent_data("saved_game_msg", saved_game_msg)
-  crawl.sendkeys(control_key("s"))
+
+  BRC.mpr.white("Leave a message: ", "prompt")
+  ma_saved_msg = crawl.c_input_line()
+  BRC.util.do_cmd("CMD_SAVE_GAME_NOW")
 end
 
------------------- Hooks ------------------
-function ready_misc_alerts()
-  if CONFIG.alert_remove_faith then alert_remove_faith() end
-  if CONFIG.alert_low_hp_threshold > 0 then alert_low_hp() end
-  if CONFIG.alert_spell_level_changes then alert_spell_level_changes() end
+---- Crawl hook functions ----
+function f_misc_alerts.ready()
+  if C.alert_remove_faith then alert_remove_faith() end
+  if C.alert_low_hp_threshold > 0 then alert_low_hp() end
+  if C.alert_spell_level_changes then alert_spell_level_changes() end
 end

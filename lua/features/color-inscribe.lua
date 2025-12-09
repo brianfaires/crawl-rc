@@ -1,93 +1,127 @@
--- Colorize inscriptions --
--- Long inscriptions can break certain menus. In-game inscriptions seem limited to 78 chars.
--- If INSCRIPTION_MAX_LENGTH is exceeded, ending tags are removed. A final tag is added to resume writing in lightgrey.
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: color-inscribe
+-- @module f_color_inscribe
+-- Adds color to key terms in inscriptions (resistances, stats, etc).
+---------------------------------------------------------------------------------------------------
 
+f_color_inscribe = {}
+f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
+
+---- Local constants ----
+local LOSS_COLOR = BRC.COL.brown
+local GAIN_COLOR = BRC.COL.white
 local MULTI_PLUS = "%++"
 local MULTI_MINUS = "%-+"
 local NEG_NUM = "%-%d+%.?%d*"
 local POS_NUM = "%+%d+%.?%d*"
+local POS_WORN = ":%d+%.?%d*"
 local COLORIZE_TAGS = {
-  { "rF" .. MULTI_PLUS, COLORS.lightred },
-  { "rF" .. MULTI_MINUS, COLORS.red },
-  { "rC" .. MULTI_PLUS, COLORS.lightblue },
-  { "rC" .. MULTI_MINUS, COLORS.blue },
-  { "rN" .. MULTI_PLUS, COLORS.lightmagenta },
-  { "rN" .. MULTI_MINUS, COLORS.magenta },
-  { "rPois", COLORS.lightgreen },
-  { "rElec", COLORS.lightcyan },
-  { "rCorr", COLORS.yellow },
-  { "rMut", COLORS.brown },
-  { "sInv", COLORS.white },
-  { "MRegen" .. MULTI_PLUS, COLORS.cyan },
-  { "Regen" .. MULTI_PLUS, COLORS.green },
-  { "Stlth" .. MULTI_PLUS, COLORS.white },
-  { "Will" .. MULTI_PLUS, COLORS.brown },
-  { "Will" .. MULTI_MINUS, COLORS.darkgrey },
-  { "Wiz" .. MULTI_PLUS, COLORS.white },
-  { "Wiz" .. MULTI_MINUS, COLORS.darkgrey },
-  { "Slay" .. POS_NUM, COLORS.white},
-  { "Slay" .. NEG_NUM, COLORS.darkgrey },
-  {  "Str" .. POS_NUM, COLORS.white },
-  {  "Str" .. NEG_NUM, COLORS.darkgrey },
-  {  "Dex" .. POS_NUM, COLORS.white },
-  {  "Dex" .. NEG_NUM, COLORS.darkgrey },
-  {  "Int" .. POS_NUM, COLORS.white },
-  {  "Int" .. NEG_NUM, COLORS.darkgrey },
-  {   "AC" .. POS_NUM, COLORS.white },
-  {   "AC" .. NEG_NUM, COLORS.darkgrey },
-  {   "EV" .. POS_NUM, COLORS.white },
-  {   "EV" .. NEG_NUM, COLORS.darkgrey },
-  {   "SH" .. POS_NUM, COLORS.white },
-  {   "SH" .. NEG_NUM, COLORS.darkgrey },
-  {   "HP" .. POS_NUM, COLORS.white },
-  {   "HP" .. NEG_NUM, COLORS.darkgrey },
-  {   "MP" .. POS_NUM, COLORS.white },
-  {   "MP" .. NEG_NUM, COLORS.darkgrey },
-} --COLORIZE_TAGS (do not remove this comment)
+  { "rF" .. MULTI_PLUS, BRC.COL.lightred },
+  { "rF" .. MULTI_MINUS, LOSS_COLOR },
+  { "rC" .. MULTI_PLUS, BRC.COL.lightblue },
+  { "rC" .. MULTI_MINUS, LOSS_COLOR },
+  { "rN" .. MULTI_PLUS, BRC.COL.lightmagenta },
+  { "rN" .. MULTI_MINUS, LOSS_COLOR },
+  { "rPois", BRC.COL.lightgreen },
+  { "rElec", BRC.COL.lightcyan },
+  { "rCorr", BRC.COL.yellow },
+  { "rMut", BRC.COL.yellow },
+  { "sInv", BRC.COL.magenta },
+  { "MRegen" .. MULTI_PLUS, BRC.COL.cyan },
+  { "^Regen" .. MULTI_PLUS, BRC.COL.green }, -- Avoiding "MRegen"
+  { " Regen" .. MULTI_PLUS, BRC.COL.green }, -- Avoiding "MRegen"
+  { "Stlth" .. MULTI_PLUS, GAIN_COLOR },
+  { "%+Fly", GAIN_COLOR },
+  { "RMsl", BRC.COL.yellow },
+  { "Will" .. MULTI_PLUS, BRC.COL.blue },
+  { "Will" .. MULTI_MINUS, LOSS_COLOR },
+  { "Wiz" .. MULTI_PLUS, BRC.COL.cyan },
+  { "Wiz" .. MULTI_MINUS, LOSS_COLOR },
+  { "Slay" .. POS_NUM, GAIN_COLOR },
+  { "Slay" .. NEG_NUM, LOSS_COLOR },
+  { "Str" .. POS_NUM, GAIN_COLOR },
+  { "Str" .. NEG_NUM, LOSS_COLOR },
+  { "Dex" .. POS_NUM, GAIN_COLOR },
+  { "Dex" .. NEG_NUM, LOSS_COLOR },
+  { "Int" .. POS_NUM, GAIN_COLOR },
+  { "Int" .. NEG_NUM, LOSS_COLOR },
+  { "AC" .. POS_NUM, GAIN_COLOR },
+  { "AC" .. POS_WORN, GAIN_COLOR },
+  { "AC" .. NEG_NUM, LOSS_COLOR },
+  { "EV" .. POS_NUM, GAIN_COLOR },
+  { "EV" .. POS_WORN, GAIN_COLOR },
+  { "EV" .. NEG_NUM, LOSS_COLOR },
+  { "SH" .. POS_NUM, GAIN_COLOR },
+  { "SH" .. POS_WORN, GAIN_COLOR },
+  { "SH" .. NEG_NUM, LOSS_COLOR },
+  { "HP" .. POS_NUM, GAIN_COLOR },
+  { "HP" .. NEG_NUM, LOSS_COLOR },
+  { "MP" .. POS_NUM, GAIN_COLOR },
+  { "MP" .. NEG_NUM, LOSS_COLOR },
+} -- COLORIZE_TAGS (do not remove this comment)
 
-
-local function colorize_subtext(text, s, tag)
-  local idx = text:find(s)
-  if not idx then return text end
-  if idx > 1 then
-    -- Avoid '!r' or an existing color tag
-    local prev = text:sub(idx-1, idx-1)
-    if prev == "!" or prev == ">" then return text end
-  end
-
-  local retval = text:gsub("(" .. s .. ")", "<" .. tag .. ">%1</" .. tag .. ">")
-  return retval
+---- Local functions ----
+local function colorize_subtext(text, subtext, tag)
+  if not text:find(subtext) then return text end
+  -- Remove current color tag if it exists
+  text = text:gsub("<(%d%d?)>(" .. subtext .. ")</%1>", "%2")
+  return text:gsub(subtext, string.format("<%s>%%1</%s>", tag, tag))
 end
 
-
-------------------- Hooks -------------------
-function c_assign_invletter_color_inscribe(it)
-  if not CONFIG.colorize_inscriptions then return end
-  if it.artefact then return end
-  -- If enabled, call out to inscribe stats before coloring
-  if do_stat_inscription then do_stat_inscription(it) end
-
+---- Public API ----
+function f_color_inscribe.colorize(it)
   local text = it.inscription
   for _, tag in ipairs(COLORIZE_TAGS) do
     text = colorize_subtext(text, tag[1], tag[2])
   end
 
+  -- Limit length for % menu: = total width, minus other text, minus length of item name
+  it.inscribe("", false)
+  local max_length = 80 - 3 - (it.is_melded and 32 or 25) - #it.name("plain", true)
+  if max_length < 0 then return end
+  -- Try removing brown, then white, then just remove all
+  if #text > max_length then text = text:gsub("</?" .. BRC.COL.brown .. ">", "") end
+  if #text > max_length then text = text:gsub("</?" .. BRC.COL.white .. ">", "") end
+  if #text > max_length then text = text:gsub("<.->", "") end
+
   it.inscribe(text, false)
 end
 
--- To colorize more, need a way to:
-  -- intercept messages before they're displayed (or delete and re-insert)
-  -- insert tags that affect menus
-  -- colorize artefact text
--- function c_message_color_inscribe(text, _)
---   local orig_text = text
---   text = colorize_subtext(text)
---   if text == orig_text then return end
+---- Crawl hook functions ----
+function f_color_inscribe.c_assign_invletter(it)
+  if it.artefact then return end
+  -- If enabled, call inscribe stats before colorizing
+  if
+    f_inscribe_stats
+    and f_inscribe_stats.Config
+    and not f_inscribe_stats.Config.disabled
+    and f_inscribe_stats.do_stat_inscription
+    and (
+      it.is_weapon and f_inscribe_stats.Config.inscribe_weapons
+      or BRC.it.is_armour(it) and f_inscribe_stats.Config.inscribe_armour
+    )
+  then
+    f_inscribe_stats.do_stat_inscription(it)
+  end
 
---   local cleaned = cleanup_text(text)
---   if cleaned:sub(2, 4) == " - " then
---     text = " " .. text
---   end
+  f_color_inscribe.colorize(it)
+end
 
---   crawl.mpr(text)
--- end
+--[[
+TODO: To colorize more, need a way to:
+  intercept messages before they're displayed (or delete and re-insert)
+  insert tags that affect menus
+  colorize artefact text
+function f_color_inscribe.c_message(text, _)
+  local orig_text = text
+  text = colorize_subtext(text)
+  if text == orig_text then return end
+
+  local cleaned = BRC.txt.clean(text)
+  if cleaned:sub(2, 4) == " - " then
+    text = " " .. text
+  end
+
+  crawl.mpr(text)
+end
+--]]

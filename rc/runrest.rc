@@ -6,6 +6,8 @@ ignore := runrest_ignore_message
 interrupt_travel -= sense_monster
 interrupt_travel -= mimic
 ignore ^= "sense a monster nearby"
+ignore ^= recovery:.*
+ignore ^= duration:.*
 
 # Monsters to ignore at a distance
 runrest_ignore_monster += fire vortex:1
@@ -19,13 +21,14 @@ stop -= it creaks loudly
 stop -= flies open with a bang
 stop += You hear
 
-# Re-enable stops for all ally actions then ignore some
+# Ignore some stops for ally actions, then stop on the rest
 ignore -= friend_action:
 ignore -= friend_spell:
 ignore -= friend_enchant:
 ignore ^= butterfly disappears
 ignore ^= friend_action:(a|the) web
 ignore ^= friend_action:(seems|blinks)
+ignore ^= clockwork bee (falls|winds down)
 stop += friend_action:
 stop += friend_spell:
 stop += friend_enchant:

@@ -1,15 +1,11 @@
+# Remap ~ to Lua interpreter (CMD_GAME_MENU is still on F1)
 bindkey = [~] CMD_LUA_CONSOLE
 
-# Numpad keymaps
-macros += K \{-1019} f
-macros += K \{-1018} 3
-macros += K \{-1016} \{9}
-macros += K \{-1015} 2
-macros += K \{-1012} 1
-macros += K \{-1010} o
-macros += K \{-1000} .
-macros += K \{-247} 5
-macros += K2 \{-1019} .
+# Cntl-Tab
+bindkey = [\{-222}] CMD_AUTOFIGHT_NOMOVE
+
+# Cntl-D (Go down closest stairs w/ {Cntl-G, '>'})
+macros += M \{4} \{7}>
 
 # Spellcasting macros
 macros += M 1 za
@@ -35,3 +31,18 @@ macros += K2 7 \{13}
 macros += K2 8 \{13}
 macros += K2 9 \{13}
 macros += K2 0 \{13}
+
+# Numpad keymaps
+## Keycodes:
+## NP0 (-1000), NPenter (-1010), NP/ (-1012), NP* (-1015), 
+## NP+ (-1016), NP- (-1018), NP. (-1019), NP= (-1021), Tab (9)
+
+macros += K \{-1019} f
+macros += K \{-1012} 1
+macros += K \{-1015} 2
+macros += K \{-1018} 3
+macros += K \{-1016} \{9}
+macros += K \{-1010} o
+macros += K \{-1000} .
+macros += K \{-247} 5
+macros += K2 \{-1019} .

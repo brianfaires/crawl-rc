@@ -1,0 +1,285 @@
+## Standalone BRC Feature: drop-inferior
+## Generated from: lua/features/drop-inferior.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = true
+
+f_drop_inferior = {}
+f_drop_inferior.Config = {
+  msg_on_inscribe = true, -- Show a message when an item is marked for drop
+  hotkey_drop = true, -- BRC hotkey drops all items on the drop list
+} -- f_drop_inferior.Config (do not remove this comment)
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.ARTPROPS_BAD = {
+  "Bane", "-Cast", "-Move", "-Tele",
+  "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
+} -- BRC.ARTPROPS_BAD (do not remove this comment)
+
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+BRC.EMOJI = {
+  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
+  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
+  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
+  SUCCESS = BRC.Config.emojis and "✅" or nil,
+} -- BRC.EMOJI (do not remove this comment)
+
+BRC.MAGIC_SCHOOLS = {
+  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
+  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+} -- BRC.MAGIC_SCHOOLS (do not remove this comment)
+
+BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
+
+BRC.RISKY_EGOS = { "antimagic", "chaos", "distort", "harm", "heavy", "Infuse", "Ponderous" }
+
+BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.eq = BRC.eq or {}
+BRC.it = BRC.it or {}
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+BRC.you = BRC.you or {}
+
+-- BRC.eq module
+function BRC.eq.get_ac(it)
+  local it_plus = it.plus or 0
+
+  if it.artefact then
+    local art_ac = it.artprops["AC"]
+    if art_ac then it_plus = it_plus + art_ac end
+  end
+
+  local ac = it.ac * (1 + you.skill("Armour") / 22) + it_plus
+  if not BRC.it.is_body_armour(it) then return ac end
+
+  if BRC.you.mut_lvl("deformed body") + BRC.you.mut_lvl("pseudopods") > 0 then ac = ac * 0.6 end
+
+  return ac
+end
+
+function BRC.eq.get_ego(it, no_stat_only_egos)
+  local ego = it.ego(true)
+  if ego then
+    ego = ego:lower()
+    if BRC.eq.is_useless_ego(ego) or (no_stat_only_egos and (ego == "speed" or ego == "heavy")) then
+      return it.artefact and it.name() or nil
+    end
+    return ego
+  end
+
+  if BRC.it.is_body_armour(it) then
+    local name = it.name("qual")
+    local good_scales = name:contains("dragon scales") and not name:contains("steam")
+    if name:contains("troll leather") or good_scales then return name end
+  end
+
+  return it.artefact and it.name() or nil
+end
+
+function BRC.eq.is_risky(it)
+  if it.artefact then
+    for k, v in pairs(it.artprops) do
+      if util.contains(BRC.ARTPROPS_BAD, k) or v < 0 then return true end
+    end
+  end
+
+  local ego_name = BRC.eq.get_ego(it)
+  return ego_name and util.contains(BRC.RISKY_EGOS, ego_name)
+end
+
+function BRC.eq.is_useless_ego(ego)
+  if BRC.MAGIC_SCHOOLS[ego] then
+    return BRC.Config.unskilled_egos_usable or you.skill(BRC.MAGIC_SCHOOLS[ego]) > 0
+  end
+
+  local race = you.race()
+  return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
+    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or ego == "pain" and you.skill("Necromancy") == 0
+end
+
+-- BRC.it module
+function BRC.it.is_armour(it, include_orbs)
+  return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
+end
+
+function BRC.it.is_aux_armour(it)
+  return BRC.it.is_armour(it) and not (BRC.it.is_body_armour(it) or BRC.it.is_shield(it))
+end
+
+function BRC.it.is_body_armour(it)
+  return it and it.subtype() == "body"
+end
+
+function BRC.it.is_orb(it)
+  return it and it.subtype() == "offhand" and not it.is_shield()
+end
+
+function BRC.it.is_shield(it)
+  return it and it.is_shield()
+end
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.int2char(num)
+  return string.char(string.byte("a") + num)
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
+-- BRC.util module
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+-- BRC.you module
+function BRC.you.mut_lvl(mutation, innate_only)
+  return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
+end
+
+function BRC.you.num_eq_slots(it)
+  local player_race = you.race()
+  if it.is_weapon then return player_race == "Coglin" and 2 or 1 end
+  if BRC.it.is_aux_armour(it) then
+    if player_race == "Formicid" then return it.subtype() == "gloves" and 2 or 1 end
+    return player_race == "Poltergeist" and 6 or 1
+  end
+
+  return 1
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: drop-inferior
+-- @module f_drop_inferior
+-- When picking up an item, inscribes inferior items with "~~DROP_ME" and alerts you.
+-- Items with "~~DROP_ME" are added to the drop list, and can be quickly selected with `,`
+---------------------------------------------------------------------------------------------------
+
+
+
+---- Local constants ----
+local DROP_KEY = "~~DROP_ME"
+
+---- Initialization ----
+function f_drop_inferior.init()
+  crawl.setopt("drop_filter += " .. DROP_KEY)
+end
+
+---- Local functions ----
+local function inscribe_drop(it)
+  local new_inscr = it.inscription:gsub(DROP_KEY, "") .. DROP_KEY
+  it.inscribe(new_inscr, false)
+  if f_drop_inferior.Config.msg_on_inscribe then
+    local item_name = BRC.txt.yellow(BRC.txt.int2char(it.slot) .. " - " .. it.name())
+    BRC.mpr.cyan(BRC.txt.wrap("You can drop: " .. item_name, BRC.EMOJI.CAUTION))
+  end
+end
+
+---- Crawl hook functions ----
+function f_drop_inferior.c_assign_invletter(it)
+  -- Remove any previous DROP_KEY inscriptions
+  it.inscribe(it.inscription:gsub(DROP_KEY, ""), false)
+
+  if
+    not (it.is_weapon or BRC.it.is_armour(it))
+    or BRC.eq.is_risky(it)
+    or BRC.you.num_eq_slots(it) > 1
+  then
+    return
+  end
+
+  local it_ego = BRC.eq.get_ego(it)
+  local marked_something = false
+  for _, inv in ipairs(items.inventory()) do
+    -- To be a clear upgrade: Not artefact, same subtype, and ego is same or a clear upgrade
+    local inv_ego = BRC.eq.get_ego(inv)
+    local not_worse = inv_ego == it_ego or not inv_ego or BRC.eq.is_risky(inv)
+    if not_worse and not inv.artefact and inv.subtype() == it.subtype() then
+      if it.is_weapon then
+        if inv.plus <= (it.plus or 0) then
+          inscribe_drop(inv)
+          marked_something = true
+        end
+      else
+        local not_more_ac = BRC.eq.get_ac(inv) <= BRC.eq.get_ac(it)
+        if not_more_ac and inv.encumbrance >= it.encumbrance then
+          inscribe_drop(inv)
+          marked_something = true
+        end
+      end
+    end
+  end
+
+  if marked_something and f_drop_inferior.Config.hotkey_drop and BRC.Hotkey then
+    local condition = function()
+      return util.exists(items.inventory(), function(i)
+        return i.inscription:contains(DROP_KEY) end)
+    end
+
+    local do_drop = function()
+      crawl.sendkeys(BRC.util.get_cmd_key("CMD_DROP") .. ",\r")
+      crawl.flush_input()
+    end
+
+    BRC.Hotkey.set("drop", "your useless items", false, do_drop, condition)
+  end
+end
+
+
+-- Crawl hook wrappers
+function c_assign_invletter(...)
+  return f_drop_inferior.c_assign_invletter(...)
+end
+
+
+-- Initialize feature
+if f_drop_inferior.init then f_drop_inferior.init() end
+}

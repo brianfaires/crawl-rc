@@ -1,15 +1,24 @@
 more := force_more_message
 flash := flash_screen_message
 
+# Almost worth removing
+#force_more_message -= You bow before the missionary of Beogh
+#force_more_message -= You .* the altar of
+
 # Remove annoying defaults
 more -= You have reached level
+more -= Marking area around .* as unsafe
+more -= welcomes you( back)?!
+more -= upon you is lifted
+more -= You pick up the .* gem and feel its .* weight
+more -= You pick up the .* rune and feel its power
 more -= The lock glows eerily
 more -= Heavy smoke blows from the lock
 more -= The gate opens wide
 more -= With a soft hiss the gate opens wide
-more -= You pick up the .* gem and feel its .* weight
-more -= You pick up the .* rune and feel its power
-more -= welcomes you( back)?!
+more -= grants you (a gift|throwing weapons|a weapon)
+more += grants you (a gift|a weapon)
+more -= You finish merging with the rock
 
 # Significant spells/effects ending
 flash += You feel stable
@@ -65,6 +74,7 @@ flash += Your body shudders with the violent release
 flash += power of Zot
 
 # Found something important
+flash += You pick up the .* (gem|rune) and feel its 
 more += Found.*the Ecumenical Temple
 more += Found.*(treasure|bazaar|ziggurat)
 more += .*resides here
@@ -78,7 +88,7 @@ more += Your surroundings.*(different|flicker)
 more += You.*re suddenly pulled into a different region
 flash += You blink
 flash += danger:You feel strangely .*stable
-flash += delayed
+flash += delaying your translocation
 
 # Big damage
 more += your body is wracked

@@ -1,0 +1,77 @@
+## Standalone BRC Feature: answer-prompts
+## Generated from: lua/features/answer-prompts.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = true
+
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: answer-prompts
+-- @module f_answer_prompts
+-- Automatically answer crawl prompts.
+---------------------------------------------------------------------------------------------------
+
+f_answer_prompts = {}
+
+
+---- Crawl hook functions ----
+function f_answer_prompts.c_answer_prompt(prompt)
+  if prompt == "Die?" then return false end
+  if prompt:contains("cheaper one?") and you.branch() ~= "Bazaar" then
+    BRC.mpr.yellow("Replacing shopping list items")
+    return true
+  end
+end
+
+
+-- Crawl hook wrappers
+function c_answer_prompt(...)
+  return f_answer_prompts.c_answer_prompt(...)
+end
+
+
+-- Initialize feature
+if f_answer_prompts.init then f_answer_prompts.init() end
+}

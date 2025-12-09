@@ -1,116 +1,131 @@
--- Add autopickup exclusion for any jewellery/missile/evocable/consumable that is dropped
--- Exclusion is removed when you pick the item back up
--- Exclude enchant/brand weapon only when no enchantable weapons are in inventory
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: exclude-dropped
+-- @module f_exclude_dropped
+-- Excludes dropped items from autopickup, pickup resumes autopickup.
+-- @todo Can remove when crawl's drop_disables_autopickup setting reaches feature parity.
+--    (Configurable/optional, dropping partial stack does not exclude, pickup resumes autopickup)
+---------------------------------------------------------------------------------------------------
+
+f_exclude_dropped = {}
+f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
+f_exclude_dropped.Config = {
+  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
+} -- f_exclude_dropped.Config (do not remove this comment)
+
+---- Persistent variables ----
+ed_dropped_items = BRC.Data.persist("ed_dropped_items", {})
+
+---- Local functions ----
 local function add_exclusion(item_name)
-  if not util.contains(dropped_item_exclusions, item_name) then
-    dropped_item_exclusions[#dropped_item_exclusions + 1] = item_name
+  if not util.contains(ed_dropped_items, item_name) then
+    table.insert(ed_dropped_items, item_name)
   end
-  local command = "autopickup_exceptions ^= " .. item_name
-  crawl.setopt(command)
+  BRC.opt.autopickup_exceptions(item_name, true)
 end
 
 local function remove_exclusion(item_name)
-  util.remove(dropped_item_exclusions, item_name)
-  local command = "autopickup_exceptions -= " .. item_name
-  crawl.setopt(command)
+  util.remove(ed_dropped_items, item_name)
+  BRC.opt.autopickup_exceptions(item_name, false)
 end
 
-local function has_enchantable_weap_in_inv()
-  for inv in iter.invent_iterator:new(items.inventory()) do
-    if inv.is_weapon 
-       and not is_magic_staff(inv) 
-       and inv.plus < 9 
-       and (not inv.artefact or you.race() == "Mountain Dwarf") then
-        crawl.mpr(inv.name("qual"))
-        return true
-    end
-  end
-  return false
+local function enchantable_weap_in_inv()
+  return util.exists(items.inventory(), function(i)
+    return i.is_weapon
+      and not BRC.it.is_magic_staff(i)
+      and i.plus < 9
+      and (not i.artefact or you.race() == "Mountain Dwarf")
+  end)
 end
 
--- Pulls name from text; returns nil if we should NOT exclude anything
-local function get_excludable_name(text, for_exclusion)
-  text = cleanup_text(text, false) -- remove tags
+local function clean_item_text(text)
+  text = BRC.txt.clean(text)
   text = text:gsub("{.*}", "")
   text = text:gsub("[.]", "")
   text = text:gsub("%(.*%)", "")
-  text = util.trim(text)
+  return util.trim(text)
+end
 
-  -- jewellery and wands
-  local idx = text:find("ring of", 1, true) or text:find("amulet of", 1, true) or text:find("wand of", 1, true)
-  if idx then
-    return text:sub(idx, #text)
-  end
+local function extract_jewellery_or_evoker(text)
+  local idx = text:find("ring of", 1, true)
+    or text:find("amulet of", 1, true)
+    or text:find("wand of", 1, true)
+  if idx then return text:sub(idx, #text) end
 
-  -- misc items
-  for _,item_name in ipairs(ALL_MISC_ITEMS) do
+  for _, item_name in ipairs(BRC.MISC_ITEMS) do
     if text:find(item_name) then return item_name end
-  end
-
-  -- Missiles; add regex to hit specific missiles
-  for _,item_name in ipairs(ALL_MISSILES) do
-    if text:find(item_name) then
-      return item_name
-    end
-  end
-
-  -- Potions
-  idx = text:find("potions? of")
-  if idx then
-    return "potions? of " .. util.trim(text:sub(idx+10,#text))
-  end
-
-  -- Scrolls; Enchant scrolls are special; not always excluded
-  idx = text:find("scrolls? of")
-  if idx then
-    -- Enchant/Brand weapon scrolls continue pickup if they're still useful
-    if for_exclusion and CONFIG.ignore_stashed_weapon_scrolls
-    and (text:find("enchant weapon", 1, true) or text:find("brand weapon", 1, true))
-    and has_enchantable_weap_in_inv() then
-      return
-    end
-    return "scrolls? of " .. util.trim(text:sub(idx+10,#text))
   end
 end
 
+local function extract_missile(text)
+  for _, item_name in ipairs(BRC.MISSILES) do
+    if text:find(item_name) then return item_name end
+  end
+end
 
-function init_exclude_dropped()
-  if not CONFIG.exclude_dropped then return end
-  if CONFIG.debug_init then crawl.mpr("Initializing exclude-dropped") end
+local function extract_potion(text)
+  local idx = text:find("potions? of")
+  if idx then return "potions? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
 
-  create_persistent_data("dropped_item_exclusions", {})
+local function extract_scroll(text)
+  local idx = text:find("scrolls? of")
+  if idx then return "scrolls? of " .. util.trim(text:sub(idx + 10, #text)) end
+end
 
-  for _,v in ipairs(dropped_item_exclusions) do
+--[[
+  get_item_name() - Tries to extract item name from text.
+  Returns name of item, or nil if not recognized as an excludable item.
+--]]
+local function get_item_name(text)
+  text = clean_item_text(text)
+  return extract_jewellery_or_evoker(text)
+    or extract_missile(text)
+    or extract_potion(text)
+    or extract_scroll(text)
+end
+
+local function should_exclude(item_name, full_msg)
+  -- Enchant/Brand weapon scrolls continue pickup if they're still useful
+  if
+    f_exclude_dropped.Config.not_weapon_scrolls
+    and (item_name:contains("enchant weapon") or item_name:contains("brand weapon"))
+    and enchantable_weap_in_inv()
+  then
+    return false
+  end
+
+  -- Don't exclude if we dropped partial stack (except for jewellery)
+  for _, inv in ipairs(items.inventory()) do
+    if inv.name("qual"):contains(item_name) then
+      return BRC.it.is_jewellery(inv)
+        or inv.quantity == 1
+        or full_msg:contains("ou drop " .. item_name .. " " .. inv.quantity)
+    end
+  end
+
+  return true
+end
+
+---- Initialization ----
+function f_exclude_dropped.init()
+  for _, v in ipairs(ed_dropped_items) do
     add_exclusion(v)
   end
 end
 
-
------------------- Hooks ------------------
-function c_message_exclude_dropped(text, channel)
-  if not CONFIG.exclude_dropped then return end
+---- Crawl hook functions ----
+function f_exclude_dropped.c_message(text, channel)
   if channel ~= "plain" then return end
-  local exclude
-  if text:find("ou drop ", 1, true) then exclude = true
-  elseif text:find(" %- ") then exclude = false
-  else return end
 
-  local item_name = get_excludable_name(text, exclude)
+  local picked_up = BRC.txt.get_pickup_info(text)
+  if not picked_up and not text:contains("ou drop ") then return end
+
+  local item_name = get_item_name(text)
   if not item_name then return end
 
-  if exclude then
-    -- Don't exclude if we dropped partial stack (except for jewellery)
-    for inv in iter.invent_iterator:new(items.inventory()) do
-      if inv.name("qual"):find(item_name, 1, true) then
-        if is_jewellery(inv) then break end
-        local qty_str = "ou drop " .. inv.quantity .. " " .. item_name
-        if inv.quantity == 1 or text:find(qty_str, 1, true) then break end
-        return
-      end
-    end
-
-    add_exclusion(item_name)
-  else
+  if picked_up then
     remove_exclusion(item_name)
+  elseif should_exclude(item_name, text) then
+    add_exclusion(item_name)
   end
 end

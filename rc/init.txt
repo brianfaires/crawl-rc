@@ -1,0 +1,92 @@
+{
+  crawl.mpr("<red>Recommended to use buehler.rc instead. Only use multi-file for improved error messages.")
+  crawl.mpr("<red>If running BRC as multi-file, you must restart crawl after saving a game, to reset memory.")
+}
+
+lua_file = crawl-rc/lua/core/_header.lua
+lua_file = crawl-rc/lua/config/custom.lua
+lua_file = crawl-rc/lua/config/testing.lua
+lua_file = crawl-rc/lua/config/speed.lua
+lua_file = crawl-rc/lua/config/turncount.lua
+lua_file = crawl-rc/lua/config/streak.lua
+lua_file = crawl-rc/lua/config/explicit.lua
+
+### Mostly normal RC options ###
+include = crawl-rc/rc/main.rc
+include = crawl-rc/rc/macros.rc
+include = crawl-rc/rc/slot-defaults.rc
+include = crawl-rc/rc/autoinscribe.rc
+include = crawl-rc/rc/display.rc
+include = crawl-rc/rc/fm-messages.rc
+include = crawl-rc/rc/runrest.rc
+
+### buehler.rc core files ###
+lua_file = crawl-rc/lua/core/constants.lua
+lua_file = crawl-rc/lua/util/util.lua
+lua_file = crawl-rc/lua/util/text.lua
+lua_file = crawl-rc/lua/util/mpr.lua
+lua_file = crawl-rc/lua/util/item.lua
+lua_file = crawl-rc/lua/util/you.lua
+lua_file = crawl-rc/lua/util/equipment.lua
+lua_file = crawl-rc/lua/util/options.lua
+lua_file = crawl-rc/lua/core/data.lua
+lua_file = crawl-rc/lua/core/config.lua
+lua_file = crawl-rc/lua/core/hotkey.lua
+lua_file = crawl-rc/lua/core/brc.lua
+
+### Lua feature files ###
+lua_file = crawl-rc/lua/features/alert-monsters.lua
+lua_file = crawl-rc/lua/features/announce-hp-mp.lua
+lua_file = crawl-rc/lua/features/announce-items.lua
+lua_file = crawl-rc/lua/features/answer-prompts.lua
+lua_file = crawl-rc/lua/features/bread-swinger.lua
+lua_file = crawl-rc/lua/features/color-inscribe.lua
+lua_file = crawl-rc/lua/features/drop-inferior.lua
+lua_file = crawl-rc/lua/features/dynamic-options.lua
+lua_file = crawl-rc/lua/features/exclude-dropped.lua
+lua_file = crawl-rc/lua/features/fully-recover.lua
+lua_file = crawl-rc/lua/features/go-up-macro.lua
+lua_file = crawl-rc/lua/features/inscribe-stats.lua
+lua_file = crawl-rc/lua/features/misc-alerts.lua
+lua_file = crawl-rc/lua/features/mute-messages.lua
+lua_file = crawl-rc/lua/features/quiver-reminders.lua
+lua_file = crawl-rc/lua/features/remind-id.lua
+lua_file = crawl-rc/lua/features/runrest-features.lua
+lua_file = crawl-rc/lua/features/safe-consumables.lua
+lua_file = crawl-rc/lua/features/safe-stairs.lua
+lua_file = crawl-rc/lua/features/startup.lua
+lua_file = crawl-rc/lua/features/weapon-slots.lua
+
+### Pickup and alert ###
+lua_file = crawl-rc/lua/features/pickup-alert/pa-config.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-main.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-data.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-armour.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-misc.lua
+lua_file = crawl-rc/lua/features/pickup-alert/pa-weapons.lua
+
+
+############## Lua Hook Functions ##############
+{
+function c_message(text, channel)
+  BRC.c_message(text, channel)
+end
+
+function c_answer_prompt(prompt)
+  return BRC.c_answer_prompt(prompt)
+end
+
+function c_assign_invletter(it)
+  return BRC.c_assign_invletter(it)
+end
+
+function ch_start_running(kind)
+  BRC.ch_start_running(kind)
+end
+
+function ready()
+  BRC.ready()
+end
+
+BRC.init()
+}

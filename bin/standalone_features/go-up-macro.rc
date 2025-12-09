@@ -1,0 +1,219 @@
+## Standalone BRC Feature: go-up-macro
+## Generated from: lua/features/go-up-macro.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = true
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.logs_to_stderr = false
+
+f_go_up_macro = {}
+f_go_up_macro.Config = {
+  go_up_macro_key = string.byte("E") - 64, -- Key for "go up closest stairs" macro
+
+  ignore_mon_on_orb_run = true, -- Ignore monsters on orb run
+  -- %HP thresholds for ignoring monsters during orb run (2-7 tiles away, depending on HP percent)
+  orb_ignore_hp_min = 0.30, -- HP percent to stop ignoring monsters
+  orb_ignore_hp_max = 0.70, -- HP percent to ignore monsters at min distance away (2 tiles)
+} -- f_go_up_macro.Config (do not remove this comment)
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+
+BRC.PORTAL_FEATURE_NAMES = {
+  "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis", "Ossuary",
+  "Sewer", "Trove", "Volcano", "Wizlab", "Zig",
+} -- BRC.PORTAL_FEATURE_NAMES (do not remove this comment)
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+
+-- BRC.mpr module
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, color)
+  -- Avoid referencing BRC, to stay robust during startup
+  color = color or "lightgrey"
+  local msg = "[BRC] " .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+  crawl.redraw_screen()
+
+  if not skip_more then
+    crawl.more()
+    crawl.redraw_screen()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr("[BRC] (Error) " .. message)
+  end
+end
+
+-- BRC.opt module
+function BRC.opt.macro(key, function_name)
+  if type(_G[function_name]) ~= "function" then
+    BRC.mpr.error("Function %s is not a global function", function_name)
+    return
+  end
+
+  -- Format msg for debugging and keycode for crawl.setopt()
+  local key_str = nil
+  if type(key) == "number" then
+    -- Try to convert to key name for better debug msg
+    for k, v in pairs(BRC.KEYS) do
+      if v == key then
+        key_str = "<<< " .. k .. " >>"
+        break
+      end
+    end
+    -- Format keycode string for crawl.setopt()
+    key = "\\{" .. key .. "}"
+    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
+  end
+
+  -- The << >> formatting protects against crawl thinking '<' is a tag
+  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
+
+  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+
+  BRC.mpr.debug(
+    string.format(
+      "Assigned macro: %s to key: %s",
+      BRC.txt.magenta(function_name .. "()"),
+      BRC.txt.lightred(key_str)
+    )
+  )
+end
+
+function BRC.opt.runrest_ignore_monster(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("runrest_ignore_monster %s %s", op, pattern))
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
+-- BRC.util module
+function BRC.util.cntl(c)
+  return string.byte(c:upper()) - 64
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: go-up-macro
+-- @module f_go_up_macro
+-- Handles orb run mechanics: HP-based monster ignore for cntl-E macro
+---------------------------------------------------------------------------------------------------
+
+
+
+---- Local variables ----
+local orb_ignore_distance
+
+---- Local functions ----
+local function set_orb_ignore_distance(distance)
+  if orb_ignore_distance then
+    BRC.opt.runrest_ignore_monster(".*:" .. orb_ignore_distance, false)
+    orb_ignore_distance = nil
+  end
+  if distance then
+    orb_ignore_distance = distance
+    BRC.opt.runrest_ignore_monster(".*:" .. orb_ignore_distance, true)
+  end
+end
+
+--- Get distance (2 - 7) to ignore monsters based on HP percent
+local function get_ignore_distance_from_hp()
+  local hp, mhp = you.hp()
+  local hp_pct = hp / mhp
+  local min_pct = f_go_up_macro.Config.orb_ignore_hp_min
+  local max_pct = f_go_up_macro.Config.orb_ignore_hp_max
+
+  if hp_pct <= min_pct then return nil end
+  if hp_pct >= max_pct then return 2 end
+
+  -- Linear interpolation between min_pct and max_pct
+  local ratio = (hp_pct - min_pct) / (max_pct - min_pct)
+  return math.floor(2 + ratio * (you.los() - 2))
+end
+
+---- Initialization ----
+function f_go_up_macro.init()
+  BRC.opt.macro(f_go_up_macro.Config.go_up_macro_key, "macro_brc_go_up")
+end
+
+---- Macro function ----
+--- Go up the closest stairs (Cntl-E)
+function macro_brc_go_up()
+  if BRC.active == false or f_go_up_macro.Config.disabled then return end
+
+  if you.have_orb() and f_go_up_macro.Config.ignore_mon_on_orb_run then
+    local distance = get_ignore_distance_from_hp()
+    if distance ~= orb_ignore_distance then set_orb_ignore_distance(distance) end
+  end
+
+  -- Go up closest stairs; different macro for D:1 and portals
+  local where = you.where()
+  if where == "D:1" and you.have_orb()
+    or where == "Temple"
+    or util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch())
+  then
+    crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
+  else
+    crawl.sendkeys({ BRC.util.cntl("g"), "<" })
+  end
+  crawl.flush_input()
+end
+
+
+
+-- Initialize feature
+if f_go_up_macro.init then f_go_up_macro.init() end
+}

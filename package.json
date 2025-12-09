@@ -1,0 +1,18 @@
+{
+  "name": "crawl-rc",
+  "version": "1.2.0",
+  "description": "Crawl RC configuration files",
+  "scripts": {
+    "lint": "luacheck --formatter plain lua/",
+    "lint:fix": "luacheck --formatter plain --fix lua/",
+    "lint:quiet": "luacheck --formatter plain --quiet lua/"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "lua",
+    "crawl",
+    "rc"
+  ],
+  "author": "buehler",
+  "license": "MIT"
+}

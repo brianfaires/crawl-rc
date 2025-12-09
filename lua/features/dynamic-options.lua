@@ -1,162 +1,151 @@
------ Set any options based on game state -----
--- Configure this feature here
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: dynamic-options
+-- @module f_dynamic_options
+-- Contains options that change based on game state: xl, class, race, god, skills.
+---------------------------------------------------------------------------------------------------
 
-local EARLY_XL = 5
-local MID_XL = 10
-local LATE_XL = 15
+f_dynamic_options = {}
+f_dynamic_options.BRC_FEATURE_NAME = "dynamic-options"
+f_dynamic_options.Config = {
+  --- XL-based force more messages: patterns active when XL <= specified level
+  xl_force_mores = {
+    { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
+    { pattern = "You.*re more poisoned", xl = 7 },
+    { pattern = "^(?!.*Your?).*speeds? up", xl = 10 },
+    { pattern = "danger:goes berserk", xl = 18 },
+    { pattern = "monster_warning:carrying a wand of", xl = 15 },
+  },
 
-local EARLY_XL_FMs = {
-} -- EARLY_XL_FMs (do not remove this comment)
+  --- Call each function for the corresponding race
+  race_options = {
+    Gnoll = function()
+      BRC.opt.message_mute("intrinsic_gain:skill increases to level", true)
+    end,
+  },
 
-local MID_XL_FMs = {
-  "monster_warning:wielding.*of electrocution",
-  "You.*re more poisoned"
-} -- MID_XL_FMs (do not remove this comment)
+  --- Call each function for the corresponding class
+  class_options = {
+    Hunter = function()
+      crawl.setopt("view_delay = 30")
+    end,
+    Shapeshifter = function()
+      BRC.opt.autopickup_exceptions("<flux bauble", true)
+    end,
+  },
 
-local LATE_XL_FMs = {
-  "^(?!.*Your?).*speeds? up",
-  "danger:goes berserk",
-  "monster_warning:carrying a wand of"
-} -- LATE_XL_FMs (do not remove this comment)
+  --- Call each function when joining/leaving a god
+  god_options = {
+    ["No God"] = function(joined)
+      BRC.opt.force_more_message("Found.*the Ecumenical Temple", not joined)
+      BRC.opt.flash_screen_message("Found.*the Ecumenical Temple", joined)
+      BRC.opt.runrest_stop_message("Found.*the Ecumenical Temple", joined)
+    end,
+    Beogh = function(joined)
+      BRC.opt.runrest_ignore_message("no longer looks.*", joined)
+      BRC.opt.force_more_message("Your orc.*dies", joined)
+    end,
+    Cheibriados = function(joined)
+      BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)
+    end,
+    Jiyva = function(joined)
+      BRC.opt.flash_screen_message("god:splits in two", joined)
+      BRC.opt.message_mute("You hear a.*(slurping|squelching) noise", joined)
+    end,
+    Lugonu = function(joined)
+      BRC.util.add_or_remove(BRC.RISKY_EGOS, "distort", not joined)
+    end,
+    Trog = function(joined)
+      BRC.util.add_or_remove(BRC.ARTPROPS_BAD, "-Cast", not joined)
+      BRC.util.add_or_remove(BRC.RISKY_EGOS, "antimagic", not joined)
+    end,
+    Xom = function(joined)
+      BRC.opt.flash_screen_message("god:", joined)
+    end,
+  },
+} -- f_dynamic_options.Config (do not remove this comment)
 
-local IGNORE_SPELLBOOKS_STRING = table.concat(ALL_SPELLBOOKS, ", ")
-local SPELLCASTING_ITEMS_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
+---- Local constants ----
+local IGNORE_SPELLBOOKS_STRING = table.concat(BRC.SPELLBOOKS, ", ")
+local HIGH_LVL_MAGIC_STRING = "scrolls? of amnesia, potions? of brilliance, ring of wizardry"
 
-local dynopt_cur_god
-local ignoring_spellcasting
-local ignoring_spellbooks
-local early_xl_alerts_on
-local mid_xl_alerts_on
-local late_xl_alerts_on
+---- Local variables ----
+local C -- config alias
+local cur_god
+local ignore_all_magic
+local ignore_advanced_magic
+local xl_force_mores_active
 
-local function set_dyn_fm(warnings, create)
-  for _, v in ipairs(warnings) do
-    if create then
-      crawl.setopt("force_more_message += " .. v)
-    else
-      crawl.setopt("force_more_message -= " .. v)
-    end
+---- Initialization ----
+function f_dynamic_options.init()
+  C = f_dynamic_options.Config
+
+  cur_god = "No God"
+  ignore_advanced_magic = false
+  ignore_all_magic = false
+  xl_force_mores_active = {}
+
+  -- Class options
+  local handler = C.class_options[you.class()]
+  if handler then handler() end
+
+  -- Race options
+  local race = you.race()
+  handler = C.race_options[race]
+  if handler then handler() end
+  if util.contains(BRC.UNDEAD_RACES, race) then
+    BRC.opt.force_more_message("monster_warning:wielding.*of holy wrath", true)
+  end
+  if not util.contains(BRC.POIS_RES_RACES, race) then
+    BRC.opt.force_more_message("monster_warning:curare", true)
   end
 end
 
-local function set_class_options()
-  if you.class() == "Hunter" then
-    crawl.setopt("view_delay = 30")
-  elseif you.class() == "Shapeshifter" then
-    crawl.setopt("autopickup_exceptions ^= <flux bauble")
-  end
-end
-
--- Some god-specific force_mores also in fm-message.rc
+---- Local functions ----
 local function set_god_options()
-  local new_god = you.god()
-  if new_god ~= dynopt_cur_god then
-    if dynopt_cur_god == "No God" then
-      crawl.setopt("force_more_message -= Found.*the Ecumenical Temple")
-      crawl.setopt("flash_screen_message += Found.*the Ecumenical Temple")
-      crawl.setopt("runrest_stop_message += Found.*the Ecumenical Temple")
-    elseif new_god == "Beogh" then
-      crawl.setopt("runrest_ignore_message += no longer looks.*")
-      crawl.setopt("force_more_message += Your orc.*dies")
-    elseif new_god == "Jiyva" then
-      crawl.setopt("force_more_message += god:splits in two")
-      crawl.setopt("force_more_message += god:Your prayer is over.")
-      crawl.setopt("message_colour ^= mute:You hear a.*(slurping|squelching) noise")
-    elseif new_god == "Qazlal" then
-      crawl.setopt("force_more_message -= god:You feel.*protected")
-    elseif new_god == "Xom" then
-      crawl.setopt("force_more_message += god:")
-    end
+  if cur_god == you.god() then return end
+  local prev_god = cur_god
+  cur_god = you.god()
 
-    dynopt_cur_god = new_god
-  end
-end
+  local abandoned = C.god_options[prev_god]
+  if abandoned then abandoned(false) end
 
-local function set_race_options()
-  if util.contains(ALL_UNDEAD_RACES, you.race()) then
-    crawl.setopt("force_more_message += monster_warning:wielding.*of holy wrath")
-  end
-
-  if not util.contains(ALL_POIS_RES_RACES, you.race()) then
-    crawl.setopt("force_more_message += monster_warning:curare")
-  end
-
-  if you.race() == "Gnoll" then
-    crawl.setopt("message_colour ^= mute:intrinsic_gain:skill increases to level")
-  end
+  local joined = C.god_options[cur_god]
+  if joined then joined(true) end
 end
 
 local function set_xl_options()
-  if not early_xl_alerts_on and you.xl() <= EARLY_XL then
-    early_xl_alerts_on = true
-    set_dyn_fm(EARLY_XL_FMs, true)
-  elseif early_xl_alerts_on and you.xl() > EARLY_XL then
-    early_xl_alerts_on = false
-    set_dyn_fm(EARLY_XL_FMs, false)
-  end
-
-  if not mid_xl_alerts_on and you.xl() <= MID_XL then
-    mid_xl_alerts_on = true
-    set_dyn_fm(MID_XL_FMs, true)
-  elseif mid_xl_alerts_on and you.xl() > MID_XL then
-    mid_xl_alerts_on = false
-    set_dyn_fm(MID_XL_FMs, false)
-  end
-
-  if not late_xl_alerts_on and you.xl() <= LATE_XL then
-    late_xl_alerts_on = true
-    set_dyn_fm(LATE_XL_FMs, true)
-  elseif not late_xl_alerts_on and you.xl() > LATE_XL then
-    late_xl_alerts_on = false
-    set_dyn_fm(LATE_XL_FMs, false)
+  for i, v in ipairs(C.xl_force_mores) do
+    local should_be_active = you.xl() <= v.xl
+    if xl_force_mores_active[i] ~= should_be_active then
+      xl_force_mores_active[i] = should_be_active
+      BRC.opt.force_more_message(v.pattern, should_be_active)
+    end
   end
 end
 
 local function set_skill_options()
-  -- If zero spellcasting, don't stop on spellbook pickup
-  local zero_spellcasting = you.skill("Spellcasting") == 0
-  if not ignoring_spellbooks and zero_spellcasting then
-    ignoring_spellbooks = true
-    crawl.setopt("explore_stop_pickup_ignore += " .. IGNORE_SPELLBOOKS_STRING)
-  elseif ignoring_spellbooks and not zero_spellcasting then
-    ignoring_spellbooks = false
-    crawl.setopt("explore_stop_pickup_ignore -= " .. IGNORE_SPELLBOOKS_STRING)
+  -- If zero spellcasting or no spells, don't stop on spellbook pickup, and allow -Cast / antimagic
+  local no_spells = you.skill("Spellcasting") == 0 or #you.spells() == 0
+  if ignore_all_magic ~= no_spells then
+    ignore_all_magic = no_spells
+    BRC.opt.explore_stop_pickup_ignore(IGNORE_SPELLBOOKS_STRING, no_spells)
+    BRC.util.add_or_remove(BRC.ARTPROPS_BAD, "-Cast", not no_spells)
+    BRC.util.add_or_remove(BRC.RISKY_EGOS, "antimagic", not no_spells)
   end
 
   -- If heavy armour and low armour skill, ignore spellcasting items
-  if you.race() ~= "Mountain Dwarf" then
+  if ignore_all_magic and you.race() ~= "Mountain Dwarf" then
     local worn = items.equipped_at("armour")
-    local heavy_arm = worn ~= nil and worn.encumbrance > 4 + you.skill("Armour")/2
-    local skip_items = zero_spellcasting and heavy_arm
-    if not ignoring_spellcasting and skip_items then
-      ignoring_spellcasting = true
-      crawl.setopt("autopickup_exceptions += " .. SPELLCASTING_ITEMS_STRING)
-    elseif ignoring_spellcasting and not skip_items then
-      ignoring_spellcasting = false
-      crawl.setopt("autopickup_exceptions -= " .. SPELLCASTING_ITEMS_STRING)
+    local encumbered_magic = worn and worn.encumbrance > (4 + you.skill("Armour") / 2)
+    if ignore_advanced_magic ~= encumbered_magic then
+      ignore_advanced_magic = encumbered_magic
+      BRC.opt.autopickup_exceptions(HIGH_LVL_MAGIC_STRING, encumbered_magic)
     end
   end
 end
 
-
-function init_dynamic_options()
-  if CONFIG.debug_init then crawl.mpr("Initializing dynamic-options") end
-
-  dynopt_cur_god = "No God"
-  ignoring_spellcasting = false
-  ignoring_spellbooks = false
-  early_xl_alerts_on = false
-  mid_xl_alerts_on = false
-  late_xl_alerts_on = false
-
-  set_race_options()
-  set_class_options()
-  set_god_options()
-end
-
-
------------------- Hooks ------------------
-function ready_dynamic_options()
+---- Crawl hook functions ----
+function f_dynamic_options.ready()
   set_god_options()
   set_xl_options()
   set_skill_options()
