@@ -212,8 +212,8 @@ f_alert_monsters.Config.init = [[
     if not you.torment_immune() then
       util.append(alert_list, {
         name = "torment", cond = "always", cutoff = 0,
-        pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
-                    "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+        pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
+                    "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
       })
     end
 ]]

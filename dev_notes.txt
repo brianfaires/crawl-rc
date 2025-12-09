@@ -8,8 +8,29 @@ Curr issues:
     - ss_prev_location too?
     - manual_swing_slot?
   - scrolls + artefacts both cyan in the $ menu
+  - make manuals yellow or something
+  - dont display "move to" hotkey if not safe()
+  - unmute: you see here (entrance to the depths)
+  - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
+  - keeps re-picking up boomerangs (after restart?)
+  - +9 vampiric broad axe inscription: 49 -> 57.5?
+    - 48 ->55.9 (-2Str?)
+  - too many alerts for 2h battleaxe when wearing shield + training it
+  - msg: "dropped below 35.0%%"
+  - bad status "sap"
+  - hotkey move to, is swallowing a key press? (maybe shift-dir?)
+  - inscribe-stats >100: buehler.rc 262: attempt to divide str by a number
+  - pan is exploring frame by frame
+  - alert-monsters: += "draugr" in regex
+  - ruin status?
+  - stop rest early on contamination removed
 
 ### crawl PRs / issues affecting BRC
+Lua bugs:
+- Didn't find any props for trap_sarcophagus=1
+- coroutine not defined
+- pan is using a travel delay often/
+
 https://github.com/crawl/crawl/issues/4789 ->
   - drop_disables_autopickup blocks exclude-dropped.lua from working
   - crawl option cannot be toggled off
