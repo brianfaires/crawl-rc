@@ -65,7 +65,7 @@ f_mute_messages.Config = {
       "Unfortunately\\, you learn nothing new",
 
       -- Ground items / features
-      "There is a.*(door|gate|staircase|web).*here",
+      "There is a.*(door|web).*here",
       "You see here .*(corpse|skeleton)",
       "You now have \\d+ gold piece",
       "You enter the shallow water",

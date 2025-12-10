@@ -217,7 +217,7 @@ f_alert_monsters.Config.init = [[
 
 ---- Local constants ----
 local WARN_PREFIX = "monster_warning:encounter.*(?<!spectral )("
-local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum))"
+local WARN_SUFFIX = ")(?! (draugr|simulacrum|zombie))"
 
 ---- Local variables ----
 local C -- config alias

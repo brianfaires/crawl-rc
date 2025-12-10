@@ -4517,7 +4517,7 @@ f_alert_monsters.Config.init = [[
 
 ---- Local constants ----
 local WARN_PREFIX = "monster_warning:encounter.*(?<!spectral )("
-local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum))"
+local WARN_SUFFIX = ")(?! (draugr|simulacrum|zombie))"
 
 ---- Local variables ----
 local C -- config alias
@@ -6461,7 +6461,7 @@ f_mute_messages.Config = {
       "Unfortunately\\, you learn nothing new",
 
       -- Ground items / features
-      "There is a.*(door|gate|staircase|web).*here",
+      "There is a.*(door|web).*here",
       "You see here .*(corpse|skeleton)",
       "You now have \\d+ gold piece",
       "You enter the shallow water",
