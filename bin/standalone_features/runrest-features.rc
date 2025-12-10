@@ -19,6 +19,7 @@ f_runrest_features.Config = {
   stop_on_pan_gates = true, -- stop explore on pan gates
   temple_search = true, -- on entering or exploring temple, auto-search
   gauntlet_search = true, -- on entering or exploring gauntlet, auto-search with filters
+  necropolis_search = true, -- on exploring necropolis, auto-search with filters
 } -- f_runrest_features.Config (do not remove this comment)
 
 -- define string:contains() for all strings
@@ -139,11 +140,15 @@ rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 rr_shaft_location = BRC.Data.persist("rr_shaft_location", nil)
 
 ---- Local constants ----
-local GAUNTLET_CONCAT_STRING = " && !!"
-local GAUNTLET_SEARCH_STRING = table.concat({
-  "gauntlet", "gate leading", "a transporter", "gold piece",
+local CONCAT_STRING = " && !!"
+local SEARCH_FILTERS = table.concat({
+  "gate leading", "a transporter", "gold piece",
   " trap", "translucent door", "translucent gate"
-  }, GAUNTLET_CONCAT_STRING)
+  }, CONCAT_STRING)
+local SEARCH_STRING = {
+  Gauntlet = "gauntlet" .. CONCAT_STRING .. SEARCH_FILTERS,
+  Necropolis = "necropolis" .. CONCAT_STRING .. SEARCH_FILTERS,
+} -- SEARCH_STRING (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias
@@ -164,7 +169,9 @@ end
 ---- Local functions ----
 local function is_explore_done_msg(text)
   local cleaned = BRC.txt.clean(text)
-  return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
+  return cleaned == "Done exploring."
+    or cleaned:find("Partly explored, ", 1, true) == 1
+    or cleaned:find("Could not explore, unopened runed ", 1, true) == 1
 end
 
 local function set_stairs_stop_state()
@@ -220,24 +227,30 @@ local function c_message_temple(text, _)
   end
 end
 
--- Gauntlet functions
-local function search_gauntlet()
+-- Filtered search functions (Gauntlet & Necropolis)
+local function search_filtered(branch)
   local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
-  crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
+  crawl.sendkeys({ cmd_key, SEARCH_STRING[branch], "\r" })
   crawl.flush_input()
 end
 
+--- Autosearch Gauntlet upon entry (not necropolis)
 local function ready_gauntlet_macro()
-  if you.branch() == "Gauntlet" and not rr_autosearched_gauntlet then
-    search_gauntlet()
+  local branch = you.branch()
+  if branch == "Gauntlet" and not rr_autosearched_gauntlet then
+    search_filtered(branch)
     rr_autosearched_gauntlet = true
   end
 end
 
-local function c_message_gauntlet(text, _)
+local function c_message_filtered_search(text, _)
   -- Search again after explore
-  if you.branch() == "Gauntlet" then
-    if is_explore_done_msg(text) then search_gauntlet() end
+  local branch = you.branch()
+  if is_explore_done_msg(text) and (
+    C.necropolis_search and branch == "Necropolis"
+    or C.gauntlet_search and branch == "Gauntlet"
+  ) then
+    search_filtered(branch)
   end
 end
 
@@ -268,7 +281,7 @@ end
 ---- Crawl hook functions ----
 function f_runrest_features.c_message(...)
   if C.temple_search then c_message_temple(...) end
-  if C.gauntlet_search then c_message_gauntlet(...) end
+  if C.gauntlet_search or C.necropolis_search then c_message_filtered_search(...) end
   if C.after_shaft then c_message_after_shaft(...) end
 end
 

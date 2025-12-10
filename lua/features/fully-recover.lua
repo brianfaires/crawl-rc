@@ -126,7 +126,15 @@ function macro_brc_rest()
     return BRC.util.do_cmd("CMD_REST")
   end
 
-  start_fully_recover()
+  if fully_recovered() then
+    if recovery_start_turn > 0 then
+      finish_fully_recover()
+    else
+      BRC.util.do_cmd("CMD_REST")
+    end
+  elseif you.feel_safe() then
+    start_fully_recover()
+  end
 end
 
 ---- Crawl hook functions ----
