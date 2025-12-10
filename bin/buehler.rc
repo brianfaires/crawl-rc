@@ -2835,8 +2835,8 @@ end
 --- Format damage values for consistent display width (4 characters)
 local function format_dmg(dmg)
   if dmg < 10 then return string.format("%.2f", dmg) end
-  if dmg > 99.9 then return ">100" end
-  return string.format("%.1f", dmg)
+  if dmg < 100 then return string.format("%.1f", dmg) end
+  return string.format("%.0f ", dmg)
 end
 
 --- Format stat string for display or inscription

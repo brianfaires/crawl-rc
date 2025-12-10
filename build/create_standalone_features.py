@@ -646,7 +646,7 @@ class StandaloneGenerator:
                                lambda m: f'string.byte("{m.group(1).upper()}") - 64', config_content)
  
         # Prepend constants that are used in the config
-        for c in ["COL", "DMG_TYPE"]:
+        for c in ["COL"]:
             if f"BRC.{c}." in config_content:
                 const = match_constant_definition(_get_cached_text(BRC_CONSTANTS), c)
                 config_content = f"\n{const}\n\n{config_content}"

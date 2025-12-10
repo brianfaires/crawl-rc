@@ -10,14 +10,6 @@ BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = true
 
-
-BRC.DMG_TYPE = {
-  unbranded = 1, -- No brand
-  plain = 2, -- Include brand dmg for non-elemental brands
-  branded = 3, -- Include full brand dmg
-  scoring = 4, -- Include boosts for non-damaging brands
-} -- BRC.DMG_TYPE (do not remove this comment)
-
 f_inscribe_stats = {}
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
@@ -67,8 +59,8 @@ BRC.you = BRC.you or {}
 -- BRC.eq module
 local function format_dmg(dmg)
   if dmg < 10 then return string.format("%.2f", dmg) end
-  if dmg > 99.9 then return ">100" end
-  return string.format("%.1f", dmg)
+  if dmg < 100 then return string.format("%.1f", dmg) end
+  return string.format("%.0f ", dmg)
 end
 
 local function format_stat(abbr, val, is_worn)
