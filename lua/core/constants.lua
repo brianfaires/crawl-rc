@@ -19,7 +19,6 @@ BRC.MISC_ITEMS = {
   "tin of tremorstones",
 } -- BRC.MISC_ITEMS (do not remove this comment)
 
--- This is checked against the full text of the pickup message, so use patterns to match
 BRC.MISSILES = {
   "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart",
   "darts? of disjunction", "darts? of dispersal", " stone", "boomerang",

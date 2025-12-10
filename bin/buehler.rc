@@ -1792,7 +1792,6 @@ BRC.MISC_ITEMS = {
   "tin of tremorstones",
 } -- BRC.MISC_ITEMS (do not remove this comment)
 
--- This is checked against the full text of the pickup message, so use patterns to match
 BRC.MISSILES = {
   "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart",
   "darts? of disjunction", "darts? of dispersal", " stone", "boomerang",
@@ -5851,7 +5850,7 @@ end
 
 local function extract_missile(text)
   for _, item_name in ipairs(BRC.MISSILES) do
-    if text:find(item_name) then return item_name end
+    if text:contains(item_name) then return item_name end
   end
 end
 
@@ -5892,7 +5891,7 @@ local function should_exclude(item_name, full_msg)
     if inv.name("qual"):contains(item_name) then
       return BRC.it.is_jewellery(inv)
         or inv.quantity == 1
-        or full_msg:contains("ou drop " .. item_name .. " " .. inv.quantity)
+        or full_msg:contains("ou drop " .. inv.quantity .. " " .. item_name)
     end
   end
 
