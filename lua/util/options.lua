@@ -8,6 +8,7 @@ BRC.opt = {}
 
 ---- Single turn mutes: Mute a message for the current turn only ----
 local _single_turn_mutes = {}
+local _claimed_macro_keys = {}
 
 function BRC.opt.single_turn_mute(pattern)
   BRC.opt.message_mute(pattern, true)
@@ -47,7 +48,7 @@ end
 
 --- Bind a macro to a key. Function must be global and not a member of a module.
 -- If key is a number, it is converted to a keycode string.
-function BRC.opt.macro(key, function_name)
+function BRC.opt.macro(key, function_name, overwrite_existing)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
     return
@@ -67,6 +68,12 @@ function BRC.opt.macro(key, function_name)
     key = "\\{" .. key .. "}"
     if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
   end
+
+  if _claimed_macro_keys[key] and not overwrite_existing then
+    BRC.mpr.debug("Macro key %s is already assigned to %s", key_str, _claimed_macro_keys[key])
+    return
+  end
+  _claimed_macro_keys[key] = function_name
 
   -- The << >> formatting protects against crawl thinking '<' is a tag
   if key_str == nil then key_str = "<<< '" .. key .. "' >>" end

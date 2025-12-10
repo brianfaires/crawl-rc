@@ -15,15 +15,13 @@ Curr issues:
   - keeps re-picking up boomerangs (after restart?)
   - too many alerts for 2h battleaxe when wearing shield + training it
   - msg: "dropped below 35.0%%"
-  - bad status "sap"
   - hotkey move to, is swallowing a key press? (maybe shift-dir?)
   - pan is exploring frame by frame
   - alert-monsters: += "draugr" in regex
-  - ruin status?
-  - stop rest early on contamination removed
   - cntl-e from hell, ends w weird msg
   - after shaft; ignore hell
   - new weapon egos
+  - realtime: https://github.com/crawl/crawl/commit/b9e851eaf54d77071d7c9e7336be5ac50ece415d
 
 
 ### crawl PRs / issues affecting BRC

@@ -323,7 +323,7 @@ end
 function f_bread_swinger.init()
   C = f_bread_swinger.Config
   reset_rest()
-  BRC.opt.macro("5", "macro_brc_bread_swing")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_REST") or "5", "macro_brc_bread_swing", true)
 end
 
 ---- Crawl hook functions ----
