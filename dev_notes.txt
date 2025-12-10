@@ -2,7 +2,6 @@ Curr issues:
   - didn't offer to pick up scarf of resistance; over +0 cloak
   - stop rest on "something misses " (your orc friend)
   - OTA for bardiche; wearing shield
-  - not seeing enemy die message (from ally kills)
   - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
   - too many alerts for 2h battleaxe when wearing shield + training it
   - hotkey move to, is swallowing a key press? (maybe shift-dir?)
