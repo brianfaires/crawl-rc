@@ -269,7 +269,7 @@ end
 -- After shaft functions
 local function c_message_after_shaft(text, channel)
   if channel ~= "plain" or rr_shaft_location then return end
-  if text:contains("ou fall into a shaft") or text:contains("ou are sucked into a shaft") then
+  if text:find("ou .* into a shaft") and not BRC.you.in_hell(true) then
     rr_shaft_location = you.where()
   end
 end
