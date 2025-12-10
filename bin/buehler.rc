@@ -1394,7 +1394,8 @@ menu += $i_useful:deck of summoning
 menu += $i_warning:deck of destruction
 
 # Misc
-menu += $i_misc:(manual of|spellbook|staff of|talisman|bauble)
+menu += $i_rare:manual of
+menu += $i_misc:(spellbook|staff of|talisman|bauble)
 menu += $i_evoker:(curare|disjunction|throwing net)
 menu += $i_evoker:evoker
 
@@ -1407,9 +1408,9 @@ menu += $i_warning:potions? of (attraction|berserk|lignification|mutation)
 
 # Scrolls
 menu += $i_plain:scrolls? of (amnesia|enchant|identify)
-menu += $i_emergency:scrolls? of (blinking|butterflies|fear|fog|teleportation|summoning)
+menu += $i_emergency:scrolls? of (blinking|butterflies|fear|fog|summoning)
 menu += $i_rare:scrolls? of (acquirement|brand)
-menu += $i_useful:scrolls? of (revelation)
+menu += $i_useful:scrolls? of (revelation|teleportation)
 menu += $i_warning:scrolls? of (immolation|noise|poison|silence|torment|vulnerability)
 
 # Wands

@@ -1,26 +1,27 @@
 Curr issues:
-  - useless_item ?id not colored in 'd' menu; works in 'r' & 'i' menus
   - didn't offer to pick up scarf of resistance; over +0 cloak
   - stop rest on "something misses " (your orc friend)
   - OTA for bardiche; wearing shield
-  - not seeing enemy die message (from ally kills?)
+  - not seeing enemy die message (from ally kills)
   - rr_autosearch need to be persistent?
     - ss_prev_location too?
     - manual_swing_slot?
-  - scrolls + artefacts both cyan in the $ menu
-  - make manuals yellow or something
   - dont display "move to" hotkey if not safe()
   - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
   - keeps re-picking up boomerangs (after restart?)
   - too many alerts for 2h battleaxe when wearing shield + training it
-  - msg: "dropped below 35.0%%"
   - hotkey move to, is swallowing a key press? (maybe shift-dir?)
-  - pan is exploring frame by frame
   - cntl-e from hell, ends w weird msg
   - after shaft; ignore hell
   - new weapon egos
   - realtime: https://github.com/crawl/crawl/commit/b9e851eaf54d77071d7c9e7336be5ac50ece415d
+  - duplicate more messages; dmg taken + massive damage
 
+
+#### Speeding up
+  - int instead of floats
+  - remove gratuitous refresh_screen() calls
+    - relates to ()"pan is exploring frame by frame"?)
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:
