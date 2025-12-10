@@ -3833,6 +3833,7 @@ function BRC.Hotkey.waypoint(name, push_front, feature_name)
   travel.set_waypoint(waynum, x, y)
 
   local is_valid = function()
+    if not you.feel_safe() then return false end
     local dx, dy = travel.waypoint_delta(waynum)
     return dx and not(dx == 0 and dy == 0)
   end

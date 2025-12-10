@@ -3,11 +3,9 @@ Curr issues:
   - stop rest on "something misses " (your orc friend)
   - OTA for bardiche; wearing shield
   - not seeing enemy die message (from ally kills)
-  - dont display "move to" hotkey if not safe()
   - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
   - too many alerts for 2h battleaxe when wearing shield + training it
   - hotkey move to, is swallowing a key press? (maybe shift-dir?)
-  - cntl-e from hell, ends w weird msg
   - new weapon egos
   - realtime: https://github.com/crawl/crawl/commit/b9e851eaf54d77071d7c9e7336be5ac50ece415d
   - duplicate more messages; dmg taken + massive damage
@@ -17,6 +15,7 @@ Curr issues:
   - int instead of floats
   - remove gratuitous refresh_screen() calls
     - relates to ("pan is exploring frame by frame"?)
+  - extra level of 'items_alerted' table: item_db_name -> ego -> plus
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:
