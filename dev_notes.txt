@@ -13,8 +13,6 @@ Curr issues:
   - unmute: you see here (entrance to the depths)
   - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
   - keeps re-picking up boomerangs (after restart?)
-  - +9 vampiric broad axe inscription: 49 -> 57.5?
-    - 48 ->55.9 (-2Str?)
   - too many alerts for 2h battleaxe when wearing shield + training it
   - msg: "dropped below 35.0%%"
   - bad status "sap"
@@ -24,6 +22,10 @@ Curr issues:
   - alert-monsters: += "draugr" in regex
   - ruin status?
   - stop rest early on contamination removed
+  - cntl-e from hell, ends w weird msg
+  - after shaft; ignore hell
+  - new weapon egos
+
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:

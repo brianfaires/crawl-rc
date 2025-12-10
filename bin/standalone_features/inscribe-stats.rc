@@ -10,11 +10,19 @@ BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = true
 
+
+BRC.DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg for non-elemental brands
+  branded = 3, -- Include full brand dmg
+  scoring = 4, -- Include boosts for non-damaging brands
+} -- BRC.DMG_TYPE (do not remove this comment)
+
 f_inscribe_stats = {}
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = "scoring",
+  dmg_type = BRC.DMG_TYPE.unbranded, -- unbranded, plain, branded, scoring
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 -- define string:contains() for all strings

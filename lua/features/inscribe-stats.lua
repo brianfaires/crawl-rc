@@ -10,7 +10,7 @@ f_inscribe_stats.BRC_FEATURE_NAME = "inscribe-stats"
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = BRC.DMG_TYPE.unbranded,
+  dmg_type = BRC.DMG_TYPE.unbranded, -- unbranded, plain, branded, scoring
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -55,7 +55,11 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.eq.wpn_stats(it, BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type])
+  local dmg_type = f_inscribe_stats.Config.dmg_type
+  if type(dmg_type) == "string" then
+    dmg_type = BRC.DMG_TYPE[dmg_type]
+  end
+  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type)
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)

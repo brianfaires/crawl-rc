@@ -129,7 +129,7 @@ brc_config_explicit = {
     disabled = false,
     inscribe_weapons = true, -- Inscribe weapon stats on pickup
     inscribe_armour = true, -- Inscribe armour stats on pickup
-    dmg_type = 1, -- unbranded
+    dmg_type = "unbranded", -- unbranded, plain, branded, scoring
   },
 
   ["misc-alerts"] = {
