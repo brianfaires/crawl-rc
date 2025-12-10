@@ -688,8 +688,13 @@ end
 function BRC.eq.wpn_stats(it, dmg_type)
   if not it.is_weapon then return end
   if not dmg_type then
-    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
-      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    -- Default to pulling from inscribe-stats config, if it exists. Else use plain.
+    if f_inscribe_stats and f_inscribe_stats.Config then
+      if type(f_inscribe_stats.Config.dmg_type) == "string" then
+        dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+      else
+        dmg_type = f_inscribe_stats.Config.dmg_type
+      end
     else
       dmg_type = BRC.DMG_TYPE.plain
     end

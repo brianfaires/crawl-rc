@@ -376,7 +376,7 @@ local function load_generic_skill_targets()
 
   local set_first = false
   for _, skill_target in ipairs(C.auto_set_skill_targets) do
-    local skill, target = unpack(skill_target)
+    local skill, target = table.unpack(skill_target)
     if you.skill(skill) < target then
       you.set_training_target(skill, target)
       if not set_first or not C.focus_one_skill then

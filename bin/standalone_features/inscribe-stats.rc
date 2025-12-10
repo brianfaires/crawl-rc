@@ -10,19 +10,11 @@ BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = true
 
-
-BRC.DMG_TYPE = {
-  unbranded = 1, -- No brand
-  plain = 2, -- Include brand dmg for non-elemental brands
-  branded = 3, -- Include full brand dmg
-  scoring = 4, -- Include boosts for non-damaging brands
-} -- BRC.DMG_TYPE (do not remove this comment)
-
 f_inscribe_stats = {}
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = BRC.DMG_TYPE.unbranded,
+  dmg_type = "scoring",
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 -- define string:contains() for all strings
@@ -393,8 +385,13 @@ end
 function BRC.eq.wpn_stats(it, dmg_type)
   if not it.is_weapon then return end
   if not dmg_type then
-    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
-      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    -- Default to pulling from inscribe-stats config, if it exists. Else use plain.
+    if f_inscribe_stats and f_inscribe_stats.Config then
+      if type(f_inscribe_stats.Config.dmg_type) == "string" then
+        dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+      else
+        dmg_type = f_inscribe_stats.Config.dmg_type
+      end
     else
       dmg_type = BRC.DMG_TYPE.plain
     end
@@ -551,7 +548,11 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dps_inscr = BRC.eq.wpn_stats(it, BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type])
+  local dmg_type = f_inscribe_stats.Config.dmg_type
+  if type(dmg_type) == "string" then
+    dmg_type = BRC.DMG_TYPE[dmg_type]
+  end
+  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type)
   local prefix, suffix = "", ""
 
   local idx = orig_inscr:find("DPS:", 1, true)
