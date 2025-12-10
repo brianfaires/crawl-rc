@@ -39,6 +39,7 @@ globals = {
   "macro_brc_fire",
   "macro_brc_go_up",
   "macro_brc_hotkey",
+  "macro_brc_rest",
   "macro_brc_save",
   "macro_brc_save_skills_and_config",
   "macro_brc_skip_hotkey",

@@ -16,8 +16,9 @@ BRC.Config.mpr.logs_to_stderr = false
 f_fully_recover = {}
 f_fully_recover.Config = {
   rest_off_statuses = { -- Keep resting until these statuses are gone
-    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
+    "berserk", "blind", "confused", "corroded", "diminished spells",
+    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+    "sluggish", "tree%-form", "vulnerable", "weakened",
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
@@ -92,7 +93,9 @@ function BRC.mpr.error(message, context, skip_more)
 end
 
 -- BRC.opt module
-function BRC.opt.macro(key, function_name)
+local _claimed_macro_keys = {}
+
+function BRC.opt.macro(key, function_name, overwrite_existing)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
     return
@@ -112,6 +115,12 @@ function BRC.opt.macro(key, function_name)
     key = "\\{" .. key .. "}"
     if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
   end
+
+  if _claimed_macro_keys[key] and not overwrite_existing then
+    BRC.mpr.debug("Macro key %s is already assigned to %s", key_str, _claimed_macro_keys[key])
+    return
+  end
+  _claimed_macro_keys[key] = function_name
 
   -- The << >> formatting protects against crawl thinking '<' is a tag
   if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
@@ -135,11 +144,6 @@ end
 function BRC.opt.runrest_ignore_message(pattern, create)
   local op = create and "+=" or "-="
   crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
-end
-
-function BRC.opt.single_turn_mute(pattern)
-  BRC.opt.message_mute(pattern, true)
-  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
 end
 
 -- BRC.txt module
@@ -188,13 +192,6 @@ function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
 end
 
--- single turn mutes support: _single_turn_mutes and BRC.opt.clear_single_turn_mutes()
-_single_turn_mutes = {}
-function BRC.opt.clear_single_turn_mutes()
-  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
-  _single_turn_mutes = {}
-end
-
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: fully-recover
 -- @module f_fully_recover
@@ -219,6 +216,7 @@ function f_fully_recover.init()
   explore_after_recovery = false
 
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_REST") or "5", "macro_brc_rest")
   BRC.opt.runrest_ignore_message("recovery:.*", true)
   BRC.opt.runrest_ignore_message("duration:.*", true)
   BRC.opt.message_mute("^HP restored", true)
@@ -282,8 +280,12 @@ local function remove_statuses_from_config()
 end
 
 local function start_fully_recover()
-  recovery_start_turn = you.turns()
-  BRC.opt.single_turn_mute("You start waiting.")
+  if not you.feel_safe() then
+    BRC.mpr.lightred("A monster is nearby!")
+  else
+    recovery_start_turn = you.turns()
+    BRC.util.do_cmd("CMD_WAIT")
+  end
 end
 
 ---- Macro function: Attach full recovery to auto-explore ----
@@ -298,23 +300,28 @@ function macro_brc_explore()
     else
       BRC.util.do_cmd("CMD_EXPLORE")
     end
-  else
-    if you.feel_safe() then explore_after_recovery = true end
-    BRC.util.do_cmd("CMD_REST")
+  elseif you.feel_safe() then
+    explore_after_recovery = true
+    start_fully_recover()
   end
 end
 
+---- Macro function: Attach full recovery to auto-rest ----
+function macro_brc_rest()
+  if BRC.active == false or f_fully_recover.Config.disabled then
+    return BRC.util.do_cmd("CMD_REST")
+  end
+
+  start_fully_recover()
+end
+
 ---- Crawl hook functions ----
-function f_fully_recover.c_message(text, channel)
-  if channel == "plain" then
-    if text:contains("ou start waiting") or text:contains("ou start resting") then
-      if not fully_recovered() then start_fully_recover() end
-    end
-  elseif recovery_start_turn > 0 then
-    if channel == "timed_portal" then
-      abort_fully_recover()
-    elseif fully_recovered() then
+function f_fully_recover.c_message(_, channel)
+  if recovery_start_turn > 0 then
+    if fully_recovered() then
       finish_fully_recover()
+    elseif channel == "timed_portal" then
+      abort_fully_recover()
     end
   end
 end
@@ -346,7 +353,6 @@ end
 
 local brc_last_turn = -1
 function ready(...)
-  BRC.opt.clear_single_turn_mutes()
   if you.turns() > brc_last_turn then
     brc_last_turn = you.turns()
     f_fully_recover.ready(...)

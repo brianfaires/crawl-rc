@@ -92,6 +92,8 @@ function BRC.it.is_magic_staff(it)
 end
 
 -- BRC.opt module
+local _claimed_macro_keys = {}
+
 function BRC.opt.autopickup_exceptions(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("autopickup_exceptions %s %s", op, pattern))

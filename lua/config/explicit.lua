@@ -120,8 +120,9 @@ brc_config_explicit = {
   ["fully-recover"] = {
     disabled = false,
     rest_off_statuses = { -- Keep resting until these statuses are gone
-      "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-      "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
+      "berserk", "blind", "confused", "corroded", "diminished spells",
+      "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+      "sluggish", "tree%-form", "vulnerable", "weakened",
     },
   },
 

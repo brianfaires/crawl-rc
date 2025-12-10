@@ -9,8 +9,9 @@ f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
 f_fully_recover.Config = {
   rest_off_statuses = { -- Keep resting until these statuses are gone
-    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
+    "berserk", "blind", "confused", "corroded", "diminished spells",
+    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+    "sluggish", "tree%-form", "vulnerable", "weakened",
   },
 } -- f_fully_recover.Config (do not remove this comment)
 
@@ -29,6 +30,7 @@ function f_fully_recover.init()
   explore_after_recovery = false
 
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_REST") or "5", "macro_brc_rest")
   BRC.opt.runrest_ignore_message("recovery:.*", true)
   BRC.opt.runrest_ignore_message("duration:.*", true)
   BRC.opt.message_mute("^HP restored", true)
@@ -92,8 +94,12 @@ local function remove_statuses_from_config()
 end
 
 local function start_fully_recover()
-  recovery_start_turn = you.turns()
-  BRC.opt.single_turn_mute("You start waiting.")
+  if not you.feel_safe() then
+    BRC.mpr.lightred("A monster is nearby!")
+  else
+    recovery_start_turn = you.turns()
+    BRC.util.do_cmd("CMD_WAIT")
+  end
 end
 
 ---- Macro function: Attach full recovery to auto-explore ----
@@ -108,23 +114,28 @@ function macro_brc_explore()
     else
       BRC.util.do_cmd("CMD_EXPLORE")
     end
-  else
-    if you.feel_safe() then explore_after_recovery = true end
-    BRC.util.do_cmd("CMD_REST")
+  elseif you.feel_safe() then
+    explore_after_recovery = true
+    start_fully_recover()
   end
 end
 
+---- Macro function: Attach full recovery to auto-rest ----
+function macro_brc_rest()
+  if BRC.active == false or f_fully_recover.Config.disabled then
+    return BRC.util.do_cmd("CMD_REST")
+  end
+
+  start_fully_recover()
+end
+
 ---- Crawl hook functions ----
-function f_fully_recover.c_message(text, channel)
-  if channel == "plain" then
-    if text:contains("ou start waiting") or text:contains("ou start resting") then
-      if not fully_recovered() then start_fully_recover() end
-    end
-  elseif recovery_start_turn > 0 then
-    if channel == "timed_portal" then
-      abort_fully_recover()
-    elseif fully_recovered() then
+function f_fully_recover.c_message(_, channel)
+  if recovery_start_turn > 0 then
+    if fully_recovered() then
       finish_fully_recover()
+    elseif channel == "timed_portal" then
+      abort_fully_recover()
     end
   end
 end

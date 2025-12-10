@@ -280,7 +280,9 @@ function BRC.mpr.warning(message, context)
 end
 
 -- BRC.opt module
-function BRC.opt.macro(key, function_name)
+local _claimed_macro_keys = {}
+
+function BRC.opt.macro(key, function_name, overwrite_existing)
   if type(_G[function_name]) ~= "function" then
     BRC.mpr.error("Function %s is not a global function", function_name)
     return
@@ -300,6 +302,12 @@ function BRC.opt.macro(key, function_name)
     key = "\\{" .. key .. "}"
     if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
   end
+
+  if _claimed_macro_keys[key] and not overwrite_existing then
+    BRC.mpr.debug("Macro key %s is already assigned to %s", key_str, _claimed_macro_keys[key])
+    return
+  end
+  _claimed_macro_keys[key] = function_name
 
   -- The << >> formatting protects against crawl thinking '<' is a tag
   if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
@@ -726,7 +734,7 @@ end
 function f_bread_swinger.init()
   C = f_bread_swinger.Config
   reset_rest()
-  BRC.opt.macro("5", "macro_brc_bread_swing")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_REST") or "5", "macro_brc_bread_swing", true)
 end
 
 ---- Crawl hook functions ----

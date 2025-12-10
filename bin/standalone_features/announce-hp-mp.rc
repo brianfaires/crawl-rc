@@ -121,6 +121,8 @@ function BRC.mpr.que_optmore(show_more, msg, color, channel)
 end
 
 -- BRC.opt module
+local _claimed_macro_keys = {}
+
 function BRC.opt.message_mute(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
