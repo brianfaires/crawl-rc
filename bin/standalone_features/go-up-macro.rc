@@ -30,6 +30,8 @@ BRC.COL = {
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
 } -- BRC.COL (do not remove this comment)
 
+BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
+
 BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 BRC.PORTAL_FEATURE_NAMES = {
@@ -43,6 +45,7 @@ BRC.mpr = BRC.mpr or {}
 BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.util = BRC.util or {}
+BRC.you = BRC.you or {}
 
 -- BRC.mpr module
 for k, color in pairs(BRC.COL) do
@@ -154,6 +157,13 @@ function BRC.util.cntl(c)
   return string.byte(c:upper()) - 64
 end
 
+-- BRC.you module
+function BRC.you.in_hell(exclude_vestibule)
+  local branch = you.branch()
+  if exclude_vestibule and branch == "Hell" then return false end
+  return util.contains(BRC.HELL_BRANCHES, branch)
+end
+
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: go-up-macro
 -- @module f_go_up_macro
@@ -212,6 +222,7 @@ function macro_brc_go_up()
   if where == "D:1" and you.have_orb()
     or where == "Temple"
     or util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch())
+    or BRC.you.in_hell(true)
   then
     crawl.sendkeys({ "X", "<", "\r", BRC.KEYS.ESC, "<" }) -- {ESC, <} handles standing on stairs
   else
