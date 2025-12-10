@@ -21,7 +21,7 @@ Curr issues:
 #### Speeding up
   - int instead of floats
   - remove gratuitous refresh_screen() calls
-    - relates to ()"pan is exploring frame by frame"?)
+    - relates to ("pan is exploring frame by frame"?)
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:

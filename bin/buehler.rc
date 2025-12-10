@@ -464,6 +464,7 @@ brc_config_explicit = {
     stop_on_pan_gates = true, -- stop explore on pan gates
     temple_search = true, -- on entering or exploring temple, auto-search
     gauntlet_search = true, -- on entering or exploring gauntlet, auto-search with filters
+    necropolis_search = true, -- on exploring necropolis, auto-search with filters
   },
 
   ["safe-consumables"] = {
