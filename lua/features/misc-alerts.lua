@@ -9,7 +9,7 @@ f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
 f_misc_alerts.Config = {
   save_with_msg = true, -- Shift-S to save and leave yourself a message
-  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
   alert_spell_level_changes = true, -- Alert when you gain additional spell levels
   alert_remove_faith = true, -- Reminder to remove amulet at max piety
   remove_faith_hotkey = true, -- Hotkey remove amulet
@@ -47,9 +47,9 @@ local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= C.alert_low_hp_threshold * mhp then
+  elseif hp <= mhp * C.alert_low_hp_threshold / 100 then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. 100 * C.alert_low_hp_threshold .. "%% HP"
+    local low_hp_msg = "Dropped below " .. C.alert_low_hp_threshold .. "% HP"
     BRC.mpr.que_optmore(true, BRC.txt.wrap(BRC.txt.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
   end
 end

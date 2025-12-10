@@ -6,7 +6,7 @@ brc_config_custom = {
   BRC_CONFIG_NAME = "Custom",
 
   ["misc-alerts"] = {
-    alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+    alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
   },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
