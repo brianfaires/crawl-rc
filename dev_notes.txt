@@ -17,7 +17,6 @@ Curr issues:
   - msg: "dropped below 35.0%%"
   - bad status "sap"
   - hotkey move to, is swallowing a key press? (maybe shift-dir?)
-  - inscribe-stats >100: buehler.rc 262: attempt to divide str by a number
   - pan is exploring frame by frame
   - alert-monsters: += "draugr" in regex
   - ruin status?
