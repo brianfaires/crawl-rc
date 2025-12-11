@@ -1,20 +1,25 @@
 Curr issues:
-  - didn't offer to pick up scarf of resistance; over +0 cloak
-  - stop rest on "something misses " (your orc friend)
-  - OTA for bardiche; wearing shield
-  - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
-  - too many alerts for 2h battleaxe when wearing shield + training it
-  - hotkey move to, is swallowing a key press? (maybe shift-dir?)
-  - new weapon egos
   - realtime: https://github.com/crawl/crawl/commit/b9e851eaf54d77071d7c9e7336be5ac50ece415d
+  - stop rest on "something misses " (your orc friend)
   - duplicate more messages; dmg taken + massive damage
 
+pickup-alert:
+  - didn't offer to pick up scarf of resistance; over +0 cloak
+  - OTA for bardiche; wearing shield
+  - too many alerts for 2h battleaxe when wearing shield + training it
+
+monster-alerts:
+  - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
+
+0.34:
+  - new weapon egos
 
 #### Speeding up
   - int instead of floats
   - remove gratuitous refresh_screen() calls
     - relates to ("pan is exploring frame by frame"?)
   - extra level of 'items_alerted' table: item_db_name -> ego -> plus
+
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:
