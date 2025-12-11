@@ -232,9 +232,9 @@ end
 
 local function finish_fully_recover()
   local turns = you.turns() - recovery_start_turn
+  recovery_start_turn = 0
   BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
 
-  recovery_start_turn = 0
   you.stop_activity()
 
   if explore_after_recovery then
@@ -290,7 +290,7 @@ end
 
 ---- Macro function: Attach full recovery to auto-explore ----
 function macro_brc_explore()
-  if BRC.active == false or f_fully_recover.Config.disabled then
+  if BRC.active == false or f_fully_recover.Config.disabled or not you.feel_safe() then
     return BRC.util.do_cmd("CMD_EXPLORE")
   end
 
@@ -300,7 +300,7 @@ function macro_brc_explore()
     else
       BRC.util.do_cmd("CMD_EXPLORE")
     end
-  elseif you.feel_safe() then
+  else
     explore_after_recovery = true
     start_fully_recover()
   end
@@ -308,7 +308,7 @@ end
 
 ---- Macro function: Attach full recovery to auto-rest ----
 function macro_brc_rest()
-  if BRC.active == false or f_fully_recover.Config.disabled then
+  if BRC.active == false or f_fully_recover.Config.disabled or not you.feel_safe() then
     return BRC.util.do_cmd("CMD_REST")
   end
 
@@ -318,38 +318,38 @@ function macro_brc_rest()
     else
       BRC.util.do_cmd("CMD_REST")
     end
-  elseif you.feel_safe() then
+  else
     start_fully_recover()
   end
 end
 
 ---- Crawl hook functions ----
 function f_fully_recover.c_message(_, channel)
-  if recovery_start_turn > 0 then
-    if fully_recovered() then
-      finish_fully_recover()
-    elseif channel == "timed_portal" then
-      abort_fully_recover()
-    end
+  if recovery_start_turn <= 0 then return end
+  if fully_recovered() then
+    finish_fully_recover()
+  elseif channel == "timed_portal" then
+    abort_fully_recover()
   end
 end
 
 function f_fully_recover.ready()
-  if recovery_start_turn > 0 then
-    if fully_recovered() then
-      finish_fully_recover()
-    elseif not you.feel_safe() then
-      abort_fully_recover()
-    elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
-      BRC.mpr.error("f_fully_recover.Config.rest_off_statuses:")
-      remove_statuses_from_config()
-      abort_fully_recover()
-    else
-      BRC.util.do_cmd("CMD_SAFE_WAIT")
-    end
-  else
+  if recovery_start_turn <= 0 then
     explore_after_recovery = false
+    return
+  end
+
+  if fully_recovered() then
+    finish_fully_recover()
+  elseif not you.feel_safe() then
+    abort_fully_recover()
+  elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
+    BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
+    BRC.mpr.error("f_fully_recover.Config.rest_off_statuses:")
+    remove_statuses_from_config()
+    abort_fully_recover()
+  else
+    BRC.util.do_cmd("CMD_SAFE_WAIT")
   end
 end
 
