@@ -174,6 +174,9 @@ brc_config_speed = {
     dmg_fm_threshold = 1,       -- Force more for losing this % of max HP
     always_on_bottom = true,    -- Rewrite HP/MP meters after each turn with messages
   },
+  ["display-realtime"] = {
+    disabled = false,
+  },
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
     save_with_msg = false,      -- Shift-S to save and leave yourself a message
@@ -401,6 +404,12 @@ brc_config_explicit = {
   ["color-inscribe"] = {
     disabled = false,
     -- No config; See color-inscribe.lua for COLORIZE_TAGS
+  },
+
+  ["display-realtime"] = {
+    disabled = true, -- Disabled by default
+    interval_s = 60, -- seconds between updates
+    emoji = BRC.Config.emojis and "🕒" or "--",
   },
 
   ["drop-inferior"] = {
@@ -4290,7 +4299,6 @@ end
 function BRC.ready()
   if you.turns() == 0 then BRC.active = true end
   if not BRC.active then return end
-  crawl.redraw_screen()
   BRC.opt.clear_single_turn_mutes()
 
   if you.turns() > turn_count then
@@ -5644,6 +5652,56 @@ end
 
 }
 ############################### End lua/features/drop-inferior.lua ###############################
+##########################################################################################
+
+################################### Begin lua/features/display-realtime.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: display-realtime
+-- @module f_display_realtime
+-- Display the realtime periodically in the output channel.
+---------------------------------------------------------------------------------------------------
+
+f_display_realtime = {}
+f_display_realtime.BRC_FEATURE_NAME = "display-realtime"
+f_display_realtime.Config = {
+  disabled = true, -- Disabled by default
+  interval_s = 60, -- seconds between updates
+  emoji = BRC.Config.emojis and "🕒" or "--",
+} -- f_display_realtime.Config (do not remove this comment)
+
+---- Persistent variables ----
+dr_total_time = BRC.Data.persist("dr_total_time", 0)
+
+---- Local variables ----
+local last_time
+local last_cycle
+
+---- Initialization ----
+function f_display_realtime.init()
+  last_time = you.real_time()
+  last_cycle = 0
+end
+
+---- Crawl hook functions ----
+function f_display_realtime.ready()
+  dr_total_time = dr_total_time + you.real_time() - last_time
+  local cycle = dr_total_time // f_display_realtime.Config.interval_s
+  if cycle > last_cycle then
+    local time_str = "Game time: "
+    if dr_total_time > 3600 then time_str = time_str .. (dr_total_time // 3600) .. ":" end
+    local remain = dr_total_time % 3600
+    time_str = time_str .. (remain // 60) .. ":" .. (remain % 60)
+
+    BRC.mpr.white(BRC.txt.wrap(time_str, f_display_realtime.Config.emoji))
+    last_cycle = cycle
+  end
+  last_time = you.real_time()
+end
+
+}
+############################### End lua/features/display-realtime.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/features/dynamic-options.lua ###################################
