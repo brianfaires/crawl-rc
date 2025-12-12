@@ -81,6 +81,28 @@ local function fully_recovered()
   return true
 end
 
+local function start_fully_recover(cmd)
+  if BRC.active == false or f_fully_recover.Config.disabled or not you.feel_safe() then
+    return BRC.util.do_cmd(cmd)
+  end
+
+  if fully_recovered() then
+    if recovery_start_turn > 0 then
+      finish_fully_recover()
+    else
+      BRC.util.do_cmd(cmd)
+    end
+  else
+    if not you.feel_safe() then
+      BRC.mpr.lightred("A monster is nearby!")
+    else
+      explore_after_recovery = cmd == "CMD_EXPLORE"
+      recovery_start_turn = you.turns()
+      BRC.util.do_cmd("CMD_WAIT")
+    end
+  end
+end
+
 local function remove_statuses_from_config()
   local status = you.status()
   local to_remove = {}
@@ -93,48 +115,14 @@ local function remove_statuses_from_config()
   end
 end
 
-local function start_fully_recover()
-  if not you.feel_safe() then
-    BRC.mpr.lightred("A monster is nearby!")
-  else
-    recovery_start_turn = you.turns()
-    BRC.util.do_cmd("CMD_WAIT")
-  end
-end
-
 ---- Macro function: Attach full recovery to auto-explore ----
 function macro_brc_explore()
-  if BRC.active == false or f_fully_recover.Config.disabled or not you.feel_safe() then
-    return BRC.util.do_cmd("CMD_EXPLORE")
-  end
-
-  if fully_recovered() then
-    if recovery_start_turn > 0 then
-      finish_fully_recover()
-    else
-      BRC.util.do_cmd("CMD_EXPLORE")
-    end
-  else
-    explore_after_recovery = true
-    start_fully_recover()
-  end
+  start_fully_recover("CMD_EXPLORE")
 end
 
 ---- Macro function: Attach full recovery to auto-rest ----
 function macro_brc_rest()
-  if BRC.active == false or f_fully_recover.Config.disabled or not you.feel_safe() then
-    return BRC.util.do_cmd("CMD_REST")
-  end
-
-  if fully_recovered() then
-    if recovery_start_turn > 0 then
-      finish_fully_recover()
-    else
-      BRC.util.do_cmd("CMD_REST")
-    end
-  else
-    start_fully_recover()
-  end
+  start_fully_recover("CMD_REST")
 end
 
 ---- Crawl hook functions ----
@@ -142,7 +130,7 @@ function f_fully_recover.c_message(_, channel)
   if recovery_start_turn <= 0 then return end
   if fully_recovered() then
     finish_fully_recover()
-  elseif channel == "timed_portal" then
+  elseif channel ~= "duration" and channel ~= "recovery" then
     abort_fully_recover()
   end
 end
