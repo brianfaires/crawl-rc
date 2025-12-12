@@ -42,6 +42,7 @@ lua_file = crawl-rc/lua/features/answer-prompts.lua
 lua_file = crawl-rc/lua/features/bread-swinger.lua
 lua_file = crawl-rc/lua/features/color-inscribe.lua
 lua_file = crawl-rc/lua/features/drop-inferior.lua
+lua_file = crawl-rc/lua/features/display-realtime.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
 lua_file = crawl-rc/lua/features/fully-recover.lua

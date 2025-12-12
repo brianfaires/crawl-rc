@@ -113,6 +113,12 @@ brc_config_explicit = {
     -- No config; See color-inscribe.lua for COLORIZE_TAGS
   },
 
+  ["display-realtime"] = {
+    disabled = true, -- Disabled by default
+    interval_s = 60, -- seconds between updates
+    emoji = BRC.Config.emojis and "🕒" or "--",
+  },
+
   ["drop-inferior"] = {
     disabled = false,
     msg_on_inscribe = true, -- Show a message when an item is marked for drop

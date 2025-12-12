@@ -1,21 +1,16 @@
-Curr issues:
-  - realtime: https://github.com/crawl/crawl/commit/b9e851eaf54d77071d7c9e7336be5ac50ece415d
-
 #### Speeding up
   - int instead of floats
-  - remove gratuitous refresh_screen() calls
-    - relates to ("pan is exploring frame by frame"?)
   - extra level of 'items_alerted' table: item_db_name -> ego -> plus
 
 ### todos
 - more/flash prompts as lua (to toggle w configs)
-
+- test using CMD_WAIT vs CMD_REST; only use wait when maxhp?
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:
 - Didn't find any props for trap_sarcophagus=1
 - coroutine not defined
-- pan is using a travel delay often/
+- pan is using a travel delay often/or calling ready?
 
 https://github.com/crawl/crawl/issues/4789 ->
   - drop_disables_autopickup blocks exclude-dropped.lua from working
@@ -35,7 +30,6 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
     (Maybe could fix with >1 ready() / turn... Try macro'ing: { WAIT, READY, EXPLORE }?)
 1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
-1. Display realtime for speedrun config
 
 ### Won't do - random ideas
 1. feature ready() hook takes optional bool to fire every ready() instead of every turn

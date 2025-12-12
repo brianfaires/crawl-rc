@@ -11,6 +11,9 @@ brc_config_speed = {
     dmg_fm_threshold = 1,       -- Force more for losing this % of max HP
     always_on_bottom = true,    -- Rewrite HP/MP meters after each turn with messages
   },
+  ["display-realtime"] = {
+    disabled = false,
+  },
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
     save_with_msg = false,      -- Shift-S to save and leave yourself a message
