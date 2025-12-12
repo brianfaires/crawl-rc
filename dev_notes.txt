@@ -1,22 +1,14 @@
 Curr issues:
   - realtime: https://github.com/crawl/crawl/commit/b9e851eaf54d77071d7c9e7336be5ac50ece415d
 
-pickup-alert:
-  - didn't offer to pick up scarf of resistance; over +0 cloak
-  - OTA for bardiche; wearing shield
-  - too many alerts for 2h battleaxe when wearing shield + training it
-
-0.34:
-  - new weapon egos
-
-### features
-- more prompts as lua (to toggle w configs)
-
 #### Speeding up
   - int instead of floats
   - remove gratuitous refresh_screen() calls
     - relates to ("pan is exploring frame by frame"?)
   - extra level of 'items_alerted' table: item_db_name -> ego -> plus
+
+### todos
+- more/flash prompts as lua (to toggle w configs)
 
 
 ### crawl PRs / issues affecting BRC
