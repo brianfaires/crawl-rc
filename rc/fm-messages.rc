@@ -91,19 +91,18 @@ flash += danger:You feel strangely .*stable
 flash += delaying your translocation
 
 # Big damage
-more += your body is wracked
-more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse
-more += You feel a (horrible|terrible) chill
-more += Your.*terribly
-more += You are.*terribly
+more += you terribly
+#more += Terrible wounds open
+#more += your body is wracked
+#more += You shudder from the earth-shattering force
 
-# Hit by something
-more += Terrible wounds open
+# Dangerous abilities
+more += you stand beside yourself
+more += sudden wrenching feeling in your soul
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
-more += You shudder from the earth-shattering force
 more += You feel.*(?<!less)( haunted| rot| vulnerable)
 flash += danger:corrodes you
 flash += Your damage is reflected back at you
@@ -118,6 +117,8 @@ more += appears in a (shower|flash)
 more += appears out of thin air
 more += You sense the presence of something unfriendly
 more += Wisps of shadow swirl around
+
+
 
 # Misc
 more += hell effect:.*

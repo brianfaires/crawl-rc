@@ -132,7 +132,6 @@ brc_config_testing = {
   },
 
   disable_other_features = false,
-  ["alert-monsters"] = { disabled = true },
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.5,
@@ -1604,19 +1603,18 @@ flash += danger:You feel strangely .*stable
 flash += delaying your translocation
 
 # Big damage
-more += your body is wracked
-more += The poison in your body grows stronger
 more += You.*re lethally poisoned
 more += danger:You convulse
-more += You feel a (horrible|terrible) chill
-more += Your.*terribly
-more += You are.*terribly
+more += you terribly
+#more += Terrible wounds open
+#more += your body is wracked
+#more += You shudder from the earth-shattering force
 
-# Hit by something
-more += Terrible wounds open
+# Dangerous abilities
+more += you stand beside yourself
+more += sudden wrenching feeling in your soul
 more += The air around.*erupts in flames
 more += The air twists around and violently strikes you in flight
-more += You shudder from the earth-shattering force
 more += You feel.*(?<!less)( haunted| rot| vulnerable)
 flash += danger:corrodes you
 flash += Your damage is reflected back at you
@@ -1631,6 +1629,8 @@ more += appears in a (shower|flash)
 more += appears out of thin air
 more += You sense the presence of something unfriendly
 more += Wisps of shadow swirl around
+
+
 
 # Misc
 more += hell effect:.*
@@ -4348,14 +4348,14 @@ f_alert_monsters.Config.Alerts = {
       "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
       "torpor snail", "water nymph", "wretched star", "wyrmhole",
       --Dangerous clouds
-      "apocalypse crab","catoblepas",
+      "apocalypse crab", "catoblepas",
     } },
 
   { name = "always_flash", flash_screen = true,
     pattern = {
       -- Noteworthy abilities
       "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-      "vault guardian", "vault warden", "wendingo",
+      "vault guardian", "vault warden", "wendigo",
       -- Displacement
       "deep elf knight", "swamp worm",
       -- Summoning
@@ -4364,12 +4364,12 @@ f_alert_monsters.Config.Alerts = {
       "death knight", "imperial myrmidon", "necromancer",
     } },
 
-  { name = "always_fm_pack", is_pack = true,
-    pattern = { "boggart", "dream sheep", "floating eye", "shrike" } },
-
   -- Early game Dungeon problems for chars with low mhp. (adder defined below)
   { name = "30hp", cond = "hp", cutoff = 30,
     pattern = { "hound", "gnoll" } },
+
+  { name = "mid_game_packs", cutoff = 90, is_pack = true,
+    pattern = { "boggart", "dream sheep" } },
 
   -- Monsters dangerous until a certain point
   { name = "xl_7", cond = "xl", cutoff = 7,
@@ -4446,17 +4446,20 @@ f_alert_monsters.Config.Alerts = {
                 "tengu reaver", "titan" } },
   { name = "elec_140_pack", cond = "elec", cutoff = 140, is_pack = true,
     pattern = { "ball lightning" } },
+
   { name = "corr_60", cond = "corr", cutoff = 60,
     pattern = { "acid dragon" } },
+    { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
+    pattern = { "caustic shrike" } },
   { name = "corr_140", cond = "corr", cutoff = 140,
     pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
 
   { name = "fire_60", cond = "fire", cutoff = 60,
-    pattern = { "fire crab", "lava snake", "lindwurm", "steam dragon" } },
+    pattern = { "fire crab", "hell hound", "lava snake", "lindwurm", "steam dragon" } },
   { name = "fire_100", cond = "fire", cutoff = 100,
     pattern = { "deep elf pyromancer", "efreet", "smoke demon", "sun moth" } },
   { name = "fire_120", cond = "fire", cutoff = 120,
-    pattern = { "demonspawn blood saint", "hell hound", "hell knight", "molten gargoyle",
+    pattern = { "demonspawn blood saint", "hell hog", "hell knight", "molten gargoyle",
                 "ogre mage", "orc sorcerer", "red draconian" } },
   { name = "fire_140", cond = "fire", cutoff = 140,
     pattern = { "balrug" } },
@@ -4471,6 +4474,8 @@ f_alert_monsters.Config.Alerts = {
   { name = "cold_120", cond = "cold", cutoff = 120,
     pattern = { "blizzard demon", "bog body", "demonspawn blood saint",
                "ironbound frostheart", "white draconian" } },
+  { name = "shard_shrike", cond = "cold", cutoff = 120, is_pack = true,
+    pattern = { "shard shrike" } },
   { name = "cold_160", cond = "cold", cutoff = 160,
     pattern = { "draconian knight", "frost giant", "golden dragon",
                 "ice dragon", "tengu reaver" } },
