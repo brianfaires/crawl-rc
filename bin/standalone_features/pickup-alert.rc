@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = false
+BRC.Config.emojis = true
 BRC.Config.unskilled_egos_usable = false
 BRC.Config.BrandBonus = {
   chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average

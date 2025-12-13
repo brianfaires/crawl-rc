@@ -11,14 +11,14 @@ f_announce_hp_mp.Config = {
   dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
-  meter_length = 5, -- Number of pips in each meter
+  meter_length = 10, -- Number of pips in each meter
 
   Announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
     hp_gain_limit = 4, -- Announce when HP gain >= this
     mp_loss_limit = 1, -- Announce when MP loss >= this
     mp_gain_limit = 2, -- Announce when MP gain >= this
-    hp_first = true, -- Show HP first in the message
+    hp_first = false, -- Show HP first in the message
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts

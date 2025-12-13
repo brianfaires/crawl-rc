@@ -107,6 +107,7 @@ more += You feel.*(?<!less)( haunted| rot| vulnerable)
 flash += danger:corrodes you
 flash += Your damage is reflected back at you
 flash += ^(?!Your? ).*reflects
+flash += You feel your power leaking away
 
 # FYI
 more += seems mollified

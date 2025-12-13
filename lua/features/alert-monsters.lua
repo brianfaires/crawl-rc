@@ -43,7 +43,7 @@ f_alert_monsters.Config.Alerts = {
       "boundless tesseract", "demonspawn corrupter", "draconian stormcaller", "dryad",
       "guardian serpent", "halazid warlock", "shadow demon", "spriggan druid", "worldbinder",
       --Dangerous abilities
-      "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
+      "iron giant", "merfolk aquamancer", "nekomata", "shambling mangrove", "starflower",
       "torpor snail", "water nymph", "wretched star", "wyrmhole",
       --Dangerous clouds
       "apocalypse crab", "catoblepas",

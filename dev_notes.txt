@@ -1,16 +1,38 @@
-#### Speeding up
-  - int instead of floats
-  - extra level of 'items_alerted' table: item_db_name -> ego -> plus
 
 ### todos
 - more/flash prompts as lua (to toggle w configs)
+
+fully-recover:
 - test using CMD_WAIT vs CMD_REST; only use wait when maxhp?
+
+announce-items:
+  - tomb, hell, other vaults: multiple gold piles
+  - disable gold in extended?
+  - keep track of items on cur level?
+
+- features:
+  - enter a "god of choice": FM on altar; hotkey move to
+  - helper for selecting char tile?
+
+
+### settings to consider
+tile_runrest_rate = 17
+        The number of milliseconds that tick by before the screen is redrawn
+        when running or resting. If Crawl is slow while running or resting,
+        increase this number.
+
+tile_key_repeat_delay = 200
+        If you hold down a key, there's a delay until the pressed key will
+        take action. This option controls this delay, in milliseconds. If it
+        is set to 0 key presses will never repeat.
+
+tile_tooltip_ms = 500
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:
 - Didn't find any props for trap_sarcophagus=1
 - coroutine not defined
-- pan is using a travel delay often/or calling ready?
+- pan; redrawing screen on every turn of travel
 
 https://github.com/crawl/crawl/issues/4789 ->
   - drop_disables_autopickup blocks exclude-dropped.lua from working
@@ -19,7 +41,7 @@ https://github.com/crawl/crawl/pull/4814 -> artificial cap on length blocks colo
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
 Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
 
-### TODO - requiring crawl PR?
+### TODO - requirie crawl PR?
 1. fully-recover:
   - Wait for allies to fully heal
   - Wait for ancestor respawn
@@ -31,7 +53,12 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
     (Maybe could fix with >1 ready() / turn... Try macro'ing: { WAIT, READY, EXPLORE }?)
 1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
 
-### Won't do - random ideas
+### Backlog / Probably won't do
+1. Speed improvements:
+  - int instead of floats
+  - extra level of 'items_alerted' table: item_db_name -> ego -> plus
+  - bring back BRC.CACHE - ie load all values that are used >1x per ready().
+    (Removed previous cache due to minimal impact, vs code clarity + robustness)
 1. feature ready() hook takes optional bool to fire every ready() instead of every turn
 1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
 1. autorest starts w/autopickup (if inv not full)

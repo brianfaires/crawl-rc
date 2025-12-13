@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = false
+BRC.Config.emojis = true
 
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
