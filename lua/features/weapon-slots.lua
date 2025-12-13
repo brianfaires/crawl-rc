@@ -143,7 +143,6 @@ function f_weapon_slots.ready()
   end
   if slots_changed then
     BRC.mpr.debug("Weapon slots updated (ab+w).")
-    crawl.redraw_screen()
     slots_changed = false
   end
 end

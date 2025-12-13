@@ -29,7 +29,6 @@ function BRC.mpr.consume_queue()
   -- stop_activity() can generate more autopickups, and thus more queue'd messages
   if do_more then
     you.stop_activity()
-    crawl.redraw_screen()
   end
 
   for _, msg in ipairs(_mpr_queue) do
@@ -39,8 +38,8 @@ function BRC.mpr.consume_queue()
   _mpr_queue = {}
 
   if do_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 end
 
@@ -75,11 +74,10 @@ function BRC.mpr.error(message, context, skip_more)
 
   log_message("(Error) " .. message, context, BRC.COL.lightred)
   you.stop_activity()
-  crawl.redraw_screen()
 
   if not skip_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 
   if BRC.Config.mpr.logs_to_stderr then
@@ -130,7 +128,6 @@ function BRC.mpr.more(msg, color, channel)
   you.stop_activity()
   crawl.redraw_screen()
   crawl.more()
-  crawl.redraw_screen()
 end
 
 --- Conditional force_more_message

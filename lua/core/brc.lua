@@ -368,4 +368,5 @@ function BRC.ready()
 
   -- Always display messages, even if same turn
   BRC.mpr.consume_queue()
+  crawl.redraw_screen()
 end

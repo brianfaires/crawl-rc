@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.show_debug_messages = false
 BRC.Config.mpr.logs_to_stderr = false
@@ -222,7 +222,6 @@ function f_weapon_slots.ready()
   end
   if slots_changed then
     BRC.mpr.debug("Weapon slots updated (ab+w).")
-    crawl.redraw_screen()
     slots_changed = false
   end
 end
