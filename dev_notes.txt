@@ -1,13 +1,9 @@
-### todos
-fully-recover:
-- test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
-
+### todos / bugs?
+- fully-recover:
+  - test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
+- pan; redrawing screen on every turn of travel
 
 ### crawl PRs / issues affecting BRC
-Lua bugs:
-- Didn't find any props for trap_sarcophagus=1
-- coroutine not defined
-- pan; redrawing screen on every turn of travel
 
 https://github.com/crawl/crawl/issues/4789 ->
   - drop_disables_autopickup blocks exclude-dropped.lua from working
@@ -16,7 +12,7 @@ https://github.com/crawl/crawl/pull/4814 -> artificial cap on length blocks colo
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
 Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
 
-### TODO - requirie crawl PR?
+### TODO - require crawl PR?
 1. fully-recover:
   - Wait for allies to fully heal
   - Wait for ancestor respawn
