@@ -131,7 +131,8 @@ brc_config_testing = {
     logs_to_stderr = true,
   },
 
-  disable_other_features = false,
+  disable_other_features = false, -- only use features explicitly configured below
+
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.5,
@@ -143,7 +144,8 @@ brc_config_testing = {
       },
     },
   },
-  init = [[
+
+  init = function()
     if BRC.Config.disable_other_features then
       for _, v in pairs(_G) do
         if BRC.is_feature_module(v) and not BRC.Config[v.BRC_FEATURE_NAME] then
@@ -151,7 +153,7 @@ brc_config_testing = {
         end
       end
     end
-  ]],
+  end,
 } -- brc_config_testing (do not remove this comment)
 
 }
@@ -224,13 +226,13 @@ brc_config_speed = {
     },
   },
 
-  init = [[
+  init = function()
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
     crawl.setopt("view_delay = 0")
     crawl.setopt("use_animations = 0")
     crawl.setopt("autofight_stop = 15")
     crawl.setopt("fail_severity_to_confirm = 40")
-  ]],
+  end,
 } -- brc_config_speed (do not remove this comment)
 
 }
@@ -516,7 +518,7 @@ brc_config_explicit = {
     },
 
     -- For non-spellcasters, add preferred weapon type as 3rd skill target
-    init = [[
+    init = function()
       if you.skill("Spellcasting") == 0 then
         local wpn_skill = BRC.you.top_wpn_skill()
         if wpn_skill then
@@ -524,7 +526,7 @@ brc_config_explicit = {
           t[#t + 1] = { wpn_skill, 6.0 }
         end
       end
-    ]],
+    end,
   },
 
   ["weapon-slots"] = {
@@ -856,29 +858,31 @@ brc_config_explicit = {
           "boundless tesseract", "demonspawn corrupter", "draconian stormcaller", "dryad",
           "guardian serpent", "halazid warlock", "shadow demon", "spriggan druid", "worldbinder",
           --Dangerous abilities
-          "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
+          "iron giant", "merfolk aquamancer", "nekomata", "shambling mangrove", "starflower",
           "torpor snail", "water nymph", "wretched star", "wyrmhole",
           --Dangerous clouds
-          "apocalypse crab","catoblepas",
+          "apocalypse crab", "catoblepas",
         } },
 
       { name = "always_flash", flash_screen = true,
         pattern = {
           -- Noteworthy abilities
           "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-          "vault guardian", "vault warden", "wendingo",
+          "vault guardian", "vault warden", "wendigo",
           -- Displacement
           "deep elf knight", "swamp worm",
           -- Summoning
           "deep elf elementalist",
+          -- Agony
+          "death knight", "imperial myrmidon", "necromancer",
         } },
-
-      { name = "always_fm_pack", is_pack = true,
-        pattern = { "boggart", "dream sheep", "floating eye", "shrike" } },
 
       -- Early game Dungeon problems for chars with low mhp. (adder defined below)
       { name = "30hp", cond = "hp", cutoff = 30,
         pattern = { "hound", "gnoll" } },
+
+      { name = "mid_game_packs", cutoff = 90, is_pack = true,
+        pattern = { "boggart", "dream sheep" } },
 
       -- Monsters dangerous until a certain point
       { name = "xl_7", cond = "xl", cutoff = 7,
@@ -892,7 +896,7 @@ brc_config_explicit = {
       { name = "50hp", cond = "hp", cutoff = 50,
         pattern = { "manticore", "orc high priest" } },
       { name = "60hp", cond = "hp", cutoff = 60,
-        pattern = { "centaur(?! warrior)", "cyclops", "yaktaur(?! captain)" } },
+        pattern = { "centaur(?! warrior)", "cyclops", "orc knight", "yaktaur(?! captain)" } },
       { name = "70hp_melai", cond = "hp", cutoff = 70, is_pack = true,
         pattern = "meliai" },
       { name = "80hp", cond = "hp", cutoff = 80,
@@ -955,17 +959,20 @@ brc_config_explicit = {
                     "tengu reaver", "titan" } },
       { name = "elec_140_pack", cond = "elec", cutoff = 140, is_pack = true,
         pattern = { "ball lightning" } },
+
       { name = "corr_60", cond = "corr", cutoff = 60,
         pattern = { "acid dragon" } },
+        { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
+        pattern = { "caustic shrike" } },
       { name = "corr_140", cond = "corr", cutoff = 140,
         pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
 
       { name = "fire_60", cond = "fire", cutoff = 60,
-        pattern = { "fire crab", "lava snake", "lindwurm", "steam dragon" } },
+        pattern = { "fire crab", "hell hound", "lava snake", "lindwurm", "steam dragon" } },
       { name = "fire_100", cond = "fire", cutoff = 100,
         pattern = { "deep elf pyromancer", "efreet", "smoke demon", "sun moth" } },
       { name = "fire_120", cond = "fire", cutoff = 120,
-        pattern = { "demonspawn blood saint", "hell hound", "hell knight", "molten gargoyle",
+        pattern = { "demonspawn blood saint", "hell hog", "hell knight", "molten gargoyle",
                     "ogre mage", "orc sorcerer", "red draconian" } },
       { name = "fire_140", cond = "fire", cutoff = 140,
         pattern = { "balrug" } },
@@ -979,7 +986,9 @@ brc_config_explicit = {
         pattern = { "rime drake" } },
       { name = "cold_120", cond = "cold", cutoff = 120,
         pattern = { "blizzard demon", "bog body", "demonspawn blood saint",
-                  "ironbound frostheart", "white draconian" } },
+                   "ironbound frostheart", "white draconian" } },
+      { name = "shard_shrike", cond = "cold", cutoff = 120, is_pack = true,
+        pattern = { "shard shrike" } },
       { name = "cold_160", cond = "cold", cutoff = 160,
         pattern = { "draconian knight", "frost giant", "golden dragon",
                     "ice dragon", "tengu reaver" } },
@@ -996,34 +1005,34 @@ brc_config_explicit = {
         pattern = { "demonspawn blood saint", "revenant" } },
       { name = "drain_190", cond = "drain", cutoff = 190,
         pattern = { "shadow dragon" } },
-    }, -- Alerts
+    }, -- fm_patterns (do not remove this comment)
 
-    init = [[
-    local alert_list = f_alert_monsters.Config.Alerts
+    init = function()
+      local alert_list = f_alert_monsters.Config.Alerts
 
-    -- Mutators (only flash if immune)
-    util.append(alert_list, {
-      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-      pattern = { "cacodemon", "neqoxec", "shining eye" }
-    })
-
-    -- Conditionally add miasma monsters
-    if not BRC.you.miasma_immune() then
+      -- Mutators (only flash if immune)
       util.append(alert_list, {
-        name = "miasma", cond = "always", cutoff = 0,
-        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+        name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+        pattern = { "cacodemon", "neqoxec", "shining eye" }
       })
-    end
 
-    -- Conditionally add tormentors
-    if not you.torment_immune() then
-      util.append(alert_list, {
-        name = "torment", cond = "always", cutoff = 0,
-        pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
-                    "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
-      })
-    end
-]]
+      -- Conditionally add miasma monsters
+      if not BRC.you.miasma_immune() then
+        util.append(alert_list, {
+          name = "miasma", cond = "always", cutoff = 0,
+          pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+        })
+      end
+
+      -- Conditionally add tormentors
+      if not you.torment_immune() then
+        util.append(alert_list, {
+          name = "torment", cond = "always", cutoff = 0,
+          pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
+                      "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+        })
+      end
+    end,
   }, -- alert-monsters
 
 } -- brc_config_explicit (do not remove this comment)
@@ -3509,24 +3518,10 @@ local function get_valid_config_name(input_name)
   return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
 end
 
-local function safe_call_string(str, module_name)
-  local chunk, err = loadstring(str)
-  if not chunk then
-    BRC.mpr.error("Error loading " .. module_name .. ".Config.init string: ", err)
-  else
-    local success, result = pcall(chunk)
-    if not success then
-      BRC.mpr.error("Error executing " .. module_name .. ".Config.init string: ", result)
-    end
-  end
-end
-
-local function execute_config_init(config, module_name)
+local function execute_config_init(config)
   if type(config) ~= "table" then return end
   if type(config.init) == "function" then
     config.init()
-  elseif type(config.init) == "string" then
-    safe_call_string(config.init, module_name)
   end
 end
 
@@ -3539,7 +3534,7 @@ local function override_table(dest, source)
     if BRC.util.is_map(value) then
       if not dest[key] then dest[key] = {} end
       override_table(dest[key], value)
-    elseif key ~= "init" then
+    else
       dest[key] = value
     end
   end
@@ -3554,8 +3549,8 @@ local function load_specific_config(config)
   else
     local name = get_valid_config_name(config)
     override_table(BRC.Config, BRC.Configs[name])
-    execute_config_init(BRC.Config, "BRC")
-    execute_config_init(BRC.Configs[name], "BRC.Configs." ..name)
+    execute_config_init(BRC.Config)
+    execute_config_init(BRC.Configs[name])
   end
 
   -- Store persistent config info
@@ -3592,17 +3587,25 @@ function BRC.init_config(config)
   end
 end
 
---- Process a feature config: Ensure default values, init(), then override with BRC.Config values
+--- Process a feature config: Load defaults, then override w BRC.Config
 function BRC.process_feature_config(feature)
   if type(feature.ConfigDefaults) == "table" then
     feature.Config = util.copy_table(feature.ConfigDefaults)
   else
+    -- Save the defaults after default init(), so they can be used later w a diff config
     feature.Config = feature.Config or {}
-    execute_config_init(feature.Config, feature.BRC_FEATURE_NAME)
+    local preinit_defaults = util.copy_table(feature.Config)
+    execute_config_init(feature.Config)
     feature.ConfigDefaults = util.copy_table(feature.Config)
+
+    -- If init() is overridden, restore to the pre-init defaults and only apply the new init()
+    if type(BRC.Config[feature.BRC_FEATURE_NAME].init) == "function" then
+      feature.Config = util.copy_table(preinit_defaults)
+    end
   end
 
   override_table(feature.Config, BRC.Config[feature.BRC_FEATURE_NAME])
+  execute_config_init(BRC.Config[feature.BRC_FEATURE_NAME])
 end
 
 --- Stringify BRC.Config and each feature config, with headers
@@ -4518,32 +4521,32 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "shadow dragon" } },
 } -- fm_patterns (do not remove this comment)
 
-f_alert_monsters.Config.init = [[
-    local alert_list = f_alert_monsters.Config.Alerts
+f_alert_monsters.Config.init = function()
+  local alert_list = f_alert_monsters.Config.Alerts
 
-    -- Mutators (only flash if immune)
+  -- Mutators (only flash if immune)
+  util.append(alert_list, {
+    name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+    pattern = { "cacodemon", "neqoxec", "shining eye" }
+  })
+
+  -- Conditionally add miasma monsters
+  if not BRC.you.miasma_immune() then
     util.append(alert_list, {
-      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-      pattern = { "cacodemon", "neqoxec", "shining eye" }
+      name = "miasma", cond = "always", cutoff = 0,
+      pattern = { "death drake", "tainted leviathan", "putrid mouth" }
     })
+  end
 
-    -- Conditionally add miasma monsters
-    if not BRC.you.miasma_immune() then
-      util.append(alert_list, {
-        name = "miasma", cond = "always", cutoff = 0,
-        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
-      })
-    end
-
-    -- Conditionally add tormentors
-    if not you.torment_immune() then
-      util.append(alert_list, {
-        name = "torment", cond = "always", cutoff = 0,
-        pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
-                    "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
-      })
-    end
-]]
+  -- Conditionally add tormentors
+  if not you.torment_immune() then
+    util.append(alert_list, {
+      name = "torment", cond = "always", cutoff = 0,
+      pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
+                  "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+    })
+  end
+end
 ------------------- End config section -------------------
 
 ---- Local constants ----
@@ -7180,7 +7183,7 @@ f_startup.Config = {
   },
 
   -- For non-spellcasters, add preferred weapon type as 3rd skill target
-  init = [[
+  init = function()
     if you.skill("Spellcasting") == 0 then
       local wpn_skill = BRC.you.top_wpn_skill()
       if wpn_skill then
@@ -7188,7 +7191,7 @@ f_startup.Config = {
         t[#t + 1] = { wpn_skill, 6.0 }
       end
     end
-  ]],
+  end,
 } -- f_startup.Config (do not remove this comment)
 
 ---- Local variables ----

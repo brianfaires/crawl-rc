@@ -115,24 +115,10 @@ local function get_valid_config_name(input_name)
   return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
 end
 
-local function safe_call_string(str, module_name)
-  local chunk, err = loadstring(str)
-  if not chunk then
-    BRC.mpr.error("Error loading " .. module_name .. ".Config.init string: ", err)
-  else
-    local success, result = pcall(chunk)
-    if not success then
-      BRC.mpr.error("Error executing " .. module_name .. ".Config.init string: ", result)
-    end
-  end
-end
-
-local function execute_config_init(config, module_name)
+local function execute_config_init(config)
   if type(config) ~= "table" then return end
   if type(config.init) == "function" then
     config.init()
-  elseif type(config.init) == "string" then
-    safe_call_string(config.init, module_name)
   end
 end
 
@@ -145,7 +131,7 @@ local function override_table(dest, source)
     if BRC.util.is_map(value) then
       if not dest[key] then dest[key] = {} end
       override_table(dest[key], value)
-    elseif key ~= "init" then
+    else
       dest[key] = value
     end
   end
@@ -160,8 +146,8 @@ local function load_specific_config(config)
   else
     local name = get_valid_config_name(config)
     override_table(BRC.Config, BRC.Configs[name])
-    execute_config_init(BRC.Config, "BRC")
-    execute_config_init(BRC.Configs[name], "BRC.Configs." ..name)
+    execute_config_init(BRC.Config)
+    execute_config_init(BRC.Configs[name])
   end
 
   -- Store persistent config info
@@ -198,17 +184,25 @@ function BRC.init_config(config)
   end
 end
 
---- Process a feature config: Ensure default values, init(), then override with BRC.Config values
+--- Process a feature config: Load defaults, then override w BRC.Config
 function BRC.process_feature_config(feature)
   if type(feature.ConfigDefaults) == "table" then
     feature.Config = util.copy_table(feature.ConfigDefaults)
   else
+    -- Save the defaults after default init(), so they can be used later w a diff config
     feature.Config = feature.Config or {}
-    execute_config_init(feature.Config, feature.BRC_FEATURE_NAME)
+    local preinit_defaults = util.copy_table(feature.Config)
+    execute_config_init(feature.Config)
     feature.ConfigDefaults = util.copy_table(feature.Config)
+
+    -- If init() is overridden, restore to the pre-init defaults and only apply the new init()
+    if type(BRC.Config[feature.BRC_FEATURE_NAME].init) == "function" then
+      feature.Config = util.copy_table(preinit_defaults)
+    end
   end
 
   override_table(feature.Config, BRC.Config[feature.BRC_FEATURE_NAME])
+  execute_config_init(BRC.Config[feature.BRC_FEATURE_NAME])
 end
 
 --- Stringify BRC.Config and each feature config, with headers
