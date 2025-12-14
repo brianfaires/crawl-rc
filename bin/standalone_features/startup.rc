@@ -341,7 +341,7 @@ end
 
 local function load_config(key, require_confirmation)
   local saved = c_persist.BRC.saved_configs[key]
-  if type(saved) ~= "table" and type(saved) ~= "string" then return false end
+  if type(saved) ~= "string" then return false end
 
   if require_confirmation
     and not BRC.mpr.yesno("Load config for " .. BRC.txt.lightcyan(key) .. "?")

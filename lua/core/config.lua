@@ -82,7 +82,7 @@ local function find_config_modules()
   end
 end
 
---- @param input_name string "ask" or "previous" or a config name
+--- @param input_name string "ask" or a config name
 -- @return string The valid name of a config
 local function get_valid_config_name(input_name)
   if #BRC.Configs == 1 then return util.keys(BRC.Configs)[1] end
@@ -95,13 +95,6 @@ local function get_valid_config_name(input_name)
       -- If game has started, restore from the previously saved config name
       if you.turns() > 0 and brc_config_name then
         return get_valid_config_name(brc_config_name)
-      end
-    elseif config_name == "previous" then
-      -- Restore from the config name in c_persist (cross-game persistence), or display warning
-      if c_persist.BRC and c_persist.BRC.current_config then
-        return get_valid_config_name(c_persist.BRC.current_config)
-      else
-        BRC.mpr.warning("No previous config found.")
       end
     else
       -- Find by name in BRC.Configs, or display warning
@@ -137,51 +130,32 @@ local function override_table(dest, source)
   end
 end
 
---- Load a config, either from a table or from a name.
--- @param config table of config values, or string name of a config
-local function load_specific_config(config)
+---- Public API ----
+--- Main config loading entry point
+-- @param config_name string name of a config
+function BRC.init_config(config_name)
+  find_config_modules()
   BRC.Config = util.copy_table(BRC.Configs.Default)
-  if type(config) == "table" then
-    override_table(BRC.Config, config)
-  else
-    local name = get_valid_config_name(config)
-    override_table(BRC.Config, BRC.Configs[name])
-    execute_config_init(BRC.Config)
-    execute_config_init(BRC.Configs[name])
+  local name = get_valid_config_name(config_name or BRC.Config.use_config)
+  if BRC.Configs[brc_config_name] and (name ~= brc_config_name) and you.turns() > 0 then
+    if not BRC.mpr.yesno(string.format(
+      "Switch config from %s to %s?",
+      BRC.txt.lightcyan(brc_config_name),
+      BRC.txt.lightcyan(name)
+    )) then
+      name = brc_config_name
+    end
   end
 
-  -- Store persistent config info
-  brc_config_name = BRC.Config.BRC_CONFIG_NAME
-  if BRC.Config.store_config and BRC.Config.store_config:lower() == "full" then
-    brc_full_persistant_config = BRC.Config
-  end
+  override_table(BRC.Config, BRC.Configs[name])
+  execute_config_init(BRC.Config)
 
-  -- Init all features and apply any overrides from the loaded config
   for _ , value in pairs(BRC.get_registered_features()) do
     BRC.process_feature_config(value)
   end
 
+  brc_config_name = name
   BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME))
-end
-
----- Public API ----
---- Main config loading entry point
--- @param config table of config values, or string name of a config
-function BRC.init_config(config)
-  find_config_modules()
-
-  if config then
-    load_specific_config(config)
-  else
-    local store_mode = BRC.Config.store_config and BRC.Config.store_config:lower() or nil
-    if store_mode == "full" then
-      load_specific_config(brc_full_persistant_config or brc_config_name or BRC.Config.use_config)
-    elseif store_mode == "name" then
-      load_specific_config(brc_config_name or BRC.Config.use_config)
-    else
-      load_specific_config(BRC.Config.use_config)
-    end
-  end
 end
 
 --- Process a feature config: Load defaults, then override w BRC.Config

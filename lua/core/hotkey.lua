@@ -116,8 +116,8 @@ end
 -- @param suffix string - Printed after the action. Usually an item name
 -- @param push_front boolean - Push the action to the front of the queue
 -- @param f_action function - The function to call when the hotkey is pressed
--- @param f_condition optional function (return bool) - If the action is still valid
--- @param f_cleanup optional function - Function to call after hotkey pressed or skipped
+-- @param f_condition (optional function) return bool - If the action is still valid
+-- @param f_cleanup (optional function) - Function to call after hotkey pressed or skipped
 -- @return nil
 function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
   local act = {

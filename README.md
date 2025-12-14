@@ -174,14 +174,7 @@ BRC.Config = {
   --- Specify which config (defined below) to use, or how to choose one.
   --   "<config name>": Use the named config like "Custom"
   --   "ask": Select config at start of each new game
-  --   "previous": Keep using previously loaded config; asks on first game
-  use_config = "previous",
-
-  --- For local games, use store_config to use different configs across multiple characters.
-  --   "none": Normal behavior: Read use_config, and load it from the RC.
-  --   "name": Remember the config name and reload it from the RC. Ignore new values of use_config.
-  --   "full": Remember the config and all of its values. Ignore RC changes.
-  store_config = "none",
+  use_config = "ask",
 } -- BRC.Config
 ```
 

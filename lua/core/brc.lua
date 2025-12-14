@@ -239,15 +239,15 @@ function BRC.unregister(name)
   return true
 end
 
--- @param config table of config values, or string name of a config
-function BRC.reset(config)
+-- @param config_name (optional string) name of a config
+function BRC.reset(config_name)
   BRC.active = false
   BRC.Data.reset()
-  BRC.init(config)
+  BRC.init(config_name)
 end
 
--- @param config table of config values, or string name of a config
-function BRC.init(config)
+-- @param config_name string name of a config
+function BRC.init(config_name)
   BRC.active = false
   _features = {}
   _hooks = {}
@@ -265,7 +265,7 @@ function BRC.init(config)
     end
   end
 
-  BRC.init_config(config)
+  BRC.init_config(config_name)
   BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register core features...")

@@ -9,17 +9,8 @@ BRC = {}
 BRC.Config = {
   emojis = true, -- Include emojis in alerts
 
-  --- Specify which config (defined below) to use, or how to choose one.
-  --   "<config name>": Use the named config
-  --   "ask": Prompt at start of each new game
-  --   "previous": Keep using the last config
+  --- Specify which config (defined below) to use, or "ask" to prompt at start of each new game
   use_config = "ask",
-
-  --- For local games, use store_config to use different configs across multiple characters.
-  --   "none": Normal behavior: Read use_config, and load it from the RC.
-  --   "name": Remember the config name and reload it from the RC. Ignore new values of use_config.
-  --   "full": Remember the config and all of its values. Ignore RC changes.
-  store_config = "none",
 } -- BRC.Config (do not remove this comment)
 
 }
@@ -229,9 +220,8 @@ brc_config_speed = {
   init = function()
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
     crawl.setopt("view_delay = 0")
-    crawl.setopt("use_animations = 0")
     crawl.setopt("autofight_stop = 15")
-    crawl.setopt("fail_severity_to_confirm = 40")
+    crawl.setopt("fail_severity_to_confirm = 4")
   end,
 } -- brc_config_speed (do not remove this comment)
 
@@ -1054,7 +1044,7 @@ show_more = false
 small_more = true
 mouse_input = false
 tile_web_mouse_control = false
-fail_severity_to_confirm = 4
+fail_severity_to_confirm = 3
 tile_key_repeat_delay = 100
 
 ####### Combat options #######
@@ -3485,7 +3475,7 @@ local function find_config_modules()
   end
 end
 
---- @param input_name string "ask" or "previous" or a config name
+--- @param input_name string "ask" or a config name
 -- @return string The valid name of a config
 local function get_valid_config_name(input_name)
   if #BRC.Configs == 1 then return util.keys(BRC.Configs)[1] end
@@ -3498,13 +3488,6 @@ local function get_valid_config_name(input_name)
       -- If game has started, restore from the previously saved config name
       if you.turns() > 0 and brc_config_name then
         return get_valid_config_name(brc_config_name)
-      end
-    elseif config_name == "previous" then
-      -- Restore from the config name in c_persist (cross-game persistence), or display warning
-      if c_persist.BRC and c_persist.BRC.current_config then
-        return get_valid_config_name(c_persist.BRC.current_config)
-      else
-        BRC.mpr.warning("No previous config found.")
       end
     else
       -- Find by name in BRC.Configs, or display warning
@@ -3540,51 +3523,32 @@ local function override_table(dest, source)
   end
 end
 
---- Load a config, either from a table or from a name.
--- @param config table of config values, or string name of a config
-local function load_specific_config(config)
+---- Public API ----
+--- Main config loading entry point
+-- @param config_name string name of a config
+function BRC.init_config(config_name)
+  find_config_modules()
   BRC.Config = util.copy_table(BRC.Configs.Default)
-  if type(config) == "table" then
-    override_table(BRC.Config, config)
-  else
-    local name = get_valid_config_name(config)
-    override_table(BRC.Config, BRC.Configs[name])
-    execute_config_init(BRC.Config)
-    execute_config_init(BRC.Configs[name])
+  local name = get_valid_config_name(config_name or BRC.Config.use_config)
+  if BRC.Configs[brc_config_name] and (name ~= brc_config_name) and you.turns() > 0 then
+    if not BRC.mpr.yesno(string.format(
+      "Switch config from %s to %s?",
+      BRC.txt.lightcyan(brc_config_name),
+      BRC.txt.lightcyan(name)
+    )) then
+      name = brc_config_name
+    end
   end
 
-  -- Store persistent config info
-  brc_config_name = BRC.Config.BRC_CONFIG_NAME
-  if BRC.Config.store_config and BRC.Config.store_config:lower() == "full" then
-    brc_full_persistant_config = BRC.Config
-  end
+  override_table(BRC.Config, BRC.Configs[name])
+  execute_config_init(BRC.Config)
 
-  -- Init all features and apply any overrides from the loaded config
   for _ , value in pairs(BRC.get_registered_features()) do
     BRC.process_feature_config(value)
   end
 
+  brc_config_name = name
   BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME))
-end
-
----- Public API ----
---- Main config loading entry point
--- @param config table of config values, or string name of a config
-function BRC.init_config(config)
-  find_config_modules()
-
-  if config then
-    load_specific_config(config)
-  else
-    local store_mode = BRC.Config.store_config and BRC.Config.store_config:lower() or nil
-    if store_mode == "full" then
-      load_specific_config(brc_full_persistant_config or brc_config_name or BRC.Config.use_config)
-    elseif store_mode == "name" then
-      load_specific_config(brc_config_name or BRC.Config.use_config)
-    else
-      load_specific_config(BRC.Config.use_config)
-    end
-  end
 end
 
 --- Process a feature config: Load defaults, then override w BRC.Config
@@ -3758,8 +3722,8 @@ end
 -- @param suffix string - Printed after the action. Usually an item name
 -- @param push_front boolean - Push the action to the front of the queue
 -- @param f_action function - The function to call when the hotkey is pressed
--- @param f_condition optional function (return bool) - If the action is still valid
--- @param f_cleanup optional function - Function to call after hotkey pressed or skipped
+-- @param f_condition (optional function) return bool - If the action is still valid
+-- @param f_cleanup (optional function) - Function to call after hotkey pressed or skipped
 -- @return nil
 function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
   local act = {
@@ -4184,15 +4148,15 @@ function BRC.unregister(name)
   return true
 end
 
--- @param config table of config values, or string name of a config
-function BRC.reset(config)
+-- @param config_name (optional string) name of a config
+function BRC.reset(config_name)
   BRC.active = false
   BRC.Data.reset()
-  BRC.init(config)
+  BRC.init(config_name)
 end
 
--- @param config table of config values, or string name of a config
-function BRC.init(config)
+-- @param config_name string name of a config
+function BRC.init(config_name)
   BRC.active = false
   _features = {}
   _hooks = {}
@@ -4210,7 +4174,7 @@ function BRC.init(config)
     end
   end
 
-  BRC.init_config(config)
+  BRC.init_config(config_name)
   BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register core features...")
@@ -7264,7 +7228,7 @@ end
 
 local function load_config(key, require_confirmation)
   local saved = c_persist.BRC.saved_configs[key]
-  if type(saved) ~= "table" and type(saved) ~= "string" then return false end
+  if type(saved) ~= "string" then return false end
 
   if require_confirmation
     and not BRC.mpr.yesno("Load config for " .. BRC.txt.lightcyan(key) .. "?")
