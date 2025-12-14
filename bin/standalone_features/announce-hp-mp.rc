@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 
 f_announce_hp_mp = {}
 f_announce_hp_mp.Config = {
@@ -28,19 +28,25 @@ f_announce_hp_mp.Config = {
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
   },
 
-  HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-    BORDER = "<white>|</white>",
-    FULL = "<lightgreen>+</lightgreen>",
-    PART = "<lightgrey>+</lightgrey>",
-    EMPTY = "<darkgrey>-</darkgrey>",
-  },
+  HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" },
+  MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" },
 
-  MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-    BORDER = "<white>|</white>",
-    FULL = "<lightblue>+</lightblue>",
-    PART = "<lightgrey>+</lightgrey>",
-    EMPTY = "<darkgrey>-</darkgrey>",
-  },
+  init = function()
+    if not BRC.Config.emojis then
+      f_announce_hp_mp.Config.HP_METER = {
+        BORDER = "<white>|</white>",
+        FULL = "<lightgreen>+</lightgreen>",
+        PART = "<lightgrey>+</lightgrey>",
+        EMPTY = "<darkgrey>-</darkgrey>",
+      }
+      f_announce_hp_mp.Config.MP_METER = {
+        BORDER = "<white>|</white>",
+        FULL = "<lightblue>+</lightblue>",
+        PART = "<lightgrey>+</lightgrey>",
+        EMPTY = "<darkgrey>-</darkgrey>",
+      }
+    end
+  end,
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 -- BRC Constants
@@ -50,12 +56,7 @@ BRC.COL = {
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
 } -- BRC.COL (do not remove this comment)
 
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
 
 
 -- BRC module tables (Don't overwrite existing globals)

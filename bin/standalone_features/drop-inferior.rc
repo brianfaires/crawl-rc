@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 
 f_drop_inferior = {}
 f_drop_inferior.Config = {
@@ -34,12 +34,7 @@ BRC.COL = {
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
 } -- BRC.COL (do not remove this comment)
 
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
 
 BRC.MAGIC_SCHOOLS = {
   air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",

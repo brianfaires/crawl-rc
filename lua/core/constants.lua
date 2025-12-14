@@ -5,12 +5,20 @@
 ---------------------------------------------------------------------------------------------------
 
 ---- Cosmetic settings
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
+BRC.init_emojis = function()
+  if BRC.Config.emojis then
+    BRC.EMOJI.CAUTION = "⚠️"
+    BRC.EMOJI.EXCLAMATION = "❗"
+    BRC.EMOJI.EXCLAMATION_2 = "‼️"
+    BRC.EMOJI.SUCCESS = "✅"
+  else
+    BRC.EMOJI.CAUTION = BRC.txt.yellow("!")
+    BRC.EMOJI.EXCLAMATION = BRC.txt.magenta("!")
+    BRC.EMOJI.EXCLAMATION_2 = BRC.txt.lightmagenta("!!")
+    BRC.EMOJI.SUCCESS = nil
+  end
+end
 
 ---- Items ----
 BRC.MISC_ITEMS = {

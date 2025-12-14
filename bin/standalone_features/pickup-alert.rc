@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 BRC.Config.unskilled_egos_usable = false
 BRC.Config.BrandBonus = {
   chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
@@ -201,7 +201,7 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+f_pickup_alert.Config.Emoji = {
   RARE_ITEM = "💎",
   ARTEFACT = "💠",
   ORB = "🔮",
@@ -223,11 +223,7 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   AUTOPICKUP = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
----------------------------------------------------------------------------------------------------
--- BRC feature module: pickup-alert
--- @module f_pickup_alert
--- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
--- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
+f_pickup_alert.Config.init = function()
 
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
@@ -265,12 +261,7 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
 
 BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
@@ -992,6 +983,16 @@ end
 ---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
+  if not BRC.Config.emojis then
+    f_pickup_alert.Config.Emoji = {}
+  end
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert
+-- @module f_pickup_alert
+-- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
+-- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
 ---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}

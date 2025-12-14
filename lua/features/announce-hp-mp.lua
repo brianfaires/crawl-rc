@@ -24,19 +24,25 @@ f_announce_hp_mp.Config = {
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
   },
 
-  HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-    BORDER = BRC.txt.white("|"),
-    FULL = BRC.txt.lightgreen("+"),
-    PART = BRC.txt.lightgrey("+"),
-    EMPTY = BRC.txt.darkgrey("-"),
-  },
+  HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" },
+  MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" },
 
-  MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-    BORDER = BRC.txt.white("|"),
-    FULL = BRC.txt.lightblue("+"),
-    PART = BRC.txt.lightgrey("+"),
-    EMPTY = BRC.txt.darkgrey("-"),
-  },
+  init = function()
+    if not BRC.Config.emojis then
+      f_announce_hp_mp.Config.HP_METER = {
+        BORDER = BRC.txt.white("|"),
+        FULL = BRC.txt.lightgreen("+"),
+        PART = BRC.txt.lightgrey("+"),
+        EMPTY = BRC.txt.darkgrey("-"),
+      }
+      f_announce_hp_mp.Config.MP_METER = {
+        BORDER = BRC.txt.white("|"),
+        FULL = BRC.txt.lightblue("+"),
+        PART = BRC.txt.lightgrey("+"),
+        EMPTY = BRC.txt.darkgrey("-"),
+      }
+    end
+  end,
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 ---- Persistent variables ----

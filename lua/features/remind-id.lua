@@ -10,8 +10,13 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
   read_id_hotkey = true, -- Put read ID on hotkey
+  emoji = "🎁",
+  init = function()
+    if not BRC.Config.emojis then
+      f_remind_id.Config.emoji = BRC.txt.magenta("?")
+    end
+  end,
 } -- f_remind_id.Config (do not remove this comment)
 
 ---- Persistent variables ----

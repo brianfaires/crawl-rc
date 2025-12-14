@@ -9,7 +9,12 @@ f_display_realtime.BRC_FEATURE_NAME = "display-realtime"
 f_display_realtime.Config = {
   disabled = true, -- Disabled by default
   interval_s = 60, -- seconds between updates
-  emoji = BRC.Config.emojis and "🕒" or "--",
+  emoji = "🕒",
+  init = function()
+    if not BRC.Config.emojis then
+      f_display_realtime.Config.emoji = BRC.txt.white("--")
+    end
+  end,
 } -- f_display_realtime.Config (do not remove this comment)
 
 ---- Persistent variables ----

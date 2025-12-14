@@ -8,13 +8,18 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 
 f_display_realtime = {}
 f_display_realtime.Config = {
   disabled = false, -- Disabled by default
   interval_s = 60, -- seconds between updates
-  emoji = BRC.Config.emojis and "🕒" or "--",
+  emoji = "🕒",
+  init = function()
+    if not BRC.Config.emojis then
+      f_display_realtime.Config.emoji = "<white>--</white>"
+    end
+  end,
 } -- f_display_realtime.Config (do not remove this comment)
 
 -- BRC Constants

@@ -165,18 +165,11 @@ Included configs:
 
 ### 4. Set which config to load
 
-`BRC.Config` is at the top of `buehler.rc` (and `lua/core/_header.lua`) with 3 settings. Don't remove these - they define which config to load.
+`BRC.Config.to_use` is at the top of `buehler.rc` (and `lua/core/_header.lua`). Set the config name there.
 
 ```lua
---- All other configs start with these values
-BRC.Config = {
-  emojis = true, -- Include emojis in alerts
-
-  --- Specify which config (defined below) to use, or how to choose one.
-  --   "<config name>": Use the named config like "Custom"
-  --   "ask": Select config at start of each new game
-  use_config = "ask",
-} -- BRC.Config
+-- Specify a config by name, or "ask" to prompt at start of each new game
+BRC.Config.use_config = "ask"
 ```
 
 ### 5. Add Your Own Features

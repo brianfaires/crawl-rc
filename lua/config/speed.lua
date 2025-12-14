@@ -3,6 +3,8 @@
 brc_config_speed = {
   BRC_CONFIG_NAME = "Speed",
 
+  emojis = true,
+
   ["alert-monsters"] = { disabled = true },
   ["safe-consumables"] = { disabled = true },
   ["safe-stairs"] = { disabled = true },

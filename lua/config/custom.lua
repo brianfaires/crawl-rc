@@ -5,6 +5,8 @@
 brc_config_custom = {
   BRC_CONFIG_NAME = "Custom",
 
+  emojis = true,
+
   ["misc-alerts"] = {
     alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
     preferred_god = nil, -- Stop on first altar with this text (Ex. "Wu Jian", "Ash"); nil disables

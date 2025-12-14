@@ -3,15 +3,10 @@
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
 BRC = {}
+BRC.Config = {}
 
---- All other configs start with these values
--- These are loaded on startup. Changing them requires a restart.
-BRC.Config = {
-  emojis = true, -- Include emojis in alerts
-
-  --- Specify which config (defined below) to use, or "ask" to prompt at start of each new game
-  use_config = "ask",
-} -- BRC.Config (do not remove this comment)
+-- Specify a config by name, or "ask" to prompt at start of each new game
+BRC.Config.to_use = "ask"
 
 }
 ############################### End lua/core/_header.lua ###############################
@@ -26,6 +21,8 @@ BRC.Config = {
 
 brc_config_custom = {
   BRC_CONFIG_NAME = "Custom",
+
+  emojis = true,
 
   ["misc-alerts"] = {
     alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
@@ -121,6 +118,8 @@ brc_config_custom = {
 brc_config_testing = {
   BRC_CONFIG_NAME = "Testing",
 
+  emojis = false,
+
   mpr = {
     show_debug_messages = true,
     logs_to_stderr = true,
@@ -197,6 +196,8 @@ brc_config_turncount = {
 
 brc_config_speed = {
   BRC_CONFIG_NAME = "Speed",
+
+  emojis = true,
 
   ["alert-monsters"] = { disabled = true },
   ["safe-consumables"] = { disabled = true },
@@ -285,6 +286,8 @@ brc_config_explicit = {
   BRC_CONFIG_NAME = "Explicit",
 
   ---- BRC Core values ----
+  emojis = true,
+
   mpr = {
     show_debug_messages = false,
     logs_to_stderr = false,
@@ -355,19 +358,25 @@ brc_config_explicit = {
       very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
     },
 
-    HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-      BORDER = "<white>|</white>",
-      FULL = "<lightgreen>+</lightgreen>",
-      PART = "<lightgrey>+</lightgrey>",
-      EMPTY = "<darkgrey>-</darkgrey>",
-    },
+    HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" },
+    MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" },
 
-    MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-      BORDER = "<white>|</white>",
-      FULL = "<lightblue>+</lightblue>",
-      PART = "<lightgrey>+</lightgrey>",
-      EMPTY = "<darkgrey>-</darkgrey>",
-    },
+    init = function()
+      if not BRC.Config.emojis then
+        f_announce_hp_mp.Config.HP_METER = {
+          BORDER = BRC.txt.white("|"),
+          FULL = BRC.txt.lightgreen("+"),
+          PART = BRC.txt.lightgrey("+"),
+          EMPTY = BRC.txt.darkgrey("-"),
+        }
+        f_announce_hp_mp.Config.MP_METER = {
+          BORDER = BRC.txt.white("|"),
+          FULL = BRC.txt.lightblue("+"),
+          PART = BRC.txt.lightgrey("+"),
+          EMPTY = BRC.txt.darkgrey("-"),
+        }
+      end
+    end,
   },
 
   ["answer-prompts"] = {
@@ -385,6 +394,12 @@ brc_config_explicit = {
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
     alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
+    emoji = "🍞",
+    init = function()
+      if not BRC.Config.emojis then
+        f_bread_swinger.Config.emoji = BRC.txt.cyan("---- ")
+      end
+    end,
   },
 
   ["color-inscribe"] = {
@@ -395,7 +410,12 @@ brc_config_explicit = {
   ["display-realtime"] = {
     disabled = true, -- Disabled by default
     interval_s = 60, -- seconds between updates
-    emoji = BRC.Config.emojis and "🕒" or "--",
+    emoji = "🕒",
+    init = function()
+      if not BRC.Config.emojis then
+        f_display_realtime.Config.emoji = BRC.txt.white("--")
+      end
+    end,
   },
 
   ["drop-inferior"] = {
@@ -454,8 +474,13 @@ brc_config_explicit = {
     disabled = false,
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-    emoji = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>",
     read_id_hotkey = true, -- Put read ID on hotkey
+    emoji = "🎁",
+    init = function()
+      if not BRC.Config.emojis then
+        f_remind_id.Config.emoji = BRC.txt.magenta("?")
+      end
+    end,
   },
 
   ["runrest-features"] = {
@@ -1770,12 +1795,20 @@ ignore += mindless puppets stay behind to rot
 ---------------------------------------------------------------------------------------------------
 
 ---- Cosmetic settings
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
+BRC.init_emojis = function()
+  if BRC.Config.emojis then
+    BRC.EMOJI.CAUTION = "⚠️"
+    BRC.EMOJI.EXCLAMATION = "❗"
+    BRC.EMOJI.EXCLAMATION_2 = "‼️"
+    BRC.EMOJI.SUCCESS = "✅"
+  else
+    BRC.EMOJI.CAUTION = BRC.txt.yellow("!")
+    BRC.EMOJI.EXCLAMATION = BRC.txt.magenta("!")
+    BRC.EMOJI.EXCLAMATION_2 = BRC.txt.lightmagenta("!!")
+    BRC.EMOJI.SUCCESS = nil
+  end
+end
 
 ---- Items ----
 BRC.MISC_ITEMS = {
@@ -3398,6 +3431,8 @@ brc_config_name = BRC.Data.persist("brc_config_name", nil)
 BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
 BRC.Configs.Default.BRC_CONFIG_NAME = "Default"
 
+BRC.Configs.Default.emojis = true -- Include emojis in alerts
+
 -- Does "Armour of <MagicSkill>" have an ego when skill is 0?
 BRC.Configs.Default.unskilled_egos_usable = false
 
@@ -3511,7 +3546,7 @@ end
 function BRC.init_config(config_name)
   find_config_modules()
   BRC.Config = util.copy_table(BRC.Configs.Default)
-  local name = get_valid_config_name(config_name or BRC.Config.use_config)
+  local name = get_valid_config_name(config_name or BRC.Config.to_use)
   if BRC.Configs[brc_config_name] and (name ~= brc_config_name) and you.turns() > 0 then
     if not BRC.mpr.yesno(string.format(
       "Switch config from %s to %s?",
@@ -3531,6 +3566,7 @@ function BRC.init_config(config_name)
 
   brc_config_name = name
   BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME))
+  BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
 end
 
 --- Process a feature config: Load defaults, then override w BRC.Config
@@ -4713,19 +4749,25 @@ f_announce_hp_mp.Config = {
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
   },
 
-  HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-    BORDER = BRC.txt.white("|"),
-    FULL = BRC.txt.lightgreen("+"),
-    PART = BRC.txt.lightgrey("+"),
-    EMPTY = BRC.txt.darkgrey("-"),
-  },
+  HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" },
+  MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" },
 
-  MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-    BORDER = BRC.txt.white("|"),
-    FULL = BRC.txt.lightblue("+"),
-    PART = BRC.txt.lightgrey("+"),
-    EMPTY = BRC.txt.darkgrey("-"),
-  },
+  init = function()
+    if not BRC.Config.emojis then
+      f_announce_hp_mp.Config.HP_METER = {
+        BORDER = BRC.txt.white("|"),
+        FULL = BRC.txt.lightgreen("+"),
+        PART = BRC.txt.lightgrey("+"),
+        EMPTY = BRC.txt.darkgrey("-"),
+      }
+      f_announce_hp_mp.Config.MP_METER = {
+        BORDER = BRC.txt.white("|"),
+        FULL = BRC.txt.lightblue("+"),
+        PART = BRC.txt.lightgrey("+"),
+        EMPTY = BRC.txt.darkgrey("-"),
+      }
+    end
+  end,
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -5034,6 +5076,13 @@ f_bread_swinger.Config = {
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
   alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
+  emoji = "🍞",
+
+  init = function()
+    if not BRC.Config.emojis then
+      f_bread_swinger.Config.emoji = BRC.txt.cyan("---- ")
+    end
+  end,
 } -- f_bread_swinger.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -5097,12 +5146,12 @@ end
 
 local function do_alert(msg, it)
   local tokens = {}
-  tokens[1] = BRC.Config.emojis and "🍞 " or BRC.txt.cyan("---- ")
+  tokens[1] = f_bread_swinger.Config.emoji .. " "
   tokens[#tokens + 1] = msg .. ": "
   tokens[#tokens + 1] = BRC.txt.cyan(it.name() .. " (")
   tokens[#tokens + 1] = BRC.txt.lightmagenta(string.format("%.2f", BRC.eq.get_weap_delay(it)))
   tokens[#tokens + 1] = BRC.txt.cyan(") ")
-  tokens[#tokens + 1] = tokens[1]
+  tokens[#tokens + 1] = f_bread_swinger.Config.emoji
   BRC.mpr.que(table.concat(tokens))
   you.stop_activity()
 end
@@ -5631,7 +5680,12 @@ f_display_realtime.BRC_FEATURE_NAME = "display-realtime"
 f_display_realtime.Config = {
   disabled = true, -- Disabled by default
   interval_s = 60, -- seconds between updates
-  emoji = BRC.Config.emojis and "🕒" or "--",
+  emoji = "🕒",
+  init = function()
+    if not BRC.Config.emojis then
+      f_display_realtime.Config.emoji = BRC.txt.white("--")
+    end
+  end,
 } -- f_display_realtime.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -6870,8 +6924,13 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
   read_id_hotkey = true, -- Put read ID on hotkey
+  emoji = "🎁",
+  init = function()
+    if not BRC.Config.emojis then
+      f_remind_id.Config.emoji = BRC.txt.magenta("?")
+    end
+  end,
 } -- f_remind_id.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -7865,7 +7924,7 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+f_pickup_alert.Config.Emoji = {
   RARE_ITEM = "💎",
   ARTEFACT = "💠",
   ORB = "🔮",
@@ -7886,6 +7945,12 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
 
   AUTOPICKUP = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
+
+f_pickup_alert.Config.init = function()
+  if not BRC.Config.emojis then
+    f_pickup_alert.Config.Emoji = {}
+  end
+end
 
 }
 ############################### End lua/features/pickup-alert/pa-config.lua ###############################

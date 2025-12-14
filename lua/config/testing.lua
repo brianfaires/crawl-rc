@@ -3,6 +3,8 @@
 brc_config_testing = {
   BRC_CONFIG_NAME = "Testing",
 
+  emojis = false,
+
   mpr = {
     show_debug_messages = true,
     logs_to_stderr = true,

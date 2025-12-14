@@ -7,6 +7,8 @@ brc_config_explicit = {
   BRC_CONFIG_NAME = "Explicit",
 
   ---- BRC Core values ----
+  emojis = true,
+
   mpr = {
     show_debug_messages = false,
     logs_to_stderr = false,
@@ -77,19 +79,25 @@ brc_config_explicit = {
       very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
     },
 
-    HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-      BORDER = "<white>|</white>",
-      FULL = "<lightgreen>+</lightgreen>",
-      PART = "<lightgrey>+</lightgrey>",
-      EMPTY = "<darkgrey>-</darkgrey>",
-    },
+    HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" },
+    MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" },
 
-    MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-      BORDER = "<white>|</white>",
-      FULL = "<lightblue>+</lightblue>",
-      PART = "<lightgrey>+</lightgrey>",
-      EMPTY = "<darkgrey>-</darkgrey>",
-    },
+    init = function()
+      if not BRC.Config.emojis then
+        f_announce_hp_mp.Config.HP_METER = {
+          BORDER = BRC.txt.white("|"),
+          FULL = BRC.txt.lightgreen("+"),
+          PART = BRC.txt.lightgrey("+"),
+          EMPTY = BRC.txt.darkgrey("-"),
+        }
+        f_announce_hp_mp.Config.MP_METER = {
+          BORDER = BRC.txt.white("|"),
+          FULL = BRC.txt.lightblue("+"),
+          PART = BRC.txt.lightgrey("+"),
+          EMPTY = BRC.txt.darkgrey("-"),
+        }
+      end
+    end,
   },
 
   ["answer-prompts"] = {
@@ -107,6 +115,12 @@ brc_config_explicit = {
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
     alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
+    emoji = "🍞",
+    init = function()
+      if not BRC.Config.emojis then
+        f_bread_swinger.Config.emoji = BRC.txt.cyan("---- ")
+      end
+    end,
   },
 
   ["color-inscribe"] = {
@@ -117,7 +131,12 @@ brc_config_explicit = {
   ["display-realtime"] = {
     disabled = true, -- Disabled by default
     interval_s = 60, -- seconds between updates
-    emoji = BRC.Config.emojis and "🕒" or "--",
+    emoji = "🕒",
+    init = function()
+      if not BRC.Config.emojis then
+        f_display_realtime.Config.emoji = BRC.txt.white("--")
+      end
+    end,
   },
 
   ["drop-inferior"] = {
@@ -176,8 +195,13 @@ brc_config_explicit = {
     disabled = false,
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-    emoji = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>",
     read_id_hotkey = true, -- Put read ID on hotkey
+    emoji = "🎁",
+    init = function()
+      if not BRC.Config.emojis then
+        f_remind_id.Config.emoji = BRC.txt.magenta("?")
+      end
+    end,
   },
 
   ["runrest-features"] = {

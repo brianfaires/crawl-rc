@@ -157,7 +157,7 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+f_pickup_alert.Config.Emoji = {
   RARE_ITEM = "💎",
   ARTEFACT = "💠",
   ORB = "🔮",
@@ -178,3 +178,9 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
 
   AUTOPICKUP = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
+
+f_pickup_alert.Config.init = function()
+  if not BRC.Config.emojis then
+    f_pickup_alert.Config.Emoji = {}
+  end
+end

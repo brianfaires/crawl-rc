@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.show_debug_messages = false
 BRC.Config.mpr.logs_to_stderr = false
@@ -19,6 +19,13 @@ f_bread_swinger.Config = {
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
   alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
+  emoji = "🍞",
+
+  init = function()
+    if not BRC.Config.emojis then
+      f_bread_swinger.Config.emoji = "<cyan>---- </cyan>"
+    end
+  end,
 } -- f_bread_swinger.Config (do not remove this comment)
 
 -- define string:contains() for all strings
@@ -492,12 +499,12 @@ end
 
 local function do_alert(msg, it)
   local tokens = {}
-  tokens[1] = BRC.Config.emojis and "🍞 " or BRC.txt.cyan("---- ")
+  tokens[1] = f_bread_swinger.Config.emoji .. " "
   tokens[#tokens + 1] = msg .. ": "
   tokens[#tokens + 1] = BRC.txt.cyan(it.name() .. " (")
   tokens[#tokens + 1] = BRC.txt.lightmagenta(string.format("%.2f", BRC.eq.get_weap_delay(it)))
   tokens[#tokens + 1] = BRC.txt.cyan(") ")
-  tokens[#tokens + 1] = tokens[1]
+  tokens[#tokens + 1] = f_bread_swinger.Config.emoji
   BRC.mpr.que(table.concat(tokens))
   you.stop_activity()
 end

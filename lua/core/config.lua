@@ -25,6 +25,8 @@ brc_config_name = BRC.Data.persist("brc_config_name", nil)
 BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
 BRC.Configs.Default.BRC_CONFIG_NAME = "Default"
 
+BRC.Configs.Default.emojis = true -- Include emojis in alerts
+
 -- Does "Armour of <MagicSkill>" have an ego when skill is 0?
 BRC.Configs.Default.unskilled_egos_usable = false
 
@@ -138,7 +140,7 @@ end
 function BRC.init_config(config_name)
   find_config_modules()
   BRC.Config = util.copy_table(BRC.Configs.Default)
-  local name = get_valid_config_name(config_name or BRC.Config.use_config)
+  local name = get_valid_config_name(config_name or BRC.Config.to_use)
   if BRC.Configs[brc_config_name] and (name ~= brc_config_name) and you.turns() > 0 then
     if not BRC.mpr.yesno(string.format(
       "Switch config from %s to %s?",
@@ -158,6 +160,7 @@ function BRC.init_config(config_name)
 
   brc_config_name = name
   BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME))
+  BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
 end
 
 --- Process a feature config: Load defaults, then override w BRC.Config
