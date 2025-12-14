@@ -176,7 +176,7 @@ f_pickup_alert.Config.Emoji = {
   LIGHTER = "⏬",
   HEAVIER = "⏫",
 
-  AUTOPICKUP = "👍",
+  AUTOPICKUP_ITEM = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
 f_pickup_alert.Config.init = function()

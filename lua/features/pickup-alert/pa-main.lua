@@ -57,7 +57,7 @@ local function do_autopickup(it)
     and A.autopickup_disabled
     and not f_pa_data.already_alerted(it)
   then
-    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP, M.autopickup_disabled)
+    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP_ITEM, M.autopickup_disabled)
   end
 
   return true

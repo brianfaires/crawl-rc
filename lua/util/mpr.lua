@@ -16,15 +16,15 @@ end
 
 --- Queue msg w/ conditional force_more_message
 -- send with empty msg for a delayed force_more_message
-function BRC.mpr.que_optmore(show_more, msg, color, channel)
+function BRC.mpr.que_optmore(show_more, msg, msg_color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
-  color = color or BRC.COL.lightgrey
+  msg_color = msg_color or BRC.COL.lightgrey
   if not msg or #msg == 0 then
     msg = ""
   else
-    msg = BRC.txt[color](msg)
+    msg = BRC.txt[msg_color](msg)
   end
   _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
 end
@@ -63,12 +63,12 @@ end
 
 
 ---- Pre-formatted logging functions ----
-local function log_message(message, context, color)
+local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
+  msg_color = msg_color or "lightgrey"
   local msg = "[BRC] " .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
 end
 

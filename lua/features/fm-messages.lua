@@ -156,7 +156,7 @@ f_fm_messages.Config = {
     "You finish merging with the rock",
     --"You bow before the missionary of Beogh",
     --"You .* the altar of",
-  }
+  },
 } -- f_fm_messages.Config (do not remove this comment)
 
 ---- Initialization ----

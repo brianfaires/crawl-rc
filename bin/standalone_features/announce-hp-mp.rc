@@ -38,13 +38,13 @@ f_announce_hp_mp.Config = {
         FULL = "<lightgreen>+</lightgreen>",
         PART = "<lightgrey>+</lightgrey>",
         EMPTY = "<darkgrey>-</darkgrey>",
-      }
+      } -- HP_METER (do not remove this comment)
       f_announce_hp_mp.Config.MP_METER = {
         BORDER = "<white>|</white>",
         FULL = "<lightblue>+</lightblue>",
         PART = "<lightgrey>+</lightgrey>",
         EMPTY = "<darkgrey>-</darkgrey>",
-      }
+      } -- MP_METER (do not remove this comment)
     end
   end,
 } -- f_announce_hp_mp.Config (do not remove this comment)
@@ -113,15 +113,15 @@ function BRC.mpr.que(msg, color, channel)
   BRC.mpr.que_optmore(false, msg, color, channel)
 end
 
-function BRC.mpr.que_optmore(show_more, msg, color, channel)
+function BRC.mpr.que_optmore(show_more, msg, msg_color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
-  color = color or BRC.COL.lightgrey
+  msg_color = msg_color or BRC.COL.lightgrey
   if not msg or #msg == 0 then
     msg = ""
   else
-    msg = BRC.txt[color](msg)
+    msg = BRC.txt[msg_color](msg)
   end
   _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
 end
@@ -241,20 +241,20 @@ local function format_delta(delta)
 end
 
 local function format_ratio(cur, max)
-  local color
+  local ratio_color
   if cur <= (max * 0.25) then
-    color = BRC.COL.lightred
+    ratio_color = BRC.COL.lightred
   elseif cur <= (max * 0.50) then
-    color = BRC.COL.red
+    ratio_color = BRC.COL.red
   elseif cur <= (max * 0.75) then
-    color = BRC.COL.yellow
+    ratio_color = BRC.COL.yellow
   elseif cur < max then
-    color = BRC.COL.white
+    ratio_color = BRC.COL.white
   else
-    color = BRC.COL.green
+    ratio_color = BRC.COL.green
   end
 
-  return BRC.txt[color](string.format(" -> %s/%s", cur, max))
+  return BRC.txt[ratio_color](string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)

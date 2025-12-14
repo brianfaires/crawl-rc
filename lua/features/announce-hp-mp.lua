@@ -34,13 +34,13 @@ f_announce_hp_mp.Config = {
         FULL = BRC.txt.lightgreen("+"),
         PART = BRC.txt.lightgrey("+"),
         EMPTY = BRC.txt.darkgrey("-"),
-      }
+      } -- HP_METER (do not remove this comment)
       f_announce_hp_mp.Config.MP_METER = {
         BORDER = BRC.txt.white("|"),
         FULL = BRC.txt.lightblue("+"),
         PART = BRC.txt.lightgrey("+"),
         EMPTY = BRC.txt.darkgrey("-"),
-      }
+      } -- MP_METER (do not remove this comment)
     end
   end,
 } -- f_announce_hp_mp.Config (do not remove this comment)
@@ -102,20 +102,20 @@ local function format_delta(delta)
 end
 
 local function format_ratio(cur, max)
-  local color
+  local ratio_color
   if cur <= (max * 0.25) then
-    color = BRC.COL.lightred
+    ratio_color = BRC.COL.lightred
   elseif cur <= (max * 0.50) then
-    color = BRC.COL.red
+    ratio_color = BRC.COL.red
   elseif cur <= (max * 0.75) then
-    color = BRC.COL.yellow
+    ratio_color = BRC.COL.yellow
   elseif cur < max then
-    color = BRC.COL.white
+    ratio_color = BRC.COL.white
   else
-    color = BRC.COL.green
+    ratio_color = BRC.COL.green
   end
 
-  return BRC.txt[color](string.format(" -> %s/%s", cur, max))
+  return BRC.txt[ratio_color](string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)

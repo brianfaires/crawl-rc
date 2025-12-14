@@ -368,13 +368,13 @@ brc_config_explicit = {
           FULL = BRC.txt.lightgreen("+"),
           PART = BRC.txt.lightgrey("+"),
           EMPTY = BRC.txt.darkgrey("-"),
-        }
+        } -- HP_METER (do not remove this comment)
         f_announce_hp_mp.Config.MP_METER = {
           BORDER = BRC.txt.white("|"),
           FULL = BRC.txt.lightblue("+"),
           PART = BRC.txt.lightgrey("+"),
           EMPTY = BRC.txt.darkgrey("-"),
-        }
+        } -- MP_METER (do not remove this comment)
       end
     end,
   },
@@ -753,7 +753,7 @@ brc_config_explicit = {
       "You finish merging with the rock",
       --"You bow before the missionary of Beogh",
       --"You .* the altar of",
-    }
+    },
   },
 
   ["mute-messages"] = {
@@ -987,7 +987,7 @@ brc_config_explicit = {
       misc = { desc = "brown", item = "white" },
     }, -- AlertColor
 
-    Emoji = not BRC.Config.emojis and {} or {
+    Emoji = {
       RARE_ITEM = "💎",
       ARTEFACT = "💠",
       ORB = "🔮",
@@ -1006,8 +1006,14 @@ brc_config_explicit = {
       LIGHTER = "⏬",
       HEAVIER = "⏫",
 
-      AUTOPICKUP = "👍",
-    }, -- Emoji
+      AUTOPICKUP_ITEM = "👍",
+    }, -- Emoji (do not remove this comment)
+
+    init = function()
+      if not BRC.Config.emojis then
+        f_pickup_alert.Config.Emoji = {}
+      end
+    end,
   }, -- pickup-alert
 
   ["alert-monsters"] = {
@@ -1810,9 +1816,9 @@ BRC.init_emojis = function()
     BRC.EMOJI.EXCLAMATION_2 = "‼️"
     BRC.EMOJI.SUCCESS = "✅"
   else
-    BRC.EMOJI.CAUTION = BRC.txt.yellow("!")
-    BRC.EMOJI.EXCLAMATION = BRC.txt.magenta("!")
-    BRC.EMOJI.EXCLAMATION_2 = BRC.txt.lightmagenta("!!")
+    BRC.EMOJI.CAUTION = "<!yellow>!</yellow>"
+    BRC.EMOJI.EXCLAMATION = "<!magenta>!</magenta>"
+    BRC.EMOJI.EXCLAMATION_2 = "<!lightmagenta>!!</lightmagenta>"
     BRC.EMOJI.SUCCESS = nil
   end
 end
@@ -2224,15 +2230,15 @@ end
 
 --- Queue msg w/ conditional force_more_message
 -- send with empty msg for a delayed force_more_message
-function BRC.mpr.que_optmore(show_more, msg, color, channel)
+function BRC.mpr.que_optmore(show_more, msg, msg_color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
-  color = color or BRC.COL.lightgrey
+  msg_color = msg_color or BRC.COL.lightgrey
   if not msg or #msg == 0 then
     msg = ""
   else
-    msg = BRC.txt[color](msg)
+    msg = BRC.txt[msg_color](msg)
   end
   _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
 end
@@ -2271,12 +2277,12 @@ end
 
 
 ---- Pre-formatted logging functions ----
-local function log_message(message, context, color)
+local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
+  msg_color = msg_color or "lightgrey"
   local msg = "[BRC] " .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
 end
 
@@ -4466,7 +4472,7 @@ f_alert_monsters.Config.Alerts = {
 
   { name = "corr_60", cond = "corr", cutoff = 60,
     pattern = { "acid dragon" } },
-    { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
+  { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
     pattern = { "caustic shrike" } },
   { name = "corr_140", cond = "corr", cutoff = 140,
     pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
@@ -4509,7 +4515,7 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "demonspawn blood saint", "revenant" } },
   { name = "drain_190", cond = "drain", cutoff = 190,
     pattern = { "shadow dragon" } },
-} -- fm_patterns (do not remove this comment)
+} -- f_alert_monsters.Config.Alerts (do not remove this comment)
 
 f_alert_monsters.Config.init = function()
   local alert_list = f_alert_monsters.Config.Alerts
@@ -4768,13 +4774,13 @@ f_announce_hp_mp.Config = {
         FULL = BRC.txt.lightgreen("+"),
         PART = BRC.txt.lightgrey("+"),
         EMPTY = BRC.txt.darkgrey("-"),
-      }
+      } -- HP_METER (do not remove this comment)
       f_announce_hp_mp.Config.MP_METER = {
         BORDER = BRC.txt.white("|"),
         FULL = BRC.txt.lightblue("+"),
         PART = BRC.txt.lightgrey("+"),
         EMPTY = BRC.txt.darkgrey("-"),
-      }
+      } -- MP_METER (do not remove this comment)
     end
   end,
 } -- f_announce_hp_mp.Config (do not remove this comment)
@@ -4836,20 +4842,20 @@ local function format_delta(delta)
 end
 
 local function format_ratio(cur, max)
-  local color
+  local ratio_color
   if cur <= (max * 0.25) then
-    color = BRC.COL.lightred
+    ratio_color = BRC.COL.lightred
   elseif cur <= (max * 0.50) then
-    color = BRC.COL.red
+    ratio_color = BRC.COL.red
   elseif cur <= (max * 0.75) then
-    color = BRC.COL.yellow
+    ratio_color = BRC.COL.yellow
   elseif cur < max then
-    color = BRC.COL.white
+    ratio_color = BRC.COL.white
   else
-    color = BRC.COL.green
+    ratio_color = BRC.COL.green
   end
 
-  return BRC.txt[color](string.format(" -> %s/%s", cur, max))
+  return BRC.txt[ratio_color](string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
@@ -6200,7 +6206,7 @@ f_fm_messages.Config = {
     "You finish merging with the rock",
     --"You bow before the missionary of Beogh",
     --"You .* the altar of",
-  }
+  },
 } -- f_fm_messages.Config (do not remove this comment)
 
 ---- Initialization ----
@@ -7952,7 +7958,7 @@ f_pickup_alert.Config.Emoji = {
   LIGHTER = "⏬",
   HEAVIER = "⏫",
 
-  AUTOPICKUP = "👍",
+  AUTOPICKUP_ITEM = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
 f_pickup_alert.Config.init = function()
@@ -8027,7 +8033,7 @@ local function do_autopickup(it)
     and A.autopickup_disabled
     and not f_pa_data.already_alerted(it)
   then
-    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP, M.autopickup_disabled)
+    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP_ITEM, M.autopickup_disabled)
   end
 
   return true

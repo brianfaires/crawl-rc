@@ -13,9 +13,9 @@ BRC.init_emojis = function()
     BRC.EMOJI.EXCLAMATION_2 = "‼️"
     BRC.EMOJI.SUCCESS = "✅"
   else
-    BRC.EMOJI.CAUTION = BRC.txt.yellow("!")
-    BRC.EMOJI.EXCLAMATION = BRC.txt.magenta("!")
-    BRC.EMOJI.EXCLAMATION_2 = BRC.txt.lightmagenta("!!")
+    BRC.EMOJI.CAUTION = "<!yellow>!</yellow>"
+    BRC.EMOJI.EXCLAMATION = "<!magenta>!</magenta>"
+    BRC.EMOJI.EXCLAMATION_2 = "<!lightmagenta>!!</lightmagenta>"
     BRC.EMOJI.SUCCESS = nil
   end
 end

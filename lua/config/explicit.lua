@@ -89,13 +89,13 @@ brc_config_explicit = {
           FULL = BRC.txt.lightgreen("+"),
           PART = BRC.txt.lightgrey("+"),
           EMPTY = BRC.txt.darkgrey("-"),
-        }
+        } -- HP_METER (do not remove this comment)
         f_announce_hp_mp.Config.MP_METER = {
           BORDER = BRC.txt.white("|"),
           FULL = BRC.txt.lightblue("+"),
           PART = BRC.txt.lightgrey("+"),
           EMPTY = BRC.txt.darkgrey("-"),
-        }
+        } -- MP_METER (do not remove this comment)
       end
     end,
   },
@@ -474,7 +474,7 @@ brc_config_explicit = {
       "You finish merging with the rock",
       --"You bow before the missionary of Beogh",
       --"You .* the altar of",
-    }
+    },
   },
 
   ["mute-messages"] = {
@@ -708,7 +708,7 @@ brc_config_explicit = {
       misc = { desc = "brown", item = "white" },
     }, -- AlertColor
 
-    Emoji = not BRC.Config.emojis and {} or {
+    Emoji = {
       RARE_ITEM = "💎",
       ARTEFACT = "💠",
       ORB = "🔮",
@@ -727,8 +727,14 @@ brc_config_explicit = {
       LIGHTER = "⏬",
       HEAVIER = "⏫",
 
-      AUTOPICKUP = "👍",
-    }, -- Emoji
+      AUTOPICKUP_ITEM = "👍",
+    }, -- Emoji (do not remove this comment)
+
+    init = function()
+      if not BRC.Config.emojis then
+        f_pickup_alert.Config.Emoji = {}
+      end
+    end,
   }, -- pickup-alert
 
   ["alert-monsters"] = {

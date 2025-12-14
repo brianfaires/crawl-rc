@@ -147,7 +147,7 @@ f_alert_monsters.Config.Alerts = {
 
   { name = "corr_60", cond = "corr", cutoff = 60,
     pattern = { "acid dragon" } },
-    { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
+  { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
     pattern = { "caustic shrike" } },
   { name = "corr_140", cond = "corr", cutoff = 140,
     pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
@@ -190,7 +190,7 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "demonspawn blood saint", "revenant" } },
   { name = "drain_190", cond = "drain", cutoff = 190,
     pattern = { "shadow dragon" } },
-} -- fm_patterns (do not remove this comment)
+} -- f_alert_monsters.Config.Alerts (do not remove this comment)
 
 f_alert_monsters.Config.init = function()
   local alert_list = f_alert_monsters.Config.Alerts
