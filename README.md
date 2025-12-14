@@ -313,7 +313,8 @@ BRC.init("config-name")               -- Load a diff config (keep persistent dat
 BRC.reset()                           -- Reset everything and select a config
 BRC.reset("config-name")              -- Reset and load config by name
 BRC.Data.reset()                      -- Reset persistent data
-BRC.unregister("feature-name")        -- Remove a feature
+BRC.unregister("feature-name")        -- Disable a feature
+c_persist.BRC = nil                   -- Delete any BRC cross-game data (training targets + config)
 
 -- Debugging
 BRC.dump()                        -- Print all persistent data
