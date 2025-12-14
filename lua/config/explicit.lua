@@ -55,6 +55,7 @@ brc_config_explicit = {
     equip_hotkey = true, -- Offer to equip after picking up equipment
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
     explore_clears_queue = true, -- Clear the hotkey queue on explore
+    newline_before_hotkey = true, -- Add a newline before the hotkey message
   },
 
   ---- Feature configs ----
@@ -148,7 +149,8 @@ brc_config_explicit = {
 
   ["misc-alerts"] = {
     disabled = false,
-    preferred_god = nil, -- Stop on first altar for this god (Ex. "Wu Jian", "Ash"); nil disables
+    preferred_god = "", -- Stop on first altar with this text (Ex. "Wu Jian"); nil or "" disables
+    force_more_on_pref_altar = true, -- Force more message on first altar for preferred god
     save_with_msg = true, -- Shift-S to save and leave yourself a message
     alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
     alert_spell_level_changes = true, -- Alert when you gain additional spell levels

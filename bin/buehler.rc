@@ -343,6 +343,7 @@ brc_config_explicit = {
     equip_hotkey = true, -- Offer to equip after picking up equipment
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
     explore_clears_queue = true, -- Clear the hotkey queue on explore
+    newline_before_hotkey = true, -- Add a newline before the hotkey message
   },
 
   ---- Feature configs ----
@@ -436,7 +437,8 @@ brc_config_explicit = {
 
   ["misc-alerts"] = {
     disabled = false,
-    preferred_god = nil, -- Stop on first altar for this god (Ex. "Wu Jian", "Ash"); nil disables
+    preferred_god = "", -- Stop on first altar with this text (Ex. "Wu Jian"); nil or "" disables
+    force_more_on_pref_altar = true, -- Force more message on first altar for preferred god
     save_with_msg = true, -- Shift-S to save and leave yourself a message
     alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
     alert_spell_level_changes = true, -- Alert when you gain additional spell levels
@@ -3628,6 +3630,7 @@ BRC.Hotkey.Config = {
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view
   explore_clears_queue = true, -- Clear the hotkey queue on explore
+  newline_before_hotkey = true, -- Add a newline before the hotkey message
   move_to_feature = {
     -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
     enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
@@ -3672,7 +3675,7 @@ end
 ---- Local functions ----
 local function display_cur_message()
   if BRC.Hotkey.Config.wait_for_safety and not you.feel_safe() then return end
-  local msg = string.format("[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
+  local msg = string.format("\n[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
@@ -6414,6 +6417,7 @@ function f_misc_alerts.init()
     else
       GOD_ALTAR_TEXT = GOD_ALTAR_TEXT .. C.preferred_god
       BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, true)
+      BRC.opt.force_more_message(GOD_ALTAR_TEXT, C.force_more_on_pref_altar)
     end
   end
 end
@@ -6483,7 +6487,6 @@ end
 function f_misc_alerts.c_message(text, _)
   if C.preferred_god and not ma_found_altar and text:find(GOD_ALTAR_TEXT) then
     ma_found_altar = true
-    BRC.mpr.que_optmore(C.force_more_on_pref_altar, nil)
     local feature_name = "altar_" .. (C.preferred_god:match("^%S+") or C.preferred_god):lower()
     BRC.Hotkey.waypoint("altar of " .. C.preferred_god, true, feature_name)
   end
@@ -6496,6 +6499,7 @@ function f_misc_alerts.ready()
   if ma_found_altar and not removed_altar_alert then
     removed_altar_alert = true
     BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, false)
+    BRC.opt.force_more_message(GOD_ALTAR_TEXT, false)
   end
 end
 

@@ -53,6 +53,7 @@ function f_misc_alerts.init()
     else
       GOD_ALTAR_TEXT = GOD_ALTAR_TEXT .. C.preferred_god
       BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, true)
+      BRC.opt.force_more_message(GOD_ALTAR_TEXT, C.force_more_on_pref_altar)
     end
   end
 end
@@ -122,7 +123,6 @@ end
 function f_misc_alerts.c_message(text, _)
   if C.preferred_god and not ma_found_altar and text:find(GOD_ALTAR_TEXT) then
     ma_found_altar = true
-    BRC.mpr.que_optmore(C.force_more_on_pref_altar, nil)
     local feature_name = "altar_" .. (C.preferred_god:match("^%S+") or C.preferred_god):lower()
     BRC.Hotkey.waypoint("altar of " .. C.preferred_god, true, feature_name)
   end
@@ -135,5 +135,6 @@ function f_misc_alerts.ready()
   if ma_found_altar and not removed_altar_alert then
     removed_altar_alert = true
     BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, false)
+    BRC.opt.force_more_message(GOD_ALTAR_TEXT, false)
   end
 end

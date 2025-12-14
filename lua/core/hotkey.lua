@@ -12,6 +12,7 @@ BRC.Hotkey.Config = {
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view
   explore_clears_queue = true, -- Clear the hotkey queue on explore
+  newline_before_hotkey = true, -- Add a newline before the hotkey message
   move_to_feature = {
     -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
     enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
@@ -56,7 +57,7 @@ end
 ---- Local functions ----
 local function display_cur_message()
   if BRC.Hotkey.Config.wait_for_safety and not you.feel_safe() then return end
-  local msg = string.format("[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
+  local msg = string.format("\n[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
