@@ -4,14 +4,8 @@
 fully-recover:
 - test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
 
-announce-items:
-  - tomb, hell, other vaults: multiple gold piles
-  - disable gold in extended?
-  - keep track of items on cur level?
-
 - features:
   - enter a "god of choice": FM on altar; hotkey move to
-  - helper for selecting char tile?
 
 
 ### crawl PRs / issues affecting BRC
