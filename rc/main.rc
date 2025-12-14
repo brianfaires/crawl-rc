@@ -17,7 +17,6 @@ rest_wait_ancestor = true
 monster_alert += uniques
 
 ####### Display options #######
-tile_player_tile = playermons
 tile_runrest_rate = 25
 item_stack_summary_minimum = 8
 sort_menus = true:equipped,art,ego,basename,identified,qualname,>qty
