@@ -152,6 +152,38 @@ brc_config_testing = {
 ############################### End lua/config/testing.lua ###############################
 ##########################################################################################
 
+################################### Begin lua/config/turncount.lua ###################################
+############### https://github.com/brianfaires/crawl-rc/ ###############
+{
+--- Turncount Config Profile: For turncount runs
+
+brc_config_turncount = {
+  BRC_CONFIG_NAME = "Turncount",
+
+  ["alert-monsters"] = {
+    sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
+  },
+  ["announce-items"] = {
+    disabled = false,
+  },
+  ["bread-swinger"] = {
+    disabled = false,
+  },
+  ["runrest-features"] = { after_shaft = false },
+  ["mute-messages"] = {
+    mute_level = 1,
+  },
+
+  init = function()
+    crawl.setopt("show_game_time = false")
+    crawl.setopt("autopick_on = false")
+  end,
+} -- brc_config_turncount (do not remove this comment)
+
+}
+############################### End lua/config/turncount.lua ###############################
+##########################################################################################
+
 ################################### Begin lua/config/speed.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
@@ -229,38 +261,6 @@ brc_config_speed = {
 
 }
 ############################### End lua/config/speed.lua ###############################
-##########################################################################################
-
-################################### Begin lua/config/turncount.lua ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-{
---- Turncount Config Profile: For turncount runs
-
-brc_config_turncount = {
-  BRC_CONFIG_NAME = "Turncount",
-
-  ["alert-monsters"] = {
-    sensitivity = 1.25, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
-  },
-  ["announce-items"] = {
-    disabled = false,
-  },
-  ["bread-swinger"] = {
-    disabled = false,
-  },
-  ["runrest-features"] = { after_shaft = false },
-  ["mute-messages"] = {
-    mute_level = 1,
-  },
-
-  init = function()
-    crawl.setopt("show_game_time = false")
-    crawl.setopt("autopick_on = false")
-  end,
-} -- brc_config_turncount (do not remove this comment)
-
-}
-############################### End lua/config/turncount.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/config/explicit.lua ###################################
