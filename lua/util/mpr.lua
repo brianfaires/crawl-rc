@@ -15,12 +15,18 @@ function BRC.mpr.que(msg, color, channel)
 end
 
 --- Queue msg w/ conditional force_more_message
+-- send with empty msg for a delayed force_more_message
 function BRC.mpr.que_optmore(show_more, msg, color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
   color = color or BRC.COL.lightgrey
-  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
+  if not msg or #msg == 0 then
+    msg = ""
+  else
+    msg = BRC.txt[color](msg)
+  end
+  _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
 end
 
 --- Display queued messages and clear the queue
@@ -32,8 +38,10 @@ function BRC.mpr.consume_queue()
   end
 
   for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(tostring(msg.m), msg.ch)
-    crawl.flush_prev_message()
+    if msg.m and #msg.m > 0 then
+      crawl.mpr(tostring(msg.m), msg.ch)
+      crawl.flush_prev_message()
+    end
   end
   _mpr_queue = {}
 

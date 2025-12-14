@@ -202,7 +202,7 @@ function BRC.Hotkey.waypoint(name, push_front, feature_name)
     local r = you.los()
     for dx = -r, r do
       for dy = -r, r do
-        if view.feature_at(dx, dy) == feature_name then
+        if view.feature_at(dx, dy):contains(feature_name) then
           x, y = dx, dy
           break
         end

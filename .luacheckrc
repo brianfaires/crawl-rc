@@ -100,6 +100,7 @@ globals = {
   "fr_explore_after",
   "fr_start_turn",
   "ma_alerted_max_piety",
+  "ma_found_altar",
   "ma_prev_spell_levels",
   "ma_saved_msg",
   "pa_egos_alerted",

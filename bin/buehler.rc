@@ -29,6 +29,7 @@ brc_config_custom = {
 
   ["misc-alerts"] = {
     alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
+    preferred_god = nil, -- Stop on first altar with this text (Ex. "Wu Jian", "Ash"); nil disables
   },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
@@ -222,6 +223,7 @@ brc_config_speed = {
     crawl.setopt("view_delay = 0")
     crawl.setopt("autofight_stop = 15")
     crawl.setopt("fail_severity_to_confirm = 4")
+    crawl.setopt("view_delay = 100")
   end,
 } -- brc_config_speed (do not remove this comment)
 
@@ -434,6 +436,7 @@ brc_config_explicit = {
 
   ["misc-alerts"] = {
     disabled = false,
+    preferred_god = nil, -- Stop on first altar for this god (Ex. "Wu Jian", "Ash"); nil disables
     save_with_msg = true, -- Shift-S to save and leave yourself a message
     alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
     alert_spell_level_changes = true, -- Alert when you gain additional spell levels
@@ -1066,7 +1069,7 @@ fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped
 explore_delay = -1
 travel_delay = -1
 rest_delay = -1
-view_delay = 100
+view_delay = 200
 show_travel_trail = true
 explore_stop = altars, branches, portals, runed_doors, greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang, javelin
@@ -2210,12 +2213,18 @@ function BRC.mpr.que(msg, color, channel)
 end
 
 --- Queue msg w/ conditional force_more_message
+-- send with empty msg for a delayed force_more_message
 function BRC.mpr.que_optmore(show_more, msg, color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
   color = color or BRC.COL.lightgrey
-  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
+  if not msg or #msg == 0 then
+    msg = ""
+  else
+    msg = BRC.txt[color](msg)
+  end
+  _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
 end
 
 --- Display queued messages and clear the queue
@@ -2227,8 +2236,10 @@ function BRC.mpr.consume_queue()
   end
 
   for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(tostring(msg.m), msg.ch)
-    crawl.flush_prev_message()
+    if msg.m and #msg.m > 0 then
+      crawl.mpr(tostring(msg.m), msg.ch)
+      crawl.flush_prev_message()
+    end
   end
   _mpr_queue = {}
 
@@ -3807,7 +3818,7 @@ function BRC.Hotkey.waypoint(name, push_front, feature_name)
     local r = you.los()
     for dx = -r, r do
       for dy = -r, r do
-        if view.feature_at(dx, dy) == feature_name then
+        if view.feature_at(dx, dy):contains(feature_name) then
           x, y = dx, dy
           break
         end
@@ -6358,6 +6369,8 @@ end
 f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
 f_misc_alerts.Config = {
+  preferred_god = "", -- Stop on first altar with this text (Ex. "Wu Jian"); nil or "" disables
+  force_more_on_pref_altar = true, -- Force more message on first altar for preferred god
   save_with_msg = true, -- Shift-S to save and leave yourself a message
   alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
   alert_spell_level_changes = true, -- Alert when you gain additional spell levels
@@ -6368,26 +6381,39 @@ f_misc_alerts.Config = {
 ---- Persistent variables ----
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
+ma_found_altar = BRC.Data.persist("ma_found_altar", false)
 
 ---- Local constants ----
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
+local GOD_ALTAR_TEXT = "Found.*altar.*"
 
 ---- Local variables ----
 local C -- config alias
 local below_hp_threshold
 local prev_spell_levels
+local removed_altar_alert
 
 ---- Initialization ----
 function f_misc_alerts.init()
   C = f_misc_alerts.Config
   below_hp_threshold = false
   prev_spell_levels = you.spell_levels()
+  removed_altar_alert = false
 
   if C.save_with_msg then
     BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
       ma_saved_msg = nil
+    end
+  end
+
+  if C.preferred_god and not ma_found_altar then
+    if #C.preferred_god == 0 then
+      ma_found_altar = true
+    else
+      GOD_ALTAR_TEXT = GOD_ALTAR_TEXT .. C.preferred_god
+      BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, true)
     end
   end
 end
@@ -6454,10 +6480,23 @@ function macro_brc_save()
 end
 
 ---- Crawl hook functions ----
+function f_misc_alerts.c_message(text, _)
+  if C.preferred_god and not ma_found_altar and text:find(GOD_ALTAR_TEXT) then
+    ma_found_altar = true
+    BRC.mpr.que_optmore(C.force_more_on_pref_altar, nil)
+    local feature_name = "altar_" .. (C.preferred_god:match("^%S+") or C.preferred_god):lower()
+    BRC.Hotkey.waypoint("altar of " .. C.preferred_god, true, feature_name)
+  end
+end
+
 function f_misc_alerts.ready()
   if C.alert_remove_faith then alert_remove_faith() end
   if C.alert_low_hp_threshold > 0 then alert_low_hp() end
   if C.alert_spell_level_changes then alert_spell_level_changes() end
+  if ma_found_altar and not removed_altar_alert then
+    removed_altar_alert = true
+    BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, false)
+  end
 end
 
 }

@@ -8,6 +8,8 @@
 f_misc_alerts = {}
 f_misc_alerts.BRC_FEATURE_NAME = "misc-alerts"
 f_misc_alerts.Config = {
+  preferred_god = "", -- Stop on first altar with this text (Ex. "Wu Jian"); nil or "" disables
+  force_more_on_pref_altar = true, -- Force more message on first altar for preferred god
   save_with_msg = true, -- Shift-S to save and leave yourself a message
   alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
   alert_spell_level_changes = true, -- Alert when you gain additional spell levels
@@ -18,26 +20,39 @@ f_misc_alerts.Config = {
 ---- Persistent variables ----
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
+ma_found_altar = BRC.Data.persist("ma_found_altar", false)
 
 ---- Local constants ----
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
+local GOD_ALTAR_TEXT = "Found.*altar.*"
 
 ---- Local variables ----
 local C -- config alias
 local below_hp_threshold
 local prev_spell_levels
+local removed_altar_alert
 
 ---- Initialization ----
 function f_misc_alerts.init()
   C = f_misc_alerts.Config
   below_hp_threshold = false
   prev_spell_levels = you.spell_levels()
+  removed_altar_alert = false
 
   if C.save_with_msg then
     BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
     if ma_saved_msg and ma_saved_msg ~= "" then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
       ma_saved_msg = nil
+    end
+  end
+
+  if C.preferred_god and not ma_found_altar then
+    if #C.preferred_god == 0 then
+      ma_found_altar = true
+    else
+      GOD_ALTAR_TEXT = GOD_ALTAR_TEXT .. C.preferred_god
+      BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, true)
     end
   end
 end
@@ -104,8 +119,21 @@ function macro_brc_save()
 end
 
 ---- Crawl hook functions ----
+function f_misc_alerts.c_message(text, _)
+  if C.preferred_god and not ma_found_altar and text:find(GOD_ALTAR_TEXT) then
+    ma_found_altar = true
+    BRC.mpr.que_optmore(C.force_more_on_pref_altar, nil)
+    local feature_name = "altar_" .. (C.preferred_god:match("^%S+") or C.preferred_god):lower()
+    BRC.Hotkey.waypoint("altar of " .. C.preferred_god, true, feature_name)
+  end
+end
+
 function f_misc_alerts.ready()
   if C.alert_remove_faith then alert_remove_faith() end
   if C.alert_low_hp_threshold > 0 then alert_low_hp() end
   if C.alert_spell_level_changes then alert_spell_level_changes() end
+  if ma_found_altar and not removed_altar_alert then
+    removed_altar_alert = true
+    BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, false)
+  end
 end

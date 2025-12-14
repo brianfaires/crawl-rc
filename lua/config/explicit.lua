@@ -148,6 +148,7 @@ brc_config_explicit = {
 
   ["misc-alerts"] = {
     disabled = false,
+    preferred_god = nil, -- Stop on first altar for this god (Ex. "Wu Jian", "Ash"); nil disables
     save_with_msg = true, -- Shift-S to save and leave yourself a message
     alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
     alert_spell_level_changes = true, -- Alert when you gain additional spell levels

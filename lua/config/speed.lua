@@ -66,5 +66,6 @@ brc_config_speed = {
     crawl.setopt("view_delay = 0")
     crawl.setopt("autofight_stop = 15")
     crawl.setopt("fail_severity_to_confirm = 4")
+    crawl.setopt("view_delay = 100")
   end,
 } -- brc_config_speed (do not remove this comment)

@@ -1,11 +1,10 @@
 ### todos
 - more/flash prompts as lua (to toggle w configs)
+- config order; consistent
+- newline before hotkey?
 
 fully-recover:
 - test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
-
-- features:
-  - enter a "god of choice": FM on altar; hotkey move to
 
 
 ### crawl PRs / issues affecting BRC
