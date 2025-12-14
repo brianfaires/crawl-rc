@@ -105,7 +105,9 @@ local function get_valid_config_name(input_name)
     end
   end
 
-  return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
+  local config_names = util.keys(BRC.Configs)
+  util.sort(config_names)
+  return BRC.mpr.select("Select a config", config_names)
 end
 
 local function execute_config_init(config)

@@ -52,7 +52,6 @@ globals = {
   "brc_config_custom",
   "brc_config_explicit",
   "brc_config_speed",
-  "brc_config_streak",
   "brc_config_testing",
   "brc_config_turncount",
 

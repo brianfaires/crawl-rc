@@ -263,26 +263,6 @@ brc_config_turncount = {
 ############################### End lua/config/turncount.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/config/streak.lua ###################################
-############### https://github.com/brianfaires/crawl-rc/ ###############
-{
---- Streak Config Profile: For win streaks
-
-brc_config_streak = {
-  BRC_CONFIG_NAME = "Streak",
-
-  ["alert-monsters"] = {
-    sensitivity = 1.5, -- 0 to disable all; at 2.0, alerts will fire at 1/2 HP
-  },
-  ["mute-messages"] = {
-    mute_level = 1,
-  },
-} -- brc_config_streak (do not remove this comment)
-
-}
-############################### End lua/config/streak.lua ###############################
-##########################################################################################
-
 ################################### Begin lua/config/explicit.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
@@ -3510,7 +3490,9 @@ local function get_valid_config_name(input_name)
     end
   end
 
-  return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
+  local config_names = util.keys(BRC.Configs)
+  util.sort(config_names)
+  return BRC.mpr.select("Select a config", config_names)
 end
 
 local function execute_config_init(config)
