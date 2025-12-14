@@ -1,4 +1,8 @@
 ### todos / bugs?
+- turncount:
+  - Disable autopickup by default
+  - Flag glowing / un-id'd items: they're not autopickup until they're id'd
+  - breadswing for negative statuses too?
 - fully-recover:
   - test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
 - pan; redrawing screen on every turn of travel

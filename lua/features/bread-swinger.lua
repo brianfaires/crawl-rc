@@ -230,8 +230,9 @@ end
 
 local function verify_safe_rest()
   local hp, mhp = you.hp()
-  if hp == mhp then
-    reset_rest("You are already at full health!")
+  local mp, mmp = you.mp()
+  if hp == mhp and mp == mmp then
+    reset_rest("You are already full!")
     return false
   elseif turns_remaining <= 0 then
     reset_rest()
