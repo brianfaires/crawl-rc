@@ -26,11 +26,6 @@ def write_footer(file_path, outfile):
     name = str(file_path).replace(str(base_dir) + "/", "")
     outfile.write(f"\n{comment * 31} End {name} {comment * 31}\n{comment * 90}\n")
 
-def write_resume(file_path, outfile):
-    comment = get_comment_char(file_path)
-    name = str(file_path).replace(str(base_dir) + "/", "")
-    outfile.write(f"{comment * 2} (Resuming {name}) {comment * 2}\n\n")
-
 def parse_include(line):
     if line.startswith(rc_prefix):
         return base_dir / line[len(rc_prefix):]
@@ -85,21 +80,14 @@ def process_line(line, outfile, processed_files):
     return False
 
 def process_init_file(infile, outfile, processed_files):
-    resume = False
     # skip first 5 lines of init.txt, assuming they still start with ":crawl"
     for _ in range(5):
         line = infile.readline()
         if not (line.find("crawl.mpr(") or line.find("crawl.more()")):
-            resume = process_line(line, outfile, processed_files)
+            process_line(line, outfile, processed_files)
         
-    # Process the rest of the lines
     for line in infile:
-        if process_line(line, outfile, processed_files):
-            resume = True
-        else:
-            if resume:
-                write_resume(init_file, outfile)
-                resume = False
+        process_line(line, outfile, processed_files)
 
 def main():
     """Main entry point."""
