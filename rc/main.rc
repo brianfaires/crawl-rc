@@ -1,24 +1,28 @@
 ####### Main options #######
 easy_confirm = all
+default_manual_training = true
 show_more = false
 small_more = true
 mouse_input = false
 tile_web_mouse_control = false
-default_manual_training = true
+fail_severity_to_confirm = 4
+tile_key_repeat_delay = 100
+
+####### Combat options #######
+autofight_stop = 40
+hp_warning = 20
 autofight_caught = true
 rest_wait_both = true
 rest_wait_ancestor = true
 monster_alert += uniques
 
-autofight_stop = 40
-hp_warning = 20
+####### Display options #######
+tile_player_tile = playermons
+tile_runrest_rate = 25
 item_stack_summary_minimum = 8
-fail_severity_to_confirm = 4
-
 sort_menus = true:equipped,art,ego,basename,identified,qualname,>qty
 drop_filter += useless_item, forbidden
 fire_order = silver javelin, javelin, silver boomerang, boomerang, curare-tipped dart, poisoned dart, dart, stone
-
 
 ####### Explore options #######
 explore_delay = -1
@@ -28,7 +32,6 @@ view_delay = 100
 show_travel_trail = true
 explore_stop = altars, branches, portals, runed_doors, greedy_pickup_smart
 explore_stop_pickup_ignore += scroll, potion, misc, wand, stone, dart, boomerang, javelin
-
 
 ####### Autopickup exceptions #######
 ae := autopickup_exceptions

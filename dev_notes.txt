@@ -1,9 +1,8 @@
-
 ### todos
 - more/flash prompts as lua (to toggle w configs)
 
 fully-recover:
-- test using CMD_WAIT vs CMD_REST; only use wait when maxhp?
+- test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
 
 announce-items:
   - tomb, hell, other vaults: multiple gold piles
@@ -14,19 +13,6 @@ announce-items:
   - enter a "god of choice": FM on altar; hotkey move to
   - helper for selecting char tile?
 
-
-### settings to consider
-tile_runrest_rate = 17
-        The number of milliseconds that tick by before the screen is redrawn
-        when running or resting. If Crawl is slow while running or resting,
-        increase this number.
-
-tile_key_repeat_delay = 200
-        If you hold down a key, there's a delay until the pressed key will
-        take action. This option controls this delay, in milliseconds. If it
-        is set to 0 key presses will never repeat.
-
-tile_tooltip_ms = 500
 
 ### crawl PRs / issues affecting BRC
 Lua bugs:
