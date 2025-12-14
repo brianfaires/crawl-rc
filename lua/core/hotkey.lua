@@ -2,6 +2,8 @@
 -- BRC core feature: hotkey
 -- @module BRC.Hotkey
 -- Manages the BRC hotkey, and provides functions to add actions to it.
+-- Adding an action to the hotkey will prompt the user after performing any specified checks.
+-- If user accepts, the defined action is performed. (Equip, pick up, read, move to, etc)
 ---------------------------------------------------------------------------------------------------
 
 BRC.Hotkey = {}

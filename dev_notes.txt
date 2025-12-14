@@ -4,7 +4,6 @@
 - pan; redrawing screen on every turn of travel
 
 ### crawl PRs / issues affecting BRC
-
 https://github.com/crawl/crawl/issues/4789 ->
   - drop_disables_autopickup blocks exclude-dropped.lua from working
   - crawl option cannot be toggled off
@@ -16,22 +15,27 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
 1. fully-recover:
   - Wait for allies to fully heal
   - Wait for ancestor respawn
-1. Ancestor reappear; stop rest, but not explore
-1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
-1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
-1. 0.34: Make use of explore_auto_rest_status to replace fully-recover.lua.
+  - Capture in fully_recovered() to stop resting when this happens.
+  - Make use of explore_auto_rest_status to replace fully-recover.lua.
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
     (Maybe could fix with >1 ready() / turn... Try macro'ing: { WAIT, READY, EXPLORE }?)
+1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
+1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
 1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
 
-### Backlog / Probably won't do
+### Backlog
 1. Speed improvements:
   - int instead of floats
   - extra level of 'items_alerted' table: item_db_name -> ego -> plus
   - bring back BRC.CACHE - ie load all values that are used >1x per ready().
     (Removed previous cache due to minimal impact, vs code clarity + robustness)
-1. feature ready() hook takes optional bool to fire every ready() instead of every turn
-1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
-1. autorest starts w/autopickup (if inv not full)
-1. level-specific fm ignores (eg vault warden on v:5)
-1. disable basic jewellery pickup after configurable xl
+1. BRC core/util:
+  - feature ready() hook takes optional bool to fire every ready() instead of every turn
+  - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
+1. Rest starts w/1 turn of autopickup (if inv not full)
+1. alert-monsters:
+  - level-specific fm ignores (eg vault warden on v:5)
+  - torment helper; unique color / display count or list of tormentors in LOS
+1. pickup-alert:
+  - disable basic jewellery pickup after configurable xl
+  - on pickup artefact jewellery with no downsides, disable autopickup of basic jewellery

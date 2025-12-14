@@ -169,7 +169,7 @@ Included configs:
 
 ```lua
 -- Specify a config by name, or "ask" to prompt at start of each new game
-BRC.Config.use_config = "ask"
+BRC.Config.to_use = "ask"
 ```
 
 ### 5. Add Your Own Features
@@ -194,7 +194,7 @@ function my_feature.ready()
     if my_feature.Config.use_crawl_mpr then
       crawl.mpr("<blue>Turn reached!</blue>")
     else
-      BRC.mpr.blue("Turn reached!") -- See core/util.lua for useful functions
+      BRC.mpr.blue("Turn reached!") -- See util/ for useful functions
     end
   end
 end
@@ -281,13 +281,14 @@ build/                  # Python scripts to generate bin/
 rc/                     # RC file components
 lua/                    # Lua files
 ├── core/                   # Core BRC system
-│   ├── _header_.lua            # Stuff at top of buehler.rc, before config 
+│   ├── _header.lua             # Anything wanted at the top of buehler.rc, before configs
 │   ├── brc.lua                 # Main coordinator
-│   ├── config.lua              # Config definitions
-│   ├── data.lua                # Manages persistent data + backup
-│   ├── util.lua                # General functions available to features
+│   ├── config.lua              # Define core config defaults, and handle config management
+│   ├── data.lua                # Manage persistent data + backup
 │   ├── constants.lua           # Constants from crawl
-│   └── ...                     # BRC Core features; don't remove
+│   └── hotkey.lua              # Core feature, don't remove. See file header for description
+├── util/                   # Utility modules grouped by usage
+│   └── ...                     
 ├── features/               # Feature modules
 │   ├── _template.lua           # Template for new features
 │   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
