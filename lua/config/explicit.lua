@@ -66,14 +66,14 @@ brc_config_explicit = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
     always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
-    meter_length = 5, -- Number of pips in each meter
+    meter_length = 10, -- Number of pips in each meter
 
     Announce = {
       hp_loss_limit = 1, -- Announce when HP loss >= this
       hp_gain_limit = 4, -- Announce when HP gain >= this
       mp_loss_limit = 1, -- Announce when MP loss >= this
       mp_gain_limit = 2, -- Announce when MP gain >= this
-      hp_first = true, -- Show HP first in the message
+      hp_first = false, -- Show HP first in the message
       same_line = true, -- Show HP/MP on the same line
       always_both = true, -- If showing one, show both
       very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
@@ -107,7 +107,8 @@ brc_config_explicit = {
 
   ["announce-items"] = {
     disabled = true, -- Disabled by default. Intended only for turncount runs.
-    announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+    announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" },
+    max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
   },
 
   ["bread-swinger"] = {
@@ -268,6 +269,8 @@ brc_config_explicit = {
   ---- Large config sections ----
   ["dynamic-options"] = {
     disabled = false,
+    meaningful_spellcasting_skill = 5, -- Skill level to switch on "spellcaster-specific" options
+
     -- XL-based force more messages: active when XL <= specified level
     xl_force_mores = {
       { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
@@ -429,6 +432,7 @@ brc_config_explicit = {
       {7, "hell effect:.*"},
 
       -- Gods
+      {9, "Press the corresponding letter to learn more about a god"},
       {7, "god:Ashenzari invites you to partake"},
       {7, "god:You are shrouded in an aura of darkness"},
       {7, "god:You.*bleed smoke"},
@@ -542,7 +546,8 @@ brc_config_explicit = {
       -- Heavily reduced messages for speed runs
       [3] = {
         "No target in view",
-        "You (headbutt|bite|kick)",
+        "You (bite|headbutt|kick)",
+        "You (burn|freeze|drain)",
         "You block",
         "but do(es)? no damage",
         "misses you",
@@ -721,6 +726,8 @@ brc_config_explicit = {
       STRONGEST = "💪💪",
       LIGHTER = "⏬",
       HEAVIER = "⏫",
+
+      AUTOPICKUP = "👍",
     }, -- Emoji
   }, -- pickup-alert
 
