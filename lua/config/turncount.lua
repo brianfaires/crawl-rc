@@ -12,6 +12,9 @@ brc_config_turncount = {
   ["bread-swinger"] = {
     disabled = false,
   },
+  ["fm-messages"] = {
+    force_more_threshold = 5,
+  },
   ["runrest-features"] = { after_shaft = false },
   ["mute-messages"] = {
     mute_level = 1,

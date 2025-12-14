@@ -14,6 +14,9 @@ brc_config_speed = {
   ["display-realtime"] = {
     disabled = false,
   },
+  ["fm-messages"] = {
+    force_more_threshold = 9,
+  },
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
     save_with_msg = false,      -- Shift-S to save and leave yourself a message
@@ -67,5 +70,6 @@ brc_config_speed = {
     crawl.setopt("autofight_stop = 15")
     crawl.setopt("fail_severity_to_confirm = 4")
     crawl.setopt("view_delay = 100")
+    crawl.setopt("enable_more = false")
   end,
 } -- brc_config_speed (do not remove this comment)

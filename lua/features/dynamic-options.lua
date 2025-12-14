@@ -44,7 +44,6 @@ f_dynamic_options.Config = {
     end,
     Beogh = function(joined)
       BRC.opt.runrest_ignore_message("no longer looks.*", joined)
-      BRC.opt.force_more_message("Your orc.*dies", joined)
     end,
     Cheibriados = function(joined)
       BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)

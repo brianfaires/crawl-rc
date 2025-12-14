@@ -57,6 +57,7 @@ Looking at a feature module might still be helpful to read the description, or s
 
 - **answer-prompts** - Auto-answers certain prompts
 - **dynamic-options** - Changes crawl settings based on XL, religion, race/class, etc.
+- **fm-messages** - Messages rated 1-9 for importance. Configurable as force_more_message and flash_screen_message.
 - **mute-messages** - Reduces message spam with configurable mute levels (light/moderate/heavy reduction)
 - **startup** - Auto-sets skill targets, opens skills menu, saves/reloads skill targets by race+class
 
@@ -160,7 +161,6 @@ Included configs:
 - **Explicit**: A big config with every field defined, set to default values.
 - _**Others**_:
   - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
-  - **Streak**: For win streaks (extra caution)
   - **Speed**: For speed runs (reduced prompts + alerts)
 
 ### 4. Set which config to load

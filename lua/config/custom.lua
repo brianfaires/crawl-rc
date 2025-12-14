@@ -14,6 +14,9 @@ brc_config_custom = {
     dmg_fm_threshold = 0.30,    -- Force more for losing this % of max HP
     always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
   },
+  ["fm-messages"] = {
+    force_more_threshold = 6, -- How many force_more_messages; 1=many; 10=none
+  },
   ["inscribe-stats"] = {
     inscribe_weapons = true, -- Inscribe weapon stats on pickup and keep updated
     inscribe_armour = true,  -- Inscribe armour stats on pickup and keep updated

@@ -16,7 +16,6 @@ include = crawl-rc/rc/macros.rc
 include = crawl-rc/rc/slot-defaults.rc
 include = crawl-rc/rc/autoinscribe.rc
 include = crawl-rc/rc/display.rc
-include = crawl-rc/rc/fm-messages.rc
 include = crawl-rc/rc/runrest.rc
 
 ### buehler.rc core files ###
@@ -44,6 +43,7 @@ lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/display-realtime.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
+lua_file = crawl-rc/lua/features/fm-messages.lua
 lua_file = crawl-rc/lua/features/fully-recover.lua
 lua_file = crawl-rc/lua/features/go-up-macro.lua
 lua_file = crawl-rc/lua/features/inscribe-stats.lua

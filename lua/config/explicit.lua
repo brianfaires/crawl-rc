@@ -298,6 +298,157 @@ brc_config_explicit = {
     },
   },
 
+  ["fm-messages"] = {
+    disabled = false,
+    force_more_threshold = 6, -- How many force_more_messages; 1=many; 10=none
+    flash_screen_threshold = 1,
+
+    --- A list of all messages to respond to. The first value is the message importance.
+    -- Use the above thresholds to adjust how the messages are responded to.
+    -- General guidance on values:
+    -- 8-9: Prevent accidental button press
+    -- 5-7: Make sure you see it
+    -- 3-4: Important to notice
+    -- 1-2: Good to know
+    messages = {
+      -- Significant spells/effects ending
+      {9, "life is in your own"}, -- Death's Door
+      {7, "time is.*running out"}, -- Death's Door
+      {7, "is no longer charmed"},
+      {7, "You.*re starting to lose your buoyancy"},
+      {5, "unholy channel is weakening"}, -- Death channel
+      {2, "You feel stable"}, -- Cancelled tele
+
+      -- Monsters doing things / Dangerous abilities
+      {9, "you stand beside yourself"}, -- Mara
+      {9, "sudden wrenching feeling in your soul"}, -- Mara
+      {8, "monster_warning:wielding.*of distortion"},
+      {8, "begins to recite a word of recall"},
+      {7, "The air around.*erupts in flames"},
+      {7, "The air twists around and violently strikes you in flight"},
+      {7, "You feel.*(?<!less)( haunted| rot| vulnerable)"},
+      {6, "wretched star pulses"},
+      {6, "Strange energies course through your body"},
+      {5, "Deactivating autopickup"},
+      {4, "You feel your power leaking away"},
+      {4, "The.*offers itself to Yredelemnul"},
+      {3, "doors? slams? shut"},
+      {3, "blows.*on a signal horn"},
+      {3, "Your?.*suddenly stops? moving"},
+      {3, "danger:corrodes you"},
+      {3, "Your damage is reflected back at you"},
+      {3, "^(?!Your? ).*reflects"},
+      {2, "The forest starts to sway and rumble"},
+      {1, "Its appearance distorts for a moment"},
+
+      -- Crowd control
+      {9, "You.*(?<!( too|less)) confused"},
+      {9, "You .*(slow.*down|lose consciousness)"},
+      {9, "infuriates you"},
+      {8, "hits you .* distortion"},
+      {8, "Space .* around you"},
+      {8, "surroundings become eerily quiet"},
+      {9, "Your limbs are stiffening"},
+      {4, "You .* (blown|knocked back|mesmerised|trampled|stumble backwards|encased)"},
+      {4, "A sentinel's mark forms upon you"},
+      {3, "Your magical (effects|defenses) are (unraveling|stripped away)"},
+      {3, "You stop (a|de)scending the stairs"},
+      {3, "The pull of.*song draws you forward"},
+      {3, "engulfs you in water"},
+
+      -- Clouds
+      {9, "danger:(calcify|mutagenic)"},
+      {9, "You.*re engulfed in.*miasma"},
+      {1, "Miasma billows from the"},
+
+      -- You Screwed Up
+      {7, "is no longer ready"},
+      {7, "You really shouldn't be using"},
+      {6, "You don't have enough magic to cast this spell"},
+      {4, "Your body shudders with the violent release"},
+      {4, "power of Zot"},
+
+      -- Found something important
+      {7, "Found.*the Ecumenical Temple"},
+      {7, "Found.*(treasure|bazaar|ziggurat)"},
+      {6, ".*resides here"},
+      {6, "You have a vision of.*gates?"},
+      {2, "timed_portal:.*"},
+      {1, "You pick up the .* (gem|rune) and feel its "},
+
+      -- Translocations
+      {9, "danger:sense of stasis"},
+      {9, "Your surroundings.*(different|flicker)"},
+      {6, "You.*re suddenly pulled into a different region"},
+      {5, "danger:You feel strangely .*stable"},
+      {4, "You blink"},
+      {3, "delaying your translocation"},
+
+      -- Big damage
+      {7, "You.*re lethally poisoned"},
+      {7, "danger:You convulse"},
+      {7, "you terribly"},
+
+      -- FYI
+      {6, "seems mollified"},
+      {6, "You have finished your manual"},
+
+      -- Unexpected monsters
+      {8, "appears in a (shower|flash)"},
+      {8, "appears out of thin air"},
+      {7, "You sense the presence of something unfriendly"},
+      {7, "Wisps of shadow swirl around"},
+
+      -- Misc
+      {9, "god:wrath finds you"},
+      {9, "The walls disappear"},
+      {7, "hell effect:.*"},
+
+      -- Gods
+      {7, "god:Ashenzari invites you to partake"},
+      {7, "god:You are shrouded in an aura of darkness"},
+      {7, "god:You.*bleed smoke"},
+      {7, "god:Your shadow.*tangibly mimics your actions"},
+      {8, "god:Fedhas invokes the elements against you"},
+      {7, "god:Jiyva alters your body"},
+      {7, "god:will now unseal the treasures of the Slime Pits"},
+      {7, "god:Kikubaaqudgha will grant you"},
+      {7, "god:Lugonu will now corrupt your weapon"},
+      {9, "god:Lugonu sends minions to punish you"},
+      {9, "god:Okawaru sends forces against you"},
+      {7, "god:grants you (a gift|a weapon)"},
+      {1, "god:You are surrounded by a storm which can block enemy attacks"},
+      {1, "god:resistances upon receiving elemental damage"},
+      {8, "god:Your divine shield fades away"},
+      {7, "god:Your divine shield starts to fade"},
+      {8, "god:You feel less resistant to hostile enchantments"},
+      {7, "god:You feel the effects of Trog's Hand fading"},
+      {9, "staircase.*moves"},
+      {9, "Some monsters swap places"},
+      {7, "god:soul is no.* ripe for the taking"},
+      {7, "god:dark mirror aura disappears"},
+      {7, "god:will now cure all your mutations"},
+    },
+
+    --- Remove these default force_more_message patterns
+    remove_more_messages = {
+      "You have reached level",
+      "Marking area around .* as unsafe",
+      "welcomes you( back)?!",
+      "upon you is lifted",
+      "You pick up the .* gem and feel its .* weight",
+      "You pick up the .* rune and feel its power",
+      "The lock glows eerily",
+      "Heavy smoke blows from the lock",
+      "The gate opens wide",
+      "With a soft hiss the gate opens wide",
+      "grants you (a gift|throwing weapons|a weapon)",
+      "You finish merging with the rock",
+      --"You bow before the missionary of Beogh",
+      --"You .* the altar of",
+    }
+  },
+
   ["mute-messages"] = {
     disabled = false,
     mute_level = 2,
