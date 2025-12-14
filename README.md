@@ -60,11 +60,12 @@ Looking at a feature module might still be helpful to read the description, or s
 - **mute-messages** - Reduces message spam with configurable mute levels (light/moderate/heavy reduction)
 - **startup** - Auto-sets skill targets, opens skills menu, saves/reloads skill targets by race+class
 
-### Turncount Features
+### Turncount-specific
 
 _(disabled by default; enabled in the turncount config)_
-- **announce-items** - Prints messages describing floor items like gold/wands/books as they come into view 
-- **bread-swinger** - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
+- **announce-items** (Turncount) - Prints messages describing floor items like gold/wands/books as they come into view
+- **bread-swinger** (Turncount) - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
+- **display-realtime** (Speedrun) - Every x seconds (default 60), display the current real time.
 
 ---
 
