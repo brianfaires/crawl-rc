@@ -12,7 +12,7 @@ f_startup.Config = {
   macro_save_key = BRC.util.cntl("t"), -- Keycode to save training targets and config
   save_training = true, -- Allow save/load of race/class training targets
   save_config = true, -- Allow save/load of BRC config
-  prompt_before_load = true, -- Prompt before loading in a new game with same race+class
+  prompt_before_load = false, -- Prompt before loading in a new game with same race+class
   allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
   allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
 
@@ -91,6 +91,7 @@ local function load_training_targets(key, require_confirmation)
   if require_confirmation
     and not BRC.mpr.yesno("Load training targets for " .. BRC.txt.lightcyan(key) .. "?")
   then
+    BRC.mpr.okay()
     return false
   end
 
@@ -109,11 +110,12 @@ end
 
 local function load_config(key, require_confirmation)
   local saved = c_persist.BRC.saved_configs[key]
-  if type(saved) ~= "table" and type(saved) ~= "string" then return false end
+  if type(saved) ~= "string" then return false end
 
   if require_confirmation
     and not BRC.mpr.yesno("Load config for " .. BRC.txt.lightcyan(key) .. "?")
   then
+    BRC.mpr.okay()
     return false
   end
 
@@ -163,38 +165,6 @@ local function load_generic_skill_targets()
   end
 end
 
---- Since BRC.Config inherits from BRC.Configs.Default, remove the defaults to reduce size
--- Recursively walks through config, removing values that match those in defaults
--- @warning Does not check for circular references; there's no reason for them in BRC.Config
-local function strip_defaults_from_map(config, defaults)
-  if defaults == nil then return util.copy_table(config) end
-  local stripped = {}
-  for k, v in pairs(config) do
-    if type(v) == "table" then
-      -- If neither map nor list, it's {} and will be excluded
-      if BRC.util.is_map(v) then
-        local stripped_map = strip_defaults_from_map(v, defaults[k])
-        if next(stripped_map) then stripped[k] = stripped_map end
-      elseif BRC.util.is_list(v) then
-        local default_list = defaults[k]
-        local is_same = type(default_list) == "table" and #v == #default_list
-        if is_same then
-          for i = 1, #v do
-            if v[i] ~= default_list[i] then
-              is_same = false
-              break
-            end
-          end
-        end
-        if not is_same then stripped[k] = v end
-      end
-    elseif v ~= defaults[k] then
-      stripped[k] = v
-    end
-  end
-  return stripped
-end
-
 ---- Macro function: Save current skill targets (training levels and targets) for race/class ----
 function macro_brc_save_skills_and_config()
   if BRC.active == false or f_startup.Config.disabled then
@@ -207,7 +177,7 @@ function macro_brc_save_skills_and_config()
     local do_save = not f_startup.Config.save_config
     if not do_save then
       do_save = BRC.mpr.yesno("Save training + targets?", BRC.COL.magenta)
-      if not do_save then crawl.mpr.okay() end
+      if not do_save then BRC.mpr.okay() end
     end
     if do_save then
       save_race_class("training targets", c_persist.BRC.saved_training, create_skill_table())
@@ -221,8 +191,7 @@ function macro_brc_save_skills_and_config()
       if not do_save then crawl.mpr.okay() end
     end
     if do_save then
-      local stripped_config = strip_defaults_from_map(BRC.Config, BRC.Configs.Default)
-      save_race_class("config", c_persist.BRC.saved_configs, stripped_config)
+      save_race_class("config", c_persist.BRC.saved_configs, brc_config_name)
     end
   end
 end

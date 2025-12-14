@@ -206,7 +206,7 @@ brc_config_explicit = {
     macro_save_key = 20, -- (Cntl-T) Keycode to save training targets and config
     save_training = true, -- Allow save/load of race/class training targets
     save_config = true, -- Allow save/load of BRC config
-    prompt_before_load = true, -- Prompt before loading in a new game with same race+class
+    prompt_before_load = false, -- Prompt before loading in a new game with same race+class
     allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
     allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
 
