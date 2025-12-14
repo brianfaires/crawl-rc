@@ -222,7 +222,7 @@ brc_config_explicit = {
     },
 
     -- For non-spellcasters, add preferred weapon type as 3rd skill target
-    init = [[
+    init = function()
       if you.skill("Spellcasting") == 0 then
         local wpn_skill = BRC.you.top_wpn_skill()
         if wpn_skill then
@@ -230,7 +230,7 @@ brc_config_explicit = {
           t[#t + 1] = { wpn_skill, 6.0 }
         end
       end
-    ]],
+    end,
   },
 
   ["weapon-slots"] = {
@@ -562,29 +562,31 @@ brc_config_explicit = {
           "boundless tesseract", "demonspawn corrupter", "draconian stormcaller", "dryad",
           "guardian serpent", "halazid warlock", "shadow demon", "spriggan druid", "worldbinder",
           --Dangerous abilities
-          "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
+          "iron giant", "merfolk aquamancer", "nekomata", "shambling mangrove", "starflower",
           "torpor snail", "water nymph", "wretched star", "wyrmhole",
           --Dangerous clouds
-          "apocalypse crab","catoblepas",
+          "apocalypse crab", "catoblepas",
         } },
 
       { name = "always_flash", flash_screen = true,
         pattern = {
           -- Noteworthy abilities
           "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-          "vault guardian", "vault warden", "wendingo",
+          "vault guardian", "vault warden", "wendigo",
           -- Displacement
           "deep elf knight", "swamp worm",
           -- Summoning
           "deep elf elementalist",
+          -- Agony
+          "death knight", "imperial myrmidon", "necromancer",
         } },
-
-      { name = "always_fm_pack", is_pack = true,
-        pattern = { "boggart", "dream sheep", "floating eye", "shrike" } },
 
       -- Early game Dungeon problems for chars with low mhp. (adder defined below)
       { name = "30hp", cond = "hp", cutoff = 30,
         pattern = { "hound", "gnoll" } },
+
+      { name = "mid_game_packs", cutoff = 90, is_pack = true,
+        pattern = { "boggart", "dream sheep" } },
 
       -- Monsters dangerous until a certain point
       { name = "xl_7", cond = "xl", cutoff = 7,
@@ -598,7 +600,7 @@ brc_config_explicit = {
       { name = "50hp", cond = "hp", cutoff = 50,
         pattern = { "manticore", "orc high priest" } },
       { name = "60hp", cond = "hp", cutoff = 60,
-        pattern = { "centaur(?! warrior)", "cyclops", "yaktaur(?! captain)" } },
+        pattern = { "centaur(?! warrior)", "cyclops", "orc knight", "yaktaur(?! captain)" } },
       { name = "70hp_melai", cond = "hp", cutoff = 70, is_pack = true,
         pattern = "meliai" },
       { name = "80hp", cond = "hp", cutoff = 80,
@@ -661,17 +663,20 @@ brc_config_explicit = {
                     "tengu reaver", "titan" } },
       { name = "elec_140_pack", cond = "elec", cutoff = 140, is_pack = true,
         pattern = { "ball lightning" } },
+
       { name = "corr_60", cond = "corr", cutoff = 60,
         pattern = { "acid dragon" } },
+        { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
+        pattern = { "caustic shrike" } },
       { name = "corr_140", cond = "corr", cutoff = 140,
         pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
 
       { name = "fire_60", cond = "fire", cutoff = 60,
-        pattern = { "fire crab", "lava snake", "lindwurm", "steam dragon" } },
+        pattern = { "fire crab", "hell hound", "lava snake", "lindwurm", "steam dragon" } },
       { name = "fire_100", cond = "fire", cutoff = 100,
         pattern = { "deep elf pyromancer", "efreet", "smoke demon", "sun moth" } },
       { name = "fire_120", cond = "fire", cutoff = 120,
-        pattern = { "demonspawn blood saint", "hell hound", "hell knight", "molten gargoyle",
+        pattern = { "demonspawn blood saint", "hell hog", "hell knight", "molten gargoyle",
                     "ogre mage", "orc sorcerer", "red draconian" } },
       { name = "fire_140", cond = "fire", cutoff = 140,
         pattern = { "balrug" } },
@@ -685,7 +690,9 @@ brc_config_explicit = {
         pattern = { "rime drake" } },
       { name = "cold_120", cond = "cold", cutoff = 120,
         pattern = { "blizzard demon", "bog body", "demonspawn blood saint",
-                  "ironbound frostheart", "white draconian" } },
+                   "ironbound frostheart", "white draconian" } },
+      { name = "shard_shrike", cond = "cold", cutoff = 120, is_pack = true,
+        pattern = { "shard shrike" } },
       { name = "cold_160", cond = "cold", cutoff = 160,
         pattern = { "draconian knight", "frost giant", "golden dragon",
                     "ice dragon", "tengu reaver" } },
@@ -702,34 +709,34 @@ brc_config_explicit = {
         pattern = { "demonspawn blood saint", "revenant" } },
       { name = "drain_190", cond = "drain", cutoff = 190,
         pattern = { "shadow dragon" } },
-    }, -- Alerts
+    }, -- fm_patterns (do not remove this comment)
 
-    init = [[
-    local alert_list = f_alert_monsters.Config.Alerts
+    init = function()
+      local alert_list = f_alert_monsters.Config.Alerts
 
-    -- Mutators (only flash if immune)
-    util.append(alert_list, {
-      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-      pattern = { "cacodemon", "neqoxec", "shining eye" }
-    })
-
-    -- Conditionally add miasma monsters
-    if not BRC.you.miasma_immune() then
+      -- Mutators (only flash if immune)
       util.append(alert_list, {
-        name = "miasma", cond = "always", cutoff = 0,
-        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+        name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+        pattern = { "cacodemon", "neqoxec", "shining eye" }
       })
-    end
 
-    -- Conditionally add tormentors
-    if not you.torment_immune() then
-      util.append(alert_list, {
-        name = "torment", cond = "always", cutoff = 0,
-        pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
-                    "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
-      })
-    end
-]]
+      -- Conditionally add miasma monsters
+      if not BRC.you.miasma_immune() then
+        util.append(alert_list, {
+          name = "miasma", cond = "always", cutoff = 0,
+          pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+        })
+      end
+
+      -- Conditionally add tormentors
+      if not you.torment_immune() then
+        util.append(alert_list, {
+          name = "torment", cond = "always", cutoff = 0,
+          pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
+                      "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+        })
+      end
+    end,
   }, -- alert-monsters
 
 } -- brc_config_explicit (do not remove this comment)

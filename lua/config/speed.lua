@@ -61,11 +61,11 @@ brc_config_speed = {
     },
   },
 
-  init = [[
+  init = function()
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
     crawl.setopt("view_delay = 0")
     crawl.setopt("use_animations = 0")
     crawl.setopt("autofight_stop = 15")
     crawl.setopt("fail_severity_to_confirm = 40")
-  ]],
+  end,
 } -- brc_config_speed (do not remove this comment)

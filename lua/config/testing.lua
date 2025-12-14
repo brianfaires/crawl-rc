@@ -8,7 +8,8 @@ brc_config_testing = {
     logs_to_stderr = true,
   },
 
-  disable_other_features = false,
+  disable_other_features = false, -- only use features explicitly configured below
+
   ["pickup-alert"] = {
     Alert = {
       armour_sensitivity = 0.5,
@@ -20,7 +21,8 @@ brc_config_testing = {
       },
     },
   },
-  init = [[
+
+  init = function()
     if BRC.Config.disable_other_features then
       for _, v in pairs(_G) do
         if BRC.is_feature_module(v) and not BRC.Config[v.BRC_FEATURE_NAME] then
@@ -28,5 +30,5 @@ brc_config_testing = {
         end
       end
     end
-  ]],
+  end,
 } -- brc_config_testing (do not remove this comment)

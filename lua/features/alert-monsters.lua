@@ -192,32 +192,32 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "shadow dragon" } },
 } -- fm_patterns (do not remove this comment)
 
-f_alert_monsters.Config.init = [[
-    local alert_list = f_alert_monsters.Config.Alerts
+f_alert_monsters.Config.init = function()
+  local alert_list = f_alert_monsters.Config.Alerts
 
-    -- Mutators (only flash if immune)
+  -- Mutators (only flash if immune)
+  util.append(alert_list, {
+    name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+    pattern = { "cacodemon", "neqoxec", "shining eye" }
+  })
+
+  -- Conditionally add miasma monsters
+  if not BRC.you.miasma_immune() then
     util.append(alert_list, {
-      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-      pattern = { "cacodemon", "neqoxec", "shining eye" }
+      name = "miasma", cond = "always", cutoff = 0,
+      pattern = { "death drake", "tainted leviathan", "putrid mouth" }
     })
+  end
 
-    -- Conditionally add miasma monsters
-    if not BRC.you.miasma_immune() then
-      util.append(alert_list, {
-        name = "miasma", cond = "always", cutoff = 0,
-        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
-      })
-    end
-
-    -- Conditionally add tormentors
-    if not you.torment_immune() then
-      util.append(alert_list, {
-        name = "torment", cond = "always", cutoff = 0,
-        pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
-                    "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
-      })
-    end
-]]
+  -- Conditionally add tormentors
+  if not you.torment_immune() then
+    util.append(alert_list, {
+      name = "torment", cond = "always", cutoff = 0,
+      pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
+                  "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+    })
+  end
+end
 ------------------- End config section -------------------
 
 ---- Local constants ----

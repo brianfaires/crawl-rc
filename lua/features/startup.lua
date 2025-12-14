@@ -28,7 +28,7 @@ f_startup.Config = {
   },
 
   -- For non-spellcasters, add preferred weapon type as 3rd skill target
-  init = [[
+  init = function()
     if you.skill("Spellcasting") == 0 then
       local wpn_skill = BRC.you.top_wpn_skill()
       if wpn_skill then
@@ -36,7 +36,7 @@ f_startup.Config = {
         t[#t + 1] = { wpn_skill, 6.0 }
       end
     end
-  ]],
+  end,
 } -- f_startup.Config (do not remove this comment)
 
 ---- Local variables ----
