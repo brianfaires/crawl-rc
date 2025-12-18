@@ -7097,7 +7097,6 @@ f_runrest_features.Config = {
 
 ---- Persistent variables ----
 rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
-rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 rr_shaft_location = BRC.Data.persist("rr_shaft_location", nil)
 
 ---- Local constants ----
@@ -7116,6 +7115,8 @@ local C -- config alias
 local stop_on_altars
 local stop_on_portals
 local stop_on_stairs
+local autosearched_gauntlet
+local autosearched_necropolis
 
 ---- Initialization ----
 function f_runrest_features.init()
@@ -7123,6 +7124,8 @@ function f_runrest_features.init()
   stop_on_altars = true
   stop_on_portals = true
   stop_on_stairs = false
+  autosearched_gauntlet = false
+  autosearched_necropolis = false
 
   if you.turns() == 0 and you.class() == "Delver" then rr_shaft_location = "D:1" end
 end
@@ -7174,7 +7177,7 @@ local function search_altars()
   crawl.flush_input()
 end
 
-local function ready_temple_macro()
+local function ready_temple_search()
   if you.branch() == "Temple" and not rr_autosearched_temple then
     search_altars()
     rr_autosearched_temple = true
@@ -7195,12 +7198,21 @@ local function search_filtered(branch)
   crawl.flush_input()
 end
 
---- Autosearch Gauntlet upon entry (not necropolis)
-local function ready_gauntlet_macro()
+--- Autosearch Gauntlet upon entry
+local function ready_gauntlet_search()
   local branch = you.branch()
-  if branch == "Gauntlet" and not rr_autosearched_gauntlet then
+  if branch == "Gauntlet" and not autosearched_gauntlet then
     search_filtered(branch)
-    rr_autosearched_gauntlet = true
+    autosearched_gauntlet = true
+  end
+end
+
+--- Autosearch Necropolis upon entry
+local function ready_necropolis_search()
+  local branch = you.branch()
+  if branch == "Necropolis" and not autosearched_necropolis then
+    search_filtered(branch)
+    autosearched_necropolis = true
   end
 end
 
@@ -7249,8 +7261,9 @@ end
 function f_runrest_features.ready()
   if C.ignore_altars then ready_ignore_altars() end
   if C.ignore_portal_exits then ready_ignore_portals() end
-  if C.temple_search then ready_temple_macro() end
-  if C.gauntlet_search then ready_gauntlet_macro() end
+  if C.temple_search then ready_temple_search() end
+  if C.gauntlet_search then ready_gauntlet_search() end
+  if C.necropolis_search then ready_necropolis_search() end
   if C.after_shaft then ready_after_shaft() end
   set_stairs_stop_state()
 end
