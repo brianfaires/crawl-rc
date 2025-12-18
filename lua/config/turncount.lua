@@ -22,6 +22,6 @@ brc_config_turncount = {
 
   init = function()
     crawl.setopt("show_game_time = false")
-    crawl.setopt("autopick_on = false")
+    crawl.setopt("default_autopickup = false")
   end,
 } -- brc_config_turncount (do not remove this comment)
