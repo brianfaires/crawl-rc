@@ -583,7 +583,6 @@ brc_config_explicit = {
       end,
       Beogh = function(joined)
         BRC.opt.runrest_ignore_message("no longer looks.*", joined)
-        BRC.opt.force_more_message("Your orc.*dies", joined)
       end,
       Cheibriados = function(joined)
         BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)
@@ -813,7 +812,7 @@ brc_config_explicit = {
         "Unfortunately\\, you learn nothing new",
 
         -- Ground items / features
-        "There is a.*(door|gate|staircase|web).*here",
+        "There is a.*(door|web).*here",
         "You see here .*(corpse|skeleton)",
         "You now have \\d+ gold piece",
         "You enter the shallow water",
