@@ -243,7 +243,6 @@ function BRC.Hotkey.waypoint(name, push_front, feature_name)
 
     util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
-    crawl.flush_input()
 
     if not feature_name then
       BRC.Hotkey.pickup(name, true)

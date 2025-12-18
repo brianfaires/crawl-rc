@@ -6,7 +6,6 @@
   - Disable several hotkeys
   - breadswing bug:
     - only wall is NW, w/ battleaxe, item on ground NE
-- hotkey def swallowing keypresses
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 lvl)
 - no first of buckler alert when in a stack (autopickup disabled)
 
