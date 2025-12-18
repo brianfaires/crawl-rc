@@ -14,8 +14,8 @@ f_announce_items = {}
 f_announce_items.Config = {
   disabled = false, -- Disabled by default. Intended only for turncount runs.
   announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
-  announce_feature = { "enter_shop", },
   max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
+  announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
 
 -- BRC Constants
@@ -47,12 +47,14 @@ end
 
 
 ---- Local variables ----
+local C -- config alias
 local los_items
 local prev_item_names
 local prev_gold_count
 
 ---- Initialization ----
 function f_announce_items.init()
+  C = f_announce_items.Config
   los_items = {}
   prev_item_names = {}
   prev_gold_count = 0
@@ -62,10 +64,10 @@ end
 local function announce_item(it)
   if it.is_useless then return end
   local class = it.class(true):lower()
-  if util.contains(f_announce_items.Config.announce_class, class) then
+  if util.contains(C.announce_class, class) then
     if class == "gold" then
       prev_gold_count = prev_gold_count + 1
-      if prev_gold_count > f_announce_items.Config.max_gold_announcements then return end
+      if prev_gold_count > C.max_gold_announcements then return end
     end
     crawl.mpr(BRC.txt.yellow("You see: ") .. it.name())
   end
@@ -78,13 +80,22 @@ function f_announce_items.ready()
   for x = -r, r do
     for y = -r, r do
       if you.see_cell(x, y) then
-        if util.contains(f_announce_items.Config.announce_feature, view.feature_at(x, y)) then
-          crawl.mpr(BRC.txt.yellow("You see: ") .. view.feature_at(x, y))
-        end
         local items_xy = items.get_items_at(x, y)
         if items_xy and #items_xy > 0 then
           for _, it in ipairs(items_xy) do
             los_items[#los_items+1] = it
+
+            if C.announce_extra_consumables_wo_id then
+              if x == 0 and y == 0 and not it.is_identified
+                and (it.class(true) == "scroll" or it.class(true) == "potion")
+               then
+                if util.exists(items.inventory(), function(i)
+                  return i.name("qual", false) == it.name("qual", false)
+                end) then
+                  crawl.mpr(BRC.txt.green("Duplicate: ") .. it.name())
+                end
+              end
+            end
           end
         end
       end

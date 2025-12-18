@@ -4,8 +4,6 @@
   - Flag glowing / un-id'd items: they're not autopickup until they're id'd
   - breadswing for negative statuses too?
   - Disable several hotkeys
-  - announce shops
-  - announce consumables if duplicate to inventory
   - breadswing bug:
     - only wall is NW, w/ battleaxe, item on ground NE
 
@@ -43,6 +41,7 @@ Shift-D drops both an item picked up with item:pickup(), and also the last picke
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
 1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
+1. announce shop names/types as they come into view
 
 ### Backlog
 1. Speed improvements:

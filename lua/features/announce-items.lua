@@ -8,17 +8,20 @@ f_announce_items = {}
 f_announce_items.BRC_FEATURE_NAME = "announce-items"
 f_announce_items.Config = {
   disabled = true, -- Disabled by default. Intended only for turncount runs.
-  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" },
+  announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
   max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
+  announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
 
 ---- Local variables ----
+local C -- config alias
 local los_items
 local prev_item_names
 local prev_gold_count
 
 ---- Initialization ----
 function f_announce_items.init()
+  C = f_announce_items.Config
   los_items = {}
   prev_item_names = {}
   prev_gold_count = 0
@@ -28,12 +31,12 @@ end
 local function announce_item(it)
   if it.is_useless then return end
   local class = it.class(true):lower()
-  if util.contains(f_announce_items.Config.announced_classes, class) then
+  if util.contains(C.announce_class, class) then
     if class == "gold" then
       prev_gold_count = prev_gold_count + 1
-      if prev_gold_count > f_announce_items.Config.max_gold_announcements then return end
+      if prev_gold_count > C.max_gold_announcements then return end
     end
-    crawl.mpr(BRC.txt.white("You see: ") .. it.name())
+    crawl.mpr(BRC.txt.yellow("You see: ") .. it.name())
   end
 end
 
@@ -48,6 +51,18 @@ function f_announce_items.ready()
         if items_xy and #items_xy > 0 then
           for _, it in ipairs(items_xy) do
             los_items[#los_items+1] = it
+
+            if C.announce_extra_consumables_wo_id then
+              if x == 0 and y == 0 and not it.is_identified
+                and (it.class(true) == "scroll" or it.class(true) == "potion")
+               then
+                if util.exists(items.inventory(), function(i)
+                  return i.name("qual", false) == it.name("qual", false)
+                end) then
+                  crawl.mpr(BRC.txt.green("Duplicate: ") .. it.name())
+                end
+              end
+            end
           end
         end
       end
