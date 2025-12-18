@@ -34,11 +34,6 @@ local DIR_TO_VI = {
   [1] = { [-1] = "u", [0] = "l", [1] = "n" },
 } -- DIR_TO_VI (do not remove this comment)
 
-local SOLID_FEATURES = {
-  "wall", "grate", "tree", "mangrove", "endless_lava", "open_sea", "statue", "idol",
-  "malign_gateway", "sealed_door", "closed_door", "runed_door", "explore_horizon"
-} -- SOLID_FEATURES (do not remove this comment)
-
 ---- Local variables ----
 local C -- config alias
 local swing_slot
@@ -147,17 +142,12 @@ local function is_monster(x, y)
   return mon and not (C.allow_plant_damage and mon.is_stationary())
 end
 
-local function is_solid(x, y)
-  local feat = view.feature_at(x, y):lower()
-  return util.exists(SOLID_FEATURES, function(f) return feat:find(f) end)
-end
-
 -- Setting direction to move or swing
 local function is_good_dir_walk(x, y)
   if x == 0 and y == 0 then return false end
   return is_water(x, y) == is_water(0, 0)
     and view.is_safe_square(x, y)
-    and not is_solid(x, y)
+    and not travel.feature_solid(view.feature_at(x, y))
     and not monster.get_monster_at(x, y)
 end
 
@@ -172,7 +162,7 @@ local function is_good_dir_swing(x, y)
       local cur_x = i * x
       local cur_y = i * y
       if is_monster(cur_x, cur_y) then return false end
-      if is_solid(cur_x, cur_y) then break end
+      if travel.feature_solid(view.feature_at(cur_x, cur_y)) then break end
     end
   elseif weapon.weap_skill:contains("Axes") then
     -- Confirm no monsters in adjacent squares
@@ -182,7 +172,7 @@ local function is_good_dir_swing(x, y)
       end
     end
   else
-    return not is_solid(x, y) and not is_monster(x, y)
+    return not travel.feature_solid(view.feature_at(x, y)) and not is_monster(x, y)
   end
 
   return true
