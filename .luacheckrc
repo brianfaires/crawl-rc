@@ -110,7 +110,6 @@ globals = {
   "ri_found_scroll_of_id",
   "ri_max_potion_stack",
   "ri_max_scroll_stack",
-  "rr_autosearched_gauntlet",
   "rr_autosearched_temple",
   "rr_shaft_location",
   "ss_cur_location",

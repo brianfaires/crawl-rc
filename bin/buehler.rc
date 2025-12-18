@@ -386,8 +386,9 @@ brc_config_explicit = {
 
   ["announce-items"] = {
     disabled = true, -- Disabled by default. Intended only for turncount runs.
-    announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" },
+    announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
     max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
+    announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
   },
 
   ["bread-swinger"] = {
