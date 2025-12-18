@@ -269,8 +269,8 @@ function BRC.eq.wpn_stats(it, dmg_type)
   if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
-  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
-  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+  --return string.format("DPS=<w>%s</w> (%s/%s) Acc<w>%s</w>", dps, dmg, delay_str, acc)
+  return string.format("DPS=%s (%s/%s) Acc%s", dps, dmg, delay_str, acc)
 end
 
 

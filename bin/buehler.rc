@@ -2945,8 +2945,8 @@ function BRC.eq.wpn_stats(it, dmg_type)
   if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
-  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
-  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+  --return string.format("DPS=<w>%s</w> (%s/%s) Acc<w>%s</w>", dps, dmg, delay_str, acc)
+  return string.format("DPS=%s (%s/%s) Acc%s", dps, dmg, delay_str, acc)
 end
 
 
@@ -6551,7 +6551,7 @@ local function inscribe_weapon_stats(it)
   local dps_inscr = BRC.eq.wpn_stats(it, dmg_type)
   local prefix, suffix = "", ""
 
-  local idx = orig_inscr:find("DPS:", 1, true)
+  local idx = orig_inscr:find("DPS=", 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then
