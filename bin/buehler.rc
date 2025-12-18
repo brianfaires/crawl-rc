@@ -181,7 +181,7 @@ brc_config_turncount = {
 
   init = function()
     crawl.setopt("show_game_time = false")
-    crawl.setopt("autopick_on = false")
+    crawl.setopt("default_autopickup = false")
   end,
 } -- brc_config_turncount (do not remove this comment)
 
@@ -4981,7 +4981,8 @@ f_announce_items = {}
 f_announce_items.BRC_FEATURE_NAME = "announce-items"
 f_announce_items.Config = {
   disabled = true, -- Disabled by default. Intended only for turncount runs.
-  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" },
+  announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
+  announce_feature = { "enter_shop", },
   max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
 } -- f_announce_items.Config (do not remove this comment)
 
@@ -5001,12 +5002,12 @@ end
 local function announce_item(it)
   if it.is_useless then return end
   local class = it.class(true):lower()
-  if util.contains(f_announce_items.Config.announced_classes, class) then
+  if util.contains(f_announce_items.Config.announce_class, class) then
     if class == "gold" then
       prev_gold_count = prev_gold_count + 1
       if prev_gold_count > f_announce_items.Config.max_gold_announcements then return end
     end
-    crawl.mpr(BRC.txt.white("You see: ") .. it.name())
+    crawl.mpr(BRC.txt.yellow("You see: ") .. it.name())
   end
 end
 
@@ -5017,6 +5018,9 @@ function f_announce_items.ready()
   for x = -r, r do
     for y = -r, r do
       if you.see_cell(x, y) then
+        if util.contains(f_announce_items.Config.announce_feature, view.feature_at(x, y)) then
+          crawl.mpr(BRC.txt.yellow("You see: ") .. view.feature_at(x, y))
+        end
         local items_xy = items.get_items_at(x, y)
         if items_xy and #items_xy > 0 then
           for _, it in ipairs(items_xy) do
@@ -5111,11 +5115,6 @@ local DIR_TO_VI = {
   [0] = { [-1] = "k", [1] = "j" },
   [1] = { [-1] = "u", [0] = "l", [1] = "n" },
 } -- DIR_TO_VI (do not remove this comment)
-
-local SOLID_FEATURES = {
-  "wall", "grate", "tree", "mangrove", "endless_lava", "open_sea", "statue", "idol",
-  "malign_gateway", "sealed_door", "closed_door", "runed_door", "explore_horizon"
-} -- SOLID_FEATURES (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias
@@ -5225,17 +5224,12 @@ local function is_monster(x, y)
   return mon and not (C.allow_plant_damage and mon.is_stationary())
 end
 
-local function is_solid(x, y)
-  local feat = view.feature_at(x, y):lower()
-  return util.exists(SOLID_FEATURES, function(f) return feat:find(f) end)
-end
-
 -- Setting direction to move or swing
 local function is_good_dir_walk(x, y)
   if x == 0 and y == 0 then return false end
   return is_water(x, y) == is_water(0, 0)
     and view.is_safe_square(x, y)
-    and not is_solid(x, y)
+    and not travel.feature_solid(view.feature_at(x, y))
     and not monster.get_monster_at(x, y)
 end
 
@@ -5250,7 +5244,7 @@ local function is_good_dir_swing(x, y)
       local cur_x = i * x
       local cur_y = i * y
       if is_monster(cur_x, cur_y) then return false end
-      if is_solid(cur_x, cur_y) then break end
+      if travel.feature_solid(view.feature_at(cur_x, cur_y)) then break end
     end
   elseif weapon.weap_skill:contains("Axes") then
     -- Confirm no monsters in adjacent squares
@@ -5260,7 +5254,7 @@ local function is_good_dir_swing(x, y)
       end
     end
   else
-    return not is_solid(x, y) and not is_monster(x, y)
+    return not travel.feature_solid(view.feature_at(x, y)) and not is_monster(x, y)
   end
 
   return true
@@ -5336,6 +5330,7 @@ local function do_resting()
   if rest_type == "item" then
     BRC.opt.single_turn_mute("You swing at nothing.")
     BRC.opt.single_turn_mute("You shoot ")
+    BRC.opt.single_turn_mute("unstable footing causes you to fumble your attack")
     crawl.sendkeys({ BRC.util.cntl(DIR_TO_VI[dir.x][dir.y]) })
     crawl.flush_input()
   else

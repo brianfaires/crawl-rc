@@ -258,6 +258,7 @@ local function do_resting()
   if rest_type == "item" then
     BRC.opt.single_turn_mute("You swing at nothing.")
     BRC.opt.single_turn_mute("You shoot ")
+    BRC.opt.single_turn_mute("unstable footing causes you to fumble your attack")
     crawl.sendkeys({ BRC.util.cntl(DIR_TO_VI[dir.x][dir.y]) })
     crawl.flush_input()
   else
