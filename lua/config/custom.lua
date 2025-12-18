@@ -58,7 +58,7 @@ brc_config_custom = {
 
       -- Alert the first time each item is found. Can require training with OTA_require_skill.
       one_time = {
-        "buckler", "kite shield", "tower shield", "crystal plate armour",
+        "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
         "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
         "broad axe", "executioner's axe",

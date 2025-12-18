@@ -3,7 +3,6 @@
 - turncount:
   - Flag glowing / un-id'd items: they're not autopickup until they're id'd
   - breadswing for negative statuses too?
-  - Disable several hotkeys
   - breadswing bug:
     - only wall is NW, w/ battleaxe, item on ground NE
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 lvl)

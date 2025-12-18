@@ -12,12 +12,23 @@ brc_config_turncount = {
   ["bread-swinger"] = {
     disabled = false,
   },
+  ["drop-inferior"] = {
+    disabled = true,
+  },
   ["fm-messages"] = {
     force_more_threshold = 5,
+  },
+  ["hotkey"] = {
+    equip_hotkey = false,
   },
   ["runrest-features"] = { after_shaft = false },
   ["mute-messages"] = {
     mute_level = 1,
+  },
+  ["pickup-alert"] = {
+    Alert = {
+      hotkey_pickup = false,
+    },
   },
 
   init = function()
