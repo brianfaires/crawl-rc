@@ -30,8 +30,20 @@ f_mute_messages.Config = {
       "You can access your shopping list by pressing '\\$'",
 
       -- Wielding weapons
-      "Your .* exudes an aura of protection",
+      "Your .* begins to drip with poison",
+      "Your .* stops dripping with poison",
+      "Your .* bursts into flame",
+      "Your .* stops flaming",
       "Your .* glows with a cold blue light",
+      "Your .* stops glowing",
+      "You hear the crackle of electricity",
+      "Your .* stops crackling",
+      "Your .* exudes an aura of protection",
+      "Your .* hums with potential",
+      "Your .* goes still",
+      "You sense an unholy aura",
+
+
 
       -- Monsters /Allies / Neutrals
       "dissolves into shadows",
