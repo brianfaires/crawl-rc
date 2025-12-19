@@ -1,16 +1,21 @@
 ### todos / bugs?
 - brighter colors for finding portal "staircase to the Shoals"
 - turncount:
-  - Flag glowing / un-id'd items: they're not autopickup until they're id'd
   - breadswing for negative statuses too?
   - breadswing bug:
     - only wall is NW, w/ battleaxe, item on ground NE
-- no announcement for steam dragon scales (same turn as lvl up and gained 1 lvl)
-- no first of buckler alert when in a stack (autopickup disabled)
+
+- Autopickup only called for the top item in each stack.
+  Stack checked when visited, iff autopickup is enabled. 
+  Fix: Don't use autopickup. Interrogate all items in view each turn.
 
 - fully-recover:
   - test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
 - pan; redrawing screen on every turn of travel
+
+### Can't reproduce:
+- no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
+
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->

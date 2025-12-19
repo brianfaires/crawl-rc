@@ -9,9 +9,24 @@ f_announce_items.BRC_FEATURE_NAME = "announce-items"
 f_announce_items.Config = {
   disabled = true, -- Disabled by default. Intended only for turncount runs.
   announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
+  announce_glowing = true,
+  announce_artefacts = true,
   max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
   announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
+
+---- Local constants ----
+local ALERT_COLOR = {
+  gold = BRC.COL.yellow,
+  book = BRC.COL.lightcyan,
+  jewellery = BRC.COL.magenta,
+  misc = BRC.COL.lightcyan,
+  missile = BRC.COL.white,
+  potion = BRC.COL.lightgreen,
+  scroll = BRC.COL.lightgreen,
+  wand = BRC.COL.magenta,
+  default = BRC.COL.lightblue,
+} -- ALERT_COLOR (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias
@@ -28,16 +43,26 @@ function f_announce_items.init()
 end
 
 ---- Local functions ----
-local function announce_item(it)
-  if it.is_useless then return end
-  local class = it.class(true):lower()
-  if util.contains(C.announce_class, class) then
-    if class == "gold" then
-      prev_gold_count = prev_gold_count + 1
-      if prev_gold_count > C.max_gold_announcements then return end
-    end
-    crawl.mpr(BRC.txt.yellow("You see: ") .. it.name())
+local function should_announce_item(it)
+  if it.is_useless then return false end
+  if not it.is_identified then
+    if it.artefact then return C.announce_artefacts end
+    if it.branded then return C.announce_glowing end
   end
+
+  return util.contains(C.announce_class, it.class(true):lower())
+end
+
+local function announce_item(it)
+  if not should_announce_item(it) then return end
+  local class = it.class(true):lower()
+  if class == "gold" then
+    prev_gold_count = prev_gold_count + 1
+    if prev_gold_count > C.max_gold_announcements then return end
+  end
+
+  local item_col = ALERT_COLOR[class] or ALERT_COLOR.default
+  crawl.mpr(BRC.txt.white("You see: ") .. BRC.txt[item_col](it.name()))
 end
 
 ---- Crawl hook functions ----

@@ -58,6 +58,7 @@ local ALERT_COLOR = {
   potion = BRC.COL.lightgreen,
   scroll = BRC.COL.lightgreen,
   wand = BRC.COL.magenta,
+  default = BRC.COL.lightblue,
 } -- ALERT_COLOR (do not remove this comment)
 
 ---- Local variables ----
@@ -93,7 +94,8 @@ local function announce_item(it)
     if prev_gold_count > C.max_gold_announcements then return end
   end
 
-  crawl.mpr(BRC.txt.white("You see: ") .. BRC.txt[ALERT_COLOR[class]](it.name()))
+  local item_col = ALERT_COLOR[class] or ALERT_COLOR.default
+  crawl.mpr(BRC.txt.white("You see: ") .. BRC.txt[item_col](it.name()))
 end
 
 ---- Crawl hook functions ----
