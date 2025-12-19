@@ -9,6 +9,8 @@
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.logs_to_stderr = false
 
 f_drop_inferior = {}
 f_drop_inferior.Config = {
@@ -136,6 +138,7 @@ function BRC.it.is_shield(it)
 end
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -144,6 +147,33 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
+local function log_message(message, context, msg_color)
+  -- Avoid referencing BRC, to stay robust during startup
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+
+  if not skip_more then
+    crawl.redraw_screen()
+    crawl.more()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
+  end
+end
 
 -- BRC.txt module
 for k, color in pairs(BRC.COL) do
@@ -164,7 +194,14 @@ end
 
 -- BRC.util module
 function BRC.util.cntl(c)
-  return string.byte(c:upper()) - 64
+  if c >= '0' and c <= '9' or c >= 'a' and c <= 'z' then
+    return string.byte(c) - 96
+  elseif c >= 'A' and c <= 'Z' then
+    return string.byte(c) - 64
+  end
+
+  BRC.mpr.error("Unsupported character sent to BRC.util.cntl: %s", c)
+  return nil
 end
 
 function BRC.util.get_cmd_key(cmd)

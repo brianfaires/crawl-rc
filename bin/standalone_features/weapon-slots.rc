@@ -42,6 +42,7 @@ function BRC.it.is_polearm(it)
 end
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -53,7 +54,7 @@ end
 local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
   msg_color = msg_color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
   crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
@@ -64,7 +65,7 @@ function BRC.mpr.debug(message, context)
     log_message(message, context, BRC.COL.lightblue)
   end
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Debug) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
   end
 end
 

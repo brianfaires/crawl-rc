@@ -5,6 +5,7 @@
 ---------------------------------------------------------------------------------------------------
 
 BRC.mpr = {}
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 
 ---- mpr queue (displayed after all other messages for the turn) ----
 local _mpr_queue = {}
@@ -66,7 +67,7 @@ end
 local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
   msg_color = msg_color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
   crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
@@ -89,7 +90,7 @@ function BRC.mpr.error(message, context, skip_more)
   end
 
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
 end
 
@@ -97,7 +98,7 @@ function BRC.mpr.warning(message, context)
   log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Warning) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Warning) " .. message)
   end
 end
 
@@ -110,7 +111,7 @@ function BRC.mpr.debug(message, context)
     log_message(message, context, BRC.COL.lightblue)
   end
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Debug) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
   end
 end
 

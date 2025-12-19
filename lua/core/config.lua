@@ -159,7 +159,8 @@ function BRC.init_config(config_name)
   end
 
   brc_config_name = name
-  BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME))
+  local m = BRC.mpr.brc_prefix .. "Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME)
+  BRC.mpr.white(m)
   BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
 end
 

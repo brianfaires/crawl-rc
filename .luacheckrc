@@ -42,6 +42,7 @@ globals = {
   "macro_brc_rest",
   "macro_brc_save",
   "macro_brc_save_skills_and_config",
+  "macro_brc_set_swing_slot",
   "macro_brc_skip_hotkey",
   "macro_brc_upstairs",
   

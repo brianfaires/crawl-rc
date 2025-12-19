@@ -83,6 +83,7 @@ BRC.util = BRC.util or {}
 BRC.you = BRC.you or {}
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -94,7 +95,7 @@ end
 local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
   msg_color = msg_color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
   crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
@@ -105,7 +106,7 @@ function BRC.mpr.debug(message, context)
     log_message(message, context, BRC.COL.lightblue)
   end
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Debug) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
   end
 end
 
@@ -124,7 +125,7 @@ function BRC.mpr.error(message, context, skip_more)
   end
 
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
 end
 
@@ -209,7 +210,14 @@ end
 
 -- BRC.util module
 function BRC.util.cntl(c)
-  return string.byte(c:upper()) - 64
+  if c >= '0' and c <= '9' or c >= 'a' and c <= 'z' then
+    return string.byte(c) - 96
+  elseif c >= 'A' and c <= 'Z' then
+    return string.byte(c) - 64
+  end
+
+  BRC.mpr.error("Unsupported character sent to BRC.util.cntl: %s", c)
+  return nil
 end
 
 function BRC.util.do_cmd(cmd)

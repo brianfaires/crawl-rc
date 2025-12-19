@@ -29,6 +29,7 @@ BRC.mpr = BRC.mpr or {}
 BRC.txt = BRC.txt or {}
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
