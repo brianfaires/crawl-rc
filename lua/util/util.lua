@@ -8,7 +8,14 @@ BRC.util = {}
 
 --- Get the keycode for Cntl+char
 function BRC.util.cntl(c)
-  return string.byte(c:upper()) - 64
+  if c >= '0' and c <= '9' or c >= 'a' and c <= 'z' then
+    return string.byte(c) - 96
+  elseif c >= 'A' and c <= 'Z' then
+    return string.byte(c) - 64
+  end
+
+  BRC.mpr.error("Unsupported character sent to BRC.util.cntl: %s", c)
+  return nil
 end
 
 --- Get key assigned to a crawl command (e.g. "CMD_EXPLORE")
