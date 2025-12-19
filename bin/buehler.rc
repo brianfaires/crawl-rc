@@ -409,7 +409,8 @@ brc_config_explicit = {
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
     alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay.
-    set_manual_slot_key = BRC.util.cntl("5"), -- Manually set which weapon slot to swing
+    set_manual_slot_key = 53, -- (Cntl-5) Manually set which weapon slot to swing
+    max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
     emoji = "🍞",
     init = function()
       if not BRC.Config.emojis then
@@ -1921,7 +1922,7 @@ BRC.ARTPROPS_EGO = { -- Corresponding ego
 } -- BRC.ARTPROPS_EGO (do not remove this comment)
 
 ---- Other ----
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5, ["Cntl-5"] = 53 }
 
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
@@ -5169,9 +5170,10 @@ f_bread_swinger.BRC_FEATURE_NAME = "bread-swinger"
 f_bread_swinger.Config = {
   disabled = true, -- Disable by default
   allow_plant_damage = false, -- Allow damaging plants to rest
-  walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
-  alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay.
+  walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable
+  alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay
   set_manual_slot_key = BRC.util.cntl("5"), -- Manually set which weapon slot to swing
+  max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
   emoji = "🍞",
 
   init = function()
@@ -5192,6 +5194,7 @@ local DIR_TO_VI = {
   [0] = { [-1] = "k", [1] = "j" },
   [1] = { [-1] = "u", [0] = "l", [1] = "n" },
 } -- DIR_TO_VI (do not remove this comment)
+local SH_PROMPT = "Unequip shield to rest with "
 
 ---- Local variables ----
 local C -- config alias
@@ -5202,6 +5205,7 @@ local prev_num_turns_to_rest
 local rest_type
 local wielding
 local dir
+local bs_removed_shield
 
 ---- Local functions ----
 local function has_bad_duration()
@@ -5216,7 +5220,12 @@ local function reset_rest(msg)
       local diff = turns_to_rest - turns_remaining
       msg = string.format("%s (Rested %s/%s turns)", msg, diff, turns_to_rest)
     end
-    BRC.mpr.warning(msg)
+  end
+
+  if msg then BRC.mpr.warning(msg) end
+
+  if bs_removed_shield then
+    BRC.mpr.que(BRC.txt.lightmagenta("Remember to re-equip your shield after resting!"))
   end
 
   swing_slot = nil
@@ -5225,6 +5234,7 @@ local function reset_rest(msg)
   rest_type = nil
   wielding = false
   dir = { x = nil, y = nil }
+  bs_removed_shield = false
 end
 
 local function get_num_turns()
@@ -5272,17 +5282,37 @@ local function weapon_can_swap()
 end
 
 local function get_slowest_slot()
-  local slowest_slot = nil
+  local slowest_item = nil
   local largest_delay = 0
+  local slowest_item_1h = nil
+  local largest_delay_1h = 0
   for _, item in ipairs(items.inventory()) do
-    if item.class() == "Hand Weapons" and BRC.eq.get_weap_delay(item) > largest_delay then
-      largest_delay = BRC.eq.get_weap_delay(item)
-      slowest_slot = item.slot
+    if item.class() == "Hand Weapons" then
+      local weap_delay = BRC.eq.get_weap_delay(item)
+      if weap_delay > largest_delay then
+        largest_delay = weap_delay
+        slowest_item = item
+      end
+      if BRC.eq.get_hands(item) == 1 and weap_delay > largest_delay_1h then
+        largest_delay_1h = weap_delay
+        slowest_item_1h = item
+      end
+    end
+  end
+  if not slowest_item then return nil end
+
+  -- May be more efficient to unequip shield and rest with a slower 2-handed weapon.
+  if not BRC.you.free_offhand() and BRC.eq.get_hands(slowest_item) > 1 then
+    local msg = BRC.txt.white(SH_PROMPT .. BRC.txt.lightcyan(slowest_item.name("db")) .. "?")
+    if BRC.mpr.yesno(msg) then
+      items.equipped_at("offhand").remove()
+      bs_removed_shield = true
+    else
+      slowest_item = slowest_item_1h
     end
   end
 
-  if not slowest_slot then return nil end
-  return items.index_to_letter(slowest_slot)
+  return items.index_to_letter(slowest_item.slot)
 end
 
 local function swing_item_wielded()
@@ -5391,11 +5421,10 @@ end
 local function verify_safe_rest()
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
-  if hp == mhp and mp == mmp and not has_bad_duration() then
-    reset_rest("You are already full!")
-    return false
-  elseif turns_remaining <= 0 then
-    reset_rest()
+  mhp = mhp * C.max_heal_perc / 100
+  mmp = mmp * C.max_heal_perc / 100
+  if hp >= mhp and mp >= mmp and not has_bad_duration() then
+    reset_rest("You are fully healed!")
     return false
   elseif not you.feel_safe() then
     reset_rest("You can't rest with a hostile monster in view!")
@@ -5447,6 +5476,8 @@ function macro_brc_bread_swing(turns)
     return BRC.util.do_cmd("CMD_REST")
   end
 
+  if not verify_safe_rest() then return end
+
   turns_to_rest = turns or get_num_turns()
   if not turns_to_rest or turns_to_rest <= 0 then
     return
@@ -5494,14 +5525,21 @@ function f_bread_swinger.init()
 end
 
 ---- Crawl hook functions ----
-function f_bread_swinger.c_message(_, channel)
+function f_bread_swinger.c_message(text, channel)
   if turns_remaining <= 0 then return end
   if channel == "recovery" or channel == "duration" then return end
+  if bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT) then
+    -- ignore messages about removing shield
+    return
+  end
   reset_rest() -- Stop on any unrecognized message
 end
 
 function f_bread_swinger.ready()
-  if not turns_remaining or turns_remaining <= 0 then return end
+  if not turns_remaining or turns_remaining <= 0 then
+    reset_rest()
+    return
+  end
   if not verify_safe_rest() then return end
 
   if wielding and not swing_item_wielded() then

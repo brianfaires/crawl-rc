@@ -39,7 +39,7 @@ BRC.COL = {
 
 BRC.EMOJI = {}
 
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5, ["Cntl-5"] = 53 }
 
 
 -- BRC module tables (Don't overwrite existing globals)

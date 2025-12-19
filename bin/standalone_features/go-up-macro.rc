@@ -32,7 +32,7 @@ BRC.COL = {
 
 BRC.HELL_BRANCHES = { "Coc", "Dis", "Geh", "Hell", "Tar" }
 
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5, ["Cntl-5"] = 53 }
 
 BRC.PORTAL_FEATURE_NAMES = {
   "Bailey", "Bazaar", "Desolation", "Gauntlet", "IceCv", "Necropolis", "Ossuary",

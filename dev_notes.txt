@@ -1,6 +1,5 @@
 ### todos / bugs?
-- turncount:
-  - only do slot if can wield (2h/shield)
+- breadswing: risky / fragile items
 
 - Autopickup only called for the top item in each stack.
   Stack checked when visited, iff autopickup is enabled. 
@@ -9,6 +8,10 @@
 - fully-recover:
   - test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
 - pan; redrawing screen on every turn of travel
+
+- Num turns to multiturn equip/unequip == time + 1; intended?
+- Equip weap -> unwield shield = 8 turns
+  - But unwield + equip = 7 turns
 
 ### Can't reproduce:
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
@@ -20,6 +23,7 @@ https://github.com/crawl/crawl/issues/4789 ->
   - crawl option cannot be toggled off
 https://github.com/crawl/crawl/pull/4814 -> artificial cap on length blocks color-inscribe.lua
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
+  - Afterward, prioritize walking into water.
 Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
 
 ### TODO - require crawl PR?
