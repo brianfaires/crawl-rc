@@ -409,6 +409,7 @@ brc_config_explicit = {
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
     alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay.
+    set_manual_slot_key = BRC.util.cntl("5"), -- Manually set which weapon slot to swing
     emoji = "🍞",
     init = function()
       if not BRC.Config.emojis then
@@ -5158,6 +5159,9 @@ end
 -- @author gammafunk, buehler
 -- Efficient resting during turncount runs, by wielding slow weapons, or walking back and forth.
 -- Based on: https://github.com/gammafunk/dcss-rc/blob/master/speedrun_rest.lua
+--
+-- Press '5' to rest a variable number of turns. Will swap to slowest weapon in inventory.
+-- Press 'cntl-5' to manually set the weapon slot to swing.
 ---------------------------------------------------------------------------------------------------
 
 f_bread_swinger = {}
@@ -5167,7 +5171,7 @@ f_bread_swinger.Config = {
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
   alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay.
-  set_manual_slot_key = BRC.util.cntl("5"),
+  set_manual_slot_key = BRC.util.cntl("5"), -- Manually set which weapon slot to swing
   emoji = "🍞",
 
   init = function()

@@ -118,7 +118,8 @@ brc_config_explicit = {
     disabled = true, -- Disable by default
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
-    alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
+    alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay.
+    set_manual_slot_key = BRC.util.cntl("5"), -- Manually set which weapon slot to swing
     emoji = "🍞",
     init = function()
       if not BRC.Config.emojis then

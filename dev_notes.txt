@@ -1,7 +1,5 @@
 ### todos / bugs?
 - turncount:
-  - remember # turns for breadswing; enter to do it
-  - remove manually set slot?
   - only do slot if can wield (2h/shield)
 
 - Autopickup only called for the top item in each stack.
