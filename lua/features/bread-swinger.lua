@@ -126,6 +126,7 @@ end
 local function wield_swing_item()
   if not swing_slot then return end
   wielding = true
+  BRC.opt.single_turn_mute("You unwield ")
   BRC.opt.single_turn_mute(swing_slot .. " - ")
   crawl.sendkeys({ "w", "*", swing_slot })
   crawl.flush_input()
@@ -164,18 +165,19 @@ local function is_good_dir_swing(x, y)
       if is_monster(cur_x, cur_y) then return false end
       if travel.feature_solid(view.feature_at(cur_x, cur_y)) then break end
     end
-  elseif weapon.weap_skill:contains("Axes") then
+    return true
+  end
+
+  if weapon.weap_skill:contains("Axes") then
     -- Confirm no monsters in adjacent squares
     for cur_x = -1, 1 do
       for cur_y = -1, 1 do
         if is_monster(cur_x, cur_y) then return false end
       end
     end
-  else
-    return not travel.feature_solid(view.feature_at(x, y)) and not is_monster(x, y)
   end
 
-  return true
+  return not travel.feature_solid(view.feature_at(x, y)) and not is_monster(x, y)
 end
 
 local function get_good_direction()
