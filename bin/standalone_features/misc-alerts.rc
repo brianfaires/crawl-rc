@@ -401,7 +401,7 @@ function f_misc_alerts.c_message(text, _)
   if C.preferred_god and not ma_found_altar and text:find(GOD_ALTAR_TEXT) then
     ma_found_altar = true
     local feature_name = "altar_" .. (C.preferred_god:match("^%S+") or C.preferred_god):lower()
-    BRC.Hotkey.waypoint("altar of " .. C.preferred_god, true, feature_name)
+    BRC.Hotkey.move_to_feature("altar of " .. C.preferred_god, true, feature_name)
   end
 end
 

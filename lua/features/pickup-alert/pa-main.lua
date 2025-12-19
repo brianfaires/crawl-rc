@@ -165,11 +165,13 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   local it_name = it.name()
   function_queue[#function_queue + 1] = function()
-    -- Set hotkeys (have to do next turn, so player position is updated for setting waypoint)
+    -- Set hotkeys (on next turn, so player position is updated before setting waypoint)
     if util.exists(you.floor_items(), function(fl) return fl.name() == it_name end) then
       if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it_name, true) end
     else
-      if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it_name) end
+      if A.hotkey_travel and BRC.Hotkey then
+        BRC.Hotkey.move_to_item(it_name, false, A.hotkey_pickup)
+      end
     end
   end
 

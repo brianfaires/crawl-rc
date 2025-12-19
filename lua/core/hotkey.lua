@@ -195,7 +195,8 @@ end
 
 --- Set hotkey as 'move to <name>', if it's in LOS
 -- If feature_name provided, moves to that feature, otherwise searches for the item by name
-function BRC.Hotkey.waypoint(name, push_front, feature_name)
+-- @param queue_pickup (optional boolean) - Queue pickup after moving to item (default true)
+local function set_waypoint_hotkey(name, push_front, feature_name, queue_pickup)
   if util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch()) then
     return -- Can't auto-travel
   end
@@ -244,12 +245,20 @@ function BRC.Hotkey.waypoint(name, push_front, feature_name)
     util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
 
-    if not feature_name then
+    if not feature_name and queue_pickup ~= false then
       BRC.Hotkey.pickup(name, true)
     end
   end
 
   BRC.Hotkey.set("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
+end
+
+function BRC.Hotkey.move_to_item(name, push_front, queue_pickup)
+  set_waypoint_hotkey(name, push_front, nil, queue_pickup)
+end
+
+function BRC.Hotkey.move_to_feature(name, push_front, feature_name)
+  set_waypoint_hotkey(name, push_front, feature_name, false)
 end
 
 ---- Crawl hook functions ----
@@ -266,17 +275,17 @@ end
 
 function BRC.Hotkey.c_message(text, channel)
   if channel ~= "plain" then return end
-  if BRC.Hotkey.Config.move_to_feature == nil then return end
+  if type(BRC.Hotkey.Config.move_to_feature) ~= "table" then return end
   if not text:contains("Found") then return end
 
   for k, v in pairs(BRC.Hotkey.Config.move_to_feature) do
     if text:contains(v) then
-      BRC.Hotkey.waypoint(v, true, k)
+      BRC.Hotkey.move_to_feature(v, true, k)
     end
   end
   for k, v in pairs(BRC.PORTAL_FEATURE_NAMES) do
     if text:contains(v) then
-      BRC.Hotkey.waypoint(v, true, k)
+      BRC.Hotkey.move_to_feature(v, true, k)
     end
   end
 end

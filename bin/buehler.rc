@@ -3843,7 +3843,8 @@ end
 
 --- Set hotkey as 'move to <name>', if it's in LOS
 -- If feature_name provided, moves to that feature, otherwise searches for the item by name
-function BRC.Hotkey.waypoint(name, push_front, feature_name)
+-- @param queue_pickup (optional boolean) - Queue pickup after moving to item (default true)
+local function set_waypoint_hotkey(name, push_front, feature_name, queue_pickup)
   if util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch()) then
     return -- Can't auto-travel
   end
@@ -3892,12 +3893,20 @@ function BRC.Hotkey.waypoint(name, push_front, feature_name)
     util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
 
-    if not feature_name then
+    if not feature_name and queue_pickup ~= false then
       BRC.Hotkey.pickup(name, true)
     end
   end
 
   BRC.Hotkey.set("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
+end
+
+function BRC.Hotkey.move_to_item(name, push_front, queue_pickup)
+  set_waypoint_hotkey(name, push_front, nil, queue_pickup)
+end
+
+function BRC.Hotkey.move_to_feature(name, push_front, feature_name)
+  set_waypoint_hotkey(name, push_front, feature_name, false)
 end
 
 ---- Crawl hook functions ----
@@ -3914,17 +3923,17 @@ end
 
 function BRC.Hotkey.c_message(text, channel)
   if channel ~= "plain" then return end
-  if BRC.Hotkey.Config.move_to_feature == nil then return end
+  if type(BRC.Hotkey.Config.move_to_feature) ~= "table" then return end
   if not text:contains("Found") then return end
 
   for k, v in pairs(BRC.Hotkey.Config.move_to_feature) do
     if text:contains(v) then
-      BRC.Hotkey.waypoint(v, true, k)
+      BRC.Hotkey.move_to_feature(v, true, k)
     end
   end
   for k, v in pairs(BRC.PORTAL_FEATURE_NAMES) do
     if text:contains(v) then
-      BRC.Hotkey.waypoint(v, true, k)
+      BRC.Hotkey.move_to_feature(v, true, k)
     end
   end
 end
@@ -4992,9 +5001,23 @@ f_announce_items.BRC_FEATURE_NAME = "announce-items"
 f_announce_items.Config = {
   disabled = true, -- Disabled by default. Intended only for turncount runs.
   announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
+  announce_glowing = true,
+  announce_artefacts = true,
   max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
   announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
+
+---- Local constants ----
+local ALERT_COLOR = {
+  gold = BRC.COL.yellow,
+  book = BRC.COL.lightcyan,
+  jewellery = BRC.COL.magenta,
+  misc = BRC.COL.lightcyan,
+  missile = BRC.COL.white,
+  potion = BRC.COL.lightgreen,
+  scroll = BRC.COL.lightgreen,
+  wand = BRC.COL.magenta,
+} -- ALERT_COLOR (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias
@@ -5011,16 +5034,25 @@ function f_announce_items.init()
 end
 
 ---- Local functions ----
-local function announce_item(it)
-  if it.is_useless then return end
-  local class = it.class(true):lower()
-  if util.contains(C.announce_class, class) then
-    if class == "gold" then
-      prev_gold_count = prev_gold_count + 1
-      if prev_gold_count > C.max_gold_announcements then return end
-    end
-    crawl.mpr(BRC.txt.yellow("You see: ") .. it.name())
+local function should_announce_item(it)
+  if it.is_useless then return false end
+  if not it.is_identified then
+    if it.artefact then return C.announce_artefacts end
+    if it.branded then return C.announce_glowing end
   end
+
+  return util.contains(C.announce_class, it.class(true):lower())
+end
+
+local function announce_item(it)
+  if not should_announce_item(it) then return end
+  local class = it.class(true):lower()
+  if class == "gold" then
+    prev_gold_count = prev_gold_count + 1
+    if prev_gold_count > C.max_gold_announcements then return end
+  end
+
+  crawl.mpr(BRC.txt.white("You see: ") .. BRC.txt[ALERT_COLOR[class]](it.name()))
 end
 
 ---- Crawl hook functions ----
@@ -6725,7 +6757,7 @@ function f_misc_alerts.c_message(text, _)
   if C.preferred_god and not ma_found_altar and text:find(GOD_ALTAR_TEXT) then
     ma_found_altar = true
     local feature_name = "altar_" .. (C.preferred_god:match("^%S+") or C.preferred_god):lower()
-    BRC.Hotkey.waypoint("altar of " .. C.preferred_god, true, feature_name)
+    BRC.Hotkey.move_to_feature("altar of " .. C.preferred_god, true, feature_name)
   end
 end
 
@@ -8183,11 +8215,13 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   local it_name = it.name()
   function_queue[#function_queue + 1] = function()
-    -- Set hotkeys (have to do next turn, so player position is updated for setting waypoint)
+    -- Set hotkeys (on next turn, so player position is updated before setting waypoint)
     if util.exists(you.floor_items(), function(fl) return fl.name() == it_name end) then
       if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it_name, true) end
     else
-      if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it_name) end
+      if A.hotkey_travel and BRC.Hotkey then
+        BRC.Hotkey.move_to_item(it_name, false, A.hotkey_pickup)
+      end
     end
   end
 
