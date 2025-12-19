@@ -95,6 +95,7 @@ globals = {
   "bs_manual_swing_slot",
   "dr_total_time",
   "ed_dropped_items",
+  "fr_bad_durations",
   "fr_explore_after",
   "fr_start_turn",
   "ma_alerted_max_piety",

@@ -446,11 +446,6 @@ brc_config_explicit = {
 
   ["fully-recover"] = {
     disabled = false,
-    rest_off_statuses = { -- Keep resting until these statuses are gone
-      "berserk", "blind", "confused", "corroded", "diminished spells",
-      "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
-      "sluggish", "tree%-form", "vulnerable", "weakened",
-    },
   },
 
   ["inscribe-stats"] = {
@@ -1941,6 +1936,12 @@ BRC.DMG_TYPE = {
 } -- BRC.DMG_TYPE (do not remove this comment)
 
 BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
+
+BRC.BAD_DURATIONS = {
+    "berserk", "blind", "confused", "corroded", "diminished spells",
+    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+    "sluggish", "tree%-form", "vulnerable", "weakened",
+} -- BRC.BAD_DURATIONS (do not remove this comment)
 
 }
 ############################### End lua/core/constants.lua ###############################
@@ -5188,6 +5189,11 @@ local wielding
 local dir
 
 ---- Local functions ----
+local function has_bad_duration()
+  local status = you.status()
+  return util.exists(BRC.BAD_DURATIONS, function(x) return status:contains(x) end)
+end
+
 local function reset_rest(msg)
   -- Display msg iff we're aborting a rest command
   if turns_remaining and turns_remaining > 0 and msg then
@@ -5367,7 +5373,7 @@ end
 local function verify_safe_rest()
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
-  if hp == mhp and mp == mmp then
+  if hp == mhp and mp == mmp and not has_bad_duration() then
     reset_rest("You are already full!")
     return false
   elseif turns_remaining <= 0 then
@@ -6301,25 +6307,19 @@ end
 
 f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
-f_fully_recover.Config = {
-  rest_off_statuses = { -- Keep resting until these statuses are gone
-    "berserk", "blind", "confused", "corroded", "diminished spells",
-    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
-    "sluggish", "tree%-form", "vulnerable", "weakened",
-  },
-} -- f_fully_recover.Config (do not remove this comment)
+
+---- Persistent variables ----
+fr_bad_durations = BRC.Data.persist("fr_bad_durations", util.copy_table(BRC.BAD_DURATIONS))
 
 ---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500
 
 ---- Local variables ----
-local C -- config alias
 local recovery_start_turn
 local explore_after_recovery
 
 ---- Initialization ----
 function f_fully_recover.init()
-  C = f_fully_recover.Config
   recovery_start_turn = 0
   explore_after_recovery = false
 
@@ -6368,7 +6368,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(C.rest_off_statuses) do
+  for _, s in ipairs(BRC.BAD_DURATIONS) do
     if status:find(s) and not should_ignore_status(s) then return false end
   end
 
@@ -6397,14 +6397,14 @@ local function start_fully_recover(cmd)
   end
 end
 
-local function remove_statuses_from_config()
+local function remove_statuses_from_list()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(C.rest_off_statuses) do
+  for _, s in ipairs(fr_bad_durations) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(C.rest_off_statuses, s)
+    util.remove(fr_bad_durations, s)
     BRC.mpr.error("  Removed: " .. s)
   end
 end
@@ -6441,8 +6441,8 @@ function f_fully_recover.ready()
     abort_fully_recover()
   elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
     BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
-    BRC.mpr.error("f_fully_recover.Config.rest_off_statuses:")
-    remove_statuses_from_config()
+    BRC.mpr.error("fr_bad_durations:")
+    remove_statuses_from_list()
     abort_fully_recover()
   else
     BRC.util.do_cmd("CMD_SAFE_WAIT")

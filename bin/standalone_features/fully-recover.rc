@@ -13,15 +13,6 @@ BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.show_debug_messages = false
 BRC.Config.mpr.logs_to_stderr = false
 
-f_fully_recover = {}
-f_fully_recover.Config = {
-  rest_off_statuses = { -- Keep resting until these statuses are gone
-    "berserk", "blind", "confused", "corroded", "diminished spells",
-    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
-    "sluggish", "tree%-form", "vulnerable", "weakened",
-  },
-} -- f_fully_recover.Config (do not remove this comment)
-
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
   return self:find(text, 1, true) ~= nil
@@ -29,6 +20,12 @@ end
 getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
+BRC.BAD_DURATIONS = {
+    "berserk", "blind", "confused", "corroded", "diminished spells",
+    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+    "sluggish", "tree%-form", "vulnerable", "weakened",
+} -- BRC.BAD_DURATIONS (do not remove this comment)
+
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
@@ -39,11 +36,47 @@ BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
 
 
 -- BRC module tables (Don't overwrite existing globals)
+BRC.Data = BRC.Data or {}
 BRC.mpr = BRC.mpr or {}
 BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.util = BRC.util or {}
 BRC.you = BRC.you or {}
+
+-- BRC.Data module
+-- Minimal persistence system for standalone features
+local function brc_tostr(value)
+  if type(value) == "table" then
+    if #value == 0 then
+      local result = "{ "
+      for k, v in pairs(value) do
+        result = result .. k .. " = " .. brc_tostr(v) .. ", "
+      end
+      return result .. " }"
+    else
+      return "{ " .. table.concat(value, ", ") .. " }"
+    end
+  elseif type(value) == "string" then
+    return "\"" .. value:gsub("\"", "") .. "\""
+  else
+    return tostring(value)
+  end
+end
+
+function BRC.Data.persist(name, default_value)
+  if _G[name] == nil then
+    if type(default_value) == "table" then
+      _G[name] = util.copy_table(default_value)
+    else
+      _G[name] = default_value
+    end
+  end
+  table.insert(chk_lua_save, function()
+    if _G[name] == nil then return "" end
+    return name .. " = " .. brc_tostr(_G[name]) .. "\n"
+  end)
+  return _G[name]
+end
 
 -- BRC.mpr module
 for k, color in pairs(BRC.COL) do
@@ -198,19 +231,21 @@ end
 -- @todo Can remove when crawl's explore_auto_rest_status setting reaches feature parity.
 ---------------------------------------------------------------------------------------------------
 
+f_fully_recover = {}
 
+
+---- Persistent variables ----
+fr_bad_durations = BRC.Data.persist("fr_bad_durations", util.copy_table(BRC.BAD_DURATIONS))
 
 ---- Local constants ----
 local MAX_TURNS_TO_WAIT = 500
 
 ---- Local variables ----
-local C -- config alias
 local recovery_start_turn
 local explore_after_recovery
 
 ---- Initialization ----
 function f_fully_recover.init()
-  C = f_fully_recover.Config
   recovery_start_turn = 0
   explore_after_recovery = false
 
@@ -259,7 +294,7 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(C.rest_off_statuses) do
+  for _, s in ipairs(BRC.BAD_DURATIONS) do
     if status:find(s) and not should_ignore_status(s) then return false end
   end
 
@@ -288,14 +323,14 @@ local function start_fully_recover(cmd)
   end
 end
 
-local function remove_statuses_from_config()
+local function remove_statuses_from_list()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(C.rest_off_statuses) do
+  for _, s in ipairs(fr_bad_durations) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(C.rest_off_statuses, s)
+    util.remove(fr_bad_durations, s)
     BRC.mpr.error("  Removed: " .. s)
   end
 end
@@ -332,8 +367,8 @@ function f_fully_recover.ready()
     abort_fully_recover()
   elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
     BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
-    BRC.mpr.error("f_fully_recover.Config.rest_off_statuses:")
-    remove_statuses_from_config()
+    BRC.mpr.error("fr_bad_durations:")
+    remove_statuses_from_list()
     abort_fully_recover()
   else
     BRC.util.do_cmd("CMD_SAFE_WAIT")

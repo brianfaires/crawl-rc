@@ -120,3 +120,9 @@ BRC.DMG_TYPE = {
 } -- BRC.DMG_TYPE (do not remove this comment)
 
 BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
+
+BRC.BAD_DURATIONS = {
+    "berserk", "blind", "confused", "corroded", "diminished spells",
+    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+    "sluggish", "tree%-form", "vulnerable", "weakened",
+} -- BRC.BAD_DURATIONS (do not remove this comment)

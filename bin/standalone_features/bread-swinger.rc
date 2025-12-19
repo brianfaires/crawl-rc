@@ -35,6 +35,12 @@ end
 getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
+BRC.BAD_DURATIONS = {
+    "berserk", "blind", "confused", "corroded", "diminished spells",
+    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+    "sluggish", "tree%-form", "vulnerable", "weakened",
+} -- BRC.BAD_DURATIONS (do not remove this comment)
+
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
   lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
@@ -460,6 +466,11 @@ local wielding
 local dir
 
 ---- Local functions ----
+local function has_bad_duration()
+  local status = you.status()
+  return util.exists(BRC.BAD_DURATIONS, function(x) return status:contains(x) end)
+end
+
 local function reset_rest(msg)
   -- Display msg iff we're aborting a rest command
   if turns_remaining and turns_remaining > 0 and msg then
@@ -639,7 +650,7 @@ end
 local function verify_safe_rest()
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
-  if hp == mhp and mp == mmp then
+  if hp == mhp and mp == mmp and not has_bad_duration() then
     reset_rest("You are already full!")
     return false
   elseif turns_remaining <= 0 then
