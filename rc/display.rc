@@ -103,6 +103,7 @@ menu += $i_useful:wand of (acid|iceblast|light|quicksilver|roots|warping)
 $m_boring := darkgrey
 $m_normal := lightgrey
 $m_interesting := white
+$m_noteworthy := lightcyan
 $m_interface := cyan
 $m_info := blue
 $m_attention := lightmagenta
@@ -149,13 +150,17 @@ channel.dgl_message = $m_attention
 ####### Message-specific colors
 msc := message_colour
 
+# Found things
+msc ^= $m_interface:Found a faded altar
+msc ^= $m_interface:Found a.* altar of
+msc ^= $m_alert:Found a (gate|stair).* to
+
 # Travel / Exploring
 msc ^= $m_alert:You now have enough gold to buy 
 msc ^= $m_alert:You have identified the last 
 msc ^= $m_boring:You .*(open|close) the door
 msc ^= $m_boring:You climb (upwards|downwards)
 msc ^= $m_interesting:Done exploring
-msc ^= $m_interesting:Found a faded altar
 msc ^= $m_interesting:You disentangle yourself
 msc ^= $m_warning:You are caught in .* web
 

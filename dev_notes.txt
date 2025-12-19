@@ -1,5 +1,4 @@
 ### todos / bugs?
-- brighter colors for finding portal "staircase to the Shoals"
 - turncount:
   - breadswing for negative statuses too?
   - breadswing bug:
