@@ -41,7 +41,7 @@ end
 local function finish_fully_recover()
   local turns = you.turns() - recovery_start_turn
   recovery_start_turn = 0
-  BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
+  if turns > 0 then BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns)) end
 
   you.stop_activity()
 
@@ -84,6 +84,7 @@ local function start_fully_recover(cmd)
     if recovery_start_turn > 0 then
       finish_fully_recover()
     else
+      recovery_start_turn = you.turns()
       BRC.util.do_cmd(cmd)
     end
   else
@@ -92,7 +93,7 @@ local function start_fully_recover(cmd)
     else
       explore_after_recovery = cmd == "CMD_EXPLORE"
       recovery_start_turn = you.turns()
-      BRC.util.do_cmd("CMD_WAIT")
+      BRC.util.do_cmd("CMD_REST")
     end
   end
 end
@@ -121,8 +122,8 @@ end
 
 ---- Crawl hook functions ----
 function f_fully_recover.c_message(_, channel)
-  if recovery_start_turn <= 0 then return end
-  if fully_recovered() then
+  if not fully_recovered() then return end
+  if recovery_start_turn > 0 then
     finish_fully_recover()
   elseif channel ~= "duration" and channel ~= "recovery" then
     abort_fully_recover()
@@ -145,6 +146,6 @@ function f_fully_recover.ready()
     remove_statuses_from_list()
     abort_fully_recover()
   else
-    BRC.util.do_cmd("CMD_SAFE_WAIT")
+    BRC.util.do_cmd("CMD_REST")
   end
 end
