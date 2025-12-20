@@ -39,6 +39,7 @@ local DIR_TO_VI = {
   [1] = { [-1] = "u", [0] = "l", [1] = "n" },
 } -- DIR_TO_VI (do not remove this comment)
 local SH_PROMPT = "Unequip shield to rest with "
+local FULLY_RECOVERED_MSG = "Fully recovered"
 
 ---- Local variables ----
 local C -- config alias
@@ -58,15 +59,22 @@ local function has_bad_duration()
 end
 
 local function reset_rest(msg)
-  -- Display msg iff we're aborting a rest command
-  if turns_remaining and turns_remaining > 0 and msg then
-    if turns_remaining ~= turns_to_rest then
+  if msg then
+    if turns_remaining > 0 and turns_remaining ~= turns_to_rest then
       local diff = turns_to_rest - turns_remaining
       msg = string.format("%s (Rested %s/%s turns)", msg, diff, turns_to_rest)
     end
-  end
 
-  if msg then BRC.mpr.warning(msg) end
+    if msg:contains(FULLY_RECOVERED_MSG) then
+      if turns_remaining == turns_to_rest then
+        BRC.mpr.yellow("You're healthy enough!")
+      else
+        BRC.mpr.lightgreen(msg)
+      end
+    else
+      BRC.mpr.warning(msg)
+    end
+  end
 
   if bs_removed_shield then
     BRC.mpr.que(BRC.txt.lightmagenta("Remember to re-equip your shield after resting!"))
@@ -268,7 +276,7 @@ local function verify_safe_rest()
   mhp = mhp * C.max_heal_perc / 100
   mmp = mmp * C.max_heal_perc / 100
   if hp >= mhp and mp >= mmp and not has_bad_duration() then
-    reset_rest("You are fully healed!")
+    reset_rest(FULLY_RECOVERED_MSG)
     return false
   elseif not you.feel_safe() then
     reset_rest("You can't rest with a hostile monster in view!")

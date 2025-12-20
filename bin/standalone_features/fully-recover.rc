@@ -336,7 +336,7 @@ local function start_fully_recover(cmd)
     else
       explore_after_recovery = cmd == "CMD_EXPLORE"
       recovery_start_turn = you.turns()
-      BRC.util.do_cmd("CMD_WAIT")
+      BRC.util.do_cmd("CMD_REST")
     end
   end
 end
@@ -369,7 +369,10 @@ function f_fully_recover.c_message(_, channel)
   if fully_recovered() then
     finish_fully_recover()
   elseif channel ~= "duration" and channel ~= "recovery" then
+    crawl.mpr("aborting. ch: " .. channel .. "; status is: " .. you.status())
     abort_fully_recover()
+  else
+    crawl.mpr("not aborting. ch: " .. channel .. "; status is: " .. you.status())
   end
 end
 
@@ -389,7 +392,7 @@ function f_fully_recover.ready()
     remove_statuses_from_list()
     abort_fully_recover()
   else
-    BRC.util.do_cmd("CMD_SAFE_WAIT")
+    BRC.util.do_cmd("CMD_REST")
   end
 end
 
