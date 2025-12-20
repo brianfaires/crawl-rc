@@ -6,11 +6,10 @@
 - fully-recover:
   - test using CMD_WAIT vs CMD_REST; only use wait when maxhp? (else redraws every turn)
 
-- pan+webtiles; redrawing screen on every turn of travel
 
-
-### Can't reproduce:
+### Can't reproduce locally:
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
+- in pan: redrawing screen on every turn of travel (fixed?)
 
 
 ### crawl PRs / issues affecting BRC

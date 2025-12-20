@@ -243,6 +243,7 @@ end
 function BRC.reset(config_name)
   BRC.active = false
   BRC.Data.reset()
+  BRC.opt.clear_macros()
   BRC.init(config_name)
 end
 
