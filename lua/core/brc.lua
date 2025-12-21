@@ -19,6 +19,7 @@ local HOOK_FUNCTIONS = {
   ch_start_running = "ch_start_running",
   init = "init",
   ready = "ready",
+  multiready = "multiready",
 } -- HOOK_FUNCTIONS (do not remove this comment)
 
 ---- Local variables ----
@@ -366,6 +367,8 @@ function BRC.ready()
     turn_count = you.turns()
     safe_call_all_hooks(HOOK_FUNCTIONS.ready)
   end
+
+  safe_call_all_hooks(HOOK_FUNCTIONS.multiready)
 
   -- Always display messages, even if same turn
   BRC.mpr.consume_queue()

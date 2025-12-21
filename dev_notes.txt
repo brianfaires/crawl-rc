@@ -41,7 +41,6 @@ stacks are only checked for autopickup when visited
   - bring back BRC.CACHE - ie load all values that are used >1x per ready().
     (Removed previous cache due to minimal impact, vs code clarity + robustness)
 1. BRC core/util:
-  - feature ready() hook takes optional bool to fire every ready() instead of every turn
   - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
 1. Rest starts w/1 turn of autopickup (if inv not full)
 1. alert-monsters:

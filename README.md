@@ -220,16 +220,18 @@ items_found[#items_found+1] = "tower shield" -- Another way to append to a list
 Persistent variables start off each game with their initial value, and remember any changes for the rest of the game. They are _**not**_ shared across different games.
 
 **Step 3: Add hooks** (optional):
-
-If you define `my_feature.init()`, it will be called when BRC starts up. This is similar to putting raw code in your RC file, but is more robust.
-
 These crawl hooks are currently implemented:
-- ready()
+- ready() _(Called only once per turn. Use multiready() if you want it called multiple times per turn, like crawl's ready().)_
 - autopickup(it)
 - c_answer_prompt(prompt)
 - c_assign_invletter(it)
 - c_message(text, channel)
 - ch_start_running(kind)
+
+You can also define:
+- init() - Called when BRC starts up. This is similar to putting raw code in your RC file, but allows a full re-init on demand.
+- multiready() - Called every time crawl's ready() is, multiple times per player turn.
+
 
 Define them in your feature and they will be automatically hooked to crawl. Example:
 ```lua
