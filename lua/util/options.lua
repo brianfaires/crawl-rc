@@ -102,7 +102,6 @@ end
 
 function BRC.opt.clear_macros()
   for key, function_name in pairs(_claimed_macro_keys) do
-    crawl.mpr(key .. " -> " .. tostring(function_name))
     BRC.opt.macro(key, nil, true)
   end
   _claimed_macro_keys = {}
