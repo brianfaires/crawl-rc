@@ -14,6 +14,7 @@ local A -- alert config alias
 local M -- more config alias
 local pause_pa_system
 local hold_alerts_for_next_turn
+local pa_last_ready_turn
 local function_queue -- queue of actions for next ready()
 
 ---- Initialization ----
@@ -23,6 +24,7 @@ function f_pickup_alert.init()
   M = f_pickup_alert.Config.Alert.More
   pause_pa_system = false
   hold_alerts_for_next_turn = false
+  pa_last_ready_turn = you.turns()
   function_queue = {}
 
   BRC.mpr.debug("Initialize pickup-alert submodules...")
@@ -220,8 +222,12 @@ function f_pickup_alert.autopickup(it, _)
     end
   end
 
-  -- Item not picked up - check if it should trigger alerts
-  if check_and_trigger_alerts(it, unworn_aux_item) then return end
+  -- Item not picked up - check if it should trigger alerts.
+  -- Autopickup fires many times per turn, and needs to consistently return true for pickup to work
+  -- But, only check for alerts immediately after turncount changes, before ready() is called.
+  if you.turns() ~= pa_last_ready_turn then
+    check_and_trigger_alerts(it, unworn_aux_item)
+  end
 end
 
 function f_pickup_alert.c_assign_invletter(it)
@@ -259,6 +265,7 @@ end
 
 function f_pickup_alert.ready()
   hold_alerts_for_next_turn = false
+  pa_last_ready_turn = you.turns()
   util.foreach(function_queue, function(f) f() end)
   function_queue = {}
 

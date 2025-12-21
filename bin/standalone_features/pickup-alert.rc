@@ -1005,6 +1005,7 @@ local A -- alert config alias
 local M -- more config alias
 local pause_pa_system
 local hold_alerts_for_next_turn
+local pa_last_ready_turn
 local function_queue -- queue of actions for next ready()
 
 ---- Initialization ----
@@ -1014,6 +1015,7 @@ function f_pickup_alert.init()
   M = f_pickup_alert.Config.Alert.More
   pause_pa_system = false
   hold_alerts_for_next_turn = false
+  pa_last_ready_turn = you.turns()
   function_queue = {}
 
   BRC.mpr.debug("Initialize pickup-alert submodules...")
@@ -1211,8 +1213,12 @@ function f_pickup_alert.autopickup(it, _)
     end
   end
 
-  -- Item not picked up - check if it should trigger alerts
-  if check_and_trigger_alerts(it, unworn_aux_item) then return end
+  -- Item not picked up - check if it should trigger alerts.
+  -- Autopickup fires many times per turn, and needs to consistently return true for pickup to work
+  -- But, only check for alerts immediately after turncount changes, before ready() is called.
+  if you.turns() ~= pa_last_ready_turn then
+    check_and_trigger_alerts(it, unworn_aux_item)
+  end
 end
 
 function f_pickup_alert.c_assign_invletter(it)
@@ -1250,6 +1256,7 @@ end
 
 function f_pickup_alert.ready()
   hold_alerts_for_next_turn = false
+  pa_last_ready_turn = you.turns()
   util.foreach(function_queue, function(f) f() end)
   function_queue = {}
 
@@ -1927,7 +1934,7 @@ function f_pa_weapons.init()
   A = f_pickup_alert.Config.Alert
   M = f_pickup_alert.Config.Alert.More
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
-  _weapon_cache.refresh(true)
+  _weapon_cache.init()
 
   if not A.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
   if not A.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
@@ -1998,12 +2005,25 @@ end
 
 local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
-    and _weapon_cache.is_empty()
+    and _weapon_cache.is_empty() -- Fail faster than iterating inventory
     and you.skill("Unarmed Combat") == 0
     and BRC.you.mut_lvl("claws") == 0
+    and not util.exists(items.inventory(), function(i) return i.is_weapon end)
 end
 
--- Local functions: Weapon cache
+-- Weapon cache functions
+function _weapon_cache.init()
+  _weapon_cache.turn = -1
+  _weapon_cache.refresh()
+end
+
+function _weapon_cache.ready()
+  -- Ensure that a full refresh happens after each player action, even if turncount hasn't changed
+  -- This is necessary because player actions + autopickup() often occur before turncount increases
+  -- Resetting turn in ready() refreshes cache on first autopickup() after applying player action
+  _weapon_cache.turn = -1
+end
+
 function _weapon_cache.get_primary_key(it)
   local tokens = {}
   tokens[1] = it.is_ranged and RANGED_PREFIX or MELEE_PREFIX
@@ -2083,9 +2103,9 @@ function _weapon_cache.is_empty()
   return _weapon_cache.max_dps["melee_2"].dps == 0 -- The most restrictive category
 end
 
-function _weapon_cache.refresh(skip_turn_check)
+function _weapon_cache.refresh()
   local cur_turn = you.turns()
-  if _weapon_cache.turn and _weapon_cache.turn == cur_turn and not skip_turn_check then return end
+  if _weapon_cache.turn == cur_turn then return end
   _weapon_cache.turn = cur_turn
   _weapon_cache.weapons = {}
   _weapon_cache.egos = {}
@@ -2284,18 +2304,10 @@ end
 ---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
   _weapon_cache.refresh()
-  if need_first_weapon() then
-    -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
-    return not util.exists(items.inventory(), function(i) return i.is_weapon end)
-  end
-
   if BRC.eq.is_risky(it) then return false end
+  if need_first_weapon() then return true end
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then
-      -- Confirm after updating cache, to avoid spurious alerts from XP gain.
-      _weapon_cache.refresh(true)
-      if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then return true end
-    end
+    if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then return true end
   end
 end
 
@@ -2303,20 +2315,13 @@ function f_pa_weapons.alert_weapon(it)
   _weapon_cache.refresh()
   local a = get_weapon_alert(it)
   if not a then return false end
-
-  -- Refresh mid-turn to avoid spurious alerts from XP gain. (Except for first-of-skill alerts)
-  if not a.msg:contains("First ") then
-    _weapon_cache.refresh(true)
-    a = get_weapon_alert(it)
-    if not a then return false end
-  end
-
   return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option)
 end
 
 ---- Crawl hook functions ----
 function f_pa_weapons.ready()
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
+  _weapon_cache.ready()
 end
 
 

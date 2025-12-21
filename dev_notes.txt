@@ -2,6 +2,8 @@
 - Bug: swallowing keypresses; happens the turn AFTER move_to appears
   Also, move_to appears a turn too late.
   Also, when travel is interrupted; it should re-prompt, and it also swallows the next keypress.
+- weapon_cache to its own file
+- Highlight top stack item on alerting 'hidden under stack'
 
 ### Can't reproduce locally:
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)

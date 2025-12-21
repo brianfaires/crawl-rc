@@ -101,7 +101,7 @@ function BRC.opt.macro(key, function_name, overwrite_existing)
 end
 
 function BRC.opt.clear_macros()
-  for key, function_name in pairs(_claimed_macro_keys) do
+  for key, _ in pairs(_claimed_macro_keys) do
     BRC.opt.macro(key, nil, true)
   end
   _claimed_macro_keys = {}
