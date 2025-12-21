@@ -52,17 +52,6 @@ function f_pickup_alert.init()
 end
 
 ---- Local functions ----
-local function do_autopickup(it)
-  if options.autopick_on == false
-    and A.autopickup_disabled
-    and not f_pa_data.already_alerted(it)
-  then
-    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP_ITEM, M.autopickup_disabled)
-  end
-
-  return true
-end
-
 local function has_configured_force_more(it)
   if it.artefact then
     if M.artefact then return true end
@@ -125,6 +114,31 @@ local function check_and_trigger_alerts(it, unworn_aux_item)
   end
 
   return false
+end
+
+--- Runs autopickup for all items in view, that are stacked under another item.
+-- Pickup-alert system runs as an autopickup function, which only triggers for stacked items when:
+-- 1. The stack is visited, 2. autopickup is on.
+-- This is very bad for turncount runs, and annoying otherwise.
+-- This check triggers during ready(), so it has has no effect on autopickup during autoexplore.
+local function check_stacked_items()
+  local r = you.los()
+  for x = -r, r do
+    for y = -r, r do
+      if you.see_cell(x, y) then
+        local items_xy = items.get_items_at(x, y)
+        if items_xy and #items_xy > 1 then
+          for i, it in ipairs(items_xy) do
+            if i > 1 and f_pickup_alert.autopickup(it) and not f_pa_data.already_alerted(it) then
+              f_pickup_alert.do_alert(
+                it, "Hidden under stack", C.Emoji.AUTOPICKUP_ITEM, M.autopickup_disabled
+              )
+            end
+          end
+        end
+      end
+    end
+  end
 end
 
 ---- Public API ----
@@ -196,11 +210,11 @@ function f_pickup_alert.autopickup(it, _)
     if not unworn_aux_item then return end
   else
     if BRC.it.is_armour(it) then
-      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return do_autopickup(it) end
+      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return true end
     elseif BRC.it.is_magic_staff(it) then
-      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return do_autopickup(it) end
+      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return true end
     elseif it.is_weapon then
-      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return do_autopickup(it) end
+      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return true end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
     end
@@ -251,4 +265,6 @@ function f_pickup_alert.ready()
   if pause_pa_system then return end
   f_pa_weapons.ready()
   f_pa_data.update_high_scores(items.equipped_at("armour"))
+
+  if A.stacked_items then check_stacked_items() end
 end

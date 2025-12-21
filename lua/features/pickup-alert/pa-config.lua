@@ -21,7 +21,7 @@ f_pickup_alert.Config.Alert = {
   talismans = true,
   first_ranged = true,
   first_polearm = true,
-  autopickup_disabled = true, -- If autopickup is off, alert for items that would be autopicked up
+  stacked_items = true, -- Check items hidden under stacks, to alert without visiting the stack
 
   -- Each usable item is alerted once.
   one_time = {

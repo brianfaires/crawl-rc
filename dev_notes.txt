@@ -1,7 +1,7 @@
 ### todos / bugs
-- Autopickup only called for the top item in each stack.
-  Stack checked when visited, iff autopickup is enabled. 
-  Fix: Don't use autopickup. Interrogate all items in view each turn.
+- Bug: swallowing keypresses; happens the turn AFTER move_to appears
+  Also, move_to appears a turn too late.
+  Also, when travel is interrupted; it should re-prompt, and it also swallows the next keypress.
 
 ### Can't reproduce locally:
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
@@ -18,6 +18,8 @@ https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
 Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
 Num turns to multiturn equip/unequip == time + 1; intended?
   - Actually is +2 for: Equip 2h weap -> unwield shield = 8 turns (unwield + equip = 7 turns)
+items.pickup() does nothing?
+stacks are only checked for autopickup when visited
 
 ### TODO - require crawl PR?
 1. fully-recover:

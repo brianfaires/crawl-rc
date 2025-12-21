@@ -571,7 +571,7 @@ brc_config_explicit = {
       talismans = true,
       first_ranged = true,
       first_polearm = true,
-      autopickup_disabled = true, -- If autopickup off, alert for items that would be autopicked up
+      stacked_items = true, -- Check items hidden under stacks, to alert without visiting the stack
 
       -- Alert the first time each item is found. Can require training with OTA_require_skill.
       one_time = {
