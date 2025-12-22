@@ -571,7 +571,7 @@ brc_config_explicit = {
       talismans = true,
       first_ranged = true,
       first_polearm = true,
-      stacked_items = true, -- Check items hidden under stacks, to alert without visiting the stack
+      stacked_items = true, -- Special handling for items hidden in stacks, to alert before visiting
 
       -- Alert the first time each item is found. Can require training with OTA_require_skill.
       one_time = {

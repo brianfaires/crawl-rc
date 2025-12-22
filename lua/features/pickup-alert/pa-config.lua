@@ -21,7 +21,7 @@ f_pickup_alert.Config.Alert = {
   talismans = true,
   first_ranged = true,
   first_polearm = true,
-  stacked_items = true, -- Check items hidden under stacks, to alert without visiting the stack
+  stacked_items = true, -- Special handling for items hidden in stacks, to alert before visiting
 
   -- Each usable item is alerted once.
   one_time = {
