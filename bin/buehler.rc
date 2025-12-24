@@ -5499,6 +5499,21 @@ local function do_resting()
   end
 end
 
+--- Checks if weapon has slowest swing speed. Returns 2 if slowest, and 1 for slowest 1-handed.
+local function is_slowest_weapon(it)
+  if not it or it.is_useless or not it.is_weapon then return nil end
+  local delay = BRC.eq.get_weap_delay(it)
+  if delay < C.alert_slow_weap_min then return nil end
+
+  if delay > bs_highest_delay then
+    bs_highest_delay = delay
+    if BRC.eq.get_hands(it) == 1 then bs_highest_delay_1h = delay end
+    return 2
+  elseif delay > bs_highest_delay_1h and BRC.eq.get_hands(it) == 1 then
+    bs_highest_delay_1h = delay
+    return 1
+  end
+end
 
 ---- Public API ----
 function macro_brc_bread_swing(turns)
@@ -5552,6 +5567,10 @@ function f_bread_swinger.init()
   reset_rest()
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_REST") or "5", "macro_brc_bread_swing", true)
   BRC.opt.macro(C.set_manual_slot_key, "macro_brc_set_swing_slot", true)
+
+  for _, it in ipairs(items.inventory()) do
+    is_slowest_weapon(it)
+  end
 end
 
 ---- Crawl hook functions ----
@@ -5586,19 +5605,10 @@ function f_bread_swinger.ready()
 end
 
 function f_bread_swinger.autopickup(it)
-  if it.is_useless or not it.is_weapon then return nil end
-  local delay = BRC.eq.get_weap_delay(it)
-  if delay < C.alert_slow_weap_min then return nil end
-
-  if delay > bs_highest_delay and (BRC.eq.get_hands(it) == 1 or BRC.you.free_offhand()) then
-    bs_highest_delay = delay
-    if BRC.eq.get_hands(it) == 1 then bs_highest_delay_1h = delay end
+  local num_hands = is_slowest_weapon(it)
+  if num_hands == 2 then
     do_alert("Found slowest weapon", it)
-  elseif delay > bs_highest_delay_1h
-    and BRC.eq.get_hands(it) == 1
-    and not BRC.you.free_offhand()
-  then
-    bs_highest_delay_1h = delay
+  elseif num_hands == 1 then
     do_alert("Found slowest 1-handed weapon", it)
   end
 end
