@@ -110,6 +110,24 @@ function macro_brc_rest()
 end
 
 ---- Crawl hook functions ----
+function f_fully_recover.c_message(text, channel)
+  if recovery_start_turn == nil then return end
+  if channel == "plain" and (
+    text:contains("You start resting.") or
+    text:contains("You start waiting.") or
+    (f_announce_hp_mp and f_announce_hp_mp.msg_is_meter(text)) -- ignore announce-hp-mp messages
+  ) then
+    return
+  end
+
+  -- Always stop the current recovery, and ready() will re-evaluate with the updated player status
+  -- For any non-duration/recovery message, abort the recovery entirely.
+  you.stop_activity()
+  if channel ~= "duration" and channel ~= "recovery" then
+    recovery_start_turn = nil
+  end
+end
+
 function f_fully_recover.ready()
   if recovery_start_turn == nil then return end
   if fully_recovered() then

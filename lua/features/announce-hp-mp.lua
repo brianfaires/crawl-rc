@@ -157,12 +157,15 @@ local function get_mp_message(mp_delta, mmp_delta)
 end
 
 local function last_msg_is_meter()
-  local meter_chars = C.meter_length + 2 * #(BRC.txt.clean(C.HP_METER.BORDER) or "")
   local last_msg = crawl.messages(1)
-  if not (last_msg and #last_msg > meter_chars + 4) then return false end
+  return f_announce_hp_mp.msg_is_meter(last_msg)
+end
 
-  local s = last_msg:sub(meter_chars + 1, meter_chars + 4)
-  return s == " HP[" or s == " MP["
+---- Public API ----
+function f_announce_hp_mp.msg_is_meter(msg)
+  -- Might be better to check more rigorously, but this seems robust and quick.
+  msg = BRC.txt.clean(msg)
+  return msg:contains("] -> ") and (msg:contains(" HP[") or msg:contains(" MP["))
 end
 
 ---- Crawl hook functions ----
