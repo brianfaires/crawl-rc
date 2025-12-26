@@ -768,8 +768,20 @@ brc_config_explicit = {
 
   ["mute-messages"] = {
     disabled = false,
+    do_exploration_mutes = true, -- Mute boring messages while auto-exploring
     mute_level = 2,
     messages = {
+      -- Only mute these when auto-exploring
+      explore_only = {
+        "There is a.*(staircase|door|gate|hatch).*here",
+        "You enter the shallow water",
+        "Moving in this stuff is going to be slow",
+        "You see here .*(corpse|skeleton)",
+        "You.*open the door",
+        "You disentangle yourself",
+        "You see here .*",
+      },
+
       -- Light reduction; unnecessary messages
       [1] = {
 
@@ -6420,7 +6432,7 @@ function f_fully_recover.init()
   recovery_start_turn = nil
   explore_after_recovery = nil
 
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore", true)
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_REST") or "5", "macro_brc_rest")
   BRC.opt.runrest_ignore_message("recovery:.*", true)
   BRC.opt.runrest_ignore_message("duration:.*", true)
@@ -6465,26 +6477,37 @@ local function remove_statuses_from_list()
   end
 end
 
+--- If both CMD_EXPLORE macros are enabled, muted_explore is overridden. This function calls it.
+local function do_cmd_wrapper(cmd)
+  if cmd == "CMD_EXPLORE" and macro_brc_muted_explore then
+    macro_brc_muted_explore()
+  else
+    BRC.util.do_cmd(cmd)
+  end
+end
+
 local function complete_recovery()
   local turns = you.turns() - recovery_start_turn
   recovery_start_turn = nil
   if turns > 0 then
     you.stop_activity()
     BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
-    if explore_after_recovery then BRC.util.do_cmd("CMD_EXPLORE") end
+    if explore_after_recovery then
+      do_cmd_wrapper("CMD_EXPLORE")
+    end
   end
 end
 
 local function start_recovery(cmd)
   if BRC.active == false or f_fully_recover.Config.disabled or not you.feel_safe() then
-    return BRC.util.do_cmd(cmd)
+    return do_cmd_wrapper(cmd)
   end
 
   if fully_recovered() then
     if recovery_start_turn ~= nil then
       complete_recovery()
     else
-      BRC.util.do_cmd(cmd)
+      do_cmd_wrapper(cmd)
     end
   elseif not you.feel_safe() then
     recovery_start_turn = nil
@@ -6492,7 +6515,7 @@ local function start_recovery(cmd)
   else
     recovery_start_turn = you.turns()
     explore_after_recovery = cmd == "CMD_EXPLORE"
-    BRC.util.do_cmd("CMD_REST")
+    do_cmd_wrapper("CMD_REST")
   end
 end
 
@@ -6539,7 +6562,7 @@ function f_fully_recover.ready()
     recovery_start_turn = nil
     you.stop_activity()
   else
-    BRC.util.do_cmd("CMD_REST")
+    do_cmd_wrapper("CMD_REST")
   end
 end
 
@@ -6892,8 +6915,20 @@ end
 f_mute_messages = {}
 f_mute_messages.BRC_FEATURE_NAME = "mute-messages"
 f_mute_messages.Config = {
+  do_exploration_mutes = true, -- Mute boring messages while auto-exploring
   mute_level = 2,
   messages = {
+    -- Only mute these when auto-exploring
+    explore_only = {
+      "There is a.*(staircase|door|gate|hatch).*here",
+      "You enter the shallow water",
+      "Moving in this stuff is going to be slow",
+      "You see here .*(corpse|skeleton)",
+      "You.*open the door",
+      "You disentangle yourself",
+      "You see here .*",
+    },
+
     -- Light reduction; unnecessary messages
     [1] = {
       -- Unnecessary
@@ -6979,8 +7014,26 @@ f_mute_messages.Config = {
   },
 } -- f_mute_messages.Config (do not remove this comment)
 
+---- Macro functions ----
+function macro_brc_muted_explore()
+  if BRC.active and
+    not f_mute_messages.Config.disabled and
+    f_mute_messages.Config.do_exploration_mutes
+  then
+    for _, message in ipairs(f_mute_messages.Config.messages.explore_only) do
+      BRC.opt.single_turn_mute(message)
+    end
+  end
+
+  BRC.util.do_cmd("CMD_EXPLORE")
+end
+
 ---- Initialization ----
 function f_mute_messages.init()
+  if f_mute_messages.Config.do_exploration_mutes then
+    BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_muted_explore")
+  end
+
   if f_mute_messages.Config.mute_level and f_mute_messages.Config.mute_level > 0 then
     for i = 1, f_mute_messages.Config.mute_level do
       if not f_mute_messages.Config.messages[i] then break end

@@ -9,11 +9,26 @@
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.show_debug_messages = false
+BRC.Config.mpr.logs_to_stderr = false
 
 f_mute_messages = {}
 f_mute_messages.Config = {
+  do_exploration_mutes = true, -- Mute boring messages while auto-exploring
   mute_level = 2,
   messages = {
+    -- Only mute these when auto-exploring
+    explore_only = {
+      "There is a.*(staircase|door|gate|hatch).*here",
+      "You enter the shallow water",
+      "Moving in this stuff is going to be slow",
+      "You see here .*(corpse|skeleton)",
+      "You.*open the door",
+      "You disentangle yourself",
+      "You see here .*",
+    },
+
     -- Light reduction; unnecessary messages
     [1] = {
       -- Unnecessary
@@ -99,15 +114,183 @@ f_mute_messages.Config = {
   },
 } -- f_mute_messages.Config (do not remove this comment)
 
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5, ["Cntl-5"] = 53 }
+
+
 -- BRC module tables (Don't overwrite existing globals)
+BRC.mpr = BRC.mpr or {}
 BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
+BRC.util = BRC.util or {}
+
+-- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, msg_color)
+  -- Avoid referencing BRC, to stay robust during startup
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.debug(message, context)
+  if BRC.Config.mpr.show_debug_messages then
+    log_message(message, context, BRC.COL.lightblue)
+  end
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
+  end
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+
+  if not skip_more then
+    crawl.redraw_screen()
+    crawl.more()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
+  end
+end
 
 -- BRC.opt module
 local _claimed_macro_keys = {}
 
+function BRC.opt.macro(key, function_name, overwrite_existing)
+  -- Format msg for debugging and keycode for crawl.setopt()
+  local key_str = nil
+  if type(key) == "number" then
+    -- Try to convert to key name for better debug msg
+    for k, v in pairs(BRC.KEYS) do
+      if v == key then
+        key_str = "<<< " .. k .. " >>"
+        break
+      end
+    end
+    -- Format keycode string for crawl.setopt()
+    key = "\\{" .. key .. "}"
+    if key_str == nil then key_str = "<<< \\" .. key .. " >>" end
+  end
+
+  -- The << >> formatting protects against crawl thinking '<' is a tag
+  if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
+
+  if type(_G[function_name]) == "function" then
+    if _claimed_macro_keys[key] and not overwrite_existing then
+      BRC.mpr.debug("Macro key %s is already assigned to %s", key_str, _claimed_macro_keys[key])
+      return
+    end
+    crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+    _claimed_macro_keys[key] = function_name
+    BRC.mpr.debug(
+      string.format(
+        "Assigned macro %s to key: %s",
+        BRC.txt.magenta(function_name .. "()"),
+        BRC.txt.lightred(key_str)
+      )
+    )
+  else
+    function_name = _claimed_macro_keys[key]
+    if not function_name then
+      crawl.mpr("no function name found for key: " .. key)
+      return
+    end
+    crawl.setopt(string.format("macros += M %s %s", key, key))
+    _claimed_macro_keys[key] = nil
+    BRC.mpr.debug(
+      string.format(
+        "Cleared macro %s from key: %s",
+        BRC.txt.magenta(function_name .. "()"),
+        BRC.txt.lightred(key_str)
+      )
+    )
+  end
+end
+
 function BRC.opt.message_mute(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+function BRC.opt.single_turn_mute(pattern)
+  BRC.opt.message_mute(pattern, true)
+  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
+-- BRC.util module
+function BRC.util.cntl(c)
+  if c >= '0' and c <= '9' or c >= 'a' and c <= 'z' then
+    return string.byte(c) - 96
+  elseif c >= 'A' and c <= 'Z' then
+    return string.byte(c) - 64
+  end
+
+  BRC.mpr.error("Unsupported character sent to BRC.util.cntl: %s", c)
+  return nil
+end
+
+function BRC.util.do_cmd(cmd)
+  local key = BRC.util.get_cmd_key(cmd)
+  if key then
+    crawl.sendkeys({ key })
+    crawl.flush_input()
+  else
+    crawl.do_commands({ cmd })
+  end
+end
+
+function BRC.util.get_cmd_key(cmd)
+  local key = crawl.get_command(cmd)
+  if not key or key == "NULL" then return nil end
+  -- get_command returns things like "Uppercase Ctrl-S"; we just want 'S'
+  local char_key = key:sub(-1)
+  return key:contains("Ctrl") and BRC.util.cntl(char_key) or char_key
+end
+
+-- single turn mutes support: _single_turn_mutes and BRC.opt.clear_single_turn_mutes()
+_single_turn_mutes = {}
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -117,8 +300,26 @@ end
 
 
 
+---- Macro functions ----
+function macro_brc_muted_explore()
+  if BRC.active and
+    not f_mute_messages.Config.disabled and
+    f_mute_messages.Config.do_exploration_mutes
+  then
+    for _, message in ipairs(f_mute_messages.Config.messages.explore_only) do
+      BRC.opt.single_turn_mute(message)
+    end
+  end
+
+  BRC.util.do_cmd("CMD_EXPLORE")
+end
+
 ---- Initialization ----
 function f_mute_messages.init()
+  if f_mute_messages.Config.do_exploration_mutes then
+    BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_muted_explore")
+  end
+
   if f_mute_messages.Config.mute_level and f_mute_messages.Config.mute_level > 0 then
     for i = 1, f_mute_messages.Config.mute_level do
       if not f_mute_messages.Config.messages[i] then break end
@@ -126,6 +327,17 @@ function f_mute_messages.init()
         BRC.opt.message_mute(message, true)
       end
     end
+  end
+end
+
+
+-- Crawl hook wrappers
+local brc_last_turn = -1
+function ready(...)
+  BRC.opt.clear_single_turn_mutes()
+  if you.turns() > brc_last_turn then
+    brc_last_turn = you.turns()
+    f_mute_messages.ready(...)
   end
 end
 

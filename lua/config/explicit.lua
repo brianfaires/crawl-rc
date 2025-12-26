@@ -478,8 +478,20 @@ brc_config_explicit = {
 
   ["mute-messages"] = {
     disabled = false,
+    do_exploration_mutes = true, -- Mute boring messages while auto-exploring
     mute_level = 2,
     messages = {
+      -- Only mute these when auto-exploring
+      explore_only = {
+        "There is a.*(staircase|door|gate|hatch).*here",
+        "You enter the shallow water",
+        "Moving in this stuff is going to be slow",
+        "You see here .*(corpse|skeleton)",
+        "You.*open the door",
+        "You disentangle yourself",
+        "You see here .*",
+      },
+
       -- Light reduction; unnecessary messages
       [1] = {
 

@@ -36,6 +36,7 @@ globals = {
   "macro_brc_downstairs",
   "macro_brc_dump_character",
   "macro_brc_explore",
+  "macro_brc_muted_explore",
   "macro_brc_fire",
   "macro_brc_go_up",
   "macro_brc_hotkey",

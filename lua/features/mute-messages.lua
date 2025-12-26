@@ -6,8 +6,20 @@
 f_mute_messages = {}
 f_mute_messages.BRC_FEATURE_NAME = "mute-messages"
 f_mute_messages.Config = {
+  do_exploration_mutes = true, -- Mute boring messages while auto-exploring
   mute_level = 2,
   messages = {
+    -- Only mute these when auto-exploring
+    explore_only = {
+      "There is a.*(staircase|door|gate|hatch).*here",
+      "You enter the shallow water",
+      "Moving in this stuff is going to be slow",
+      "You see here .*(corpse|skeleton)",
+      "You.*open the door",
+      "You disentangle yourself",
+      "You see here .*",
+    },
+
     -- Light reduction; unnecessary messages
     [1] = {
       -- Unnecessary
@@ -93,8 +105,26 @@ f_mute_messages.Config = {
   },
 } -- f_mute_messages.Config (do not remove this comment)
 
+---- Macro functions ----
+function macro_brc_muted_explore()
+  if BRC.active and
+    not f_mute_messages.Config.disabled and
+    f_mute_messages.Config.do_exploration_mutes
+  then
+    for _, message in ipairs(f_mute_messages.Config.messages.explore_only) do
+      BRC.opt.single_turn_mute(message)
+    end
+  end
+
+  BRC.util.do_cmd("CMD_EXPLORE")
+end
+
 ---- Initialization ----
 function f_mute_messages.init()
+  if f_mute_messages.Config.do_exploration_mutes then
+    BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_muted_explore")
+  end
+
   if f_mute_messages.Config.mute_level and f_mute_messages.Config.mute_level > 0 then
     for i = 1, f_mute_messages.Config.mute_level do
       if not f_mute_messages.Config.messages[i] then break end
