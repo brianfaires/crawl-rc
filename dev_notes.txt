@@ -1,12 +1,11 @@
 ### todos / bugs
-- Bug: swallowing keypresses; happens the turn AFTER move_to appears
-  Also, move_to appears a turn too late.
-  Also, when travel is interrupted; it should re-prompt, and it also swallows the next keypress.
 
 ### Can't reproduce locally:
+- (Fixed?)
+  - move_to hotkey swallowing keypresses
+  - Also, when travel is interrupted; it should re-prompt, and it also swallows the next keypress. (works w/ mons interrupt)
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
 - in pan: redrawing screen on every turn of travel (fixed?)
-
 
 
 ### crawl PRs / issues affecting BRC
@@ -26,7 +25,6 @@ stacks are only checked for autopickup when visited
 1. fully-recover:
   - Wait for allies to fully heal
   - Wait for ancestor respawn
-  - Capture in fully_recovered() to stop resting when this happens.
   - Make use of explore_auto_rest_status to replace fully-recover.lua.
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
     (Maybe could fix with >1 ready() / turn... Try macro'ing: { WAIT, READY, EXPLORE }?)
@@ -36,6 +34,7 @@ stacks are only checked for autopickup when visited
 1. announce shop names/types as they come into view
 
 ### Backlog
+1. Rest starts w/1 turn of autopickup (if inv not full)
 1. Speed improvements:
   - int instead of floats
   - extra level of 'items_alerted' table: item_db_name -> ego -> plus
@@ -43,7 +42,6 @@ stacks are only checked for autopickup when visited
     (Removed previous cache due to minimal impact, vs code clarity + robustness)
 1. BRC core/util:
   - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
-1. Rest starts w/1 turn of autopickup (if inv not full)
 1. alert-monsters:
   - level-specific fm ignores (eg vault warden on v:5)
   - torment helper; unique color / display count or list of tormentors in LOS

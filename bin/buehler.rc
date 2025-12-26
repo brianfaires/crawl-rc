@@ -3939,7 +3939,7 @@ local function set_waypoint_hotkey(name, push_front, feature_name, queue_pickup)
       end
     end
 
-    --util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
+    util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
 
     if not feature_name and queue_pickup ~= false then
