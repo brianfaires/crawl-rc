@@ -9,6 +9,8 @@ Realtime features:
 - pickup_shields config
   - Train Shields on shield pickup/equip
 
+- Add more comments to feature files, especially for the config options.
+
 
 ### Can't reproduce locally:
 - (Fixed?)
