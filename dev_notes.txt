@@ -1,4 +1,14 @@
-### todos / bugs
+### TODO
+Realtime features:
+  - Print realtime on milestones (enter lair, get rune, ...)
+- Conditions for Stop on stairs:
+  - up vs down, hatches
+  - level, xl, etc
+- Heal before Cntl-D / Cntl-E
+- Artefact weapon alerts: 'min_skill' for alerts; sans "+Blink"
+- pickup_shields config
+  - Train Shields on shield pickup/equip
+
 
 ### Can't reproduce locally:
 - (Fixed?)

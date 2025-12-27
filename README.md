@@ -64,9 +64,9 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Turncount-specific
 
 _(disabled by default; enabled in the turncount config)_
-- **announce-items** (Turncount) - Prints messages describing floor items like gold/wands/books as they come into view
-- **bread-swinger** (Turncount) - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
-- **display-realtime** (Speedrun) - Every x seconds (default 60), display the current real time.
+- **announce-items** (Turncount speedrun) - Prints messages describing floor items like gold/wands/books as they come into view
+- **bread-swinger** (Turncount speedrun) - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
+- **display-realtime** (Realtime speedrun) - Every x seconds (default 60), display the current real time.
 
 ---
 
@@ -160,8 +160,8 @@ Included configs:
 - **Testing**: Turns on debug messages, and disables any features not explicitly configured.
 - **Explicit**: A big config with every field defined, set to default values.
 - _**Others**_:
-  - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
-  - **Speed**: For speed runs (reduced prompts + alerts)
+  - **Turncount**: For high score / turncount speedruns (disable autopickup, auto-display info for items in view)
+  - **Realtime**: For realtime speedruns (reduced prompts + alerts)
 
 ### 4. Set which config to load
 

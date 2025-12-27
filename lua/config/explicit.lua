@@ -554,7 +554,7 @@ brc_config_explicit = {
         "Your shadow attacks",
       },
 
-      -- Heavily reduced messages for speed runs
+      -- Heavily reduced messages for realtime speedruns
       [3] = {
         "No target in view",
         "You (bite|headbutt|kick)",

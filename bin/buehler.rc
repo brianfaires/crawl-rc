@@ -200,13 +200,13 @@ brc_config_turncount = {
 ############################### End lua/config/turncount.lua ###############################
 ##########################################################################################
 
-################################### Begin lua/config/speed.lua ###################################
+################################### Begin lua/config/realtime.lua ###################################
 ############### https://github.com/brianfaires/crawl-rc/ ###############
 {
---- Speed Config Profile: For speed runs
+--- Realtime Config Profile: For realtime speedruns
 
-brc_config_speed = {
-  BRC_CONFIG_NAME = "Speed",
+brc_config_realtime = {
+  BRC_CONFIG_NAME = "Realtime",
 
   emojis = true,
 
@@ -279,10 +279,10 @@ brc_config_speed = {
     crawl.setopt("view_delay = 100")
     crawl.setopt("enable_more = false")
   end,
-} -- brc_config_speed (do not remove this comment)
+} -- brc_config_realtime (do not remove this comment)
 
 }
-############################### End lua/config/speed.lua ###############################
+############################### End lua/config/realtime.lua ###############################
 ##########################################################################################
 
 ################################### Begin lua/config/explicit.lua ###################################
@@ -844,7 +844,7 @@ brc_config_explicit = {
         "Your shadow attacks",
       },
 
-      -- Heavily reduced messages for speed runs
+      -- Heavily reduced messages for realtime speedruns
       [3] = {
         "No target in view",
         "You (bite|headbutt|kick)",
@@ -7002,7 +7002,7 @@ f_mute_messages.Config = {
       "Your shadow attacks",
     },
 
-    -- Heavily reduced messages for speed runs
+    -- Heavily reduced messages for realtime speedruns
     [3] = {
       "No target in view",
       "You (bite|headbutt|kick)",

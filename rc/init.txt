@@ -7,7 +7,7 @@ lua_file = crawl-rc/lua/core/_header.lua
 lua_file = crawl-rc/lua/config/custom.lua
 lua_file = crawl-rc/lua/config/testing.lua
 lua_file = crawl-rc/lua/config/turncount.lua
-lua_file = crawl-rc/lua/config/speed.lua
+lua_file = crawl-rc/lua/config/realtime.lua
 lua_file = crawl-rc/lua/config/explicit.lua
 
 ### Mostly normal RC options ###

@@ -1,7 +1,7 @@
---- Speed Config Profile: For speed runs
+--- Realtime Config Profile: For realtime speedruns
 
-brc_config_speed = {
-  BRC_CONFIG_NAME = "Speed",
+brc_config_realtime = {
+  BRC_CONFIG_NAME = "Realtime",
 
   emojis = true,
 
@@ -74,4 +74,4 @@ brc_config_speed = {
     crawl.setopt("view_delay = 100")
     crawl.setopt("enable_more = false")
   end,
-} -- brc_config_speed (do not remove this comment)
+} -- brc_config_realtime (do not remove this comment)
