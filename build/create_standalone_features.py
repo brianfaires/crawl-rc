@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Standalone Feature Generator for BRC
 
@@ -36,7 +35,6 @@ BRC_MODULES = {
 
 BRC_CONSTANTS = core_dir / "constants.lua"
 BRC_HEADER = core_dir / "_header.lua"
-
 CRAWL_HOOKS = ["ready", "autopickup", "c_answer_prompt", "c_assign_invletter", "c_message", "ch_start_running"]
 
 # ============================================================================
@@ -83,9 +81,7 @@ def match_constant_definition(content: str, const_name: str) -> Optional[str]:
             if depth == 0:
                 end_pos = i + 1
                 next_newline = content.find('\n', end_pos)
-                if next_newline == -1:
-                    next_newline = len(content)
-                remaining = content[end_pos:next_newline]
+                remaining = content[end_pos:next_newline if next_newline != -1 else len(content)]
                 comment_match = re.search(r'\s*--[^\n]*', remaining)
                 return content[match.start():end_pos + (comment_match.end() if comment_match else 0)]
     return None
@@ -121,8 +117,7 @@ def _find_function_by_pattern(lines: List[str], pattern: re.Pattern, start_idx: 
     for i in range(start_idx, len(lines)):
         match = pattern.match(lines[i].strip())
         if match:
-            func_name = match.group(1) if match.lastindex else None
-            return (i, func_name)
+            return (i, match.group(1) if match.lastindex else None)
     return None
 
 def extract_lua_function(module_name: str, function_name: str) -> Optional[str]:
@@ -130,9 +125,7 @@ def extract_lua_function(module_name: str, function_name: str) -> Optional[str]:
     module_var = module_name.split('.')[1]
     pattern = re.compile(rf'^function\s+BRC\.{re.escape(module_var)}\.{re.escape(function_name)}\s*\(')
     result = _find_function_by_pattern(lines, pattern)
-    if result:
-        return '\n'.join(_extract_function_block(lines, result[0]))
-    return None
+    return '\n'.join(_extract_function_block(lines, result[0])) if result else None
 
 def extract_local_functions(file_path: Path) -> Dict[str, str]:
     lines = _get_cached_lines(file_path)
@@ -158,9 +151,9 @@ def extract_top_level(file_path: Path) -> str:
     skip_patterns = {"local _mpr_queue = {}", "local _single_turn_mutes = {}", 
                      'getmetatable("").__index.contains = BRC.txt.contains'}
     
-    for i, line in enumerate(lines):
+    for line in lines:
         stripped = line.strip()
-        if (not stripped or stripped.startswith('--') or stripped in skip_patterns):
+        if not stripped or stripped.startswith('--') or stripped in skip_patterns:
             continue
         
         current_indent = len(line) - len(line.lstrip())
@@ -190,7 +183,6 @@ def get_txt_contains_code() -> str:
         "end",
         'getmetatable("").__index.contains = BRC_txt_str_contains',
     ])
-
 
 def get_minimal_persist_code() -> str:
     return "\n".join([
@@ -255,7 +247,6 @@ class DependencyAnalyzer:
         changed = True
         while changed:
             changed = self._extract_dependencies_recursively()
-
             prev_modules = len(self.used_modules)
             self._extract_top_level()
             if len(self.used_modules) > prev_modules:
@@ -651,7 +642,6 @@ class StandaloneGenerator:
                 const = match_constant_definition(_get_cached_text(BRC_CONSTANTS), c)
                 config_content = f"\n{const}\n\n{config_content}"
 
-
         return config_content
     
     def _generate_feature_code(self) -> str:
@@ -720,7 +710,6 @@ def process_feature(analyzer: DependencyAnalyzer, output_name: str, display_name
         display_name = output_name
     
     print(f"Analyzing feature: {display_name}")
-    
     analyzer.analyze()
     
     print(f"  Dependencies found:")
@@ -729,8 +718,7 @@ def process_feature(analyzer: DependencyAnalyzer, output_name: str, display_name
     print(f"    Constants: {sorted(analyzer.used_constants)}")
     
     generator = StandaloneGenerator(analyzer, f_var_name)
-    standalone_content = generator.generate()
-    standalone_content += "\n}\n"
+    standalone_content = generator.generate() + "\n}\n"
 
     output_file = output_dir / f"{output_name}.rc"
     output_file.write_text(standalone_content, encoding='utf-8')
@@ -739,10 +727,6 @@ def process_feature(analyzer: DependencyAnalyzer, output_name: str, display_name
     print(f"  Size: {len(standalone_content)} characters, {len(standalone_content.splitlines())} lines")
     print()
 
-# ============================================================================
-# Main Entry Point
-# ============================================================================
-
 def main():
     for feature_path in features_dir.glob("*.lua"):
         if "_template" in feature_path.name:
@@ -750,16 +734,8 @@ def main():
         analyzer = DependencyAnalyzer(feature_path)
         process_feature(analyzer, feature_path.stem.replace('_', '-'))
     
-    # Special handling for pickup-alert: concatenate multiple files
     pickup_alert_dir = features_dir / "pickup-alert"
-    pickup_alert_files = [
-        "pa-config.lua",
-        "pa-main.lua",
-        "pa-data.lua",
-        "pa-armour.lua",
-        "pa-misc.lua",
-        "pa-weapons.lua",
-    ]
+    pickup_alert_files = ["pa-config.lua", "pa-main.lua", "pa-data.lua", "pa-armour.lua", "pa-misc.lua", "pa-weapons.lua"]
     
     concatenated_content = []
     for filename in pickup_alert_files:
