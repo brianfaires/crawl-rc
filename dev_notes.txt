@@ -1,4 +1,8 @@
 ### TODO
+Turncount features:
+- OTA for spells
+- POG macro / ignore monsteres for POG or shift-dir
+
 Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)
 - Conditions for Stop on stairs:
