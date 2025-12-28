@@ -8353,27 +8353,26 @@ local function mark_stacked_items()
 
   for x = -r, r do
     for y = -r, r do
-      if not you.see_cell(x, y) then goto continue end
-      local items_xy = items.get_items_at(x, y)
-      if not items_xy then goto continue end
-
-      local top_item_name = items_xy[1].name()
-      unmarked_item_counts[top_item_name] = (unmarked_item_counts[top_item_name] or 0) + 1
-      if #items_xy <= 1 then goto continue end
-
-      for i, it in ipairs(items_xy) do
-        if i > 1 and f_pickup_alert.autopickup(it) then
-          marked_stacks[#marked_stacks + 1] = {x, y, top_item_name, it.name()}
-          unmarked_item_counts[top_item_name] = unmarked_item_counts[top_item_name] - 1
-          if not f_pa_data.already_alerted(it) then
-            f_pickup_alert.do_alert(
-              it, "Hidden under stack", C.Emoji.AUTOPICKUP_ITEM, M.autopickup_disabled
-            )
+      if you.see_cell(x, y) then
+        local items_xy = items.get_items_at(x, y)
+        if items_xy then
+          local top_item_name = items_xy[1].name()
+          unmarked_item_counts[top_item_name] = (unmarked_item_counts[top_item_name] or 0) + 1
+          if #items_xy > 1 then
+            for i, it in ipairs(items_xy) do
+              if i > 1 and f_pickup_alert.autopickup(it) then
+                marked_stacks[#marked_stacks + 1] = {x, y, top_item_name, it.name()}
+                unmarked_item_counts[top_item_name] = unmarked_item_counts[top_item_name] - 1
+                if not f_pa_data.already_alerted(it) then
+                  f_pickup_alert.do_alert(
+                    it, "Hidden under stack", C.Emoji.AUTOPICKUP_ITEM, M.autopickup_disabled
+                  )
+                end
+              end
+            end
           end
         end
       end
-
-      ::continue::
     end
   end
 
