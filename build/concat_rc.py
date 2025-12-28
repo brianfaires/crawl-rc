@@ -2,11 +2,14 @@ from pathlib import Path
 
 base_dir = Path(__file__).parent.parent
 
+MAX_LINE_LENGTH = 99
+
 # Paths
 init_file = base_dir / "rc" / "init.txt"
 core_dir = base_dir / "lua" / "core"
 pickup_alert_dir = base_dir / "lua" / "features" / "pickup-alert"
 output_dir = base_dir / "bin"
+GITHUB_PREFIX = "https://github.com/brianfaires/crawl-rc/blob/main/"
 
 # Patterns
 rc_prefix = "include = crawl-rc/"
@@ -16,15 +19,28 @@ def get_comment_char(file_path):
     return "#" if file_path and file_path.suffix == ".lua" else "#"
 
 def write_header(file_path, outfile):
+    print(file=outfile)
+
     comment = get_comment_char(file_path)
-    name = str(file_path).replace(str(base_dir) + "/", "")
-    outfile.write(f"\n{comment * 35} Begin {name} {comment * 35}\n")
-    outfile.write(f"{comment * 15} https://github.com/brianfaires/crawl-rc/ {comment * 15}\n")
+    file_name = str(file_path).replace(str(base_dir) + "/", "")
+    lines = [f" Begin {file_name} ", f" {GITHUB_PREFIX}{file_name} "]
+    for line in lines:
+        num_chars = MAX_LINE_LENGTH - len(line)
+        post_chars = num_chars // 2
+        pre_chars = num_chars - post_chars
+        print(f"{comment * pre_chars}{line}{comment * post_chars}", file=outfile)
 
 def write_footer(file_path, outfile):
+    if file_path.suffix != ".lua":
+        print(file=outfile)
     comment = get_comment_char(file_path)
     name = str(file_path).replace(str(base_dir) + "/", "")
-    outfile.write(f"\n{comment * 31} End {name} {comment * 31}\n{comment * 90}\n")
+    end_msg = f" End {name} "
+    num_chars = MAX_LINE_LENGTH - len(end_msg)
+    post_chars = num_chars // 2
+    pre_chars = num_chars - post_chars
+    print(f"{comment * pre_chars}{end_msg}{comment * post_chars}", file=outfile)
+    print(f"{comment * MAX_LINE_LENGTH}", file=outfile)
 
 def parse_include(line):
     if line.startswith(rc_prefix):
@@ -43,7 +59,7 @@ def process_file(file_path, outfile, processed_files):
     with open(file_path, 'r', encoding='utf-8') as infile:
         write_header(file_path, outfile)
         if is_lua:
-            outfile.write("{\n")
+            print("{", file=outfile)
         
         for line in infile:
             if line.startswith(rc_prefix) or line.startswith(lua_prefix):
@@ -51,12 +67,12 @@ def process_file(file_path, outfile, processed_files):
                 if include_path and include_path.exists() and include_path not in processed_files:
                     process_file(include_path, outfile, processed_files)
                 else:
-                    outfile.write(line)
+                    print(line, end="", file=outfile)
             else:
-                outfile.write(line)
+                print(line, end="", file=outfile)
         
         if is_lua:
-            outfile.write("\n}")
+            print("\n}", file=outfile)
         write_footer(file_path, outfile)
 
 def process_line(line, outfile, processed_files):
@@ -67,16 +83,16 @@ def process_line(line, outfile, processed_files):
             process_file(include_path, outfile, processed_files)
             return True
         else:
-            outfile.write(line)
+            print(line, end="", file=outfile)
     elif line.startswith(rc_prefix):
         include_path = parse_include(line.strip())
         if include_path and include_path.exists():
             process_file(include_path, outfile, processed_files)
             return True
         else:
-            outfile.write(line)
+            print(line, end="", file=outfile)
     else:
-        outfile.write(line)
+        print(line, end="", file=outfile)
     return False
 
 def process_init_file(infile, outfile, processed_files):
