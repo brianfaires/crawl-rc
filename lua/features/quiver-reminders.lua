@@ -60,7 +60,8 @@ function macro_brc_fire()
   end
 
   if you.turns() - last_thrown_turn <= C.warn_diff_missile_turns then
-    if last_thrown ~= quivered.name("qual") then
+    local eq_name = items.equipped_at("Weapon") and items.equipped_at("Weapon").name("qual") or nil
+    if last_thrown ~= quivered.name("qual") and quivered.name("qual") ~= eq_name then
       local q = BRC.txt.lightgreen(quivered.name("qual"))
       if not BRC.mpr.yesno("Did you mean to throw " .. q .. "?") then
         local t = BRC.txt.lightgreen(last_thrown)
