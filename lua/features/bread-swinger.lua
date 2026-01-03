@@ -138,6 +138,20 @@ local function get_slowest_slot()
   local largest_delay = 0
   local slowest_item_1h = nil
   local largest_delay_1h = 0
+
+  -- Initialize to wielded weapon; so we don't swap for an equivalent.
+  local it = items.equipped_at("Weapon")
+  if it and it.class() == "Hand Weapons" then
+    local weap_delay = BRC.eq.get_weap_delay(it)
+    largest_delay = weap_delay
+    slowest_item = it
+    if BRC.eq.get_hands(it) == 1 then
+      largest_delay_1h = weap_delay
+      slowest_item_1h = it
+    end
+  end
+
+  -- Scan inventory for slowest weapon
   for _, item in ipairs(items.inventory()) do
     if item.class() == "Hand Weapons" then
       local weap_delay = BRC.eq.get_weap_delay(item)
@@ -153,14 +167,16 @@ local function get_slowest_slot()
   end
   if not slowest_item then return nil end
 
-  -- May be more efficient to unequip shield and rest with a slower 2-handed weapon.
+  -- Often is more efficient to unequip shield and rest with a slower 2-handed weapon.
   if not BRC.you.free_offhand() and BRC.eq.get_hands(slowest_item) > 1 then
     local msg = BRC.txt.white(SH_PROMPT .. BRC.txt.lightcyan(slowest_item.name("db")) .. "?")
     if BRC.mpr.yesno(msg) then
       items.equipped_at("offhand").remove()
       bs_removed_shield = true
-    else
+    elseif slowest_item_1h then
       slowest_item = slowest_item_1h
+    else
+      return nil
     end
   end
 
@@ -169,6 +185,7 @@ end
 
 local function swing_item_wielded()
   local weapon = items.equipped_at("Weapon")
+  if not weapon and not swing_slot then return true end
   if not weapon or not swing_slot then return false end
   return weapon.slot == items.letter_to_index(swing_slot)
 end
@@ -204,25 +221,26 @@ end
 
 local function is_good_dir_swing(x, y)
   if x == 0 and y == 0 then return false end
+
   local weapon = items.equipped_at("Weapon")
-  if not weapon then return false end
-
-  if weapon.is_ranged then
-    -- Confirm no monsters in straight line
-    for i = 1, you.los() do
-      local cur_x = i * x
-      local cur_y = i * y
-      if is_monster(cur_x, cur_y) then return false end
-      if travel.feature_solid(view.feature_at(cur_x, cur_y)) then break end
-    end
-    return true
-  end
-
-  if weapon.weap_skill:contains("Axes") then
-    -- Confirm no monsters in adjacent squares
-    for cur_x = -1, 1 do
-      for cur_y = -1, 1 do
+  if weapon then
+    if weapon.is_ranged then
+      -- Confirm no monsters in straight line
+      for i = 1, you.los() do
+        local cur_x = i * x
+        local cur_y = i * y
         if is_monster(cur_x, cur_y) then return false end
+        if travel.feature_solid(view.feature_at(cur_x, cur_y)) then break end
+      end
+      return true
+    end
+
+    if weapon.weap_skill:contains("Axes") then
+      -- Confirm no monsters in adjacent squares
+      for cur_x = -1, 1 do
+        for cur_y = -1, 1 do
+          if is_monster(cur_x, cur_y) then return false end
+        end
       end
     end
   end
@@ -259,14 +277,16 @@ end
 
 -- Resting
 local function set_rest_type()
-  local inv = items.inslot(items.letter_to_index(swing_slot))
-  if not swing_slot
-    or (not swing_item_wielded() and not weapon_can_swap())
-    or you.movement_cost and you.movement_cost() > 10 * BRC.eq.get_weap_delay(inv)
+  local inv = swing_slot and items.inslot(items.letter_to_index(swing_slot))
+  local weap_delay = inv and BRC.eq.get_weap_delay(inv) or BRC.you.unarmed_attack_delay()
+  if (not swing_item_wielded() and not weapon_can_swap())
+    or you.movement_cost and you.movement_cost() > 10 * weap_delay
   then
     rest_type = "walk"
-  else
+  elseif weap_delay > 1 then
     rest_type = "item"
+  else
+    rest_type = "wait"
   end
 end
 
@@ -282,10 +302,7 @@ local function verify_safe_rest()
     reset_rest("Hostile monster in view!")
     return false
   elseif rest_type == "walk" then
-    if you.movement_cost and you.movement_cost() <= 10 then
-      reset_rest("You can't walk slowly right now!")
-      return false
-    elseif you.status("barbs") then
+    if you.status("barbs") then
       reset_rest("You must remove the barbs first.")
       return false
     end
@@ -296,7 +313,9 @@ end
 local function do_resting()
   if not set_good_direction() then return end
 
-  if rest_type == "item" then
+  if rest_type == "wait" then
+    BRC.util.do_cmd("CMD_SAFE_WAIT")
+  elseif rest_type == "item" then
     BRC.opt.single_turn_mute("You swing at nothing.")
     BRC.opt.single_turn_mute("You shoot ")
     BRC.opt.single_turn_mute("unstable footing causes you to fumble your attack")
@@ -353,11 +372,12 @@ function macro_brc_bread_swing(turns)
 
   -- Set swing slot
   swing_slot = bs_manual_swing_slot or get_slowest_slot()
-  if not swing_slot then return end
-  local weap = items.inslot(items.letter_to_index(swing_slot))
-  if not weap or not weap.is_weapon then
-    BRC.mpr.warning("Swing slot " .. BRC.txt.lightmagenta(swing_slot) .. " is not a weapon!")
-    return
+  if swing_slot then
+    local weap = items.inslot(items.letter_to_index(swing_slot))
+    if not weap or not weap.is_weapon then
+      BRC.mpr.warning("Swing slot " .. BRC.txt.lightmagenta(swing_slot) .. " is not a weapon!")
+      return
+    end
   end
 
   -- Determine rest type

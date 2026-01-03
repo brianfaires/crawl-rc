@@ -1,5 +1,8 @@
 ### TODO
+recent:
+
 Turncount features:
+- only alerted "slowest weap" when swapping orb->shield. Carrying broad axe, and it alerted for a floor broad axe.
 - highlight or announce glowing items (iff they might be picked up?)
 - OTA for spells
 - POG macro / ignore monsteres for POG or shift-dir
@@ -8,8 +11,9 @@ Turncount features:
 - disable 'highest dmg' alert?
 - prevent accidental long-dist travel (ie shopping list)
 
-breadswing:
-  - dont swap for same speed, diff weap
+announce-items:
+- don't announce wands upon id (ie when standing on, or right after "You see here a wand of x"?")
+
 
 hotkey:
   - move to only if on same floor
@@ -17,6 +21,7 @@ hotkey:
   - "move to +0 ring mail"; but a +4 ring mail was alerted after (diff items);
   - read id hotkey shows up a turn after the "scroll of id" message that triggered it
   - triggering on "you see: scroll of id"
+  - walking, found temple (swallowed); stepped to entrance, OTA buckler; weird map screen after entering temple. Esc -> showed altar search
   
 quiver-alerts:
   - disable when wielded weapon is quivered

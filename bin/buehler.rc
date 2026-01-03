@@ -1972,7 +1972,7 @@ BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 BRC.BAD_DURATIONS = {
     "berserk", "blind", "confused", "corroded", "diminished spells",
     "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
-    "sluggish", "tree-form", "vulnerable", "weakened",
+    "sluggish", "tree-form", "vertiginous", "vulnerable", "weakened",
 } -- BRC.BAD_DURATIONS (do not remove this comment)
 
 }
@@ -2650,6 +2650,10 @@ function BRC.you.size_penalty()
   else
     return BRC.SIZE_PENALTY.NORMAL
   end
+end
+
+function BRC.you.unarmed_attack_delay()
+  return 1 - you.skill("Unarmed Combat") / 54
 end
 
 function BRC.you.zero_stat()
@@ -5494,12 +5498,15 @@ end
 -- Resting
 local function set_rest_type()
   local inv = swing_slot and items.inslot(items.letter_to_index(swing_slot))
+  local weap_delay = inv and BRC.eq.get_weap_delay(inv) or BRC.you.unarmed_attack_delay()
   if (not swing_item_wielded() and not weapon_can_swap())
-    or you.movement_cost and you.movement_cost() > 10 * BRC.eq.get_weap_delay(inv)
+    or you.movement_cost and you.movement_cost() > 10 * weap_delay
   then
     rest_type = "walk"
-  else
+  elseif weap_delay > 1 then
     rest_type = "item"
+  else
+    rest_type = "wait"
   end
 end
 
@@ -5515,10 +5522,7 @@ local function verify_safe_rest()
     reset_rest("Hostile monster in view!")
     return false
   elseif rest_type == "walk" then
-    if you.movement_cost and you.movement_cost() <= 10 then
-      reset_rest("You can't walk slowly right now!")
-      return false
-    elseif you.status("barbs") then
+    if you.status("barbs") then
       reset_rest("You must remove the barbs first.")
       return false
     end
@@ -5529,7 +5533,9 @@ end
 local function do_resting()
   if not set_good_direction() then return end
 
-  if rest_type == "item" then
+  if rest_type == "wait" then
+    BRC.util.do_cmd("CMD_SAFE_WAIT")
+  elseif rest_type == "item" then
     BRC.opt.single_turn_mute("You swing at nothing.")
     BRC.opt.single_turn_mute("You shoot ")
     BRC.opt.single_turn_mute("unstable footing causes you to fumble your attack")

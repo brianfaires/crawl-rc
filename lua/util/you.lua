@@ -69,6 +69,10 @@ function BRC.you.size_penalty()
   end
 end
 
+function BRC.you.unarmed_attack_delay()
+  return 1 - you.skill("Unarmed Combat") / 54
+end
+
 function BRC.you.zero_stat()
   return you.strength() <= 0 or you.dexterity() <= 0 or you.intelligence() <= 0
 end
