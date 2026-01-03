@@ -1,25 +1,47 @@
 ### TODO
 Turncount features:
+- highlight or announce glowing items (iff they might be picked up?)
 - OTA for spells
 - POG macro / ignore monsteres for POG or shift-dir
+- tele into see trident; prompted for read ?id
+- don't upgrade old, basic weaps that i just dont wanna drop
+- disable 'highest dmg' alert?
+- prevent accidental long-dist travel (ie shopping list)
+
+breadswing:
+  - dont swap for same speed, diff weap
+
+hotkey:
+  - move to only if on same floor
+  - [bug?] swallowing keypress again? when walking and comes into view
+  - "move to +0 ring mail"; but a +4 ring mail was alerted after (diff items);
+  - read id hotkey shows up a turn after the "scroll of id" message that triggered it
+  - triggering on "you see: scroll of id"
+  
+quiver-alerts:
+  - disable when wielded weapon is quivered
+
+inscribe-stats:
+  - option to skip DPS (for turncount runs)
+  - use diff inscription rules for staves (to show dmg)
+
+Misc:
+  - Add more comments to feature files, especially for the config options.
+  - reading scroll off ground, not auto-assigning copy in inventory to its slot
+  - prevent drinking potion of lignification over deep water (just wastes the turn)
+  - disable fm for arte armour
 
 Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)
-- Conditions for Stop on stairs:
-  - up vs down, hatches
-  - level, xl, etc
-- Heal before Cntl-D / Cntl-E
-- Artefact weapon alerts: 'min_skill' for alerts; sans "+Blink"
-- pickup_shields config
-  - Train Shields on shield pickup/equip
-
-- Add more comments to feature files, especially for the config options.
-
+  - Conditions for Stop on stairs:
+    - up vs down, hatches
+    - level, xl, etc
+  - Heal before Cntl-D / Cntl-E
+  - Artefact weapon alerts: 'min_skill' for alerts; sans "+Blink"
+  - pickup_shields config
+    - Train Shields on shield pickup/equip
 
 ### Can't reproduce locally:
-- (Fixed?)
-  - move_to hotkey swallowing keypresses
-  - Also, when travel is interrupted; it should re-prompt, and it also swallows the next keypress. (works w/ mons interrupt)
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
 - in pan: redrawing screen on every turn of travel (fixed?)
 

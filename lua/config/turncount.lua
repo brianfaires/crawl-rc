@@ -28,6 +28,10 @@ brc_config_turncount = {
   ["pickup-alert"] = {
     Alert = {
       hotkey_pickup = false,
+      one_time = {
+        "distortion", "troll leather armour", "wand of digging",
+        "buckler", "kite shield", "tower shield",
+      },
     },
   },
 
@@ -35,6 +39,7 @@ brc_config_turncount = {
     crawl.setopt("show_game_time = false")
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
-    crawl.setopt("message_colour += white:Found")
+    crawl.setopt("runrest_ignore_monster ^= bat:1") -- Allows shift-dir
+    crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
   end,
 } -- brc_config_turncount (do not remove this comment)
