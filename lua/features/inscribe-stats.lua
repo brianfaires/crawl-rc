@@ -11,6 +11,7 @@ f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
   dmg_type = BRC.DMG_TYPE.unbranded, -- unbranded, plain, branded, scoring
+  skip_dps = false, -- Skip DPS in weapon inscriptions
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -59,10 +60,10 @@ local function inscribe_weapon_stats(it)
   if type(dmg_type) == "string" then
     dmg_type = BRC.DMG_TYPE[dmg_type]
   end
-  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type)
+  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, f_inscribe_stats.Config.skip_dps)
   local prefix, suffix = "", ""
 
-  local idx = orig_inscr:find("DPS=", 1, true)
+  local idx = orig_inscr:find(dps_inscr:sub(1, 4), 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then

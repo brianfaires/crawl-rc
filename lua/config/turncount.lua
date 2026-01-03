@@ -21,6 +21,9 @@ brc_config_turncount = {
   ["hotkey"] = {
     equip_hotkey = false,
   },
+  ["inscribe-stats"] = {
+    skip_dps = true,
+  },
   ["runrest-features"] = { after_shaft = false },
   ["mute-messages"] = {
     mute_level = 1,

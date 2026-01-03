@@ -165,6 +165,7 @@ brc_config_explicit = {
     inscribe_weapons = true, -- Inscribe weapon stats on pickup
     inscribe_armour = true, -- Inscribe armour stats on pickup
     dmg_type = "unbranded", -- unbranded, plain, branded, scoring
+    skip_dps = false, -- Skip DPS in weapon inscriptions
   },
 
   ["misc-alerts"] = {

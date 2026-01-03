@@ -19,7 +19,6 @@ hotkey:
   - walking, found temple (swallowed); stepped to entrance, OTA buckler; weird map screen after entering temple. Esc -> showed altar search
   
 inscribe-stats:
-  - option to skip DPS (for turncount runs)
   - use diff inscription rules for staves (to show dmg)
 
 Misc:

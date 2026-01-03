@@ -180,6 +180,9 @@ brc_config_turncount = {
   ["hotkey"] = {
     equip_hotkey = false,
   },
+  ["inscribe-stats"] = {
+    skip_dps = true,
+  },
   ["runrest-features"] = { after_shaft = false },
   ["mute-messages"] = {
     mute_level = 1,
@@ -462,6 +465,7 @@ brc_config_explicit = {
     inscribe_weapons = true, -- Inscribe weapon stats on pickup
     inscribe_armour = true, -- Inscribe armour stats on pickup
     dmg_type = "unbranded", -- unbranded, plain, branded, scoring
+    skip_dps = false, -- Skip DPS in weapon inscriptions
   },
 
   ["misc-alerts"] = {
@@ -2980,7 +2984,7 @@ end
 
 --- Get weapon stats as a string
 -- @return (string) DPS, damage, delay, and accuracy
-function BRC.eq.wpn_stats(it, dmg_type)
+function BRC.eq.wpn_stats(it, dmg_type, skip_dps)
   if not it.is_weapon then return end
   if not dmg_type then
     -- Default to pulling from inscribe-stats config, if it exists. Else use plain.
@@ -3008,8 +3012,9 @@ function BRC.eq.wpn_stats(it, dmg_type)
   if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
-  --return string.format("DPS=<w>%s</w> (%s/%s) Acc<w>%s</w>", dps, dmg, delay_str, acc)
-  return string.format("DPS=%s (%s/%s) Acc%s", dps, dmg, delay_str, acc)
+  --return string.format("DPS=<w>%s</w> (%s/%s) Ac<w>%s</w>", dps, dmg, delay_str, acc)
+  if skip_dps then return string.format("Dmg=%s/%s A%s", dmg, delay_str, acc) end
+  return string.format("DPS=%s (%s/%s) A%s", dps, dmg, delay_str, acc)
 end
 
 
@@ -6722,6 +6727,7 @@ f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
   dmg_type = BRC.DMG_TYPE.unbranded, -- unbranded, plain, branded, scoring
+  skip_dps = false, -- Skip DPS in weapon inscriptions
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -6770,10 +6776,10 @@ local function inscribe_weapon_stats(it)
   if type(dmg_type) == "string" then
     dmg_type = BRC.DMG_TYPE[dmg_type]
   end
-  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type)
+  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, f_inscribe_stats.Config.skip_dps)
   local prefix, suffix = "", ""
 
-  local idx = orig_inscr:find("DPS=", 1, true)
+  local idx = orig_inscr:find(dps_inscr:sub(1, 4), 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
     if idx + #dps_inscr - 1 < #orig_inscr then

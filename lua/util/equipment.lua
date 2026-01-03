@@ -241,7 +241,7 @@ end
 
 --- Get weapon stats as a string
 -- @return (string) DPS, damage, delay, and accuracy
-function BRC.eq.wpn_stats(it, dmg_type)
+function BRC.eq.wpn_stats(it, dmg_type, skip_dps)
   if not it.is_weapon then return end
   if not dmg_type then
     -- Default to pulling from inscribe-stats config, if it exists. Else use plain.
@@ -269,8 +269,9 @@ function BRC.eq.wpn_stats(it, dmg_type)
   if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
-  --return string.format("DPS=<w>%s</w> (%s/%s) Acc<w>%s</w>", dps, dmg, delay_str, acc)
-  return string.format("DPS=%s (%s/%s) Acc%s", dps, dmg, delay_str, acc)
+  --return string.format("DPS=<w>%s</w> (%s/%s) Ac<w>%s</w>", dps, dmg, delay_str, acc)
+  if skip_dps then return string.format("Dmg=%s/%s A%s", dmg, delay_str, acc) end
+  return string.format("DPS=%s (%s/%s) A%s", dps, dmg, delay_str, acc)
 end
 
 
