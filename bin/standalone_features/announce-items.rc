@@ -20,6 +20,12 @@ f_announce_items.Config = {
   announce_duplicate_consumables = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
 
+-- define string:contains() for all strings
+function BRC_txt_str_contains(self, text)
+  return self:find(text, 1, true) ~= nil
+end
+getmetatable("").__index.contains = BRC_txt_str_contains
+
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
@@ -81,6 +87,9 @@ local function should_announce_item(it)
   if not it.is_identified then
     if it.artefact then return C.announce_artefacts end
     if it.branded then return C.announce_glowing end
+  elseif crawl.messages(2):contains(it.name()) then
+    -- Avoid duplicating "You see here ..." after floor-id
+    return false
   end
 
   return util.contains(C.announce_class, it.class(true):lower())

@@ -48,6 +48,9 @@ local function should_announce_item(it)
   if not it.is_identified then
     if it.artefact then return C.announce_artefacts end
     if it.branded then return C.announce_glowing end
+  elseif crawl.messages(2):contains(it.name()) then
+    -- Avoid duplicating "You see here ..." after floor-id
+    return false
   end
 
   return util.contains(C.announce_class, it.class(true):lower())
