@@ -151,6 +151,7 @@ channel.dgl_message = $m_attention
 msc := message_colour
 
 # Found things
+msc += $m_interesting:Found
 msc ^= $m_interface:Found a faded altar
 msc ^= $m_interface:Found a.* altar of
 msc ^= $m_alert:Found a (gate|stair).* to

@@ -187,12 +187,19 @@ brc_config_turncount = {
   ["pickup-alert"] = {
     Alert = {
       hotkey_pickup = false,
+      one_time = {
+        "distortion", "troll leather armour", "wand of digging",
+        "buckler", "kite shield", "tower shield",
+      },
     },
   },
 
   init = function()
     crawl.setopt("show_game_time = false")
     crawl.setopt("default_autopickup = false")
+    crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
+    crawl.setopt("runrest_ignore_monster ^= bat:1") -- Allows shift-dir
+    crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
   end,
 } -- brc_config_turncount (do not remove this comment)
 
@@ -331,6 +338,7 @@ brc_config_explicit = {
       antimagic = { factor = 1.1, offset = 0 },
       concuss = { factor = 1.2, offset = 0 },
       devious = { factor = 1.1, offset = 0 },
+      entangle = { factor = 1.2, offset = 0 },
       holy = { factor = 1.15, offset = 0 },
       penet = { factor = 1.3, offset = 0 },
       protect = { factor = 1.15, offset = 0 },
@@ -408,7 +416,7 @@ brc_config_explicit = {
     disabled = true, -- Disable by default
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
-    alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay.
+    alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
     set_manual_slot_key = 53, -- (Cntl-5) Manually set which weapon slot to swing
     max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
     emoji = "🍞",
@@ -784,7 +792,6 @@ brc_config_explicit = {
 
       -- Light reduction; unnecessary messages
       [1] = {
-
         -- Unnecessary
         "You now have .* runes",
         "to see all the runes you have collected",
@@ -802,7 +809,8 @@ brc_config_explicit = {
         "Your .* begins to drip with poison",
         "Your .* stops dripping with poison",
         "Your .* bursts into flame",
-        "Your .* stops flaming",
+        "Your .* quivers in your",
+        "Your .* stops (flaming|quivering)",
         "Your .* glows with a cold blue light",
         "Your .* stops glowing",
         "You hear the crackle of electricity",
@@ -1258,7 +1266,7 @@ show_more = false
 small_more = true
 mouse_input = false
 tile_web_mouse_control = false
-fail_severity_to_confirm = 3
+fail_severity_to_confirm = 4
 tile_key_repeat_delay = 100
 
 ####### Combat options #######
@@ -1510,7 +1518,7 @@ ai += of invulnerability:rInv
 ai += of magic regeneration:MRegen+
 ai += of positive energy:rN+
 ai += of regeneration:Regen+
-ai += of resistance:rF+, rC+
+ai += (?!.*potion)of resistance:rF+, rC+
 ai += of willpower:Will+
 
 # Armour (avoid double inscribing artefacts)
@@ -1704,6 +1712,7 @@ channel.dgl_message = $m_attention
 msc := message_colour
 
 # Found things
+msc += $m_interesting:Found
 msc ^= $m_interface:Found a faded altar
 msc ^= $m_interface:Found a.* altar of
 msc ^= $m_alert:Found a (gate|stair).* to
@@ -1964,7 +1973,7 @@ BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
 BRC.BAD_DURATIONS = {
     "berserk", "blind", "confused", "corroded", "diminished spells",
     "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
-    "sluggish", "tree%-form", "vulnerable", "weakened",
+    "sluggish", "tree-form", "vulnerable", "weakened",
 } -- BRC.BAD_DURATIONS (do not remove this comment)
 
 }
@@ -4380,7 +4389,7 @@ function BRC.ch_start_running(kind)
 end
 
 function BRC.ready()
-  if you.turns() == 0 then BRC.active = true end
+  if you.turns() <= 1 then BRC.active = true end -- webtiles skips ready() on turn 0
   if not BRC.active then return end
   BRC.opt.clear_single_turn_mutes()
 
@@ -5000,7 +5009,7 @@ function f_announce_hp_mp.ready()
   local mp_delta = mp - ad_prev.mp
   local mhp_delta = mhp - ad_prev.mhp
   local mmp_delta = mmp - ad_prev.mmp
-  local damage_taken = mhp_delta - hp_delta
+
   ad_prev.hp = hp
   ad_prev.mhp = mhp
   ad_prev.mp = mp
@@ -5037,9 +5046,9 @@ function f_announce_hp_mp.ready()
   if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
 
   -- Add Damage-related warnings, when damage >= threshold
-  if damage_taken >= mhp * C.dmg_flash_threshold then
+  if -hp_delta >= mhp * C.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    if damage_taken >= (mhp * C.dmg_fm_threshold) then
+    if -hp_delta >= (mhp * C.dmg_fm_threshold) then
       local msg = BRC.txt.lightmagenta("MASSIVE DAMAGE")
       BRC.mpr.que_optmore(true, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
     else
@@ -5070,7 +5079,7 @@ f_announce_items.Config = {
   announce_glowing = true,
   announce_artefacts = true,
   max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
-  announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
+  announce_duplicate_consumables = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -5120,7 +5129,8 @@ local function announce_item(it)
   end
 
   local item_col = ALERT_COLOR[class] or ALERT_COLOR.default
-  crawl.mpr(BRC.txt.white("You see: ") .. BRC.txt[item_col](it.name()))
+  crawl.mpr(BRC.txt.white("Found: ") .. BRC.txt[item_col](it.name()))
+  you.stop_activity()
 end
 
 ---- Crawl hook functions ----
@@ -5135,14 +5145,14 @@ function f_announce_items.ready()
           for _, it in ipairs(items_xy) do
             los_items[#los_items+1] = it
 
-            if C.announce_extra_consumables_wo_id then
+            if C.announce_duplicate_consumables then
               if x == 0 and y == 0 and not it.is_identified
                 and (it.class(true) == "scroll" or it.class(true) == "potion")
                then
                 if util.exists(items.inventory(), function(i)
                   return i.name("qual", false) == it.name("qual", false)
                 end) then
-                  crawl.mpr(BRC.txt.green("Duplicate: ") .. it.name())
+                  crawl.mpr(BRC.txt.magenta("Duplicate: ") .. it.name())
                 end
               end
             end
@@ -5218,7 +5228,7 @@ f_bread_swinger.Config = {
   disabled = true, -- Disable by default
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable
-  alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay
+  alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay
   set_manual_slot_key = BRC.util.cntl("5"), -- Manually set which weapon slot to swing
   max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
   emoji = "🍞",
@@ -5482,14 +5492,14 @@ local function verify_safe_rest()
     reset_rest(FULLY_RECOVERED_MSG)
     return false
   elseif not you.feel_safe() then
-    reset_rest("You can't rest with a hostile monster in view!")
+    reset_rest("Hostile monster in view!")
     return false
   elseif rest_type == "walk" then
     if you.movement_cost and you.movement_cost() <= 10 then
       reset_rest("You can't walk slowly right now!")
       return false
-    elseif you.status("manticore barbs") then
-      reset_rest("You must remove the manticore barbs first.")
+    elseif you.status("barbs") then
+      reset_rest("You must remove the barbs first.")
       return false
     end
   end
@@ -5600,13 +5610,15 @@ end
 
 ---- Crawl hook functions ----
 function f_bread_swinger.c_message(text, channel)
-  if turns_remaining <= 0 then return end
-  if channel == "recovery" or channel == "duration" then return end
-  if bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT) then
-    -- ignore messages about removing shield
-    return
-  end
-  reset_rest() -- Stop on any unrecognized message
+  -- Don't stop for expiring effects or removing shield
+  if turns_remaining <= 0
+    or channel == "recovery"
+    or channel == "duration"
+    or text:find("Your magical contamination .* fade")
+    or bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT)
+  then return end
+
+  reset_rest()
 end
 
 function f_bread_swinger.ready()
@@ -6955,20 +6967,33 @@ f_mute_messages.Config = {
       "You can access your shopping list by pressing '\\$'",
 
       -- Wielding weapons
-      "Your .* begins to drip with poison",
-      "Your .* stops dripping with poison",
+      "Your .* begins to (drip with poison|ooze corrosive slime)",
       "Your .* bursts into flame",
-      "Your .* stops flaming",
-      "Your .* glows with a cold blue light",
-      "Your .* stops glowing",
-      "You hear the crackle of electricity",
-      "Your .* stops crackling",
+      "Your .* is covered in frost",
+      "Your .* glows (with a cold blue light|with a divine radiance|horrifically)",
+      "You (hear the crackle of electricity|see sparks fly)",
       "Your .* exudes an aura of protection",
       "Your .* hums with potential",
-      "Your .* goes still",
       "You sense an unholy aura",
+      "Your .* tingle",
+      "Your .* quivers in your",
+      "Space warps around you for a moment",
+      "You feel (a sense of dread|a bond with|a baleful cunning)",
+      "(Pain shudders through|A searing pain shoots up) your",
+      "Your .* is briefly surrounded by (a scintillating aura|shifting shadows)",
+      "Your .* before you manage to get a firm grip on it",
+      "Your .* gleams with (eagerness|a vicious edge)",
+      "Your .* radiates an overwhelming force",
+      "Vines begin sprouting from",
 
-
+      -- Unwielding weapons
+      "Your .* stops (flaming|glowing|crackling|quivering)",
+      "Your .* stops (dripping with poison|oozing corrosive slime|radiating force)",
+      "Your .* goes (still|dull)",
+      "You feel the dreadful sensation subside",
+      "You feel magic returning to you",
+      "You feel (very meek|guileless)",
+      "The vines retreat back into",
 
       -- Monsters /Allies / Neutrals
       "dissolves into shadows",

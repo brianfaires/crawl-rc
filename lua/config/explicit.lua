@@ -118,7 +118,7 @@ brc_config_explicit = {
     disabled = true, -- Disable by default
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
-    alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay.
+    alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
     set_manual_slot_key = 53, -- (Cntl-5) Manually set which weapon slot to swing
     max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
     emoji = "🍞",
@@ -494,7 +494,6 @@ brc_config_explicit = {
 
       -- Light reduction; unnecessary messages
       [1] = {
-
         -- Unnecessary
         "You now have .* runes",
         "to see all the runes you have collected",
@@ -512,7 +511,8 @@ brc_config_explicit = {
         "Your .* begins to drip with poison",
         "Your .* stops dripping with poison",
         "Your .* bursts into flame",
-        "Your .* stops flaming",
+        "Your .* quivers in your",
+        "Your .* stops (flaming|quivering)",
         "Your .* glows with a cold blue light",
         "Your .* stops glowing",
         "You hear the crackle of electricity",

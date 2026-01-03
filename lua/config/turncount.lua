@@ -34,5 +34,7 @@ brc_config_turncount = {
   init = function()
     crawl.setopt("show_game_time = false")
     crawl.setopt("default_autopickup = false")
+    crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
+    crawl.setopt("message_colour += white:Found")
   end,
 } -- brc_config_turncount (do not remove this comment)

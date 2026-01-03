@@ -5,7 +5,7 @@ show_more = false
 small_more = true
 mouse_input = false
 tile_web_mouse_control = false
-fail_severity_to_confirm = 3
+fail_severity_to_confirm = 4
 tile_key_repeat_delay = 100
 
 ####### Combat options #######

@@ -39,7 +39,8 @@ f_mute_messages.Config = {
       "Your .* begins to drip with poison",
       "Your .* stops dripping with poison",
       "Your .* bursts into flame",
-      "Your .* stops flaming",
+      "Your .* quivers in your",
+      "Your .* stops (flaming|quivering)",
       "Your .* glows with a cold blue light",
       "Your .* stops glowing",
       "You hear the crackle of electricity",
@@ -48,8 +49,6 @@ f_mute_messages.Config = {
       "Your .* hums with potential",
       "Your .* goes still",
       "You sense an unholy aura",
-
-
 
       -- Monsters /Allies / Neutrals
       "dissolves into shadows",

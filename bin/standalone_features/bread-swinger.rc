@@ -18,7 +18,7 @@ f_bread_swinger.Config = {
   disabled = false, -- Disable by default
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable
-  alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay
+  alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay
   set_manual_slot_key = string.byte("5") - 64, -- Manually set which weapon slot to swing
   max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
   emoji = "🍞",
@@ -40,7 +40,7 @@ getmetatable("").__index.contains = BRC_txt_str_contains
 BRC.BAD_DURATIONS = {
     "berserk", "blind", "confused", "corroded", "diminished spells",
     "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
-    "sluggish", "tree%-form", "vulnerable", "weakened",
+    "sluggish", "tree-form", "vulnerable", "weakened",
 } -- BRC.BAD_DURATIONS (do not remove this comment)
 
 BRC.COL = {
@@ -737,14 +737,14 @@ local function verify_safe_rest()
     reset_rest(FULLY_RECOVERED_MSG)
     return false
   elseif not you.feel_safe() then
-    reset_rest("You can't rest with a hostile monster in view!")
+    reset_rest("Hostile monster in view!")
     return false
   elseif rest_type == "walk" then
     if you.movement_cost and you.movement_cost() <= 10 then
       reset_rest("You can't walk slowly right now!")
       return false
-    elseif you.status("manticore barbs") then
-      reset_rest("You must remove the manticore barbs first.")
+    elseif you.status("barbs") then
+      reset_rest("You must remove the barbs first.")
       return false
     end
   end
@@ -855,13 +855,15 @@ end
 
 ---- Crawl hook functions ----
 function f_bread_swinger.c_message(text, channel)
-  if turns_remaining <= 0 then return end
-  if channel == "recovery" or channel == "duration" then return end
-  if bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT) then
-    -- ignore messages about removing shield
-    return
-  end
-  reset_rest() -- Stop on any unrecognized message
+  -- Don't stop for expiring effects or removing shield
+  if turns_remaining <= 0
+    or channel == "recovery"
+    or channel == "duration"
+    or text:find("Your magical contamination .* fade")
+    or bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT)
+  then return end
+
+  reset_rest()
 end
 
 function f_bread_swinger.ready()

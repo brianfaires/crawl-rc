@@ -12,7 +12,7 @@ f_announce_items.Config = {
   announce_glowing = true,
   announce_artefacts = true,
   max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
-  announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
+  announce_duplicate_consumables = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
 
 ---- Local constants ----
@@ -62,7 +62,8 @@ local function announce_item(it)
   end
 
   local item_col = ALERT_COLOR[class] or ALERT_COLOR.default
-  crawl.mpr(BRC.txt.white("You see: ") .. BRC.txt[item_col](it.name()))
+  crawl.mpr(BRC.txt.white("Found: ") .. BRC.txt[item_col](it.name()))
+  you.stop_activity()
 end
 
 ---- Crawl hook functions ----
@@ -77,14 +78,14 @@ function f_announce_items.ready()
           for _, it in ipairs(items_xy) do
             los_items[#los_items+1] = it
 
-            if C.announce_extra_consumables_wo_id then
+            if C.announce_duplicate_consumables then
               if x == 0 and y == 0 and not it.is_identified
                 and (it.class(true) == "scroll" or it.class(true) == "potion")
                then
                 if util.exists(items.inventory(), function(i)
                   return i.name("qual", false) == it.name("qual", false)
                 end) then
-                  crawl.mpr(BRC.txt.green("Duplicate: ") .. it.name())
+                  crawl.mpr(BRC.txt.magenta("Duplicate: ") .. it.name())
                 end
               end
             end

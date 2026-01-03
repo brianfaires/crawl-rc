@@ -15,7 +15,7 @@ f_bread_swinger.Config = {
   disabled = true, -- Disable by default
   allow_plant_damage = false, -- Allow damaging plants to rest
   walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable
-  alert_slow_weap_min = 1.4, -- Alert when finding the slowest weapon yet, starting at this delay
+  alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay
   set_manual_slot_key = BRC.util.cntl("5"), -- Manually set which weapon slot to swing
   max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
   emoji = "🍞",
@@ -279,14 +279,14 @@ local function verify_safe_rest()
     reset_rest(FULLY_RECOVERED_MSG)
     return false
   elseif not you.feel_safe() then
-    reset_rest("You can't rest with a hostile monster in view!")
+    reset_rest("Hostile monster in view!")
     return false
   elseif rest_type == "walk" then
     if you.movement_cost and you.movement_cost() <= 10 then
       reset_rest("You can't walk slowly right now!")
       return false
-    elseif you.status("manticore barbs") then
-      reset_rest("You must remove the manticore barbs first.")
+    elseif you.status("barbs") then
+      reset_rest("You must remove the barbs first.")
       return false
     end
   end
