@@ -397,13 +397,15 @@ end
 
 ---- Crawl hook functions ----
 function f_bread_swinger.c_message(text, channel)
-  if turns_remaining <= 0 then return end
-  if channel == "recovery" or channel == "duration" then return end
-  if bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT) then
-    -- ignore messages about removing shield
-    return
-  end
-  reset_rest() -- Stop on any unrecognized message
+  -- Don't stop for expiring effects or removing shield
+  if turns_remaining <= 0
+    or channel == "recovery"
+    or channel == "duration"
+    or text:find("Your magical contamination .* fade")
+    or bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT)
+  then return end
+
+  reset_rest()
 end
 
 function f_bread_swinger.ready()
