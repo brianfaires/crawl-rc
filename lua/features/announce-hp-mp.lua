@@ -179,6 +179,10 @@ function f_announce_hp_mp.ready()
   local mhp_delta = mhp - ad_prev.mhp
   local mmp_delta = mmp - ad_prev.mmp
 
+  -- Calc damage taken, with starting point being mhp * (prev hp / prev mhp)
+  local expected_hp = mhp * (hp / mhp)
+  local damage_taken = expected_hp - hp
+
   ad_prev.hp = hp
   ad_prev.mhp = mhp
   ad_prev.mp = mp
@@ -215,9 +219,9 @@ function f_announce_hp_mp.ready()
   if #msg_tokens > 0 then BRC.mpr.que(table.concat(msg_tokens)) end
 
   -- Add Damage-related warnings, when damage >= threshold
-  if -hp_delta >= mhp * C.dmg_flash_threshold then
+  if damage_taken >= mhp * C.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    if -hp_delta >= (mhp * C.dmg_fm_threshold) then
+    if damage_taken >= mhp * C.dmg_fm_threshold then
       local msg = BRC.txt.lightmagenta("MASSIVE DAMAGE")
       BRC.mpr.que_optmore(true, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
     else
