@@ -359,7 +359,7 @@ function BRC.ch_start_running(kind)
 end
 
 function BRC.ready()
-  if you.turns() == 0 then BRC.active = true end
+  if you.turns() <= 1 then BRC.active = true end -- webtiles skips ready() on turn 0
   if not BRC.active then return end
   BRC.opt.clear_single_turn_mutes()
 
