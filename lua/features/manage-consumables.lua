@@ -50,7 +50,7 @@ f_manage_consumables.Config = {
     ["resistance"] = "r",
     ["mutation"] = "M",
   },
-}
+} -- f_manage_consumables.Config
 
 ---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {

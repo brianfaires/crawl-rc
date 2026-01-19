@@ -53,7 +53,7 @@ f_manage_consumables.Config = {
     ["resistance"] = "r",
     ["mutation"] = "M",
   },
-}
+} -- f_manage_consumables.Config
 
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
