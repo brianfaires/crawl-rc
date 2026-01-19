@@ -1,13 +1,11 @@
 ### TODO
 recent:
 - cntl-5 not working on webtiles
--breadswing; when on edge of map; glitches when trying to attack OOB
 - carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
 
 Turncount features:
 - only alerted "slowest weap" when swapping orb->shield. Carrying broad axe, and it alerted for a floor broad axe.
 - POG macro (enter closest) / ignore monsteres for POG or shift-dir
-- tele into see trident; prompted for read ?id
 - prevent accidental long-dist travel (ie shopping list)
 
 hotkey:

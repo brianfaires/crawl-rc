@@ -220,6 +220,7 @@ end
 
 local function is_good_dir_swing(x, y)
   if x == 0 and y == 0 then return false end
+  if not view.in_known_map_bounds(x, y) then return false end
 
   local weapon = items.equipped_at("Weapon")
   if weapon then
@@ -231,7 +232,6 @@ local function is_good_dir_swing(x, y)
         if is_monster(cur_x, cur_y) then return false end
         if travel.feature_solid(view.feature_at(cur_x, cur_y)) then break end
       end
-      return true
     end
 
     if weapon.weap_skill:contains("Axes") then
@@ -244,7 +244,7 @@ local function is_good_dir_swing(x, y)
     end
   end
 
-  return not travel.feature_solid(view.feature_at(x, y)) and not is_monster(x, y)
+  return not (travel.feature_solid(view.feature_at(x, y)) or is_monster(x, y))
 end
 
 local function get_good_direction()

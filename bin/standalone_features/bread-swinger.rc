@@ -718,9 +718,7 @@ local function get_good_direction()
   local func_is_good_dir = rest_type == "walk" and is_good_dir_walk or is_good_dir_swing
   for x = -1, 1 do
     for y = -1, 1 do
-      if func_is_good_dir(x, y) then
-        print("Good: " .. x .. ", " .. y)
-        return x, y end
+      if func_is_good_dir(x, y) then return x, y end
     end
   end
   return nil
