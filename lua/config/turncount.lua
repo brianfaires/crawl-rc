@@ -24,11 +24,11 @@ brc_config_turncount = {
   ["inscribe-stats"] = {
     skip_dps = true,
   },
-  ["runrest-features"] = {
-    after_shaft = false
-  },
   ["mute-messages"] = {
     mute_level = 1,
+  },
+  ["runrest-features"] = {
+    after_shaft = false
   },
   ["pickup-alert"] = {
     Pickup = {
@@ -42,9 +42,13 @@ brc_config_turncount = {
         "Apportation", "Passage of Golubria", "Shatter", "Ignition", "Fire Storm", "Polar Vortex",
       },
       More = {
+        armour_ego = false,
         shields = false,
       },
     },
+  },
+  ["safe-stairs"] = {
+    warn_backtracking = false,
   },
 
   init = function()
@@ -52,6 +56,7 @@ brc_config_turncount = {
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
+    crawl.setopt("autoinscribe += (shield|buckler|orb):!T")
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
       if m ~= "one_time_alerts" then

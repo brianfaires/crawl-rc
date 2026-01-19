@@ -1,11 +1,9 @@
 ### TODO
 recent:
-- remove 'auto unwield' behavior; prompt instead
 - cntl-5 not working on webtiles
 -breadswing; when on edge of map; glitches when trying to attack OOB
 does read id hotkey work when inventory slot is not i?
 - carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
-- BUG: OTA not overwriten by config
 - meter always says +0 mp
 - breadswing getting stopped by mana gain msg
 
@@ -22,18 +20,19 @@ hotkey:
   - move to only if on same floor
   - swallowing keypress again; when walking and it comes into view
   - "move to +0 ring mail"; but a +4 ring mail was alerted after (diff items);
-  - read id hotkey shows up a turn after the "scroll of id" message that triggered it
-  - triggering on "you see: scroll of id"
   - walking, found temple (swallowed); stepped to entrance, OTA buckler; weird map screen after entering temple. Esc -> showed altar search
-  
-inscribe-stats:
-  - use diff inscription rules for staves (to show dmg)
 
 Misc:
   - Add more comments to feature files, especially for the config options.
   - reading scroll off ground, not auto-assigning copy in inventory to its slot
   - prevent drinking potion of lignification over deep water (just wastes the turn)
-  - disable fm for arte armour
+  - disable fm for arte armour (for turncount only? - not sure what this was about)
+
+### Can't reproduce locally:
+- read id hotkey shows up a turn after the "scroll of id" message that triggered it
+- no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
+- in pan: redrawing screen on every turn of travel (fixed?)
+
 
 Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)
@@ -44,11 +43,6 @@ Realtime features:
   - Artefact weapon alerts: 'min_skill' for alerts; sans "+Blink"
   - pickup_shields config
     - Train Shields on shield pickup/equip
-
-### Can't reproduce locally:
-- no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
-- in pan: redrawing screen on every turn of travel (fixed?)
-
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->
