@@ -8,15 +8,15 @@ bindkey = [\{-222}] CMD_AUTOFIGHT_NOMOVE
 macros += M \{4} \{7}>
 
 # Spellcasting macros
-macros += M 1 za
-macros += M 2 zb
-macros += M 3 zc
-macros += M 4 zd
-macros += M 6 zf
-macros += M 7 zg
-macros += M 8 zh
-macros += M 9 zi
-macros += M 0 zj
+macros += M 1 Za
+macros += M 2 Zb
+macros += M 3 Zc
+macros += M 4 Zd
+macros += M 6 Zf
+macros += M 7 Zg
+macros += M 8 Zh
+macros += M 9 Zi
+macros += M 0 Zj
 
 # Confirm targeting with same keys as spellcasting
 macros += K2 \{-1018} \{13}
