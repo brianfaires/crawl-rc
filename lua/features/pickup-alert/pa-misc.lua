@@ -61,7 +61,7 @@ function f_pa_misc.alert_staff(it)
     if you.res_shock() > 0 then return false end
     tag = "rElec"
     tag_color = BRC.COL.lightcyan
-  elseif basename == "staff of alchemy" then
+  elseif basename == "staff of chemistry" then
     if you.res_poison() > 0 then return false end
     tag = "rPois"
     tag_color = BRC.COL.lightgreen
