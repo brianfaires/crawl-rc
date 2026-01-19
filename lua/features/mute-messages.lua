@@ -76,6 +76,7 @@ f_mute_messages.Config = {
       -- Religion
       "accepts your kill",
       "is honoured by your kill",
+      "appreciates the change of pace",
     },
 
     -- Moderate reduction; potentially confusing but no info lost

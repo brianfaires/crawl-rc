@@ -369,7 +369,7 @@ brc_config_explicit = {
       {1, "Its appearance distorts for a moment"},
 
       -- Crowd control
-      {9, "You.*(?<!( too|less)) confused"},
+      {9, "You.*(?<!( too|less|momentarily)) confused"},
       {9, "You .*(slow.*down|lose consciousness)"},
       {9, "infuriates you"},
       {8, "hits you .* distortion"},
