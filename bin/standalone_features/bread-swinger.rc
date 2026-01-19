@@ -687,6 +687,7 @@ end
 
 local function is_good_dir_swing(x, y)
   if x == 0 and y == 0 then return false end
+  if not view.in_known_map_bounds(x, y) then return false end
 
   local weapon = items.equipped_at("Weapon")
   if weapon then
@@ -698,7 +699,6 @@ local function is_good_dir_swing(x, y)
         if is_monster(cur_x, cur_y) then return false end
         if travel.feature_solid(view.feature_at(cur_x, cur_y)) then break end
       end
-      return true
     end
 
     if weapon.weap_skill:contains("Axes") then
@@ -711,14 +711,16 @@ local function is_good_dir_swing(x, y)
     end
   end
 
-  return not travel.feature_solid(view.feature_at(x, y)) and not is_monster(x, y)
+  return not (travel.feature_solid(view.feature_at(x, y)) or is_monster(x, y))
 end
 
 local function get_good_direction()
   local func_is_good_dir = rest_type == "walk" and is_good_dir_walk or is_good_dir_swing
   for x = -1, 1 do
     for y = -1, 1 do
-      if func_is_good_dir(x, y) then return x, y end
+      if func_is_good_dir(x, y) then
+        print("Good: " .. x .. ", " .. y)
+        return x, y end
     end
   end
   return nil

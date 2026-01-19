@@ -63,6 +63,44 @@ local function inscribe_armour_stats(it)
   end
 end
 
+local function get_staff_dmg_str(it)
+  local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it)
+  local bonus_str
+  if dmg == 0 or chance == 0 then
+    bonus_str = "(+0)"
+  elseif chance >= 1 then
+    bonus_str = string.format("(+%d)", math.floor(dmg))
+  else
+    bonus_str = string.format("(+%.0f,%.0f%%%%)", dmg, chance * 100)
+  end
+  return bonus_str
+end
+
+--- Replace the old inscription with the current one, preserving prefix/suffix
+local function update_inscription(orig, cur)
+  local first = orig:find(cur:sub(1, 4))
+  if not first then return cur .. "; " .. orig end
+
+  local _, last = orig:find("A%+%d+")
+  if not last then
+    _, last = orig:find("A%-%d+")
+  end
+  if not last then
+    BRC.mpr.error("Missing accuracy in inscription: " .. orig)
+    return cur .. "; " .. orig
+  end
+
+  local prefix = orig:sub(1, first - 1)
+  if #prefix > 0 and prefix:sub(-2) ~= "; " then prefix = prefix .. "; " end
+  if prefix == "; " then prefix = "" end
+
+  local suffix = util.trim(orig:sub(last+1))
+  if #suffix > 0 and suffix:sub(1, 1) ~= ";" then suffix = "; " .. suffix end
+  if suffix == ";" then suffix = "" end
+
+  return prefix .. cur .. suffix
+end
+
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
   local dmg_type = C.dmg_type
@@ -72,30 +110,11 @@ local function inscribe_weapon_stats(it)
 
   local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, C.skip_dps)
   if C.prefix_staff_dmg and BRC.it.is_magic_staff(it) then
-    local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it, dmg_type)
-    local bonus_str
-    if dmg == 0 or chance == 0 then
-      bonus_str = "(+0)"
-    elseif chance >= 1 then
-      bonus_str = string.format("(+%.1f)", dmg)
-    else
-      bonus_str = string.format("(+%.1f,%d%%%%)", dmg, math.floor(chance * 100))
-    end
+    local bonus_str = get_staff_dmg_str(it)
     dps_inscr = dps_inscr:gsub("/", bonus_str .. "/")
   end
 
-  local prefix, suffix = "", ""
-  local idx = orig_inscr:find(dps_inscr:sub(1, 4), 1, true)
-  if idx then
-    if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
-    if idx + #dps_inscr - 1 < #orig_inscr then
-      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
-    end
-  elseif #orig_inscr > 0 then
-    suffix = "; " .. orig_inscr
-  end
-
-  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
+  it.inscribe(update_inscription(orig_inscr, dps_inscr), false)
 end
 
 ---- Crawl hook functions ----

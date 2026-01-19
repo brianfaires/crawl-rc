@@ -9,6 +9,8 @@
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.logs_to_stderr = false
 
 f_inscribe_stats = {}
 f_inscribe_stats.Config = {
@@ -26,6 +28,12 @@ end
 getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
   plain = 2, -- Include brand dmg for non-elemental brands
@@ -57,6 +65,8 @@ BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 -- BRC module tables (Don't overwrite existing globals)
 BRC.eq = BRC.eq or {}
 BRC.it = BRC.it or {}
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
 BRC.you = BRC.you or {}
 
 -- BRC.eq module
@@ -463,6 +473,53 @@ function BRC.it.is_shield(it)
   return it and it.is_shield()
 end
 
+-- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, msg_color)
+  -- Avoid referencing BRC, to stay robust during startup
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  you.stop_activity()
+
+  if not skip_more then
+    crawl.redraw_screen()
+    crawl.more()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
+  end
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
 -- BRC.you module
 function BRC.you.mut_lvl(mutation, innate_only)
   return you.get_base_mutation_level(mutation, true, not innate_only, not innate_only)
@@ -560,6 +617,44 @@ local function inscribe_armour_stats(it)
   end
 end
 
+local function get_staff_dmg_str(it)
+  local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it)
+  local bonus_str
+  if dmg == 0 or chance == 0 then
+    bonus_str = "(+0)"
+  elseif chance >= 1 then
+    bonus_str = string.format("(+%d)", math.floor(dmg))
+  else
+    bonus_str = string.format("(+%.0f,%.0f%%%%)", dmg, chance * 100)
+  end
+  return bonus_str
+end
+
+--- Replace the old inscription with the current one, preserving prefix/suffix
+local function update_inscription(orig, cur)
+  local first = orig:find(cur:sub(1, 4))
+  if not first then return cur .. "; " .. orig end
+
+  local _, last = orig:find("A%+%d+")
+  if not last then
+    _, last = orig:find("A%-%d+")
+  end
+  if not last then
+    BRC.mpr.error("Missing accuracy in inscription: " .. orig)
+    return cur .. "; " .. orig
+  end
+
+  local prefix = orig:sub(1, first - 1)
+  if #prefix > 0 and prefix:sub(-2) ~= "; " then prefix = prefix .. "; " end
+  if prefix == "; " then prefix = "" end
+
+  local suffix = util.trim(orig:sub(last+1))
+  if #suffix > 0 and suffix:sub(1, 1) ~= ";" then suffix = "; " .. suffix end
+  if suffix == ";" then suffix = "" end
+
+  return prefix .. cur .. suffix
+end
+
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
   local dmg_type = C.dmg_type
@@ -569,30 +664,11 @@ local function inscribe_weapon_stats(it)
 
   local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, C.skip_dps)
   if C.prefix_staff_dmg and BRC.it.is_magic_staff(it) then
-    local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it, dmg_type)
-    local bonus_str
-    if dmg == 0 or chance == 0 then
-      bonus_str = "(+0)"
-    elseif chance >= 1 then
-      bonus_str = string.format("(+%.1f)", dmg)
-    else
-      bonus_str = string.format("(+%.1f,%d%%%%)", dmg, math.floor(chance * 100))
-    end
+    local bonus_str = get_staff_dmg_str(it)
     dps_inscr = dps_inscr:gsub("/", bonus_str .. "/")
   end
 
-  local prefix, suffix = "", ""
-  local idx = orig_inscr:find(dps_inscr:sub(1, 4), 1, true)
-  if idx then
-    if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
-    if idx + #dps_inscr - 1 < #orig_inscr then
-      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
-    end
-  elseif #orig_inscr > 0 then
-    suffix = "; " .. orig_inscr
-  end
-
-  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
+  it.inscribe(update_inscription(orig_inscr, dps_inscr), false)
 end
 
 ---- Crawl hook functions ----
