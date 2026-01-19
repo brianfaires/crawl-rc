@@ -34,6 +34,7 @@ f_mute_messages.Config = {
       "Marking area around",
       "(Reduced|Removed|Placed new) exclusion",
       "You can access your shopping list by pressing '\\$'",
+      "Shift\\-Dir \\- straight line",
 
       -- Wielding weapons
       "Your .* begins to (drip with poison|ooze corrosive slime)",
@@ -89,7 +90,6 @@ f_mute_messages.Config = {
       -- Interface
       "Use which ability\\?",
       "Evoke which item\\?$",
-      "Shift\\-Dir \\- straight line",
 
       -- Books
       "You pick up (?!a manual).*and begin reading",

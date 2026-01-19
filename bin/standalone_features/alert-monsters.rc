@@ -74,7 +74,7 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "boggart", "dream sheep" } },
 
   -- Monsters dangerous until a certain point
-  { name = "xl_7", cond = "xl", cutoff = 6,
+  { name = "xl_7", cond = "xl", cutoff = 6, is_pack = true,
     pattern = { "orc wizard" } },
   { name = "xl_12", cond = "xl", cutoff = 12,
     pattern = { "hydra", "bloated husk" } },

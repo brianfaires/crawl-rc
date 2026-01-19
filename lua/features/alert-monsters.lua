@@ -62,15 +62,15 @@ f_alert_monsters.Config.Alerts = {
       "death knight", "imperial myrmidon", "necromancer",
     } },
 
-  -- Early game Dungeon problems for chars with low mhp. (adder defined below)
-  { name = "30hp", cond = "hp", cutoff = 30,
+  -- Early game Dungeon problems for chars with low hp. (adder defined below)
+  { name = "30hp", cond = "hp", cutoff = 30, is_pack = true,
     pattern = { "hound", "gnoll" } },
 
   { name = "mid_game_packs", cutoff = 90, is_pack = true,
     pattern = { "boggart", "dream sheep" } },
 
   -- Monsters dangerous until a certain point
-  { name = "xl_7", cond = "xl", cutoff = 7,
+  { name = "xl_7", cond = "xl", cutoff = 6, is_pack = true,
     pattern = { "orc wizard" } },
   { name = "xl_12", cond = "xl", cutoff = 12,
     pattern = { "hydra", "bloated husk" } },
