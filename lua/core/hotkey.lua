@@ -61,7 +61,7 @@ end
 ---- Local functions ----
 local function display_cur_message()
   if BRC.Hotkey.Config.wait_for_safety and not you.feel_safe() then return end
-  local msg = string.format("\n[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
+  local msg = string.format("[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
