@@ -7816,13 +7816,13 @@ local function maintain_inscriptions()
   if not (C.maintain_safe_scrolls or C.maintain_safe_potions) then return end
   for _, inv in ipairs(items.inventory()) do
     local inv_class = inv.class(true)
-    if inv_class == SCROLL_CLASS and C.maintain_scroll_slots then
+    if inv_class == SCROLL_CLASS and C.maintain_safe_scrolls then
       if scroll_needs_inscription(inv.subtype()) then
         if not inv.inscription:contains(SCROLL_INSCR) then inv.inscribe(SCROLL_INSCR) end
       elseif inv.inscription:contains(SCROLL_INSCR) then
         inv.inscribe(inv.inscription:gsub(SCROLL_PATT, ""), false)
       end
-    elseif inv_class == POTION_CLASS and C.maintain_potion_slots then
+    elseif inv_class == POTION_CLASS and C.maintain_safe_potions then
       if potion_needs_inscription(inv.subtype()) then
         if not inv.inscription:contains(POTION_INSCR) then inv.inscribe(POTION_INSCR) end
       elseif inv.inscription:contains(POTION_INSCR) then
