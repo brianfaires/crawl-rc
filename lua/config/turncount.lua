@@ -24,16 +24,25 @@ brc_config_turncount = {
   ["inscribe-stats"] = {
     skip_dps = true,
   },
-  ["runrest-features"] = { after_shaft = false },
+  ["runrest-features"] = {
+    after_shaft = false
+  },
   ["mute-messages"] = {
     mute_level = 1,
   },
   ["pickup-alert"] = {
+    Pickup = {
+      weapons = false,
+    },
     Alert = {
+      hotkey_travel = false,
       hotkey_pickup = false,
       one_time = {
         "distortion", "troll leather armour", "wand of digging",
-        "buckler", "kite shield", "tower shield",
+        "shatter", "apportation", "passage of golubria",
+      },
+      More = {
+        shields = false,
       },
     },
   },
@@ -42,7 +51,12 @@ brc_config_turncount = {
     crawl.setopt("show_game_time = false")
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
-    crawl.setopt("runrest_ignore_monster ^= bat:1") -- Allows shift-dir
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
+
+    for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
+      if m ~= "one_time_alerts" then
+        f_pickup_alert.Config.Alert.More[m] = false
+      end
+    end
   end,
 } -- brc_config_turncount (do not remove this comment)
