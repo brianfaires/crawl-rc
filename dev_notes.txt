@@ -6,7 +6,6 @@ hotkey:
 
 Misc:
   - Add more comments to feature files, especially for the config options.
-  - replace spell_slots with all-caps, for spells w no prompt
 
 ### Can't reproduce locally:
 - cntl-5 not working on webtiles
@@ -33,13 +32,15 @@ https://github.com/crawl/crawl/issues/4789 ->
 https://github.com/crawl/crawl/pull/4814 -> artificial cap on length blocks color-inscribe.lua
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
   - Afterward, prioritize walking into water.
-Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
-Num turns to multiturn equip/unequip == time + 1; intended?
+- Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
+- Num turns to multiturn equip/unequip == time + 1; intended?
   - Actually is +2 for: Equip 2h weap -> unwield shield = 8 turns (unwield + equip = 7 turns)
-items.pickup() does nothing?
-stacks are only checked for autopickup when visited
+- items.pickup() does nothing?
+- stacks are only checked for autopickup when visited
+- floor-id'ing consumables skips consumable_shortcut
 
 ### TODO - require crawl PR?
+1. replace spell_slots with all-caps, for spells w no prompt (need access to full list of spells)
 1. idk how to detect these actions:
   - Prompt/prevent accidental long-dist travel from shopping list
   - Hotkey: Enter closest POG
