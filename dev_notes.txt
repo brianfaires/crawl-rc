@@ -6,7 +6,7 @@ hotkey:
 
 Misc:
   - Add more comments to feature files, especially for the config options.
-  - reading scroll off ground, not auto-assigning copy in inventory to its slot
+  - replace spell_slots with all-caps, for spells w no prompt
 
 ### Can't reproduce locally:
 - cntl-5 not working on webtiles
@@ -62,7 +62,7 @@ stacks are only checked for autopickup when visited
   - bring back BRC.CACHE - ie load all values that are used >1x per ready().
     (Removed previous cache due to minimal impact, vs code clarity + robustness)
 1. BRC core/util:
-  - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
+  - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use mprf()
 1. alert-monsters:
   - level-specific fm ignores (eg vault warden on v:5)
   - torment helper; unique color / display count or list of tormentors in LOS
