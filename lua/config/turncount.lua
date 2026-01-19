@@ -39,7 +39,7 @@ brc_config_turncount = {
       hotkey_pickup = false,
       one_time = {
         "distortion", "troll leather armour", "wand of digging",
-        "shatter", "apportation", "passage of golubria",
+        "Apportation", "Passage of Golubria", "Shatter", "Ignition", "Fire Storm", "Polar Vortex",
       },
       More = {
         shields = false,

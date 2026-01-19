@@ -496,6 +496,7 @@ bs_highest_delay = BRC.Data.persist("bs_highest_delay", 0)
 bs_highest_delay_1h = BRC.Data.persist("bs_highest_delay_1h", 0)
 
 ---- Local constants ----
+local CUR_WEAP_BIAS = 0.05 -- Borderline config; don't swap weaps unless delay diff > this
 local DIR_TO_VI = {
   [-1] = { [-1] = "y", [0] = "h", [1] = "b" },
   [0] = { [-1] = "k", [1] = "j" },
@@ -514,6 +515,7 @@ local rest_type
 local wielding
 local dir
 local bs_removed_shield
+local do_overheal
 
 ---- Local functions ----
 local function has_bad_duration()
@@ -529,11 +531,7 @@ local function reset_rest(msg)
     end
 
     if msg:contains(FULLY_RECOVERED_MSG) then
-      if turns_remaining == turns_to_rest then
-        BRC.mpr.yellow("You're healthy enough!")
-      else
-        BRC.mpr.lightgreen(msg)
-      end
+      BRC.mpr.lightgreen(msg)
     else
       BRC.mpr.warning(msg)
     end
@@ -550,6 +548,7 @@ local function reset_rest(msg)
   wielding = false
   dir = { x = nil, y = nil }
   bs_removed_shield = false
+  do_overheal = false
 end
 
 local function get_num_turns()
@@ -602,10 +601,10 @@ local function get_slowest_slot()
   local slowest_item_1h = nil
   local largest_delay_1h = 0
 
-  -- Initialize to wielded weapon; so we don't swap for an equivalent.
+  -- Initialize to wielded weapon + BIAS; so we don't swap for an (approximate) equivalent.
   local it = items.equipped_at("Weapon")
   if it and it.class() == "Hand Weapons" then
-    local weap_delay = BRC.eq.get_weap_delay(it)
+    local weap_delay = BRC.eq.get_weap_delay(it) + CUR_WEAP_BIAS
     largest_delay = weap_delay
     slowest_item = it
     if BRC.eq.get_hands(it) == 1 then
@@ -758,10 +757,23 @@ local function verify_safe_rest()
   local mp, mmp = you.mp()
   mhp = mhp * C.max_heal_perc / 100
   mmp = mmp * C.max_heal_perc / 100
-  if hp >= mhp and mp >= mmp and not has_bad_duration() then
+  if hp >= mhp and mp >= mmp and not has_bad_duration() and not do_overheal then
+    if turns_remaining == turns_to_rest then
+      if BRC.mpr.yesno("You're healthy enough! Rest anyway?", BRC.COL.yellow) then
+        do_overheal = true
+        return true
+      else
+        crawl.mpr.okay()
+        reset_rest()
+        return false
+      end
+    end
+
     reset_rest(FULLY_RECOVERED_MSG)
     return false
-  elseif not you.feel_safe() then
+  end
+
+  if not you.feel_safe() then
     reset_rest("Hostile monster in view!")
     return false
   elseif rest_type == "walk" then
