@@ -296,6 +296,7 @@ BRC.Data = BRC.Data or {}
 BRC.eq = BRC.eq or {}
 BRC.it = BRC.it or {}
 BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.you = BRC.you or {}
 
@@ -818,8 +819,13 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  print(message .. "(" .. context .. ")")
 
   if not skip_more then
     crawl.redraw_screen()
@@ -846,6 +852,19 @@ function BRC.mpr.que_optmore(show_more, msg, msg_color, channel)
     msg = BRC.txt[msg_color](msg)
   end
   _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
+end
+
+-- BRC.opt module
+local _claimed_macro_keys = {}
+
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
 end
 
 -- BRC.txt module

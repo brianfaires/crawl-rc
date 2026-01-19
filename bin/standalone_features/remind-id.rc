@@ -42,6 +42,7 @@ BRC.COL = {
 -- BRC module tables (Don't overwrite existing globals)
 BRC.Data = BRC.Data or {}
 BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.util = BRC.util or {}
 
@@ -105,8 +106,13 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  print(message .. "(" .. context .. ")")
 
   if not skip_more then
     crawl.redraw_screen()
@@ -121,6 +127,19 @@ end
 function BRC.mpr.stop(msg, color, channel)
   BRC.mpr[color or BRC.COL.lightgrey](msg, channel)
   you.stop_activity()
+end
+
+-- BRC.opt module
+local _claimed_macro_keys = {}
+
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
 end
 
 -- BRC.txt module

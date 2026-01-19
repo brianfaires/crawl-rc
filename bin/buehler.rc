@@ -2378,8 +2378,13 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  print(message .. "(" .. context .. ")")
 
   if not skip_more then
     crawl.redraw_screen()
@@ -3809,7 +3814,7 @@ end
 ---- Local functions ----
 local function display_cur_message()
   if BRC.Hotkey.Config.wait_for_safety and not you.feel_safe() then return end
-  local msg = string.format("\n[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
+  local msg = string.format("[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
 
@@ -7713,66 +7718,132 @@ end
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: safe-consumables
 -- @module f_safe_consumables
--- Automatically manages !q and !r inscriptions. An upgrade to using autoinscribe.
+-- Features for consumable management. Same as crawl's built-in options, without gaps in coverage.
+-- safe_scrolls / safe_potions: !r and !q inscriptions. A more consistent version of autoinscribe.
+-- slots: A more consistent version of crawl's item_slot option.
 ---------------------------------------------------------------------------------------------------
 
 f_safe_consumables = {}
 f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
+f_safe_consumables.Config = {
+  maintain_safe_scrolls = true,
+  maintain_safe_potions = true,
+  scroll_slots = { ["identify"] = "i", ["acquirement"] = "A", ["blinking"] = "b", },
+  potion_slots = { ["might"] = "m", ["magic"] = "g", },
+}
 
 ---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
   "acquirement", "amnesia", "blinking", "brand weapon", "enchant armour", "enchant weapon",
   "identify", "immolation", "noise", "vulnerability", "attraction", "lignification", "mutation",
 } -- NO_INSCRIPTION_NEEDED (do not remove this comment)
+local SCROLL_CLASS = "scroll"
+local POTION_CLASS = "potion"
+local SCROLL_INSCR = "!r"
+local POTION_INSCR = "!q"
+local SCROLL_PATT = "%!r"
+local POTION_PATT = "%!q"
+
+---- Local variables ----
+local C -- config alias
+local found_scroll
+local found_potion
+
+---- Initialization ----
+function f_safe_consumables.init()
+  C = f_safe_consumables.Config
+  C.scroll_slots = C.scroll_slots or {}
+  C.potion_slots = C.potion_slots or {}
+  found_scroll = nil
+  found_potion = nil
+end
 
 ---- Local functions ----
-local function inscription_needed(class, st)
+local function potion_needs_inscription(st)
+  return not util.contains(NO_INSCRIPTION_NEEDED, st)
+end
+
+local function scroll_needs_inscription(st)
   if util.contains(NO_INSCRIPTION_NEEDED, st) then return false end
-  if class == "scroll" then
-    if st == "poison" then return you.res_poison() > 0 end
-    if st == "torment" then return you.torment_immune() end
-  end
+  if st == "poison" then return you.res_poison() > 0 end
+  if st == "torment" then return you.torment_immune() end
   return true
 end
 
----- Crawl hook functions ----
-function f_safe_consumables.ready()
-  -- Add / Remove inscriptions as appropriate
+local function change_slot(old_slot, new_slot, name, class)
+  BRC.mpr.lightgreen(BRC.txt.lightgrey(old_slot .. " -> ") .. new_slot .. " - " .. name)
+  BRC.opt.single_turn_mute("Adjust")
+  BRC.opt.single_turn_mute(" - ")
+  local class_key = class == SCROLL_CLASS and "r" or "p"
+  crawl.sendkeys("=" .. class_key .. old_slot .. new_slot)
+end
+
+local function maintain_slots()
+  if found_scroll then
+    local new_slot = C.scroll_slots[found_scroll]
+    if new_slot then
+      for _, inv in ipairs(items.inventory()) do
+        if inv.class(true) == SCROLL_CLASS and inv.subtype() == found_scroll then
+          change_slot(items.index_to_letter(inv.slot), new_slot, inv.name(), SCROLL_CLASS)
+        end
+      end
+    end
+    found_scroll = nil
+  elseif found_potion then
+    local new_slot = items.letter_to_index(C.potion_slots[found_potion])
+    if new_slot then
+      for _, inv in ipairs(items.inventory()) do
+        if inv.class(true) == POTION_CLASS and inv.subtype() == found_potion then
+          change_slot(items.index_to_letter(inv.slot), new_slot, inv.name(), POTION_CLASS)
+        end
+      end
+    end
+    found_potion = nil
+  end
+end
+
+local function maintain_inscriptions()
+  if not (C.maintain_safe_scrolls or C.maintain_safe_potions) then return end
   for _, inv in ipairs(items.inventory()) do
     local inv_class = inv.class(true)
-    if inv_class == "scroll" then
-      if inscription_needed(inv_class, inv.subtype()) then
-        if not inv.inscription:contains("!r") then inv.inscribe("!r") end
-      elseif inv.inscription:contains("!r") then
-        inv.inscribe(inv.inscription:gsub("%!r", ""), false)
+    if inv_class == SCROLL_CLASS and C.maintain_scroll_slots then
+      if scroll_needs_inscription(inv.subtype()) then
+        if not inv.inscription:contains(SCROLL_INSCR) then inv.inscribe(SCROLL_INSCR) end
+      elseif inv.inscription:contains(SCROLL_INSCR) then
+        inv.inscribe(inv.inscription:gsub(SCROLL_PATT, ""), false)
       end
-    elseif inv_class == "potion" then
-      if inscription_needed(inv_class, inv.subtype()) then
-        if not inv.inscription:contains("!q") then inv.inscribe("!q") end
-      elseif inv.inscription:contains("!q") then
-        inv.inscribe(inv.inscription:gsub("%!q", ""), false)
+    elseif inv_class == POTION_CLASS and C.maintain_potion_slots then
+      if potion_needs_inscription(inv.subtype()) then
+        if not inv.inscription:contains(POTION_INSCR) then inv.inscribe(POTION_INSCR) end
+      elseif inv.inscription:contains(POTION_INSCR) then
+        inv.inscribe(inv.inscription:gsub(POTION_PATT, ""), false)
       end
     end
   end
 end
 
+---- Crawl hook functions ----
 function f_safe_consumables.c_message(text, _)
-  local idx = text:find("It .+ a scroll of ")
-  if idx then
-    for _, inv in ipairs(items.inventory()) do
-      if inv.class(true) == "scroll" then
-        crawl.mpr("scroll: " .. inv.name())
-      end
+  if next(C.scroll_slots) then
+    local _, last = text:find(" .[^s]?s a scroll of ")
+    if last then
+      found_scroll = text:sub(last + 1, #text - 1)
+      return
     end
   end
 
-  if text:find("As you read the scroll labelled ") then
-    for _, inv in ipairs(items.inventory()) do
-      if inv.class(true) == "scroll" then
-        crawl.mpr("1scroll: " .. inv.name())
-      end
+  if next(C.potion_slots) then
+    local _, last = text:find(" .[^s]?s a potion of ")
+    if last then
+      found_potion = text:sub(last + 1, #text - 1)
+      return
     end
   end
+end
+
+function f_safe_consumables.ready()
+  maintain_slots()
+  maintain_inscriptions()
 end
 
 }

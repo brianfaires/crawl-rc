@@ -81,8 +81,13 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  print(message .. "(" .. context .. ")")
 
   if not skip_more then
     crawl.redraw_screen()
