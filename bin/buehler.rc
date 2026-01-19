@@ -4919,10 +4919,12 @@ local ALWAYS_BOTTOM_SETTINGS = {
 
 ---- Local variables ----
 local C -- config alias
+local pause_announcements
 
 ---- Initialization ----
 function f_announce_hp_mp.init()
   C = f_announce_hp_mp.Config
+  pause_announcements = false
 
   ad_prev.hp = 0
   ad_prev.mhp = 0
@@ -5031,8 +5033,16 @@ function f_announce_hp_mp.msg_is_meter(msg)
   return msg:contains("] -> ") and (msg:contains(" HP[") or msg:contains(" MP["))
 end
 
+function f_announce_hp_mp.single_turn_mute()
+  pause_announcements = true
+end
+
 ---- Crawl hook functions ----
 function f_announce_hp_mp.ready()
+  if pause_announcements then
+    pause_announcements = false
+    return
+  end
   -- Update prev state first, so we can safely return early below
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
@@ -5234,12 +5244,24 @@ end
 f_answer_prompts = {}
 f_answer_prompts.BRC_FEATURE_NAME = "answer-prompts"
 
+---- Local constants ----
+local BAD_FOR_TREES = { "deep_water", "lava", "open_sea", "endless_lava" }
+
 ---- Crawl hook functions ----
 function f_answer_prompts.c_answer_prompt(prompt)
   if prompt == "Die?" then return false end
+
   if prompt:contains("cheaper one?") and you.branch() ~= "Bazaar" then
     BRC.mpr.yellow("Replacing shopping list items")
     return true
+  end
+
+  if prompt:contains("quaff the potion of lignification") then
+    local feat = view.feature_at(0,0)
+    if feat and util.contains(BAD_FOR_TREES, feat) then
+      BRC.mpr.warning("Blocking lignification over " .. feat)
+      return false
+    end
   end
 end
 
@@ -5552,7 +5574,7 @@ local function verify_safe_rest()
         do_overheal = true
         return true
       else
-        crawl.mpr.okay()
+        BRC.mpr.okay()
         reset_rest()
         return false
       end
@@ -5576,6 +5598,7 @@ end
 
 local function do_resting()
   if not set_good_direction() then return end
+  if f_announce_hp_mp then f_announce_hp_mp.single_turn_mute() end
 
   if rest_type == "wait" then
     BRC.util.do_cmd("CMD_SAFE_WAIT")

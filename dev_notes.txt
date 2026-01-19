@@ -2,18 +2,12 @@
 recent:
 - cntl-5 not working on webtiles
 -breadswing; when on edge of map; glitches when trying to attack OOB
-does read id hotkey work when inventory slot is not i?
 - carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
-- meter always says +0 mp
-- breadswing getting stopped by mana gain msg
 
 Turncount features:
-- disable most weapon alerts
 - only alerted "slowest weap" when swapping orb->shield. Carrying broad axe, and it alerted for a floor broad axe.
 - POG macro (enter closest) / ignore monsteres for POG or shift-dir
 - tele into see trident; prompted for read ?id
-- don't upgrade old, basic weaps that i just dont wanna drop
-- disable 'highest dmg' alert?
 - prevent accidental long-dist travel (ie shopping list)
 
 hotkey:
@@ -25,7 +19,6 @@ hotkey:
 Misc:
   - Add more comments to feature files, especially for the config options.
   - reading scroll off ground, not auto-assigning copy in inventory to its slot
-  - prevent drinking potion of lignification over deep water (just wastes the turn)
   - disable fm for arte armour (for turncount only? - not sure what this was about)
 
 ### Can't reproduce locally:

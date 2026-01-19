@@ -9,6 +9,8 @@
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.logs_to_stderr = false
 
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
@@ -38,6 +40,22 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
+local function log_message(message, context, msg_color)
+  -- Avoid referencing BRC, to stay robust during startup
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.warning(message, context)
+  log_message(message, context, BRC.COL.yellow)
+  you.stop_activity()
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Warning) " .. message)
+  end
+end
 
 -- BRC.txt module
 for k, color in pairs(BRC.COL) do
@@ -57,12 +75,24 @@ end
 f_answer_prompts = {}
 
 
+---- Local constants ----
+local BAD_FOR_TREES = { "deep_water", "lava", "open_sea", "endless_lava" }
+
 ---- Crawl hook functions ----
 function f_answer_prompts.c_answer_prompt(prompt)
   if prompt == "Die?" then return false end
+
   if prompt:contains("cheaper one?") and you.branch() ~= "Bazaar" then
     BRC.mpr.yellow("Replacing shopping list items")
     return true
+  end
+
+  if prompt:contains("quaff the potion of lignification") then
+    local feat = view.feature_at(0,0)
+    if feat and util.contains(BAD_FOR_TREES, feat) then
+      BRC.mpr.warning("Blocking lignification over " .. feat)
+      return false
+    end
   end
 end
 

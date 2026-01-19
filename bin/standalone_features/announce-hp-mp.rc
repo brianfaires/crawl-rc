@@ -202,10 +202,12 @@ local ALWAYS_BOTTOM_SETTINGS = {
 
 ---- Local variables ----
 local C -- config alias
+local pause_announcements
 
 ---- Initialization ----
 function f_announce_hp_mp.init()
   C = f_announce_hp_mp.Config
+  pause_announcements = false
 
   ad_prev.hp = 0
   ad_prev.mhp = 0
@@ -314,8 +316,16 @@ function f_announce_hp_mp.msg_is_meter(msg)
   return msg:contains("] -> ") and (msg:contains(" HP[") or msg:contains(" MP["))
 end
 
+function f_announce_hp_mp.single_turn_mute()
+  pause_announcements = true
+end
+
 ---- Crawl hook functions ----
 function f_announce_hp_mp.ready()
+  if pause_announcements then
+    pause_announcements = false
+    return
+  end
   -- Update prev state first, so we can safely return early below
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()

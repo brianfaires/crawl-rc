@@ -300,7 +300,7 @@ local function verify_safe_rest()
         do_overheal = true
         return true
       else
-        crawl.mpr.okay()
+        BRC.mpr.okay()
         reset_rest()
         return false
       end
@@ -324,6 +324,7 @@ end
 
 local function do_resting()
   if not set_good_direction() then return end
+  if f_announce_hp_mp then f_announce_hp_mp.single_turn_mute() end
 
   if rest_type == "wait" then
     BRC.util.do_cmd("CMD_SAFE_WAIT")

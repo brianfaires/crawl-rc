@@ -275,6 +275,10 @@ function BRC.mpr.info(message, context)
   log_message(message, context, BRC.COL.darkgrey)
 end
 
+function BRC.mpr.okay(suffix)
+  BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
+end
+
 function BRC.mpr.que(msg, color, channel)
   BRC.mpr.que_optmore(false, msg, color, channel)
 end
@@ -763,7 +767,7 @@ local function verify_safe_rest()
         do_overheal = true
         return true
       else
-        crawl.mpr.okay()
+        BRC.mpr.okay()
         reset_rest()
         return false
       end
@@ -787,6 +791,7 @@ end
 
 local function do_resting()
   if not set_good_direction() then return end
+  if f_announce_hp_mp then f_announce_hp_mp.single_turn_mute() end
 
   if rest_type == "wait" then
     BRC.util.do_cmd("CMD_SAFE_WAIT")
