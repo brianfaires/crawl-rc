@@ -219,9 +219,9 @@ brc_config_explicit = {
     necropolis_search = true, -- on exploring necropolis, auto-search with filters
   },
 
-  ["safe-consumables"] = {
+  ["manage-consumables"] = {
     disabled = false,
-    -- No config;See safe-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
+    -- No config;See manage-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
   },
 
   ["safe-stairs"] = {

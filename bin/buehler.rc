@@ -240,7 +240,7 @@ brc_config_realtime = {
   emojis = true,
 
   ["alert-monsters"] = { disabled = true },
-  ["safe-consumables"] = { disabled = true },
+  ["manage-consumables"] = { disabled = true },
   ["safe-stairs"] = { disabled = true },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
@@ -538,9 +538,9 @@ brc_config_explicit = {
     necropolis_search = true, -- on exploring necropolis, auto-search with filters
   },
 
-  ["safe-consumables"] = {
+  ["manage-consumables"] = {
     disabled = false,
-    -- No config;See safe-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
+    -- No config;See manage-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
   },
 
   ["safe-stairs"] = {
@@ -1529,7 +1529,7 @@ spell_slot ^= Volatile Blastmotes:VBOLMASTE
 
 ##################################### Begin rc/autoinscribe.rc ####################################
 ############### https://github.com/brianfaires/crawl-rc/blob/main/rc/autoinscribe.rc ##############
-# See safe-consumables.lua for consumable inscriptions
+# See manage-consumables.lua for consumable inscriptions
 ai := autoinscribe
 
 # General
@@ -7712,20 +7712,20 @@ end
 ############################## End lua/features/runrest-features.lua ##############################
 ###################################################################################################
 
-############################# Begin lua/features/safe-consumables.lua #############################
-####### https://github.com/brianfaires/crawl-rc/blob/main/lua/features/safe-consumables.lua #######
+############################ Begin lua/features/manage-consumables.lua ############################
+###### https://github.com/brianfaires/crawl-rc/blob/main/lua/features/manage-consumables.lua ######
 {
 ---------------------------------------------------------------------------------------------------
--- BRC feature module: safe-consumables
--- @module f_safe_consumables
+-- BRC feature module: manage-consumables
+-- @module f_manage_consumables
 -- Features for consumable management. Same as crawl's built-in options, without gaps in coverage.
 -- safe_scrolls / safe_potions: !r and !q inscriptions. A more consistent version of autoinscribe.
 -- slots: A more consistent version of crawl's item_slot option.
 ---------------------------------------------------------------------------------------------------
 
-f_safe_consumables = {}
-f_safe_consumables.BRC_FEATURE_NAME = "safe-consumables"
-f_safe_consumables.Config = {
+f_manage_consumables = {}
+f_manage_consumables.BRC_FEATURE_NAME = "manage-consumables"
+f_manage_consumables.Config = {
   maintain_safe_scrolls = true,
   maintain_safe_potions = true,
   scroll_slots = { ["identify"] = "i", ["acquirement"] = "A", ["blinking"] = "b", },
@@ -7750,8 +7750,8 @@ local found_scroll
 local found_potion
 
 ---- Initialization ----
-function f_safe_consumables.init()
-  C = f_safe_consumables.Config
+function f_manage_consumables.init()
+  C = f_manage_consumables.Config
   C.scroll_slots = C.scroll_slots or {}
   C.potion_slots = C.potion_slots or {}
   found_scroll = nil
@@ -7823,7 +7823,7 @@ local function maintain_inscriptions()
 end
 
 ---- Crawl hook functions ----
-function f_safe_consumables.c_message(text, _)
+function f_manage_consumables.c_message(text, _)
   if next(C.scroll_slots) then
     local _, last = text:find(" .[^s]?s a scroll of ")
     if last then
@@ -7841,13 +7841,13 @@ function f_safe_consumables.c_message(text, _)
   end
 end
 
-function f_safe_consumables.ready()
+function f_manage_consumables.ready()
   maintain_slots()
   maintain_inscriptions()
 end
 
 }
-############################## End lua/features/safe-consumables.lua ##############################
+############################# End lua/features/manage-consumables.lua #############################
 ###################################################################################################
 
 ################################ Begin lua/features/safe-stairs.lua ###############################

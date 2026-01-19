@@ -36,7 +36,7 @@ Looking at a feature module might still be helpful to read the description, or s
 - **color-inscribe** - Adds color to item inscriptions (like <span style="color: red;">rF++</span>)
 - **drop-inferior** - Alerts when you pick up a replacement for an item in inventory, and adds the inferior one to the drop list
 - **exclude-dropped** - Excludes dropped items from autopickup
-- **safe-consumables** - Robustly maintains `!q` and `!r` inscriptions only where required
+- **manage-consumables** - Robustly maintains `!q` and `!r` inscriptions only where required
 - **weapon-slots** - Keeps weapons organized in slots a/b/w
 
 ### Alerts & Warnings

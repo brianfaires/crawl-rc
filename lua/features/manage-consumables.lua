@@ -1,82 +1,3 @@
-## Standalone BRC Feature: manage-consumables
-## Generated from: lua/features/manage-consumables.lua
-## This file is self-contained and can be copy-pasted into your RC file.
-## No external dependencies required.
-
-{
-
--- Minimal BRC namespace (Don't overwrite existing globals)
-BRC = BRC or {}
-BRC.Config = BRC.Config or {}
-BRC.Config.emojis = false
-
-f_manage_consumables = {}
-f_manage_consumables.Config = {
-  maintain_safe_scrolls = true,
-  maintain_safe_potions = true,
-  scroll_slots = { ["identify"] = "i", ["acquirement"] = "A", ["blinking"] = "b", },
-  potion_slots = { ["might"] = "m", ["magic"] = "g", },
-}
-
--- define string:contains() for all strings
-function BRC_txt_str_contains(self, text)
-  return self:find(text, 1, true) ~= nil
-end
-getmetatable("").__index.contains = BRC_txt_str_contains
-
--- BRC Constants
-BRC.COL = {
-  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
-  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
-  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COL (do not remove this comment)
-
-
--- BRC module tables (Don't overwrite existing globals)
-BRC.mpr = BRC.mpr or {}
-BRC.opt = BRC.opt or {}
-BRC.txt = BRC.txt or {}
-
--- BRC.mpr module
-BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
-
-
--- BRC.opt module
-local _claimed_macro_keys = {}
-
-function BRC.opt.message_mute(pattern, create)
-  local op = create and "^=" or "-="
-  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
-end
-
-function BRC.opt.single_turn_mute(pattern)
-  BRC.opt.message_mute(pattern, true)
-  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
-end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
-
--- single turn mutes support: _single_turn_mutes and BRC.opt.clear_single_turn_mutes()
-_single_turn_mutes = {}
-function BRC.opt.clear_single_turn_mutes()
-  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
-  _single_turn_mutes = {}
-end
-
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: manage-consumables
 -- @module f_manage_consumables
@@ -85,7 +6,14 @@ end
 -- slots: A more consistent version of crawl's item_slot option.
 ---------------------------------------------------------------------------------------------------
 
-
+f_manage_consumables = {}
+f_manage_consumables.BRC_FEATURE_NAME = "manage-consumables"
+f_manage_consumables.Config = {
+  maintain_safe_scrolls = true,
+  maintain_safe_potions = true,
+  scroll_slots = { ["identify"] = "i", ["acquirement"] = "A", ["blinking"] = "b", },
+  potion_slots = { ["might"] = "m", ["magic"] = "g", },
+}
 
 ---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
@@ -200,23 +128,3 @@ function f_manage_consumables.ready()
   maintain_slots()
   maintain_inscriptions()
 end
-
-
--- Crawl hook wrappers
-function c_message(...)
-  return f_manage_consumables.c_message(...)
-end
-
-local brc_last_turn = -1
-function ready(...)
-  BRC.opt.clear_single_turn_mutes()
-  if you.turns() > brc_last_turn then
-    brc_last_turn = you.turns()
-    f_manage_consumables.ready(...)
-  end
-end
-
-
--- Initialize feature
-if f_manage_consumables.init then f_manage_consumables.init() end
-}

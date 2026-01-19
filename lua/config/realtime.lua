@@ -6,7 +6,7 @@ brc_config_realtime = {
   emojis = true,
 
   ["alert-monsters"] = { disabled = true },
-  ["safe-consumables"] = { disabled = true },
+  ["manage-consumables"] = { disabled = true },
   ["safe-stairs"] = { disabled = true },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP

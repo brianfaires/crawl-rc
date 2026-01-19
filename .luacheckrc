@@ -83,7 +83,7 @@ globals = {
   "f_pickup_alert",
   "f_remind_id",
   "f_runrest_features",
-  "f_safe_consumables",
+  "f_manage_consumables",
   "f_safe_stairs",
   "f_startup",
   "f_template",
