@@ -183,16 +183,25 @@ brc_config_turncount = {
   ["inscribe-stats"] = {
     skip_dps = true,
   },
-  ["runrest-features"] = { after_shaft = false },
+  ["runrest-features"] = {
+    after_shaft = false
+  },
   ["mute-messages"] = {
     mute_level = 1,
   },
   ["pickup-alert"] = {
+    Pickup = {
+      weapons = false,
+    },
     Alert = {
+      hotkey_travel = false,
       hotkey_pickup = false,
       one_time = {
         "distortion", "troll leather armour", "wand of digging",
-        "buckler", "kite shield", "tower shield",
+        "shatter", "apportation", "passage of golubria",
+      },
+      More = {
+        shields = false,
       },
     },
   },
@@ -201,8 +210,13 @@ brc_config_turncount = {
     crawl.setopt("show_game_time = false")
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
-    crawl.setopt("runrest_ignore_monster ^= bat:1") -- Allows shift-dir
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
+
+    for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
+      if m ~= "one_time_alerts" then
+        f_pickup_alert.Config.Alert.More[m] = false
+      end
+    end
   end,
 } -- brc_config_turncount (do not remove this comment)
 
@@ -1911,8 +1925,9 @@ BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
 BRC.MAGIC_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
-  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+  air = "Air Magic", alchemy = "Alchemy", chemistry = "Alchemy", cold = "Ice Magic",
+  conjuration = "Conjurations", death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",
+  necromancy = "Necromancy",
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.TRAINING_SKILLS = {
@@ -4486,15 +4501,15 @@ f_alert_monsters.Config.Alerts = {
       "death knight", "imperial myrmidon", "necromancer",
     } },
 
-  -- Early game Dungeon problems for chars with low mhp. (adder defined below)
-  { name = "30hp", cond = "hp", cutoff = 30,
+  -- Early game Dungeon problems for chars with low hp. (adder defined below)
+  { name = "30hp", cond = "hp", cutoff = 30, is_pack = true,
     pattern = { "hound", "gnoll" } },
 
   { name = "mid_game_packs", cutoff = 90, is_pack = true,
     pattern = { "boggart", "dream sheep" } },
 
   -- Monsters dangerous until a certain point
-  { name = "xl_7", cond = "xl", cutoff = 7,
+  { name = "xl_7", cond = "xl", cutoff = 6,
     pattern = { "orc wizard" } },
   { name = "xl_12", cond = "xl", cutoff = 12,
     pattern = { "hydra", "bloated husk" } },
@@ -7001,6 +7016,7 @@ f_mute_messages.Config = {
       "Marking area around",
       "(Reduced|Removed|Placed new) exclusion",
       "You can access your shopping list by pressing '\\$'",
+      "Shift\\-Dir \\- straight line",
 
       -- Wielding weapons
       "Your .* begins to (drip with poison|ooze corrosive slime)",
@@ -7056,7 +7072,6 @@ f_mute_messages.Config = {
       -- Interface
       "Use which ability\\?",
       "Evoke which item\\?$",
-      "Shift\\-Dir \\- straight line",
 
       -- Books
       "You pick up (?!a manual).*and begin reading",
@@ -7139,27 +7154,41 @@ f_quiver_reminders.Config = {
 local C -- config alias
 local last_thrown
 local last_thrown_turn
+local last_queued
+local last_queued_turn
 
 ---- Initialization ----
 function f_quiver_reminders.init()
   C = f_quiver_reminders.Config
   last_thrown = nil
   last_thrown_turn = -1
-
+  last_queued = nil
+  last_queued_turn = -1
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_FIRE") or "f", "macro_brc_fire")
 end
 
 ---- Local functions ----
+--- Generate a string that matches the "Throw: <qty> <name> (<ego>)" format
+local function parse_name_from_item(it)
+  local ego = it.ego()
+  if not ego then return it.name("db") end
+  return it.name("db") .. " (" .. ego .. ")"
+end
+
+
 local function quiver_missile_by_name(name)
   local slot = nil
   for _, inv in ipairs(items.inventory()) do
-    if inv.name("qual") == name then
+    if parse_name_from_item(inv) == name then
       slot = inv.slot
       break
     end
   end
 
-  if not slot then return end
+  if not slot then
+    BRC.mpr.error("Not found in inventory: " .. name)
+    return
+  end
   crawl.sendkeys(BRC.util.get_cmd_key("CMD_QUIVER_ITEM") .. "*(" .. BRC.txt.int2char(slot))
   crawl.flush_input()
 end
@@ -7183,10 +7212,11 @@ function macro_brc_fire()
     end
   end
 
-  if you.turns() - last_thrown_turn <= C.warn_diff_missile_turns then
+  if last_thrown and (you.turns() - last_thrown_turn <= C.warn_diff_missile_turns) then
     local eq_name = items.equipped_at("Weapon") and items.equipped_at("Weapon").name("qual") or nil
-    if last_thrown ~= quivered.name("qual") and quivered.name("qual") ~= eq_name then
-      local q = BRC.txt.lightgreen(quivered.name("qual"))
+    local quiv_name = parse_name_from_item(quivered)
+    if quiv_name ~= last_thrown and quiv_name ~= eq_name then
+      local q = BRC.txt.lightgreen(quiv_name)
       if not BRC.mpr.yesno("Did you mean to throw " .. q .. "?") then
         local t = BRC.txt.lightgreen(last_thrown)
         if BRC.mpr.yesno("Quiver and throw " .. t .. " instead?") then
@@ -7204,10 +7234,24 @@ end
 ---- Crawl hook functions ----
 function f_quiver_reminders.c_message(text, _)
   local cleaned = BRC.txt.clean(text)
-  local prefix = "You throw a "
-  if cleaned:sub(1, #prefix) == prefix then
-    last_thrown = cleaned:sub(#prefix + 1, #cleaned - 1):gsub(" {.*}", "")
-    last_thrown_turn = you.turns()
+  if cleaned:sub(1, 7) == "Throw: " then
+    last_queued_turn = you.turns()
+    -- Missile name is shown in message like: "Throw: 23 darts (curare)". Strip prefix.
+    last_queued = cleaned:sub(8, #cleaned)
+
+    -- Remove quantity and pluralization
+    last_queued = last_queued:gsub("^%d+ ", "")
+    if last_queued:sub(-1) == "s" then
+      last_queued = last_queued:sub(1, -2)
+    else
+      last_queued = last_queued:gsub("s %(", " (")
+    end
+  elseif cleaned:sub(1, 10) == "You throw " then
+    if you.turns() ~= last_queued_turn then
+      BRC.mpr.error("quiver-remind turn changed: " .. last_queued_turn .. " -> " .. you.turns())
+    end
+    last_thrown = last_queued
+    last_thrown_turn = last_queued_turn
   end
 end
 
@@ -9182,7 +9226,7 @@ function f_pa_misc.alert_staff(it)
     if you.res_shock() > 0 then return false end
     tag = "rElec"
     tag_color = BRC.COL.lightcyan
-  elseif basename == "staff of alchemy" then
+  elseif basename == "staff of chemistry" then
     if you.res_poison() > 0 then return false end
     tag = "rPois"
     tag_color = BRC.COL.lightgreen

@@ -268,8 +268,9 @@ BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 BRC.LITTLE_RACES = { "Spriggan" }
 
 BRC.MAGIC_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
-  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+  air = "Air Magic", alchemy = "Alchemy", chemistry = "Alchemy", cold = "Ice Magic",
+  conjuration = "Conjurations", death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",
+  necromancy = "Necromancy",
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
@@ -1873,7 +1874,7 @@ function f_pa_misc.alert_staff(it)
     if you.res_shock() > 0 then return false end
     tag = "rElec"
     tag_color = BRC.COL.lightcyan
-  elseif basename == "staff of alchemy" then
+  elseif basename == "staff of chemistry" then
     if you.res_poison() > 0 then return false end
     tag = "rPois"
     tag_color = BRC.COL.lightgreen

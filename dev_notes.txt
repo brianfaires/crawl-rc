@@ -1,10 +1,24 @@
 ### TODO
 recent:
+- remove 'auto unwield' behavior; prompt instead
+- cntl-5 not working on webtiles
+- don't fm on "you are momentarily confused"
+- mute: appreciates the change of pace
+-breadswing; when on edge of map; glitches when trying to attack OOB
+does read id hotkey work when inventory slot is not i?
+- gnoll: pack animal alert
+- switching weapons: dont switch slowest if diff < 0.1
+- carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
+- BUG: OTA not overwriten by config
+- meter always says +0 mp
+- breadswing getting stopped by mana gain msg
+- "you're healthy enough" -> y/n prompt for full rest
 
 Turncount features:
+- disable most weapon alerts
 - only alerted "slowest weap" when swapping orb->shield. Carrying broad axe, and it alerted for a floor broad axe.
 - OTA for spells
-- POG macro / ignore monsteres for POG or shift-dir
+- POG macro (enter closest) / ignore monsteres for POG or shift-dir
 - tele into see trident; prompted for read ?id
 - don't upgrade old, basic weaps that i just dont wanna drop
 - disable 'highest dmg' alert?
@@ -12,7 +26,7 @@ Turncount features:
 
 hotkey:
   - move to only if on same floor
-  - [bug?] swallowing keypress again? when walking and comes into view
+  - swallowing keypress again; when walking and it comes into view
   - "move to +0 ring mail"; but a +4 ring mail was alerted after (diff items);
   - read id hotkey shows up a turn after the "scroll of id" message that triggered it
   - triggering on "you see: scroll of id"
