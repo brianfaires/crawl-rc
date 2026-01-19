@@ -45,12 +45,14 @@ local WAYPOINT_MUTES = {
 local action_queue
 local cur_action
 local delay_expire
+local cur_floor
 
 ---- Initialization ----
 function BRC.Hotkey.init()
   action_queue = {}
   cur_action = nil
   delay_expire = false
+  cur_floor = you.where()
 
   BRC.opt.macro(BRC.Hotkey.Config.key.keycode, "macro_brc_hotkey")
   BRC.opt.macro(BRC.Hotkey.Config.skip_keycode, "macro_brc_skip_hotkey")
@@ -194,19 +196,22 @@ function BRC.Hotkey.pickup(name, push_front)
 end
 
 --- Set hotkey as 'move to <name>', if it's in LOS
--- If feature_name provided, moves to that feature, otherwise searches for the item by name
+-- If target is a table, moves to that xy coordinate
+-- If target is a string, moves to that feature, otherwise searches for the item by name
 -- @param queue_pickup (optional boolean) - Queue pickup after moving to item (default true)
-local function set_waypoint_hotkey(name, push_front, feature_name, queue_pickup)
+local function set_waypoint_hotkey(name, push_front, target, queue_pickup)
   if util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch()) then
     return -- Can't auto-travel
   end
 
   local x, y
-  if feature_name ~= nil then
+  if type(target) == "table" then
+    x, y = target.dx, target.dy
+  elseif type(target) == "string" then
     local r = you.los()
     for dx = -r, r do
       for dy = -r, r do
-        if view.feature_at(dx, dy):contains(feature_name) then
+        if view.feature_at(dx, dy):contains(target) then
           x, y = dx, dy
           break
         end
@@ -245,7 +250,7 @@ local function set_waypoint_hotkey(name, push_front, feature_name, queue_pickup)
     util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
 
-    if not feature_name and queue_pickup ~= false then
+    if not target and queue_pickup ~= false then
       BRC.Hotkey.pickup(name, true)
     end
   end
@@ -259,6 +264,10 @@ end
 
 function BRC.Hotkey.move_to_feature(name, push_front, feature_name)
   set_waypoint_hotkey(name, push_front, feature_name, false)
+end
+
+function BRC.Hotkey.move_to_xy(name, push_front, x, y)
+  set_waypoint_hotkey(name, push_front, {dx=x, dy=y}, false)
 end
 
 ---- Crawl hook functions ----
@@ -291,7 +300,12 @@ function BRC.Hotkey.c_message(text, channel)
 end
 
 function BRC.Hotkey.ready()
-  if cur_action == nil then
+  if you.where() ~= cur_floor then
+    -- Clear the queue when changing floors
+    cur_floor = you.where()
+    action_queue = {}
+    cur_action = nil
+  elseif cur_action == nil then
     load_next_action()
   elseif cur_action.turn > you.turns() then
     return

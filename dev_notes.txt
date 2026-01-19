@@ -1,15 +1,5 @@
 ### TODO
-recent:
-- cntl-5 not working on webtiles
-- carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
-
-Turncount features:
-- only alerted "slowest weap" when swapping orb->shield. Carrying broad axe, and it alerted for a floor broad axe.
-- POG macro (enter closest) / ignore monsteres for POG or shift-dir
-- prevent accidental long-dist travel (ie shopping list)
-
 hotkey:
-  - move to only if on same floor
   - swallowing keypress again; when walking and it comes into view
   - "move to +0 ring mail"; but a +4 ring mail was alerted after (diff items);
   - walking, found temple (swallowed); stepped to entrance, OTA buckler; weird map screen after entering temple. Esc -> showed altar search
@@ -17,12 +7,13 @@ hotkey:
 Misc:
   - Add more comments to feature files, especially for the config options.
   - reading scroll off ground, not auto-assigning copy in inventory to its slot
-  - disable fm for arte armour (for turncount only? - not sure what this was about)
 
 ### Can't reproduce locally:
+- cntl-5 not working on webtiles
 - read id hotkey shows up a turn after the "scroll of id" message that triggered it
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
 - in pan: redrawing screen on every turn of travel (fixed?)
+- carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
 
 
 Realtime features:
@@ -49,6 +40,9 @@ items.pickup() does nothing?
 stacks are only checked for autopickup when visited
 
 ### TODO - require crawl PR?
+1. idk how to detect these actions:
+  - Prompt/prevent accidental long-dist travel from shopping list
+  - Hotkey: Enter closest POG
 1. fully-recover:
   - Wait for allies to fully heal
   - Wait for ancestor respawn

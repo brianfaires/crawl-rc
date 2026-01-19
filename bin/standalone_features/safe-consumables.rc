@@ -62,8 +62,31 @@ function f_safe_consumables.ready()
   end
 end
 
+function f_safe_consumables.c_message(text, _)
+  local idx = text:find("It .+ a scroll of ")
+  if idx then
+    for _, inv in ipairs(items.inventory()) do
+      if inv.class(true) == "scroll" then
+        crawl.mpr("scroll: " .. inv.name())
+      end
+    end
+  end
+
+  if text:find("As you read the scroll labelled ") then
+    for _, inv in ipairs(items.inventory()) do
+      if inv.class(true) == "scroll" then
+        crawl.mpr("1scroll: " .. inv.name())
+      end
+    end
+  end
+end
+
 
 -- Crawl hook wrappers
+function c_message(...)
+  return f_safe_consumables.c_message(...)
+end
+
 local brc_last_turn = -1
 function ready(...)
   if you.turns() > brc_last_turn then

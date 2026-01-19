@@ -44,6 +44,8 @@ f_mute_messages.Config = {
       "(Reduced|Removed|Placed new) exclusion",
       "You can access your shopping list by pressing '\\$'",
       "Shift\\-Dir \\- straight line",
+      "Press: ? .* help",
+
 
       -- Wielding weapons
       "Your .* begins to (drip with poison|ooze corrosive slime)",

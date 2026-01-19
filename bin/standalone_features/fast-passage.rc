@@ -1,0 +1,95 @@
+## Standalone BRC Feature: fast_passage
+## Generated from: lua/features/fast-passage.lua
+## This file is self-contained and can be copy-pasted into your RC file.
+## No external dependencies required.
+
+{
+
+-- Minimal BRC namespace (Don't overwrite existing globals)
+BRC = BRC or {}
+BRC.Config = BRC.Config or {}
+BRC.Config.emojis = false
+
+-- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
+
+-- BRC module tables (Don't overwrite existing globals)
+BRC.mpr = BRC.mpr or {}
+BRC.txt = BRC.txt or {}
+
+-- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
+f_fast_passage = {}
+
+
+---- Local constants ----
+local FEAT_NAME = "passage of golubria"
+
+---- Local fucntions ----
+local function find_closest_portal()
+  for r = 0, 2 do
+    for dx = -r, r do
+      for dy = -r, r do
+        if view.feature_at(dx, dy) == FEAT_NAME then
+          return dx, dy
+        end
+      end
+    end
+  end
+end
+
+--- Find the closest portal (feature name is 'passage of golubria') and enter it
+local function do_safe_passage()
+  local x, y = find_closest_portal()
+  if not x then
+    BRC.mpr.yellow("No nearby portals.")
+    return
+  end
+
+  if not you.feel_safe() then
+    BRC.mpr.yellow("Hostile monster in view!")
+    return
+  end
+
+  BRC.Hotkey.move_to_xy("Passage of Golubria", true, x, y)
+end
+
+function f_fast_passage.c_message(text, _)
+  if text:find("you open a passage or sth") then
+    do_safe_passage()
+  end
+end
+
+
+-- Crawl hook wrappers
+function c_message(...)
+  return f_fast_passage.c_message(...)
+end
+
+
+-- Initialize feature
+if f_fast_passage.init then f_fast_passage.init() end
+}

@@ -43,6 +43,7 @@ lua_file = crawl-rc/lua/features/drop-inferior.lua
 lua_file = crawl-rc/lua/features/display-realtime.lua
 lua_file = crawl-rc/lua/features/dynamic-options.lua
 lua_file = crawl-rc/lua/features/exclude-dropped.lua
+#lua_file = crawl-rc/lua/features/fast-passage.lua
 lua_file = crawl-rc/lua/features/fm-messages.lua
 lua_file = crawl-rc/lua/features/fully-recover.lua
 lua_file = crawl-rc/lua/features/go-up-macro.lua
