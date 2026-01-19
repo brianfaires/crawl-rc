@@ -514,7 +514,7 @@ local prev_num_turns_to_rest
 local rest_type
 local wielding
 local dir
-local bs_removed_shield
+local removed_shield
 local do_overheal
 
 ---- Local functions ----
@@ -537,7 +537,7 @@ local function reset_rest(msg)
     end
   end
 
-  if bs_removed_shield then
+  if removed_shield then
     BRC.mpr.que(BRC.txt.lightmagenta("Remember to re-equip your shield after resting!"))
   end
 
@@ -547,7 +547,7 @@ local function reset_rest(msg)
   rest_type = nil
   wielding = false
   dir = { x = nil, y = nil }
-  bs_removed_shield = false
+  removed_shield = false
   do_overheal = false
 end
 
@@ -634,7 +634,7 @@ local function get_slowest_slot()
     local msg = BRC.txt.white(SH_PROMPT .. BRC.txt.lightcyan(slowest_item.name("db")) .. "?")
     if BRC.mpr.yesno(msg) then
       items.equipped_at("offhand").remove()
-      bs_removed_shield = true
+      removed_shield = true
     elseif slowest_item_1h then
       slowest_item = slowest_item_1h
     else
@@ -897,7 +897,7 @@ function f_bread_swinger.c_message(text, channel)
     or channel == "recovery"
     or channel == "duration"
     or text:find("Your magical contamination .* fade")
-    or bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT)
+    or removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT)
   then return end
 
   reset_rest()

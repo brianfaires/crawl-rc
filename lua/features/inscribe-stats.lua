@@ -12,10 +12,19 @@ f_inscribe_stats.Config = {
   inscribe_armour = true, -- Inscribe armour stats on pickup
   dmg_type = BRC.DMG_TYPE.unbranded, -- unbranded, plain, branded, scoring
   skip_dps = false, -- Skip DPS in weapon inscriptions
+  prefix_staff_dmg = true, -- Special prefix for magical staves
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
+
+---- Local variables ----
+local C -- config alias
+
+---- Initialization ----
+function f_inscribe_stats.init()
+  C = f_inscribe_stats.Config
+end
 
 ---- Local functions ----
 local function inscribe_armour_stats(it)
@@ -56,13 +65,26 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dmg_type = f_inscribe_stats.Config.dmg_type
+  local dmg_type = C.dmg_type
   if type(dmg_type) == "string" then
     dmg_type = BRC.DMG_TYPE[dmg_type]
   end
-  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, f_inscribe_stats.Config.skip_dps)
-  local prefix, suffix = "", ""
 
+  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, C.skip_dps)
+  if C.prefix_staff_dmg and BRC.it.is_magic_staff(it) then
+    local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it, dmg_type)
+    local bonus_str
+    if dmg == 0 or chance == 0 then
+      bonus_str = "(+0)"
+    elseif chance >= 1 then
+      bonus_str = string.format("(+%.1f)", dmg)
+    else
+      bonus_str = string.format("(+%.1f,%d%%%%)", dmg, math.floor(chance * 100))
+    end
+    dps_inscr = dps_inscr:gsub("/", bonus_str .. "/")
+  end
+
+  local prefix, suffix = "", ""
   local idx = orig_inscr:find(dps_inscr:sub(1, 4), 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
@@ -78,9 +100,9 @@ end
 
 ---- Crawl hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
-  if f_inscribe_stats.Config.inscribe_weapons and it.is_weapon then
+  if C.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif f_inscribe_stats.Config.inscribe_armour
+  elseif C.inscribe_armour
     and BRC.it.is_armour(it)
     and not BRC.it.is_scarf(it)
   then

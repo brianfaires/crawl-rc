@@ -183,11 +183,11 @@ brc_config_turncount = {
   ["inscribe-stats"] = {
     skip_dps = true,
   },
-  ["runrest-features"] = {
-    after_shaft = false
-  },
   ["mute-messages"] = {
     mute_level = 1,
+  },
+  ["runrest-features"] = {
+    after_shaft = false
   },
   ["pickup-alert"] = {
     Pickup = {
@@ -201,9 +201,13 @@ brc_config_turncount = {
         "Apportation", "Passage of Golubria", "Shatter", "Ignition", "Fire Storm", "Polar Vortex",
       },
       More = {
+        armour_ego = false,
         shields = false,
       },
     },
+  },
+  ["safe-stairs"] = {
+    warn_backtracking = false,
   },
 
   init = function()
@@ -211,6 +215,7 @@ brc_config_turncount = {
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
+    crawl.setopt("autoinscribe += (shield|buckler|orb):!T")
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
       if m ~= "one_time_alerts" then
@@ -480,6 +485,7 @@ brc_config_explicit = {
     inscribe_armour = true, -- Inscribe armour stats on pickup
     dmg_type = "unbranded", -- unbranded, plain, branded, scoring
     skip_dps = false, -- Skip DPS in weapon inscriptions
+    prefix_staff_dmg = true, -- Special prefix for magical staves
   },
 
   ["misc-alerts"] = {
@@ -1330,15 +1336,15 @@ bindkey = [\{-222}] CMD_AUTOFIGHT_NOMOVE
 macros += M \{4} \{7}>
 
 # Spellcasting macros
-macros += M 1 za
-macros += M 2 zb
-macros += M 3 zc
-macros += M 4 zd
-macros += M 6 zf
-macros += M 7 zg
-macros += M 8 zh
-macros += M 9 zi
-macros += M 0 zj
+macros += M 1 Za
+macros += M 2 Zb
+macros += M 3 Zc
+macros += M 4 Zd
+macros += M 6 Zf
+macros += M 7 Zg
+macros += M 8 Zh
+macros += M 9 Zi
+macros += M 0 Zj
 
 # Confirm targeting with same keys as spellcasting
 macros += K2 \{-1018} \{13}
@@ -2866,25 +2872,6 @@ local function get_slay_bonuses()
   return sum
 end
 
-local function get_staff_bonus_dmg(it, dmg_type)
-  if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
-  if dmg_type == BRC.DMG_TYPE.plain then
-    local basename = it.name("base")
-    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
-  end
-
-  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
-  local evo_skill = you.skill("Evocations")
-
-  local chance = (2 * evo_skill + spell_skill) / 30
-  if chance > 1 then chance = 1 end
-  -- 0.75 is an acceptable approximation; most commonly 63/80
-  -- Varies by staff type in sometimes complex ways
-  local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
-  return avg_dmg * chance
-end
-
-
 --- Gets the updated stats after equipping an item
 -- @param stats (table) Keys are artefact properties, values are the current values
 -- If multiple equip slots available, assumes no item is removed.
@@ -3104,6 +3091,7 @@ function BRC.eq.get_weap_delay(it)
 
   return delay / 10
 end
+
 --- Get weapon damage (average), including stat/slay changes when swapping from current weapon.
 -- Aux attacks not included
 function BRC.eq.get_avg_dmg(it, dmg_type)
@@ -3119,7 +3107,7 @@ function BRC.eq.get_avg_dmg(it, dmg_type)
   local base_dmg = it.damage * stat_mod * skill_mod
 
   if BRC.it.is_magic_staff(it) then
-    return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
+    return base_dmg + stats.Slay + BRC.eq.get_staff_bonus_dmg(it, dmg_type)
   else
     return get_dmg_with_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
   end
@@ -3130,6 +3118,27 @@ function BRC.eq.get_dps(it, dmg_type)
   return BRC.eq.get_avg_dmg(it, dmg_type) / BRC.eq.get_weap_delay(it)
 end
 
+--- Calculate expected damage output from a staff
+-- @return (number) Damage * chance, (number) damage on proc, (number) chance to proc
+function BRC.eq.get_staff_bonus_dmg(it, dmg_type)
+  local result = nil
+  if dmg_type == BRC.DMG_TYPE.unbranded then result = 0 end
+  if dmg_type == BRC.DMG_TYPE.plain then
+    local basename = it.name("base")
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then result = 0 end
+  end
+
+  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
+  local evo_skill = you.skill("Evocations")
+
+  local chance = (2 * evo_skill + spell_skill) / 30
+  if chance > 1 then chance = 1 end
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
+  result = result or dmg * chance
+  return result, dmg, chance
+end
 
 ---- Item properties ----
 --- Get the ego of an item, with custom logic:
@@ -5294,7 +5303,7 @@ local prev_num_turns_to_rest
 local rest_type
 local wielding
 local dir
-local bs_removed_shield
+local removed_shield
 local do_overheal
 
 ---- Local functions ----
@@ -5317,7 +5326,7 @@ local function reset_rest(msg)
     end
   end
 
-  if bs_removed_shield then
+  if removed_shield then
     BRC.mpr.que(BRC.txt.lightmagenta("Remember to re-equip your shield after resting!"))
   end
 
@@ -5327,7 +5336,7 @@ local function reset_rest(msg)
   rest_type = nil
   wielding = false
   dir = { x = nil, y = nil }
-  bs_removed_shield = false
+  removed_shield = false
   do_overheal = false
 end
 
@@ -5414,7 +5423,7 @@ local function get_slowest_slot()
     local msg = BRC.txt.white(SH_PROMPT .. BRC.txt.lightcyan(slowest_item.name("db")) .. "?")
     if BRC.mpr.yesno(msg) then
       items.equipped_at("offhand").remove()
-      bs_removed_shield = true
+      removed_shield = true
     elseif slowest_item_1h then
       slowest_item = slowest_item_1h
     else
@@ -5677,7 +5686,7 @@ function f_bread_swinger.c_message(text, channel)
     or channel == "recovery"
     or channel == "duration"
     or text:find("Your magical contamination .* fade")
-    or bs_removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT)
+    or removed_shield and text:find("You .* removing your") or text:contains(SH_PROMPT)
   then return end
 
   reset_rest()
@@ -6755,10 +6764,19 @@ f_inscribe_stats.Config = {
   inscribe_armour = true, -- Inscribe armour stats on pickup
   dmg_type = BRC.DMG_TYPE.unbranded, -- unbranded, plain, branded, scoring
   skip_dps = false, -- Skip DPS in weapon inscriptions
+  prefix_staff_dmg = true, -- Special prefix for magical staves
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
+
+---- Local variables ----
+local C -- config alias
+
+---- Initialization ----
+function f_inscribe_stats.init()
+  C = f_inscribe_stats.Config
+end
 
 ---- Local functions ----
 local function inscribe_armour_stats(it)
@@ -6799,13 +6817,26 @@ end
 
 local function inscribe_weapon_stats(it)
   local orig_inscr = it.inscription
-  local dmg_type = f_inscribe_stats.Config.dmg_type
+  local dmg_type = C.dmg_type
   if type(dmg_type) == "string" then
     dmg_type = BRC.DMG_TYPE[dmg_type]
   end
-  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, f_inscribe_stats.Config.skip_dps)
-  local prefix, suffix = "", ""
 
+  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, C.skip_dps)
+  if C.prefix_staff_dmg and BRC.it.is_magic_staff(it) then
+    local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it, dmg_type)
+    local bonus_str
+    if dmg == 0 or chance == 0 then
+      bonus_str = "(+0)"
+    elseif chance >= 1 then
+      bonus_str = string.format("(+%.1f)", dmg)
+    else
+      bonus_str = string.format("(+%.1f,%d%%%%)", dmg, math.floor(chance * 100))
+    end
+    dps_inscr = dps_inscr:gsub("/", bonus_str .. "/")
+  end
+
+  local prefix, suffix = "", ""
   local idx = orig_inscr:find(dps_inscr:sub(1, 4), 1, true)
   if idx then
     if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
@@ -6821,9 +6852,9 @@ end
 
 ---- Crawl hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
-  if f_inscribe_stats.Config.inscribe_weapons and it.is_weapon then
+  if C.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif f_inscribe_stats.Config.inscribe_armour
+  elseif C.inscribe_armour
     and BRC.it.is_armour(it)
     and not BRC.it.is_scarf(it)
   then
@@ -7356,7 +7387,11 @@ function f_remind_id.c_message(text, channel)
     ri_found_scroll_of_id = true
     -- Don't re-trigger on dropping or on hotkey notification
     text = BRC.txt.clean(text)
-    if not text:contains("ou drop ") and not text:contains("to read ") and have_unid_item() then
+    if have_unid_item() and not (
+      text:contains("ou drop ") or
+      text:contains("to read ") or
+      text:contains("Found")
+   ) then
       you.stop_activity()
       do_remind_id_check = true
     end
