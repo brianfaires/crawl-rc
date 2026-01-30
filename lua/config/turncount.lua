@@ -56,7 +56,7 @@ brc_config_turncount = {
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
-    crawl.setopt("autoinscribe += (shield|buckler|orb):!T")
+    crawl.setopt("autoinscribe += shield:!T")
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
       if m ~= "one_time_alerts" then

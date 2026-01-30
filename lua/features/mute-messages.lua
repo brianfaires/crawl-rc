@@ -13,7 +13,6 @@ f_mute_messages.Config = {
     explore_only = {
       "There is a.*(staircase|door|gate|hatch).*here",
       "You enter the shallow water",
-      "Moving in this stuff is going to be slow",
       "You see here .*(corpse|skeleton)",
       "You.*open the door",
       "You disentangle yourself",
@@ -37,6 +36,8 @@ f_mute_messages.Config = {
       "Shift\\-Dir \\- straight line",
       "Press: ? .* help",
 
+      -- Movement
+      "Moving in this stuff is going to be slow",
 
       -- Wielding weapons
       "Your .* begins to (drip with poison|ooze corrosive slime)",
@@ -103,7 +104,6 @@ f_mute_messages.Config = {
       "You see here .*(corpse|skeleton)",
       "You now have \\d+ gold piece",
       "You enter the shallow water",
-      "Moving in this stuff is going to be slow",
 
       -- Religion
       "Your shadow attacks",

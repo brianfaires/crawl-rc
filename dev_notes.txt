@@ -1,4 +1,20 @@
 ### TODO
+why getting "DPS increase" alert?
+'o' starts by resting when below mhp, when i want it to search gauntlet again
+no fm on basilisk if can't be petrified
+got a fm on hound at 33 hp
+  and gnoll/iguana at 35
+staff inscription, reduce num_digits on dmg to 0 or 1
+mute you see here a .* skeleton
+extra bright "feel more experienced" when theres a recent 'invisible' message
+pickup-alert exception: manual of conjurations; attempt to index a nil value
+picked up weapon & gold; didn't assign weapon to 'a' (left on b)
+BRC.active == false at start of game; cause monsters in view on spawn?
+
+
+new
+  - not announcing "Found: parchment"
+
 hotkey:
   - swallowing keypress again; when walking and it comes into view
   - "move to +0 ring mail"; but a +4 ring mail was alerted after (diff items);
