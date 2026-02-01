@@ -103,7 +103,7 @@ function f_pa_data.find_OTA(it)
     if v and qualname:find(v) then return v end
   end
 
-  if it.class(true) == "book" then
+  if it.class(true) == "book" and it.spells then
     local lower_spells = {}
     for _, s in ipairs(it.spells) do
       lower_spells[#lower_spells + 1] = s:lower()
