@@ -184,7 +184,7 @@ brc_config_turncount = {
     skip_dps = true,
   },
   ["mute-messages"] = {
-    mute_level = 1,
+    mute_level = 2,
   },
   ["runrest-features"] = {
     after_shaft = false
@@ -1695,6 +1695,9 @@ channel.dgl_message = $m_attention
 
 ####### Message-specific colors
 msc := message_colour
+
+# Easy-to-miss messages
+msc ^= $m_alert:You feel more experienced
 
 # Found things
 msc += $m_interesting:Found
@@ -7064,7 +7067,6 @@ f_mute_messages.Config = {
     explore_only = {
       "There is a.*(staircase|door|gate|hatch).*here",
       "You enter the shallow water",
-      "You see here .*(corpse|skeleton)",
       "You.*open the door",
       "You disentangle yourself",
       "You see here .*",
@@ -8655,6 +8657,7 @@ local function check_and_trigger_alerts(it, unworn_aux_item)
   elseif it.is_weapon and f_pa_weapons and A.weapon_sensitivity > 0 then
     if f_pa_weapons.alert_weapon(it) then return true end
   end
+
   return false
 end
 
@@ -9422,10 +9425,8 @@ function f_pa_misc.alert_orb(it)
 end
 
 function f_pa_misc.alert_OTA(it)
-  crawl.mpr("test A")
   local ota_item = f_pa_data.find_OTA(it)
   if not ota_item then return end
-  crawl.mpr("test B")
 
   local do_alert = true
 
@@ -9444,15 +9445,12 @@ function f_pa_misc.alert_OTA(it)
   elseif it.is_weapon then
     if you.skill(it.weap_skill) < A.OTA_require_skill.weapon then return end
   end
-  crawl.mpr("test C")
+
   f_pa_data.remove_OTA(it)
   if not do_alert then return false end
-  crawl.mpr("test D")
   if it.class(true) == "book" and not it.name():find(ota_item) then
-    crawl.mpr("test E")
     return f_pickup_alert.do_alert(it, "Found " .. ota_item, E.RARE_ITEM, M.one_time_alerts)
   end
-  crawl.mpr("test F")
   return f_pickup_alert.do_alert(it, "Found first", E.RARE_ITEM, M.one_time_alerts)
 end
 

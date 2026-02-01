@@ -150,6 +150,9 @@ channel.dgl_message = $m_attention
 ####### Message-specific colors
 msc := message_colour
 
+# Easy-to-miss messages
+msc ^= $m_alert:You feel more experienced
+
 # Found things
 msc += $m_interesting:Found
 msc ^= $m_interface:Found a faded altar

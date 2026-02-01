@@ -25,7 +25,7 @@ brc_config_turncount = {
     skip_dps = true,
   },
   ["mute-messages"] = {
-    mute_level = 1,
+    mute_level = 2,
   },
   ["runrest-features"] = {
     after_shaft = false
@@ -57,6 +57,7 @@ brc_config_turncount = {
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
     crawl.setopt("autoinscribe += shield:!T")
+    crawl.setopt("autopickup_exceptions ^= > stones?$") -- Don't highlight autopickup for stones
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
       if m ~= "one_time_alerts" then

@@ -13,7 +13,6 @@ f_mute_messages.Config = {
     explore_only = {
       "There is a.*(staircase|door|gate|hatch).*here",
       "You enter the shallow water",
-      "You see here .*(corpse|skeleton)",
       "You.*open the door",
       "You disentangle yourself",
       "You see here .*",
