@@ -7,6 +7,9 @@
 f_weapon_slots = {}
 f_weapon_slots.BRC_FEATURE_NAME = "weapon-slots"
 
+---- 0.34/0.35 compatibility ----
+local SWAP_SLOTS = items.swap_gear_slots or items.swap_slots
+
 ---- Local variables ----
 local do_cleanup_weapon_slots
 local slots_changed
@@ -87,7 +90,7 @@ local function cleanup_ab(slot)
 
   for p = 1, #priorities_ab do
     if priorities_ab[p] > slot then -- Not from earlier slot
-      items.swap_gear_slots(priorities_ab[p], slot)
+      SWAP_SLOTS(priorities_ab[p], slot)
       slots_changed = true
       priorities_ab[p] = -1
       return
@@ -102,7 +105,7 @@ local function cleanup_w()
 
   for p = 1, #priorities_w do
     if priorities_w[p] > 1 then -- Not from slots a or b
-      items.swap_gear_slots(priorities_w[p], slot_w)
+      SWAP_SLOTS(priorities_w[p], slot_w)
       slots_changed = true
       return
     end
@@ -125,7 +128,7 @@ function f_weapon_slots.c_assign_invletter(it)
     local inv = items.inslot(slot)
     if not inv then return slot end
     if not inv.is_weapon then
-      items.swap_gear_slots(slot, get_first_empty_slot())
+      SWAP_SLOTS(slot, get_first_empty_slot())
       slots_changed = true
       return slot
     end
