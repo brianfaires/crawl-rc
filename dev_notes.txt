@@ -9,12 +9,9 @@ staff inscription, reduce num_digits on dmg to 0 or 1
 picked up weapon & gold; didn't assign weapon to 'a' (left on b)
 BRC.active == false at start of game; cause monsters in view on spawn?
 
-new
-  - not announcing "Found: parchment"
-
 hotkey:
   - swallowing keypress again; when walking and it comes into view
-  - "move to +0 ring mail"; but a +4 ring mail was alerted after (diff items);
+  - When adding move to hotkey, check existing for inferior and remove
   - walking, found temple (swallowed); stepped to entrance, OTA buckler; weird map screen after entering temple. Esc -> showed altar search
 
 Misc:
@@ -78,7 +75,7 @@ https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
 1. BRC core/util:
   - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use mprf()
 1. alert-monsters:
-  - level-specific fm ignores (eg vault warden on v:5)
+  - floor-specific fm ignores (eg vault warden on v:5)
   - torment helper; unique color / display count or list of tormentors in LOS
 1. pickup-alert:
   - disable basic jewellery pickup after configurable xl
