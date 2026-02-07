@@ -27,6 +27,7 @@ getmetatable("").__index.contains = BRC_txt_str_contains
 -- BRC Constants
 BRC.ARTPROPS_BAD = {
   "Bane", "-Cast", "-Move", "-Tele",
+  "^Contam", "^Drain", "^Fragile",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
 } -- BRC.ARTPROPS_BAD (do not remove this comment)
 

@@ -151,7 +151,7 @@ channel.dgl_message = $m_attention
 msc := message_colour
 
 # Easy-to-miss messages
-msc ^= $m_alert:You feel more experienced
+msc ^= $m_alert:You feel .*more experienced
 
 # Found things
 msc += $m_interesting:Found

@@ -94,6 +94,7 @@ BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
 ---- Artefact properties ----
 BRC.ARTPROPS_BAD = {
   "Bane", "-Cast", "-Move", "-Tele",
+  "^Contam", "^Drain", "^Fragile",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
 } -- BRC.ARTPROPS_BAD (do not remove this comment)
 
