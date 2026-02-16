@@ -4,8 +4,9 @@ A modular system for Dungeon Crawl Stone Soup RC files, designed to be easily cu
 
 ## Quick Start
 - Include the contents of `bin/buehler.rc` in your RC file.
-- **Merge hooks (if needed)**: Hook functions like `ready()` are defined at the very end of BRC.
-If your RC already contains these, remove BRC's hook function and add `BRC.ready()` at the top of your hook function.
+- **Merge hooks (if needed)**: The hook functions used by crawl (like `ready()`) are defined at the very end of BRC.
+If your RC already contains these, merge them.
+(Ex: Remove BRC's `ready()` function and add `BRC.ready()` at the top of your current `ready()` function.)
 
 ## Built-in Keybinds / Macros
 - `Cntl-D`: Travel down one level (with the nearest stairs)
@@ -14,15 +15,13 @@ If your RC already contains these, remove BRC's hook function and add `BRC.ready
 - `Cntl-Tab`: Autofight, no movement
 - `~`: Open lua interpreter
 - 1,2,3,4,6,7,8,9,0: Cast spell a,b,c,d,f,g,h,i,j,k (press again to confirm targetting)
-  - Press again to confirm target
-- TODO: numpad keybinds
 
 ## Feature Modules
 
 BRC is made up of feature modules that are isolated from each other. Each feature can be independently edited, enabled, and configured.
-All features work out of the box with sensible config defaults. You can customize anything later if you want, but you don't need to!
+All features work out of the box with sensible defaults. You can customize anything later if you want, but you don't need to!
 
-While you can modify features normally, it's intended to configure them all in a config at the top of your RC.
+While you *can* modify features through their Lua code/config, it's intended to configure them all in a config at the top of your RC.
 Looking at a feature module might still be helpful to read the description, or see what config options are available.
 
 ### Most Noticeable Features
@@ -34,9 +33,10 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Inventory Management
 
 - **color-inscribe** - Adds color to item inscriptions (like <span style="color: red;">rF++</span>)
+*(Disabled by default, until crawl's treatment of color tags is more consistent)*
 - **drop-inferior** - Alerts when you pick up a replacement for an item in inventory, and adds the inferior one to the drop list
 - **exclude-dropped** - Excludes dropped items from autopickup
-- **safe-consumables** - Robustly maintains `!q` and `!r` inscriptions only where required
+- **manage-consumables** - Robustly maintains `!q` and `!r` inscriptions only where required
 - **weapon-slots** - Keeps weapons organized in slots a/b/w
 
 ### Alerts & Warnings
@@ -49,32 +49,32 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Exploration & Travel
 
 - **fully-recover** - Rests until negative status effects clear
+- **fast-passage** - *(Disabled; not complete)* When you open a passage of Golubria, offers to move to it via the hotkey
 - **go-up-macro** - Enhanced Cntl-E macro with orb run mechanics: HP-based monster ignore for fast+safe ascension
-- **runrest-features** - Updates travel stops based on location/religion/recent shaft. Auto-searches when entering temple/gauntlet
+- **runrest-features** - Misc features: Update what stops travel based on location/religion/recent shaft. Useful auto-search when entering temple/gauntlet
 - **safe-stairs** - Prevents accidental stair usage. Warns before entering V:5
 
 ### Quality of Life
 
 - **answer-prompts** - Auto-answers certain prompts
-- **dynamic-options** - Changes crawl settings based on XL, religion, race/class, etc.
+- **dynamic-options** - Changes various crawl options based on XL, religion, race/class, etc.
+- **fm-messages** - Messages rated 1-9 for importance. Configurable as force_more_message and flash_screen_message.
 - **mute-messages** - Reduces message spam with configurable mute levels (light/moderate/heavy reduction)
 - **startup** - Auto-sets skill targets, opens skills menu, saves/reloads skill targets by race+class
 
-### Turncount Features
+### Config-specific
 
-_(disabled by default; enabled in the turncount config)_
-- **announce-items** - Prints messages describing floor items like gold/wands/books as they come into view 
-- **bread-swinger** - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
+- **announce-items** (Turncount) - Prints messages describing floor items like gold/books/shops as they come into view
+- **bread-swinger** (Turncount) - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
+- **display-realtime** (Realtime) - Every x seconds (default 60), display the current real time.
 
 ---
 
 ## Cherry-Picking Individual Features
 
-Want to use just one feature without the full BRC system? The script `build/create_standalone_features.py` converts the feature modules to standalone files in `bin/standalone_features/` that can be copy-pasted into your RC. 
+Want to use just one feature without the full BRC system? The script `build/create_standalone_features.py` converts the feature modules to standalone files in `bin/standalone_features/` that can be copy-pasted into your RC. The files are always current with whatever is in this git repo.
 
 **Remember to merge hooks if you already have them defined!**
-
-The generated files are always active and work independently of the full BRC system.
 
 ## Pickup & Alert Feature
 
@@ -128,9 +128,10 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 ### 2. Configuring Features
 
 Each feature defines its own `Config` table, containing options and default values.
+The feature references it's Config table to customize its behavior.
 
 Configuration for all features is intended to live at the top of `buehler.rc`. A "Main" config can specify a feature name and any of its options to override default values.
-*(See all available config options in `lua/config/explicit.lua` - it's a lot though)*
+*(See all available config options in `lua/config/explicit.lua` - it's a lot in there though, and just intended as a reference)*
 
 **Ex:** The `inscribe-stats` feature inscribes items with their current stats (AC, EV, DPS, ...).
 To disable this for weapons, add this to your config:
@@ -151,43 +152,28 @@ To disable this for weapons, add this to your config:
 _(Feel free to delete any configs you don't want. No other changes needed.)_
 
 BRC includes several pre-built configs. You can edit/remove any of them or create new ones.
-Any table that includes `BRC_CONFIG_NAME = <config_name>` will be available as a config.
+Any global Lua table that includes `BRC_CONFIG_NAME = <config_name>` will be available as a config.
 
 Included configs:
 - **Custom**: Intended as the main config, or maybe the only one. It includes options that seem the most likely to be configured.
 - **Testing**: Turns on debug messages, and disables any features not explicitly configured.
 - **Explicit**: A big config with every field defined, set to default values.
 - _**Others**_:
-  - **Turncount**: For low-turncount runs (disable autopickup, auto-display info for items in view)
-  - **Streak**: For win streaks (extra caution)
-  - **Speed**: For speed runs (reduced prompts + alerts)
+  - **Turncount**: For high score / turncount speedruns (disable autopickup, auto-display info for items in view)
+  - **Realtime**: For realtime speedruns (reduced prompts + alerts)
 
 ### 4. Set which config to load
 
-`BRC.Config` is at the top of `buehler.rc` (and `lua/core/_header.lua`) with 3 settings. Don't remove these - they define which config to load.
+`BRC.Config.to_use` is at the top of `buehler.rc` (and `lua/core/_header.lua`). Set the config name there.
 
 ```lua
---- All other configs start with these values
-BRC.Config = {
-  emojis = true, -- Include emojis in alerts
-
-  --- Specify which config (defined below) to use, or how to choose one.
-  --   "<config name>": Use the named config like "Custom"
-  --   "ask": Select config at start of each new game
-  --   "previous": Keep using previously loaded config; asks on first game
-  use_config = "previous",
-
-  --- For local games, use store_config to use different configs across multiple characters.
-  --   "none": Normal behavior: Read use_config, and load it from the RC.
-  --   "name": Remember the config name and reload it from the RC. Ignore new values of use_config.
-  --   "full": Remember the config and all of its values. Ignore RC changes.
-  store_config = "none",
-} -- BRC.Config
+-- Specify a config by name, or "ask" to prompt at start of each new game
+BRC.Config.to_use = "ask"
 ```
 
 ### 5. Add Your Own Features
 
-BRC will find and load any global table that contains a `BRC_FEATURE_NAME`. Just define a table anywhere in your RC and everything else will happen automatically.
+BRC will find and load any global Lua table that contains a `BRC_FEATURE_NAME`. Just define a table anywhere in your RC and everything else will happen automatically.
 
 **Step 1: Define your feature**
 
@@ -207,7 +193,7 @@ function my_feature.ready()
     if my_feature.Config.use_crawl_mpr then
       crawl.mpr("<blue>Turn reached!</blue>")
     else
-      BRC.mpr.blue("Turn reached!") -- See core/util.lua for useful functions
+      BRC.mpr.blue("Turn reached!") -- See util/ for useful functions
     end
   end
 end
@@ -233,16 +219,18 @@ items_found[#items_found+1] = "tower shield" -- Another way to append to a list
 Persistent variables start off each game with their initial value, and remember any changes for the rest of the game. They are _**not**_ shared across different games.
 
 **Step 3: Add hooks** (optional):
-
-If you define `my_feature.init()`, it will be called when BRC starts up. This is similar to putting raw code in your RC file, but is more robust.
-
 These crawl hooks are currently implemented:
-- ready()
+- ready() _(Called only once per turn. Use multiready() if you want it called multiple times per turn, like crawl's ready().)_
 - autopickup(it)
 - c_answer_prompt(prompt)
 - c_assign_invletter(it)
 - c_message(text, channel)
 - ch_start_running(kind)
+
+You can also define:
+- init() - Called when BRC starts up. This is similar to putting raw code in your RC file, but allows a full re-init on demand.
+- multiready() - Called every time crawl's ready() is, multiple times per player turn.
+
 
 Define them in your feature and they will be automatically hooked to crawl. Example:
 ```lua
@@ -253,31 +241,9 @@ end
 
 **Step 4: Advanced config** (optional):
 
-Each config can define an `init` field, which will execute after the config is created.
+Each config can define an `init` function, which will execute after the config is created.
 This allows a config to alter itself, conditionally add values, or define things based on earlier values in the config.
 `BRC.Config.init` and `<feature>.init` both execute before BRC.Config values override feature configs.
-
-`init` can be a function or a multi-line string:
-- `init = function()` will execute the function
-- `init = [[ string ]]` executes the string as a series of lua commands. _(This is required for `store_config = "full"`, since functions cannot be persisted)_
-
-**Example** _(From BRC.Configs.Testing)_: Disable all features that aren't currently defined in the config.
-```lua
-BRC.Configs.Testing = {
-  disable_other_features = true,
-  ...,
-
-  init = [[
-    if BRC.Config.disable_other_features then
-      for _, v in pairs(_G) do
-        if BRC.is_feature_module(v) and not BRC.Config[v.BRC_FEATURE_NAME] then
-          BRC.Config[v.BRC_FEATURE_NAME] = { disabled = true }
-        end
-      end
-    end
-  ]],
-} -- BRC.Configs.Testing
-```
 
 ---
 
@@ -293,19 +259,48 @@ bin/                    # Pre-built RC files
 build/                  # Python scripts to generate bin/
 rc/                     # RC file components
 lua/                    # Lua files
+├── config/                 # Main configs (Custom, Turncount, Realtime, Explicit, Testing)
+│   ├── custom.lua            # Commonly adjusted options
+│   ├── turncount.lua         # Turncount speedrun config
+│   ├── explicit.lua          # All options from all features, in one place with default values
+│   └── ...
 ├── core/                   # Core BRC system
-│   ├── _header_.lua            # Stuff at top of buehler.rc, before config 
+│   ├── _header.lua             # Anything wanted at the top of buehler.rc, before configs
 │   ├── brc.lua                 # Main coordinator
-│   ├── config.lua              # Config definitions
-│   ├── data.lua                # Manages persistent data + backup
-│   ├── util.lua                # General functions available to features
+│   ├── config.lua              # Define core config defaults, and handle config management
+│   ├── data.lua                # Manage persistent data + backup
 │   ├── constants.lua           # Constants from crawl
-│   └── ...                     # BRC Core features; don't remove
+│   └── hotkey.lua              # Core feature, don't remove. See file header for description
+├── util/                   # Utility modules grouped by usage
+│   └── ...                     
 ├── features/               # Feature modules
 │   ├── _template.lua           # Template for new features
 │   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
 │   └── ...                     # Other features
 ```
+
+---
+
+### Design Philosophy
+
+The goal of all this is to increase QOL and automate no-brainer decisions. However automating multiple turns is a
+slippery slope to [qw.rc](https://github.com/crawl/crawl/blob/master/crawl-ref/source/test/stress/qw.rc) and avoided.
+It's also possibly disqualifying for any record or tournament games. Where I draw the line is:
+- No automatic turns taken (every turn is an explicit player action)
+- Anything that doesn't consume a turn is fair game (setting inscriptions, inventory slots, or alerts).
+- One-click actions must either: Take a single turn, or be available in dcss as a single command.
+- The hotkey feature is the closest to the line IMO. Hotkey actions are generally pretty obvious things you want to do,
+and rarely occur multiple turns in a row. Still, an extreme use of hotkeys would be to run qw.rc, hotkey everything,
+and "play" the game by holding down the `Enter` key.
+
+**Included features:**
+- Auto-search a long and custom string in gauntlets, to filter out garbage (0 turns)
+- After pickup a weapon, hotkey for "wield this item?"
+- After scroll of ID pickup, hotkey for "read scroll of id?"
+- Cntl-E (go up closest stairs) on the orb run: Does some math to ignore monsters and ascend faster
+
+**Excluded features:**
+- After joining a god in the temple, automatically run to the stairs.
 
 ---
 
@@ -320,7 +315,8 @@ BRC.init("config-name")               -- Load a diff config (keep persistent dat
 BRC.reset()                           -- Reset everything and select a config
 BRC.reset("config-name")              -- Reset and load config by name
 BRC.Data.reset()                      -- Reset persistent data
-BRC.unregister("feature-name")        -- Remove a feature
+BRC.unregister("feature-name")        -- Disable a feature
+c_persist.BRC = nil                   -- Delete any BRC cross-game data (training targets + config)
 
 -- Debugging
 BRC.dump()                        -- Print all persistent data
@@ -351,11 +347,8 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
   # More RC
   ```
 - If running crawl locally:
-  - **Switching between characters** does not re-execute lua files. `init()` will be called, so all locals are set to defaults in init functions.
-  It's safest to use `buehler.rc` as a single file, but using `init.txt` will still work, and provides better line numbers in error messages.
-  It's generally good to restart crawl when switching between characters, to ensure all lua code re-executes.
   - **Regex issues**: Some regular expression patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
-  - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT MacOS doesn't, so I configure `BRC.Config.emojis = false` locally.
+  - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT macOS doesn't, so I configure `BRC.Config.emojis = false` locally.
   If you have one, define it in `rc/display.rc`, and LMK!
 
 **RC syntax errors**: If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You may be prompted to restore data from backup.
@@ -367,7 +360,7 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
 - When a feature throws an error, BRC will offer to disable the feature.
 - If errors occur in the core code (rare), BRC may offer to disable a hook. This would impact all features using that hook,
 so it's recommended to determine the feature causing the error and disable it.
-- In both cases, it's probably worth answering No once, then disabling things only if the error persists. Restarting crawl will re-enable all features and hooks.
+- In both cases, it's probably worth answering `No` once, then disabling things only if the error persists. Restarting crawl will re-enable all features and hooks.
 
 ## Resources
 
@@ -378,7 +371,8 @@ so it's recommended to determine the feature causing the error and disable it.
 
 ### Cool RC files / Sources of features
 - Use this syntax to lookup a player's RC file:
-[http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc)  
+  - [http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc)
+  - [http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc)
 - [gammafunk/dcss-rc](https://github.com/gammafunk/dcss-rc)
 - [magus/dcss](https://github.com/magus/dcss)
 - [linewriter1024/crawl-rc](https://github.com/linewriter1024/crawl-rc)

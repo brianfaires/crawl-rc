@@ -1,82 +1,3 @@
-## Standalone BRC Feature: manage-consumables
-## Generated from: lua/features/manage-consumables.lua
-## This file is self-contained and can be copy-pasted into your RC file.
-## No external dependencies required.
-
-{
-
--- Minimal BRC namespace (Don't overwrite existing globals)
-BRC = BRC or {}
-BRC.Config = BRC.Config or {}
-BRC.Config.emojis = false
-
-f_manage_consumables = {}
-f_manage_consumables.Config = {
-  maintain_safe_scrolls = true,
-  maintain_safe_potions = true,
-  scroll_slots = { ["identify"] = "i", ["acquirement"] = "A", ["blinking"] = "b", },
-  potion_slots = { ["might"] = "m", ["magic"] = "g", },
-}
-
--- define string:contains() for all strings
-function BRC_txt_str_contains(self, text)
-  return self:find(text, 1, true) ~= nil
-end
-getmetatable("").__index.contains = BRC_txt_str_contains
-
--- BRC Constants
-BRC.COL = {
-  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
-  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
-  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
-} -- BRC.COL (do not remove this comment)
-
-
--- BRC module tables (Don't overwrite existing globals)
-BRC.mpr = BRC.mpr or {}
-BRC.opt = BRC.opt or {}
-BRC.txt = BRC.txt or {}
-
--- BRC.mpr module
-BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
-for k, color in pairs(BRC.COL) do
-  BRC.mpr[k] = function(msg, channel)
-    crawl.mpr(BRC.txt[color](msg), channel)
-    crawl.flush_prev_message()
-  end
-  BRC.mpr[color] = BRC.mpr[k]
-end
-
-
--- BRC.opt module
-local _claimed_macro_keys = {}
-
-function BRC.opt.message_mute(pattern, create)
-  local op = create and "^=" or "-="
-  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
-end
-
-function BRC.opt.single_turn_mute(pattern)
-  BRC.opt.message_mute(pattern, true)
-  _single_turn_mutes[#_single_turn_mutes + 1] = pattern
-end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
-
--- single turn mutes support: _single_turn_mutes and BRC.opt.clear_single_turn_mutes()
-_single_turn_mutes = {}
-function BRC.opt.clear_single_turn_mutes()
-  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
-  _single_turn_mutes = {}
-end
-
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: manage-consumables
 -- @module f_manage_consumables
@@ -85,7 +6,51 @@ end
 -- slots: A more consistent version of crawl's item_slot option.
 ---------------------------------------------------------------------------------------------------
 
-
+f_manage_consumables = {}
+f_manage_consumables.BRC_FEATURE_NAME = "manage-consumables"
+f_manage_consumables.Config = {
+  maintain_safe_scrolls = true,
+  maintain_safe_potions = true,
+  scroll_slots = {
+    ["acquirement"] = "A",
+    ["amnesia"] = "x",
+    ["blinking"] = "B",
+    ["brand weapon"] = "W",
+    ["butterflies"] = "s",
+    ["enchant armour"] = "a",
+    ["enchant weapon"] = "w",
+    ["fear"] = "f",
+    ["fog"] = "g",
+    ["identify"] = "i",
+    ["immolation"] = "I",
+    ["noise"] = "N",
+    ["revelation"] = "r",
+    ["poison"] = "p",
+    ["silence"] = "S",
+    ["summoning"] = "s",
+    ["teleportation"] = "t",
+    ["torment"] = "T",
+    ["vulnerability"] = "V",
+  },
+  potion_slots = {
+    ["ambrosia"] = "a",
+    ["attraction"] = "A",
+    ["berserk rage"] = "B",
+    ["brilliance"] = "b",
+    ["cancellation"] = "C",
+    ["curing"] = "c",
+    ["experience"] = "E",
+    ["enlightenment"] = "e",
+    ["haste"] = "h",
+    ["heal wounds"] = "w",
+    ["invisibility"] = "i",
+    ["lignification"] = "L",
+    ["magic"] = "g",
+    ["might"] = "z",
+    ["resistance"] = "r",
+    ["mutation"] = "M",
+  },
+} -- f_manage_consumables.Config
 
 ---- Local constants ----
 local NO_INSCRIPTION_NEEDED = {
@@ -111,6 +76,15 @@ function f_manage_consumables.init()
   C.potion_slots = C.potion_slots or {}
   found_scroll = nil
   found_potion = nil
+
+  -- These options must use += to override crawl defaults
+  for st, slot in pairs(C.scroll_slots) do
+    crawl.setopt("consumable_shortcut += scroll of " .. st .. ":" .. slot)
+  end
+  for st, slot in pairs(C.potion_slots) do
+    --crawl.setopt("consumable_shortcut ^= potion of " .. st .. ":" .. slot)
+    crawl.setopt("consumable_shortcut += potion of " .. st .. ":" .. slot)
+  end
 end
 
 ---- Local functions ----
@@ -126,7 +100,8 @@ local function scroll_needs_inscription(st)
 end
 
 local function change_slot(old_slot, new_slot, name, class)
-  BRC.mpr.lightgreen(BRC.txt.lightgrey(old_slot .. " -> ") .. new_slot .. " - " .. name)
+  if old_slot == new_slot then return end
+  BRC.mpr.lightgreen(" " .. BRC.txt.lightgrey(old_slot .. " -> ") .. new_slot .. " - " .. name)
   BRC.opt.single_turn_mute("Adjust")
   BRC.opt.single_turn_mute(" - ")
   local class_key = class == SCROLL_CLASS and "r" or "p"
@@ -140,16 +115,18 @@ local function maintain_slots()
       for _, inv in ipairs(items.inventory()) do
         if inv.class(true) == SCROLL_CLASS and inv.subtype() == found_scroll then
           change_slot(items.index_to_letter(inv.slot), new_slot, inv.name(), SCROLL_CLASS)
+          break
         end
       end
     end
     found_scroll = nil
   elseif found_potion then
-    local new_slot = items.letter_to_index(C.potion_slots[found_potion])
+    local new_slot = C.potion_slots[found_potion]
     if new_slot then
       for _, inv in ipairs(items.inventory()) do
         if inv.class(true) == POTION_CLASS and inv.subtype() == found_potion then
           change_slot(items.index_to_letter(inv.slot), new_slot, inv.name(), POTION_CLASS)
+          break
         end
       end
     end
@@ -161,13 +138,13 @@ local function maintain_inscriptions()
   if not (C.maintain_safe_scrolls or C.maintain_safe_potions) then return end
   for _, inv in ipairs(items.inventory()) do
     local inv_class = inv.class(true)
-    if inv_class == SCROLL_CLASS and C.maintain_scroll_slots then
+    if inv_class == SCROLL_CLASS and C.maintain_safe_scrolls then
       if scroll_needs_inscription(inv.subtype()) then
         if not inv.inscription:contains(SCROLL_INSCR) then inv.inscribe(SCROLL_INSCR) end
       elseif inv.inscription:contains(SCROLL_INSCR) then
         inv.inscribe(inv.inscription:gsub(SCROLL_PATT, ""), false)
       end
-    elseif inv_class == POTION_CLASS and C.maintain_potion_slots then
+    elseif inv_class == POTION_CLASS and C.maintain_safe_potions then
       if potion_needs_inscription(inv.subtype()) then
         if not inv.inscription:contains(POTION_INSCR) then inv.inscribe(POTION_INSCR) end
       elseif inv.inscription:contains(POTION_INSCR) then
@@ -200,23 +177,3 @@ function f_manage_consumables.ready()
   maintain_slots()
   maintain_inscriptions()
 end
-
-
--- Crawl hook wrappers
-function c_message(...)
-  return f_manage_consumables.c_message(...)
-end
-
-local brc_last_turn = -1
-function ready(...)
-  BRC.opt.clear_single_turn_mutes()
-  if you.turns() > brc_last_turn then
-    brc_last_turn = you.turns()
-    f_manage_consumables.ready(...)
-  end
-end
-
-
--- Initialize feature
-if f_manage_consumables.init then f_manage_consumables.init() end
-}

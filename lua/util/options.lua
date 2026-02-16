@@ -8,6 +8,7 @@ BRC.opt = {}
 
 ---- Single turn mutes: Mute a message for the current turn only ----
 local _single_turn_mutes = {}
+local _claimed_macro_keys = {}
 
 function BRC.opt.single_turn_mute(pattern)
   BRC.opt.message_mute(pattern, true)
@@ -47,12 +48,8 @@ end
 
 --- Bind a macro to a key. Function must be global and not a member of a module.
 -- If key is a number, it is converted to a keycode string.
-function BRC.opt.macro(key, function_name)
-  if type(_G[function_name]) ~= "function" then
-    BRC.mpr.error("Function %s is not a global function", function_name)
-    return
-  end
-
+-- Passing an invalid function name will clear the macro for that key.
+function BRC.opt.macro(key, function_name, overwrite_existing)
   -- Format msg for debugging and keycode for crawl.setopt()
   local key_str = nil
   if type(key) == "number" then
@@ -71,15 +68,43 @@ function BRC.opt.macro(key, function_name)
   -- The << >> formatting protects against crawl thinking '<' is a tag
   if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
 
-  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
-
-  BRC.mpr.debug(
-    string.format(
-      "Assigned macro: %s to key: %s",
-      BRC.txt.magenta(function_name .. "()"),
-      BRC.txt.lightred(key_str)
+  if type(_G[function_name]) == "function" then
+    if _claimed_macro_keys[key] and not overwrite_existing then
+      BRC.mpr.debug("Macro key %s is already assigned to %s", key_str, _claimed_macro_keys[key])
+      return
+    end
+    crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+    _claimed_macro_keys[key] = function_name
+    BRC.mpr.debug(
+      string.format(
+        "Assigned macro %s to key: %s",
+        BRC.txt.magenta(function_name .. "()"),
+        BRC.txt.lightred(key_str)
+      )
     )
-  )
+  else
+    function_name = _claimed_macro_keys[key]
+    if not function_name then
+      crawl.mpr("no function name found for key: " .. key)
+      return
+    end
+    crawl.setopt(string.format("macros += M %s %s", key, key))
+    _claimed_macro_keys[key] = nil
+    BRC.mpr.debug(
+      string.format(
+        "Cleared macro %s from key: %s",
+        BRC.txt.magenta(function_name .. "()"),
+        BRC.txt.lightred(key_str)
+      )
+    )
+  end
+end
+
+function BRC.opt.clear_macros()
+  for key, _ in pairs(_claimed_macro_keys) do
+    BRC.opt.macro(key, nil, true)
+  end
+  _claimed_macro_keys = {}
 end
 
 function BRC.opt.message_mute(pattern, create)

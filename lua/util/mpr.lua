@@ -5,6 +5,7 @@
 ---------------------------------------------------------------------------------------------------
 
 BRC.mpr = {}
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 
 ---- mpr queue (displayed after all other messages for the turn) ----
 local _mpr_queue = {}
@@ -15,12 +16,18 @@ function BRC.mpr.que(msg, color, channel)
 end
 
 --- Queue msg w/ conditional force_more_message
-function BRC.mpr.que_optmore(show_more, msg, color, channel)
+-- send with empty msg for a delayed force_more_message
+function BRC.mpr.que_optmore(show_more, msg, msg_color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
-  color = color or BRC.COL.lightgrey
-  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
+  msg_color = msg_color or BRC.COL.lightgrey
+  if not msg or #msg == 0 then
+    msg = ""
+  else
+    msg = BRC.txt[msg_color](msg)
+  end
+  _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
 end
 
 --- Display queued messages and clear the queue
@@ -29,18 +36,19 @@ function BRC.mpr.consume_queue()
   -- stop_activity() can generate more autopickups, and thus more queue'd messages
   if do_more then
     you.stop_activity()
-    crawl.redraw_screen()
   end
 
   for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(tostring(msg.m), msg.ch)
-    crawl.flush_prev_message()
+    if msg.m and #msg.m > 0 then
+      crawl.mpr(tostring(msg.m), msg.ch)
+      crawl.flush_prev_message()
+    end
   end
   _mpr_queue = {}
 
   if do_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 end
 
@@ -56,12 +64,12 @@ end
 
 
 ---- Pre-formatted logging functions ----
-local function log_message(message, context, color)
+local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
 end
 
@@ -73,17 +81,22 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
-  crawl.redraw_screen()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  if context then message = message .. " (" .. context .. ")" end
+  print(message)
 
   if not skip_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
 end
 
@@ -91,7 +104,7 @@ function BRC.mpr.warning(message, context)
   log_message(message, context, BRC.COL.yellow)
   you.stop_activity()
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Warning) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Warning) " .. message)
   end
 end
 
@@ -104,7 +117,7 @@ function BRC.mpr.debug(message, context)
     log_message(message, context, BRC.COL.lightblue)
   end
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Debug) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
   end
 end
 
@@ -130,7 +143,6 @@ function BRC.mpr.more(msg, color, channel)
   you.stop_activity()
   crawl.redraw_screen()
   crawl.more()
-  crawl.redraw_screen()
 end
 
 --- Conditional force_more_message

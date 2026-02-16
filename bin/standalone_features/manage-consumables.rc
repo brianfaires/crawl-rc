@@ -14,9 +14,46 @@ f_manage_consumables = {}
 f_manage_consumables.Config = {
   maintain_safe_scrolls = true,
   maintain_safe_potions = true,
-  scroll_slots = { ["identify"] = "i", ["acquirement"] = "A", ["blinking"] = "b", },
-  potion_slots = { ["might"] = "m", ["magic"] = "g", },
-}
+  scroll_slots = {
+    ["acquirement"] = "A",
+    ["amnesia"] = "x",
+    ["blinking"] = "B",
+    ["brand weapon"] = "W",
+    ["butterflies"] = "s",
+    ["enchant armour"] = "a",
+    ["enchant weapon"] = "w",
+    ["fear"] = "f",
+    ["fog"] = "g",
+    ["identify"] = "i",
+    ["immolation"] = "I",
+    ["noise"] = "N",
+    ["revelation"] = "r",
+    ["poison"] = "p",
+    ["silence"] = "S",
+    ["summoning"] = "s",
+    ["teleportation"] = "t",
+    ["torment"] = "T",
+    ["vulnerability"] = "V",
+  },
+  potion_slots = {
+    ["ambrosia"] = "a",
+    ["attraction"] = "A",
+    ["berserk rage"] = "B",
+    ["brilliance"] = "b",
+    ["cancellation"] = "C",
+    ["curing"] = "c",
+    ["experience"] = "E",
+    ["enlightenment"] = "e",
+    ["haste"] = "h",
+    ["heal wounds"] = "w",
+    ["invisibility"] = "i",
+    ["lignification"] = "L",
+    ["magic"] = "g",
+    ["might"] = "z",
+    ["resistance"] = "r",
+    ["mutation"] = "M",
+  },
+} -- f_manage_consumables.Config
 
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
@@ -111,6 +148,15 @@ function f_manage_consumables.init()
   C.potion_slots = C.potion_slots or {}
   found_scroll = nil
   found_potion = nil
+
+  -- These options must use += to override crawl defaults
+  for st, slot in pairs(C.scroll_slots) do
+    crawl.setopt("consumable_shortcut += scroll of " .. st .. ":" .. slot)
+  end
+  for st, slot in pairs(C.potion_slots) do
+    --crawl.setopt("consumable_shortcut ^= potion of " .. st .. ":" .. slot)
+    crawl.setopt("consumable_shortcut += potion of " .. st .. ":" .. slot)
+  end
 end
 
 ---- Local functions ----
@@ -126,7 +172,8 @@ local function scroll_needs_inscription(st)
 end
 
 local function change_slot(old_slot, new_slot, name, class)
-  BRC.mpr.lightgreen(BRC.txt.lightgrey(old_slot .. " -> ") .. new_slot .. " - " .. name)
+  if old_slot == new_slot then return end
+  BRC.mpr.lightgreen(" " .. BRC.txt.lightgrey(old_slot .. " -> ") .. new_slot .. " - " .. name)
   BRC.opt.single_turn_mute("Adjust")
   BRC.opt.single_turn_mute(" - ")
   local class_key = class == SCROLL_CLASS and "r" or "p"
@@ -140,16 +187,18 @@ local function maintain_slots()
       for _, inv in ipairs(items.inventory()) do
         if inv.class(true) == SCROLL_CLASS and inv.subtype() == found_scroll then
           change_slot(items.index_to_letter(inv.slot), new_slot, inv.name(), SCROLL_CLASS)
+          break
         end
       end
     end
     found_scroll = nil
   elseif found_potion then
-    local new_slot = items.letter_to_index(C.potion_slots[found_potion])
+    local new_slot = C.potion_slots[found_potion]
     if new_slot then
       for _, inv in ipairs(items.inventory()) do
         if inv.class(true) == POTION_CLASS and inv.subtype() == found_potion then
           change_slot(items.index_to_letter(inv.slot), new_slot, inv.name(), POTION_CLASS)
+          break
         end
       end
     end
@@ -161,13 +210,13 @@ local function maintain_inscriptions()
   if not (C.maintain_safe_scrolls or C.maintain_safe_potions) then return end
   for _, inv in ipairs(items.inventory()) do
     local inv_class = inv.class(true)
-    if inv_class == SCROLL_CLASS and C.maintain_scroll_slots then
+    if inv_class == SCROLL_CLASS and C.maintain_safe_scrolls then
       if scroll_needs_inscription(inv.subtype()) then
         if not inv.inscription:contains(SCROLL_INSCR) then inv.inscribe(SCROLL_INSCR) end
       elseif inv.inscription:contains(SCROLL_INSCR) then
         inv.inscribe(inv.inscription:gsub(SCROLL_PATT, ""), false)
       end
-    elseif inv_class == POTION_CLASS and C.maintain_potion_slots then
+    elseif inv_class == POTION_CLASS and C.maintain_safe_potions then
       if potion_needs_inscription(inv.subtype()) then
         if not inv.inscription:contains(POTION_INSCR) then inv.inscribe(POTION_INSCR) end
       elseif inv.inscription:contains(POTION_INSCR) then

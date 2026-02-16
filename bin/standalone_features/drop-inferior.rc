@@ -8,7 +8,9 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.logs_to_stderr = false
 
 f_drop_inferior = {}
 f_drop_inferior.Config = {
@@ -25,6 +27,7 @@ getmetatable("").__index.contains = BRC_txt_str_contains
 -- BRC Constants
 BRC.ARTPROPS_BAD = {
   "Bane", "-Cast", "-Move", "-Tele",
+  "^Contam", "^Drain", "^Fragile",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
 } -- BRC.ARTPROPS_BAD (do not remove this comment)
 
@@ -34,16 +37,12 @@ BRC.COL = {
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
 } -- BRC.COL (do not remove this comment)
 
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
 
 BRC.MAGIC_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
-  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+  air = "Air Magic", alchemy = "Alchemy", chemistry = "Alchemy", cold = "Ice Magic",
+  conjuration = "Conjurations", death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",
+  necromancy = "Necromancy",
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
@@ -57,6 +56,7 @@ BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 BRC.eq = BRC.eq or {}
 BRC.it = BRC.it or {}
 BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.util = BRC.util or {}
 BRC.you = BRC.you or {}
@@ -141,6 +141,7 @@ function BRC.it.is_shield(it)
 end
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -149,6 +150,52 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
+local function log_message(message, context, msg_color)
+  -- Avoid referencing BRC, to stay robust during startup
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
+  you.stop_activity()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  if context then message = message .. " (" .. context .. ")" end
+  print(message)
+
+  if not skip_more then
+    crawl.redraw_screen()
+    crawl.more()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
+  end
+end
+
+-- BRC.opt module
+local _claimed_macro_keys = {}
+
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
 
 -- BRC.txt module
 for k, color in pairs(BRC.COL) do
@@ -169,7 +216,16 @@ end
 
 -- BRC.util module
 function BRC.util.cntl(c)
-  return string.byte(c:upper()) - 64
+  if c >= '0' and c <= '9' or c >= 'a' and c <= 'z' then
+    -- Idk why webtiles numeric keycodes are different than local tiles on Mac
+    if crawl.is_webtiles() and c >= '0' and c <= '9' then return string.byte(c) - 64 end
+    return string.byte(c) - 96
+  elseif c >= 'A' and c <= 'Z' then
+    return string.byte(c) - 64
+  end
+
+  BRC.mpr.error("Unsupported character sent to BRC.util.cntl: %s", c)
+  return nil
 end
 
 function BRC.util.get_cmd_key(cmd)

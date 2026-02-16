@@ -1,59 +1,86 @@
-Curr issues:
-  - useless_item ?id not colored in 'd' menu; works in 'r' & 'i' menus
-  - didn't offer to pick up scarf of resistance; over +0 cloak
-  - stop rest on "something misses " (your orc friend)
-  - OTA for bardiche; wearing shield
-  - not seeing enemy die message (from ally kills?)
-  - rr_autosearch need to be persistent?
-    - ss_prev_location too?
-    - manual_swing_slot?
-  - scrolls + artefacts both cyan in the $ menu
-  - make manuals yellow or something
-  - dont display "move to" hotkey if not safe()
-  - unmute: you see here (entrance to the depths)
-  - fm? Hell Knight w/ +4 war axe of flaming: rF1, 154hp+25mp
-  - keeps re-picking up boomerangs (after restart?)
-  - +9 vampiric broad axe inscription: 49 -> 57.5?
-    - 48 ->55.9 (-2Str?)
-  - too many alerts for 2h battleaxe when wearing shield + training it
-  - msg: "dropped below 35.0%%"
-  - bad status "sap"
-  - hotkey move to, is swallowing a key press? (maybe shift-dir?)
-  - inscribe-stats >100: buehler.rc 262: attempt to divide str by a number
-  - pan is exploring frame by frame
-  - alert-monsters: += "draugr" in regex
-  - ruin status?
-  - stop rest early on contamination removed
+## TO TEST (fixed)
+- Potion of res getting auto-inscribed from "of resistance"
+- pause slowest weapon alert with pa pause
+- pause pickup-alert during memorization
+
+### Can't reproduce locally:
+- read id hotkey shows up a turn after the "scroll of id" message that triggered it
+- no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
+- in pan: redrawing screen on every turn of travel (fixed?)
+- carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
+
+
+## TODO
+### Turncount playtest notes:
+  why getting "DPS increase" alert?
+  picked up weapon & gold; didn't assign weapon to 'a' (left on b)
+  BRC.active == false at start of game; because monsters in view on spawn?
+
+### Misc:
+  - Config saved to class/race isn't used, because the feature is set by the config. (Needs BRC global toggle)
+  - Add more comments to feature files, especially for the config options.
+  - Autoinscribe consumables with bailey/ossuary/sewer/etc
+  - When creating a "move to item" hotkey, check existing hotkeys and remove move for inferior item
+  - fm unexpected (is from new dcss feature?)
+      basilisk if can't be petrified
+      hound at 33 hp
+      gnoll/iguana at 35
+
+### Realtime features:
+  - Print realtime on milestones (enter lair, get rune, ...)
+  - Conditions for Stop on stairs:
+    - up vs down, hatches
+    - level, xl, etc
+  - Heal before Cntl-D / Cntl-E
+  - Artefact weapon alerts: 'min_skill' for alerts; sans "+Blink"
+  - pickup_shields config
+    - Train Shields on shield pickup/equip
+
+### Useful hotkeys:
+- After read scroll of enchant weapon, hotkey for read more
+
 
 ### crawl PRs / issues affecting BRC
-Lua bugs:
-- Didn't find any props for trap_sarcophagus=1
-- coroutine not defined
-- pan is using a travel delay often/
-
 https://github.com/crawl/crawl/issues/4789 ->
   - drop_disables_autopickup blocks exclude-dropped.lua from working
   - crawl option cannot be toggled off
 https://github.com/crawl/crawl/pull/4814 -> artificial cap on length blocks color-inscribe.lua
 https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
-Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
+  - Afterward, prioritize walking into water.
+- Shift-D drops both an item picked up with item:pickup(), and also the last picked up item.
+- Num turns to multiturn equip/unequip == time + 1; intended?
+  - Actually is +2 for: Equip 2h weap -> unwield shield = 8 turns (unwield + equip = 7 turns)
+- items.pickup() does nothing?
+- stacks are only checked for autopickup when visited
+- floor-id'ing consumables skips consumable_shortcut
 
-### TODO - requiring crawl PR?
+### TODO - require crawl PR?
+1. replace spell_slots with all-caps, for spells w no prompt (need access to full list of spells)
+1. idk how to detect these actions:
+  - Prompt/prevent accidental long-dist travel from shopping list
+  - Hotkey: Enter closest POG
 1. fully-recover:
   - Wait for allies to fully heal
   - Wait for ancestor respawn
-1. Ancestor reappear; stop rest, but not explore
-1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
-1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
-1. 0.34: Make use of explore_auto_rest_status to replace fully-recover.lua.
+  - Make use of explore_auto_rest_status to replace fully-recover.lua.
     (Issue: Trouble calling ready() after heal, before explore. Multiple annoyances when it's skipped.)
     (Maybe could fix with >1 ready() / turn... Try macro'ing: { WAIT, READY, EXPLORE }?)
-1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
-1. Display realtime for speedrun config
+1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
+1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
+1. Disable mouse click travel (on macOS?) - ideally just prevent accidental movement from trackpad
 
-### Won't do - random ideas
-1. feature ready() hook takes optional bool to fire every ready() instead of every turn
-1. BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use string.format()
-1. autorest starts w/autopickup (if inv not full)
-1. level-specific fm ignores (eg vault warden on v:5)
-1. disable basic jewellery pickup after configurable xl
+### Backlog / won't do
+1. Start any rest with autopickup on current square (if inv not full)
+1. Speed improvements:
+  - int instead of floats
+  - extra level of 'items_alerted' table: item_db_name -> ego -> plus
+  - bring back BRC.CACHE - ie load all values that are used >1x per ready().
+    (Removed previous cache due to minimal impact, vs code clarity + robustness)
+1. BRC core/util:
+  - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that uses mprf()
+1. alert-monsters:
+  - floor-specific fm ignores (eg vault warden on v:5)
+  - torment helper; unique color / display count or list of tormentors in LOS
+1. pickup-alert:
+  - disable basic jewellery pickup after configurable xl
+  - on pickup artefact jewellery with no downsides, disable autopickup of basic jewellery

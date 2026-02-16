@@ -8,21 +8,17 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
-
-
-BRC.DMG_TYPE = {
-  unbranded = 1, -- No brand
-  plain = 2, -- Include brand dmg for non-elemental brands
-  branded = 3, -- Include full brand dmg
-  scoring = 4, -- Include boosts for non-damaging brands
-} -- BRC.DMG_TYPE (do not remove this comment)
+BRC.Config.emojis = false
+BRC.Config.mpr = BRC.Config.mpr or {}
+BRC.Config.mpr.logs_to_stderr = false
 
 f_inscribe_stats = {}
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
   inscribe_armour = true, -- Inscribe armour stats on pickup
-  dmg_type = BRC.DMG_TYPE.unbranded,
+  dmg_type = BRC.DMG_TYPE.unbranded, -- unbranded, plain, branded, scoring
+  skip_dps = false, -- Skip DPS in weapon inscriptions
+  prefix_staff_dmg = true, -- Special prefix for magical staves
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 -- define string:contains() for all strings
@@ -32,6 +28,12 @@ end
 getmetatable("").__index.contains = BRC_txt_str_contains
 
 -- BRC Constants
+BRC.COL = {
+  black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
+  lightgrey = "7", darkgrey = "8", lightblue = "9", lightgreen = "10",
+  lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
+} -- BRC.COL (do not remove this comment)
+
 BRC.DMG_TYPE = {
   unbranded = 1, -- No brand
   plain = 2, -- Include brand dmg for non-elemental brands
@@ -44,8 +46,9 @@ BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 BRC.LITTLE_RACES = { "Spriggan" }
 
 BRC.MAGIC_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
-  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+  air = "Air Magic", alchemy = "Alchemy", chemistry = "Alchemy", cold = "Ice Magic",
+  conjuration = "Conjurations", death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",
+  necromancy = "Necromancy",
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
@@ -62,13 +65,16 @@ BRC.UNDEAD_RACES = { "Demonspawn", "Mummy", "Poltergeist", "Revenant" }
 -- BRC module tables (Don't overwrite existing globals)
 BRC.eq = BRC.eq or {}
 BRC.it = BRC.it or {}
+BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
+BRC.txt = BRC.txt or {}
 BRC.you = BRC.you or {}
 
 -- BRC.eq module
 local function format_dmg(dmg)
   if dmg < 10 then return string.format("%.2f", dmg) end
-  if dmg > 99.9 then return ">100" end
-  return string.format("%.1f", dmg)
+  if dmg < 100 then return string.format("%.1f", dmg) end
+  return string.format("%.0f ", dmg)
 end
 
 local function format_stat(abbr, val, is_worn)
@@ -179,24 +185,6 @@ local function get_slay_bonuses()
   end
 
   return sum
-end
-
-local function get_staff_bonus_dmg(it, dmg_type)
-  if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
-  if dmg_type == BRC.DMG_TYPE.plain then
-    local basename = it.name("base")
-    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
-  end
-
-  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
-  local evo_skill = you.skill("Evocations")
-
-  local chance = (2 * evo_skill + spell_skill) / 30
-  if chance > 1 then chance = 1 end
-  -- 0.75 is an acceptable approximation; most commonly 63/80
-  -- Varies by staff type in sometimes complex ways
-  local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
-  return avg_dmg * chance
 end
 
 local function get_stats_with_item(it, stats)
@@ -315,7 +303,7 @@ function BRC.eq.get_avg_dmg(it, dmg_type)
   local base_dmg = it.damage * stat_mod * skill_mod
 
   if BRC.it.is_magic_staff(it) then
-    return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
+    return base_dmg + stats.Slay + BRC.eq.get_staff_bonus_dmg(it, dmg_type)
   else
     return get_dmg_with_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
   end
@@ -350,6 +338,26 @@ function BRC.eq.get_sh(it)
   shield = shield + 200 * it_plus
   shield = shield + 38 * (sh_skill + 3 + stats.Dex * (base_sh + 13) / 26)
   return shield / 200
+end
+
+function BRC.eq.get_staff_bonus_dmg(it, dmg_type)
+  local result = nil
+  if dmg_type == BRC.DMG_TYPE.unbranded then result = 0 end
+  if dmg_type == BRC.DMG_TYPE.plain then
+    local basename = it.name("base")
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then result = 0 end
+  end
+
+  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
+  local evo_skill = you.skill("Evocations")
+
+  local chance = (2 * evo_skill + spell_skill) / 30
+  if chance > 1 then chance = 1 end
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
+  result = result or dmg * chance
+  return result, dmg, chance
 end
 
 function BRC.eq.get_weap_delay(it)
@@ -390,11 +398,16 @@ function BRC.eq.is_useless_ego(ego)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 
-function BRC.eq.wpn_stats(it, dmg_type)
+function BRC.eq.wpn_stats(it, dmg_type, skip_dps)
   if not it.is_weapon then return end
   if not dmg_type then
-    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
-      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    -- Default to pulling from inscribe-stats config, if it exists. Else use plain.
+    if f_inscribe_stats and f_inscribe_stats.Config then
+      if type(f_inscribe_stats.Config.dmg_type) == "string" then
+        dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+      else
+        dmg_type = f_inscribe_stats.Config.dmg_type
+      end
     else
       dmg_type = BRC.DMG_TYPE.plain
     end
@@ -413,8 +426,9 @@ function BRC.eq.wpn_stats(it, dmg_type)
   if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
-  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
-  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+  --return string.format("DPS=<w>%s</w> (%s/%s) Ac<w>%s</w>", dps, dmg, delay_str, acc)
+  if skip_dps then return string.format("Dmg=%s/%s A%s", dmg, delay_str, acc) end
+  return string.format("DPS=%s (%s/%s) A%s", dps, dmg, delay_str, acc)
 end
 
 -- BRC.it module
@@ -459,6 +473,72 @@ end
 function BRC.it.is_shield(it)
   return it and it.is_shield()
 end
+
+-- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
+for k, color in pairs(BRC.COL) do
+  BRC.mpr[k] = function(msg, channel)
+    crawl.mpr(BRC.txt[color](msg), channel)
+    crawl.flush_prev_message()
+  end
+  BRC.mpr[color] = BRC.mpr[k]
+end
+
+local function log_message(message, context, msg_color)
+  -- Avoid referencing BRC, to stay robust during startup
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
+  if context then msg = string.format("%s (%s)", msg, tostring(context)) end
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
+  crawl.flush_prev_message()
+end
+
+function BRC.mpr.error(message, context, skip_more)
+  if type(context) == "boolean" and skip_more == nil then
+    skip_more = context
+    context = nil
+  end
+
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
+  you.stop_activity()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  if context then message = message .. " (" .. context .. ")" end
+  print(message)
+
+  if not skip_more then
+    crawl.redraw_screen()
+    crawl.more()
+  end
+
+  if BRC.Config.mpr.logs_to_stderr then
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
+  end
+end
+
+-- BRC.opt module
+local _claimed_macro_keys = {}
+
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
+end
+
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
 
 -- BRC.you module
 function BRC.you.mut_lvl(mutation, innate_only)
@@ -512,6 +592,14 @@ end
 ---- Local constants ----
 local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
 
+---- Local variables ----
+local C -- config alias
+
+---- Initialization ----
+function f_inscribe_stats.init()
+  C = f_inscribe_stats.Config
+end
+
 ---- Local functions ----
 local function inscribe_armour_stats(it)
   local abbr = BRC.it.is_shield(it) and "SH" or "AC"
@@ -523,14 +611,14 @@ local function inscribe_armour_stats(it)
     new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, ac_or_sh)
     if not it.inscription:contains(ac_or_sh:sub(1, 3)) then sign_change = true end
 
-    if ev and ev ~= "" then
+    if ev and #ev > 0 then
       new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
       if not it.inscription:contains(ev:sub(1, 3)) then sign_change = true end
     end
   else
     new_insc = ac_or_sh
-    if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
-    if it.inscription and it.inscription ~= "" then
+    if ev and #ev > 0 then new_insc = string.format("%s, %s", new_insc, ev) end
+    if it.inscription and #it.inscription > 0 then
       new_insc = string.format("%s; %s", new_insc, it.inscription)
     end
   end
@@ -549,29 +637,66 @@ local function inscribe_armour_stats(it)
   end
 end
 
-local function inscribe_weapon_stats(it)
-  local orig_inscr = it.inscription
-  local dps_inscr = BRC.eq.wpn_stats(it, BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type])
-  local prefix, suffix = "", ""
+local function get_staff_dmg_str(it)
+  local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it)
+  if dmg == 0 or chance == 0 then return "(+0)" end
+  if chance >= 1 then return string.format("(+%d)", math.floor(dmg)) end
+  return string.format("(+%.0f|%.0f%%%%)", dmg, chance * 100)
+end
 
-  local idx = orig_inscr:find("DPS:", 1, true)
-  if idx then
-    if idx > 1 then prefix = orig_inscr:sub(1, idx - 1) .. "; " end
-    if idx + #dps_inscr - 1 < #orig_inscr then
-      suffix = orig_inscr:sub(idx + #dps_inscr, #orig_inscr)
-    end
-  elseif #orig_inscr > 0 then
-    suffix = "; " .. orig_inscr
+--- Replace the old inscription with the current one, preserving prefix/suffix
+local function update_inscription(orig, cur)
+  local first = orig:find(cur:sub(1, 4))
+  if not first then return cur .. "; " .. orig end
+
+  local _, last = orig:find("A%+%d+")
+  if not last then
+    _, last = orig:find("A%-%d+")
+  end
+  if not last then
+    BRC.mpr.error("Missing accuracy in inscription: " .. orig)
+    return cur .. "; " .. orig
   end
 
-  it.inscribe(table.concat({ prefix, dps_inscr, suffix }), false)
+  local prefix = orig:sub(1, first - 1)
+  if #prefix > 0 and prefix:sub(-2) ~= "; " then prefix = prefix .. "; " end
+  if prefix == "; " then prefix = "" end
+
+  local suffix = util.trim(orig:sub(last+1))
+  if #suffix > 0 and suffix:sub(1, 1) ~= ";" then suffix = "; " .. suffix end
+  if suffix == ";" then suffix = "" end
+
+  return prefix .. cur .. suffix
+end
+
+local function inscribe_weapon_stats(it)
+  local orig_inscr = it.inscription
+  local dmg_type = C.dmg_type
+  if type(dmg_type) == "string" then
+    dmg_type = BRC.DMG_TYPE[dmg_type]
+  end
+
+  local dps_inscr = BRC.eq.wpn_stats(it, dmg_type, C.skip_dps)
+  if C.prefix_staff_dmg and BRC.it.is_magic_staff(it) then
+    local bonus_str = get_staff_dmg_str(it)
+    dps_inscr = dps_inscr:gsub("/", bonus_str .. "/")
+    -- Recuce weapon damage string from #.## -> #
+    local dmg_index = dps_inscr:find("=%d+%.%d%d")
+    if dmg_index then
+      local dmg_str = dps_inscr:sub(dmg_index + 1, dmg_index + 4)
+      local dmg_int = math.floor(tonumber(dmg_str)+0.5)
+      dps_inscr = dps_inscr:gsub("=" .. dmg_str, "=" .. dmg_int)
+    end
+  end
+
+  it.inscribe(update_inscription(orig_inscr, dps_inscr), false)
 end
 
 ---- Crawl hook functions ----
 function f_inscribe_stats.do_stat_inscription(it)
-  if f_inscribe_stats.Config.inscribe_weapons and it.is_weapon then
+  if C.inscribe_weapons and it.is_weapon then
     inscribe_weapon_stats(it)
-  elseif f_inscribe_stats.Config.inscribe_armour
+  elseif C.inscribe_armour
     and BRC.it.is_armour(it)
     and not BRC.it.is_scarf(it)
   then

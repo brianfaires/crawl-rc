@@ -21,11 +21,11 @@ f_pickup_alert.Config.Alert = {
   talismans = true,
   first_ranged = true,
   first_polearm = true,
-  autopickup_disabled = true, -- If autopickup is off, alert for items that would be autopicked up
+  stacked_items = true, -- Special handling for items hidden in stacks, to alert before visiting
 
   -- Each usable item is alerted once.
   one_time = {
-    "buckler", "kite shield", "tower shield", "crystal plate armour",
+    "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
     "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
     "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
     "broad axe", "executioner's axe",
@@ -157,7 +157,7 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+f_pickup_alert.Config.Emoji = {
   RARE_ITEM = "💎",
   ARTEFACT = "💠",
   ORB = "🔮",
@@ -176,5 +176,11 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   LIGHTER = "⏬",
   HEAVIER = "⏫",
 
-  AUTOPICKUP = "👍",
+  AUTOPICKUP_ITEM = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
+
+f_pickup_alert.Config.init = function()
+  if not BRC.Config.emojis then
+    f_pickup_alert.Config.Emoji = {}
+  end
+end

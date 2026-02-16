@@ -10,8 +10,13 @@ f_remind_id.BRC_FEATURE_NAME = "remind-id"
 f_remind_id.Config = {
   stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
   stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-  emoji = BRC.Config.emojis and "🎁" or BRC.txt.magenta("?"),
   read_id_hotkey = true, -- Put read ID on hotkey
+  emoji = "🎁",
+  init = function()
+    if not BRC.Config.emojis then
+      f_remind_id.Config.emoji = BRC.txt.magenta("?")
+    end
+  end,
 } -- f_remind_id.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -74,7 +79,11 @@ function f_remind_id.c_message(text, channel)
     ri_found_scroll_of_id = true
     -- Don't re-trigger on dropping or on hotkey notification
     text = BRC.txt.clean(text)
-    if not text:contains("ou drop ") and not text:contains("to read ") and have_unid_item() then
+    if have_unid_item() and not (
+      text:contains("ou drop ") or
+      text:contains("to read ") or
+      text:contains("Found")
+   ) then
       you.stop_activity()
       do_remind_id_check = true
     end

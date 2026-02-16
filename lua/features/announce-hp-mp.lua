@@ -11,32 +11,38 @@ f_announce_hp_mp.Config = {
   dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
   dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
   always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
-  meter_length = 5, -- Number of pips in each meter
+  meter_length = 10, -- Number of pips in each meter
 
   Announce = {
     hp_loss_limit = 1, -- Announce when HP loss >= this
     hp_gain_limit = 4, -- Announce when HP gain >= this
     mp_loss_limit = 1, -- Announce when MP loss >= this
     mp_gain_limit = 2, -- Announce when MP gain >= this
-    hp_first = true, -- Show HP first in the message
+    hp_first = false, -- Show HP first in the message
     same_line = true, -- Show HP/MP on the same line
     always_both = true, -- If showing one, show both
     very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
   },
 
-  HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-    BORDER = BRC.txt.white("|"),
-    FULL = BRC.txt.lightgreen("+"),
-    PART = BRC.txt.lightgrey("+"),
-    EMPTY = BRC.txt.darkgrey("-"),
-  },
+  HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" },
+  MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" },
 
-  MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-    BORDER = BRC.txt.white("|"),
-    FULL = BRC.txt.lightblue("+"),
-    PART = BRC.txt.lightgrey("+"),
-    EMPTY = BRC.txt.darkgrey("-"),
-  },
+  init = function()
+    if not BRC.Config.emojis then
+      f_announce_hp_mp.Config.HP_METER = {
+        BORDER = BRC.txt.white("|"),
+        FULL = BRC.txt.lightgreen("+"),
+        PART = BRC.txt.lightgrey("+"),
+        EMPTY = BRC.txt.darkgrey("-"),
+      } -- HP_METER (do not remove this comment)
+      f_announce_hp_mp.Config.MP_METER = {
+        BORDER = BRC.txt.white("|"),
+        FULL = BRC.txt.lightblue("+"),
+        PART = BRC.txt.lightgrey("+"),
+        EMPTY = BRC.txt.darkgrey("-"),
+      } -- MP_METER (do not remove this comment)
+    end
+  end,
 } -- f_announce_hp_mp.Config (do not remove this comment)
 
 ---- Persistent variables ----
@@ -50,10 +56,12 @@ local ALWAYS_BOTTOM_SETTINGS = {
 
 ---- Local variables ----
 local C -- config alias
+local pause_announcements
 
 ---- Initialization ----
 function f_announce_hp_mp.init()
   C = f_announce_hp_mp.Config
+  pause_announcements = false
 
   ad_prev.hp = 0
   ad_prev.mhp = 0
@@ -96,20 +104,20 @@ local function format_delta(delta)
 end
 
 local function format_ratio(cur, max)
-  local color
+  local ratio_color
   if cur <= (max * 0.25) then
-    color = BRC.COL.lightred
+    ratio_color = BRC.COL.lightred
   elseif cur <= (max * 0.50) then
-    color = BRC.COL.red
+    ratio_color = BRC.COL.red
   elseif cur <= (max * 0.75) then
-    color = BRC.COL.yellow
+    ratio_color = BRC.COL.yellow
   elseif cur < max then
-    color = BRC.COL.white
+    ratio_color = BRC.COL.white
   else
-    color = BRC.COL.green
+    ratio_color = BRC.COL.green
   end
 
-  return BRC.txt[color](string.format(" -> %s/%s", cur, max))
+  return BRC.txt[ratio_color](string.format(" -> %s/%s", cur, max))
 end
 
 local function get_hp_message(hp_delta, mhp_delta)
@@ -151,16 +159,27 @@ local function get_mp_message(mp_delta, mmp_delta)
 end
 
 local function last_msg_is_meter()
-  local meter_chars = C.meter_length + 2 * #(BRC.txt.clean(C.HP_METER.BORDER) or "")
   local last_msg = crawl.messages(1)
-  if not (last_msg and #last_msg > meter_chars + 4) then return false end
+  return f_announce_hp_mp.msg_is_meter(last_msg)
+end
 
-  local s = last_msg:sub(meter_chars + 1, meter_chars + 4)
-  return s == " HP[" or s == " MP["
+---- Public API ----
+function f_announce_hp_mp.msg_is_meter(msg)
+  -- Might be better to check more rigorously, but this seems robust and quick.
+  msg = BRC.txt.clean(msg)
+  return msg:contains("] -> ") and (msg:contains(" HP[") or msg:contains(" MP["))
+end
+
+function f_announce_hp_mp.single_turn_mute()
+  pause_announcements = true
 end
 
 ---- Crawl hook functions ----
 function f_announce_hp_mp.ready()
+  if pause_announcements then
+    pause_announcements = false
+    return
+  end
   -- Update prev state first, so we can safely return early below
   local hp, mhp = you.hp()
   local mp, mmp = you.mp()
@@ -169,7 +188,11 @@ function f_announce_hp_mp.ready()
   local mp_delta = mp - ad_prev.mp
   local mhp_delta = mhp - ad_prev.mhp
   local mmp_delta = mmp - ad_prev.mmp
-  local damage_taken = mhp_delta - hp_delta
+
+  -- Calc damage taken, with starting point being mhp * (prev hp / prev mhp)
+  local expected_hp = mhp * (hp / mhp)
+  local damage_taken = expected_hp - hp
+
   ad_prev.hp = hp
   ad_prev.mhp = mhp
   ad_prev.mp = mp
@@ -208,7 +231,7 @@ function f_announce_hp_mp.ready()
   -- Add Damage-related warnings, when damage >= threshold
   if damage_taken >= mhp * C.dmg_flash_threshold then
     if is_very_low_hp then return end -- mute % HP alerts
-    if damage_taken >= (mhp * C.dmg_fm_threshold) then
+    if damage_taken >= mhp * C.dmg_fm_threshold then
       local msg = BRC.txt.lightmagenta("MASSIVE DAMAGE")
       BRC.mpr.que_optmore(true, BRC.txt.wrap(msg, BRC.EMOJI.EXCLAMATION_2))
     else

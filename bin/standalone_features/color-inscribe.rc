@@ -8,7 +8,12 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
+
+f_color_inscribe = {}
+f_color_inscribe.Config = {
+  disabled = false,
+} -- f_color_inscribe.Config (do not remove this comment)
 
 -- BRC Constants
 BRC.COL = {
@@ -48,9 +53,9 @@ end
 -- BRC feature module: color-inscribe
 -- @module f_color_inscribe
 -- Adds color to key terms in inscriptions (resistances, stats, etc).
+-- Disabled on main, because webtiles (CAO) doesn't consistently support numeric tags.
 ---------------------------------------------------------------------------------------------------
 
-f_color_inscribe = {}
 
 
 ---- Local constants ----

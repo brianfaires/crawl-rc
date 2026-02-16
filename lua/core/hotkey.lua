@@ -2,6 +2,8 @@
 -- BRC core feature: hotkey
 -- @module BRC.Hotkey
 -- Manages the BRC hotkey, and provides functions to add actions to it.
+-- Adding an action to the hotkey will prompt the user after performing any specified checks.
+-- If user accepts, the defined action is performed. (Equip, pick up, read, move to, etc)
 ---------------------------------------------------------------------------------------------------
 
 BRC.Hotkey = {}
@@ -12,8 +14,9 @@ BRC.Hotkey.Config = {
   equip_hotkey = true, -- Offer to equip after picking up equipment
   wait_for_safety = true, -- Don't expire the hotkey with monsters in view
   explore_clears_queue = true, -- Clear the hotkey queue on explore
+  newline_before_hotkey = true, -- Add a newline before the hotkey message
   move_to_feature = {
-    -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
+    -- Hotkey for "move to _" when you find these features
     enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
     enter_bailey = "flagged portal", enter_bazaar = "bazaar",
     enter_desolation = "crumbling gateway", enter_gauntlet = "gauntlet",
@@ -42,12 +45,14 @@ local WAYPOINT_MUTES = {
 local action_queue
 local cur_action
 local delay_expire
+local cur_floor
 
 ---- Initialization ----
 function BRC.Hotkey.init()
   action_queue = {}
   cur_action = nil
   delay_expire = false
+  cur_floor = you.where()
 
   BRC.opt.macro(BRC.Hotkey.Config.key.keycode, "macro_brc_hotkey")
   BRC.opt.macro(BRC.Hotkey.Config.skip_keycode, "macro_brc_skip_hotkey")
@@ -55,6 +60,7 @@ end
 
 ---- Local functions ----
 local function display_cur_message()
+  if BRC.Hotkey.Config.wait_for_safety and not you.feel_safe() then return end
   local msg = string.format("[BRC] Press %s to %s.", BRC.Hotkey.Config.key.name, cur_action.msg)
   BRC.mpr.que(msg, BRC.COL.darkgrey)
 end
@@ -115,8 +121,8 @@ end
 -- @param suffix string - Printed after the action. Usually an item name
 -- @param push_front boolean - Push the action to the front of the queue
 -- @param f_action function - The function to call when the hotkey is pressed
--- @param f_condition optional function (return bool) - If the action is still valid
--- @param f_cleanup optional function - Function to call after hotkey pressed or skipped
+-- @param f_condition (optional function) return bool - If the action is still valid
+-- @param f_cleanup (optional function) - Function to call after hotkey pressed or skipped
 -- @return nil
 function BRC.Hotkey.set(prefix, suffix, push_front, f_action, f_condition, f_cleanup)
   local act = {
@@ -190,18 +196,22 @@ function BRC.Hotkey.pickup(name, push_front)
 end
 
 --- Set hotkey as 'move to <name>', if it's in LOS
--- If feature_name provided, moves to that feature, otherwise searches for the item by name
-function BRC.Hotkey.waypoint(name, push_front, feature_name)
+-- If target is a table, moves to that xy coordinate
+-- If target is a string, moves to that feature, otherwise searches for the item by name
+-- @param queue_pickup (optional boolean) - Queue pickup after moving to item (default true)
+local function set_waypoint_hotkey(name, push_front, target, queue_pickup)
   if util.contains(BRC.PORTAL_FEATURE_NAMES, you.branch()) then
     return -- Can't auto-travel
   end
 
   local x, y
-  if feature_name ~= nil then
+  if type(target) == "table" then
+    x, y = target.dx, target.dy
+  elseif type(target) == "string" then
     local r = you.los()
     for dx = -r, r do
       for dy = -r, r do
-        if view.feature_at(dx, dy) == feature_name then
+        if view.feature_at(dx, dy):contains(target) then
           x, y = dx, dy
           break
         end
@@ -239,14 +249,25 @@ function BRC.Hotkey.waypoint(name, push_front, feature_name)
 
     util.foreach(WAYPOINT_MUTES, function(m) BRC.opt.single_turn_mute(m) end)
     crawl.sendkeys(keys)
-    crawl.flush_input()
 
-    if not feature_name then
+    if not target and queue_pickup ~= false then
       BRC.Hotkey.pickup(name, true)
     end
   end
 
   BRC.Hotkey.set("move to", name, push_front, move_to_waypoint, is_valid, clear_waypoint)
+end
+
+function BRC.Hotkey.move_to_item(name, push_front, queue_pickup)
+  set_waypoint_hotkey(name, push_front, nil, queue_pickup)
+end
+
+function BRC.Hotkey.move_to_feature(name, push_front, feature_name)
+  set_waypoint_hotkey(name, push_front, feature_name, false)
+end
+
+function BRC.Hotkey.move_to_xy(name, push_front, x, y)
+  set_waypoint_hotkey(name, push_front, {dx=x, dy=y}, false)
 end
 
 ---- Crawl hook functions ----
@@ -263,23 +284,28 @@ end
 
 function BRC.Hotkey.c_message(text, channel)
   if channel ~= "plain" then return end
-  if BRC.Hotkey.Config.move_to_feature == nil then return end
+  if type(BRC.Hotkey.Config.move_to_feature) ~= "table" then return end
   if not text:contains("Found") then return end
 
   for k, v in pairs(BRC.Hotkey.Config.move_to_feature) do
     if text:contains(v) then
-      BRC.Hotkey.waypoint(v, true, k)
+      BRC.Hotkey.move_to_feature(v, true, k)
     end
   end
   for k, v in pairs(BRC.PORTAL_FEATURE_NAMES) do
     if text:contains(v) then
-      BRC.Hotkey.waypoint(v, true, k)
+      BRC.Hotkey.move_to_feature(v, true, k)
     end
   end
 end
 
 function BRC.Hotkey.ready()
-  if cur_action == nil then
+  if you.where() ~= cur_floor then
+    -- Clear the queue when changing floors
+    cur_floor = you.where()
+    action_queue = {}
+    cur_action = nil
+  elseif cur_action == nil then
     load_next_action()
   elseif cur_action.turn > you.turns() then
     return

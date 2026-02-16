@@ -52,6 +52,8 @@ end
 ---- Crawl hook functions (Remove any hooks you don't need) ----
 function f_template.ready()
   -- Called at the start of each turn
+  -- Note: crawl's ready() hook fires multiple times per turn, which is usually not what you want.
+  -- If you do want to execute multiple times per turn, define f_template.multiready() instead.
   if you.turns() == C.example_number then BRC.mpr.blue("Hit magic number!") end
 end
 

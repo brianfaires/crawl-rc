@@ -8,15 +8,17 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.show_debug_messages = false
 BRC.Config.mpr.logs_to_stderr = false
 
 f_misc_alerts = {}
 f_misc_alerts.Config = {
+  preferred_god = "", -- Stop on first altar with this text (Ex. "Wu Jian"); nil or "" disables
+  force_more_on_pref_altar = true, -- Force more message on first altar for preferred god
   save_with_msg = true, -- Shift-S to save and leave yourself a message
-  alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+  alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
   alert_spell_level_changes = true, -- Alert when you gain additional spell levels
   alert_remove_faith = true, -- Reminder to remove amulet at max piety
   remove_faith_hotkey = true, -- Hotkey remove amulet
@@ -35,14 +37,11 @@ BRC.COL = {
   lightcyan = "11", lightred = "12", lightmagenta = "13", yellow = "14", white = "15",
 } -- BRC.COL (do not remove this comment)
 
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
 
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-T"] = 20, ["Cntl-E"] = 5,
+["Cntl-5"] = crawl.is_webtiles() and -11 or -43
+} -- BRC.KEYS (do not remove this comment)
 
 
 -- BRC module tables (Don't overwrite existing globals)
@@ -88,6 +87,7 @@ function BRC.Data.persist(name, default_value)
 end
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -96,12 +96,12 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
-local function log_message(message, context, color)
+local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
 end
 
@@ -110,7 +110,7 @@ function BRC.mpr.debug(message, context)
     log_message(message, context, BRC.COL.lightblue)
   end
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Debug) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
   end
 end
 
@@ -120,17 +120,22 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
-  crawl.redraw_screen()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  if context then message = message .. " (" .. context .. ")" end
+  print(message)
 
   if not skip_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
 end
 
@@ -139,19 +144,23 @@ function BRC.mpr.more(msg, color, channel)
   you.stop_activity()
   crawl.redraw_screen()
   crawl.more()
-  crawl.redraw_screen()
 end
 
 function BRC.mpr.okay(suffix)
   BRC.mpr.darkgrey("Okay, then." .. (suffix and " " .. suffix or ""))
 end
 
-function BRC.mpr.que_optmore(show_more, msg, color, channel)
+function BRC.mpr.que_optmore(show_more, msg, msg_color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
-  color = color or BRC.COL.lightgrey
-  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
+  msg_color = msg_color or BRC.COL.lightgrey
+  if not msg or #msg == 0 then
+    msg = ""
+  else
+    msg = BRC.txt[msg_color](msg)
+  end
+  _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
 end
 
 function BRC.mpr.yesno(msg, color, capital_only)
@@ -173,12 +182,24 @@ function BRC.mpr.yesno(msg, color, capital_only)
 end
 
 -- BRC.opt module
-function BRC.opt.macro(key, function_name)
-  if type(_G[function_name]) ~= "function" then
-    BRC.mpr.error("Function %s is not a global function", function_name)
-    return
-  end
+local _claimed_macro_keys = {}
 
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
+end
+
+function BRC.opt.flash_screen_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
+end
+
+function BRC.opt.force_more_message(pattern, create)
+  local op = create and "+=" or "-="
+  crawl.setopt(string.format("force_more_message %s %s", op, pattern))
+end
+
+function BRC.opt.macro(key, function_name, overwrite_existing)
   -- Format msg for debugging and keycode for crawl.setopt()
   local key_str = nil
   if type(key) == "number" then
@@ -197,15 +218,41 @@ function BRC.opt.macro(key, function_name)
   -- The << >> formatting protects against crawl thinking '<' is a tag
   if key_str == nil then key_str = "<<< '" .. key .. "' >>" end
 
-  crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
-
-  BRC.mpr.debug(
-    string.format(
-      "Assigned macro: %s to key: %s",
-      BRC.txt.magenta(function_name .. "()"),
-      BRC.txt.lightred(key_str)
+  if type(_G[function_name]) == "function" then
+    if _claimed_macro_keys[key] and not overwrite_existing then
+      BRC.mpr.debug("Macro key %s is already assigned to %s", key_str, _claimed_macro_keys[key])
+      return
+    end
+    crawl.setopt(string.format("macros += M %s ===%s", key, function_name))
+    _claimed_macro_keys[key] = function_name
+    BRC.mpr.debug(
+      string.format(
+        "Assigned macro %s to key: %s",
+        BRC.txt.magenta(function_name .. "()"),
+        BRC.txt.lightred(key_str)
+      )
     )
-  )
+  else
+    function_name = _claimed_macro_keys[key]
+    if not function_name then
+      crawl.mpr("no function name found for key: " .. key)
+      return
+    end
+    crawl.setopt(string.format("macros += M %s %s", key, key))
+    _claimed_macro_keys[key] = nil
+    BRC.mpr.debug(
+      string.format(
+        "Cleared macro %s from key: %s",
+        BRC.txt.magenta(function_name .. "()"),
+        BRC.txt.lightred(key_str)
+      )
+    )
+  end
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
 end
 
 -- BRC.txt module
@@ -223,7 +270,16 @@ end
 
 -- BRC.util module
 function BRC.util.cntl(c)
-  return string.byte(c:upper()) - 64
+  if c >= '0' and c <= '9' or c >= 'a' and c <= 'z' then
+    -- Idk why webtiles numeric keycodes are different than local tiles on Mac
+    if crawl.is_webtiles() and c >= '0' and c <= '9' then return string.byte(c) - 64 end
+    return string.byte(c) - 96
+  elseif c >= 'A' and c <= 'Z' then
+    return string.byte(c) - 64
+  end
+
+  BRC.mpr.error("Unsupported character sent to BRC.util.cntl: %s", c)
+  return nil
 end
 
 function BRC.util.do_cmd(cmd)
@@ -251,18 +307,19 @@ function BRC.mpr.consume_queue()
   -- stop_activity() can generate more autopickups, and thus more queue'd messages
   if do_more then
     you.stop_activity()
-    crawl.redraw_screen()
   end
 
   for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(tostring(msg.m), msg.ch)
-    crawl.flush_prev_message()
+    if msg.m and #msg.m > 0 then
+      crawl.mpr(tostring(msg.m), msg.ch)
+      crawl.flush_prev_message()
+    end
   end
   _mpr_queue = {}
 
   if do_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 end
 
@@ -278,26 +335,40 @@ end
 ---- Persistent variables ----
 ma_alerted_max_piety = BRC.Data.persist("ma_alerted_max_piety", false)
 ma_saved_msg = BRC.Data.persist("ma_saved_msg", "")
+ma_found_altar = BRC.Data.persist("ma_found_altar", false)
 
 ---- Local constants ----
 local REMOVE_FAITH_MSG = "6 star piety! Maybe ditch that amulet soon."
+local GOD_ALTAR_TEXT = "Found.*altar.*"
 
 ---- Local variables ----
 local C -- config alias
 local below_hp_threshold
 local prev_spell_levels
+local removed_altar_alert
 
 ---- Initialization ----
 function f_misc_alerts.init()
   C = f_misc_alerts.Config
   below_hp_threshold = false
   prev_spell_levels = you.spell_levels()
+  removed_altar_alert = false
 
   if C.save_with_msg then
     BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
-    if ma_saved_msg and ma_saved_msg ~= "" then
+    if ma_saved_msg and #ma_saved_msg > 0 then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
-      ma_saved_msg = nil
+      ma_saved_msg = ""
+    end
+  end
+
+  if C.preferred_god and not ma_found_altar then
+    if #C.preferred_god == 0 then
+      ma_found_altar = true
+    else
+      GOD_ALTAR_TEXT = GOD_ALTAR_TEXT .. C.preferred_god
+      BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, true)
+      BRC.opt.force_more_message(GOD_ALTAR_TEXT, C.force_more_on_pref_altar)
     end
   end
 end
@@ -307,9 +378,9 @@ local function alert_low_hp()
   local hp, mhp = you.hp()
   if below_hp_threshold then
     below_hp_threshold = hp ~= mhp
-  elseif hp <= C.alert_low_hp_threshold * mhp then
+  elseif hp <= mhp * C.alert_low_hp_threshold / 100 then
     below_hp_threshold = true
-    local low_hp_msg = "Dropped below " .. 100 * C.alert_low_hp_threshold .. "%% HP"
+    local low_hp_msg = "Dropped below " .. C.alert_low_hp_threshold .. "% HP"
     BRC.mpr.que_optmore(true, BRC.txt.wrap(BRC.txt.magenta(low_hp_msg), BRC.EMOJI.EXCLAMATION))
   end
 end
@@ -364,14 +435,31 @@ function macro_brc_save()
 end
 
 ---- Crawl hook functions ----
+function f_misc_alerts.c_message(text, _)
+  if C.preferred_god and not ma_found_altar and text:find(GOD_ALTAR_TEXT) then
+    ma_found_altar = true
+    local feature_name = "altar_" .. (C.preferred_god:match("^%S+") or C.preferred_god):lower()
+    BRC.Hotkey.move_to_feature("altar of " .. C.preferred_god, true, feature_name)
+  end
+end
+
 function f_misc_alerts.ready()
   if C.alert_remove_faith then alert_remove_faith() end
   if C.alert_low_hp_threshold > 0 then alert_low_hp() end
   if C.alert_spell_level_changes then alert_spell_level_changes() end
+  if ma_found_altar and not removed_altar_alert then
+    removed_altar_alert = true
+    BRC.opt.flash_screen_message(GOD_ALTAR_TEXT, false)
+    BRC.opt.force_more_message(GOD_ALTAR_TEXT, false)
+  end
 end
 
 
 -- Crawl hook wrappers
+function c_message(...)
+  return f_misc_alerts.c_message(...)
+end
+
 local brc_last_turn = -1
 function ready(...)
   if you.turns() > brc_last_turn then

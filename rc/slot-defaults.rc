@@ -1,66 +1,27 @@
 ####### Item Slots #########
+# See manage-consumables.lua for scrolls/potions.
+# Wands use crawl defaults
+
 # Rings to P/p for easy swapping
-item_slot += ring of:Pp
+gear_slot += ring of:Pp
 
-# ignored: moonshine, noise
-# unassigned slots: d, e, F
-item_slot ^= scroll of acquirement:q
-item_slot ^= scroll of amnesia:E
-item_slot ^= scroll of blinking:B
-item_slot ^= scroll of brand weapon:D
-item_slot ^= scroll of butterflies:s
-item_slot ^= scroll of enchant armour:u
-item_slot ^= scroll of enchant weapon:W
-item_slot ^= scroll of fear:f
-item_slot ^= scroll of fog:F
-item_slot ^= scroll of identify:i
-item_slot ^= scroll of immolation:o
-item_slot ^= scroll of revelation:j
-item_slot ^= scroll of poison:y
-item_slot ^= scroll of silence:S
-item_slot ^= scroll of summoning:s
-item_slot ^= scroll of teleportation:t
-item_slot ^= scroll of torment:k
-item_slot ^= scroll of vulnerability:v
 
-item_slot ^= potion of ambrosia:A
-item_slot ^= potion of attraction:n
-item_slot ^= potion of berserk rage:z
-item_slot ^= potion of brilliance:R
-item_slot ^= potion of cancellation:C
-item_slot ^= potion of curing:c
-item_slot ^= potion of experience:x
-item_slot ^= potion of enlightenment:g
-item_slot ^= potion of haste:H
-item_slot ^= potion of heal wounds:h
-item_slot ^= potion of invisibility:I
-item_slot ^= potion of lignification:l
-item_slot ^= potion of magic:M
-item_slot ^= potion of might:m
-item_slot ^= potion of resistance:r
-item_slot ^= potion of mutation:U
-
-item_slot ^= condenser vane:V
-item_slot ^= phial of floods:O
-item_slot ^= phantom mirror:N
-item_slot ^= box of beasts:X
-item_slot ^= tin of tremorstones:T
-item_slot ^= lightning rod:L
-
-item_slot ^= wand of digging:K
-item_slot ^= wand of flame:Q
-item_slot ^= wand of mindburst:Y
-item_slot ^= wand of acid:G
-item_slot ^= wand of light:G
-item_slot ^= wand of quicksilver:G
-item_slot ^= wand of iceblast:Z
-item_slot ^= wand of roots:Z
-item_slot ^= wand of charming:J
-item_slot ^= wand of paralysis:J
-
+consumable_shortcut ^= box of beasts:B
+consumable_shortcut ^= condenser vane:C
+consumable_shortcut ^= figurine of a ziggurat:Z
+consumable_shortcut ^= Gell's gravitambourine:G
+consumable_shortcut ^= horn of Geryon:H
+consumable_shortcut ^= lightning rod:L
+consumable_shortcut ^= phantom mirror:M
+consumable_shortcut ^= phial of floods:P
+consumable_shortcut ^= sack of spiders:S
+consumable_shortcut ^= tin of tremorstones:T
 
 
 ######## Spell Slots #########
+spell_slot ^= Apportation:zZ
+spell_slot ^= Passage of Golubria:zZ
+
 spell_slot ^= Alistair's Intoxication:AITX
 spell_slot ^= Alistair’s Walking Alembic:AWKLMBSTEI
 spell_slot ^= Anguish:ANGUISH

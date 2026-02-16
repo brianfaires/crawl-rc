@@ -9,9 +9,15 @@ f_pa_data = {}
 ---- Persistent variables ----
 pa_items_alerted = BRC.Data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.Data.persist("pa_recent_alerts", {})
-pa_OTA_items = BRC.Data.persist("pa_OTA_items", f_pickup_alert.Config.Alert.one_time)
+pa_OTA_items = BRC.Data.persist("pa_OTA_items", nil)
 pa_high_score = BRC.Data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
 pa_egos_alerted = BRC.Data.persist("pa_egos_alerted", {})
+
+---- Initialization ----
+function f_pa_data.init()
+  -- Set initial value of pa_OTA_items here, after config overrides are applied
+  pa_OTA_items = pa_OTA_items or f_pickup_alert.Config.Alert.one_time
+end
 
 ---- Local functions ----
 local function get_pa_keys(it, use_plain_name)
@@ -95,6 +101,19 @@ function f_pa_data.find_OTA(it)
   local qualname = it.name("qual")
   for _, v in ipairs(pa_OTA_items) do
     if v and qualname:find(v) then return v end
+  end
+
+  if it.class(true) == "book" and it.spells then
+    local lower_spells = {}
+    for _, s in ipairs(it.spells) do
+      lower_spells[#lower_spells + 1] = s:lower()
+    end
+    for _, v in ipairs(pa_OTA_items) do
+      local v_lower = v:lower()
+      for _, s in ipairs(lower_spells) do
+        if s:find(v_lower) then return v end
+      end
+    end
   end
 end
 

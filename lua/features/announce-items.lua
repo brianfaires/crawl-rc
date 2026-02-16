@@ -8,25 +8,65 @@ f_announce_items = {}
 f_announce_items.BRC_FEATURE_NAME = "announce-items"
 f_announce_items.Config = {
   disabled = true, -- Disabled by default. Intended only for turncount runs.
-  announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+  announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
+  announce_glowing = true,
+  announce_artefacts = true,
+  max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
+  announce_duplicate_consumables = true, -- Announce when standing on not-id'd duplicates
 } -- f_announce_items.Config (do not remove this comment)
 
+---- Local constants ----
+local ALERT_COLOR = {
+  gold = BRC.COL.yellow,
+  book = BRC.COL.lightcyan,
+  jewellery = BRC.COL.magenta,
+  misc = BRC.COL.lightcyan,
+  missile = BRC.COL.white,
+  potion = BRC.COL.lightgreen,
+  scroll = BRC.COL.lightgreen,
+  wand = BRC.COL.magenta,
+  default = BRC.COL.lightblue,
+} -- ALERT_COLOR (do not remove this comment)
+
 ---- Local variables ----
+local C -- config alias
 local los_items
 local prev_item_names
+local prev_gold_count
 
 ---- Initialization ----
 function f_announce_items.init()
+  C = f_announce_items.Config
   los_items = {}
   prev_item_names = {}
+  prev_gold_count = 0
 end
 
 ---- Local functions ----
-local function announce_item(it)
-  local class = it.class(true):lower()
-  if util.contains(f_announce_items.Config.announced_classes, class) then
-    crawl.mpr(BRC.txt.white("You see: ") .. it.name())
+local function should_announce_item(it)
+  if it.is_useless then return false end
+  if not it.is_identified then
+    if it.artefact then return C.announce_artefacts end
+    if it.branded then return C.announce_glowing end
+  elseif crawl.messages(2):contains(it.name()) then
+    -- Avoid duplicating "You see here ..." after floor-id
+    return false
   end
+
+  return util.contains(C.announce_class, it.class(true):lower())
+end
+
+local function announce_item(it)
+  if not should_announce_item(it) then return end
+  local class = it.class(true):lower()
+  if class == "gold" then
+    prev_gold_count = prev_gold_count + 1
+    if prev_gold_count > C.max_gold_announcements then return end
+  end
+
+  local item_col = ALERT_COLOR[class] or ALERT_COLOR.default
+  crawl.mpr(BRC.txt.white("Found: ") .. BRC.txt[item_col](it.name()))
+  you.stop_activity()
 end
 
 ---- Crawl hook functions ----
@@ -40,6 +80,18 @@ function f_announce_items.ready()
         if items_xy and #items_xy > 0 then
           for _, it in ipairs(items_xy) do
             los_items[#los_items+1] = it
+
+            if C.announce_duplicate_consumables then
+              if x == 0 and y == 0 and not it.is_identified
+                and (it.class(true) == "scroll" or it.class(true) == "potion")
+               then
+                if util.exists(items.inventory(), function(i)
+                  return i.name("qual", false) == it.name("qual", false)
+                end) then
+                  crawl.mpr(BRC.txt.magenta("Duplicate: ") .. it.name())
+                end
+              end
+            end
           end
         end
       end
@@ -52,9 +104,13 @@ function f_announce_items.ready()
     end
   end
 
-  -- Save names for comparison
+  -- Save history for comparison
   prev_item_names = {}
+  prev_gold_count = 0
   for _, it in ipairs(los_items) do
     prev_item_names[#prev_item_names+1] = it.name()
+    if it.class(true):lower() == "gold" then
+      prev_gold_count = prev_gold_count + 1
+    end
   end
 end

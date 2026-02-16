@@ -5,12 +5,20 @@
 ---------------------------------------------------------------------------------------------------
 
 ---- Cosmetic settings
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
+BRC.init_emojis = function()
+  if BRC.Config.emojis then
+    BRC.EMOJI.CAUTION = "⚠️"
+    BRC.EMOJI.EXCLAMATION = "❗"
+    BRC.EMOJI.EXCLAMATION_2 = "‼️"
+    BRC.EMOJI.SUCCESS = "✅"
+  else
+    BRC.EMOJI.CAUTION = "<!yellow>!</yellow>"
+    BRC.EMOJI.EXCLAMATION = "<!magenta>!</magenta>"
+    BRC.EMOJI.EXCLAMATION_2 = "<!lightmagenta>!!</lightmagenta>"
+    BRC.EMOJI.SUCCESS = nil
+  end
+end
 
 ---- Items ----
 BRC.MISC_ITEMS = {
@@ -19,7 +27,6 @@ BRC.MISC_ITEMS = {
   "tin of tremorstones",
 } -- BRC.MISC_ITEMS (do not remove this comment)
 
--- This is checked against the full text of the pickup message, so use patterns to match
 BRC.MISSILES = {
   "poisoned dart", "atropa-tipped dart", "curare-tipped dart", "datura-tipped dart",
   "darts? of disjunction", "darts? of dispersal", " stone", "boomerang",
@@ -52,8 +59,9 @@ BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
 BRC.MAGIC_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
-  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+  air = "Air Magic", alchemy = "Alchemy", chemistry = "Alchemy", cold = "Ice Magic",
+  conjuration = "Conjurations", death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",
+  necromancy = "Necromancy",
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.TRAINING_SKILLS = {
@@ -86,6 +94,7 @@ BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
 ---- Artefact properties ----
 BRC.ARTPROPS_BAD = {
   "Bane", "-Cast", "-Move", "-Tele",
+  "^Contam", "^Drain", "^Fragile",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
 } -- BRC.ARTPROPS_BAD (do not remove this comment)
 
@@ -97,7 +106,9 @@ BRC.ARTPROPS_EGO = { -- Corresponding ego
 } -- BRC.ARTPROPS_EGO (do not remove this comment)
 
 ---- Other ----
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-T"] = 20, ["Cntl-E"] = 5,
+["Cntl-5"] = crawl.is_webtiles() and -11 or -43
+} -- BRC.KEYS (do not remove this comment)
 
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
@@ -113,3 +124,9 @@ BRC.DMG_TYPE = {
 } -- BRC.DMG_TYPE (do not remove this comment)
 
 BRC.SIZE_PENALTY = { LITTLE = -2, SMALL = -1, NORMAL = 0, LARGE = 1, GIANT = 2 }
+
+BRC.BAD_DURATIONS = {
+    "berserk", "blind", "confused", "corroded", "diminished spells",
+    "marked", "magic-sapped", "short of breath", "sign of ruin", "slowed",
+    "sluggish", "tree-form", "vertiginous", "vulnerable", "weakened",
+} -- BRC.BAD_DURATIONS (do not remove this comment)

@@ -108,25 +108,6 @@ local function get_slay_bonuses()
   return sum
 end
 
-local function get_staff_bonus_dmg(it, dmg_type)
-  if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
-  if dmg_type == BRC.DMG_TYPE.plain then
-    local basename = it.name("base")
-    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
-  end
-
-  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
-  local evo_skill = you.skill("Evocations")
-
-  local chance = (2 * evo_skill + spell_skill) / 30
-  if chance > 1 then chance = 1 end
-  -- 0.75 is an acceptable approximation; most commonly 63/80
-  -- Varies by staff type in sometimes complex ways
-  local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
-  return avg_dmg * chance
-end
-
-
 --- Gets the updated stats after equipping an item
 -- @param stats (table) Keys are artefact properties, values are the current values
 -- If multiple equip slots available, assumes no item is removed.
@@ -204,8 +185,8 @@ end
 --- Format damage values for consistent display width (4 characters)
 local function format_dmg(dmg)
   if dmg < 10 then return string.format("%.2f", dmg) end
-  if dmg > 99.9 then return ">100" end
-  return string.format("%.1f", dmg)
+  if dmg < 100 then return string.format("%.1f", dmg) end
+  return string.format("%.0f ", dmg)
 end
 
 --- Format stat string for display or inscription
@@ -241,11 +222,16 @@ end
 
 --- Get weapon stats as a string
 -- @return (string) DPS, damage, delay, and accuracy
-function BRC.eq.wpn_stats(it, dmg_type)
+function BRC.eq.wpn_stats(it, dmg_type, skip_dps)
   if not it.is_weapon then return end
   if not dmg_type then
-    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
-      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    -- Default to pulling from inscribe-stats config, if it exists. Else use plain.
+    if f_inscribe_stats and f_inscribe_stats.Config then
+      if type(f_inscribe_stats.Config.dmg_type) == "string" then
+        dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+      else
+        dmg_type = f_inscribe_stats.Config.dmg_type
+      end
     else
       dmg_type = BRC.DMG_TYPE.plain
     end
@@ -264,8 +250,9 @@ function BRC.eq.wpn_stats(it, dmg_type)
   if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
-  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
-  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+  --return string.format("DPS=<w>%s</w> (%s/%s) Ac<w>%s</w>", dps, dmg, delay_str, acc)
+  if skip_dps then return string.format("Dmg=%s/%s A%s", dmg, delay_str, acc) end
+  return string.format("DPS=%s (%s/%s) A%s", dps, dmg, delay_str, acc)
 end
 
 
@@ -340,6 +327,7 @@ function BRC.eq.get_weap_delay(it)
 
   return delay / 10
 end
+
 --- Get weapon damage (average), including stat/slay changes when swapping from current weapon.
 -- Aux attacks not included
 function BRC.eq.get_avg_dmg(it, dmg_type)
@@ -355,7 +343,7 @@ function BRC.eq.get_avg_dmg(it, dmg_type)
   local base_dmg = it.damage * stat_mod * skill_mod
 
   if BRC.it.is_magic_staff(it) then
-    return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
+    return base_dmg + stats.Slay + BRC.eq.get_staff_bonus_dmg(it, dmg_type)
   else
     return get_dmg_with_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
   end
@@ -366,6 +354,27 @@ function BRC.eq.get_dps(it, dmg_type)
   return BRC.eq.get_avg_dmg(it, dmg_type) / BRC.eq.get_weap_delay(it)
 end
 
+--- Calculate expected damage output from a staff
+-- @return (number) Damage * chance, (number) damage on proc, (number) chance to proc
+function BRC.eq.get_staff_bonus_dmg(it, dmg_type)
+  local result = nil
+  if dmg_type == BRC.DMG_TYPE.unbranded then result = 0 end
+  if dmg_type == BRC.DMG_TYPE.plain then
+    local basename = it.name("base")
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then result = 0 end
+  end
+
+  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
+  local evo_skill = you.skill("Evocations")
+
+  local chance = (2 * evo_skill + spell_skill) / 30
+  if chance > 1 then chance = 1 end
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
+  result = result or dmg * chance
+  return result, dmg, chance
+end
 
 ---- Item properties ----
 --- Get the ego of an item, with custom logic:

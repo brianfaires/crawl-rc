@@ -19,6 +19,7 @@ local HOOK_FUNCTIONS = {
   ch_start_running = "ch_start_running",
   init = "init",
   ready = "ready",
+  multiready = "multiready",
 } -- HOOK_FUNCTIONS (do not remove this comment)
 
 ---- Local variables ----
@@ -239,15 +240,16 @@ function BRC.unregister(name)
   return true
 end
 
--- @param config table of config values, or string name of a config
-function BRC.reset(config)
+-- @param config_name (optional string) name of a config
+function BRC.reset(config_name)
   BRC.active = false
   BRC.Data.reset()
-  BRC.init(config)
+  BRC.opt.clear_macros()
+  BRC.init(config_name)
 end
 
--- @param config table of config values, or string name of a config
-function BRC.init(config)
+-- @param config_name string name of a config
+function BRC.init(config_name)
   BRC.active = false
   _features = {}
   _hooks = {}
@@ -265,7 +267,7 @@ function BRC.init(config)
     end
   end
 
-  BRC.init_config(config)
+  BRC.init_config(config_name)
   BRC.mpr.debug("Config loaded.")
 
   BRC.mpr.debug("Register core features...")
@@ -357,9 +359,8 @@ function BRC.ch_start_running(kind)
 end
 
 function BRC.ready()
-  if you.turns() == 0 then BRC.active = true end
+  if you.turns() <= 1 then BRC.active = true end -- webtiles skips ready() on turn 0
   if not BRC.active then return end
-  crawl.redraw_screen()
   BRC.opt.clear_single_turn_mutes()
 
   if you.turns() > turn_count then
@@ -367,6 +368,9 @@ function BRC.ready()
     safe_call_all_hooks(HOOK_FUNCTIONS.ready)
   end
 
+  safe_call_all_hooks(HOOK_FUNCTIONS.multiready)
+
   -- Always display messages, even if same turn
   BRC.mpr.consume_queue()
+  crawl.redraw_screen()
 end

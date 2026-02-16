@@ -1,15 +1,23 @@
---- Speed Config Profile: For speed runs
+--- Realtime Main Config: For realtime speedruns
 
-brc_config_speed = {
-  BRC_CONFIG_NAME = "Speed",
+brc_config_realtime = {
+  BRC_CONFIG_NAME = "Realtime",
+
+  emojis = true,
 
   ["alert-monsters"] = { disabled = true },
-  ["safe-consumables"] = { disabled = true },
+  ["manage-consumables"] = { disabled = true },
   ["safe-stairs"] = { disabled = true },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 1,       -- Force more for losing this % of max HP
     always_on_bottom = true,    -- Rewrite HP/MP meters after each turn with messages
+  },
+  ["display-realtime"] = {
+    disabled = false,
+  },
+  ["fm-messages"] = {
+    force_more_threshold = 9,
   },
   ["misc-alerts"] = {
     alert_low_hp_threshold = 0, -- % max HP to alert; 0 to disable
@@ -58,10 +66,12 @@ brc_config_speed = {
     },
   },
 
-  init = [[
+  init = function()
     BRC.Config.startup.auto_set_skill_targets = { { BRC.you.top_wpn_skill(), 8.0 } }
     crawl.setopt("view_delay = 0")
-    crawl.setopt("use_animations = 0")
     crawl.setopt("autofight_stop = 15")
-  ]],
-} -- brc_config_speed (do not remove this comment)
+    crawl.setopt("fail_severity_to_confirm = 4")
+    crawl.setopt("view_delay = 100")
+    crawl.setopt("enable_more = false")
+  end,
+} -- brc_config_realtime (do not remove this comment)

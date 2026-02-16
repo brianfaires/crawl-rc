@@ -2,10 +2,14 @@
 -- BRC feature module: color-inscribe
 -- @module f_color_inscribe
 -- Adds color to key terms in inscriptions (resistances, stats, etc).
+-- Disabled on main, because webtiles (CAO) doesn't consistently support numeric tags.
 ---------------------------------------------------------------------------------------------------
 
 f_color_inscribe = {}
 f_color_inscribe.BRC_FEATURE_NAME = "color-inscribe"
+f_color_inscribe.Config = {
+  disabled = true,
+} -- f_color_inscribe.Config (do not remove this comment)
 
 ---- Local constants ----
 local LOSS_COLOR = BRC.COL.brown

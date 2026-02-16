@@ -7,6 +7,8 @@ brc_config_explicit = {
   BRC_CONFIG_NAME = "Explicit",
 
   ---- BRC Core values ----
+  emojis = true,
+
   mpr = {
     show_debug_messages = false,
     logs_to_stderr = false,
@@ -25,22 +27,29 @@ brc_config_explicit = {
     distort = { factor = 1.0, offset = 6.0 },
     drain = { factor = 1.25, offset = 2.0 },
     elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
+    entangle = { factor = 1.1, offset = 3 },
     flame = { factor = 1.25, offset = 0 },
     freeze = { factor = 1.25, offset = 0 },
     heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
     pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
     spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
+    sunder = { factor = 1.2, offset = 0 },
+    valour = { factor = 1.15, offset = 0 },
     venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
 
     subtle = { -- Values to use for weapon "scores" (not damage)
       antimagic = { factor = 1.1, offset = 0 },
+      concuss = { factor = 1.2, offset = 0 },
+      devious = { factor = 1.1, offset = 0 },
       holy = { factor = 1.15, offset = 0 },
       penet = { factor = 1.3, offset = 0 },
       protect = { factor = 1.15, offset = 0 },
       reap = { factor = 1.3, offset = 0 },
+      rebuke = { factor = 1.2, offset = 0 },
       vamp = { factor = 1.2, offset = 0 },
     },
-  },
+  }, -- BrandBonus (do not remove this comment)
+
 
   hotkey = {
     key = { keycode = 13, name = "[Enter]" },
@@ -48,6 +57,17 @@ brc_config_explicit = {
     equip_hotkey = true, -- Offer to equip after picking up equipment
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
     explore_clears_queue = true, -- Clear the hotkey queue on explore
+    newline_before_hotkey = true, -- Add a newline before the hotkey message
+    move_to_feature = {
+      -- Hotkey for "move to _" when you find these features
+      enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
+      enter_bailey = "flagged portal", enter_bazaar = "bazaar",
+      enter_desolation = "crumbling gateway", enter_gauntlet = "gauntlet",
+      enter_ice_cave = "frozen archway", enter_necropolis = "phantasmal passage",
+      enter_ossuary = "sand-covered staircase", enter_sewer = "glowing drain",
+      enter_trove = "trove of treasure", enter_volcano = "dark tunnel",
+      enter_wizlab = "magical portal", enter_ziggurat = "ziggurat",
+    },
   },
 
   ---- Feature configs ----
@@ -56,32 +76,38 @@ brc_config_explicit = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 0.30, -- Force more for losing this % of max HP
     always_on_bottom = false, -- Rewrite HP/MP meters after each turn with messages
-    meter_length = 5, -- Number of pips in each meter
+    meter_length = 10, -- Number of pips in each meter
 
     Announce = {
       hp_loss_limit = 1, -- Announce when HP loss >= this
       hp_gain_limit = 4, -- Announce when HP gain >= this
       mp_loss_limit = 1, -- Announce when MP loss >= this
       mp_gain_limit = 2, -- Announce when MP gain >= this
-      hp_first = true, -- Show HP first in the message
+      hp_first = false, -- Show HP first in the message
       same_line = true, -- Show HP/MP on the same line
       always_both = true, -- If showing one, show both
       very_low_hp = 0.10, -- At this % of max HP, show all HP changes and mute % HP alerts
     },
 
-    HP_METER = BRC.Config.emojis and { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" } or {
-      BORDER = "<white>|</white>",
-      FULL = "<lightgreen>+</lightgreen>",
-      PART = "<lightgrey>+</lightgrey>",
-      EMPTY = "<darkgrey>-</darkgrey>",
-    },
+    HP_METER = { FULL = "❤️", PART = "❤️‍🩹", EMPTY = "🤍" },
+    MP_METER = { FULL = "🟦", PART = "🔹", EMPTY = "➖" },
 
-    MP_METER = BRC.Config.emojis and { FULL = "🟦", PART = "🔹", EMPTY = "➖" } or {
-      BORDER = "<white>|</white>",
-      FULL = "<lightblue>+</lightblue>",
-      PART = "<lightgrey>+</lightgrey>",
-      EMPTY = "<darkgrey>-</darkgrey>",
-    },
+    init = function()
+      if not BRC.Config.emojis then
+        f_announce_hp_mp.Config.HP_METER = {
+          BORDER = BRC.txt.white("|"),
+          FULL = BRC.txt.lightgreen("+"),
+          PART = BRC.txt.lightgrey("+"),
+          EMPTY = BRC.txt.darkgrey("-"),
+        } -- HP_METER (do not remove this comment)
+        f_announce_hp_mp.Config.MP_METER = {
+          BORDER = BRC.txt.white("|"),
+          FULL = BRC.txt.lightblue("+"),
+          PART = BRC.txt.lightgrey("+"),
+          EMPTY = BRC.txt.darkgrey("-"),
+        } -- MP_METER (do not remove this comment)
+      end
+    end,
   },
 
   ["answer-prompts"] = {
@@ -91,7 +117,11 @@ brc_config_explicit = {
 
   ["announce-items"] = {
     disabled = true, -- Disabled by default. Intended only for turncount runs.
-    announced_classes = { "book", "gold", "jewellery", "misc", "potion", "scroll", "wand" }
+    announce_class = { "book", "gold", "jewellery", "misc", "missile", "potion", "scroll", "wand" },
+    announce_glowing = true,
+    announce_artefacts = true,
+    max_gold_announcements = 3, -- Stop announcing gold after 3rd pile on screen
+    announce_extra_consumables_wo_id = true, -- Announce when standing on not-id'd duplicates
   },
 
   ["bread-swinger"] = {
@@ -99,11 +129,30 @@ brc_config_explicit = {
     allow_plant_damage = false, -- Allow damaging plants to rest
     walk_delay = 50, -- ms delay between walk commands. Makes visuals less jarring. 0 to disable.
     alert_slow_weap_min = 1.5, -- Alert when finding the slowest weapon yet, starting at this delay.
+    set_manual_slot_key = crawl.is_webtiles() and -11 or -43, -- (Cntl-5) Manually set swing slot
+    max_heal_perc = 90, -- Stop resting at this percentage of max HP/MP
+    emoji = "🍞",
+    init = function()
+      if not BRC.Config.emojis then
+        f_bread_swinger.Config.emoji = BRC.txt.cyan("---- ")
+      end
+    end,
   },
 
   ["color-inscribe"] = {
-    disabled = false,
+    disabled = true,
     -- No config; See color-inscribe.lua for COLORIZE_TAGS
+  },
+
+  ["display-realtime"] = {
+    disabled = true, -- Disabled by default
+    interval_s = 60, -- seconds between updates
+    emoji = "🕒",
+    init = function()
+      if not BRC.Config.emojis then
+        f_display_realtime.Config.emoji = BRC.txt.white("--")
+      end
+    end,
   },
 
   ["drop-inferior"] = {
@@ -119,23 +168,23 @@ brc_config_explicit = {
 
   ["fully-recover"] = {
     disabled = false,
-    rest_off_statuses = { -- Keep resting until these statuses are gone
-      "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-      "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
-    },
   },
 
   ["inscribe-stats"] = {
     disabled = false,
     inscribe_weapons = true, -- Inscribe weapon stats on pickup
     inscribe_armour = true, -- Inscribe armour stats on pickup
-    dmg_type = 1, -- unbranded
+    dmg_type = "unbranded", -- unbranded, plain, branded, scoring
+    skip_dps = false, -- Skip DPS in weapon inscriptions
+    prefix_staff_dmg = true, -- Special prefix for magical staves
   },
 
   ["misc-alerts"] = {
     disabled = false,
+    preferred_god = "", -- Stop on first altar with this text (Ex. "Wu Jian"); nil or "" disables
+    force_more_on_pref_altar = true, -- Force more message on first altar for preferred god
     save_with_msg = true, -- Shift-S to save and leave yourself a message
-    alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+    alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
     alert_spell_level_changes = true, -- Alert when you gain additional spell levels
     alert_remove_faith = true, -- Reminder to remove amulet at max piety
     remove_faith_hotkey = true, -- Hotkey remove amulet
@@ -159,8 +208,13 @@ brc_config_explicit = {
     disabled = false,
     stop_on_scrolls_count = 2, -- Stop when largest un-ID'd scroll stack increases and is >= this
     stop_on_pots_count = 3, -- Stop when largest un-ID'd potion stack increases and is >= this
-    emoji = BRC.Config.emojis and "🎁" or "<magenta>?</magenta>",
     read_id_hotkey = true, -- Put read ID on hotkey
+    emoji = "🎁",
+    init = function()
+      if not BRC.Config.emojis then
+        f_remind_id.Config.emoji = BRC.txt.magenta("?")
+      end
+    end,
   },
 
   ["runrest-features"] = {
@@ -172,11 +226,26 @@ brc_config_explicit = {
     stop_on_pan_gates = true, -- stop explore on pan gates
     temple_search = true, -- on entering or exploring temple, auto-search
     gauntlet_search = true, -- on entering or exploring gauntlet, auto-search with filters
+    necropolis_search = true, -- on exploring necropolis, auto-search with filters
   },
 
-  ["safe-consumables"] = {
+  ["manage-consumables"] = {
     disabled = false,
-    -- No config;See safe-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
+    maintain_safe_scrolls = true,
+    maintain_safe_potions = true,
+    scroll_slots = {
+      ["acquirement"] = "A", ["amnesia"] = "x", ["blinking"] = "B", ["brand weapon"] = "W",
+      ["butterflies"] = "s", ["enchant armour"] = "a", ["enchant weapon"] = "w",
+      ["fear"] = "f", ["fog"] = "g", ["identify"] = "i", ["immolation"] = "I",
+      ["noise"] = "N", ["revelation"] = "r", ["poison"] = "p", ["silence"] = "S",
+      ["summoning"] = "s", ["teleportation"] = "t", ["torment"] = "T", ["vulnerability"] = "V",
+    },
+    potion_slots = {
+      ["ambrosia"] = "a", ["attraction"] = "A", ["berserk rage"] = "B", ["brilliance"] = "b",
+      ["cancellation"] = "C", ["curing"] = "c", ["experience"] = "E", ["enlightenment"] = "e",
+      ["haste"] = "h", ["heal wounds"] = "w", ["invisibility"] = "i", ["lignification"] = "L",
+      ["magic"] = "g", ["might"] = "z", ["resistance"] = "r", ["mutation"] = "M",
+    },
   },
 
   ["safe-stairs"] = {
@@ -191,9 +260,9 @@ brc_config_explicit = {
     macro_save_key = 20, -- (Cntl-T) Keycode to save training targets and config
     save_training = true, -- Allow save/load of race/class training targets
     save_config = true, -- Allow save/load of BRC config
-    prompt_before_load = true, -- Prompt before loading in a new game with same race+class
-    allow_race_only_saves = true, -- Also save for race only (always prompts before loading)
-    allow_class_only_saves = true, -- Also save for class only (always prompts before loading)
+    prompt_before_load = false, -- Prompt before loading in a new game with same race+class
+    allow_race_only_saves = false, -- Also save for race only (always prompts before loading)
+    allow_class_only_saves = false, -- Also save for class only (always prompts before loading)
 
     -- Remaining values only used if no training targets were loaded by race/class
     show_skills_menu = false, -- Show skills menu on startup
@@ -207,7 +276,7 @@ brc_config_explicit = {
     },
 
     -- For non-spellcasters, add preferred weapon type as 3rd skill target
-    init = [[
+    init = function()
       if you.skill("Spellcasting") == 0 then
         local wpn_skill = BRC.you.top_wpn_skill()
         if wpn_skill then
@@ -215,7 +284,7 @@ brc_config_explicit = {
           t[#t + 1] = { wpn_skill, 6.0 }
         end
       end
-    ]],
+    end,
   },
 
   ["weapon-slots"] = {
@@ -226,6 +295,8 @@ brc_config_explicit = {
   ---- Large config sections ----
   ["dynamic-options"] = {
     disabled = false,
+    meaningful_spellcasting_skill = 5, -- Skill level to switch on "spellcaster-specific" options
+
     -- XL-based force more messages: active when XL <= specified level
     xl_force_mores = {
       { pattern = "monster_warning:wielding.*of electrocution", xl = 5 },
@@ -258,7 +329,6 @@ brc_config_explicit = {
       end,
       Beogh = function(joined)
         BRC.opt.runrest_ignore_message("no longer looks.*", joined)
-        BRC.opt.force_more_message("Your orc.*dies", joined)
       end,
       Cheibriados = function(joined)
         BRC.util.add_or_remove(BRC.RISKY_EGOS, "Ponderous", not joined)
@@ -280,13 +350,176 @@ brc_config_explicit = {
     },
   },
 
+  ["fm-messages"] = {
+    disabled = false,
+    force_more_threshold = 6, -- How many force_more_messages; 1=many; 10=none
+    flash_screen_threshold = 1,
+
+    --- A list of all messages to respond to. The first value is the message importance.
+    -- Use the above thresholds to adjust how the messages are responded to.
+    -- General guidance on values:
+    -- 8-9: Prevent accidental button press
+    -- 5-7: Make sure you see it
+    -- 3-4: Important to notice
+    -- 1-2: Good to know
+    messages = {
+      -- Significant spells/effects ending
+      {9, "life is in your own"}, -- Death's Door
+      {7, "time is.*running out"}, -- Death's Door
+      {7, "is no longer charmed"},
+      {7, "You.*re starting to lose your buoyancy"},
+      {5, "unholy channel is weakening"}, -- Death channel
+      {2, "You feel stable"}, -- Cancelled tele
+
+      -- Monsters doing things / Dangerous abilities
+      {9, "you stand beside yourself"}, -- Mara
+      {9, "sudden wrenching feeling in your soul"}, -- Mara
+      {8, "monster_warning:wielding.*of distortion"},
+      {8, "begins to recite a word of recall"},
+      {7, "The air around.*erupts in flames"},
+      {7, "The air twists around and violently strikes you in flight"},
+      {7, "You feel.*(?<!less)( haunted| rot| vulnerable)"},
+      {6, "wretched star pulses"},
+      {6, "Strange energies course through your body"},
+      {5, "Deactivating autopickup"},
+      {4, "You feel your power leaking away"},
+      {4, "The.*offers itself to Yredelemnul"},
+      {3, "doors? slams? shut"},
+      {3, "blows.*on a signal horn"},
+      {3, "Your?.*suddenly stops? moving"},
+      {3, "danger:corrodes you"},
+      {3, "Your damage is reflected back at you"},
+      {3, "^(?!Your? ).*reflects"},
+      {2, "The forest starts to sway and rumble"},
+      {1, "Its appearance distorts for a moment"},
+
+      -- Crowd control
+      {9, "You.*(?<!( too|less|momentarily)) confused"},
+      {9, "You .*(slow.*down|lose consciousness)"},
+      {9, "infuriates you"},
+      {8, "hits you .* distortion"},
+      {8, "Space .* around you"},
+      {8, "surroundings become eerily quiet"},
+      {9, "Your limbs are stiffening"},
+      {4, "You .* (blown|knocked back|mesmerised|trampled|stumble backwards|encased)"},
+      {4, "A sentinel's mark forms upon you"},
+      {3, "Your magical (effects|defenses) are (unraveling|stripped away)"},
+      {3, "You stop (a|de)scending the stairs"},
+      {3, "The pull of.*song draws you forward"},
+      {3, "engulfs you in water"},
+
+      -- Clouds
+      {9, "danger:(calcify|mutagenic)"},
+      {9, "You.*re engulfed in.*miasma"},
+      {1, "Miasma billows from the"},
+
+      -- You Screwed Up
+      {7, "is no longer ready"},
+      {7, "You really shouldn't be using"},
+      {6, "You don't have enough magic to cast this spell"},
+      {4, "Your body shudders with the violent release"},
+      {4, "power of Zot"},
+
+      -- Found something important
+      {7, "Found.*the Ecumenical Temple"},
+      {7, "Found.*(treasure|bazaar|ziggurat)"},
+      {6, ".*resides here"},
+      {6, "You have a vision of.*gates?"},
+      {2, "timed_portal:.*"},
+      {1, "You pick up the .* (gem|rune) and feel its "},
+
+      -- Translocations
+      {9, "danger:sense of stasis"},
+      {9, "Your surroundings.*(different|flicker)"},
+      {6, "You.*re suddenly pulled into a different region"},
+      {5, "danger:You feel strangely .*stable"},
+      {4, "You blink"},
+      {3, "delaying your translocation"},
+
+      -- Big damage
+      {7, "You.*re lethally poisoned"},
+      {7, "danger:You convulse"},
+      {7, "you terribly"},
+
+      -- FYI
+      {6, "seems mollified"},
+      {6, "You have finished your manual"},
+
+      -- Unexpected monsters
+      {8, "appears in a (shower|flash)"},
+      {8, "appears out of thin air"},
+      {7, "You sense the presence of something unfriendly"},
+      {7, "Wisps of shadow swirl around"},
+
+      -- Misc
+      {9, "god:wrath finds you"},
+      {9, "The walls disappear"},
+      {7, "hell effect:.*"},
+
+      -- Gods
+      {9, "Press the corresponding letter to learn more about a god"},
+      {7, "god:Ashenzari invites you to partake"},
+      {7, "god:You are shrouded in an aura of darkness"},
+      {7, "god:You.*bleed smoke"},
+      {7, "god:Your shadow.*tangibly mimics your actions"},
+      {8, "god:Fedhas invokes the elements against you"},
+      {7, "god:Jiyva alters your body"},
+      {7, "god:will now unseal the treasures of the Slime Pits"},
+      {7, "god:Kikubaaqudgha will grant you"},
+      {7, "god:Lugonu will now corrupt your weapon"},
+      {9, "god:Lugonu sends minions to punish you"},
+      {9, "god:Okawaru sends forces against you"},
+      {7, "god:grants you (a gift|a weapon)"},
+      {1, "god:You are surrounded by a storm which can block enemy attacks"},
+      {1, "god:resistances upon receiving elemental damage"},
+      {8, "god:Your divine shield fades away"},
+      {7, "god:Your divine shield starts to fade"},
+      {8, "god:You feel less resistant to hostile enchantments"},
+      {7, "god:You feel the effects of Trog's Hand fading"},
+      {9, "staircase.*moves"},
+      {9, "Some monsters swap places"},
+      {7, "god:soul is no.* ripe for the taking"},
+      {7, "god:dark mirror aura disappears"},
+      {7, "god:will now cure all your mutations"},
+    },
+
+    --- Remove these default force_more_message patterns
+    remove_more_messages = {
+      "You have reached level",
+      "Marking area around .* as unsafe",
+      "welcomes you( back)?!",
+      "upon you is lifted",
+      "You pick up the .* gem and feel its .* weight",
+      "You pick up the .* rune and feel its power",
+      "The lock glows eerily",
+      "Heavy smoke blows from the lock",
+      "The gate opens wide",
+      "With a soft hiss the gate opens wide",
+      "grants you (a gift|throwing weapons|a weapon)",
+      "You finish merging with the rock",
+      --"You bow before the missionary of Beogh",
+      --"You .* the altar of",
+    },
+  },
+
   ["mute-messages"] = {
     disabled = false,
+    do_exploration_mutes = true, -- Mute boring messages while auto-exploring
     mute_level = 2,
     messages = {
+      -- Only mute these when auto-exploring
+      explore_only = {
+        "There is a.*(staircase|door|gate|hatch).*here",
+        "You enter the shallow water",
+        "Moving in this stuff is going to be slow",
+        "You see here .*(corpse|skeleton)",
+        "You.*open the door",
+        "You disentangle yourself",
+        "You see here .*",
+      },
+
       -- Light reduction; unnecessary messages
       [1] = {
-
         -- Unnecessary
         "You now have .* runes",
         "to see all the runes you have collected",
@@ -301,8 +534,19 @@ brc_config_explicit = {
         "You can access your shopping list by pressing '\\$'",
 
         -- Wielding weapons
-        "Your .* exudes an aura of protection",
+        "Your .* begins to drip with poison",
+        "Your .* stops dripping with poison",
+        "Your .* bursts into flame",
+        "Your .* quivers in your",
+        "Your .* stops (flaming|quivering)",
         "Your .* glows with a cold blue light",
+        "Your .* stops glowing",
+        "You hear the crackle of electricity",
+        "Your .* stops crackling",
+        "Your .* exudes an aura of protection",
+        "Your .* hums with potential",
+        "Your .* goes still",
+        "You sense an unholy aura",
 
         -- Monsters /Allies / Neutrals
         "dissolves into shadows",
@@ -336,7 +580,7 @@ brc_config_explicit = {
         "Unfortunately\\, you learn nothing new",
 
         -- Ground items / features
-        "There is a.*(door|gate|staircase|web).*here",
+        "There is a.*(door|web).*here",
         "You see here .*(corpse|skeleton)",
         "You now have \\d+ gold piece",
         "You enter the shallow water",
@@ -346,10 +590,11 @@ brc_config_explicit = {
         "Your shadow attacks",
       },
 
-      -- Heavily reduced messages for speed runs
+      -- Heavily reduced messages for realtime speedruns
       [3] = {
         "No target in view",
-        "You (headbutt|bite|kick)",
+        "You (bite|headbutt|kick)",
+        "You (burn|freeze|drain)",
         "You block",
         "but do(es)? no damage",
         "misses you",
@@ -374,11 +619,11 @@ brc_config_explicit = {
       talismans = true,
       first_ranged = true,
       first_polearm = true,
-      autopickup_disabled = true, -- If autopickup off, alert for items that would be autopicked up
+      stacked_items = true, -- Special handling for items hidden in stacks, to alert before visiting
 
       -- Alert the first time each item is found. Can require training with OTA_require_skill.
       one_time = {
-        "buckler", "kite shield", "tower shield", "crystal plate armour",
+        "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
         "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
         "broad axe", "executioner's axe",
@@ -510,7 +755,7 @@ brc_config_explicit = {
       misc = { desc = "brown", item = "white" },
     }, -- AlertColor
 
-    Emoji = not BRC.Config.emojis and {} or {
+    Emoji = {
       RARE_ITEM = "💎",
       ARTEFACT = "💠",
       ORB = "🔮",
@@ -528,7 +773,15 @@ brc_config_explicit = {
       STRONGEST = "💪💪",
       LIGHTER = "⏬",
       HEAVIER = "⏫",
-    }, -- Emoji
+
+      AUTOPICKUP_ITEM = "👍",
+    }, -- Emoji (do not remove this comment)
+
+    init = function()
+      if not BRC.Config.emojis then
+        f_pickup_alert.Config.Emoji = {}
+      end
+    end,
   }, -- pickup-alert
 
   ["alert-monsters"] = {
@@ -547,29 +800,31 @@ brc_config_explicit = {
           "boundless tesseract", "demonspawn corrupter", "draconian stormcaller", "dryad",
           "guardian serpent", "halazid warlock", "shadow demon", "spriggan druid", "worldbinder",
           --Dangerous abilities
-          "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
+          "iron giant", "merfolk aquamancer", "nekomata", "shambling mangrove", "starflower",
           "torpor snail", "water nymph", "wretched star", "wyrmhole",
           --Dangerous clouds
-          "apocalypse crab","catoblepas",
+          "apocalypse crab", "catoblepas",
         } },
 
       { name = "always_flash", flash_screen = true,
         pattern = {
           -- Noteworthy abilities
           "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-          "vault guardian", "vault warden", "wendingo",
+          "vault guardian", "vault warden", "wendigo",
           -- Displacement
           "deep elf knight", "swamp worm",
           -- Summoning
           "deep elf elementalist",
+          -- Agony
+          "death knight", "imperial myrmidon", "necromancer",
         } },
-
-      { name = "always_fm_pack", is_pack = true,
-        pattern = { "boggart", "dream sheep", "floating eye", "shrike" } },
 
       -- Early game Dungeon problems for chars with low mhp. (adder defined below)
       { name = "30hp", cond = "hp", cutoff = 30,
         pattern = { "hound", "gnoll" } },
+
+      { name = "mid_game_packs", cutoff = 90, is_pack = true,
+        pattern = { "boggart", "dream sheep" } },
 
       -- Monsters dangerous until a certain point
       { name = "xl_7", cond = "xl", cutoff = 7,
@@ -583,7 +838,7 @@ brc_config_explicit = {
       { name = "50hp", cond = "hp", cutoff = 50,
         pattern = { "manticore", "orc high priest" } },
       { name = "60hp", cond = "hp", cutoff = 60,
-        pattern = { "centaur(?! warrior)", "cyclops", "yaktaur(?! captain)" } },
+        pattern = { "centaur(?! warrior)", "cyclops", "orc knight", "yaktaur(?! captain)" } },
       { name = "70hp_melai", cond = "hp", cutoff = 70, is_pack = true,
         pattern = "meliai" },
       { name = "80hp", cond = "hp", cutoff = 80,
@@ -646,17 +901,20 @@ brc_config_explicit = {
                     "tengu reaver", "titan" } },
       { name = "elec_140_pack", cond = "elec", cutoff = 140, is_pack = true,
         pattern = { "ball lightning" } },
+
       { name = "corr_60", cond = "corr", cutoff = 60,
         pattern = { "acid dragon" } },
+        { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
+        pattern = { "caustic shrike" } },
       { name = "corr_140", cond = "corr", cutoff = 140,
         pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
 
       { name = "fire_60", cond = "fire", cutoff = 60,
-        pattern = { "fire crab", "lava snake", "lindwurm", "steam dragon" } },
+        pattern = { "fire crab", "hell hound", "lava snake", "lindwurm", "steam dragon" } },
       { name = "fire_100", cond = "fire", cutoff = 100,
         pattern = { "deep elf pyromancer", "efreet", "smoke demon", "sun moth" } },
       { name = "fire_120", cond = "fire", cutoff = 120,
-        pattern = { "demonspawn blood saint", "hell hound", "hell knight", "molten gargoyle",
+        pattern = { "demonspawn blood saint", "hell hog", "hell knight", "molten gargoyle",
                     "ogre mage", "orc sorcerer", "red draconian" } },
       { name = "fire_140", cond = "fire", cutoff = 140,
         pattern = { "balrug" } },
@@ -670,7 +928,9 @@ brc_config_explicit = {
         pattern = { "rime drake" } },
       { name = "cold_120", cond = "cold", cutoff = 120,
         pattern = { "blizzard demon", "bog body", "demonspawn blood saint",
-                  "ironbound frostheart", "white draconian" } },
+                   "ironbound frostheart", "white draconian" } },
+      { name = "shard_shrike", cond = "cold", cutoff = 120, is_pack = true,
+        pattern = { "shard shrike" } },
       { name = "cold_160", cond = "cold", cutoff = 160,
         pattern = { "draconian knight", "frost giant", "golden dragon",
                     "ice dragon", "tengu reaver" } },
@@ -687,34 +947,34 @@ brc_config_explicit = {
         pattern = { "demonspawn blood saint", "revenant" } },
       { name = "drain_190", cond = "drain", cutoff = 190,
         pattern = { "shadow dragon" } },
-    }, -- Alerts
+    }, -- fm_patterns (do not remove this comment)
 
-    init = [[
-    local alert_list = f_alert_monsters.Config.Alerts
+    init = function()
+      local alert_list = f_alert_monsters.Config.Alerts
 
-    -- Mutators (only flash if immune)
-    util.append(alert_list, {
-      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-      pattern = { "cacodemon", "neqoxec", "shining eye" }
-    })
-
-    -- Conditionally add miasma monsters
-    if not BRC.you.miasma_immune() then
+      -- Mutators (only flash if immune)
       util.append(alert_list, {
-        name = "miasma", cond = "always", cutoff = 0,
-        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+        name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+        pattern = { "cacodemon", "neqoxec", "shining eye" }
       })
-    end
 
-    -- Conditionally add tormentors
-    if not you.torment_immune() then
-      util.append(alert_list, {
-        name = "torment", cond = "always", cutoff = 0,
-        pattern = { "curse (toe|skull)", "Fiend", "(dread|ancient) lich", "lurking horror",
-                    "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
-      })
-    end
-]]
+      -- Conditionally add miasma monsters
+      if not BRC.you.miasma_immune() then
+        util.append(alert_list, {
+          name = "miasma", cond = "always", cutoff = 0,
+          pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+        })
+      end
+
+      -- Conditionally add tormentors
+      if not you.torment_immune() then
+        util.append(alert_list, {
+          name = "torment", cond = "always", cutoff = 0,
+          pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
+                      "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+        })
+      end
+    end,
   }, -- alert-monsters
 
 } -- brc_config_explicit (do not remove this comment)

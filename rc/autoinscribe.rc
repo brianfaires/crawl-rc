@@ -1,4 +1,4 @@
-# See safe-consumables.lua for consumable inscriptions
+# See manage-consumables.lua for consumable inscriptions
 ai := autoinscribe
 
 # General
@@ -10,7 +10,7 @@ ai += of invulnerability:rInv
 ai += of magic regeneration:MRegen+
 ai += of positive energy:rN+
 ai += of regeneration:Regen+
-ai += of resistance:rF+, rC+
+ai += (?<!potion) of resistance:rF+, rC+
 ai += of willpower:Will+
 
 # Armour (avoid double inscribing artefacts)

@@ -8,26 +8,32 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 BRC.Config.unskilled_egos_usable = false
 BRC.Config.BrandBonus = {
   chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
   distort = { factor = 1.0, offset = 6.0 },
   drain = { factor = 1.25, offset = 2.0 },
   elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
+  entangle = { factor = 1.1, offset = 3 },
   flame = { factor = 1.25, offset = 0 },
   freeze = { factor = 1.25, offset = 0 },
   heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
   pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
   spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
+  sunder = { factor = 1.2, offset = 0 },
+  valour = { factor = 1.15, offset = 0 },
   venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
 
   subtle = { -- Values to use for weapon "scores" (not damage)
     antimagic = { factor = 1.1, offset = 0 },
+    concuss = { factor = 1.2, offset = 0 },
+    devious = { factor = 1.1, offset = 0 },
     holy = { factor = 1.15, offset = 0 },
     penet = { factor = 1.3, offset = 0 },
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
+    rebuke = { factor = 1.2, offset = 0 },
     vamp = { factor = 1.2, offset = 0 },
   },
 } -- BRC.Config.BrandBonus (do not remove this comment)
@@ -59,11 +65,11 @@ f_pickup_alert.Config.Alert = {
   talismans = true,
   first_ranged = true,
   first_polearm = true,
-  autopickup_disabled = true, -- If autopickup is off, alert for items that would be autopicked up
+  stacked_items = true, -- Special handling for items hidden in stacks, to alert before visiting
 
   -- Each usable item is alerted once.
   one_time = {
-    "buckler", "kite shield", "tower shield", "crystal plate armour",
+    "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
     "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
     "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
     "broad axe", "executioner's axe",
@@ -195,7 +201,7 @@ f_pickup_alert.Config.AlertColor = {
   misc = { desc = BRC.COL.brown, item = BRC.COL.white },
 } -- f_pickup_alert.Config.AlertColor (do not remove this comment)
 
-f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
+f_pickup_alert.Config.Emoji = {
   RARE_ITEM = "💎",
   ARTEFACT = "💠",
   ORB = "🔮",
@@ -214,14 +220,10 @@ f_pickup_alert.Config.Emoji = not BRC.Config.emojis and {} or {
   LIGHTER = "⏬",
   HEAVIER = "⏫",
 
-  AUTOPICKUP = "👍",
+  AUTOPICKUP_ITEM = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
----------------------------------------------------------------------------------------------------
--- BRC feature module: pickup-alert
--- @module f_pickup_alert
--- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
--- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
+f_pickup_alert.Config.init = function()
 
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
@@ -236,6 +238,7 @@ BRC.ADJECTIVE_EGOS = { -- Egos whose English modifier comes before item name
 
 BRC.ARTPROPS_BAD = {
   "Bane", "-Cast", "-Move", "-Tele",
+  "^Contam", "^Drain", "^Fragile",
   "*Corrode", "*Noise", "*Rage", "*Silence", "*Slow", "*Tele",
 } -- BRC.ARTPROPS_BAD (do not remove this comment)
 
@@ -259,20 +262,16 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.EMOJI = {
-  CAUTION = BRC.Config.emojis and "⚠️" or "<yellow>!</yellow>",
-  EXCLAMATION = BRC.Config.emojis and "❗" or "<magenta>!</magenta>",
-  EXCLAMATION_2 = BRC.Config.emojis and "‼️" or "<lightmagenta>!!</lightmagenta>",
-  SUCCESS = BRC.Config.emojis and "✅" or nil,
-} -- BRC.EMOJI (do not remove this comment)
+BRC.EMOJI = {}
 
 BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
 
 BRC.LITTLE_RACES = { "Spriggan" }
 
 BRC.MAGIC_SCHOOLS = {
-  air = "Air Magic", alchemy = "Alchemy", cold = "Ice Magic", conjuration = "Conjurations",
-  death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic", necromancy = "Necromancy",
+  air = "Air Magic", alchemy = "Alchemy", chemistry = "Alchemy", cold = "Ice Magic",
+  conjuration = "Conjurations", death = "Necromancy", earth = "Earth Magic", fire = "Fire Magic",
+  necromancy = "Necromancy",
 } -- BRC.MAGIC_SCHOOLS (do not remove this comment)
 
 BRC.NON_ELEMENTAL_DMG_EGOS = { "distort", "heavy", "spect" }
@@ -298,6 +297,7 @@ BRC.Data = BRC.Data or {}
 BRC.eq = BRC.eq or {}
 BRC.it = BRC.it or {}
 BRC.mpr = BRC.mpr or {}
+BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.you = BRC.you or {}
 
@@ -339,8 +339,8 @@ end
 -- BRC.eq module
 local function format_dmg(dmg)
   if dmg < 10 then return string.format("%.2f", dmg) end
-  if dmg > 99.9 then return ">100" end
-  return string.format("%.1f", dmg)
+  if dmg < 100 then return string.format("%.1f", dmg) end
+  return string.format("%.0f ", dmg)
 end
 
 local function format_stat(abbr, val, is_worn)
@@ -451,24 +451,6 @@ local function get_slay_bonuses()
   end
 
   return sum
-end
-
-local function get_staff_bonus_dmg(it, dmg_type)
-  if dmg_type == BRC.DMG_TYPE.unbranded then return 0 end
-  if dmg_type == BRC.DMG_TYPE.plain then
-    local basename = it.name("base")
-    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then return 0 end
-  end
-
-  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
-  local evo_skill = you.skill("Evocations")
-
-  local chance = (2 * evo_skill + spell_skill) / 30
-  if chance > 1 then chance = 1 end
-  -- 0.75 is an acceptable approximation; most commonly 63/80
-  -- Varies by staff type in sometimes complex ways
-  local avg_dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
-  return avg_dmg * chance
 end
 
 local function get_stats_with_item(it, stats)
@@ -587,7 +569,7 @@ function BRC.eq.get_avg_dmg(it, dmg_type)
   local base_dmg = it.damage * stat_mod * skill_mod
 
   if BRC.it.is_magic_staff(it) then
-    return base_dmg + stats.Slay + get_staff_bonus_dmg(it, dmg_type)
+    return base_dmg + stats.Slay + BRC.eq.get_staff_bonus_dmg(it, dmg_type)
   else
     return get_dmg_with_brand_bonus(BRC.eq.get_ego(it), base_dmg, stats.Slay, dmg_type)
   end
@@ -634,6 +616,26 @@ function BRC.eq.get_sh(it)
   shield = shield + 200 * it_plus
   shield = shield + 38 * (sh_skill + 3 + stats.Dex * (base_sh + 13) / 26)
   return shield / 200
+end
+
+function BRC.eq.get_staff_bonus_dmg(it, dmg_type)
+  local result = nil
+  if dmg_type == BRC.DMG_TYPE.unbranded then result = 0 end
+  if dmg_type == BRC.DMG_TYPE.plain then
+    local basename = it.name("base")
+    if basename ~= "staff of earth" and basename ~= "staff of conjuration" then result = 0 end
+  end
+
+  local spell_skill = BRC.you.skill(BRC.it.get_staff_school(it))
+  local evo_skill = you.skill("Evocations")
+
+  local chance = (2 * evo_skill + spell_skill) / 30
+  if chance > 1 then chance = 1 end
+  -- 0.75 is an acceptable approximation; most commonly 63/80
+  -- Varies by staff type in sometimes complex ways
+  local dmg = 3 / 4 * (evo_skill / 2 + spell_skill)
+  result = result or dmg * chance
+  return result, dmg, chance
 end
 
 function BRC.eq.get_weap_delay(it)
@@ -685,11 +687,16 @@ function BRC.eq.is_useless_ego(ego)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 
-function BRC.eq.wpn_stats(it, dmg_type)
+function BRC.eq.wpn_stats(it, dmg_type, skip_dps)
   if not it.is_weapon then return end
   if not dmg_type then
-    if f_inscribe_stats and f_inscribe_stats.Config and f_inscribe_stats.Config.dmg_type then
-      dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+    -- Default to pulling from inscribe-stats config, if it exists. Else use plain.
+    if f_inscribe_stats and f_inscribe_stats.Config then
+      if type(f_inscribe_stats.Config.dmg_type) == "string" then
+        dmg_type = BRC.DMG_TYPE[f_inscribe_stats.Config.dmg_type]
+      else
+        dmg_type = f_inscribe_stats.Config.dmg_type
+      end
     else
       dmg_type = BRC.DMG_TYPE.plain
     end
@@ -708,8 +715,9 @@ function BRC.eq.wpn_stats(it, dmg_type)
   if acc >= 0 then acc = "+" .. acc end
 
   --TODO: This would be nice if it worked in all UIs
-  --return string.format("DPS:<w>%s</w> (%s/%s), Acc<w>%s</w>", dps, dmg, delay_str, acc)
-  return string.format("DPS: %s (%s/%s), Acc%s", dps, dmg, delay_str, acc)
+  --return string.format("DPS=<w>%s</w> (%s/%s) Ac<w>%s</w>", dps, dmg, delay_str, acc)
+  if skip_dps then return string.format("Dmg=%s/%s A%s", dmg, delay_str, acc) end
+  return string.format("DPS=%s (%s/%s) A%s", dps, dmg, delay_str, acc)
 end
 
 -- BRC.it module
@@ -779,6 +787,7 @@ function BRC.it.is_talisman(it)
 end
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -787,12 +796,12 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
-local function log_message(message, context, color)
+local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
 end
 
@@ -801,7 +810,7 @@ function BRC.mpr.debug(message, context)
     log_message(message, context, BRC.COL.lightblue)
   end
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Debug) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
   end
 end
 
@@ -811,17 +820,22 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
-  crawl.redraw_screen()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  if context then message = message .. " (" .. context .. ")" end
+  print(message)
 
   if not skip_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
 end
 
@@ -829,12 +843,30 @@ function BRC.mpr.que(msg, color, channel)
   BRC.mpr.que_optmore(false, msg, color, channel)
 end
 
-function BRC.mpr.que_optmore(show_more, msg, color, channel)
+function BRC.mpr.que_optmore(show_more, msg, msg_color, channel)
   for _, q in ipairs(_mpr_queue) do
     if q.m == msg and q.ch == channel and q.more == show_more then return end
   end
-  color = color or BRC.COL.lightgrey
-  _mpr_queue[#_mpr_queue + 1] = { m = BRC.txt[color](msg), ch = channel, more = show_more }
+  msg_color = msg_color or BRC.COL.lightgrey
+  if not msg or #msg == 0 then
+    msg = ""
+  else
+    msg = BRC.txt[msg_color](msg)
+  end
+  _mpr_queue[#_mpr_queue + 1] = { m = msg, ch = channel, more = show_more }
+end
+
+-- BRC.opt module
+local _claimed_macro_keys = {}
+
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
 end
 
 -- BRC.txt module
@@ -954,18 +986,19 @@ function BRC.mpr.consume_queue()
   -- stop_activity() can generate more autopickups, and thus more queue'd messages
   if do_more then
     you.stop_activity()
-    crawl.redraw_screen()
   end
 
   for _, msg in ipairs(_mpr_queue) do
-    crawl.mpr(tostring(msg.m), msg.ch)
-    crawl.flush_prev_message()
+    if msg.m and #msg.m > 0 then
+      crawl.mpr(tostring(msg.m), msg.ch)
+      crawl.flush_prev_message()
+    end
   end
   _mpr_queue = {}
 
   if do_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 end
 
@@ -976,6 +1009,16 @@ end
 ---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
+  if not BRC.Config.emojis then
+    f_pickup_alert.Config.Emoji = {}
+  end
+end
+
+---------------------------------------------------------------------------------------------------
+-- BRC feature module: pickup-alert
+-- @module f_pickup_alert
+-- Comprehensive pickup and alert system for weapons, armour, and miscellaneous items.
+-- Several submodules: pa-config, pa-data, pa-armour, pa-weapons, pa-misc.
 ---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
@@ -987,7 +1030,10 @@ local A -- alert config alias
 local M -- more config alias
 local pause_pa_system
 local hold_alerts_for_next_turn
+local pa_last_ready_turn
 local function_queue -- queue of actions for next ready()
+local marked_stacks
+local last_stack_check_turn
 
 ---- Initialization ----
 function f_pickup_alert.init()
@@ -996,7 +1042,10 @@ function f_pickup_alert.init()
   M = f_pickup_alert.Config.Alert.More
   pause_pa_system = false
   hold_alerts_for_next_turn = false
+  pa_last_ready_turn = you.turns()
   function_queue = {}
+  marked_stacks = {}
+  last_stack_check_turn = -1
 
   BRC.mpr.debug("Initialize pickup-alert submodules...")
   if f_pa_data.init then f_pa_data.init() end
@@ -1025,17 +1074,6 @@ function f_pickup_alert.init()
 end
 
 ---- Local functions ----
-local function do_autopickup(it)
-  if options.autopick_on == false
-    and A.autopickup_disabled
-    and not f_pa_data.already_alerted(it)
-  then
-    f_pickup_alert.do_alert(it, "Autopickup item", C.Emoji.AUTOPICKUP, M.autopickup_disabled)
-  end
-
-  return true
-end
-
 local function has_configured_force_more(it)
   if it.artefact then
     if M.artefact then return true end
@@ -1100,9 +1138,83 @@ local function check_and_trigger_alerts(it, unworn_aux_item)
   return false
 end
 
+--- Run autopickup for all items in view, even those hidden in an item stack.
+-- Pickup-alert system runs as an autopickup function, which only triggers for stacked items when:
+-- 1. The stack is visited, 2. autopickup is on.
+-- This hiding behavior is very annoying when not autoexploring, ie always for turncount runs.
+-- This function causes alerts to fire without visiting the stack. No impact on autoexplore.
+-- Also tracks which stacks these are, so we can trick the UI into highlighting them as autopickup.
+local function mark_stacked_items()
+  marked_stacks = {}
+  local unmarked_item_counts = {}
+  local r = you.los()
+
+  for x = -r, r do
+    for y = -r, r do
+      if you.see_cell(x, y) then
+        local items_xy = items.get_items_at(x, y)
+        if items_xy then
+          local top_item_name = items_xy[1].name()
+          unmarked_item_counts[top_item_name] = (unmarked_item_counts[top_item_name] or 0) + 1
+          if #items_xy > 1 then
+            for i, it in ipairs(items_xy) do
+              if i > 1 and f_pickup_alert.autopickup(it) then
+                marked_stacks[#marked_stacks + 1] = {x, y, top_item_name, it.name()}
+                unmarked_item_counts[top_item_name] = unmarked_item_counts[top_item_name] - 1
+                if not f_pa_data.already_alerted(it) then
+                  f_pickup_alert.do_alert(
+                    it, "Hidden under stack", C.Emoji.AUTOPICKUP_ITEM, M.autopickup_disabled
+                  )
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  -- In autopickup, there's no way to differentiate between items of the same name.
+  -- Can't get its coordinates, can't see what's underneath it, etc.
+  -- Choosing to not mark stacks w duplicated item names, rather than mark all items for autopickup
+  for i = #marked_stacks, 1, -1 do
+    if unmarked_item_counts[marked_stacks[i][3]] > 0 then
+      table.remove(marked_stacks, i)
+    end
+  end
+end
+
+--- This is used to trick the UI into highlighting a stack for autopickup.
+-- Since this is called from autopickup(), there's no way to differentiate items of the same name.
+local function is_top_of_marked_stack(it)
+  if last_stack_check_turn < you.turns() then
+    last_stack_check_turn = you.turns()
+    mark_stacked_items()
+  end
+
+  for _, stack in ipairs(marked_stacks) do
+    local stack_items = items.get_items_at(stack[1], stack[2])
+    if not stack_items or stack_items[1].name() ~= stack[3] then
+      -- Stack coordinates are stale
+      mark_stacked_items()
+      return is_top_of_marked_stack(it)
+    end
+    if it.name() == stack[3] then
+      for i = 2, #stack_items do
+        if stack_items[i].name() == stack[4] then return true end
+      end
+    end
+  end
+  return false
+end
+
 ---- Public API ----
 function f_pickup_alert.pause_alerts()
   hold_alerts_for_next_turn = true
+end
+
+function f_pickup_alert.is_paused()
+  return pause_pa_system or hold_alerts_for_next_turn
 end
 
 function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
@@ -1138,11 +1250,13 @@ function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
 
   local it_name = it.name()
   function_queue[#function_queue + 1] = function()
-    -- Set hotkeys (have to do next turn, so player position is updated for setting waypoint)
+    -- Set hotkeys (on next turn, so player position is updated before setting waypoint)
     if util.exists(you.floor_items(), function(fl) return fl.name() == it_name end) then
       if A.hotkey_pickup and BRC.Hotkey then BRC.Hotkey.pickup(it_name, true) end
     else
-      if A.hotkey_travel and BRC.Hotkey then BRC.Hotkey.waypoint(it_name) end
+      if A.hotkey_travel and BRC.Hotkey then
+        BRC.Hotkey.move_to_item(it_name, false, A.hotkey_pickup)
+      end
     end
   end
 
@@ -1151,6 +1265,11 @@ end
 
 ---- Crawl hook functions ----
 function f_pickup_alert.autopickup(it, _)
+  if A.stacked_items and is_top_of_marked_stack(it) then
+    -- Fake autopickup to highlight the stack. Don't actually pick it up!
+    local fl = you.floor_items()
+    if not fl or #fl <= 1 or fl[1].name() ~= it.name() then return true end
+  end
   if should_skip_pickup_check(it) then return end
 
   local unworn_aux_item = nil -- Track carried aux armour for mutation scenarios
@@ -1167,18 +1286,22 @@ function f_pickup_alert.autopickup(it, _)
     if not unworn_aux_item then return end
   else
     if BRC.it.is_armour(it) then
-      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return do_autopickup(it) end
+      if C.Pickup.armour and f_pa_armour.pickup_armour(it) then return true end
     elseif BRC.it.is_magic_staff(it) then
-      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return do_autopickup(it) end
+      if C.Pickup.staves and f_pa_misc.pickup_staff(it) then return true end
     elseif it.is_weapon then
-      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return do_autopickup(it) end
+      if C.Pickup.weapons and f_pa_weapons.pickup_weapon(it) then return true end
     elseif f_pa_misc and f_pa_misc.is_unneeded_ring(it) then
       return false
     end
   end
 
-  -- Item not picked up - check if it should trigger alerts
-  if check_and_trigger_alerts(it, unworn_aux_item) then return end
+  -- Item not picked up - check if it should trigger alerts.
+  -- Autopickup fires many times per turn, and needs to consistently return true for pickup to work
+  -- But, only check for alerts immediately after turncount changes, before ready() is called.
+  if you.turns() ~= pa_last_ready_turn then
+    check_and_trigger_alerts(it, unworn_aux_item)
+  end
 end
 
 function f_pickup_alert.c_assign_invletter(it)
@@ -1216,6 +1339,7 @@ end
 
 function f_pickup_alert.ready()
   hold_alerts_for_next_turn = false
+  pa_last_ready_turn = you.turns()
   util.foreach(function_queue, function(f) f() end)
   function_queue = {}
 
@@ -1235,9 +1359,15 @@ f_pa_data = {}
 ---- Persistent variables ----
 pa_items_alerted = BRC.Data.persist("pa_items_alerted", {})
 pa_recent_alerts = BRC.Data.persist("pa_recent_alerts", {})
-pa_OTA_items = BRC.Data.persist("pa_OTA_items", f_pickup_alert.Config.Alert.one_time)
+pa_OTA_items = BRC.Data.persist("pa_OTA_items", nil)
 pa_high_score = BRC.Data.persist("pa_high_score", { ac = 0, weapon = 0, plain_dmg = 0 })
 pa_egos_alerted = BRC.Data.persist("pa_egos_alerted", {})
+
+---- Initialization ----
+function f_pa_data.init()
+  -- Set initial value of pa_OTA_items here, after config overrides are applied
+  pa_OTA_items = pa_OTA_items or f_pickup_alert.Config.Alert.one_time
+end
 
 ---- Local functions ----
 local function get_pa_keys(it, use_plain_name)
@@ -1321,6 +1451,19 @@ function f_pa_data.find_OTA(it)
   local qualname = it.name("qual")
   for _, v in ipairs(pa_OTA_items) do
     if v and qualname:find(v) then return v end
+  end
+
+  if it.class(true) == "book" and it.spells then
+    local lower_spells = {}
+    for _, s in ipairs(it.spells) do
+      lower_spells[#lower_spells + 1] = s:lower()
+    end
+    for _, v in ipairs(pa_OTA_items) do
+      local v_lower = v:lower()
+      for _, s in ipairs(lower_spells) do
+        if s:find(v_lower) then return v end
+      end
+    end
   end
 end
 
@@ -1765,6 +1908,9 @@ function f_pa_misc.alert_OTA(it)
 
   f_pa_data.remove_OTA(it)
   if not do_alert then return false end
+  if it.class(true) == "book" and not it.name():find(ota_item) then
+    return f_pickup_alert.do_alert(it, "Found " .. ota_item, E.RARE_ITEM, M.one_time_alerts)
+  end
   return f_pickup_alert.do_alert(it, "Found first", E.RARE_ITEM, M.one_time_alerts)
 end
 
@@ -1777,7 +1923,7 @@ function f_pa_misc.alert_staff(it)
     if you.res_shock() > 0 then return false end
     tag = "rElec"
     tag_color = BRC.COL.lightcyan
-  elseif basename == "staff of alchemy" then
+  elseif basename == "staff of chemistry" then
     if you.res_poison() > 0 then return false end
     tag = "rPois"
     tag_color = BRC.COL.lightgreen
@@ -1891,7 +2037,7 @@ function f_pa_weapons.init()
   A = f_pickup_alert.Config.Alert
   M = f_pickup_alert.Config.Alert.More
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
-  _weapon_cache.refresh(true)
+  _weapon_cache.init()
 
   if not A.first_ranged then pa_lowest_hands_alerted["Ranged Weapons"] = 0 end
   if not A.first_polearm then pa_lowest_hands_alerted["Polearms"] = 0 end
@@ -1962,12 +2108,25 @@ end
 
 local function need_first_weapon()
   return you.xl() < FIRST_WEAPON_XL_CUTOFF
-    and _weapon_cache.is_empty()
+    and _weapon_cache.is_empty() -- Fail faster than iterating inventory
     and you.skill("Unarmed Combat") == 0
     and BRC.you.mut_lvl("claws") == 0
+    and not util.exists(items.inventory(), function(i) return i.is_weapon end)
 end
 
--- Local functions: Weapon cache
+-- Weapon cache functions
+function _weapon_cache.init()
+  _weapon_cache.turn = -1
+  _weapon_cache.refresh()
+end
+
+function _weapon_cache.ready()
+  -- Ensure that a full refresh happens after each player action, even if turncount hasn't changed
+  -- This is necessary because player actions + autopickup() often occur before turncount increases
+  -- Resetting turn in ready() refreshes cache on first autopickup() after applying player action
+  _weapon_cache.turn = -1
+end
+
 function _weapon_cache.get_primary_key(it)
   local tokens = {}
   tokens[1] = it.is_ranged and RANGED_PREFIX or MELEE_PREFIX
@@ -2047,9 +2206,9 @@ function _weapon_cache.is_empty()
   return _weapon_cache.max_dps["melee_2"].dps == 0 -- The most restrictive category
 end
 
-function _weapon_cache.refresh(skip_turn_check)
+function _weapon_cache.refresh()
   local cur_turn = you.turns()
-  if _weapon_cache.turn and _weapon_cache.turn == cur_turn and not skip_turn_check then return end
+  if _weapon_cache.turn == cur_turn then return end
   _weapon_cache.turn = cur_turn
   _weapon_cache.weapons = {}
   _weapon_cache.egos = {}
@@ -2248,18 +2407,10 @@ end
 ---- Public API ----
 function f_pa_weapons.pickup_weapon(it)
   _weapon_cache.refresh()
-  if need_first_weapon() then
-    -- Check if we're carrying a weapon that didn't go into _weapon_cache (like a staff)
-    return not util.exists(items.inventory(), function(i) return i.is_weapon end)
-  end
-
   if BRC.eq.is_risky(it) then return false end
+  if need_first_weapon() then return true end
   for _, inv in ipairs(_weapon_cache.weapons) do
-    if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then
-      -- Confirm after updating cache, to avoid spurious alerts from XP gain.
-      _weapon_cache.refresh(true)
-      if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then return true end
-    end
+    if is_weapon_upgrade(it, inv, C.Pickup.weapons_pure_upgrades_only) then return true end
   end
 end
 
@@ -2267,20 +2418,13 @@ function f_pa_weapons.alert_weapon(it)
   _weapon_cache.refresh()
   local a = get_weapon_alert(it)
   if not a then return false end
-
-  -- Refresh mid-turn to avoid spurious alerts from XP gain. (Except for first-of-skill alerts)
-  if not a.msg:contains("First ") then
-    _weapon_cache.refresh(true)
-    a = get_weapon_alert(it)
-    if not a then return false end
-  end
-
   return f_pickup_alert.do_alert(a.it, a.msg, a.emoji, a.fm_option)
 end
 
 ---- Crawl hook functions ----
 function f_pa_weapons.ready()
   top_attack_skill = BRC.you.top_wpn_skill() or "Unarmed Combat"
+  _weapon_cache.ready()
 end
 
 

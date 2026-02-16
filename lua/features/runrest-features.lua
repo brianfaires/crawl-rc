@@ -14,25 +14,31 @@ f_runrest_features.Config = {
   stop_on_pan_gates = true, -- stop explore on pan gates
   temple_search = true, -- on entering or exploring temple, auto-search
   gauntlet_search = true, -- on entering or exploring gauntlet, auto-search with filters
+  necropolis_search = true, -- on exploring necropolis, auto-search with filters
 } -- f_runrest_features.Config (do not remove this comment)
 
 ---- Persistent variables ----
 rr_autosearched_temple = BRC.Data.persist("rr_autosearched_temple", false)
-rr_autosearched_gauntlet = BRC.Data.persist("rr_autosearched_gauntlet", false)
 rr_shaft_location = BRC.Data.persist("rr_shaft_location", nil)
 
 ---- Local constants ----
-local GAUNTLET_CONCAT_STRING = " && !!"
-local GAUNTLET_SEARCH_STRING = table.concat({
-  "gauntlet", "gate leading", "a transporter", "gold piece",
+local CONCAT_STRING = " && !!"
+local SEARCH_FILTERS = table.concat({
+  "gate leading", "a transporter", "gold piece",
   " trap", "translucent door", "translucent gate"
-  }, GAUNTLET_CONCAT_STRING)
+  }, CONCAT_STRING)
+local SEARCH_STRING = {
+  Gauntlet = "gauntlet" .. CONCAT_STRING .. SEARCH_FILTERS,
+  Necropolis = "necropolis" .. CONCAT_STRING .. SEARCH_FILTERS,
+} -- SEARCH_STRING (do not remove this comment)
 
 ---- Local variables ----
 local C -- config alias
 local stop_on_altars
 local stop_on_portals
 local stop_on_stairs
+local autosearched_gauntlet
+local autosearched_necropolis
 
 ---- Initialization ----
 function f_runrest_features.init()
@@ -40,6 +46,8 @@ function f_runrest_features.init()
   stop_on_altars = true
   stop_on_portals = true
   stop_on_stairs = false
+  autosearched_gauntlet = false
+  autosearched_necropolis = false
 
   if you.turns() == 0 and you.class() == "Delver" then rr_shaft_location = "D:1" end
 end
@@ -47,7 +55,9 @@ end
 ---- Local functions ----
 local function is_explore_done_msg(text)
   local cleaned = BRC.txt.clean(text)
-  return cleaned == "Done exploring." or cleaned:find("Partly explored, ", 1, true) == 1
+  return cleaned == "Done exploring."
+    or cleaned:find("Partly explored, ", 1, true) == 1
+    or cleaned:find("Could not explore, unopened runed ", 1, true) == 1
 end
 
 local function set_stairs_stop_state()
@@ -89,7 +99,7 @@ local function search_altars()
   crawl.flush_input()
 end
 
-local function ready_temple_macro()
+local function ready_temple_search()
   if you.branch() == "Temple" and not rr_autosearched_temple then
     search_altars()
     rr_autosearched_temple = true
@@ -103,24 +113,39 @@ local function c_message_temple(text, _)
   end
 end
 
--- Gauntlet functions
-local function search_gauntlet()
+-- Filtered search functions (Gauntlet & Necropolis)
+local function search_filtered(branch)
   local cmd_key = BRC.util.get_cmd_key("CMD_SEARCH_STASHES") or BRC.util.cntl("f")
-  crawl.sendkeys({ cmd_key, GAUNTLET_SEARCH_STRING, "\r" })
+  crawl.sendkeys({ cmd_key, SEARCH_STRING[branch], "\r" })
   crawl.flush_input()
 end
 
-local function ready_gauntlet_macro()
-  if you.branch() == "Gauntlet" and not rr_autosearched_gauntlet then
-    search_gauntlet()
-    rr_autosearched_gauntlet = true
+--- Autosearch Gauntlet upon entry
+local function ready_gauntlet_search()
+  local branch = you.branch()
+  if branch == "Gauntlet" and not autosearched_gauntlet then
+    search_filtered(branch)
+    autosearched_gauntlet = true
   end
 end
 
-local function c_message_gauntlet(text, _)
+--- Autosearch Necropolis upon entry
+local function ready_necropolis_search()
+  local branch = you.branch()
+  if branch == "Necropolis" and not autosearched_necropolis then
+    search_filtered(branch)
+    autosearched_necropolis = true
+  end
+end
+
+local function c_message_filtered_search(text, _)
   -- Search again after explore
-  if you.branch() == "Gauntlet" then
-    if is_explore_done_msg(text) then search_gauntlet() end
+  local branch = you.branch()
+  if is_explore_done_msg(text) and (
+    C.necropolis_search and branch == "Necropolis"
+    or C.gauntlet_search and branch == "Gauntlet"
+  ) then
+    search_filtered(branch)
   end
 end
 
@@ -139,7 +164,7 @@ end
 -- After shaft functions
 local function c_message_after_shaft(text, channel)
   if channel ~= "plain" or rr_shaft_location then return end
-  if text:contains("ou fall into a shaft") or text:contains("ou are sucked into a shaft") then
+  if text:find("ou .* into a shaft") and not BRC.you.in_hell(true) then
     rr_shaft_location = you.where()
   end
 end
@@ -151,15 +176,16 @@ end
 ---- Crawl hook functions ----
 function f_runrest_features.c_message(...)
   if C.temple_search then c_message_temple(...) end
-  if C.gauntlet_search then c_message_gauntlet(...) end
+  if C.gauntlet_search or C.necropolis_search then c_message_filtered_search(...) end
   if C.after_shaft then c_message_after_shaft(...) end
 end
 
 function f_runrest_features.ready()
   if C.ignore_altars then ready_ignore_altars() end
   if C.ignore_portal_exits then ready_ignore_portals() end
-  if C.temple_search then ready_temple_macro() end
-  if C.gauntlet_search then ready_gauntlet_macro() end
+  if C.temple_search then ready_temple_search() end
+  if C.gauntlet_search then ready_gauntlet_search() end
+  if C.necropolis_search then ready_necropolis_search() end
   if C.after_shaft then ready_after_shaft() end
   set_stairs_stop_state()
 end

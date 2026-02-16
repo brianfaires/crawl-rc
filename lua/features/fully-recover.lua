@@ -7,28 +7,24 @@
 
 f_fully_recover = {}
 f_fully_recover.BRC_FEATURE_NAME = "fully-recover"
-f_fully_recover.Config = {
-  rest_off_statuses = { -- Keep resting until these statuses are gone
-    "berserk", "confused", "corroded", "diminished spells", "marked", "short of breath",
-    "slowed", "sluggish", "tree%-form", "vulnerable", "weakened",
-  },
-} -- f_fully_recover.Config (do not remove this comment)
+
+---- Persistent variables ----
+fr_bad_durations = BRC.Data.persist("fr_bad_durations", util.copy_table(BRC.BAD_DURATIONS))
 
 ---- Local constants ----
-local MAX_TURNS_TO_WAIT = 500
+local MAX_TURNS_TO_WAIT = 300
 
 ---- Local variables ----
-local C -- config alias
 local recovery_start_turn
 local explore_after_recovery
 
 ---- Initialization ----
 function f_fully_recover.init()
-  C = f_fully_recover.Config
-  recovery_start_turn = 0
-  explore_after_recovery = false
+  recovery_start_turn = nil
+  explore_after_recovery = nil
 
-  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore")
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore", true)
+  BRC.opt.macro(BRC.util.get_cmd_key("CMD_REST") or "5", "macro_brc_rest")
   BRC.opt.runrest_ignore_message("recovery:.*", true)
   BRC.opt.runrest_ignore_message("duration:.*", true)
   BRC.opt.message_mute("^HP restored", true)
@@ -36,25 +32,6 @@ function f_fully_recover.init()
 end
 
 ---- Local functions ----
-local function abort_fully_recover()
-  recovery_start_turn = 0
-  explore_after_recovery = false
-  you.stop_activity()
-end
-
-local function finish_fully_recover()
-  local turns = you.turns() - recovery_start_turn
-  BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
-
-  recovery_start_turn = 0
-  you.stop_activity()
-
-  if explore_after_recovery then
-    explore_after_recovery = false
-    BRC.util.do_cmd("CMD_EXPLORE")
-  end
-end
-
 local function should_ignore_status(s)
   if s == "corroded" then
     return BRC.you.by_slimy_wall() or you.branch() == "Dis"
@@ -72,78 +49,110 @@ local function fully_recovered()
   if mp ~= mmp then return false end
 
   local status = you.status()
-  for _, s in ipairs(C.rest_off_statuses) do
+  for _, s in ipairs(BRC.BAD_DURATIONS) do
     if status:find(s) and not should_ignore_status(s) then return false end
   end
 
   return true
 end
 
-local function remove_statuses_from_config()
+local function remove_statuses_from_list()
   local status = you.status()
   local to_remove = {}
-  for _, s in ipairs(C.rest_off_statuses) do
+  for _, s in ipairs(fr_bad_durations) do
     if status:find(s) then table.insert(to_remove, s) end
   end
   for _, s in ipairs(to_remove) do
-    util.remove(C.rest_off_statuses, s)
+    util.remove(fr_bad_durations, s)
     BRC.mpr.error("  Removed: " .. s)
   end
 end
 
-local function start_fully_recover()
-  recovery_start_turn = you.turns()
-  BRC.opt.single_turn_mute("You start waiting.")
+--- If both CMD_EXPLORE macros are enabled, muted_explore is overridden. This function calls it.
+local function do_cmd_wrapper(cmd)
+  if cmd == "CMD_EXPLORE" and macro_brc_muted_explore then
+    macro_brc_muted_explore()
+  else
+    BRC.util.do_cmd(cmd)
+  end
+end
+
+local function complete_recovery()
+  local turns = you.turns() - recovery_start_turn
+  recovery_start_turn = nil
+  if turns > 0 then
+    you.stop_activity()
+    BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
+    if explore_after_recovery then
+      do_cmd_wrapper("CMD_EXPLORE")
+    end
+  end
+end
+
+local function start_recovery(cmd)
+  if BRC.active == false or f_fully_recover.Config.disabled or not you.feel_safe() then
+    return do_cmd_wrapper(cmd)
+  end
+
+  if fully_recovered() then
+    if recovery_start_turn ~= nil then
+      complete_recovery()
+    else
+      do_cmd_wrapper(cmd)
+    end
+  elseif not you.feel_safe() then
+    recovery_start_turn = nil
+    BRC.mpr.lightred("A monster is nearby!")
+  else
+    recovery_start_turn = you.turns()
+    explore_after_recovery = cmd == "CMD_EXPLORE"
+    do_cmd_wrapper("CMD_REST")
+  end
 end
 
 ---- Macro function: Attach full recovery to auto-explore ----
 function macro_brc_explore()
-  if BRC.active == false or f_fully_recover.Config.disabled then
-    return BRC.util.do_cmd("CMD_EXPLORE")
-  end
+  start_recovery("CMD_EXPLORE")
+end
 
-  if fully_recovered() then
-    if recovery_start_turn > 0 then
-      finish_fully_recover()
-    else
-      BRC.util.do_cmd("CMD_EXPLORE")
-    end
-  else
-    if you.feel_safe() then explore_after_recovery = true end
-    BRC.util.do_cmd("CMD_REST")
-  end
+---- Macro function: Attach full recovery to auto-rest ----
+function macro_brc_rest()
+  start_recovery("CMD_REST")
 end
 
 ---- Crawl hook functions ----
 function f_fully_recover.c_message(text, channel)
-  if channel == "plain" then
-    if text:contains("ou start waiting") or text:contains("ou start resting") then
-      if not fully_recovered() then start_fully_recover() end
-    end
-  elseif recovery_start_turn > 0 then
-    if channel == "timed_portal" then
-      abort_fully_recover()
-    elseif fully_recovered() then
-      finish_fully_recover()
-    end
+  if recovery_start_turn == nil then return end
+  if channel == "plain" and (
+    text:contains("You start resting.") or
+    text:contains("You start waiting.") or
+    (f_announce_hp_mp and f_announce_hp_mp.msg_is_meter(text)) -- ignore announce-hp-mp messages
+  ) then
+    return
+  end
+
+  -- Always stop the current recovery, and ready() will re-evaluate with the updated player status
+  -- For any non-duration/recovery message, abort the recovery entirely.
+  you.stop_activity()
+  if channel ~= "duration" and channel ~= "recovery" then
+    recovery_start_turn = nil
   end
 end
 
 function f_fully_recover.ready()
-  if recovery_start_turn > 0 then
-    if fully_recovered() then
-      finish_fully_recover()
-    elseif not you.feel_safe() then
-      abort_fully_recover()
-    elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
-      BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
-      BRC.mpr.error("f_fully_recover.Config.rest_off_statuses:")
-      remove_statuses_from_config()
-      abort_fully_recover()
-    else
-      BRC.util.do_cmd("CMD_SAFE_WAIT")
-    end
+  if recovery_start_turn == nil then return end
+  if fully_recovered() then
+    complete_recovery()
+  elseif not you.feel_safe() then
+    recovery_start_turn = nil
+    you.stop_activity()
+  elseif you.turns() - recovery_start_turn > MAX_TURNS_TO_WAIT then
+    BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
+    BRC.mpr.error("fr_bad_durations:")
+    remove_statuses_from_list()
+    recovery_start_turn = nil
+    you.stop_activity()
   else
-    explore_after_recovery = false
+    do_cmd_wrapper("CMD_REST")
   end
 end

@@ -1,17 +1,26 @@
---- Custom Config Profile: Personalized settings
+--- Custom Main Config: Personalized settings
 -- Aims to list the most commonly adjusted config settings.
--- See feature config sections, or Profiles.Explicit for more settings.
+-- See feature config sections, or config/explicit.lua for more settings.
 
 brc_config_custom = {
   BRC_CONFIG_NAME = "Custom",
 
+  emojis = true,
+
   ["misc-alerts"] = {
-    alert_low_hp_threshold = 0.35, -- % max HP to alert; 0 to disable
+    alert_low_hp_threshold = 35, -- % max HP to alert; 0 to disable
+    preferred_god = nil, -- Stop on first altar with this text (Ex. "Wu Jian", "Ash"); nil disables
   },
   ["announce-hp-mp"] = {
     dmg_flash_threshold = 0.20, -- Flash screen when losing this % of max HP
     dmg_fm_threshold = 0.30,    -- Force more for losing this % of max HP
     always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
+  },
+  ["color-inscribe"] = {
+    disabled = true, -- Worth trying this out, but inconsistently supported on webtiles (CAO)
+  },
+  ["fm-messages"] = {
+    force_more_threshold = 6, -- How many force_more_messages; 1=many; 10=none
   },
   ["inscribe-stats"] = {
     inscribe_weapons = true, -- Inscribe weapon stats on pickup and keep updated
@@ -27,7 +36,7 @@ brc_config_custom = {
     gauntlet_search = true,     -- on enter or explore, auto-search gauntlet with filters
   },
   ["startup"] = {
-    show_skills_on_startup = false, -- Open skills menu on startup
+    show_skills_menu = false, -- Open skills menu on startup
     auto_set_skill_targets = {
       { "Stealth", 2.0 },  -- First, focus stealth to 2.0
       { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
@@ -52,7 +61,7 @@ brc_config_custom = {
 
       -- Alert the first time each item is found. Can require training with OTA_require_skill.
       one_time = {
-        "buckler", "kite shield", "tower shield", "crystal plate armour",
+        "wand of digging", "buckler", "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales", "shadow dragon scales",
         "quick blade", "demon blade", "eudemon blade", "double sword", "triple sword",
         "broad axe", "executioner's axe",

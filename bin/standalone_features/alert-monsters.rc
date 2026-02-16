@@ -8,7 +8,7 @@
 -- Minimal BRC namespace (Don't overwrite existing globals)
 BRC = BRC or {}
 BRC.Config = BRC.Config or {}
-BRC.Config.emojis = true
+BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.logs_to_stderr = false
 
@@ -47,17 +47,17 @@ f_alert_monsters.Config.Alerts = {
       "boundless tesseract", "demonspawn corrupter", "draconian stormcaller", "dryad",
       "guardian serpent", "halazid warlock", "shadow demon", "spriggan druid", "worldbinder",
       --Dangerous abilities
-      "iron giant", "merfolk aquamancer", "shambling mangrove", "starflower",
+      "iron giant", "merfolk aquamancer", "nekomata", "shambling mangrove", "starflower",
       "torpor snail", "water nymph", "wretched star", "wyrmhole",
       --Dangerous clouds
-      "apocalypse crab","catoblepas",
+      "apocalypse crab", "catoblepas",
     } },
 
   { name = "always_flash", flash_screen = true,
     pattern = {
       -- Noteworthy abilities
       "air elemental", "elemental wellspring", "ghost crab", "ironbound convoker",
-      "vault guardian", "vault warden", "wendingo",
+      "vault guardian", "vault warden", "wendigo",
       -- Displacement
       "deep elf knight", "swamp worm",
       -- Summoning
@@ -66,15 +66,15 @@ f_alert_monsters.Config.Alerts = {
       "death knight", "imperial myrmidon", "necromancer",
     } },
 
-  { name = "always_fm_pack", is_pack = true,
-    pattern = { "boggart", "dream sheep", "floating eye", "shrike" } },
-
-  -- Early game Dungeon problems for chars with low mhp. (adder defined below)
-  { name = "30hp", cond = "hp", cutoff = 30,
+  -- Early game Dungeon problems for chars with low hp. (adder defined below)
+  { name = "30hp", cond = "hp", cutoff = 30, is_pack = true,
     pattern = { "hound", "gnoll" } },
 
+  { name = "mid_game_packs", cutoff = 90, is_pack = true,
+    pattern = { "boggart", "dream sheep" } },
+
   -- Monsters dangerous until a certain point
-  { name = "xl_7", cond = "xl", cutoff = 7,
+  { name = "xl_7", cond = "xl", cutoff = 6, is_pack = true,
     pattern = { "orc wizard" } },
   { name = "xl_12", cond = "xl", cutoff = 12,
     pattern = { "hydra", "bloated husk" } },
@@ -148,17 +148,22 @@ f_alert_monsters.Config.Alerts = {
                 "tengu reaver", "titan" } },
   { name = "elec_140_pack", cond = "elec", cutoff = 140, is_pack = true,
     pattern = { "ball lightning" } },
+
   { name = "corr_60", cond = "corr", cutoff = 60,
     pattern = { "acid dragon" } },
+  { name = "caustic_shrike", cond = "corr", cutoff = 120, is_pack = true,
+    pattern = { "caustic shrike" } },
   { name = "corr_140", cond = "corr", cutoff = 140,
     pattern = { "demonspawn corrupter", "entropy weaver", "moon troll", "tengu reaver" } },
 
+  { name = "fire_60_pack", cond = "fire", cutoff = 60, is_pack = true,
+    pattern = { "hell hound", "lava snake", "lindwurm" } },
   { name = "fire_60", cond = "fire", cutoff = 60,
-    pattern = { "fire crab", "lava snake", "lindwurm", "steam dragon" } },
+    pattern = { "fire crab", "steam dragon" } },
   { name = "fire_100", cond = "fire", cutoff = 100,
     pattern = { "deep elf pyromancer", "efreet", "smoke demon", "sun moth" } },
   { name = "fire_120", cond = "fire", cutoff = 120,
-    pattern = { "demonspawn blood saint", "hell hound", "hell knight", "molten gargoyle",
+    pattern = { "demonspawn blood saint", "hell hog", "hell knight", "molten gargoyle",
                 "ogre mage", "orc sorcerer", "red draconian" } },
   { name = "fire_140", cond = "fire", cutoff = 140,
     pattern = { "balrug" } },
@@ -173,6 +178,8 @@ f_alert_monsters.Config.Alerts = {
   { name = "cold_120", cond = "cold", cutoff = 120,
     pattern = { "blizzard demon", "bog body", "demonspawn blood saint",
                "ironbound frostheart", "white draconian" } },
+  { name = "shard_shrike", cond = "cold", cutoff = 120, is_pack = true,
+    pattern = { "shard shrike" } },
   { name = "cold_160", cond = "cold", cutoff = 160,
     pattern = { "draconian knight", "frost giant", "golden dragon",
                 "ice dragon", "tengu reaver" } },
@@ -189,35 +196,9 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "demonspawn blood saint", "revenant" } },
   { name = "drain_190", cond = "drain", cutoff = 190,
     pattern = { "shadow dragon" } },
-} -- fm_patterns (do not remove this comment)
+} -- f_alert_monsters.Config.Alerts (do not remove this comment)
 
-f_alert_monsters.Config.init = [[
-    local alert_list = f_alert_monsters.Config.Alerts
-
-    -- Mutators (only flash if immune)
-    util.append(alert_list, {
-      name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
-      pattern = { "cacodemon", "neqoxec", "shining eye" }
-    })
-
-    -- Conditionally add miasma monsters
-    if not BRC.you.miasma_immune() then
-      util.append(alert_list, {
-        name = "miasma", cond = "always", cutoff = 0,
-        pattern = { "death drake", "tainted leviathan", "putrid mouth" }
-      })
-    end
-
-    -- Conditionally add tormentors
-    if not you.torment_immune() then
-      util.append(alert_list, {
-        name = "torment", cond = "always", cutoff = 0,
-        pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
-                    "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
-      })
-    end
-]]
-------------------- End config section -------------------
+f_alert_monsters.Config.init = function()
 
 -- BRC Constants
 BRC.COL = {
@@ -238,6 +219,7 @@ BRC.txt = BRC.txt or {}
 BRC.you = BRC.you or {}
 
 -- BRC.mpr module
+BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
   BRC.mpr[k] = function(msg, channel)
     crawl.mpr(BRC.txt[color](msg), channel)
@@ -246,12 +228,12 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
-local function log_message(message, context, color)
+local function log_message(message, context, msg_color)
   -- Avoid referencing BRC, to stay robust during startup
-  color = color or "lightgrey"
-  local msg = "[BRC] " .. tostring(message)
+  msg_color = msg_color or "lightgrey"
+  local msg = BRC.mpr.brc_prefix .. tostring(message)
   if context then msg = string.format("%s (%s)", msg, tostring(context)) end
-  crawl.mpr(string.format("<%s>%s</%s>", color, msg, color))
+  crawl.mpr(string.format("<%s>%s</%s>", msg_color, msg, msg_color))
   crawl.flush_prev_message()
 end
 
@@ -261,21 +243,33 @@ function BRC.mpr.error(message, context, skip_more)
     context = nil
   end
 
-  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  -- Stop and clean up state before displaying the error
+  BRC.opt.clear_single_turn_mutes()
+  crawl.flush_input()
   you.stop_activity()
-  crawl.redraw_screen()
+
+  log_message("(Error) " .. message, context, BRC.COL.lightred)
+  if context then message = message .. " (" .. context .. ")" end
+  print(message)
 
   if not skip_more then
-    crawl.more()
     crawl.redraw_screen()
+    crawl.more()
   end
 
   if BRC.Config.mpr.logs_to_stderr then
-    crawl.stderr("[BRC] (Error) " .. message)
+    crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
 end
 
 -- BRC.opt module
+local _claimed_macro_keys = {}
+
+function BRC.opt.clear_single_turn_mutes()
+  util.foreach(_single_turn_mutes, function(m) BRC.opt.message_mute(m, false) end)
+  _single_turn_mutes = {}
+end
+
 function BRC.opt.flash_screen_message(pattern, create)
   local op = create and "+=" or "-="
   crawl.setopt(string.format("flash_screen_message %s %s", op, pattern))
@@ -284,6 +278,11 @@ end
 function BRC.opt.force_more_message(pattern, create)
   local op = create and "+=" or "-="
   crawl.setopt(string.format("force_more_message %s %s", op, pattern))
+end
+
+function BRC.opt.message_mute(pattern, create)
+  local op = create and "^=" or "-="
+  crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
 end
 
 -- BRC.txt module
@@ -316,10 +315,36 @@ end
 -- @warning Never put a '}' on a line by itself. This breaks crawl's RC parser.
 ---------------------------------------------------------------------------------------------------
 
+  local alert_list = f_alert_monsters.Config.Alerts
+
+  -- Mutators (only flash if immune)
+  util.append(alert_list, {
+    name = "malmutate", cond = "mut", cutoff = 1, flash_screen = BRC.you.mutation_immune(),
+    pattern = { "cacodemon", "neqoxec", "shining eye" }
+  })
+
+  -- Conditionally add miasma monsters
+  if not BRC.you.miasma_immune() then
+    util.append(alert_list, {
+      name = "miasma", cond = "always", cutoff = 0,
+      pattern = { "death drake", "tainted leviathan", "putrid mouth" }
+    })
+  end
+
+  -- Conditionally add tormentors
+  if not you.torment_immune() then
+    util.append(alert_list, {
+      name = "torment", cond = "always", cutoff = 0,
+      pattern = { "alderking", "curse (toe|skull)", "Fiend", "(dread|ancient) lich",
+                  "lurking horror", "mummy priest", "royal mummy", "tormentor", "tzitzimi" }
+    })
+  end
+end
+------------------- End config section -------------------
 
 ---- Local constants ----
 local WARN_PREFIX = "monster_warning:encounter.*(?<!spectral )("
-local WARN_SUFFIX = ")(?! (zombie|skeleton|simulacrum))"
+local WARN_SUFFIX = ")(?! (draugr|simulacrum|zombie))"
 
 ---- Local variables ----
 local C -- config alias

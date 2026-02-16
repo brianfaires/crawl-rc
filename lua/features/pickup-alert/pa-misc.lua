@@ -49,6 +49,9 @@ function f_pa_misc.alert_OTA(it)
 
   f_pa_data.remove_OTA(it)
   if not do_alert then return false end
+  if it.class(true) == "book" and not it.name():find(ota_item) then
+    return f_pickup_alert.do_alert(it, "Found " .. ota_item, E.RARE_ITEM, M.one_time_alerts)
+  end
   return f_pickup_alert.do_alert(it, "Found first", E.RARE_ITEM, M.one_time_alerts)
 end
 
@@ -61,7 +64,7 @@ function f_pa_misc.alert_staff(it)
     if you.res_shock() > 0 then return false end
     tag = "rElec"
     tag_color = BRC.COL.lightcyan
-  elseif basename == "staff of alchemy" then
+  elseif basename == "staff of chemistry" then
     if you.res_poison() > 0 then return false end
     tag = "rPois"
     tag_color = BRC.COL.lightgreen

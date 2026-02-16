@@ -25,6 +25,8 @@ brc_config_name = BRC.Data.persist("brc_config_name", nil)
 BRC.Configs.Default = util.copy_table(BRC.Config) -- Include values from BRC.Config in _header.lua
 BRC.Configs.Default.BRC_CONFIG_NAME = "Default"
 
+BRC.Configs.Default.emojis = true -- Include emojis in alerts
+
 -- Does "Armour of <MagicSkill>" have an ego when skill is 0?
 BRC.Configs.Default.unskilled_egos_usable = false
 
@@ -44,19 +46,25 @@ BRC.Configs.Default.BrandBonus = {
   distort = { factor = 1.0, offset = 6.0 },
   drain = { factor = 1.25, offset = 2.0 },
   elec = { factor = 1.0, offset = 4.5 },   -- 3.5 on avg; fudged up for AC pen
+  entangle = { factor = 1.1, offset = 3 },
   flame = { factor = 1.25, offset = 0 },
   freeze = { factor = 1.25, offset = 0 },
   heavy = { factor = 1.8, offset = 0 },    -- Speed is accounted for elsewhere
   pain = { factor = 1.0, offset = you.skill("Necromancy") / 2 },
   spect = { factor = 1.7, offset = 0 },    -- Fudged down for increased incoming damage
+  sunder = { factor = 1.2, offset = 0 },
+  valour = { factor = 1.15, offset = 0 },
   venom = { factor = 1.0, offset = 5.0 },  -- 5 dmg per poisoning
 
   subtle = { -- Values to use for weapon "scores" (not damage)
     antimagic = { factor = 1.1, offset = 0 },
+    concuss = { factor = 1.2, offset = 0 },
+    devious = { factor = 1.1, offset = 0 },
     holy = { factor = 1.15, offset = 0 },
     penet = { factor = 1.3, offset = 0 },
     protect = { factor = 1.15, offset = 0 },
     reap = { factor = 1.3, offset = 0 },
+    rebuke = { factor = 1.2, offset = 0 },
     vamp = { factor = 1.2, offset = 0 },
   },
 } -- BRC.Configs.Default.BrandBonus (do not remove this comment)
@@ -76,7 +84,7 @@ local function find_config_modules()
   end
 end
 
---- @param input_name string "ask" or "previous" or a config name
+--- @param input_name string "ask" or a config name
 -- @return string The valid name of a config
 local function get_valid_config_name(input_name)
   if #BRC.Configs == 1 then return util.keys(BRC.Configs)[1] end
@@ -90,13 +98,6 @@ local function get_valid_config_name(input_name)
       if you.turns() > 0 and brc_config_name then
         return get_valid_config_name(brc_config_name)
       end
-    elseif config_name == "previous" then
-      -- Restore from the config name in c_persist (cross-game persistence), or display warning
-      if c_persist.BRC and c_persist.BRC.current_config then
-        return get_valid_config_name(c_persist.BRC.current_config)
-      else
-        BRC.mpr.warning("No previous config found.")
-      end
     else
       -- Find by name in BRC.Configs, or display warning
       for k, _ in pairs(BRC.Configs) do
@@ -106,27 +107,15 @@ local function get_valid_config_name(input_name)
     end
   end
 
-  return BRC.mpr.select("Select a config", util.keys(BRC.Configs))
+  local config_names = util.keys(BRC.Configs)
+  util.sort(config_names)
+  return BRC.mpr.select("Select a config", config_names)
 end
 
-local function safe_call_string(str, module_name)
-  local chunk, err = loadstring(str)
-  if not chunk then
-    BRC.mpr.error("Error loading " .. module_name .. ".Config.init string: ", err)
-  else
-    local success, result = pcall(chunk)
-    if not success then
-      BRC.mpr.error("Error executing " .. module_name .. ".Config.init string: ", result)
-    end
-  end
-end
-
-local function execute_config_init(config, module_name)
+local function execute_config_init(config)
   if type(config) ~= "table" then return end
   if type(config.init) == "function" then
     config.init()
-  elseif type(config.init) == "string" then
-    safe_call_string(config.init, module_name)
   end
 end
 
@@ -139,70 +128,61 @@ local function override_table(dest, source)
     if BRC.util.is_map(value) then
       if not dest[key] then dest[key] = {} end
       override_table(dest[key], value)
-    elseif key ~= "init" then
+    else
       dest[key] = value
     end
   end
 end
 
---- Load a config, either from a table or from a name.
--- @param config table of config values, or string name of a config
-local function load_specific_config(config)
+---- Public API ----
+--- Main config loading entry point
+-- @param config_name string name of a config
+function BRC.init_config(config_name)
+  find_config_modules()
   BRC.Config = util.copy_table(BRC.Configs.Default)
-  if type(config) == "table" then
-    override_table(BRC.Config, config)
-  else
-    local name = get_valid_config_name(config)
-    override_table(BRC.Config, BRC.Configs[name])
-    execute_config_init(BRC.Config, "BRC")
-    execute_config_init(BRC.Configs[name], "BRC.Configs." ..name)
+  local name = get_valid_config_name(config_name or BRC.Config.to_use)
+  if BRC.Configs[brc_config_name] and (name ~= brc_config_name) and you.turns() > 0 then
+    if not BRC.mpr.yesno(string.format(
+      "Switch config from %s to %s?",
+      BRC.txt.lightcyan(brc_config_name),
+      BRC.txt.lightcyan(name)
+    )) then
+      name = brc_config_name
+    end
   end
 
-  -- Store persistent config info
-  brc_config_name = BRC.Config.BRC_CONFIG_NAME
-  if BRC.Config.store_config and BRC.Config.store_config:lower() == "full" then
-    brc_full_persistant_config = BRC.Config
-  end
+  override_table(BRC.Config, BRC.Configs[name])
+  execute_config_init(BRC.Config)
 
-  -- Init all features and apply any overrides from the loaded config
   for _ , value in pairs(BRC.get_registered_features()) do
     BRC.process_feature_config(value)
   end
 
-  BRC.mpr.white("[BRC] Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME))
+  brc_config_name = name
+  local m = BRC.mpr.brc_prefix .. "Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME)
+  BRC.mpr.white(m)
+  BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
 end
 
----- Public API ----
---- Main config loading entry point
--- @param config table of config values, or string name of a config
-function BRC.init_config(config)
-  find_config_modules()
-
-  if config then
-    load_specific_config(config)
-  else
-    local store_mode = BRC.Config.store_config and BRC.Config.store_config:lower() or nil
-    if store_mode == "full" then
-      load_specific_config(brc_full_persistant_config or brc_config_name or BRC.Config.use_config)
-    elseif store_mode == "name" then
-      load_specific_config(brc_config_name or BRC.Config.use_config)
-    else
-      load_specific_config(BRC.Config.use_config)
-    end
-  end
-end
-
---- Process a feature config: Ensure default values, init(), then override with BRC.Config values
+--- Process a feature config: Load defaults, then override w BRC.Config
 function BRC.process_feature_config(feature)
   if type(feature.ConfigDefaults) == "table" then
     feature.Config = util.copy_table(feature.ConfigDefaults)
   else
+    -- Save the defaults after default init(), so they can be used later w a diff config
     feature.Config = feature.Config or {}
-    execute_config_init(feature.Config, feature.BRC_FEATURE_NAME)
+    local preinit_defaults = util.copy_table(feature.Config)
+    execute_config_init(feature.Config)
     feature.ConfigDefaults = util.copy_table(feature.Config)
+
+    -- If init() is overridden, restore to the pre-init defaults and only apply the new init()
+    if type(BRC.Config[feature.BRC_FEATURE_NAME].init) == "function" then
+      feature.Config = util.copy_table(preinit_defaults)
+    end
   end
 
   override_table(feature.Config, BRC.Config[feature.BRC_FEATURE_NAME])
+  execute_config_init(BRC.Config[feature.BRC_FEATURE_NAME])
 end
 
 --- Stringify BRC.Config and each feature config, with headers
