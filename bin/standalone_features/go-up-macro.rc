@@ -89,7 +89,8 @@ function BRC.mpr.error(message, context, skip_more)
   you.stop_activity()
 
   log_message("(Error) " .. message, context, BRC.COL.lightred)
-  print(message .. "(" .. context .. ")")
+  if context then message = message .. " (" .. context .. ")" end
+  print(message)
 
   if not skip_more then
     crawl.redraw_screen()
