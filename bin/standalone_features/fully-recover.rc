@@ -45,6 +45,15 @@ BRC.txt = BRC.txt or {}
 BRC.util = BRC.util or {}
 BRC.you = BRC.you or {}
 
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
 -- BRC.Data module
 -- Minimal persistence system for standalone features
 local function brc_tostr(value)
@@ -201,15 +210,6 @@ function BRC.opt.runrest_ignore_message(pattern, create)
   local op = create and "+=" or "-="
   crawl.setopt(string.format("runrest_ignore_message %s %s", op, pattern))
 end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
 
 -- BRC.util module
 function BRC.util.cntl(c)

@@ -35,6 +35,19 @@ BRC.Data = BRC.Data or {}
 BRC.mpr = BRC.mpr or {}
 BRC.txt = BRC.txt or {}
 
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
 -- BRC.Data module
 -- Minimal persistence system for standalone features
 local function brc_tostr(value)
@@ -80,19 +93,6 @@ for k, color in pairs(BRC.COL) do
   BRC.mpr[color] = BRC.mpr[k]
 end
 
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
-function BRC.txt.wrap(text, wrapper, no_space)
-  if not wrapper then return text end
-  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
-end
 
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: display-realtime

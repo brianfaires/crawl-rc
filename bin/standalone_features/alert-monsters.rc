@@ -218,6 +218,15 @@ BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.you = BRC.you or {}
 
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
 -- BRC.mpr module
 BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
@@ -284,15 +293,6 @@ function BRC.opt.message_mute(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
 end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
 
 -- BRC.you module
 function BRC.you.miasma_immune()

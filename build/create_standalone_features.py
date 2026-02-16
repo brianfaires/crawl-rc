@@ -530,7 +530,11 @@ class StandaloneGenerator:
         if module_tables:
             parts.append("-- BRC module tables (Don't overwrite existing globals)\n" + "\n".join(module_tables))
         
-        for module in sorted(self.analyzer.used_modules):
+        # BRC.txt must come first after module tables (other modules may depend on string:contains etc.)
+        modules_order = sorted(self.analyzer.used_modules)
+        if "BRC.txt" in modules_order:
+            modules_order = ["BRC.txt"] + [m for m in modules_order if m != "BRC.txt"]
+        for module in modules_order:
             parts.append(self._generate_module_code(module))
         
         if self._needs_consume_queue():

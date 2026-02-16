@@ -74,6 +74,15 @@ BRC.mpr = BRC.mpr or {}
 BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
 -- BRC.mpr module
 BRC.mpr.brc_prefix = BRC.txt.darkgrey("[BRC] ")
 for k, color in pairs(BRC.COL) do
@@ -97,15 +106,6 @@ function BRC.opt.single_turn_mute(pattern)
   BRC.opt.message_mute(pattern, true)
   _single_turn_mutes[#_single_turn_mutes + 1] = pattern
 end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
 
 -- single turn mutes support: _single_turn_mutes and BRC.opt.clear_single_turn_mutes()
 _single_turn_mutes = {}

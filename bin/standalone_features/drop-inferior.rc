@@ -61,6 +61,23 @@ BRC.txt = BRC.txt or {}
 BRC.util = BRC.util or {}
 BRC.you = BRC.you or {}
 
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.int2char(num)
+  return string.char(string.byte("a") + num)
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
 -- BRC.eq module
 function BRC.eq.get_ac(it)
   local it_plus = it.plus or 0
@@ -195,23 +212,6 @@ end
 function BRC.opt.message_mute(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
-end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
-function BRC.txt.int2char(num)
-  return string.char(string.byte("a") + num)
-end
-
-function BRC.txt.wrap(text, wrapper, no_space)
-  if not wrapper then return text end
-  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
 end
 
 -- BRC.util module

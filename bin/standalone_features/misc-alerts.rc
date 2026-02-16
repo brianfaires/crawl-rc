@@ -51,6 +51,19 @@ BRC.opt = BRC.opt or {}
 BRC.txt = BRC.txt or {}
 BRC.util = BRC.util or {}
 
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+function BRC.txt.wrap(text, wrapper, no_space)
+  if not wrapper then return text end
+  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
+end
+
 -- BRC.Data module
 -- Minimal persistence system for standalone features
 local function brc_tostr(value)
@@ -253,19 +266,6 @@ end
 function BRC.opt.message_mute(pattern, create)
   local op = create and "^=" or "-="
   crawl.setopt(string.format("message_colour %s mute:%s", op, pattern))
-end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
-function BRC.txt.wrap(text, wrapper, no_space)
-  if not wrapper then return text end
-  return table.concat({ wrapper, text, wrapper }, no_space and "" or " ")
 end
 
 -- BRC.util module

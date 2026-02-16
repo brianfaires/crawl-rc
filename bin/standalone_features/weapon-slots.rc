@@ -32,6 +32,15 @@ BRC.it = BRC.it or {}
 BRC.mpr = BRC.mpr or {}
 BRC.txt = BRC.txt or {}
 
+-- BRC.txt module
+for k, color in pairs(BRC.COL) do
+  BRC.txt[k] = function(text)
+    return string.format("<%s>%s</%s>", color, tostring(text), color)
+  end
+  BRC.txt[color] = BRC.txt[k]
+end
+
+
 -- BRC.it module
 function BRC.it.is_magic_staff(it)
   return it and it.class and it.class(true) == "magical staff"
@@ -68,15 +77,6 @@ function BRC.mpr.debug(message, context)
     crawl.stderr(BRC.mpr.brc_prefix .. "(Debug) " .. message)
   end
 end
-
--- BRC.txt module
-for k, color in pairs(BRC.COL) do
-  BRC.txt[k] = function(text)
-    return string.format("<%s>%s</%s>", color, tostring(text), color)
-  end
-  BRC.txt[color] = BRC.txt[k]
-end
-
 
 ---------------------------------------------------------------------------------------------------
 -- BRC feature module: weapon-slots

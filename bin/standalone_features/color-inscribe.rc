@@ -27,15 +27,6 @@ BRC.COL = {
 BRC.it = BRC.it or {}
 BRC.txt = BRC.txt or {}
 
--- BRC.it module
-function BRC.it.is_armour(it, include_orbs)
-  return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
-end
-
-function BRC.it.is_orb(it)
-  return it and it.subtype() == "offhand" and not it.is_shield()
-end
-
 -- BRC.txt module
 for k, color in pairs(BRC.COL) do
   BRC.txt[k] = function(text)
@@ -47,6 +38,15 @@ end
 function BRC.txt.clean(text)
   if type(text) ~= "string" then return text end
   return text:gsub("\n", ""):gsub("<[^>]*>", "")
+end
+
+-- BRC.it module
+function BRC.it.is_armour(it, include_orbs)
+  return it and it.class(true) == "armour" and (include_orbs or not BRC.it.is_orb(it))
+end
+
+function BRC.it.is_orb(it)
+  return it and it.subtype() == "offhand" and not it.is_shield()
 end
 
 ---------------------------------------------------------------------------------------------------

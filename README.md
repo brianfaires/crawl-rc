@@ -76,6 +76,8 @@ Want to use just one feature without the full BRC system? The script `build/crea
 
 **Remember to merge hooks if you already have them defined!**
 
+Note: I don't regularly test these, though I did try them all one-at-a-time once. LMK if you encounter errors. They would most likely be related to the order that things get copy/pasted into the standalone file.
+
 ## Pickup & Alert Feature
 
 BRC's largest feature. It provides smart autopickup of item upgrades, and generates alerts for noteworthy items.
