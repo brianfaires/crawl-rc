@@ -217,6 +217,7 @@ brc_config_turncount = {
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
     crawl.setopt("autoinscribe += offhand:!T")
     crawl.setopt("autopickup_exceptions ^= > stones?$") -- Don't highlight autopickup for stones
+    crawl.setopt("explore_auto_rest = false")
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
       if m ~= "one_time_alerts" then
@@ -5747,6 +5748,7 @@ function f_bread_swinger.ready()
 end
 
 function f_bread_swinger.autopickup(it)
+  if f_pickup_alert and f_pickup_alert.is_paused() then return end -- follow pause pattern
   local num_hands = is_slowest_weapon(it)
   if num_hands == 2 then
     do_alert("Found slowest weapon", it)
@@ -8760,6 +8762,10 @@ end
 ---- Public API ----
 function f_pickup_alert.pause_alerts()
   hold_alerts_for_next_turn = true
+end
+
+function f_pickup_alert.is_paused()
+  return pause_pa_system or hold_alerts_for_next_turn
 end
 
 function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)

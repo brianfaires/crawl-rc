@@ -1212,6 +1212,10 @@ function f_pickup_alert.pause_alerts()
   hold_alerts_for_next_turn = true
 end
 
+function f_pickup_alert.is_paused()
+  return pause_pa_system or hold_alerts_for_next_turn
+end
+
 function f_pickup_alert.do_alert(it, alert_type, emoji, force_more)
   local item_name = f_pa_data.get_keyname(it, true)
   local alert_col = get_alert_color_for_item(it)

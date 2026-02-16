@@ -58,6 +58,7 @@ brc_config_turncount = {
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
     crawl.setopt("autoinscribe += offhand:!T")
     crawl.setopt("autopickup_exceptions ^= > stones?$") -- Don't highlight autopickup for stones
+    crawl.setopt("explore_auto_rest = false")
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
       if m ~= "one_time_alerts" then

@@ -939,6 +939,7 @@ function f_bread_swinger.ready()
 end
 
 function f_bread_swinger.autopickup(it)
+  if f_pickup_alert and f_pickup_alert.is_paused() then return end -- follow pause pattern
   local num_hands = is_slowest_weapon(it)
   if num_hands == 2 then
     do_alert("Found slowest weapon", it)
