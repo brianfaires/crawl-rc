@@ -1,6 +1,5 @@
-## TO TEST
+## TO TEST (fixed)
 - Potion of res getting auto-inscribed from "of resistance"
-- ma_saved_msg -> after first save, throws exception on next game (can't concatenate nil)
 - pause slowest weapon alert with pa pause
 - pause pickup-alert during memorization
 
@@ -15,12 +14,12 @@
 ### Turncount playtest notes:
   why getting "DPS increase" alert?
   picked up weapon & gold; didn't assign weapon to 'a' (left on b)
-  BRC.active == false at start of game; cause monsters in view on spawn?
+  BRC.active == false at start of game; because monsters in view on spawn?
 
 ### Misc:
   - Add more comments to feature files, especially for the config options.
   - Autoinscribe consumables with bailey/ossuary/sewer/etc
-  - When creating a "move to" hotkey, check existing for inferior and remove
+  - When creating a "move to item" hotkey, check existing hotkeys and remove move for inferior item
   - fm unexpected (is from new dcss feature?)
       basilisk if can't be petrified
       hound at 33 hp
@@ -35,6 +34,10 @@
   - Artefact weapon alerts: 'min_skill' for alerts; sans "+Blink"
   - pickup_shields config
     - Train Shields on shield pickup/equip
+
+### Useful hotkeys:
+- After read scroll of enchant weapon, hotkey for read more
+
 
 ### crawl PRs / issues affecting BRC
 https://github.com/crawl/crawl/issues/4789 ->
@@ -63,7 +66,7 @@ https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
     (Maybe could fix with >1 ready() / turn... Try macro'ing: { WAIT, READY, EXPLORE }?)
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
-1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
+1. Disable mouse click travel (on macOS?) - ideally just prevent accidental movement from trackpad
 
 ### Backlog / won't do
 1. Start any rest with autopickup on current square (if inv not full)

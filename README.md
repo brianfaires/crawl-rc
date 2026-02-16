@@ -305,6 +305,29 @@ lua/                    # Lua files
 
 ---
 
+### Design Philosophy
+
+The goal is to increase QOL AND automate any no-brainer decisions. However automating multiple turns is a
+slippery slope to [qw.rc](https://github.com/crawl/crawl/blob/master/crawl-ref/source/test/stress/qw.rc) and avoided.
+It's also possibly disqualifying for any record or tournament games. Where I draw the line is:
+- Anything that doesn't consume a turn is fair game (setting inscriptions, inventory slots, or alerts).
+- One-click actions must either: Take a single turn, or be available in dcss defaults as a single command.
+- No automatic turns taken.
+- The hotkey feature is the closest to the line IMO. Hotkey actions are generally pretty obvious things you want to do,
+and rarely occur multiple turns in a row. Still, an extreme use of hotkeys would be to run qw.rc, hotkey everything,
+and "play" the game by holding down the `Enter`.
+
+Included features:
+- Auto-search a long and custom string in gauntlets, to filter out garbage (0 turns)
+- After pickup a weapon, hotkey for "wield this item?"
+- After scroll of ID pickup, hotkey for "read scroll of id?"
+- Cntl-E (go up closest stairs) on the orb run: Does some math to ignore monsters and ascend faster
+
+Excluded features:
+- After joining a god in the temple, automatically run to the stairs.
+
+---
+
 ### In-Game Commands
 
 Use the Lua interpreter (open with the `~` key) for these commands:
@@ -348,11 +371,8 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
   # More RC
   ```
 - If running crawl locally:
-  - **Switching between characters** does not re-execute lua files. `init()` will be called, so all locals are set to defaults in init functions.
-  It's safest to use `buehler.rc` as a single file, but using `init.txt` will still work, and provides better line numbers in error messages.
-  It's generally good to restart crawl when switching between characters, to ensure all lua code re-executes.
   - **Regex issues**: Some regular expression patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
-  - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT MacOS doesn't, so I configure `BRC.Config.emojis = false` locally.
+  - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT macOS doesn't, so I configure `BRC.Config.emojis = false` locally.
   If you have one, define it in `rc/display.rc`, and LMK!
 
 **RC syntax errors**: If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You may be prompted to restore data from backup.
