@@ -33,7 +33,7 @@ brc_config_custom = {
     gauntlet_search = true,     -- on enter or explore, auto-search gauntlet with filters
   },
   ["startup"] = {
-    show_skills_on_startup = false, -- Open skills menu on startup
+    show_skills_menu = false, -- Open skills menu on startup
     auto_set_skill_targets = {
       { "Stealth", 2.0 },  -- First, focus stealth to 2.0
       { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0

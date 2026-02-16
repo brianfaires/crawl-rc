@@ -58,6 +58,16 @@ brc_config_explicit = {
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
     explore_clears_queue = true, -- Clear the hotkey queue on explore
     newline_before_hotkey = true, -- Add a newline before the hotkey message
+    move_to_feature = {
+      -- Hotkey for "move to _" when you find these features
+      enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
+      enter_bailey = "flagged portal", enter_bazaar = "bazaar",
+      enter_desolation = "crumbling gateway", enter_gauntlet = "gauntlet",
+      enter_ice_cave = "frozen archway", enter_necropolis = "phantasmal passage",
+      enter_ossuary = "sand-covered staircase", enter_sewer = "glowing drain",
+      enter_trove = "trove of treasure", enter_volcano = "dark tunnel",
+      enter_wizlab = "magical portal", enter_ziggurat = "ziggurat",
+    },
   },
 
   ---- Feature configs ----
@@ -221,7 +231,21 @@ brc_config_explicit = {
 
   ["manage-consumables"] = {
     disabled = false,
-    -- No config;See manage-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
+    maintain_safe_scrolls = true,
+    maintain_safe_potions = true,
+    scroll_slots = {
+      ["acquirement"] = "A", ["amnesia"] = "x", ["blinking"] = "B", ["brand weapon"] = "W",
+      ["butterflies"] = "s", ["enchant armour"] = "a", ["enchant weapon"] = "w",
+      ["fear"] = "f", ["fog"] = "g", ["identify"] = "i", ["immolation"] = "I",
+      ["noise"] = "N", ["revelation"] = "r", ["poison"] = "p", ["silence"] = "S",
+      ["summoning"] = "s", ["teleportation"] = "t", ["torment"] = "T", ["vulnerability"] = "V",
+    },
+    potion_slots = {
+      ["ambrosia"] = "a", ["attraction"] = "A", ["berserk rage"] = "B", ["brilliance"] = "b",
+      ["cancellation"] = "C", ["curing"] = "c", ["experience"] = "E", ["enlightenment"] = "e",
+      ["haste"] = "h", ["heal wounds"] = "w", ["invisibility"] = "i", ["lignification"] = "L",
+      ["magic"] = "g", ["might"] = "z", ["resistance"] = "r", ["mutation"] = "M",
+    },
   },
 
   ["safe-stairs"] = {

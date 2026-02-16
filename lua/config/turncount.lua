@@ -56,7 +56,7 @@ brc_config_turncount = {
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
-    crawl.setopt("autoinscribe += shield:!T")
+    crawl.setopt("autoinscribe += offhand:!T")
     crawl.setopt("autopickup_exceptions ^= > stones?$") -- Don't highlight autopickup for stones
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
