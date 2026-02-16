@@ -1,4 +1,4 @@
---- Turncount Config Profile: For turncount runs
+--- Turncount Main Config: For turncount runs
 
 brc_config_turncount = {
   BRC_CONFIG_NAME = "Turncount",

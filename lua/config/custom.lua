@@ -1,6 +1,6 @@
---- Custom Config Profile: Personalized settings
+--- Custom Main Config: Personalized settings
 -- Aims to list the most commonly adjusted config settings.
--- See feature config sections, or Profiles.Explicit for more settings.
+-- See feature config sections, or config/explicit.lua for more settings.
 
 brc_config_custom = {
   BRC_CONFIG_NAME = "Custom",

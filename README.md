@@ -4,8 +4,9 @@ A modular system for Dungeon Crawl Stone Soup RC files, designed to be easily cu
 
 ## Quick Start
 - Include the contents of `bin/buehler.rc` in your RC file.
-- **Merge hooks (if needed)**: Hook functions like `ready()` are defined at the very end of BRC.
-If your RC already contains these, remove BRC's hook function and add `BRC.ready()` at the top of your hook function.
+- **Merge hooks (if needed)**: The hook functions used by crawl (like `ready()`) are defined at the very end of BRC.
+If your RC already contains these, merge them.
+(Ex: Remove BRC's `ready()` function and add `BRC.ready()` at the top of your current `ready()` function.)
 
 ## Built-in Keybinds / Macros
 - `Cntl-D`: Travel down one level (with the nearest stairs)
@@ -14,15 +15,13 @@ If your RC already contains these, remove BRC's hook function and add `BRC.ready
 - `Cntl-Tab`: Autofight, no movement
 - `~`: Open lua interpreter
 - 1,2,3,4,6,7,8,9,0: Cast spell a,b,c,d,f,g,h,i,j,k (press again to confirm targetting)
-  - Press again to confirm target
-- TODO: numpad keybinds
 
 ## Feature Modules
 
 BRC is made up of feature modules that are isolated from each other. Each feature can be independently edited, enabled, and configured.
-All features work out of the box with sensible config defaults. You can customize anything later if you want, but you don't need to!
+All features work out of the box with sensible defaults. You can customize anything later if you want, but you don't need to!
 
-While you can modify features normally, it's intended to configure them all in a config at the top of your RC.
+While you *can* modify features through their Lua code/config, it's intended to configure them all in a config at the top of your RC.
 Looking at a feature module might still be helpful to read the description, or see what config options are available.
 
 ### Most Noticeable Features
@@ -34,6 +33,7 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Inventory Management
 
 - **color-inscribe** - Adds color to item inscriptions (like <span style="color: red;">rF++</span>)
+*(Disabled by default, until crawl's treatment of color tags is more consistent)*
 - **drop-inferior** - Alerts when you pick up a replacement for an item in inventory, and adds the inferior one to the drop list
 - **exclude-dropped** - Excludes dropped items from autopickup
 - **manage-consumables** - Robustly maintains `!q` and `!r` inscriptions only where required
@@ -49,35 +49,32 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Exploration & Travel
 
 - **fully-recover** - Rests until negative status effects clear
-- **fast-passage** - (disabled; not complete) When you open a passage of Golubria, offers to move to it via the hotkey
+- **fast-passage** - *(Disabled; not complete)* When you open a passage of Golubria, offers to move to it via the hotkey
 - **go-up-macro** - Enhanced Cntl-E macro with orb run mechanics: HP-based monster ignore for fast+safe ascension
-- **runrest-features** - Updates travel stops based on location/religion/recent shaft. Auto-searches when entering temple/gauntlet
+- **runrest-features** - Misc features: Update what stops travel based on location/religion/recent shaft. Useful auto-search when entering temple/gauntlet
 - **safe-stairs** - Prevents accidental stair usage. Warns before entering V:5
 
 ### Quality of Life
 
 - **answer-prompts** - Auto-answers certain prompts
-- **dynamic-options** - Changes crawl settings based on XL, religion, race/class, etc.
+- **dynamic-options** - Changes various crawl options based on XL, religion, race/class, etc.
 - **fm-messages** - Messages rated 1-9 for importance. Configurable as force_more_message and flash_screen_message.
 - **mute-messages** - Reduces message spam with configurable mute levels (light/moderate/heavy reduction)
 - **startup** - Auto-sets skill targets, opens skills menu, saves/reloads skill targets by race+class
 
-### Turncount-specific
+### Config-specific
 
-_(disabled by default; enabled in the turncount config)_
-- **announce-items** (Turncount speedrun) - Prints messages describing floor items like gold/wands/books as they come into view
-- **bread-swinger** (Turncount speedrun) - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
-- **display-realtime** (Realtime speedrun) - Every x seconds (default 60), display the current real time.
+- **announce-items** (Turncount) - Prints messages describing floor items like gold/books/shops as they come into view
+- **bread-swinger** (Turncount) - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
+- **display-realtime** (Realtime) - Every x seconds (default 60), display the current real time.
 
 ---
 
 ## Cherry-Picking Individual Features
 
-Want to use just one feature without the full BRC system? The script `build/create_standalone_features.py` converts the feature modules to standalone files in `bin/standalone_features/` that can be copy-pasted into your RC. 
+Want to use just one feature without the full BRC system? The script `build/create_standalone_features.py` converts the feature modules to standalone files in `bin/standalone_features/` that can be copy-pasted into your RC. The files are always current with whatever is in this git repo.
 
 **Remember to merge hooks if you already have them defined!**
-
-The generated files are always active and work independently of the full BRC system.
 
 ## Pickup & Alert Feature
 
@@ -131,9 +128,10 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 ### 2. Configuring Features
 
 Each feature defines its own `Config` table, containing options and default values.
+The feature references it's Config table to customize its behavior.
 
 Configuration for all features is intended to live at the top of `buehler.rc`. A "Main" config can specify a feature name and any of its options to override default values.
-*(See all available config options in `lua/config/explicit.lua` - it's a lot though)*
+*(See all available config options in `lua/config/explicit.lua` - it's a lot in there though, and just intended as a reference)*
 
 **Ex:** The `inscribe-stats` feature inscribes items with their current stats (AC, EV, DPS, ...).
 To disable this for weapons, add this to your config:
@@ -154,7 +152,7 @@ To disable this for weapons, add this to your config:
 _(Feel free to delete any configs you don't want. No other changes needed.)_
 
 BRC includes several pre-built configs. You can edit/remove any of them or create new ones.
-Any table that includes `BRC_CONFIG_NAME = <config_name>` will be available as a config.
+Any global Lua table that includes `BRC_CONFIG_NAME = <config_name>` will be available as a config.
 
 Included configs:
 - **Custom**: Intended as the main config, or maybe the only one. It includes options that seem the most likely to be configured.
@@ -175,7 +173,7 @@ BRC.Config.to_use = "ask"
 
 ### 5. Add Your Own Features
 
-BRC will find and load any global table that contains a `BRC_FEATURE_NAME`. Just define a table anywhere in your RC and everything else will happen automatically.
+BRC will find and load any global Lua table that contains a `BRC_FEATURE_NAME`. Just define a table anywhere in your RC and everything else will happen automatically.
 
 **Step 1: Define your feature**
 
@@ -243,31 +241,9 @@ end
 
 **Step 4: Advanced config** (optional):
 
-Each config can define an `init` field, which will execute after the config is created.
+Each config can define an `init` function, which will execute after the config is created.
 This allows a config to alter itself, conditionally add values, or define things based on earlier values in the config.
 `BRC.Config.init` and `<feature>.init` both execute before BRC.Config values override feature configs.
-
-`init` can be a function or a multi-line string:
-- `init = function()` will execute the function
-- `init = [[ string ]]` executes the string as a series of lua commands. _(This is required for `store_config = "full"`, since functions cannot be persisted)_
-
-**Example** _(From BRC.Configs.Testing)_: Disable all features that aren't currently defined in the config.
-```lua
-BRC.Configs.Testing = {
-  disable_other_features = true,
-  ...,
-
-  init = [[
-    if BRC.Config.disable_other_features then
-      for _, v in pairs(_G) do
-        if BRC.is_feature_module(v) and not BRC.Config[v.BRC_FEATURE_NAME] then
-          BRC.Config[v.BRC_FEATURE_NAME] = { disabled = true }
-        end
-      end
-    end
-  ]],
-} -- BRC.Configs.Testing
-```
 
 ---
 
@@ -283,10 +259,10 @@ bin/                    # Pre-built RC files
 build/                  # Python scripts to generate bin/
 rc/                     # RC file components
 lua/                    # Lua files
-├── config/                 # Config profiles (Custom, Turncount, Realtime, Explicit, Testing)
+├── config/                 # Main configs (Custom, Turncount, Realtime, Explicit, Testing)
 │   ├── custom.lua            # Commonly adjusted options
+│   ├── turncount.lua         # Turncount speedrun config
 │   ├── explicit.lua          # All options from all features, in one place with default values
-│   ├── turncount.lua         # Turncount speedrun profile
 │   └── ...
 ├── core/                   # Core BRC system
 │   ├── _header.lua             # Anything wanted at the top of buehler.rc, before configs
@@ -307,23 +283,23 @@ lua/                    # Lua files
 
 ### Design Philosophy
 
-The goal is to increase QOL AND automate any no-brainer decisions. However automating multiple turns is a
+The goal of all this is to increase QOL and automate no-brainer decisions. However automating multiple turns is a
 slippery slope to [qw.rc](https://github.com/crawl/crawl/blob/master/crawl-ref/source/test/stress/qw.rc) and avoided.
 It's also possibly disqualifying for any record or tournament games. Where I draw the line is:
+- No automatic turns taken (every turn is an explicit player action)
 - Anything that doesn't consume a turn is fair game (setting inscriptions, inventory slots, or alerts).
-- One-click actions must either: Take a single turn, or be available in dcss defaults as a single command.
-- No automatic turns taken.
+- One-click actions must either: Take a single turn, or be available in dcss as a single command.
 - The hotkey feature is the closest to the line IMO. Hotkey actions are generally pretty obvious things you want to do,
 and rarely occur multiple turns in a row. Still, an extreme use of hotkeys would be to run qw.rc, hotkey everything,
-and "play" the game by holding down the `Enter`.
+and "play" the game by holding down the `Enter` key.
 
-Included features:
+**Included features:**
 - Auto-search a long and custom string in gauntlets, to filter out garbage (0 turns)
 - After pickup a weapon, hotkey for "wield this item?"
 - After scroll of ID pickup, hotkey for "read scroll of id?"
 - Cntl-E (go up closest stairs) on the orb run: Does some math to ignore monsters and ascend faster
 
-Excluded features:
+**Excluded features:**
 - After joining a god in the temple, automatically run to the stairs.
 
 ---
@@ -384,7 +360,7 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
 - When a feature throws an error, BRC will offer to disable the feature.
 - If errors occur in the core code (rare), BRC may offer to disable a hook. This would impact all features using that hook,
 so it's recommended to determine the feature causing the error and disable it.
-- In both cases, it's probably worth answering No once, then disabling things only if the error persists. Restarting crawl will re-enable all features and hooks.
+- In both cases, it's probably worth answering `No` once, then disabling things only if the error persists. Restarting crawl will re-enable all features and hooks.
 
 ## Resources
 

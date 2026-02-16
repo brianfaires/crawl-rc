@@ -1,4 +1,4 @@
---- Realtime Config Profile: For realtime speedruns
+--- Realtime Main Config: For realtime speedruns
 
 brc_config_realtime = {
   BRC_CONFIG_NAME = "Realtime",

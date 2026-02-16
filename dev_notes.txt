@@ -17,6 +17,7 @@
   BRC.active == false at start of game; because monsters in view on spawn?
 
 ### Misc:
+  - Config saved to class/race isn't used, because the feature is set by the config. (Needs BRC global toggle)
   - Add more comments to feature files, especially for the config options.
   - Autoinscribe consumables with bailey/ossuary/sewer/etc
   - When creating a "move to item" hotkey, check existing hotkeys and remove move for inferior item

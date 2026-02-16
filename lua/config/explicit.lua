@@ -140,7 +140,7 @@ brc_config_explicit = {
   },
 
   ["color-inscribe"] = {
-    disabled = false,
+    disabled = true,
     -- No config; See color-inscribe.lua for COLORIZE_TAGS
   },
 

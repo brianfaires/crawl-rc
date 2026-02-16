@@ -10,6 +10,11 @@ BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
 
+f_color_inscribe = {}
+f_color_inscribe.Config = {
+  disabled = false,
+} -- f_color_inscribe.Config (do not remove this comment)
+
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
@@ -48,9 +53,9 @@ end
 -- BRC feature module: color-inscribe
 -- @module f_color_inscribe
 -- Adds color to key terms in inscriptions (resistances, stats, etc).
+-- Disabled on main, because webtiles (CAO) doesn't consistently support numeric tags.
 ---------------------------------------------------------------------------------------------------
 
-f_color_inscribe = {}
 
 
 ---- Local constants ----
