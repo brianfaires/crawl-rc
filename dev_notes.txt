@@ -4,34 +4,29 @@
 - pause slowest weapon alert with pa pause
 - pause pickup-alert during memorization
 
-### TODO
-turncount playtest notes:
-  why getting "DPS increase" alert?
-  picked up weapon & gold; didn't assign weapon to 'a' (left on b)
-  BRC.active == false at start of game; cause monsters in view on spawn?
-
-hotkey:
-  - swallowing keypress again; when walking and it comes into view
-  - When adding move to hotkey, check existing for inferior and remove
-  - walking, found temple (swallowed); stepped to entrance, OTA buckler; weird map screen after entering temple. Esc -> showed altar search
-
-Misc:
-  - Add more comments to feature files, especially for the config options.
-  - Autoinscribe consumables with bailey/ossuary/sewer/etc
-  - fm unexpected (is from new dcss feature?)
-      basilisk if can't be petrified
-      hound at 33 hp
-      gnoll/iguana at 35
-
 ### Can't reproduce locally:
-- cntl-5 not working on webtiles
 - read id hotkey shows up a turn after the "scroll of id" message that triggered it
 - no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
 - in pan: redrawing screen on every turn of travel (fixed?)
 - carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
 
 
-Realtime features:
+## TODO
+### Turncount playtest notes:
+  why getting "DPS increase" alert?
+  picked up weapon & gold; didn't assign weapon to 'a' (left on b)
+  BRC.active == false at start of game; cause monsters in view on spawn?
+
+### Misc:
+  - Add more comments to feature files, especially for the config options.
+  - Autoinscribe consumables with bailey/ossuary/sewer/etc
+  - When creating a "move to" hotkey, check existing for inferior and remove
+  - fm unexpected (is from new dcss feature?)
+      basilisk if can't be petrified
+      hound at 33 hp
+      gnoll/iguana at 35
+
+### Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)
   - Conditions for Stop on stairs:
     - up vs down, hatches
@@ -69,17 +64,16 @@ https://github.com/crawl/crawl/pull/4892 -> required for bread-swinger.lua
 1. remove stat inscriptions and "~~DROP_ME" when dropping item (needs to inscribe items on floor)
 1. colorize 'inscriptions' of artefacts (and 0.34's inscriptions of all items like scarf of resistance)
 1. Disable mouse click travel (on MacOS?) - ideally just prevent accidental movement from trackpad
-1. announce shop names/types as they come into view
 
-### Backlog
-1. Rest starts w/1 turn of autopickup (if inv not full)
+### Backlog / won't do
+1. Start any rest with autopickup on current square (if inv not full)
 1. Speed improvements:
   - int instead of floats
   - extra level of 'items_alerted' table: item_db_name -> ego -> plus
   - bring back BRC.CACHE - ie load all values that are used >1x per ready().
     (Removed previous cache due to minimal impact, vs code clarity + robustness)
 1. BRC core/util:
-  - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that use mprf()
+  - BRC.mprf.color(msg, ...) and textf.color(msg, ...) that uses mprf()
 1. alert-monsters:
   - floor-specific fm ignores (eg vault warden on v:5)
   - torment helper; unique color / display count or list of tormentors in LOS

@@ -106,7 +106,9 @@ BRC.ARTPROPS_EGO = { -- Corresponding ego
 } -- BRC.ARTPROPS_EGO (do not remove this comment)
 
 ---- Other ----
-BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-S"] = 20, ["Cntl-E"] = 5, ["Cntl-5"] = 53 }
+BRC.KEYS = { ENTER = 13, ESC = 27, ["Cntl-T"] = 20, ["Cntl-E"] = 5,
+["Cntl-5"] = crawl.is_webtiles() and -11 or -43
+} -- BRC.KEYS (do not remove this comment)
 
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
