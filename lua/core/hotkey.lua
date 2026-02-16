@@ -16,7 +16,7 @@ BRC.Hotkey.Config = {
   explore_clears_queue = true, -- Clear the hotkey queue on explore
   newline_before_hotkey = true, -- Add a newline before the hotkey message
   move_to_feature = {
-    -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
+    -- Hotkey for "move to _" when you find these features
     enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
     enter_bailey = "flagged portal", enter_bazaar = "bazaar",
     enter_desolation = "crumbling gateway", enter_gauntlet = "gauntlet",

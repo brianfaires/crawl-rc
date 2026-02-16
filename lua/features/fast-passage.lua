@@ -1,5 +1,8 @@
 f_fast_passage = {}
 f_fast_passage.BRC_FEATURE_NAME = "fast_passage"
+f_fast_passage.Config = {
+  disabled = true,
+}
 
 ---- Local constants ----
 local FEAT_NAME = "passage of golubria"
@@ -34,7 +37,7 @@ local function do_safe_passage()
 end
 
 function f_fast_passage.c_message(text, _)
-  if text:find("you open a passage or sth") then
+  if text:find("you open a passage (there isn't actually a message; trigger TBD)") then
     do_safe_passage()
   end
 end
