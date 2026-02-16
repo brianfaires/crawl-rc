@@ -50,7 +50,7 @@ brc_config_custom = {
     gauntlet_search = true,     -- on enter or explore, auto-search gauntlet with filters
   },
   ["startup"] = {
-    show_skills_on_startup = false, -- Open skills menu on startup
+    show_skills_menu = false, -- Open skills menu on startup
     auto_set_skill_targets = {
       { "Stealth", 2.0 },  -- First, focus stealth to 2.0
       { "Fighting", 2.0 }, -- If already have stealth, focus fighting to 2.0
@@ -215,7 +215,7 @@ brc_config_turncount = {
     crawl.setopt("default_autopickup = false")
     crawl.setopt("explore_stop += shops") -- Adds an announcement with the shop name
     crawl.setopt("macros += M o zo") -- Disable autoexplore; cast spell 'o' instead
-    crawl.setopt("autoinscribe += shield:!T")
+    crawl.setopt("autoinscribe += offhand:!T")
     crawl.setopt("autopickup_exceptions ^= > stones?$") -- Don't highlight autopickup for stones
 
     for _, m in ipairs(f_pickup_alert.Config.Alert.More) do
@@ -378,6 +378,16 @@ brc_config_explicit = {
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
     explore_clears_queue = true, -- Clear the hotkey queue on explore
     newline_before_hotkey = true, -- Add a newline before the hotkey message
+    move_to_feature = {
+      -- Hotkey for "move to _" when you find these features
+      enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
+      enter_bailey = "flagged portal", enter_bazaar = "bazaar",
+      enter_desolation = "crumbling gateway", enter_gauntlet = "gauntlet",
+      enter_ice_cave = "frozen archway", enter_necropolis = "phantasmal passage",
+      enter_ossuary = "sand-covered staircase", enter_sewer = "glowing drain",
+      enter_trove = "trove of treasure", enter_volcano = "dark tunnel",
+      enter_wizlab = "magical portal", enter_ziggurat = "ziggurat",
+    },
   },
 
   ---- Feature configs ----
@@ -541,7 +551,21 @@ brc_config_explicit = {
 
   ["manage-consumables"] = {
     disabled = false,
-    -- No config;See manage-consumables.lua for NO_INSCRIPTION_NEEDED scrolls/potions
+    maintain_safe_scrolls = true,
+    maintain_safe_potions = true,
+    scroll_slots = {
+      ["acquirement"] = "A", ["amnesia"] = "x", ["blinking"] = "B", ["brand weapon"] = "W",
+      ["butterflies"] = "s", ["enchant armour"] = "a", ["enchant weapon"] = "w",
+      ["fear"] = "f", ["fog"] = "g", ["identify"] = "i", ["immolation"] = "I",
+      ["noise"] = "N", ["revelation"] = "r", ["poison"] = "p", ["silence"] = "S",
+      ["summoning"] = "s", ["teleportation"] = "t", ["torment"] = "T", ["vulnerability"] = "V",
+    },
+    potion_slots = {
+      ["ambrosia"] = "a", ["attraction"] = "A", ["berserk rage"] = "B", ["brilliance"] = "b",
+      ["cancellation"] = "C", ["curing"] = "c", ["experience"] = "E", ["enlightenment"] = "e",
+      ["haste"] = "h", ["heal wounds"] = "w", ["invisibility"] = "i", ["lignification"] = "L",
+      ["magic"] = "g", ["might"] = "z", ["resistance"] = "r", ["mutation"] = "M",
+    },
   },
 
   ["safe-stairs"] = {
@@ -1503,7 +1527,7 @@ ai += of invulnerability:rInv
 ai += of magic regeneration:MRegen+
 ai += of positive energy:rN+
 ai += of regeneration:Regen+
-ai += (?!.*potion)of resistance:rF+, rC+
+ai += (?<!potion) of resistance:rF+, rC+
 ai += of willpower:Will+
 
 # Armour (avoid double inscribing artefacts)
@@ -3735,7 +3759,7 @@ BRC.Hotkey.Config = {
   explore_clears_queue = true, -- Clear the hotkey queue on explore
   newline_before_hotkey = true, -- Add a newline before the hotkey message
   move_to_feature = {
-    -- Hotkey move to, for these features. Also includes all portal entrances if table is not nil.
+    -- Hotkey for "move to _" when you find these features
     enter_temple = "Temple", enter_lair = "Lair", altar_ecumenical = "faded altar",
     enter_bailey = "flagged portal", enter_bazaar = "bazaar",
     enter_desolation = "crumbling gateway", enter_gauntlet = "gauntlet",

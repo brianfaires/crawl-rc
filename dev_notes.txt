@@ -12,6 +12,7 @@ autoinscribe with "bailey" or "ossuary"
 ma_saved_msg -> after first save, throws exception on next game (can't concatenate nil)
 alerted arbalest as slowest weapon (2.02 > 2.01 trident) while changing body armour
 dump path to morgue on char dump?
+pause pickup-alert during memorization
 
 hotkey:
   - swallowing keypress again; when walking and it comes into view

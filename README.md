@@ -49,6 +49,7 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Exploration & Travel
 
 - **fully-recover** - Rests until negative status effects clear
+- **fast-passage** - (disabled; not complete) When you open a passage of Golubria, offers to move to it via the hotkey
 - **go-up-macro** - Enhanced Cntl-E macro with orb run mechanics: HP-based monster ignore for fast+safe ascension
 - **runrest-features** - Updates travel stops based on location/religion/recent shaft. Auto-searches when entering temple/gauntlet
 - **safe-stairs** - Prevents accidental stair usage. Warns before entering V:5
@@ -282,6 +283,11 @@ bin/                    # Pre-built RC files
 build/                  # Python scripts to generate bin/
 rc/                     # RC file components
 lua/                    # Lua files
+├── config/                 # Config profiles (Custom, Turncount, Realtime, Explicit, Testing)
+│   ├── custom.lua            # Commonly adjusted options
+│   ├── explicit.lua          # All options from all features, in one place with default values
+│   ├── turncount.lua         # Turncount speedrun profile
+│   └── ...
 ├── core/                   # Core BRC system
 │   ├── _header.lua             # Anything wanted at the top of buehler.rc, before configs
 │   ├── brc.lua                 # Main coordinator
@@ -369,8 +375,8 @@ so it's recommended to determine the feature causing the error and disable it.
 
 ### Cool RC files / Sources of features
 - Use this syntax to lookup a player's RC file:
-  - [http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc)
-  - [http://crawl.akrasiac.org/rcfiles/crawl-0.33/buehler.rc](http://crawl.akrasiac.org/rcfiles/crawl-git/buehler.rc)
+  - [http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc)
+  - [http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc)
 - [gammafunk/dcss-rc](https://github.com/gammafunk/dcss-rc)
 - [magus/dcss](https://github.com/magus/dcss)
 - [linewriter1024/crawl-rc](https://github.com/linewriter1024/crawl-rc)

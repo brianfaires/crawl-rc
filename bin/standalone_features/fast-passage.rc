@@ -10,6 +10,11 @@ BRC = BRC or {}
 BRC.Config = BRC.Config or {}
 BRC.Config.emojis = false
 
+f_fast_passage = {}
+f_fast_passage.Config = {
+  disabled = false,
+}
+
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
@@ -42,7 +47,6 @@ for k, color in pairs(BRC.COL) do
 end
 
 
-f_fast_passage = {}
 
 
 ---- Local constants ----
@@ -78,7 +82,7 @@ local function do_safe_passage()
 end
 
 function f_fast_passage.c_message(text, _)
-  if text:find("you open a passage or sth") then
+  if text:find("you open a passage (there isn't actually a message; trigger TBD)") then
     do_safe_passage()
   end
 end
