@@ -16,6 +16,9 @@ brc_config_custom = {
     dmg_fm_threshold = 0.30,    -- Force more for losing this % of max HP
     always_on_bottom = false,   -- Rewrite HP/MP meters after each turn with messages
   },
+  ["color-inscribe"] = {
+    disabled = true, -- Worth trying this out, but inconsistently supported on webtiles (CAO)
+  },
   ["fm-messages"] = {
     force_more_threshold = 6, -- How many force_more_messages; 1=many; 10=none
   },
