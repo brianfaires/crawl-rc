@@ -10,7 +10,7 @@ ai += of invulnerability:rInv
 ai += of magic regeneration:MRegen+
 ai += of positive energy:rN+
 ai += of regeneration:Regen+
-ai += (?!.*potion)of resistance:rF+, rC+
+ai += (?<!potion) of resistance:rF+, rC+
 ai += of willpower:Will+
 
 # Armour (avoid double inscribing artefacts)
