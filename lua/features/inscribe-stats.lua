@@ -37,14 +37,14 @@ local function inscribe_armour_stats(it)
     new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, ac_or_sh)
     if not it.inscription:contains(ac_or_sh:sub(1, 3)) then sign_change = true end
 
-    if ev and ev ~= "" then
+    if ev and #ev > 0 then
       new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
       if not it.inscription:contains(ev:sub(1, 3)) then sign_change = true end
     end
   else
     new_insc = ac_or_sh
-    if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
-    if it.inscription and it.inscription ~= "" then
+    if ev and #ev > 0 then new_insc = string.format("%s, %s", new_insc, ev) end
+    if it.inscription and #it.inscription > 0 then
       new_insc = string.format("%s; %s", new_insc, it.inscription)
     end
   end
