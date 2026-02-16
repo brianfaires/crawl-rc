@@ -351,9 +351,9 @@ function f_misc_alerts.init()
 
   if C.save_with_msg then
     BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
-    if ma_saved_msg and ma_saved_msg ~= "" then
+    if ma_saved_msg and #ma_saved_msg > 0 then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
-      ma_saved_msg = nil
+      ma_saved_msg = ""
     end
   end
 

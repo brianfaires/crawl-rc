@@ -6824,14 +6824,14 @@ local function inscribe_armour_stats(it)
     new_insc = it.inscription:gsub(abbr .. NUM_PATTERN, ac_or_sh)
     if not it.inscription:contains(ac_or_sh:sub(1, 3)) then sign_change = true end
 
-    if ev and ev ~= "" then
+    if ev and #ev > 0 then
       new_insc = new_insc:gsub("EV" .. NUM_PATTERN, ev)
       if not it.inscription:contains(ev:sub(1, 3)) then sign_change = true end
     end
   else
     new_insc = ac_or_sh
-    if ev and ev ~= "" then new_insc = string.format("%s, %s", new_insc, ev) end
-    if it.inscription and it.inscription ~= "" then
+    if ev and #ev > 0 then new_insc = string.format("%s, %s", new_insc, ev) end
+    if it.inscription and #it.inscription > 0 then
       new_insc = string.format("%s; %s", new_insc, it.inscription)
     end
   end
@@ -6852,15 +6852,9 @@ end
 
 local function get_staff_dmg_str(it)
   local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it)
-  local bonus_str
-  if dmg == 0 or chance == 0 then
-    bonus_str = "(+0)"
-  elseif chance >= 1 then
-    bonus_str = string.format("(+%d)", math.floor(dmg))
-  else
-    bonus_str = string.format("(+%.0f,%.0f%%%%)", dmg, chance * 100)
-  end
-  return bonus_str
+  if dmg == 0 or chance == 0 then return "(+0)" end
+  if chance >= 1 then return string.format("(+%d)", math.floor(dmg)) end
+  return string.format("(+%.0f|%.0f%%%%)", dmg, chance * 100)
 end
 
 --- Replace the old inscription with the current one, preserving prefix/suffix
@@ -6899,6 +6893,13 @@ local function inscribe_weapon_stats(it)
   if C.prefix_staff_dmg and BRC.it.is_magic_staff(it) then
     local bonus_str = get_staff_dmg_str(it)
     dps_inscr = dps_inscr:gsub("/", bonus_str .. "/")
+    -- Recuce weapon damage string from #.## -> #
+    local dmg_index = dps_inscr:find("=%d+%.%d%d")
+    if dmg_index then
+      local dmg_str = dps_inscr:sub(dmg_index + 1, dmg_index + 4)
+      local dmg_int = math.floor(tonumber(dmg_str)+0.5)
+      dps_inscr = dps_inscr:gsub("=" .. dmg_str, "=" .. dmg_int)
+    end
   end
 
   it.inscribe(update_inscription(orig_inscr, dps_inscr), false)
@@ -6972,9 +6973,9 @@ function f_misc_alerts.init()
 
   if C.save_with_msg then
     BRC.opt.macro(BRC.util.get_cmd_key("CMD_SAVE_GAME") or "S", "macro_brc_save")
-    if ma_saved_msg and ma_saved_msg ~= "" then
+    if ma_saved_msg and #ma_saved_msg > 0 then
       BRC.mpr.white("MESSAGE: " .. ma_saved_msg)
-      ma_saved_msg = nil
+      ma_saved_msg = ""
     end
   end
 

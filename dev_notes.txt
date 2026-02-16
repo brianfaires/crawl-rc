@@ -1,14 +1,13 @@
 ### TODO
-why getting "DPS increase" alert?
-'o' starts by resting when below mhp, when i want it to search gauntlet again
-fm removal (partially from new dcss feature?)
-  basilisk if can't be petrified
-  hound at 33 hp
-  gnoll/iguana at 35
-staff inscription, reduce num_digits on dmg to 0 or 1
-picked up weapon & gold; didn't assign weapon to 'a' (left on b)
-BRC.active == false at start of game; cause monsters in view on spawn?
-autoinscribe with "bailey" or "ossuary"
+turncount playtest notes:
+  why getting "DPS increase" alert?
+  'o' starts by resting when below mhp, when i want it to search gauntlet again
+  fm removal (is from new dcss feature?)
+    basilisk if can't be petrified
+    hound at 33 hp
+    gnoll/iguana at 35
+  picked up weapon & gold; didn't assign weapon to 'a' (left on b)
+  BRC.active == false at start of game; cause monsters in view on spawn?
 ma_saved_msg -> after first save, throws exception on next game (can't concatenate nil)
 alerted arbalest as slowest weapon (2.02 > 2.01 trident) while changing body armour
 dump path to morgue on char dump?
@@ -21,6 +20,7 @@ hotkey:
 
 Misc:
   - Add more comments to feature files, especially for the config options.
+  - Autoinscribe consumables with bailey/ossuary/sewer/etc
 
 ### Can't reproduce locally:
 - cntl-5 not working on webtiles

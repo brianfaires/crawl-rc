@@ -65,15 +65,9 @@ end
 
 local function get_staff_dmg_str(it)
   local _, dmg, chance = BRC.eq.get_staff_bonus_dmg(it)
-  local bonus_str
-  if dmg == 0 or chance == 0 then
-    bonus_str = "(+0)"
-  elseif chance >= 1 then
-    bonus_str = string.format("(+%d)", math.floor(dmg))
-  else
-    bonus_str = string.format("(+%.0f,%.0f%%%%)", dmg, chance * 100)
-  end
-  return bonus_str
+  if dmg == 0 or chance == 0 then return "(+0)" end
+  if chance >= 1 then return string.format("(+%d)", math.floor(dmg)) end
+  return string.format("(+%.0f|%.0f%%%%)", dmg, chance * 100)
 end
 
 --- Replace the old inscription with the current one, preserving prefix/suffix
@@ -112,6 +106,13 @@ local function inscribe_weapon_stats(it)
   if C.prefix_staff_dmg and BRC.it.is_magic_staff(it) then
     local bonus_str = get_staff_dmg_str(it)
     dps_inscr = dps_inscr:gsub("/", bonus_str .. "/")
+    -- Recuce weapon damage string from #.## -> #
+    local dmg_index = dps_inscr:find("=%d+%.%d%d")
+    if dmg_index then
+      local dmg_str = dps_inscr:sub(dmg_index + 1, dmg_index + 4)
+      local dmg_int = math.floor(tonumber(dmg_str)+0.5)
+      dps_inscr = dps_inscr:gsub("=" .. dmg_str, "=" .. dmg_int)
+    end
   end
 
   it.inscribe(update_inscription(orig_inscr, dps_inscr), false)
