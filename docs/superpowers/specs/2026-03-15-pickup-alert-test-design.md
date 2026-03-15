@@ -1,7 +1,7 @@
 # Design: T.wizard_give + test_pickup_alert
 
 **Date:** 2026-03-15
-**Status:** Approved
+**Status:** Draft
 
 ## Scope
 
@@ -33,10 +33,10 @@ can be driven programmatically.
 **Implementation:**
 ```lua
 function T.wizard_give(item_spec)
-  -- Pre-queue: wizard subcommand '%' + item name + Enter
-  -- cancellable_get_line_autohist reads from the same macro_buf as sendkeys
+  -- Pre-queue: wizard subcommand '%' + item name + Enter.
+  -- cancellable_get_line_autohist reads from the same macro_buf as sendkeys.
   crawl.sendkeys("%" .. item_spec .. "\r")
-  -- Execute CMD_WIZARD synchronously; it reads the pre-queued subcommand and name
+  -- Execute CMD_WIZARD; handle_wizard_command() reads the pre-queued '%' and name.
   crawl.do_commands({"CMD_WIZARD"})
   -- Item now exists on the floor at you.pos()
 end
@@ -49,6 +49,12 @@ Key facts from source:
 - Item is placed at `you.pos()` via `create_item_named(buf, you.pos(), &error)`
 - `&` key is not remapped by any BRC macro (confirmed from init log)
 
+**Pre-queue survival:** `crawl.do_commands` calls `flush_input_buffer(FLUSH_BEFORE_COMMAND)`
+at `l-crawl.cc:603`. That flush is a no-op by default: `macro.cc:929` only actually
+clears `macro_buf` when `Options.flush_input[reason]` is true or `reason` is one of
+the five special FLUSH_* constants. `FLUSH_BEFORE_COMMAND` is not in that set, so
+the pre-queued keys survive.
+
 ---
 
 ## Component 2: test_pickup_alert.lua
@@ -60,51 +66,107 @@ feature fires an alert message containing the item name.
 
 **Test character:** Mummy Berserker, seed 1 — starts with a mace (no ego). A
 weapon with a brand (e.g. "short sword of flaming") is a clear upgrade candidate
-and should trigger an alert.
+and should trigger an early-weapon alert at XL 1.
 
 **Message flow:**
-1. `f_pickup_alert.autopickup(it)` is called when autopickup runs on the floor item
+1. `BRC.autopickup(it)` is called directly from the test
+   (`brc.lua:336`: `BRC.autopickup` calls `safe_call_all_hooks("autopickup", it)`,
+   which dispatches to `f_pickup_alert.autopickup(it)` via the registered hook)
 2. `f_pa_weapons.alert_weapon(it)` evaluates it → returns an alert table
 3. `f_pickup_alert.do_alert(...)` calls `BRC.mpr.que_optmore(...)` → adds to `_mpr_queue`
 4. At end of `BRC.ready()`: `consume_queue()` calls `crawl.mpr(msg)` → `c_message` fires
 5. `T.c_message` captures the message into `T.last_messages`
 
-Because consume_queue fires at the END of the ready() cycle, the message is
-available in `T.last_messages` on the NEXT ready() call.
-
 **Phase state machine:**
 ```
-Phase "give" (first ready() call):
-  - Call T.wizard_give("short sword of flaming")
-  - Call crawl.do_commands({"CMD_WAIT"}) to take a turn and trigger autopickup
-  - Set phase = "check"
-  - [BRC.ready() ends: consume_queue runs, T.c_message captures any alert]
-
-Phase "check" (next ready() call):
-  - Assert T.messages_contain("flaming") — item name appears in alert message
+Phase "advance" (turn 0, first ready() call):
+  - Set phase = "give"
+  - Call crawl.do_commands({"CMD_WAIT"}) to advance to turn 1
+    → Inner BRC.ready() fires at turn 1 and executes phase "give" (see below)
+  - [After CMD_WAIT returns: inner ready's consume_queue has fired,
+     alert message is in T.last_messages]
+  - Assert T.messages_contain("flaming")
   - T.pass / T.done
+
+Phase "give" (turn 1, inner ready() triggered by CMD_WAIT):
+  - Call T.wizard_give("short sword of flaming") → item on floor
+  - Identify all items via wizard: crawl.sendkeys("y") + crawl.do_commands({"CMD_WIZARD"})
+    ('y' subcommand → wizard_identify_all_items() at wizard.cc:172, includes floor items)
+  - Iterate you.floor_items(); call BRC.autopickup(it) for each item
+    → pa_last_ready_turn = 0, you.turns() = 1 → alert guard passes → alert queued
+  - Set phase = "done"  [re-entry guard only — see note below]
+  - [BRC.ready() ends: consume_queue fires → T.last_messages populated]
 ```
+
+**Note on "done" phase:** The `"done"` label is a re-entry guard, never entered
+via a ready() call. The actual assertion runs inline in `"advance"` after `CMD_WAIT`
+returns, because at that point `T.last_messages` has already been populated by the
+inner ready's `consume_queue()`.
 
 **Timeout guard:** inherited from harness `T.ready()` — if neither phase completes
 within `T.timeout_turns` (20), it emits `[FAIL] timeout` and quits.
 
-**Assertion:** `T.messages_contain("flaming")` — matches against raw message text
-including color markup. "flaming" appears in the item name portion of the alert
-(`f_pickup_alert.do_alert` includes `item_name` in the message tokens), so it
-survives color-code wrapping.
+**Assertion:** `T.messages_contain("flaming")` — matches against raw message text.
+`c_message` at `message.cc:1566` passes raw `text.c_str()` including color tags.
+`do_alert` in `pa-main.lua` wraps the item name in a color tag via
+`BRC.txt[alert_col.item](string.format(" %s ", item_name))`, producing something like
+`<14> short sword of flaming (+0, 7/2/1) </14>`. The word "flaming" appears inside
+the tag body, not as part of the tag markup itself, so `string.find(text, "flaming")`
+matches it. If `T.last_messages` is empty (queue never flushed), `T.messages_contain`
+returns false (it iterates an empty table), which causes the assertion to fail.
 
 ---
 
-## Risk: CMD_WAIT timing
+## Why Direct BRC.autopickup Works
 
-`crawl.do_commands({"CMD_WAIT"})` is called from within a `ready()` hook. This is
-the standard pattern used by qw.rc for all autonomous actions. It advances the
-game clock, runs `world_reacts()`, and triggers autopickup on floor items.
+`f_pickup_alert.autopickup()` guards against re-alerting within the same turn:
 
-If autopickup does NOT run on CMD_WAIT (e.g. the item was already auto-evaluated
-at wizard-give time), the phase "check" assertion may still pass because pickup-alert
-could have queued the alert via a different path. If the test fails on first run, the
-fix is to add an additional `CMD_WAIT` turn before the "check" phase.
+```lua
+if you.turns() ~= pa_last_ready_turn then
+  check_and_trigger_alerts(it, unworn_aux_item)
+end
+```
+
+`pa_last_ready_turn` is set to `you.turns()` at the top of `f_pickup_alert.ready()`.
+
+**Hook call order:** BRC registers features alphabetically and calls their ready() hooks
+in reverse order (`call_all_hooks` iterates `#hooks` → 1). "pickup-alert" < "test-harness"
+alphabetically, so `test.ready()` runs **before** `f_pickup_alert.ready()` each cycle.
+
+At turn 1, when `test.ready()` runs:
+- `you.turns() = 1`
+- `pa_last_ready_turn = 0` (set by f_pickup_alert.ready() at turn 0, not yet updated)
+- `1 ≠ 0` → the alert guard passes ✓
+
+DCSS autopickup (via `request_autopickup()`) does NOT fire on CMD_WAIT or wizard item
+creation — it is only called from `stairs.cc`, `movement.cc`, and `god-abil.cc`. The
+direct `BRC.autopickup(it)` call is therefore required.
+
+**Turn 0 exception:** at turn 0, both `you.turns()` and `pa_last_ready_turn` are 0
+(pa_last_ready_turn is initialized to `you.turns()` in `f_pickup_alert.init()`). The
+guard would block any direct autopickup call at turn 0. The CMD_WAIT in "advance"
+advances to turn 1 specifically to avoid this.
+
+---
+
+## Item Identification
+
+`f_pickup_alert.autopickup()` skips unidentified branded items:
+```lua
+or (not it.is_identified and (it.branded or it.artefact or ...))
+```
+
+A "short sword of flaming" has a brand. To guarantee `it.is_identified` is true,
+the "give" phase always calls `wizard_identify_all_items()` immediately after giving
+the item, using wizard subcommand `'y'` (`wizard.cc:172`):
+
+```lua
+crawl.sendkeys("y")
+crawl.do_commands({"CMD_WIZARD"})  -- 'y' reads no further input; acts immediately
+```
+
+This identifies all items on the floor and in inventory, ensuring the brand is
+visible before `BRC.autopickup` is called.
 
 ---
 
