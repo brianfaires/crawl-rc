@@ -4,8 +4,10 @@
 -- Provides T.* API for assertions, lifecycle, and message capture.
 ---------------------------------------------------------------------------------------------------
 
--- Override config before BRC.init() sees it (prevents interactive "ask" prompt in headless mode)
-BRC.Config.to_use = "Testing"
+-- Override config before BRC.init() sees it (prevents interactive "ask" prompt in headless mode).
+-- Must set BRC.Configs.Default.to_use, not BRC.Config.to_use, because init_config() resets
+-- BRC.Config = util.copy_table(BRC.Configs.Default) before reading to_use.
+BRC.Configs.Default.to_use = "Testing"
 
 -- T is the harness feature module. BRC picks it up via T.BRC_FEATURE_NAME.
 T = {}
@@ -21,8 +23,7 @@ T.last_messages = {}
 ---------------------------------------------------------------------------------------------------
 
 local function stderr(line)
-  io.stderr:write(line .. "\n")
-  io.stderr:flush()
+  crawl.stderr(line) -- crawl.stderr() adds \n automatically; io library is disabled in crawl's Lua
 end
 
 function T.pass(name)
@@ -91,10 +92,10 @@ end
 ---------------------------------------------------------------------------------------------------
 
 -- T.done(): signal test completion and quit crawl.
--- Answers save/quit prompts via c_answer_prompt so crawl exits cleanly.
+-- Uses CMD_SAVE_GAME_NOW directly to bypass macro_brc_save() which would block with yesno().
 function T.done()
   T._done = true
-  crawl.sendkeys("S") -- save-and-quit key; under -no-save, crawl exits without saving
+  crawl.do_commands({"CMD_SAVE_GAME_NOW"})
 end
 
 -- Timeout guard: if T.done() not called within T.timeout_turns, fail and quit.

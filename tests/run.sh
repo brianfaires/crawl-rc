@@ -24,7 +24,19 @@ else
 fi
 if [[ -z "${CRAWL_BIN_RESOLVED}" || ! -x "${CRAWL_BIN_RESOLVED}" ]]; then
   echo "ERROR: crawl binary not found or not executable at: ${CRAWL_BIN}" >&2
-  echo "  Set CRAWL_BIN=/path/to/crawl or build crawl first." >&2
+  echo "  Set CRAWL_BIN=/path/to/crawl-console or build crawl first." >&2
+  exit 1
+fi
+
+# Check fake_pty — required to provide a PTY for the console binary
+if [[ "${FAKE_PTY_BIN}" = /* ]]; then
+  FAKE_PTY_BIN_RESOLVED="${FAKE_PTY_BIN}"
+else
+  FAKE_PTY_BIN_RESOLVED="$(cd "${REPO_ROOT}" && cd "$(dirname "${FAKE_PTY_BIN}")" 2>/dev/null && pwd)/$(basename "${FAKE_PTY_BIN}")"
+fi
+if [[ -z "${FAKE_PTY_BIN_RESOLVED}" || ! -x "${FAKE_PTY_BIN_RESOLVED}" ]]; then
+  echo "ERROR: fake_pty not found or not executable at: ${FAKE_PTY_BIN}" >&2
+  echo "  Build crawl first (fake_pty is built alongside crawl in crawl-ref/source/util/)." >&2
   exit 1
 fi
 
@@ -88,10 +100,12 @@ for TEST_FILE in "${TEST_FILES[@]}"; do
   cat "${TEST_FILE}" >> "${TEMP_RC}"
   tail -n "+${INIT_LINE}" "${REPO_ROOT}/bin/buehler.rc" >> "${TEMP_RC}"
 
-  # Run crawl with timeout
+  # Run crawl with timeout.
+  # fake_pty provides a PTY for stdin/stdout so the console binary runs headlessly.
+  # It does NOT wrap stderr, so crawl.stderr() output flows directly to the shell redirection.
   set +e
   $TIMEOUT_CMD "${TIMEOUT_SEC}" \
-    "${CRAWL_BIN_RESOLVED}" $CRAWL_FLAGS -rc "${TEMP_RC}" \
+    "${FAKE_PTY_BIN_RESOLVED}" "${CRAWL_BIN_RESOLVED}" $CRAWL_FLAGS -rc "${TEMP_RC}" \
     > "${TMPDIR_BRC}/${TEST_NAME}.stdout" \
     2> "${STDERR_LOG}"
   EXIT_CODE=$?
