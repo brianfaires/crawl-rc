@@ -1,7 +1,7 @@
 # Design: T.wizard_give + test_pickup_alert
 
 **Date:** 2026-03-15
-**Status:** Draft
+**Status:** Implemented
 
 ## Scope
 
@@ -77,31 +77,35 @@ and should trigger an early-weapon alert at XL 1.
 4. At end of `BRC.ready()`: `consume_queue()` calls `crawl.mpr(msg)` → `c_message` fires
 5. `T.c_message` captures the message into `T.last_messages`
 
-**Phase state machine:**
+**CMD_WAIT behavior (verified empirically):**
+`crawl.do_commands({"CMD_WAIT"})` is synchronous and returns immediately to Lua
+after the game processes the action. It does NOT synchronously trigger the next
+`BRC.ready()` cycle — that fires in the subsequent game loop iteration. Only ONE
+turn-advancing command may be issued per `ready()` invocation; a second call causes
+"Cannot currently process new keys (turn is over)". Test features must be declared
+as globals (not `local`) so BRC's `_G` scan in `register_all_features` finds them.
+
+**Phase state machine (3 separate ready() calls):**
 ```
-Phase "advance" (turn 0, first ready() call):
-  - Set phase = "give"
-  - Call crawl.do_commands({"CMD_WAIT"}) to advance to turn 1
-    → Inner BRC.ready() fires at turn 1 and executes phase "give" (see below)
-  - [After CMD_WAIT returns: inner ready's consume_queue has fired,
-     alert message is in T.last_messages]
+Phase "give" (turn 0):
+  - Call T.wizard_give("short sword of flaming") → item on floor
+  - Call T.wizard_identify_all() to ensure it.is_identified = true
+  - Set phase = "check"
+  - Call crawl.do_commands({"CMD_WAIT"}) → advances to turn 1, returns immediately
+  - Return from ready()  [turn 0's consume_queue fires after this; queue is empty]
+
+Phase "check" (turn 1, separate game loop iteration):
+  - test_pickup_alert.ready() runs BEFORE f_pickup_alert.ready() (reverse alpha order)
+  - pa_last_ready_turn = 0, you.turns() = 1 → alert guard passes
+  - Iterate you.floor_items(); call BRC.autopickup(it) → alert queued
+  - Set phase = "verify"
+  - Call crawl.do_commands({"CMD_WAIT"}) → advances to turn 2, returns immediately
+  - Return from ready()  [turn 1's consume_queue fires after this → T.last_messages populated]
+
+Phase "verify" (turn 2, separate game loop iteration):
   - Assert T.messages_contain("flaming")
   - T.pass / T.done
-
-Phase "give" (turn 1, inner ready() triggered by CMD_WAIT):
-  - Call T.wizard_give("short sword of flaming") → item on floor
-  - Identify all items via wizard: crawl.sendkeys("y") + crawl.do_commands({"CMD_WIZARD"})
-    ('y' subcommand → wizard_identify_all_items() at wizard.cc:172, includes floor items)
-  - Iterate you.floor_items(); call BRC.autopickup(it) for each item
-    → pa_last_ready_turn = 0, you.turns() = 1 → alert guard passes → alert queued
-  - Set phase = "done"  [re-entry guard only — see note below]
-  - [BRC.ready() ends: consume_queue fires → T.last_messages populated]
 ```
-
-**Note on "done" phase:** The `"done"` label is a re-entry guard, never entered
-via a ready() call. The actual assertion runs inline in `"advance"` after `CMD_WAIT`
-returns, because at that point `T.last_messages` has already been populated by the
-inner ready's `consume_queue()`.
 
 **Timeout guard:** inherited from harness `T.ready()` — if neither phase completes
 within `T.timeout_turns` (20), it emits `[FAIL] timeout` and quits.
