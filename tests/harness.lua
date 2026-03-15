@@ -137,8 +137,19 @@ end
 ---------------------------------------------------------------------------------------------------
 
 function T.wizard_give(item_spec)
-  T.error_("wizard_give", "not implemented in v1")
-  T.done()
+  -- Pre-queue '%' + item name + Enter; CMD_WIZARD reads them from macro_buf.
+  -- flush_input_buffer(FLUSH_BEFORE_COMMAND) inside do_commands is a no-op by
+  -- default, so the pre-queued keys survive.
+  crawl.sendkeys("%" .. item_spec .. "\r")
+  crawl.do_commands({"CMD_WIZARD"})
+  -- Item now exists on the floor at you.pos()
+end
+
+function T.wizard_identify_all()
+  -- 'y' subcommand -> wizard_identify_all_items() (wizard.cc:172).
+  -- No further input needed; identifies floor + inventory items immediately.
+  crawl.sendkeys("y")
+  crawl.do_commands({"CMD_WIZARD"})
 end
 
 function T.wizard_set_xl(level)
