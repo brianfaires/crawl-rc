@@ -73,6 +73,11 @@ end
 --- Replace the old inscription with the current one, preserving prefix/suffix
 local function update_inscription(orig, cur)
   local first = orig:find(cur:sub(1, 4))
+  -- Handle format migration between DPS= and Dmg= modes (e.g. when skip_dps config changes)
+  if not first then
+    if cur:sub(1, 4) == "Dmg=" then first = orig:find("DPS=")
+    elseif cur:sub(1, 4) == "DPS=" then first = orig:find("Dmg=") end
+  end
   if not first then return cur .. "; " .. orig end
 
   local _, last = orig:find("A%+%d+")
