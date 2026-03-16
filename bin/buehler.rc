@@ -5072,8 +5072,9 @@ function f_announce_hp_mp.ready()
   local mhp_delta = mhp - ad_prev.mhp
   local mmp_delta = mmp - ad_prev.mmp
 
-  -- Calc damage taken, with starting point being mhp * (prev hp / prev mhp)
-  local expected_hp = mhp * (hp / mhp)
+  -- Calc damage taken: scale prev HP to current max HP, then compare to actual HP.
+  -- Guard against startup (ad_prev.mhp == 0) by falling back to hp so damage_taken = 0.
+  local expected_hp = ad_prev.mhp > 0 and mhp * (ad_prev.hp / ad_prev.mhp) or hp
   local damage_taken = expected_hp - hp
 
   ad_prev.hp = hp
@@ -6651,9 +6652,6 @@ local function start_recovery(cmd)
     else
       do_cmd_wrapper(cmd)
     end
-  elseif not you.feel_safe() then
-    recovery_start_turn = nil
-    BRC.mpr.lightred("A monster is nearby!")
   else
     recovery_start_turn = you.turns()
     explore_after_recovery = cmd == "CMD_EXPLORE"
@@ -8974,8 +8972,10 @@ function f_pa_data.remember_alert(it)
   local cur_val = tonumber(pa_items_alerted[name])
   if not cur_val or value > cur_val then pa_items_alerted[name] = value end
 
-  -- Add lesser versions of same item, to avoid alerting an inferior item
-  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
+  -- Add lesser versions of same item, to avoid alerting an inferior item.
+  -- Use name comparison instead of get_ego(it) because ego() returns nil for floor items
+  -- even when the item is visibly branded (DCSS API limitation for unequipped items).
+  if name ~= it.name("db") and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
     -- Add plain unbranded version
     name = it.name("db")
     cur_val = tonumber(pa_items_alerted[name])

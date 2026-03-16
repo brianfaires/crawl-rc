@@ -359,9 +359,6 @@ local function start_recovery(cmd)
     else
       do_cmd_wrapper(cmd)
     end
-  elseif not you.feel_safe() then
-    recovery_start_turn = nil
-    BRC.mpr.lightred("A monster is nearby!")
   else
     recovery_start_turn = you.turns()
     explore_after_recovery = cmd == "CMD_EXPLORE"

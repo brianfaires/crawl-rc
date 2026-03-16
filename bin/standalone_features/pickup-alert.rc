@@ -1399,8 +1399,10 @@ function f_pa_data.remember_alert(it)
   local cur_val = tonumber(pa_items_alerted[name])
   if not cur_val or value > cur_val then pa_items_alerted[name] = value end
 
-  -- Add lesser versions of same item, to avoid alerting an inferior item
-  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
+  -- Add lesser versions of same item, to avoid alerting an inferior item.
+  -- Use name comparison instead of get_ego(it) because ego() returns nil for floor items
+  -- even when the item is visibly branded (DCSS API limitation for unequipped items).
+  if name ~= it.name("db") and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
     -- Add plain unbranded version
     name = it.name("db")
     cur_val = tonumber(pa_items_alerted[name])
