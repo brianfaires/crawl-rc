@@ -100,12 +100,21 @@ for TEST_FILE in "${TEST_FILES[@]}"; do
   cat "${TEST_FILE}" >> "${TEMP_RC}"
   tail -n "+${INIT_LINE}" "${REPO_ROOT}/bin/buehler.rc" >> "${TEMP_RC}"
 
+  # Per-test character overrides: read -- @species / -- @background / -- @weapon header comments.
+  SPECIES_OVERRIDE=$(grep -m1 "^-- @species "    "$TEST_FILE" | sed 's/^-- @species //'    || true)
+  BG_OVERRIDE=$(grep -m1     "^-- @background " "$TEST_FILE" | sed 's/^-- @background //' || true)
+  WEAPON_OVERRIDE=$(grep -m1 "^-- @weapon "     "$TEST_FILE" | sed 's/^-- @weapon //'    || true)
+  TEST_FLAGS="$CRAWL_FLAGS"
+  [[ -n "$SPECIES_OVERRIDE" ]] && TEST_FLAGS=$(echo "$TEST_FLAGS" | sed "s/-species [^ ]*/-species $SPECIES_OVERRIDE/")
+  [[ -n "$BG_OVERRIDE"      ]] && TEST_FLAGS=$(echo "$TEST_FLAGS" | sed "s/-background [^ ]*/-background $BG_OVERRIDE/")
+  [[ -n "$WEAPON_OVERRIDE"  ]] && TEST_FLAGS=$(echo "$TEST_FLAGS" | sed "s/weapon=[^ ]*/weapon=$WEAPON_OVERRIDE/")
+
   # Run crawl with timeout.
   # fake_pty provides a PTY for stdin/stdout so the console binary runs headlessly.
   # It does NOT wrap stderr, so crawl.stderr() output flows directly to the shell redirection.
   set +e
   $TIMEOUT_CMD "${TIMEOUT_SEC}" \
-    "${FAKE_PTY_BIN_RESOLVED}" "${CRAWL_BIN_RESOLVED}" $CRAWL_FLAGS -rc "${TEMP_RC}" \
+    "${FAKE_PTY_BIN_RESOLVED}" "${CRAWL_BIN_RESOLVED}" $TEST_FLAGS -rc "${TEMP_RC}" \
     > "${TMPDIR_BRC}/${TEST_NAME}.stdout" \
     2> "${STDERR_LOG}"
   EXIT_CODE=$?
