@@ -7,12 +7,13 @@
 -- Formicid has 4 arms, so gloves occupy 2 aux slots.
 -- Other item types (helmet, weapon) still return 1 for Formicid.
 --
--- Note: Formicid Fighter's autopickup consumes wizard-given gloves and helmet immediately,
--- so items are found in inventory (not on floor) in the verify phase.
+-- Note: Formicid Fighter's autopickup does NOT consume wizard-given gloves and helmet;
+-- they remain on the floor. Search uses name-based matching (it.is_armour is nil for
+-- floor items from you.floor_items()).
 --
 -- Phase flow:
 --   "give"   (turn 0): wizard-give gloves + helmet, identify, CMD_WAIT → turn 1
---   "verify" (turn 1): find items in inventory, assert num_eq_slots, T.pass, T.done
+--   "verify" (turn 1): find items on floor, assert num_eq_slots, T.pass, T.done
 ---------------------------------------------------------------------------------------------------
 
 test_pickup_alert_formicid_gloves = {}
@@ -49,13 +50,10 @@ function test_pickup_alert_formicid_gloves.ready()
       end
       T.true_(floor_gloves ~= nil, "gloves-on-floor")
       T.true_(floor_helmet ~= nil, "helmet-on-floor")
+      if not floor_gloves or not floor_helmet then T.done() return end
 
-      if floor_gloves then
-        T.eq(BRC.you.num_eq_slots(floor_gloves), 2, "formicid-glove-slots-2")
-      end
-      if floor_helmet then
-        T.eq(BRC.you.num_eq_slots(floor_helmet), 1, "formicid-helmet-slots-1")
-      end
+      T.eq(BRC.you.num_eq_slots(floor_gloves), 2, "formicid-glove-slots-2")
+      T.eq(BRC.you.num_eq_slots(floor_helmet), 1, "formicid-helmet-slots-1")
 
       -- Starting waraxe in weapon slot: Formicid has 1 weapon slot (not Coglin)
       local weap = items.equipped_at("weapon")
