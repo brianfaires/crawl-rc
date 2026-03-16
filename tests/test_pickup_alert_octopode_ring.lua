@@ -77,12 +77,11 @@ function test_pickup_alert_octopode_ring.ready()
         end
       end
       T.true_(floor_ring ~= nil, "third-ring-on-floor")
+      if not floor_ring then T.done() return end
 
       -- Core assertion: Octopode short-circuit → ring is NOT unneeded even with 2 in inventory
-      if floor_ring then
-        local result = f_pa_misc.is_unneeded_ring(floor_ring)
-        T.false_(result, "octopode-ring-not-unneeded")
-      end
+      local result = f_pa_misc.is_unneeded_ring(floor_ring)
+      T.false_(result, "octopode-ring-not-unneeded")
 
       -- Sanity: a DIFFERENT ring type (0 in inventory) is also not unneeded for Octopode
       T.wizard_give("ring of evasion")
@@ -95,9 +94,8 @@ function test_pickup_alert_octopode_ring.ready()
         end
       end
       T.true_(other_ring ~= nil, "evasion-ring-on-floor")
-      if other_ring then
-        T.false_(f_pa_misc.is_unneeded_ring(other_ring), "octopode-different-ring-not-unneeded")
-      end
+      if not other_ring then T.done() return end
+      T.false_(f_pa_misc.is_unneeded_ring(other_ring), "octopode-different-ring-not-unneeded")
 
       T.pass("pickup-alert-octopode-ring")
       T.done()
