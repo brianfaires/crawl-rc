@@ -696,7 +696,8 @@ function BRC.eq.is_useless_ego(ego)
 
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or (ego == "rPois" or ego == "rpois" or ego == "poison resistance")
+       and util.contains(BRC.POIS_RES_RACES, race)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 
