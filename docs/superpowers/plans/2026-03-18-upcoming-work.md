@@ -1,6 +1,6 @@
 # Upcoming Work
 
-**Status:** 135/135 tests passing as of 2026-03-18.
+**Status:** 138/138 tests passing as of 2026-03-18.
 
 ---
 
@@ -11,7 +11,7 @@
 - [x] Test `pickup-alert` OTA paths — weapon fires, armour fires, weapon skill gate, armour skill gate, OTA artefact (5 tests).
 - [ ] `T.wizard_teleport` — **blocked**: wizard `b` (blink) and `B` (controlled teleport) both require interactive cursor targeting; cannot pre-queue via `sendkeys`. Stub updated with explanation.
 - ~~Test `alert-monsters.lua`~~ — feature will be deprecated; no tests needed.
-- [ ] More feature tests: color-inscribe, autopickup, etc.
+- [x] More feature tests: color-inscribe (idempotency, artefact skip), announce-items (scroll fires).
 
 ## Later
 
