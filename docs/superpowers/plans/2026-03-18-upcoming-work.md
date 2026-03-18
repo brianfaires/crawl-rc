@@ -1,16 +1,16 @@
 # Upcoming Work
 
-**Status:** 129/129 tests passing as of 2026-03-17. Species/class test coverage sprint complete.
+**Status:** 135/135 tests passing as of 2026-03-18.
 
 ---
 
 ## Up Next
 
-- [ ] Implement `T.wizard_set_xl` — wraps wizard `l` subcommand (`wizard_set_xl()` at wiz-you.cc:870). v2 stub already in harness.
-- [ ] Implement `T.wizard_teleport` — v2 stub already in harness.
-- [ ] Test `alert-monsters.lua` — complex species/equipment/will/resist logic, high-risk, currently untested.
-- [ ] Test `dynamic-options.lua` at XL thresholds.
-- [ ] Test `pickup-alert` OTA artefact path.
+- [x] Implement `T.wizard_set_xl` — wraps wizard `l` subcommand (`wizard_set_xl()` at wiz-you.cc:870).
+- [x] Test `dynamic-options.lua` at XL thresholds — `test_dynamic_options_xl_thresholds.lua`.
+- [x] Test `pickup-alert` OTA paths — weapon fires, armour fires, weapon skill gate, armour skill gate, OTA artefact (5 tests).
+- [ ] `T.wizard_teleport` — **blocked**: wizard `b` (blink) and `B` (controlled teleport) both require interactive cursor targeting; cannot pre-queue via `sendkeys`. Stub updated with explanation.
+- ~~Test `alert-monsters.lua`~~ — feature will be deprecated; no tests needed.
 - [ ] More feature tests: color-inscribe, autopickup, etc.
 
 ## Later

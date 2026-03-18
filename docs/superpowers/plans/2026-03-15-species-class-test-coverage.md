@@ -1,6 +1,6 @@
 # Species/Class Test Coverage — Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Expand the BRC test suite from 94 Mummy-only tests to include a per-test character override mechanism and 12 new tests covering species-specific BRC logic across Gnoll, Octopode, Gargoyle, Formicid, Naga, Djinni, Spriggan, Kobold, Poltergeist, Revenant, Demonspawn, and Coglin.
 
@@ -44,11 +44,11 @@ Each test file is self-contained — one responsibility, one feature assertion, 
 **Files:**
 - Modify: `tests/run.sh:101-108`
 
-- [ ] **Step 1: Verify current run.sh structure**
+- [x] **Step 1: Verify current run.sh structure**
 
 Read `tests/run.sh` lines 97–112 to confirm the `tail -n` line and `$CRAWL_FLAGS` line are where expected before editing.
 
-- [ ] **Step 2: Insert the override block + change $CRAWL_FLAGS**
+- [x] **Step 2: Insert the override block + change $CRAWL_FLAGS**
 
 In `tests/run.sh`, replace the block from after the `tail -n` line through the `$CRAWL_FLAGS` launch line. The old text:
 
@@ -85,7 +85,7 @@ Replace with:
     "${FAKE_PTY_BIN_RESOLVED}" "${CRAWL_BIN_RESOLVED}" $TEST_FLAGS -rc "${TEMP_RC}" \
 ```
 
-- [ ] **Step 3: Run the full existing test suite to confirm no regression**
+- [x] **Step 3: Run the full existing test suite to confirm no regression**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh
@@ -93,7 +93,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh
 
 Expected: all existing tests pass (`Results: 94/94 passed` or similar, `OK`).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/run.sh
@@ -107,7 +107,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_pickup_alert_gnoll_falchion.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Gn
@@ -212,7 +212,7 @@ function test_pickup_alert_gnoll_falchion.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_pickup_alert_gnoll_falchion
@@ -220,7 +220,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected output includes: `[PASS] pickup-alert-gnoll-falchion` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_pickup_alert_gnoll_falchion.lua
@@ -234,7 +234,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_pickup_alert_octopode_ring.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Op
@@ -345,7 +345,7 @@ function test_pickup_alert_octopode_ring.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_pickup_alert_octopode_ring
@@ -353,7 +353,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] pickup-alert-octopode-ring` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_pickup_alert_octopode_ring.lua
@@ -367,7 +367,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_dynamic_options_race_gargoyle.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Gr
@@ -408,7 +408,7 @@ function test_dynamic_options_race_gargoyle.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_dynamic_options_race_gargoyle
@@ -416,7 +416,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] dynamic-options-race-gargoyle` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_dynamic_options_race_gargoyle.lua
@@ -430,7 +430,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_pickup_alert_formicid_gloves.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Fo
@@ -491,7 +491,7 @@ function test_pickup_alert_formicid_gloves.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_pickup_alert_formicid_gloves
@@ -499,7 +499,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] pickup-alert-formicid-gloves` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_pickup_alert_formicid_gloves.lua
@@ -515,7 +515,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_dynamic_options_race_naga.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Na
@@ -552,7 +552,7 @@ function test_dynamic_options_race_naga.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_dynamic_options_race_naga
@@ -560,7 +560,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] dynamic-options-race-naga` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_dynamic_options_race_naga.lua
@@ -574,7 +574,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_announce_hp_mp_djinni.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Dj
@@ -624,7 +624,7 @@ function test_announce_hp_mp_djinni.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_announce_hp_mp_djinni
@@ -632,7 +632,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] announce-hp-mp-djinni` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_announce_hp_mp_djinni.lua
@@ -646,7 +646,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_dynamic_options_race_spriggan.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Sp
@@ -683,7 +683,7 @@ function test_dynamic_options_race_spriggan.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_dynamic_options_race_spriggan
@@ -691,7 +691,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] dynamic-options-race-spriggan` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_dynamic_options_race_spriggan.lua
@@ -705,7 +705,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_dynamic_options_race_kobold.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Ko
@@ -739,7 +739,7 @@ function test_dynamic_options_race_kobold.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_dynamic_options_race_kobold
@@ -747,7 +747,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] dynamic-options-race-kobold` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_dynamic_options_race_kobold.lua
@@ -763,7 +763,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_dynamic_options_race_poltergeist.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Po
@@ -817,7 +817,7 @@ function test_dynamic_options_race_poltergeist.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_dynamic_options_race_poltergeist
@@ -825,7 +825,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] dynamic-options-race-poltergeist` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_dynamic_options_race_poltergeist.lua
@@ -839,7 +839,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_dynamic_options_race_revenant.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Re
@@ -874,7 +874,7 @@ function test_dynamic_options_race_revenant.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_dynamic_options_race_revenant
@@ -882,7 +882,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] dynamic-options-race-revenant` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_dynamic_options_race_revenant.lua
@@ -896,7 +896,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_dynamic_options_race_demonspawn.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Ds
@@ -933,7 +933,7 @@ function test_dynamic_options_race_demonspawn.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_dynamic_options_race_demonspawn
@@ -941,7 +941,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] dynamic-options-race-demonspawn` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_dynamic_options_race_demonspawn.lua
@@ -955,7 +955,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 **Files:**
 - Create: `tests/test_pickup_alert_coglin_dual_weapon.lua`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```lua
 -- @species Co
@@ -1015,7 +1015,7 @@ function test_pickup_alert_coglin_dual_weapon.ready()
 end
 ```
 
-- [ ] **Step 2: Run the test to verify it passes**
+- [x] **Step 2: Run the test to verify it passes**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh test_pickup_alert_coglin_dual_weapon
@@ -1023,7 +1023,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh 
 
 Expected: `[PASS] pickup-alert-coglin-dual-weapon` and `Results: 1/1 passed`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc add tests/test_pickup_alert_coglin_dual_weapon.lua
@@ -1034,7 +1034,7 @@ git -C /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc commit -m "test: 
 
 ### Task 14: Full suite regression check
 
-- [ ] **Step 1: Run the full test suite**
+- [x] **Step 1: Run the full test suite**
 
 ```bash
 cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh
@@ -1042,7 +1042,7 @@ cd /Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc/tests && bash run.sh
 
 Expected: all tests pass — `Results: 106/106 passed` (94 existing + 12 new), `OK`.
 
-- [ ] **Step 2: Commit if clean (or investigate any failures)**
+- [x] **Step 2: Commit if clean (or investigate any failures)**
 
 If all pass:
 ```bash

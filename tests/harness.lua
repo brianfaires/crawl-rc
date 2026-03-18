@@ -153,11 +153,16 @@ function T.wizard_identify_all()
 end
 
 function T.wizard_set_xl(level)
-  T.error_("wizard_set_xl", "not implemented in v1")
-  T.done()
+  -- 'l' subcommand -> wizard_set_xl() (wiz-you.cc:870).
+  -- cancellable_get_line_autohist reads the level number from macro_buf.
+  crawl.sendkeys("l" .. tostring(level) .. "\r")
+  crawl.do_commands({"CMD_WIZARD"})
 end
 
 function T.wizard_teleport()
-  T.error_("wizard_teleport", "not implemented in v1")
+  -- Not implementable via sendkeys: both wizard 'b' (wizard_blink) and 'B'
+  -- (you.teleport controlled) require interactive direction/cursor input that
+  -- cannot be pre-queued as key strings in headless mode.
+  T.error_("wizard_teleport", "requires interactive targeting; not implemented")
   T.done()
 end
