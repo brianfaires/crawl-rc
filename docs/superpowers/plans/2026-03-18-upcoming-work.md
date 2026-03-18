@@ -1,6 +1,6 @@
 # Upcoming Work
 
-**Status:** 138/138 tests passing as of 2026-03-18.
+**Status:** 143/143 tests passing as of 2026-03-18.
 
 ---
 
