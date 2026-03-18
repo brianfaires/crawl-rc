@@ -19,7 +19,7 @@
 - `weapons_pure_upgrades_only=true` short-circuits upgrade path — disable for cross-subtype tests
 - Wizard `y` subcommand = `wizard_identify_all_items()` (wizard.cc:172)
 - Wizard `%` subcommand = `wizard_create_spec_object_by_name()` (reads name from macro_buf)
-- Wizard `l` subcommand = `wizard_set_xl()` (wiz-you.cc:870) — NOT YET wrapped as `T.wizard_set_xl`
+- Wizard `l` subcommand = `wizard_set_xl()` (wiz-you.cc:870) — wrapped as `T.wizard_set_xl(level)`
 - run.sh only shows stderr on [FAIL]/[ERROR], not on [TIMEOUT] — debug via raw stderr capture
 - Mummy Berserker has only 1 MP (mmp=1). MP delta tests: `ad_prev.mp = mp - 3` gives `mp_delta = +3`
 
@@ -39,3 +39,12 @@ When suppressing `force_more` for armour items with egos, must set `M.armour_ego
 
 ### alert_low_hp hysteresis
 `below_hp_threshold` resets only at full HP (not at "above threshold"). Intentional design.
+
+### items.get_items_at vs you.floor_items
+`items.get_items_at(x, y)` reads `env.map_knowledge` cache (updated at turn boundaries), NOT live floor data. `you.floor_items()` reads the live item grid. If you `wizard_give` an item and call a function that uses `get_items_at` in the same turn, it won't see the new item. Always add a `CMD_WAIT` between `wizard_give` and any code path that uses `get_items_at` (includes `f_announce_items.ready()`).
+
+### CMD_PICKUP ends the turn
+`CMD_PICKUP` is a real turn-ending action. Do NOT follow it with `CMD_WAIT` in the same ready() phase — that causes "Cannot currently process new keys (turn is over)". Set `_phase` before calling `CMD_PICKUP` and let it end the turn naturally.
+
+### Scrolls not autopicked up in tests
+The test character does not autopick scrolls. Use `CMD_PICKUP` explicitly if you need a floor scroll in inventory.
