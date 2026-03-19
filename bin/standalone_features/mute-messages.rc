@@ -367,7 +367,6 @@ function ready(...)
   BRC.opt.clear_single_turn_mutes()
   if you.turns() > brc_last_turn then
     brc_last_turn = you.turns()
-    f_mute_messages.ready(...)
   end
 end
 

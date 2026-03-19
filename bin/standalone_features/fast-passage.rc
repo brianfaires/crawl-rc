@@ -13,7 +13,7 @@ BRC.Config.emojis = false
 f_fast_passage = {}
 f_fast_passage.Config = {
   disabled = false,
-}
+} -- f_fast_passage.Config
 
 -- BRC Constants
 BRC.COL = {

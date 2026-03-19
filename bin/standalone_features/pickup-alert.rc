@@ -223,8 +223,6 @@ f_pickup_alert.Config.Emoji = {
   AUTOPICKUP_ITEM = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
 
-f_pickup_alert.Config.init = function()
-
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
   return self:find(text, 1, true) ~= nil
@@ -1010,6 +1008,8 @@ end
 ---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
+
+f_pickup_alert.Config.init = function()
   if not BRC.Config.emojis then
     f_pickup_alert.Config.Emoji = {}
   end

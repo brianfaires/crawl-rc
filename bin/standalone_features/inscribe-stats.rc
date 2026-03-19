@@ -12,6 +12,14 @@ BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.logs_to_stderr = false
 
+
+BRC.DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg for non-elemental brands
+  branded = 3, -- Include full brand dmg
+  scoring = 4, -- Include boosts for non-damaging brands
+} -- BRC.DMG_TYPE (do not remove this comment)
+
 f_inscribe_stats = {}
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
