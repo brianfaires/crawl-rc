@@ -1,15 +1,16 @@
 ---------------------------------------------------------------------------------------------------
 -- BRC feature test: fully-recover
--- Tests fr_bad_durations (global persist — copy of BRC.BAD_DURATIONS) and the c_message
--- guard that skips processing when no recovery is active (recovery_start_turn == nil).
+-- Tests fr_bad_durations (global persist — copy of BRC.BAD_DURATIONS), the c_message
+-- guard when recovery is inactive, and c_message channel behavior when active.
 --
--- fr_bad_durations is initialized at module load time via BRC.Data.persist. It must:
---   - have the same length as BRC.BAD_DURATIONS
---   - contain all the same entries
---   - support in-place removal (util.remove) without breaking BRC.BAD_DURATIONS
+-- fr_bad_durations:
+--   - same length as BRC.BAD_DURATIONS
+--   - contains known entries
+--   - copy isolation: removing from it must not affect BRC.BAD_DURATIONS
 --
--- c_message guard: when recovery_start_turn == nil (default after init()), any message
--- must return immediately. Verified by checking no error output appears.
+-- c_message with recovery_start_turn == nil → returns immediately (no crash)
+-- c_message with recovery active + "duration" channel → recovery_start_turn preserved
+-- c_message with recovery active + "warn" channel → recovery_start_turn cleared
 ---------------------------------------------------------------------------------------------------
 
 test_fully_recover = {}
@@ -40,12 +41,21 @@ function test_fully_recover.ready()
     -- c_message with recovery inactive (recovery_start_turn == nil after init):
     -- must return without producing an error message.
     f_fully_recover.init()
-    local msg_count_before = #T.last_messages
     f_fully_recover.c_message("You feel confused.", "duration")
     f_fully_recover.c_message("You are no longer confused.", "recovery")
-    -- No error output: message count may change (other features may fire) but no [ERROR] from us
-    -- Just verifying these calls don't throw is sufficient
     T.true_(true, "c-message-inactive-no-crash")
+
+    -- c_message with recovery active + duration channel: recovery_start_turn preserved
+    f_fully_recover.init()
+    f_fully_recover.recovery_start_turn = you.turns()
+    f_fully_recover.c_message("You feel slow.", "duration")
+    T.true_(f_fully_recover.recovery_start_turn ~= nil, "duration-channel-preserves-recovery")
+
+    -- c_message with recovery active + warn channel: recovery_start_turn cleared
+    f_fully_recover.init()
+    f_fully_recover.recovery_start_turn = you.turns()
+    f_fully_recover.c_message("Something scary happens.", "warn")
+    T.eq(f_fully_recover.recovery_start_turn, nil, "warn-channel-clears-recovery")
 
     T.pass("fully-recover")
     T.done()

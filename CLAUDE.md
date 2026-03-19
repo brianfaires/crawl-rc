@@ -48,3 +48,6 @@ When suppressing `force_more` for armour items with egos, must set `M.armour_ego
 
 ### Scrolls not autopicked up in tests
 The test character does not autopick scrolls. Use `CMD_PICKUP` explicitly if you need a floor scroll in inventory.
+
+### Tests use bin/buehler.rc (bundled), not lua/ source directly
+Tests run against `bin/buehler.rc`, which is a compiled bundle of all Lua source files. After modifying any file under `lua/`, you MUST rebuild: `python3 build/concat_rc.py`. Without rebuilding, tests silently run against the OLD bundled code, giving mysterious failures where debug output doesn't appear and changes have no effect. Also rebuild `bin/standalone_features/` with `python3 build/create_standalone_features.py` when modifying feature files.

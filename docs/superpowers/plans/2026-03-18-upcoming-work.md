@@ -1,6 +1,6 @@
 # Upcoming Work
 
-**Status:** 145/145 tests passing as of 2026-03-18.
+**Status:** 145/145 tests passing as of 2026-03-18. New behavioral tests added for quiver-reminders and fully-recover (assertions added to existing test files).
 
 ---
 
