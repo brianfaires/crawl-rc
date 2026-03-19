@@ -35,39 +35,25 @@ def get_relative_path(file_path: Path) -> str:
     return str(file_path.relative_to(BASE_DIR))
 
 
+def _make_banner(msg: str) -> str:
+    num_chars = MAX_LINE_LENGTH - len(msg)
+    post_chars = num_chars // 2
+    pre_chars = num_chars - post_chars
+    return f"{COMMENT_CHAR * pre_chars}{msg}{COMMENT_CHAR * post_chars}"
+
+
 def write_header(file_path: Path, outfile: TextIO) -> None:
     print(file=outfile)
-    
     file_name = get_relative_path(file_path)
-    lines = [
-        f" Begin {file_name} ",
-        f" {GITHUB_PREFIX}{file_name} "
-    ]
-    
-    for line in lines:
-        num_chars = MAX_LINE_LENGTH - len(line)
-        post_chars = num_chars // 2
-        pre_chars = num_chars - post_chars
-        print(
-            f"{COMMENT_CHAR * pre_chars}{line}{COMMENT_CHAR * post_chars}",
-            file=outfile
-        )
+    print(_make_banner(f" Begin {file_name} "), file=outfile)
+    print(_make_banner(f" {GITHUB_PREFIX}{file_name} "), file=outfile)
 
 
 def write_footer(file_path: Path, outfile: TextIO) -> None:
     if file_path.suffix != ".lua":
         print(file=outfile)
-    
     file_name = get_relative_path(file_path)
-    end_msg = f" End {file_name} "
-    num_chars = MAX_LINE_LENGTH - len(end_msg)
-    post_chars = num_chars // 2
-    pre_chars = num_chars - post_chars
-    
-    print(
-        f"{COMMENT_CHAR * pre_chars}{end_msg}{COMMENT_CHAR * post_chars}",
-        file=outfile
-    )
+    print(_make_banner(f" End {file_name} "), file=outfile)
     print(f"{COMMENT_CHAR * MAX_LINE_LENGTH}", file=outfile)
 
 
