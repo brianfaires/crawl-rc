@@ -23,6 +23,7 @@ brc_config_explicit = {
     omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
   }, -- BRC.Configs.Default.dump (do not remove this comment)
 
+  --- How weapon damage is calculated for inscriptions+pickup/alert: (factor * DMG + offset)
   BrandBonus = {
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
     distort = { factor = 1.0, offset = 6.0 },

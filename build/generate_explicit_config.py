@@ -436,6 +436,7 @@ def extract_core_config() -> str:
             continue
         after_eq = m.end()
         rest = text[after_eq:].lstrip()
+        leading = extract_leading_comment(text, m.start())
 
         if rest.startswith('{'):
             brace_pos = text.index('{', after_eq)
@@ -452,7 +453,14 @@ def extract_core_config() -> str:
                 rest_of_line = ',' + (' ' if rest_of_line else '') + rest_of_line
             elif not rest_of_line:
                 rest_of_line = ','
-            sections.append(f"  {key} = {{\n{body}\n  }}{rest_of_line}".rstrip())
+            # Emit leading comment if present
+            prefix = ""
+            if leading:
+                for line in leading.split('\n'):
+                    stripped = line.strip()
+                    if stripped:
+                        prefix += f"  {stripped}\n"
+            sections.append(f"{prefix}  {key} = {{\n{body}\n  }}{rest_of_line}".rstrip())
         else:
             # Simple value — extract to end of line
             eol = text.find('\n', after_eq)
