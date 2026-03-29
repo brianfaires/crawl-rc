@@ -1,5 +1,13 @@
 # crawl-rc
 
+## Compatibility
+
+BRC targets multiple DCSS versions simultaneously. When updating game-content lists (species, items, monsters, spells, etc.):
+
+- **Append** new entries to lists rather than replacing old ones
+- Only remove entries when they are confirmed unused across ALL supported versions
+- Test against both the oldest and newest supported crawl binaries
+
 ## Environment
 
 - Working dir: `/Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc`
@@ -8,6 +16,14 @@
 - Test command: `npm test` (or `./tests/run.sh`)
 - Test character: Mummy Berserker, seed 1, -no-save, -wizard
 - Tests run automatically on `git push` via pre-push hook
+
+## Project Layout
+
+- `lua/core/` — BRC core module, constants, utilities
+- `lua/features/` — individual BRC features (alert-monsters, pickup-alert, etc.)
+- `lua/config/` — user configuration files
+- `lua/util/` — shared utility modules
+- `tests/` — test suite (run via `tests/run.sh`)
 
 ## Key Facts
 
@@ -22,6 +38,10 @@
 - Wizard `l` subcommand = `wizard_set_xl()` (wiz-you.cc:870) — wrapped as `T.wizard_set_xl(level)`
 - run.sh only shows stderr on [FAIL]/[ERROR], not on [TIMEOUT] — debug via raw stderr capture
 - Mummy Berserker has only 1 MP (mmp=1). MP delta tests: `ad_prev.mp = mp - 3` gives `mp_delta = +3`
+
+## Crawl Source
+
+The upstream crawl repo is at `/Users/brian/dev/dcss/crawl`. The built binary is at `crawl-ref/source/crawl`.
 
 ## Gotchas
 

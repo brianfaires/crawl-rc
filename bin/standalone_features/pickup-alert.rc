@@ -262,7 +262,7 @@ BRC.DMG_TYPE = {
 
 BRC.EMOJI = {}
 
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+BRC.LARGE_RACES = { "Armataur", "Gale Centaur", "Naga", "Oni", "Troll" }
 
 BRC.LITTLE_RACES = { "Spriggan" }
 
