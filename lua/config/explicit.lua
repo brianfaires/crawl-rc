@@ -53,7 +53,7 @@ brc_config_explicit = {
 
   hotkey = {
     key = { keycode = 13, name = "[Enter]" },
-    skip_keycode = 27,
+    skip_keycode = 27, -- ESC keycode
     equip_hotkey = true, -- Offer to equip after picking up equipment
     wait_for_safety = true, -- Don't expire the hotkey with monsters in view
     explore_clears_queue = true, -- Clear the hotkey queue on explore
@@ -284,7 +284,7 @@ brc_config_explicit = {
   ["startup"] = {
     disabled = false,
     -- Save current training targets and config, for race/class
-    macro_save_key = 20, -- Keycode to save training targets and config
+    macro_save_key = 20, -- (Cntl-T) Keycode to save training targets and config
     save_training = true, -- Allow save/load of race/class training targets
     save_config = true, -- Allow save/load of BRC config
     prompt_before_load = false, -- Prompt before loading in a new game with same race+class
@@ -325,6 +325,26 @@ brc_config_explicit = {
     pack_timeout = 10, -- turns to wait before repeating a pack alert. 0 to disable
     disable_alert_monsters_in_zigs = true, -- Disable dynamic force_mores in Ziggurats
     debug_alert_monsters = false, -- Get a message when alerts toggle off/on
+
+
+    --[[
+    Config.Alerts contains all alerts. Each table in it creates one alert, using the following fields:
+    - `name` is for debugging.
+    - `pattern` is a string or list of monster names, will alert when you encounter one.
+    - `is_pack` (optional) indicates the alert is for a pack of monsters.
+    Packs only fire once every few turns - as defined in Config.pack_timeout (default 15).
+    - `flash_screen` (optional) alert will flash the screen instead of using force_more.
+    - `cutoff` sets the point when the alert is active (usually how much HP you have)
+    - `cond` defines HOW the character stats are compared against `cutoff` (HP/will/etc).
+    Ex:
+    `always` alerts are always on.
+    `hp` alerts are active when you have < `cutoff` HP.
+    `will` alerts are active when you have <= `cutoff` pips of willpower.
+    `int` alerts are active when you have < `cutoff` Int.
+    `xl` alerts are active when your XL is < `cutoff`.
+    `elec` alerts are active when you have no rElec and < `cutoff` HP.
+    `fire`, `cold`, etc active < `cutoff` HP with no resistance. Pips lower cutoff to 50/33/20%
+    --]]
     Alerts = {
       { name = "always_fm",
         pattern = {
@@ -849,8 +869,8 @@ end,
       staves = true,
     }, -- Pickup
     Alert = {
-      armour_sensitivity = 1.0, -- [0.5-2.0] Adjust all armour alerts; 0 to disable all
-      weapon_sensitivity = 1.0, -- [0.5-2.0] Adjust all weapon alerts; 0 to disable all
+      armour_sensitivity = 1.0, -- Adjust all armour alerts; 0 to disable all (typical range 0.5-2.0)
+      weapon_sensitivity = 1.0, -- Adjust all weapon alerts; 0 to disable all (typical range 0.5-2.0)
       orbs = true,
       staff_resists = true,
       talismans = true,
@@ -899,7 +919,19 @@ end,
         autopickup_disabled = true, -- Alerts for autopickup items, when autopickup is disabled
       },
     }, -- Alert
+
+
+    ---- Heuristics for tuning the pickup/alert system. Advanced behavior customization.
     Tuning = {
+
+
+      --[[
+      f_pickup_alert.Config.Tuning.Armour: Magic numbers for the armour pickup/alert system.
+      For armour with different encumbrance, alert when ratio of gain/loss (AC|EV) is > value
+      Lower values mean more alerts. gain/diff/same/lose refers to egos.
+      min_gain/max_loss block alerts for new egos, when AC or EV delta is outside limits
+      ignore_small: if abs(AC+EV) <= this, ignore ratios and alert any gain/diff ego
+      --]]
       Armour = {
         Lighter = {
           gain_ego = 0.6,
@@ -925,8 +957,17 @@ end,
 
         encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
         early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
-        diff_body_ego_is_good = false, -- More body_armour alerts for diff_ego (no min_gain check)
+        diff_body_ego_is_good = false, -- More alerts for diff_ego in body armour (skips min_gain check)
       }, -- Armour
+
+
+      --[[
+      f_pickup_alert.Config.Tuning.Weap: Magic numbers for the weapon pickup/alert system, namely:
+      1. Cutoffs for pickup/alert weapons (when DPS ratio exceeds a value)
+      2. Cutoffs for when alerts are active (XL, skill_level)
+      Pickup/alert system will try to upgrade ANY weapon in your inventory.
+      "DPS ratio" is (new_weapon_score / inventory_weapon_score). Score considers DPS/brand/accuracy.
+      --]]
       Weap = {
         Pickup = {
           add_ego = 1.0, -- Pickup weapon that gains a brand if DPS ratio > add_ego
@@ -939,7 +980,7 @@ end,
           pure_dps = 1.0, -- Alert if DPS ratio > pure_dps
           gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > gain_ego
           new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > new_ego
-          low_skill_penalty_damping = 8, -- [0-20] Reduce penalty to lower-trained weapons
+          low_skill_penalty_damping = 8, -- [0-20] Reduces penalty to weapons of lower-trained schools
 
           -- Alerts for 2-handed weapons, when carrying 1-handed
           AddHand = {
@@ -951,7 +992,7 @@ end,
           -- Alerts for good early weapons of all types
           Early = {
             xl = 7, -- Alert early weapons if XL <= xl
-            skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons w skill_diff > XL*fact+offset
+            skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons with skill_diff > XL*factor+offset
             branded_min_plus = 4, -- Alert branded weapons with plus >= branded_min_plus
           },
 
@@ -960,7 +1001,7 @@ end,
             xl = 14, -- Alert strong ranged weapons if XL <= xl
             min_plus = 7, -- Alert ranged weapons with plus >= min_plus
             branded_min_plus = 4, -- Alert branded ranged weapons with plus >= branded_min_plus
-            max_shields = 8.0, -- Require max_shields skill to block 2h ranged alerts
+            max_shields = 8.0, -- Alert 2h ranged, despite wearing a shield, if shield_skill <= max_shields
           },
         }, -- Alert
       }, -- Weap

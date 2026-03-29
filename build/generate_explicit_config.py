@@ -226,14 +226,49 @@ def extract_function_text(text: str, func_start: int) -> str:
     return text[func_start:end]
 
 
-ConfigEntry = Tuple[str, str, bool]  # (dotted_path, text, is_function)
+ConfigEntry = Tuple[str, str, bool, str]  # (dotted_path, text, is_function, leading_comment)
+
+
+def extract_leading_comment(text: str, match_start: int) -> str:
+    """Extract comment block (-- lines and --[[ ]] blocks) immediately preceding a match position."""
+    lines = text[:match_start].split('\n')
+    comment_lines = []
+    in_block_comment = False
+    # Walk backward from the line before the match
+    for line in reversed(lines):
+        stripped = line.strip()
+        if not stripped:
+            if comment_lines:
+                comment_lines.append('')
+            continue
+        # Track --[[ ]] block boundaries (walking backward)
+        if stripped == '--]]':
+            in_block_comment = True
+            comment_lines.append(line)
+            continue
+        if in_block_comment:
+            comment_lines.append(line)
+            if stripped.startswith('--[['):
+                in_block_comment = False
+            continue
+        if stripped.startswith('--'):
+            comment_lines.append(line)
+        else:
+            break
+    if not comment_lines:
+        return ''
+    comment_lines.reverse()
+    # Strip trailing blank lines
+    while comment_lines and not comment_lines[-1].strip():
+        comment_lines.pop()
+    return '\n'.join(comment_lines)
 
 
 def extract_config_entries(file_path: Path) -> Tuple[Optional[str], Optional[str], List[ConfigEntry]]:
     """Extract config entries from a feature file.
 
     Returns (feature_name, var_name, entries) where entries is a list of
-    (dotted_path, value_text, is_function) tuples.
+    (dotted_path, value_text, is_function, leading_comment) tuples.
     """
     text = file_path.read_text(encoding="utf-8")
 
@@ -251,17 +286,21 @@ def extract_config_entries(file_path: Path) -> Tuple[Optional[str], Optional[str
         path = m.group(1).lstrip('.')  # e.g., "Tuning.Armour" or ""
         after_eq = m.end()
         rest = text[after_eq:].lstrip()
+        leading = extract_leading_comment(text, m.start())
 
         if rest.startswith('{'):
             brace_pos = text.index('{', after_eq)
             body = extract_table_body(text, brace_pos)
             if not body.strip():
-                continue  # Skip empty Config = {} namespace declarations
-            entries.append((path, body, False))
+                # Even for empty tables, capture leading comments for parent nodes
+                if leading:
+                    entries.append((path, '', False, leading))
+                continue
+            entries.append((path, body, False, leading))
         elif rest.startswith('function'):
             func_start = text.index('function', after_eq)
             func_text = extract_function_text(text, func_start)
-            entries.append((path, func_text, True))
+            entries.append((path, func_text, True, leading))
 
     return feature_name, var_name, entries
 
@@ -276,17 +315,20 @@ def extract_config_entries_by_var(file_path: Path, var_name: str) -> List[Config
         path = m.group(1).lstrip('.')
         after_eq = m.end()
         rest = text[after_eq:].lstrip()
+        leading = extract_leading_comment(text, m.start())
 
         if rest.startswith('{'):
             brace_pos = text.index('{', after_eq)
             body = extract_table_body(text, brace_pos)
             if not body.strip():
+                if leading:
+                    entries.append((path, '', False, leading))
                 continue
-            entries.append((path, body, False))
+            entries.append((path, body, False, leading))
         elif rest.startswith('function'):
             func_start = text.index('function', after_eq)
             func_text = extract_function_text(text, func_start)
-            entries.append((path, func_text, True))
+            entries.append((path, func_text, True, leading))
 
     return entries
 
@@ -302,16 +344,32 @@ class ConfigNode:
         self.children: Dict[str, 'ConfigNode'] = {}
         self.body: Optional[str] = None
         self.is_function: bool = False
+        self.leading_comment: str = ''
 
-    def add(self, path_parts: List[str], body: str, is_function: bool = False):
+    def add(self, path_parts: List[str], body: str, is_function: bool = False,
+            leading_comment: str = ''):
         if not path_parts:
             self.body = body
             self.is_function = is_function
+            if leading_comment:
+                self.leading_comment = leading_comment
             return
         key = path_parts[0]
         if key not in self.children:
             self.children[key] = ConfigNode()
-        self.children[key].add(path_parts[1:], body, is_function)
+        self.children[key].add(path_parts[1:], body, is_function, leading_comment)
+
+    def _emit_leading_comment(self, lines: List[str], pad: str, comment: str):
+        """Emit a leading comment block, re-indented to current level."""
+        if not comment:
+            return
+        lines.append("")  # blank line before comment block
+        for line in comment.split('\n'):
+            stripped = line.strip()
+            if stripped:
+                lines.append(pad + stripped)
+            else:
+                lines.append("")
 
     def serialize(self, indent: int = 4) -> str:
         """Serialize this node's children as Lua table content lines."""
@@ -327,6 +385,10 @@ class ConfigNode:
                     lines.append("")
 
         for key, child in self.children.items():
+            # Emit leading comment if present
+            if child.leading_comment:
+                self._emit_leading_comment(lines, pad, child.leading_comment)
+
             if child.body and not child.children:
                 # Leaf node
                 if child.is_function:
@@ -352,9 +414,9 @@ class ConfigNode:
 def build_nested_body(entries: List[ConfigEntry], base_indent: int = 4) -> str:
     """Build nested Lua table body from config entries."""
     root = ConfigNode()
-    for path, body, is_func in entries:
+    for path, body, is_func, leading in entries:
         parts = path.split('.') if path else []
-        root.add(parts, body, is_func)
+        root.add(parts, body, is_func, leading)
     return root.serialize(base_indent)
 
 
@@ -493,6 +555,7 @@ def format_feature_section(
 
     if is_single:
         body = entries[0][1]
+        leading = entries[0][3] if len(entries[0]) > 3 else ''
         body = resolve_brc_refs(body, brc_keys, brc_tables)
         body = dedent_body(body)
 
@@ -507,10 +570,10 @@ def format_feature_section(
     else:
         # Multi-assignment: build nested structure
         resolved = []
-        for path, text, is_func in entries:
+        for path, text, is_func, leading in entries:
             resolved_text = resolve_brc_refs(text, brc_keys, brc_tables)
             resolved_text = dedent_body(resolved_text)
-            resolved.append((path, resolved_text, is_func))
+            resolved.append((path, resolved_text, is_func, leading))
 
         nested_body = build_nested_body(resolved)
 
@@ -571,7 +634,7 @@ def main() -> int:
         # Check if disabled is already in any config entry
         has_disabled = any(
             re.search(r'\bdisabled\s*=', body)
-            for _, body, is_func in entries
+            for _, body, is_func, *_ in entries
             if not is_func
         )
 

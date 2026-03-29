@@ -15,11 +15,13 @@ fr_bad_durations = BRC.Data.persist("fr_bad_durations", util.copy_table(BRC.BAD_
 local MAX_TURNS_TO_WAIT = 300
 
 ---- Local variables ----
+-- recovery_start_turn is a module field (not local) for test observability
+local M = f_fully_recover
 local explore_after_recovery
 
 ---- Initialization ----
 function f_fully_recover.init()
-  f_fully_recover.recovery_start_turn = nil
+  M.recovery_start_turn = nil
   explore_after_recovery = nil
 
   BRC.opt.macro(BRC.util.get_cmd_key("CMD_EXPLORE") or "o", "macro_brc_explore", true)
@@ -77,8 +79,8 @@ local function do_cmd_wrapper(cmd)
 end
 
 local function complete_recovery()
-  local turns = you.turns() - f_fully_recover.recovery_start_turn
-  f_fully_recover.recovery_start_turn = nil
+  local turns = you.turns() - M.recovery_start_turn
+  M.recovery_start_turn = nil
   if turns > 0 then
     you.stop_activity()
     BRC.mpr.lightgreen(string.format("Fully recovered (%d turns)", turns))
@@ -94,13 +96,13 @@ local function start_recovery(cmd)
   end
 
   if fully_recovered() then
-    if f_fully_recover.recovery_start_turn ~= nil then
+    if M.recovery_start_turn ~= nil then
       complete_recovery()
     else
       do_cmd_wrapper(cmd)
     end
   else
-    f_fully_recover.recovery_start_turn = you.turns()
+    M.recovery_start_turn = you.turns()
     explore_after_recovery = cmd == "CMD_EXPLORE"
     do_cmd_wrapper("CMD_REST")
   end
@@ -118,7 +120,7 @@ end
 
 ---- Crawl hook functions ----
 function f_fully_recover.c_message(text, channel)
-  if f_fully_recover.recovery_start_turn == nil then return end
+  if M.recovery_start_turn == nil then return end
   if channel == "plain" and (
     text:contains("You start resting.") or
     text:contains("You start waiting.") or
@@ -131,22 +133,22 @@ function f_fully_recover.c_message(text, channel)
   -- For any non-duration/recovery message, abort the recovery entirely.
   you.stop_activity()
   if channel ~= "duration" and channel ~= "recovery" then
-    f_fully_recover.recovery_start_turn = nil
+    M.recovery_start_turn = nil
   end
 end
 
 function f_fully_recover.ready()
-  if f_fully_recover.recovery_start_turn == nil then return end
+  if M.recovery_start_turn == nil then return end
   if fully_recovered() then
     complete_recovery()
   elseif not you.feel_safe() then
-    f_fully_recover.recovery_start_turn = nil
+    M.recovery_start_turn = nil
     you.stop_activity()
-  elseif you.turns() - f_fully_recover.recovery_start_turn > MAX_TURNS_TO_WAIT then
+  elseif you.turns() - M.recovery_start_turn > MAX_TURNS_TO_WAIT then
     BRC.mpr.error("fully-recover timed out after " .. MAX_TURNS_TO_WAIT .. " turns.", true)
     BRC.mpr.error("fr_bad_durations:")
     remove_statuses_from_list()
-    f_fully_recover.recovery_start_turn = nil
+    M.recovery_start_turn = nil
     you.stop_activity()
   else
     do_cmd_wrapper("CMD_REST")

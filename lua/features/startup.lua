@@ -9,7 +9,7 @@ f_startup = {}
 f_startup.BRC_FEATURE_NAME = "startup"
 f_startup.Config = {
   -- Save current training targets and config, for race/class
-  macro_save_key = BRC.util.cntl("t"), -- Keycode to save training targets and config
+  macro_save_key = BRC.util.cntl("t"), -- (Cntl-T) Keycode to save training targets and config
   save_training = true, -- Allow save/load of race/class training targets
   save_config = true, -- Allow save/load of BRC config
   prompt_before_load = false, -- Prompt before loading in a new game with same race+class
