@@ -42,7 +42,18 @@ BRC targets multiple DCSS versions simultaneously. When updating game-content li
 
 ## Crawl Source
 
-The upstream crawl repo is at `~/dev/dcss/crawl`. The built binary is at `crawl-ref/source/crawl`.
+This repo is meant to live **inside** a DCSS checkout at:
+
+`…/<dcss-checkout>/crawl-ref/settings/crawl-rc`
+
+From the root of **this** repository (`crawl-rc`), paths into the build tree are:
+
+- **Console binary:** `../../source/crawl-console` (tests default `CRAWL_BIN` to this)
+- **fake_pty:** `../../source/util/fake_pty`
+
+So **`crawl-ref/`** is the directory **two levels up** from `crawl-rc/` (`../..`). The DCSS **checkout root** (the directory that contains `crawl-ref/`) is **three levels up** (`../../..`).
+
+If that layout is not present (e.g. you cloned `crawl-rc` alone or nested it differently), look for a full DCSS tree under **`~/dev/dcss/crawl`** and use the same `crawl-ref/settings/crawl-rc` + `crawl-ref/source/` layout there, or set `CRAWL_BIN` / `FAKE_PTY_BIN` explicitly (see `tests/config.sh`).
 
 ## Gotchas
 
@@ -72,9 +83,3 @@ The test character does not autopick scrolls. Use `CMD_PICKUP` explicitly if you
 
 ### Tests use bin/buehler.rc (bundled), not lua/ source directly
 Tests run against `bin/buehler.rc`, which is a compiled bundle of all Lua source files. After modifying any file under `lua/`, you MUST rebuild: `python3 build/concat_rc.py`. Without rebuilding, tests silently run against the OLD bundled code, giving mysterious failures where debug output doesn't appear and changes have no effect. Also rebuild `bin/standalone_features/` with `python3 build/create_standalone_features.py` when modifying feature files.
-
-## Cursor
-
-This repo uses root **`AGENTS.md`** for agent instructions. Cursor loads it automatically ([docs](https://cursor.com/docs/context/rules)); no extra project rule file is required for that.
-
-If you previously added an always-applied project rule pointing at **`CLAUDE.md`**, remove it under **Cursor Settings → Rules, Commands** so instructions are not duplicated or stale.
