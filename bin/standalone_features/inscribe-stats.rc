@@ -603,7 +603,7 @@ end
 
 
 ---- Local constants ----
-local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
+local NUM_PATTERN = "[%+%-:]%d+[%.,%,]%d*" -- Matches numbers w/ decimal
 
 ---- Local variables ----
 local C -- config alias

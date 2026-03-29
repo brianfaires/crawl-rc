@@ -35,6 +35,13 @@ local function get_pa_keys(it, use_plain_name)
   end
 end
 
+local function validate_high_scores()
+  pa_high_score = pa_high_score or {}
+  pa_high_score.ac = pa_high_score.ac or 0
+  pa_high_score.weapon = pa_high_score.weapon or 0
+  pa_high_score.plain_dmg = pa_high_score.plain_dmg or 0
+end
+
 ---- Public API ----
 function f_pa_data.already_alerted(it)
   local name, value = get_pa_keys(it)
@@ -139,6 +146,7 @@ end
 function f_pa_data.update_high_scores(it)
   if not it then return end
   local ret_val = nil
+  validate_high_scores()
 
   if BRC.it.is_armour(it) then
     local ac = BRC.eq.get_ac(it)
