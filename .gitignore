@@ -1,7 +1,7 @@
 /macro.txt
 /saves
 /morgue
-.cursor/docs/
+.cursor/
 default.profraw
 build/__pycache__/
 .env
