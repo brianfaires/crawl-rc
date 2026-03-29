@@ -180,6 +180,29 @@ function BRC.is_feature_module(f)
     and #f.BRC_FEATURE_NAME > 0
 end
 
+--- Feature module tables for config validation: active registrations plus any module present in
+--- the environment but skipped by BRC.register (disabled-by-default) and tables nested under
+--- BRC (e.g. BRC.Data), which are not top-level globals. Different from get_registered_features().
+function BRC.get_all_feature_modules()
+  local modules = {}
+  for name, mod in pairs(BRC.get_registered_features()) do
+    modules[name] = mod
+  end
+  for _, value in pairs(_G) do
+    if BRC.is_feature_module(value) then
+      modules[value.BRC_FEATURE_NAME] = value
+    end
+  end
+  if type(BRC) == "table" then
+    for _, value in pairs(BRC) do
+      if BRC.is_feature_module(value) then
+        modules[value.BRC_FEATURE_NAME] = value
+      end
+    end
+  end
+  return modules
+end
+
 -- BRC.register(): Return true if success, false if error, nil if feature is disabled
 function BRC.register(f)
   if not BRC.is_feature_module(f) then
@@ -276,6 +299,8 @@ function BRC.init(config_name)
 
   BRC.mpr.debug("Register features...")
   register_all_features()
+
+  BRC._validate_config_keys()
 
   BRC.mpr.debug("Initialize features...")
   safe_call_all_hooks(HOOK_FUNCTIONS.init)

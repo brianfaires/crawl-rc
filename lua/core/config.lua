@@ -137,7 +137,7 @@ end
 --- Warn about unknown keys in the user config that don't match any feature or core config key.
 -- Catches typos like ["pickup-alerts"] (plural) or misspelled option names.
 local function validate_config_keys()
-  local all_features = BRC.get_registered_features()
+  local feature_modules = BRC.get_all_feature_modules()
 
   -- Collect known core keys from BRC.Configs.Default
   local core_keys = {}
@@ -149,9 +149,9 @@ local function validate_config_keys()
   for key, value in pairs(BRC.Config) do
     -- Skip known core keys, init functions, and non-string keys
     if core_keys[key] or key == "init" or type(key) ~= "string" then -- luacheck: ignore 542
-    elseif all_features[key] then
+    elseif feature_modules[key] then
       -- Known feature name — validate its top-level sub-keys against defaults
-      local defaults = all_features[key].ConfigDefaults or all_features[key].Config
+      local defaults = feature_modules[key].ConfigDefaults or feature_modules[key].Config
       if type(value) == "table" and type(defaults) == "table" then
         for sub_key, _ in pairs(value) do
           if sub_key ~= "disabled" and sub_key ~= "init"
@@ -165,7 +165,7 @@ local function validate_config_keys()
         end
       end
     elseif type(value) == "table" and key:find("-") then
-      -- Looks like a feature name (contains hyphen) but isn't registered
+      -- Looks like a feature name (contains hyphen) but no such module exists
       BRC.mpr.warning(string.format(
         "Unknown feature in config: %s (not registered — possible typo?)",
         BRC.txt.yellow(key)
@@ -202,7 +202,8 @@ function BRC.init_config(config_name)
   local m = BRC.mpr.brc_prefix .. "Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME)
   BRC.mpr.white(m)
   BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
-  validate_config_keys()
+  -- validate_config_keys() runs from BRC.init() after register_all_features(); running here
+  -- would warn on every hyphenated feature key because _features is still empty.
 end
 
 --- Exposed for testing; not part of public API.
