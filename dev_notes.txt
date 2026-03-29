@@ -25,6 +25,7 @@
       basilisk if can't be petrified
       hound at 33 hp
       gnoll/iguana at 35
+  -- fully-recover: rest off poison if HP > config.threshold
 
 ### Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)
