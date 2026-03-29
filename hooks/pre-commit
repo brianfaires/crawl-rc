@@ -1,0 +1,42 @@
+#!/bin/sh
+# Pre-commit hook to generate files, lint, and bundle
+
+cd build
+
+echo "Running generate_explicit_config.py to update explicit.lua..."
+python3 generate_explicit_config.py
+GENERATE_EXIT_CODE=$?
+
+cd ..
+
+echo "Running luacheck on Lua files..."
+luacheck --formatter plain lua/
+LUACHECK_EXIT_CODE=$?
+
+cd build
+
+echo "Running concat_rc.py to update buehler.rc..."
+python3 concat_rc.py
+CONCAT_EXIT_CODE=$?
+
+echo "Running create_standalone_features.py to update standalone feature files..."
+python3 create_standalone_features.py
+STANDALONE_EXIT_CODE=$?
+
+cd ..
+
+# Stage all generated files if any script succeeded
+if [ $GENERATE_EXIT_CODE -eq 0 ] || [ $CONCAT_EXIT_CODE -eq 0 ] || [ $STANDALONE_EXIT_CODE -eq 0 ]; then
+    echo "Staging updated files in bin/ and lua/config/..."
+    git add bin/
+    git add lua/config/explicit.lua
+fi
+
+# Exit with the worst exit code (non-zero if any failed)
+if [ $LUACHECK_EXIT_CODE -ne 0 ] || [ $GENERATE_EXIT_CODE -ne 0 ] || [ $CONCAT_EXIT_CODE -ne 0 ] || [ $STANDALONE_EXIT_CODE -ne 0 ]; then
+    echo "Pre-commit hook failed!"
+    exit 1
+fi
+
+echo "Pre-commit hook completed successfully!"
+exit 0

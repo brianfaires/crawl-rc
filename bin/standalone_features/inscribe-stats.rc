@@ -12,6 +12,14 @@ BRC.Config.emojis = false
 BRC.Config.mpr = BRC.Config.mpr or {}
 BRC.Config.mpr.logs_to_stderr = false
 
+
+BRC.DMG_TYPE = {
+  unbranded = 1, -- No brand
+  plain = 2, -- Include brand dmg for non-elemental brands
+  branded = 3, -- Include full brand dmg
+  scoring = 4, -- Include boosts for non-damaging brands
+} -- BRC.DMG_TYPE (do not remove this comment)
+
 f_inscribe_stats = {}
 f_inscribe_stats.Config = {
   inscribe_weapons = true, -- Inscribe weapon stats on pickup
@@ -41,7 +49,7 @@ BRC.DMG_TYPE = {
   scoring = 4, -- Include boosts for non-damaging brands
 } -- BRC.DMG_TYPE (do not remove this comment)
 
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+BRC.LARGE_RACES = { "Armataur", "Gale Centaur", "Naga", "Oni", "Troll" }
 
 BRC.LITTLE_RACES = { "Spriggan" }
 
@@ -403,7 +411,8 @@ function BRC.eq.is_useless_ego(ego)
 
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or (ego == "rPois" or ego == "rpois" or ego == "poison resistance")
+       and util.contains(BRC.POIS_RES_RACES, race)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 
@@ -520,6 +529,10 @@ function BRC.mpr.error(message, context, skip_more)
   if not skip_more then
     crawl.redraw_screen()
     crawl.more()
+  end
+
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
   end
 
   if BRC.Config.mpr.logs_to_stderr then
@@ -647,6 +660,11 @@ end
 --- Replace the old inscription with the current one, preserving prefix/suffix
 local function update_inscription(orig, cur)
   local first = orig:find(cur:sub(1, 4))
+  -- Handle format migration between DPS= and Dmg= modes (e.g. when skip_dps config changes)
+  if not first then
+    if cur:sub(1, 4) == "Dmg=" then first = orig:find("DPS=")
+    elseif cur:sub(1, 4) == "DPS=" then first = orig:find("Dmg=") end
+  end
   if not first then return cur .. "; " .. orig end
 
   local _, last = orig:find("A%+%d+")

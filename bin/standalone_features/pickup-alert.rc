@@ -58,8 +58,8 @@ f_pickup_alert.Config.Pickup = {
 } -- f_pickup_alert.Config.Pickup (do not remove this comment)
 
 f_pickup_alert.Config.Alert = {
-  armour_sensitivity = 1.0, -- Adjust all armour alerts; 0 to disable all (typical range 0.5-2.0)
-  weapon_sensitivity = 1.0, -- Adjust all weapon alerts; 0 to disable all (typical range 0.5-2.0)
+  armour_sensitivity = 1.0, -- [0.5-2.0] Adjust all armour alerts; 0 to disable all
+  weapon_sensitivity = 1.0, -- [0.5-2.0] Adjust all weapon alerts; 0 to disable all
   orbs = true,
   staff_resists = true,
   talismans = true,
@@ -143,8 +143,8 @@ f_pickup_alert.Config.Tuning.Armour = {
   },
 
   encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
-  early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
-  diff_body_ego_is_good = false, -- More alerts for diff_ego in body armour (skips min_gain check)
+  early_xl = 6, -- Alert any usable runed body armour when XL <= `early_xl`
+  diff_body_ego_is_good = false, -- More body_armour alerts for diff_ego (no min_gain check)
 } -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
 
 --[[
@@ -167,7 +167,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
   pure_dps = 1.0, -- Alert if DPS ratio > pure_dps
   gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > gain_ego
   new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > new_ego
-  low_skill_penalty_damping = 8, -- [0-20] Reduces penalty to weapons of lower-trained schools
+  low_skill_penalty_damping = 8, -- [0-20] Reduce penalty to lower-trained weapons
 
   -- Alerts for 2-handed weapons, when carrying 1-handed
   AddHand = {
@@ -179,7 +179,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
   -- Alerts for good early weapons of all types
   Early = {
     xl = 7, -- Alert early weapons if XL <= xl
-    skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons with skill_diff > XL*factor+offset
+    skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons w skill_diff > XL*fact+offset
     branded_min_plus = 4, -- Alert branded weapons with plus >= branded_min_plus
   },
 
@@ -188,7 +188,7 @@ f_pickup_alert.Config.Tuning.Weap.Alert = {
     xl = 14, -- Alert strong ranged weapons if XL <= xl
     min_plus = 7, -- Alert ranged weapons with plus >= min_plus
     branded_min_plus = 4, -- Alert branded ranged weapons with plus >= branded_min_plus
-    max_shields = 8.0, -- Alert 2h ranged, despite a wearing shield, if shield_skill <= max_shields
+    max_shields = 8.0, -- Require max_shields skill to block 2h ranged alerts
   },
 } -- f_pickup_alert.Config.Tuning.Weap.Alert (do not remove this comment)
 
@@ -222,8 +222,6 @@ f_pickup_alert.Config.Emoji = {
 
   AUTOPICKUP_ITEM = "👍",
 } -- f_pickup_alert.Config.Emoji (do not remove this comment)
-
-f_pickup_alert.Config.init = function()
 
 -- define string:contains() for all strings
 function BRC_txt_str_contains(self, text)
@@ -264,7 +262,7 @@ BRC.DMG_TYPE = {
 
 BRC.EMOJI = {}
 
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+BRC.LARGE_RACES = { "Armataur", "Gale Centaur", "Naga", "Oni", "Troll" }
 
 BRC.LITTLE_RACES = { "Spriggan" }
 
@@ -696,7 +694,8 @@ function BRC.eq.is_useless_ego(ego)
 
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or (ego == "rPois" or ego == "rpois" or ego == "poison resistance")
+       and util.contains(BRC.POIS_RES_RACES, race)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 
@@ -845,6 +844,10 @@ function BRC.mpr.error(message, context, skip_more)
   if not skip_more then
     crawl.redraw_screen()
     crawl.more()
+  end
+
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
   end
 
   if BRC.Config.mpr.logs_to_stderr then
@@ -1009,6 +1012,8 @@ end
 ---------------------------------------------------------------------------------------------------
 
 f_pickup_alert = f_pickup_alert or {}
+
+f_pickup_alert.Config.init = function()
   if not BRC.Config.emojis then
     f_pickup_alert.Config.Emoji = {}
   end
@@ -1406,8 +1411,10 @@ function f_pa_data.remember_alert(it)
   local cur_val = tonumber(pa_items_alerted[name])
   if not cur_val or value > cur_val then pa_items_alerted[name] = value end
 
-  -- Add lesser versions of same item, to avoid alerting an inferior item
-  if BRC.eq.get_ego(it) and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
+  -- Add lesser versions of same item, to avoid alerting an inferior item.
+  -- Use name comparison instead of get_ego(it) because ego() returns nil for floor items
+  -- even when the item is visibly branded (DCSS API limitation for unequipped items).
+  if name ~= it.name("db") and not BRC.eq.is_risky(it) and not BRC.it.is_talisman(it) then
     -- Add plain unbranded version
     name = it.name("db")
     cur_val = tonumber(pa_items_alerted[name])

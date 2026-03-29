@@ -43,8 +43,8 @@ brc_config_realtime = {
     },
 
     Alert = {
-      armour_sensitivity = 1.1, -- [0.5-2.0] Adjust all armour alerts; 0 to disable
-      weapon_sensitivity = 1.2, -- [0.5-2.0] Adjust all weapon alerts; 0 to disable
+      armour_sensitivity = 0.9, -- [0.5-2.0] Adjust all armour alerts; 0 to disable
+      weapon_sensitivity = 0.9, -- [0.5-2.0] Adjust all weapon alerts; 0 to disable
       orbs = false,
       staff_resists = false, -- When a staff gives a missing resistance
       talismans = false,
@@ -52,7 +52,10 @@ brc_config_realtime = {
       one_time = { -- Alert the first time each item is found
         "kite shield", "tower shield", "crystal plate armour",
         "gold dragon scales", "pearl dragon scales", "storm dragon scales",
-        "broad axe", "demon whip", "eveningstar", "morningstar",
+        "broad axe", "executioner's axe",
+        "demon whip", "eveningstar", "giant spiked club", "morningstar", "sacred scourge",
+        "lajatang", "bardiche", "demon trident", "partisan", "trishula",
+        "hand cannon", "triple crossbow",
       },
       OTA_require_skill = { weapon = 6, armour = 0, shield = 0 }, -- No one_time if skill < this
 
@@ -61,7 +64,7 @@ brc_config_realtime = {
     Tuning = {
       Armour = {
         encumb_penalty_weight = 0, -- [0-2.0] Penalty to heavy armour when training magic/ranged
-        early_xl = 0, -- Alert all usable runed body armour if XL <= `early_xl`
+        early_xl = 0, -- Alert any usable runed body armour when XL <= `early_xl`
       },
     },
   },

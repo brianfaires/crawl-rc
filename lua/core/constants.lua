@@ -55,7 +55,7 @@ BRC.NONLIVING_RACES = { "Djinni", "Gargoyle" }
 BRC.POIS_RES_RACES = { "Djinni", "Gargoyle", "Mummy", "Naga", "Poltergeist", "Revenant" }
 BRC.LITTLE_RACES = { "Spriggan" }
 BRC.SMALL_RACES = { "Kobold" }
-BRC.LARGE_RACES = { "Armataur", "Naga", "Oni", "Troll" }
+BRC.LARGE_RACES = { "Armataur", "Gale Centaur", "Naga", "Oni", "Troll" }
 
 ---- Skills ----
 BRC.MAGIC_SCHOOLS = {

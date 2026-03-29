@@ -95,6 +95,7 @@ f_mute_messages.Config = {
       -- Allies / monsters
       "Ancestor HP restored",
       "The (bush|fungus|plant) (looks sick|begins to die|is engulfed|is struck)",
+      "Your.*the (bush|fungus|plant)",
       "evades? a web",
       "is (lightly|moderately|heavily|severely) (damaged|wounded)",
       "is almost (dead|destroyed)",
@@ -208,6 +209,10 @@ function BRC.mpr.error(message, context, skip_more)
   if not skip_more then
     crawl.redraw_screen()
     crawl.more()
+  end
+
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
   end
 
   if BRC.Config.mpr.logs_to_stderr then
@@ -367,7 +372,6 @@ function ready(...)
   BRC.opt.clear_single_turn_mutes()
   if you.turns() > brc_last_turn then
     brc_last_turn = you.turns()
-    f_mute_messages.ready(...)
   end
 end
 

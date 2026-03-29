@@ -9,7 +9,7 @@
 f_exclude_dropped = {}
 f_exclude_dropped.BRC_FEATURE_NAME = "exclude-dropped"
 f_exclude_dropped.Config = {
-  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding an enchantable weapon
+  not_weapon_scrolls = true, -- Don't exclude enchant/brand scrolls if holding enchantable weapon
 } -- f_exclude_dropped.Config (do not remove this comment)
 
 ---- Persistent variables ----

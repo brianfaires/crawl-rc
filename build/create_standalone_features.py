@@ -19,7 +19,6 @@ core_dir = base_dir / "lua" / "core"
 util_dir = base_dir / "lua" / "util"
 features_dir = base_dir / "lua" / "features"
 output_dir = base_dir / "bin" / "standalone_features"
-output_dir.mkdir(parents=True, exist_ok=True)
 
 BRC_MODULES = {
     "BRC.mpr": util_dir / "mpr.lua",
@@ -465,12 +464,17 @@ class StandaloneGenerator:
         start_idx = next((i for i, line in enumerate(lines) if config_pattern.match(line.strip())), None)
         if start_idx is None:
             return None
-        
+
         i = start_idx
         in_multiline_string = False
         while i < len(lines):
             stripped = lines[i].strip()
             if not config_pattern.match(stripped):
+                break
+
+            # Don't include function()-valued configs: can't split header from body.
+            # Leave them in the feature code so they stay adjacent to their body.
+            if re.search(r'=\s*function\s*\(', stripped):
                 break
 
             brace_count = stripped.count('{') - stripped.count('}')
@@ -564,21 +568,21 @@ class StandaloneGenerator:
     
     def _generate_brc_setup(self) -> str:
         content = "\n".join([
-          f"-- Minimal BRC namespace (Don't overwrite existing globals)\nBRC = BRC or {{}}",
-          f"BRC.Config = BRC.Config or {{}}",
-          f"BRC.Config.emojis = {get_default_config_boolean('emojis')}",
+            f"-- Minimal BRC namespace (Don't overwrite existing globals)\nBRC = BRC or {{}}",
+            f"BRC.Config = BRC.Config or {{}}",
+            f"BRC.Config.emojis = {get_default_config_boolean('emojis')}",
         ])
         if self.feature_var == "f_pickup_alert":
-          content += "\nBRC.Config.unskilled_egos_usable = " + get_default_config_boolean('unskilled_egos_usable')
-          bb = match_constant_definition(_get_cached_text(BRC_MODULES["BRC.Configs"]), "Configs.Default.BrandBonus")
-          content += "\n" + bb.replace("BRC.Configs.Default.BrandBonus", "BRC.Config.BrandBonus")
+            content += "\nBRC.Config.unskilled_egos_usable = " + get_default_config_boolean('unskilled_egos_usable')
+            bb = match_constant_definition(_get_cached_text(BRC_MODULES["BRC.Configs"]), "Configs.Default.BrandBonus")
+            content += "\n" + bb.replace("BRC.Configs.Default.BrandBonus", "BRC.Config.BrandBonus")
 
         if self._needs_debug() or self._needs_stderr():
-          content += "\nBRC.Config.mpr = BRC.Config.mpr or {}"
+            content += "\nBRC.Config.mpr = BRC.Config.mpr or {}"
         if self._needs_debug():
-          content += f"\nBRC.Config.mpr.show_debug_messages = {get_default_config_boolean('show_debug_messages')}"
+            content += f"\nBRC.Config.mpr.show_debug_messages = {get_default_config_boolean('show_debug_messages')}"
         if self._needs_stderr():
-          content += f"\nBRC.Config.mpr.logs_to_stderr = {get_default_config_boolean('logs_to_stderr')}"
+            content += f"\nBRC.Config.mpr.logs_to_stderr = {get_default_config_boolean('logs_to_stderr')}"
 
         return content
     
@@ -640,11 +644,21 @@ class StandaloneGenerator:
         config_content = re.sub(r'BRC\.util\.cntl\("([^"]+)"\)', 
                                lambda m: f'string.byte("{m.group(1).upper()}") - 64', config_content)
  
-        # Prepend constants that are used in the config
-        for c in ["COL"]:
-            if f"BRC.{c}." in config_content:
-                const = match_constant_definition(_get_cached_text(BRC_CONSTANTS), c)
-                config_content = f"\n{const}\n\n{config_content}"
+        # Prepend any BRC constants referenced in the config (constants section comes later).
+        constants_text = _get_cached_text(BRC_CONSTANTS)
+        for const_name in get_constant_names():
+            if f"BRC.{const_name}." in config_content:
+                const = match_constant_definition(constants_text, const_name)
+                if const:
+                    config_content = f"\n{const}\n\n{config_content}"
+
+        # Ensure all top-level config table closers have an inline comment so that
+        # DCSS's RC parser doesn't mistake a lone } for the outer Lua block terminator.
+        config_lines = config_content.split('\n')
+        for idx, line in enumerate(config_lines):
+            if re.match(r'^\s*}\s*$', line):
+                config_lines[idx] = line.rstrip() + f' -- {self.feature_var}.Config'
+        config_content = '\n'.join(config_lines)
 
         return config_content
     
@@ -669,6 +683,8 @@ class StandaloneGenerator:
         if not hooks:
             return ""
         
+        feature_has_ready = "ready" in self.analyzer.used_hooks
+
         result = ["-- Crawl hook wrappers"]
         for hook in hooks:
             if hook == "ready":
@@ -678,7 +694,7 @@ class StandaloneGenerator:
                     *([f"  BRC.opt.clear_single_turn_mutes()"] if needs_mutes else []),
                     f"  if you.turns() > brc_last_turn then",
                     f"    brc_last_turn = you.turns()",
-                    f"    {self.feature_var}.{hook}(...)",
+                    *([f"    {self.feature_var}.{hook}(...)"] if feature_has_ready else []),
                     f"  end",
                     *([f"  BRC.mpr.consume_queue()"] if needs_queue else []),
                     f"end",
@@ -708,7 +724,7 @@ class StandaloneGenerator:
     def _generate_init_call(self) -> str:
         return f"-- Initialize feature\nif {self.feature_var}.init then {self.feature_var}.init() end"
 
-def process_feature(analyzer: DependencyAnalyzer, output_name: str, display_name: str = None, f_var_name: Optional[str] = None):
+def process_feature(analyzer: DependencyAnalyzer, output_name: str, display_name: Optional[str] = None, f_var_name: Optional[str] = None):
     """Process a feature analyzer and generate the standalone output file."""
     if display_name is None:
         display_name = output_name
@@ -732,11 +748,16 @@ def process_feature(analyzer: DependencyAnalyzer, output_name: str, display_name
     print()
 
 def main():
+    output_dir.mkdir(parents=True, exist_ok=True)
+    generated_names: set = set()
+
     for feature_path in features_dir.glob("*.lua"):
         if "_template" in feature_path.name:
             continue
         analyzer = DependencyAnalyzer(feature_path)
-        process_feature(analyzer, feature_path.stem.replace('_', '-'))
+        name = feature_path.stem.replace('_', '-')
+        process_feature(analyzer, name)
+        generated_names.add(name)
     
     pickup_alert_dir = features_dir / "pickup-alert"
     pickup_alert_files = ["pa-config.lua", "pa-main.lua", "pa-data.lua", "pa-armour.lua", "pa-misc.lua", "pa-weapons.lua"]
@@ -754,6 +775,13 @@ def main():
         dummy_path = features_dir / "pickup-alert" / "pa-main.lua"
         analyzer = DependencyAnalyzer(dummy_path, content=concatenated_text)
         process_feature(analyzer, "pickup-alert", "pickup-alert (concatenated)", "f_pickup_alert")
+        generated_names.add("pickup-alert")
+
+    # Remove stale files that no longer correspond to any feature
+    for stale in output_dir.glob("*.rc"):
+        if stale.stem not in generated_names:
+            print(f"Removing stale: {stale.name}")
+            stale.unlink()
 
 if __name__ == "__main__":
     main()

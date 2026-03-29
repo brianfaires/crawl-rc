@@ -132,7 +132,8 @@ function BRC.eq.is_useless_ego(ego)
 
   local race = you.race()
   return ego == "holy" and util.contains(BRC.UNDEAD_RACES, race)
-    or ego == "rPois" and util.contains(BRC.POIS_RES_RACES, race)
+    or (ego == "rPois" or ego == "rpois" or ego == "poison resistance")
+       and util.contains(BRC.POIS_RES_RACES, race)
     or ego == "pain" and you.skill("Necromancy") == 0
 end
 
@@ -194,6 +195,10 @@ function BRC.mpr.error(message, context, skip_more)
   if not skip_more then
     crawl.redraw_screen()
     crawl.more()
+  end
+
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
   end
 
   if BRC.Config.mpr.logs_to_stderr then

@@ -2,6 +2,9 @@
 
 max_line_length = 100
 
+-- Auto-generated config file: relax line length (comments get deeper nesting)
+files["lua/config/explicit.lua"] = { max_line_length = 120 }
+
 -- Suppress specific warning types
 ignore = {}
 

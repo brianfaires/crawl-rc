@@ -3,20 +3,9 @@
 - pause slowest weapon alert with pa pause
 - pause pickup-alert during memorization
 
-### Can't reproduce locally:
-- read id hotkey shows up a turn after the "scroll of id" message that triggered it
-- no announcement for steam dragon scales (same turn as lvl up and gained 1 spell lvl)
-- in pan: redrawing screen on every turn of travel (fixed?)
-- carrying arbelest; why warning for 1st ranged weapon w shortbow (same w first polearm?)
-
-
 ## TODO
-### Turncount playtest notes:
-  why getting "DPS increase" alert?
-  picked up weapon & gold; didn't assign weapon to 'a' (left on b)
-  BRC.active == false at start of game; because monsters in view on spawn?
-
 ### Misc:
+  - BRC.active == false at start of game; because monsters in view on spawn?
   - Config saved to class/race isn't used, because the feature is set by the config. (Needs BRC global toggle)
   - Add more comments to feature files, especially for the config options.
   - Autoinscribe consumables with bailey/ossuary/sewer/etc
@@ -25,6 +14,7 @@
       basilisk if can't be petrified
       hound at 33 hp
       gnoll/iguana at 35
+  -- fully-recover: rest off poison if HP > config.threshold
 
 ### Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)

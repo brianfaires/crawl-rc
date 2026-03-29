@@ -189,8 +189,9 @@ function f_announce_hp_mp.ready()
   local mhp_delta = mhp - ad_prev.mhp
   local mmp_delta = mmp - ad_prev.mmp
 
-  -- Calc damage taken, with starting point being mhp * (prev hp / prev mhp)
-  local expected_hp = mhp * (hp / mhp)
+  -- Calc damage taken: scale prev HP to current max HP, then compare to actual HP.
+  -- Guard against startup (ad_prev.mhp == 0) by falling back to hp so damage_taken = 0.
+  local expected_hp = ad_prev.mhp > 0 and mhp * (ad_prev.hp / ad_prev.mhp) or hp
   local damage_taken = expected_hp - hp
 
   ad_prev.hp = hp

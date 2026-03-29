@@ -4,3 +4,4 @@
 .cursor/docs/
 default.profraw
 build/__pycache__/
+.env

@@ -3,12 +3,14 @@
 A modular system for Dungeon Crawl Stone Soup RC files, designed to be easily customized and extended.
 
 ## Quick Start
+
 - Include the contents of `bin/buehler.rc` in your RC file.
 - **Merge hooks (if needed)**: The hook functions used by crawl (like `ready()`) are defined at the very end of BRC.
 If your RC already contains these, merge them.
 (Ex: Remove BRC's `ready()` function and add `BRC.ready()` at the top of your current `ready()` function.)
 
 ## Built-in Keybinds / Macros
+
 - `Cntl-D`: Travel down one level (with the nearest stairs)
 - `Cntl-E`: Travel up one level (with the nearest stairs)
 - `Cntl-T`: Save current training targets, to be used in future games with the same race/class
@@ -26,13 +28,13 @@ Looking at a feature module might still be helpful to read the description, or s
 
 ### Most Noticeable Features
 
-- **pickup-alert** - Smart autopickup and alerts for noteworthy items. _(See detailed description below)_
+- **pickup-alert** - Smart autopickup and alerts for noteworthy items. *(See detailed description below)*
 - **announce-hp-mp** - Displays current HP/MP with visual meters (ex. ❤️❤️❤️‍🩹🤍🤍) whenever HP/MP changes
 - **inscribe-stats** - Auto-inscribes items with relevant stats like +/- AC/EV, DPS, etc.
 
 ### Inventory Management
 
-- **color-inscribe** - Adds color to item inscriptions (like <span style="color: red;">rF++</span>)
+- **color-inscribe** - Adds color to item inscriptions (like rF++)
 *(Disabled by default, until crawl's treatment of color tags is more consistent)*
 - **drop-inferior** - Alerts when you pick up a replacement for an item in inventory, and adds the inferior one to the drop list
 - **exclude-dropped** - Excludes dropped items from autopickup
@@ -65,7 +67,7 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Config-specific
 
 - **announce-items** (Turncount) - Prints messages describing floor items like gold/books/shops as they come into view
-- **bread-swinger** (Turncount) - Macro `5` to rest _X_ turns: Swinging your slowest weapon, or walking if that's slower
+- **bread-swinger** (Turncount) - Macro `5` to rest *X* turns: Swinging your slowest weapon, or walking if that's slower
 - **display-realtime** (Realtime) - Every x seconds (default 60), display the current real time.
 
 ---
@@ -76,7 +78,7 @@ Want to use just one feature without the full BRC system? The script `build/crea
 
 **Remember to merge hooks if you already have them defined!**
 
-Note: I don't regularly test these, though I did try them all one-at-a-time once. LMK if you encounter errors. They would most likely be related to the order that things get copy/pasted into the standalone file.
+Note: The full bundled RC is exercised by the repo’s automated tests; standalone files are copy-paste friendly but get less coverage.
 
 ## Pickup & Alert Feature
 
@@ -90,16 +92,16 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 - **Smart** - adjusts behavior to your inventory and character progression
 - **Configurable** - lots of config values for which alerts are active, when they fire, and when to do a force_more.
   - To adjust the overall frequency of alerts, configure: `Alert.armour_sensitivity` and `Alert.weapon_sensitivity`
-  - _(Advanced)_ For detailed tuning of alert behavior, see heuristics in `Tuning` and `BrandBonus`.
+  - *(Advanced)* For detailed tuning of alert behavior, see heuristics in `Tuning` and `BrandBonus`.
 
 ### Alerts
 
-- **`pa-armour.lua`**
+- `**pa-armour.lua`**
   - Alerts for artefacts, new egos, or anything with a plausible tradeoff of AC/encumbrance/ego
-- **`pa-weapons.lua`**
+- `**pa-weapons.lua`**
   - Checks each weapon in inventory for upgrades/alerts. (inscribe `!u` or `!brc` to exclude a carried weapon)
   - Alerts for artefacts, new egos, strong early weapons, first ranged/polearm, highest flat damage, ...
-- **`pa-misc.lua`**
+- `**pa-misc.lua**`
   - A list of "one-time alerts" - the first time you encounter specific items (e.g. broad axe, eveningstar, tower shield)
   - New orbs, relevant talismans
   - Staves that provide a needed resistance.
@@ -119,6 +121,7 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 **Method 2 (Flexible): Disable via config**
 
 - Add `disabled = true` to the corresponding feature section of your config.
+
 ```lua
   my_config = {
 
@@ -130,7 +133,7 @@ The goal is to enable confident "o-tabbing" without inspecting every dropped ite
 ### 2. Configuring Features
 
 Each feature defines its own `Config` table, containing options and default values.
-The feature references it's Config table to customize its behavior.
+The feature references its Config table to customize its behavior.
 
 Configuration for all features is intended to live at the top of `buehler.rc`. A "Main" config can specify a feature name and any of its options to override default values.
 *(See all available config options in `lua/config/explicit.lua` - it's a lot in there though, and just intended as a reference)*
@@ -140,7 +143,7 @@ To disable this for weapons, add this to your config:
 
 ```lua
   my_config = {
-
+other
     ["inscribe-stats"] = {
       inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
       inscribe_armour = true,  -- This line is redundant, since the default value is true
@@ -151,18 +154,19 @@ To disable this for weapons, add this to your config:
 
 ### 3. Multiple Configs
 
-_(Feel free to delete any configs you don't want. No other changes needed.)_
+*(Feel free to delete any configs you don't want. No other changes needed.)*
 
 BRC includes several pre-built configs. You can edit/remove any of them or create new ones.
 Any global Lua table that includes `BRC_CONFIG_NAME = <config_name>` will be available as a config.
 
 Included configs:
+
 - **Custom**: Intended as the main config, or maybe the only one. It includes options that seem the most likely to be configured.
 - **Testing**: Turns on debug messages, and disables any features not explicitly configured.
 - **Explicit**: A big config with every field defined, set to default values.
-- _**Others**_:
+- ***Others***:
   - **Turncount**: For high score / turncount speedruns (disable autopickup, auto-display info for items in view)
-  - **Realtime**: For realtime speedruns (reduced prompts + alerts)
+  - **Realtime**: For realtime speedruns (reduced prompts + alerts, more muted messages, clock time displayed)
 
 ### 4. Set which config to load
 
@@ -204,11 +208,14 @@ end
 **Step 2: Persistent variables** (optional):
 
 Create variables that retain their value across saves like this:
+
 ```lua
 already_alerted = BRC.Data.persist("already_alerted", false) -- var name and initial value
 items_found = BRC.Data.persist("items_found", {}) -- tables too
 ```
+
 In your code, access the variables normally:
+
 ```lua
 already_alerted = true -- Remember that some alert fired
 
@@ -218,11 +225,12 @@ table.insert(items_found, "broad axe") -- Remember that you found a broad axe
 items_found[#items_found+1] = "tower shield" -- Another way to append to a list
 ```
 
-Persistent variables start off each game with their initial value, and remember any changes for the rest of the game. They are _**not**_ shared across different games.
+Persistent variables start off each game with their initial value, and remember any changes for the rest of the game. They are ***not*** shared across different games.
 
 **Step 3: Add hooks** (optional):
 These crawl hooks are currently implemented:
-- ready() _(Called only once per turn. Use multiready() if you want it called multiple times per turn, like crawl's ready().)_
+
+- ready() *(Called only once per turn. Use multiready() if you want it called multiple times per turn, like crawl's ready().)*
 - autopickup(it)
 - c_answer_prompt(prompt)
 - c_assign_invletter(it)
@@ -230,11 +238,12 @@ These crawl hooks are currently implemented:
 - ch_start_running(kind)
 
 You can also define:
+
 - init() - Called when BRC starts up. This is similar to putting raw code in your RC file, but allows a full re-init on demand.
 - multiready() - Called every time crawl's ready() is, multiple times per player turn.
 
-
 Define them in your feature and they will be automatically hooked to crawl. Example:
+
 ```lua
 function my_feature.c_assign_invletter(it)
   ...
@@ -257,8 +266,7 @@ This allows a config to alter itself, conditionally add values, or define things
 bin/                    # Pre-built RC files
 ├── buehler.rc            # Single-file result of all files
 ├── standalone_features/  # Each feature, with its dependencies, as a self-contained file
-|   └── *.rc                # One RC file per feature, including crawl hooks
-build/                  # Python scripts to generate bin/
+│   └── *.rc                # One RC file per feature, including crawl hooks
 rc/                     # RC file components
 lua/                    # Lua files
 ├── config/                 # Main configs (Custom, Turncount, Realtime, Explicit, Testing)
@@ -279,6 +287,10 @@ lua/                    # Lua files
 │   ├── _template.lua           # Template for new features
 │   ├── pickup-alert/           # Pickup-Alert (multi-file feature)
 │   └── ...                     # Other features
+build/                  # Python scripts to generate explicit config and populate bin/
+hooks/                  # Git hooks (pre-commit, pre-push; see package.json "prepare")
+skills/                 # Portable agent skills (e.g. pickup-alert RCA); optional for players
+tests/                  # Integration test runner, harness, and per-feature tests
 ```
 
 ---
@@ -288,6 +300,7 @@ lua/                    # Lua files
 The goal of all this is to increase QOL and automate no-brainer decisions. However automating multiple turns is a
 slippery slope to [qw.rc](https://github.com/crawl/crawl/blob/master/crawl-ref/source/test/stress/qw.rc) and avoided.
 It's also possibly disqualifying for any record or tournament games. Where I draw the line is:
+
 - No automatic turns taken (every turn is an explicit player action)
 - Anything that doesn't consume a turn is fair game (setting inscriptions, inventory slots, or alerts).
 - One-click actions must either: Take a single turn, or be available in dcss as a single command.
@@ -296,12 +309,14 @@ and rarely occur multiple turns in a row. Still, an extreme use of hotkeys would
 and "play" the game by holding down the `Enter` key.
 
 **Included features:**
+
 - Auto-search a long and custom string in gauntlets, to filter out garbage (0 turns)
 - After pickup a weapon, hotkey for "wield this item?"
 - After scroll of ID pickup, hotkey for "read scroll of id?"
 - Cntl-E (go up closest stairs) on the orb run: Does some math to ignore monsters and ascend faster
 
 **Excluded features:**
+
 - After joining a god in the temple, automatically run to the stairs.
 
 ---
@@ -331,10 +346,12 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
 ### Troubleshooting
 
 **Bugs/Issues**: Please submit/send me any issues you find! It would help to attach:
+
 - A copy of your RC
-- **Character dump**: Press `#`, and answer `Y` to include BRC debug info.
+- **Character dump**: Press `#`, and answer `Y` to include BRC debug info (see **Error Handling** below for optional in-dump error notes).
 
 **Pitfalls to avoid**:
+
 - Never put `}` on a line by itself (crawl's RC parser will misinterpret it as "end of lua code"). Always add a comment after it like this:
   ```lua
   # RC code
@@ -363,19 +380,31 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
 - If errors occur in the core code (rare), BRC may offer to disable a hook. This would impact all features using that hook,
 so it's recommended to determine the feature causing the error and disable it.
 - In both cases, it's probably worth answering `No` once, then disabling things only if the error persists. Restarting crawl will re-enable all features and hooks.
+- By default, BRC can record error text in your **character file** (via `take_note`) so it shows up in a `#` dump—useful when reporting bugs. Turn this off with `BRC.Config.mpr.take_note_on_error = false` if you do not want those notes.
+
+### Running tests
+
+This matters if you develop or verify BRC against a **local** DCSS build—not required for normal play.
+
+- From the repository root: `npm test` or `./tests/run.sh` (the script regenerates config, rebuilds `bin/buehler.rc`, then runs the suite against the console binary).
+- You need a built **console** crawl binary (e.g. `crawl-console`), `**fake_pty`** from the same crawl tree, and a `**timeout`** command (on macOS, GNU `coreutils` provides `gtimeout`).
+- If your binary is not next to this repo in the usual layout, set `CRAWL_BIN` (and optionally `FAKE_PTY_BIN`); see `tests/config.sh` for defaults and overrides.
 
 ## Resources
 
 ### DCSS Documentation
+
 - [RC Options Guide](http://crawl.akrasiac.org/docs/options_guide.txt)
 - [Lua Integration Guide](https://github.com/gammafunk/dcss-rc#1-include-the-rc-or-lua-file-in-your-rc)
 - [DCSS Lua API](https://doc.dcss.io/index.html)
 
 ### Cool RC files / Sources of features
+
 - Use this syntax to lookup a player's RC file:
-  - [http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc)
   - [http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc)
+  - [http://crawl.akrasiac.org/rcfiles/crawl-0.35/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.35/beuhler.rc) (stable line when available)
 - [gammafunk/dcss-rc](https://github.com/gammafunk/dcss-rc)
 - [magus/dcss](https://github.com/magus/dcss)
 - [linewriter1024/crawl-rc](https://github.com/linewriter1024/crawl-rc)
 - [Other RC Examples](https://tavern.dcss.io/t/whats-in-your-rc-file/160/4)
+

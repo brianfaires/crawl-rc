@@ -16,7 +16,7 @@ BRC.Config.mpr.logs_to_stderr = false
 f_startup = {}
 f_startup.Config = {
   -- Save current training targets and config, for race/class
-  macro_save_key = string.byte("T") - 64, -- Keycode to save training targets and config
+  macro_save_key = string.byte("T") - 64, -- (Cntl-T) Keycode to save training targets and config
   save_training = true, -- Allow save/load of race/class training targets
   save_config = true, -- Allow save/load of BRC config
   prompt_before_load = false, -- Prompt before loading in a new game with same race+class
@@ -139,6 +139,10 @@ function BRC.mpr.error(message, context, skip_more)
   if not skip_more then
     crawl.redraw_screen()
     crawl.more()
+  end
+
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
   end
 
   if BRC.Config.mpr.logs_to_stderr then

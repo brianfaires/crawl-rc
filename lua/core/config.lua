@@ -33,6 +33,7 @@ BRC.Configs.Default.unskilled_egos_usable = false
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
   logs_to_stderr = false,
+  take_note_on_error = true, -- Note BRC errors in the character file for debugging with char dump
 } -- BRC.Configs.Default.mpr (do not remove this comment)
 
 BRC.Configs.Default.dump = {
@@ -134,6 +135,46 @@ local function override_table(dest, source)
   end
 end
 
+--- Warn about unknown keys in the user config that don't match any feature or core config key.
+-- Catches typos like ["pickup-alerts"] (plural) or misspelled option names.
+local function validate_config_keys()
+  local feature_modules = BRC.get_all_feature_modules()
+
+  -- Collect known core keys from BRC.Configs.Default
+  local core_keys = {}
+  for key, _ in pairs(BRC.Configs.Default) do
+    core_keys[key] = true
+  end
+
+  -- Check each key in BRC.Config
+  for key, value in pairs(BRC.Config) do
+    -- Skip known core keys, init functions, and non-string keys
+    if core_keys[key] or key == "init" or type(key) ~= "string" then -- luacheck: ignore 542
+    elseif feature_modules[key] then
+      -- Known feature name — validate its top-level sub-keys against defaults
+      local defaults = feature_modules[key].ConfigDefaults or feature_modules[key].Config
+      if type(value) == "table" and type(defaults) == "table" then
+        for sub_key, _ in pairs(value) do
+          if sub_key ~= "disabled" and sub_key ~= "init"
+            and defaults[sub_key] == nil
+          then
+            BRC.mpr.debug(string.format(
+              "Unknown config key: %s.%s",
+              BRC.txt.lightcyan(key), BRC.txt.yellow(sub_key)
+            ))
+          end
+        end
+      end
+    elseif type(value) == "table" and key:find("-") then
+      -- Looks like a feature name (contains hyphen) but no such module exists
+      BRC.mpr.warning(string.format(
+        "Unknown feature in config: %s (not registered — possible typo?)",
+        BRC.txt.yellow(key)
+      ))
+    end
+  end
+end
+
 ---- Public API ----
 --- Main config loading entry point
 -- @param config_name string name of a config
@@ -162,7 +203,12 @@ function BRC.init_config(config_name)
   local m = BRC.mpr.brc_prefix .. "Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME)
   BRC.mpr.white(m)
   BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
+  -- validate_config_keys() runs from BRC.init() after register_all_features(); running here
+  -- would warn on every hyphenated feature key because _features is still empty.
 end
+
+--- Exposed for testing; not part of public API.
+BRC._validate_config_keys = validate_config_keys
 
 --- Process a feature config: Load defaults, then override w BRC.Config
 function BRC.process_feature_config(feature)

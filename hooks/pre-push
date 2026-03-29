@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-push hook to run tests before pushing
+#
+# Tests require a crawl binary. If not found at the default relative path,
+# set CRAWL_BIN and FAKE_PTY_BIN in your environment or in a .env file
+# at the repo root.
+
+# Source .env if present (for CRAWL_BIN, FAKE_PTY_BIN overrides)
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+if [ -f "$REPO_ROOT/.env" ]; then
+    set -a
+    . "$REPO_ROOT/.env"
+    set +a
+fi
+
+echo "Running tests..."
+npm test
+
+if [ $? -ne 0 ]; then
+    echo "Pre-push hook failed! Tests did not pass."
+    exit 1
+fi
+
+echo "Pre-push hook completed successfully!"
+exit 0

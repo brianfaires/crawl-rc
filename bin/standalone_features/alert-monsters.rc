@@ -198,8 +198,6 @@ f_alert_monsters.Config.Alerts = {
     pattern = { "shadow dragon" } },
 } -- f_alert_monsters.Config.Alerts (do not remove this comment)
 
-f_alert_monsters.Config.init = function()
-
 -- BRC Constants
 BRC.COL = {
   black = "0", blue = "1", green = "2", cyan = "3", red = "4", magenta = "5", brown = "6",
@@ -266,6 +264,10 @@ function BRC.mpr.error(message, context, skip_more)
     crawl.more()
   end
 
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
+  end
+
   if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
@@ -315,6 +317,8 @@ end
 -- @warning Never put a '}' on a line by itself. This breaks crawl's RC parser.
 ---------------------------------------------------------------------------------------------------
 
+
+f_alert_monsters.Config.init = function()
   local alert_list = f_alert_monsters.Config.Alerts
 
   -- Mutators (only flash if immune)
