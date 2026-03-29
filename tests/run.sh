@@ -8,13 +8,13 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # Load configuration
 source "${SCRIPT_DIR}/config.sh"
 
-# ─── Prerequisite checks ────────────────────────────────────────────────────
+# ─── Build ──────────────────────────────────────────────────────────────────
 
-# Check buehler.rc exists
-if [[ ! -f "${REPO_ROOT}/bin/buehler.rc" ]]; then
-  echo "ERROR: bin/buehler.rc not found. Run 'node build/concat_rc.js' first." >&2
-  exit 1
-fi
+# Regenerate explicit.lua and rebuild buehler.rc so tests always run against current source
+python3 "${REPO_ROOT}/build/generate_explicit_config.py"
+python3 "${REPO_ROOT}/build/concat_rc.py"
+
+# ─── Prerequisite checks ────────────────────────────────────────────────────
 
 # Check crawl binary — resolve to absolute path without relying on `realpath` (not on macOS by default)
 if [[ "${CRAWL_BIN}" = /* ]]; then

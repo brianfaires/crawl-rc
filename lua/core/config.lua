@@ -134,6 +134,46 @@ local function override_table(dest, source)
   end
 end
 
+--- Warn about unknown keys in the user config that don't match any feature or core config key.
+-- Catches typos like ["pickup-alerts"] (plural) or misspelled option names.
+local function validate_config_keys()
+  local all_features = BRC.get_registered_features()
+
+  -- Collect known core keys from BRC.Configs.Default
+  local core_keys = {}
+  for key, _ in pairs(BRC.Configs.Default) do
+    core_keys[key] = true
+  end
+
+  -- Check each key in BRC.Config
+  for key, value in pairs(BRC.Config) do
+    -- Skip known core keys, init functions, and non-string keys
+    if not (core_keys[key] or key == "init" or type(key) ~= "string") then
+      if all_features[key] then
+        -- Known feature name — validate its top-level sub-keys
+        if type(value) == "table" and type(all_features[key].Config) == "table" then
+          for sub_key, _ in pairs(value) do
+            if sub_key ~= "disabled" and sub_key ~= "init"
+              and all_features[key].Config[sub_key] == nil
+            then
+              BRC.mpr.debug(string.format(
+                "Unknown config key: %s.%s",
+                BRC.txt.lightcyan(key), BRC.txt.yellow(sub_key)
+              ))
+            end
+          end
+        end
+      elseif type(value) == "table" and key:find("-") then
+        -- Looks like a feature name (contains hyphen) but isn't registered
+        BRC.mpr.warning(string.format(
+          "Unknown feature in config: %s (not registered — possible typo?)",
+          BRC.txt.yellow(key)
+        ))
+      end
+    end
+  end
+end
+
 ---- Public API ----
 --- Main config loading entry point
 -- @param config_name string name of a config
@@ -162,6 +202,7 @@ function BRC.init_config(config_name)
   local m = BRC.mpr.brc_prefix .. "Using config: " .. BRC.txt.lightcyan(BRC.Config.BRC_CONFIG_NAME)
   BRC.mpr.white(m)
   BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
+  validate_config_keys()
 end
 
 --- Process a feature config: Load defaults, then override w BRC.Config
