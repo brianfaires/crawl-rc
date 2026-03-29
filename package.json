@@ -3,6 +3,7 @@
   "version": "1.2.0",
   "description": "Crawl RC configuration files",
   "scripts": {
+    "prepare": "git config core.hooksPath hooks",
     "test": "./tests/run.sh",
     "lint": "luacheck --formatter plain lua/",
     "lint:fix": "luacheck --formatter plain --fix lua/",

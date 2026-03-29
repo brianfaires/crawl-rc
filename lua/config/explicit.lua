@@ -16,12 +16,12 @@ brc_config_explicit = {
   mpr = {
     show_debug_messages = false,
     logs_to_stderr = false,
-  }, -- BRC.Configs.Default.mpr (do not remove this comment)
+  } -- BRC.Configs.Default.mpr (do not remove this comment)
 
   dump = {
     max_lines_per_table = 200, -- Avoid huge tables (alert_monsters.Config.Alerts) in debug dumps
     omit_pointers = true, -- Don't dump functions and userdata (they only show a hex address)
-  }, -- BRC.Configs.Default.dump (do not remove this comment)
+  } -- BRC.Configs.Default.dump (do not remove this comment)
 
   BrandBonus = {
     chaos = { factor = 1.15, offset = 2.0 }, -- Approximate weighted average
@@ -49,7 +49,7 @@ brc_config_explicit = {
       rebuke = { factor = 1.2, offset = 0 },
       vamp = { factor = 1.2, offset = 0 },
     },
-  }, -- BRC.Configs.Default.BrandBonus (do not remove this comment)
+  } -- BRC.Configs.Default.BrandBonus (do not remove this comment)
 
   hotkey = {
     key = { keycode = 13, name = "[Enter]" },
