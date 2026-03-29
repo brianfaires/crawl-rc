@@ -148,28 +148,28 @@ local function validate_config_keys()
   -- Check each key in BRC.Config
   for key, value in pairs(BRC.Config) do
     -- Skip known core keys, init functions, and non-string keys
-    if not (core_keys[key] or key == "init" or type(key) ~= "string") then
-      if all_features[key] then
-        -- Known feature name — validate its top-level sub-keys
-        if type(value) == "table" and type(all_features[key].Config) == "table" then
-          for sub_key, _ in pairs(value) do
-            if sub_key ~= "disabled" and sub_key ~= "init"
-              and all_features[key].Config[sub_key] == nil
-            then
-              BRC.mpr.debug(string.format(
-                "Unknown config key: %s.%s",
-                BRC.txt.lightcyan(key), BRC.txt.yellow(sub_key)
-              ))
-            end
+    if core_keys[key] or key == "init" or type(key) ~= "string" then -- luacheck: ignore 542
+    elseif all_features[key] then
+      -- Known feature name — validate its top-level sub-keys against defaults
+      local defaults = all_features[key].ConfigDefaults or all_features[key].Config
+      if type(value) == "table" and type(defaults) == "table" then
+        for sub_key, _ in pairs(value) do
+          if sub_key ~= "disabled" and sub_key ~= "init"
+            and defaults[sub_key] == nil
+          then
+            BRC.mpr.debug(string.format(
+              "Unknown config key: %s.%s",
+              BRC.txt.lightcyan(key), BRC.txt.yellow(sub_key)
+            ))
           end
         end
-      elseif type(value) == "table" and key:find("-") then
-        -- Looks like a feature name (contains hyphen) but isn't registered
-        BRC.mpr.warning(string.format(
-          "Unknown feature in config: %s (not registered — possible typo?)",
-          BRC.txt.yellow(key)
-        ))
       end
+    elseif type(value) == "table" and key:find("-") then
+      -- Looks like a feature name (contains hyphen) but isn't registered
+      BRC.mpr.warning(string.format(
+        "Unknown feature in config: %s (not registered — possible typo?)",
+        BRC.txt.yellow(key)
+      ))
     end
   end
 end
@@ -204,6 +204,9 @@ function BRC.init_config(config_name)
   BRC.init_emojis() -- Updates constant values based on BRC.Config.emojis
   validate_config_keys()
 end
+
+--- Exposed for testing; not part of public API.
+BRC._validate_config_keys = validate_config_keys
 
 --- Process a feature config: Load defaults, then override w BRC.Config
 function BRC.process_feature_config(feature)
