@@ -33,6 +33,7 @@ BRC.Configs.Default.unskilled_egos_usable = false
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
   logs_to_stderr = false,
+  take_note_on_error = true, -- Note BRC errors in the character file for debugging with char dump
 } -- BRC.Configs.Default.mpr (do not remove this comment)
 
 BRC.Configs.Default.dump = {

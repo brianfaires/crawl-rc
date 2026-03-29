@@ -16,6 +16,7 @@ BRC targets multiple DCSS versions simultaneously. When updating game-content li
 - Test command: `npm test` (or `./tests/run.sh`)
 - Test character: Mummy Berserker, seed 1, -no-save, -wizard
 - Tests run automatically on `git push` via pre-push hook
+- **Sandboxed agents cannot run these tests** (PTY / `fake_pty` requirements). Do not rely on automated test runs in restricted environments; the user runs tests manually when pushing.
 
 ## Project Layout
 
@@ -71,3 +72,9 @@ The test character does not autopick scrolls. Use `CMD_PICKUP` explicitly if you
 
 ### Tests use bin/buehler.rc (bundled), not lua/ source directly
 Tests run against `bin/buehler.rc`, which is a compiled bundle of all Lua source files. After modifying any file under `lua/`, you MUST rebuild: `python3 build/concat_rc.py`. Without rebuilding, tests silently run against the OLD bundled code, giving mysterious failures where debug output doesn't appear and changes have no effect. Also rebuild `bin/standalone_features/` with `python3 build/create_standalone_features.py` when modifying feature files.
+
+## Cursor
+
+This repo uses root **`AGENTS.md`** for agent instructions. Cursor loads it automatically ([docs](https://cursor.com/docs/context/rules)); no extra project rule file is required for that.
+
+If you previously added an always-applied project rule pointing at **`CLAUDE.md`**, remove it under **Cursor Settings → Rules, Commands** so instructions are not duplicated or stale.

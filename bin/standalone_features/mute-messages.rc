@@ -211,6 +211,10 @@ function BRC.mpr.error(message, context, skip_more)
     crawl.more()
   end
 
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
+  end
+
   if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end

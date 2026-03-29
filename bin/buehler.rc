@@ -343,6 +343,7 @@ brc_config_explicit = {
   mpr = {
     show_debug_messages = false,
     logs_to_stderr = false,
+    take_note_on_error = true, -- Note BRC errors in the character file for debugging with char dump
   }, -- BRC.Configs.Default.mpr (do not remove this comment)
 
   dump = {
@@ -2459,6 +2460,10 @@ function BRC.mpr.error(message, context, skip_more)
     crawl.more()
   end
 
+  if BRC.Config.mpr.take_note_on_error then
+    crawl.take_note("[BRC] (Error) " .. tostring(message))
+  end
+
   if BRC.Config.mpr.logs_to_stderr then
     crawl.stderr(BRC.mpr.brc_prefix .. "(Error) " .. message)
   end
@@ -3636,6 +3641,7 @@ BRC.Configs.Default.unskilled_egos_usable = false
 BRC.Configs.Default.mpr = {
   show_debug_messages = false,
   logs_to_stderr = false,
+  take_note_on_error = true, -- Note BRC errors in the character file for debugging with char dump
 } -- BRC.Configs.Default.mpr (do not remove this comment)
 
 BRC.Configs.Default.dump = {

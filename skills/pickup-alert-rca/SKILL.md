@@ -23,7 +23,7 @@ Applies to **any** alert emitted through the **pickup-alert** feature—not only
 | Persistence, “already alerted”, high scores | `lua/features/pickup-alert/pa-data.lua` | |
 | Defaults | `lua/features/pickup-alert/pa-config.lua` | Overridden by `lua/config/*.lua` |
 
-Rebuild bundled RC after Lua edits: `python3 build/concat_rc.py` (see project `CLAUDE.md`).
+Rebuild bundled RC after Lua edits: `python3 build/concat_rc.py` (see project `AGENTS.md`).
 
 ## Clarifying questions (ask when relevant)
 
