@@ -384,7 +384,12 @@ def extract_core_config() -> str:
             body = dedent_body(body)
             body = indent_body(body, 4)
             body = ensure_brace_comments(body, key)
-            sections.append(f"  {key} = {{\n{body}\n  }} {rest_of_line}".rstrip())
+            # Ensure trailing comma after closing brace
+            if rest_of_line and not rest_of_line.startswith(','):
+                rest_of_line = ',' + (' ' if rest_of_line else '') + rest_of_line
+            elif not rest_of_line:
+                rest_of_line = ','
+            sections.append(f"  {key} = {{\n{body}\n  }}{rest_of_line}".rstrip())
         else:
             # Simple value — extract to end of line
             eol = text.find('\n', after_eq)

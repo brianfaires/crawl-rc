@@ -1,19 +1,19 @@
 #!/bin/sh
-# Pre-commit hook to run luacheck on Lua files and update generated files
-
-echo "Running luacheck on Lua files..."
-
-# Run luacheck on all Lua files with plain formatter and config
-luacheck --formatter plain lua/
-
-# Store luacheck exit code
-LUACHECK_EXIT_CODE=$?
+# Pre-commit hook to generate files, lint, and bundle
 
 cd build
 
 echo "Running generate_explicit_config.py to update explicit.lua..."
 python3 generate_explicit_config.py
 GENERATE_EXIT_CODE=$?
+
+cd ..
+
+echo "Running luacheck on Lua files..."
+luacheck --formatter plain lua/
+LUACHECK_EXIT_CODE=$?
+
+cd build
 
 echo "Running concat_rc.py to update buehler.rc..."
 python3 concat_rc.py
