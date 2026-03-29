@@ -4088,7 +4088,7 @@ end
 ---------------------------------------------------------------------------------------------------
 
 ---- Local constants ----
-BRC.VERSION = "1.2.0"
+BRC.VERSION = "1.2.1"
 BRC.MIN_CRAWL_VERSION = "0.34"
 
 local HOOK_FUNCTIONS = {
@@ -6817,7 +6817,7 @@ f_inscribe_stats.Config = {
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
-local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
+local NUM_PATTERN = "[%+%-:]%d+[%.,%,]%d*" -- Matches numbers w/ decimal
 
 ---- Local variables ----
 local C -- config alias

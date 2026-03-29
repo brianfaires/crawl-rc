@@ -16,7 +16,7 @@ f_inscribe_stats.Config = {
 } -- f_inscribe_stats.Config (do not remove this comment)
 
 ---- Local constants ----
-local NUM_PATTERN = "[%+%-:]%d+%.%d*" -- Matches numbers w/ decimal
+local NUM_PATTERN = "[%+%-:]%d+[%.,%,]%d*" -- Matches numbers w/ decimal
 
 ---- Local variables ----
 local C -- config alias
