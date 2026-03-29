@@ -869,8 +869,8 @@ end,
       staves = true,
     }, -- Pickup
     Alert = {
-      armour_sensitivity = 1.0, -- Adjust all armour alerts; 0 to disable all (typical range 0.5-2.0)
-      weapon_sensitivity = 1.0, -- Adjust all weapon alerts; 0 to disable all (typical range 0.5-2.0)
+      armour_sensitivity = 1.0, -- [0.5-2.0] Adjust all armour alerts; 0 to disable all
+      weapon_sensitivity = 1.0, -- [0.5-2.0] Adjust all weapon alerts; 0 to disable all
       orbs = true,
       staff_resists = true,
       talismans = true,
@@ -957,7 +957,7 @@ end,
 
         encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
         early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
-        diff_body_ego_is_good = false, -- More alerts for diff_ego in body armour (skips min_gain check)
+        diff_body_ego_is_good = false, -- More body_armour alerts for diff_ego (no min_gain check)
       }, -- Armour
 
 
@@ -980,7 +980,7 @@ end,
           pure_dps = 1.0, -- Alert if DPS ratio > pure_dps
           gain_ego = 0.8, -- Gaining ego; Alert if DPS ratio > gain_ego
           new_ego = 0.8, -- Get ego not in inventory; Alert if DPS ratio > new_ego
-          low_skill_penalty_damping = 8, -- [0-20] Reduces penalty to weapons of lower-trained schools
+          low_skill_penalty_damping = 8, -- [0-20] Reduce penalty to lower-trained weapons
 
           -- Alerts for 2-handed weapons, when carrying 1-handed
           AddHand = {
@@ -992,7 +992,7 @@ end,
           -- Alerts for good early weapons of all types
           Early = {
             xl = 7, -- Alert early weapons if XL <= xl
-            skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons with skill_diff > XL*factor+offset
+            skill = { factor = 1.5, offset = 2.0 }, -- Ignore weapons w skill_diff > XL*fact+offset
             branded_min_plus = 4, -- Alert branded weapons with plus >= branded_min_plus
           },
 
@@ -1001,7 +1001,7 @@ end,
             xl = 14, -- Alert strong ranged weapons if XL <= xl
             min_plus = 7, -- Alert ranged weapons with plus >= min_plus
             branded_min_plus = 4, -- Alert branded ranged weapons with plus >= branded_min_plus
-            max_shields = 8.0, -- Alert 2h ranged, despite wearing a shield, if shield_skill <= max_shields
+            max_shields = 8.0, -- Require max_shields skill to block 2h ranged alerts
           },
         }, -- Alert
       }, -- Weap
