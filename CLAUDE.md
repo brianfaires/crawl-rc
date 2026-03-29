@@ -10,7 +10,7 @@ BRC targets multiple DCSS versions simultaneously. When updating game-content li
 
 ## Environment
 
-- Working dir: `/Users/brian/dev/dcss/crawl/crawl-ref/settings/crawl-rc`
+- Working dir: `~/dev/dcss/crawl/crawl-ref/settings/crawl-rc`
 - Crawl binary: `crawl-ref/source/crawl-console` (v0.35-a0)
 - fake_pty: `crawl-ref/source/util/fake_pty`
 - Test command: `npm test` (or `./tests/run.sh`)
@@ -41,7 +41,7 @@ BRC targets multiple DCSS versions simultaneously. When updating game-content li
 
 ## Crawl Source
 
-The upstream crawl repo is at `/Users/brian/dev/dcss/crawl`. The built binary is at `crawl-ref/source/crawl`.
+The upstream crawl repo is at `~/dev/dcss/crawl`. The built binary is at `crawl-ref/source/crawl`.
 
 ## Gotchas
 
