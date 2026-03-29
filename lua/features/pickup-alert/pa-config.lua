@@ -99,7 +99,7 @@ f_pickup_alert.Config.Tuning.Armour = {
   },
 
   encumb_penalty_weight = 0.7, -- [0-2.0] Penalty to heavy armour when training magic/ranged
-  early_xl = 6, -- Alert all usable runed body armour if XL <= early_xl
+  early_xl = 6, -- Alert any usable runed body armour when XL <= `early_xl`
   diff_body_ego_is_good = false, -- More body_armour alerts for diff_ego (no min_gain check)
 } -- f_pickup_alert.Config.Tuning.Armour (do not remove this comment)
 
