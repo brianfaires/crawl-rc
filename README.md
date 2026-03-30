@@ -405,7 +405,7 @@ I've tried to list names in the header of each feature whenever I got a feature 
 
 - Use this syntax to lookup a player's RC file:
   - [http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-git/beuhler.rc)
-  - [http://crawl.akrasiac.org/rcfiles/crawl-0.35/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.35/beuhler.rc) (stable line when available)
+  - [http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc](http://crawl.akrasiac.org/rcfiles/crawl-0.34/beuhler.rc)
 - [gammafunk/dcss-rc](https://github.com/gammafunk/dcss-rc)
 - [magus/dcss](https://github.com/magus/dcss)
 - [linewriter1024/crawl-rc](https://github.com/linewriter1024/crawl-rc)
