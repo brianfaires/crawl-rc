@@ -29,52 +29,52 @@ Looking at a feature module might still be helpful to read the description, or s
 ### Most Noticeable Features
 
 - **pickup-alert** - Smart autopickup and alerts for noteworthy items. *(See detailed description below)*
-- **announce-hp-mp** - Displays current HP/MP with visual meters (ex. ❤️❤️❤️‍🩹🤍🤍) whenever HP/MP changes
-- **inscribe-stats** - Auto-inscribes items with relevant stats like +/- AC/EV, DPS, etc.
+- **announce-hp-mp** - Display current HP/MP with visual meters (ex. ❤️❤️❤️‍🩹🤍🤍) whenever HP/MP changes
+- **inscribe-stats** - Auto-inscribe items with relevant stats like +/- AC/EV, DPS, etc.
+- **Hotkey** - More of a utility used by several features, but you'll often see "Press [Enter] to ___" for no-brainers like equip after pickup or drop old equipment
 
 ### Inventory Management
 
-- **color-inscribe** - Adds color to item inscriptions (like rF++)
-*(Disabled by default, until crawl's treatment of color tags is more consistent)*
-- **drop-inferior** - Alerts when you pick up a replacement for an item in inventory, and adds the inferior one to the drop list
-- **exclude-dropped** - Excludes dropped items from autopickup
-- **manage-consumables** - Robustly maintains `!q` and `!r` inscriptions only where required
-- **weapon-slots** - Keeps weapons organized in slots a/b/w
+- **color-inscribe** - Add color to item inscriptions like rPois, rF+, rElec *(Disabled by default, until color tag display is more consistent across dcss builds. When it breaks it looks bad.)*
+- **drop-inferior** - Alert when you pick up a replacement for an item in inventory, and add the inferior one to the drop list
+- **exclude-dropped** - Exclude dropped items from autopickup
+- **manage-consumables** - Maintain (robustly) `!q` and `!r` inscriptions on consumables that need them
+- **weapon-slots** - Keep weapons organized in slots a/b/w
 
 ### Alerts & Warnings
 
-- **alert-monsters** - `flash_screen` or `force_more` on dangerous monsters, based on your HP/Will/Resistances/etc. Highly configurable.
-- **misc-alerts** - Various useful alerts: Low HP, spell levels, max piety w/ Amulet of faith
-- **quiver-reminders** - Alerts before (f)iring from quiver: if a consumable, or after (F)iring a different ammo
-- **remind-id** - Alerts when you should read a scroll of ID. Before finding scroll of ID, stops travel on increasing un-ID'd stack sizes
+- **alert-monsters** - force_more or flash_screen on dangerous monsters, based on your HP/Will/Resistances/etc. Highly configurable.
+- **misc-alerts** - Low HP, available spell levels, max piety w/ Amulet of faith, ...
+- **quiver-reminders** - Alert before (f)iring from quiver: if a consumable, or if you just (F)ired a different ammo
+- **remind-id** - Stop travel and alert when you should read a scroll of ID. Before identifying scroll of ID, stop travel when your largest un-ID'd stack increases
 
 ### Exploration & Travel
 
-- **fully-recover** - Rests until negative status effects clear
-- **fast-passage** - *(Disabled; not complete)* When you open a passage of Golubria, offers to move to it via the hotkey
-- **go-up-macro** - Enhanced Cntl-E macro with orb run mechanics: HP-based monster ignore for fast+safe ascension
-- **runrest-features** - Misc features: Update what stops travel based on location/religion/recent shaft. Useful auto-search when entering temple/gauntlet
-- **safe-stairs** - Prevents accidental stair usage. Warns before entering V:5
+- **fully-recover** - Rest until negative status effects clear
+- **fast-passage** - *(Disabled; not complete)* When you open a passage of Golubria, offer to move to it via the hotkey
+- **go-up-macro** - Cntl-E (go up) macro with orb run mode: HP-based monster ignore for fast+safe ascension
+- **runrest-features** - Update exploration stop conditions based on location/religion/recent shaft. Do a filtered auto-search after entering temple/gauntlet
+- **safe-stairs** - Prevent accidental stair usage. Warn before entering V:5
 
 ### Quality of Life
 
-- **answer-prompts** - Auto-answers certain prompts
-- **dynamic-options** - Changes various crawl options based on XL, religion, race/class, etc.
-- **fm-messages** - Messages rated 1-9 for importance. Configurable as force_more_message and flash_screen_message.
-- **mute-messages** - Reduces message spam with configurable mute levels (light/moderate/heavy reduction)
-- **startup** - Auto-sets skill targets, opens skills menu, saves/reloads skill targets by race+class
+- **answer-prompts** - Auto-answer certain prompts
+- **dynamic-options** - Change various crawl options based on XL, religion, race/class, etc
+- **fm-messages** - Rate messages 1-9 for importance, then configure desired level for force_more and flash_screen
+- **mute-messages** - Reduce message spam with configurable mute levels (light/moderate/heavy reduction)
+- **startup** - Auto-set skill targets, open the skills menu, save/reload skill targets by race+class
 
 ### Config-specific
 
-- **announce-items** (Turncount) - Prints messages describing floor items like gold/books/shops as they come into view
-- **bread-swinger** (Turncount) - Macro `5` to rest *X* turns: Swinging your slowest weapon, or walking if that's slower
-- **display-realtime** (Realtime) - Every x seconds (default 60), display the current real time.
+- **announce-items** (Turncount) - Print messages describing floor items like gold/books/shops as they come into view *(without printing all items)*
+- **bread-swinger** (Turncount) - Macro `5` to rest *X* turns by swinging your slowest weapon
+- **display-realtime** (Realtime) - Display the current real time every x seconds (default 60)
 
 ---
 
 ## Cherry-Picking Individual Features
 
-Want to use just one feature without the full BRC system? The script `build/create_standalone_features.py` converts the feature modules to standalone files in `bin/standalone_features/` that can be copy-pasted into your RC. The files are always current with whatever is in this git repo.
+Want to use just one feature without the full BRC system? Run `build/create_standalone_features.py` to turn feature modules into standalone files in `bin/standalone_features/` that you can copy-paste into your RC. The files stay current with whatever is in this git repo.
 
 **Remember to merge hooks if you already have them defined!**
 
@@ -82,26 +82,25 @@ Note: The full bundled RC is exercised by the repo’s automated tests; standalo
 
 ## Pickup & Alert Feature
 
-BRC's largest feature. It provides smart autopickup of item upgrades, and generates alerts for noteworthy items.
-The goal is to enable confident "o-tabbing" without inspecting every dropped item, or searching each floor to make sure you didn't overlook anything.
+BRC's largest feature: Smart autopickup of item upgrades, and alerts for noteworthy items. The goal is to enable confident "o-tabbing" without inspecting every dropped item, or searching each floor to make sure you didn't overlook anything.
 
 ### How It Works
 
 - **Alerts** - One-line messages that stop travel and stand out visually
-- **No spam** - alerts won't fire for identical/inferior items
-- **Smart** - adjusts behavior to your inventory and character progression
-- **Configurable** - lots of config values for which alerts are active, when they fire, and when to do a force_more.
+- **No spam** - Alerts won't fire again for identical/inferior items
+- **Smart** - Behavior adjusts to your inventory and character progression
+- **Configurable** - Lots of options for which alerts are active, when they fire, and when they force_more.
   - To adjust the overall frequency of alerts, configure: `Alert.armour_sensitivity` and `Alert.weapon_sensitivity`
   - *(Advanced)* For detailed tuning of alert behavior, see heuristics in `Tuning` and `BrandBonus`.
 
 ### Alerts
 
-- `**pa-armour.lua`**
-  - Alerts for artefacts, new egos, or anything with a plausible tradeoff of AC/encumbrance/ego
-- `**pa-weapons.lua`**
-  - Checks each weapon in inventory for upgrades/alerts. (inscribe `!u` or `!brc` to exclude a carried weapon)
-  - Alerts for artefacts, new egos, strong early weapons, first ranged/polearm, highest flat damage, ...
-- `**pa-misc.lua**`
+- **pa-armour.lua**
+  - Alert for artefacts, new egos, or anything with a plausible tradeoff of AC/encumbrance/ego
+- **pa-weapons.lua**
+  - Check each weapon in inventory for upgrades/alerts. (inscribe `!u` or `!brc` to exclude a carried weapon)
+  - Alert for artefacts, new egos, strong early weapons, first ranged/polearm, highest flat damage, ...
+- **pa-misc.lua**
   - A list of "one-time alerts" - the first time you encounter specific items (e.g. broad axe, eveningstar, tower shield)
   - New orbs, relevant talismans
   - Staves that provide a needed resistance.
@@ -143,7 +142,7 @@ To disable this for weapons, add this to your config:
 
 ```lua
   my_config = {
-other
+
     ["inscribe-stats"] = {
       inscribe_weapons = false, -- Don't maintain weapon info in the inscription 
       inscribe_armour = true,  -- This line is redundant, since the default value is true
@@ -161,9 +160,9 @@ Any global Lua table that includes `BRC_CONFIG_NAME = <config_name>` will be ava
 
 Included configs:
 
-- **Custom**: Intended as the main config, or maybe the only one. It includes options that seem the most likely to be configured.
-- **Testing**: Turns on debug messages, and disables any features not explicitly configured.
-- **Explicit**: A big config with every field defined, set to default values.
+- **Custom**: Intended as the main config, or maybe the only one. It includes options that seem most likely to be changed by a typical player.
+- **Explicit**: A big, auto-generated config that explicitly sets every option of every feature to its default value. A good way to see all available options.
+- **Testing**: *(More of a dev tool)* Turns on debug messages, and disables any features not explicitly configured.
 - ***Others***:
   - **Turncount**: For high score / turncount speedruns (disable autopickup, auto-display info for items in view)
   - **Realtime**: For realtime speedruns (reduced prompts + alerts, more muted messages, clock time displayed)
@@ -227,7 +226,7 @@ items_found[#items_found+1] = "tower shield" -- Another way to append to a list
 
 Persistent variables start off each game with their initial value, and remember any changes for the rest of the game. They are ***not*** shared across different games.
 
-**Step 3: Add hooks** (optional):
+**Step 3: Add hooks** (semi-optional):  
 These crawl hooks are currently implemented:
 
 - ready() *(Called only once per turn. Use multiready() if you want it called multiple times per turn, like crawl's ready().)*
@@ -252,9 +251,9 @@ end
 
 **Step 4: Advanced config** (optional):
 
-Each config can define an `init` function, which will execute after the config is created.
-This allows a config to alter itself, conditionally add values, or define things based on earlier values in the config.
-`BRC.Config.init` and `<feature>.init` both execute before BRC.Config values override feature configs.
+Each config can define an `init` function, which will execute after the config is loaded.  
+This allows a config to alter itself, conditionally add values, or define things based on earlier values in the config.  
+`BRC.Config.init` and `<feature>.init` both execute before BRC.Config values overwrite the feature config defaults.
 
 ---
 
@@ -311,9 +310,9 @@ and "play" the game by holding down the `Enter` key.
 **Included features:**
 
 - Auto-search a long and custom string in gauntlets, to filter out garbage (0 turns)
-- After pickup a weapon, hotkey for "wield this item?"
-- After scroll of ID pickup, hotkey for "read scroll of id?"
-- Cntl-E (go up closest stairs) on the orb run: Does some math to ignore monsters and ascend faster
+- After you pick up a weapon, hotkey for "wield this item?"
+- After you pick up a scroll of ID, hotkey for "read scroll of id?"
+- Cntl-E (go up closest stairs) on the orb run: do some math to ignore monsters and ascend faster
 
 **Excluded features:**
 
@@ -366,11 +365,11 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
   # More RC
   ```
 - If running crawl locally:
-  - **Regex issues**: Some regular expression patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
+  - **Regular Expresions**: Some regex patterns require PCRE (not POSIX). If you build crawl locally, use build flag `BUILD_PCRE=y`.
   - **Emojis**: Webtiles has a good font with solid emoji support. AFAICT macOS doesn't, so I configure `BRC.Config.emojis = false` locally.
   If you have one, define it in `rc/display.rc`, and LMK!
 
-**RC syntax errors**: If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You may be prompted to restore data from backup.
+**RC syntax errors**: If you edit the RC and get an error on startup: note the error and line number, and try to immediately close/fix it/try again with the same character. You'll be prompted to restore data from backup.
 
 **Data backup in `c_persist`**: BRC keeps a backup of persistent data in crawl's `c_persist` table. Backup data is only available for the most recent game. It'll automatically restore if no turns have passed since the backup was taken. Otherwise it'll ask for confirmation.
 
@@ -380,7 +379,7 @@ BRC.Config.mpr.show_debug_messages = true -- Enable debug output
 - If errors occur in the core code (rare), BRC may offer to disable a hook. This would impact all features using that hook,
 so it's recommended to determine the feature causing the error and disable it.
 - In both cases, it's probably worth answering `No` once, then disabling things only if the error persists. Restarting crawl will re-enable all features and hooks.
-- By default, BRC can record error text in your **character file** (via `take_note`) so it shows up in a `#` dump—useful when reporting bugs. Turn this off with `BRC.Config.mpr.take_note_on_error = false` if you do not want those notes.
+- By default, BRC will note any error text in your **character file** (via `take_note`) so it shows up in a `#` dump—useful when reporting bugs. Turn this off with `BRC.Config.mpr.take_note_on_error = false` if you don't want those notes.
 
 ### Running tests
 
@@ -389,6 +388,10 @@ This matters if you develop or verify BRC against a **local** DCSS build—not r
 - From the repository root: `npm test` or `./tests/run.sh` (the script regenerates config, rebuilds `bin/buehler.rc`, then runs the suite against the console binary).
 - You need a built **console** crawl binary (e.g. `crawl-console`), `**fake_pty`** from the same crawl tree, and a `**timeout`** command (on macOS, GNU `coreutils` provides `gtimeout`).
 - If your binary is not next to this repo in the usual layout, set `CRAWL_BIN` (and optionally `FAKE_PTY_BIN`); see `tests/config.sh` for defaults and overrides.
+
+## Attributions
+
+I've tried to list names in the header of each feature whenever I got a feature or idea from someone else. If something is missing, please let me know! My top 3 sources (gammafunk, magus, linewriter1024) are linked below.
 
 ## Resources
 
