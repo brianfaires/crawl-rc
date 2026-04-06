@@ -86,7 +86,7 @@ f_mute_messages.Config = {
       -- Allies / monsters
       "Ancestor HP restored",
       "The (bush|fungus|plant) (looks sick|begins to die|is engulfed|is struck)",
-      "Your.*the (bush|fungus|plant)",
+      "Your (bush|fungus|plant|briar|ballistomycete)",
       "evades? a web",
       "is (lightly|moderately|heavily|severely) (damaged|wounded)",
       "is almost (dead|destroyed)",

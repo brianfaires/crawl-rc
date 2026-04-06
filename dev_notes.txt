@@ -14,7 +14,14 @@
       basilisk if can't be petrified
       hound at 33 hp
       gnoll/iguana at 35
-  -- fully-recover: rest off poison if HP > config.threshold
+  - fully-recover: rest off poison if HP > config.threshold
+  - autofight: with ranged, smarter targeting (hit neighbor + beam through others)
+  - monster-fm: skip when auto-traveling
+  - webtiles: same bug as pan, this time in orc: refreshing every turn (shows HP gain 1by1)
+  - [BUG] Recent alerts, for +4 ring mail of res, after I picked it up.
+  - Weird alert behavior for dropped artefacts; got another alert on drop (cause pickup removed from list?)
+  - Pickup cloak of air; flagged scarm of harm for removal
+  - 
 
 ### Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)
