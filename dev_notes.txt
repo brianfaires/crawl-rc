@@ -21,7 +21,10 @@
   - [BUG] Recent alerts, for +4 ring mail of res, after I picked it up.
   - Weird alert behavior for dropped artefacts; got another alert on drop (cause pickup removed from list?)
   - Pickup cloak of air; flagged scarm of harm for removal
-  - 
+  - Add rF and rC armour when found armour of res (new ego alerted)
+  - Color "you fail to use your ability"
+  - Mute: "There is a weapon-inlaid floor here"
+  - Change inventory colors (eg darts) based on skill level
 
 ### Realtime features:
   - Print realtime on milestones (enter lair, get rune, ...)
@@ -32,6 +35,9 @@
   - Artefact weapon alerts: 'min_skill' for alerts; sans "+Blink"
   - pickup_shields config
     - Train Shields on shield pickup/equip
+  - fully-recover: will/2
+
+
 
 ### Useful hotkeys:
 - After read scroll of enchant weapon, hotkey for read more
