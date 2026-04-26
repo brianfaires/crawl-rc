@@ -8,7 +8,7 @@
 ---------------------------------------------------------------------------------------------------
 
 ---- Local constants ----
-BRC.VERSION = "1.3.0"
+BRC.VERSION = "1.3.1"
 BRC.MIN_CRAWL_VERSION = "0.34"
 
 local HOOK_FUNCTIONS = {
